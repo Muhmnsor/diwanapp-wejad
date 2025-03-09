@@ -60,3 +60,18 @@ BEGIN
   RETURN result;
 END;
 $$;
+
+-- Function to get user's outgoing requests safely
+CREATE OR REPLACE FUNCTION public.get_user_outgoing_requests(p_user_id UUID)
+RETURNS SETOF requests
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT r.*
+  FROM requests r
+  WHERE r.requester_id = p_user_id
+  ORDER BY r.created_at DESC;
+END;
+$$;

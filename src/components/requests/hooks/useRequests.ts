@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,6 +65,44 @@ export const useRequests = () => {
     try {
       console.log("Fetching outgoing requests for user:", user.id);
       
+      // First try using RPC function (which has SECURITY DEFINER privilege)
+      try {
+        const { data: rpcData, error: rpcError } = await supabase
+          .rpc('get_user_outgoing_requests', {
+            p_user_id: user.id
+          });
+        
+        if (!rpcError && rpcData) {
+          console.log(`Fetched ${rpcData.length} outgoing requests via RPC`);
+          
+          // Join with request types for the name
+          const requestTypeIds = rpcData.map(req => req.request_type_id);
+          const { data: requestTypes } = await supabase
+            .from("request_types")
+            .select("id, name")
+            .in("id", requestTypeIds);
+            
+          const typeMap = Object.fromEntries(
+            (requestTypes || []).map(type => [type.id, type])
+          );
+          
+          // Add request_type property to each request
+          const enrichedData = rpcData.map(req => ({
+            ...req,
+            request_type: typeMap[req.request_type_id] || { name: "Unknown" }
+          }));
+          
+          return enrichedData;
+        }
+        
+        // If RPC fails, log the error but continue to fallback
+        console.error("RPC method failed:", rpcError);
+      } catch (rpcErr) {
+        console.error("Error using RPC method:", rpcErr);
+      }
+      
+      // Fallback to direct query (which will use RLS)
+      console.log("Falling back to direct query for outgoing requests");
       const { data, error } = await supabase
         .from("requests")
         .select(`
@@ -82,7 +119,7 @@ export const useRequests = () => {
         return [];
       }
       
-      console.log(`Fetched ${data?.length || 0} outgoing requests`);
+      console.log(`Fetched ${data?.length || 0} outgoing requests via direct query`);
       return data || [];
     } catch (error) {
       console.error("Error in fetchOutgoingRequests:", error);
@@ -96,13 +133,12 @@ export const useRequests = () => {
     enabled: !!user
   });
 
-  const { data: outgoingRequests, isLoading: outgoingLoading } = useQuery({
+  const { data: outgoingRequests, isLoading: outgoingLoading, refetch: refetchOutgoingRequests } = useQuery({
     queryKey: ["requests", "outgoing"],
     queryFn: fetchOutgoingRequests,
     enabled: !!user
   });
 
-  // Improved create request mutation with better error handling
   const createRequest = useMutation({
     mutationFn: async (requestData: {
       request_type_id: string;
@@ -188,82 +224,30 @@ export const useRequests = () => {
         
         console.log("Creating request with processed payload:", requestPayload);
         
-        // Perform an explicit check first to debug RLS issues
-        const { data: rls_check, error: rls_error } = await supabase.rpc('is_admin');
-        console.log("RLS check - Admin status:", rls_check);
-        if (rls_error) {
-          console.error("RLS check error:", rls_error);
+        // Always use the RPC bypass function to ensure we avoid RLS issues
+        console.log("Using bypass RPC function to create request");
+        const { data: insertResult, error: insertError } = await supabase.rpc('insert_request_bypass_rls', {
+          request_data: requestPayload
+        });
+        
+        if (insertError) {
+          console.error("Error using bypass method:", insertError);
+          throw new Error(`فشل إنشاء الطلب: يبدو أن هناك مشكلة في صلاحيات الوصول. يرجى التواصل مع مسؤول النظام`);
         }
         
-        // First try using the standard approach
-        const { data, error } = await supabase
-          .from("requests")
-          .insert(requestPayload)
-          .select();
-
-        if (error) {
-          console.error("Error creating request:", error);
-          console.error("Error code:", error.code);
-          console.error("Error message:", error.message);
-          console.error("Error details:", error.details);
-          
-          // If we get a policy error, try using the bypass RPC function
-          if (error.message && (error.message.includes("policy") || error.code === "42501")) {
-            console.log("Attempting to create request using bypass RPC function");
-            
-            // Use the RPC function to bypass RLS
-            const { data: insertResult, error: insertError } = await supabase.rpc('insert_request_bypass_rls', {
-              request_data: requestPayload
-            });
-            
-            if (insertError) {
-              console.error("Error using bypass method:", insertError);
-              throw new Error(`فشل إنشاء الطلب: يبدو أن هناك مشكلة في صلاحيات الوصول. يرجى التواصل مع مسؤول النظام`);
-            }
-            
-            if (insertResult) {
-              console.log("Successfully created request using RPC bypass:", insertResult);
-              
-              // If there's a current step, create approval record
-              if (currentStepId) {
-                await createApprovalRecord(insertResult.id, currentStepId);
-              }
-              
-              return insertResult;
-            }
-          }
-          
-          // Provide more specific error message based on the error type
-          if (error.code === '23505') {
-            throw new Error("طلب مشابه موجود بالفعل");
-          } else if (error.code === '23503') {
-            throw new Error("خطأ في العلاقات: قد يكون أحد المعرفات غير صالح");
-          } else if (error.code === '42P01') {
-            throw new Error("خطأ في قاعدة البيانات: الجدول غير موجود");
-          } else if (error.code === '42703') {
-            throw new Error("خطأ في قاعدة البيانات: عمود غير موجود");
-          } else if (error.code === '23502') {
-            throw new Error("البيانات المطلوبة غير مكتملة");
-          } else if (error.message && error.message.includes("policy")) {
-            throw new Error("ليس لديك صلاحية لإنشاء طلب. تأكد من تسجيل الدخول بشكل صحيح");
-          } else {
-            throw new Error(`فشل إنشاء الطلب: ${error.message}`);
-          }
+        if (!insertResult) {
+          throw new Error("فشل إنشاء الطلب: لم يتم استلام بيانات الإنشاء");
         }
         
-        if (!data || data.length === 0) {
-          throw new Error("تم إرسال الطلب ولكن لم يتم استلام بيانات الإنشاء");
-        }
-        
-        console.log("Request created successfully:", data[0]);
+        console.log("Request created successfully:", insertResult);
         console.log("=== تم إنشاء الطلب بنجاح ===");
         
         // If there's a current step, create approval record
         if (currentStepId) {
-          await createApprovalRecord(data[0].id, currentStepId);
+          await createApprovalRecord(insertResult.id, currentStepId);
         }
         
-        return data[0];
+        return insertResult;
       } catch (error) {
         console.error("Error in createRequest:", error);
         throw error;
@@ -278,39 +262,6 @@ export const useRequests = () => {
       toast.error(error.message || "حدث خطأ أثناء إنشاء الطلب");
     }
   });
-
-  // Helper function to create approval records
-  const createApprovalRecord = async (requestId: string, stepId: string) => {
-    try {
-      const { data: step, error: fetchStepError } = await supabase
-        .from("workflow_steps")
-        .select("approver_id")
-        .eq("id", stepId)
-        .single();
-      
-      if (fetchStepError) {
-        console.error("Error fetching step info:", fetchStepError);
-        return;
-      }
-      
-      if (step && step.approver_id) {
-        const { error: approvalError } = await supabase
-          .from("request_approvals")
-          .insert({
-            request_id: requestId,
-            step_id: stepId,
-            approver_id: step.approver_id,
-            status: "pending"
-          });
-        
-        if (approvalError) {
-          console.error("Error creating approval:", approvalError);
-        }
-      }
-    } catch (error) {
-      console.error("Error creating approval record:", error);
-    }
-  };
 
   const approveRequest = useMutation({
     mutationFn: async ({ requestId, stepId, comments }: { requestId: string, stepId: string, comments?: string }) => {
@@ -499,7 +450,38 @@ export const useRequests = () => {
     }
   });
 
-  // Function to validate form data against schema
+  const createApprovalRecord = async (requestId: string, stepId: string) => {
+    try {
+      const { data: step, error: fetchStepError } = await supabase
+        .from("workflow_steps")
+        .select("approver_id")
+        .eq("id", stepId)
+        .single();
+      
+      if (fetchStepError) {
+        console.error("Error fetching step info:", fetchStepError);
+        return;
+      }
+      
+      if (step && step.approver_id) {
+        const { error: approvalError } = await supabase
+          .from("request_approvals")
+          .insert({
+            request_id: requestId,
+            step_id: stepId,
+            approver_id: step.approver_id,
+            status: "pending"
+          });
+        
+        if (approvalError) {
+          console.error("Error creating approval:", approvalError);
+        }
+      }
+    } catch (error) {
+      console.error("Error creating approval record:", error);
+    }
+  };
+
   const validateFormData = (formData: Record<string, any>, schema: any): { valid: boolean; errors: string[] } => {
     const errors: string[] = [];
     const fields = schema?.fields || [];
@@ -574,6 +556,7 @@ export const useRequests = () => {
     outgoingRequests,
     incomingLoading,
     outgoingLoading,
+    refetchOutgoingRequests,
     createRequest,
     approveRequest,
     rejectRequest

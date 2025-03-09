@@ -27,6 +27,7 @@ const RequestsManagement = () => {
     outgoingRequests, 
     incomingLoading, 
     outgoingLoading,
+    refetchOutgoingRequests,
     createRequest 
   } = useRequests();
 
@@ -38,6 +39,14 @@ const RequestsManagement = () => {
       setSearchParams(searchParams);
     }
   }, [activeTab, searchParams, setSearchParams]);
+
+  // Refresh outgoing requests when switching to that tab
+  useEffect(() => {
+    if (activeTab === "outgoing") {
+      console.log("Refreshing outgoing requests due to tab change");
+      refetchOutgoingRequests();
+    }
+  }, [activeTab, refetchOutgoingRequests]);
 
   const handleNewRequest = () => {
     setShowNewRequestDialog(false);
@@ -53,6 +62,8 @@ const RequestsManagement = () => {
     createRequest.mutate(formData, {
       onSuccess: () => {
         handleNewRequest();
+        // Force refresh outgoing requests
+        setTimeout(() => refetchOutgoingRequests(), 500);
       }
     });
   };
