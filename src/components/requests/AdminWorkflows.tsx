@@ -23,10 +23,12 @@ import { RequestWorkflow, RequestType } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { WorkflowDialog } from "./WorkflowDialog";
 
 export const AdminWorkflows = () => {
   const queryClient = useQueryClient();
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [showWorkflowDialog, setShowWorkflowDialog] = useState(false);
 
   const { data: requestTypes, isLoading: typesLoading } = useQuery({
     queryKey: ["requestTypes"],
@@ -65,6 +67,14 @@ export const AdminWorkflows = () => {
     setSelectedType(typeId);
   };
 
+  const handleAddWorkflow = () => {
+    setShowWorkflowDialog(true);
+  };
+
+  const handleWorkflowCreated = () => {
+    queryClient.invalidateQueries({ queryKey: ["workflows"] });
+  };
+
   const deleteWorkflow = useMutation({
     mutationFn: async (workflowId: string) => {
       const { error } = await supabase
@@ -89,7 +99,7 @@ export const AdminWorkflows = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">إدارة مسارات العمل</h2>
-        <Button>
+        <Button onClick={handleAddWorkflow}>
           <Plus className="mr-2 h-4 w-4" />
           إضافة مسار عمل جديد
         </Button>
@@ -191,7 +201,10 @@ export const AdminWorkflows = () => {
             </CardContent>
             <CardFooter className="justify-end">
               {selectedType && (
-                <Button variant="outline">
+                <Button 
+                  variant="outline"
+                  onClick={handleAddWorkflow}
+                >
                   <Plus className="mr-2 h-4 w-4" />
                   إضافة مسار عمل لهذا النوع
                 </Button>
@@ -200,6 +213,13 @@ export const AdminWorkflows = () => {
           </Card>
         </div>
       </div>
+
+      <WorkflowDialog
+        isOpen={showWorkflowDialog}
+        onClose={() => setShowWorkflowDialog(false)}
+        selectedTypeId={selectedType}
+        onWorkflowCreated={handleWorkflowCreated}
+      />
     </div>
   );
 };
