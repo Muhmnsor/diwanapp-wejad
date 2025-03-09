@@ -100,7 +100,16 @@ export const NewRequestDialog = ({
         form_data: formData,
       };
       
-      console.log("Submitting request with data:", fullData);
+      // Add debug info
+      console.log("Submitting request with data:", JSON.stringify(fullData, null, 2));
+      console.log("Current user ID:", user.id);
+      
+      // Store form data in requestData for potential retry
+      setRequestData({
+        ...requestData,
+        form_data: formData
+      });
+      
       onSubmit(fullData);
     } catch (err) {
       console.error("Error submitting request:", err);
@@ -136,6 +145,8 @@ export const NewRequestDialog = ({
     setInternalError(null);
   };
 
+  const hasError = !!internalError || (isSubmitting && !!error);
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-[600px]">
@@ -155,6 +166,7 @@ export const NewRequestDialog = ({
         <RequestError 
           error={internalError} 
           retryAction={internalError ? handleRetry : undefined}
+          showDetails={true}
         />
 
         {submissionSuccess && (
@@ -184,6 +196,7 @@ export const NewRequestDialog = ({
           isUploading={isUploading}
           progress={uploadProgress}
           submissionStep={submissionStep}
+          hasError={hasError}
         />
       </DialogContent>
     </Dialog>

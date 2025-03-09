@@ -17,6 +17,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
 import { RequestError } from "@/components/requests/dialogs/RequestError";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const RequestsManagement = () => {
   const { isAuthenticated, user } = useAuthStore();
@@ -27,6 +29,7 @@ const RequestsManagement = () => {
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [authChecking, setAuthChecking] = useState<boolean>(true);
+  const navigate = useNavigate();
   
   const { 
     incomingRequests, 
@@ -121,6 +124,10 @@ const RequestsManagement = () => {
     setSelectedRequestId(null);
   };
 
+  const handleLogin = () => {
+    navigate('/login', { state: { returnUrl: '/requests' } });
+  };
+
   // Render content based on the active tab
   const renderContent = () => {
     if (authChecking) {
@@ -142,12 +149,18 @@ const RequestsManagement = () => {
     }
 
     if (!isAuthenticated) {
-      return <WelcomeCard />;
+      return (
+        <div className="p-6 border rounded-lg bg-white shadow-sm">
+          <h2 className="text-xl font-bold mb-4">يجب تسجيل الدخول</h2>
+          <p className="mb-6 text-gray-600">يرجى تسجيل الدخول لاستخدام نظام الطلبات والاعتمادات</p>
+          <Button onClick={handleLogin} className="w-full">تسجيل الدخول</Button>
+        </div>
+      );
     }
 
     return (
       <>
-        <RequestError error={error} />
+        <RequestError error={error} showDetails={true} />
         
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="mb-6">

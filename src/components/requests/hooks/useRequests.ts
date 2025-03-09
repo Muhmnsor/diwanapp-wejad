@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -112,6 +111,15 @@ export const useRequests = () => {
       setSubmissionStep("إرسال البيانات لقاعدة البيانات");
       console.log(`Creating request (attempt ${retryCount + 1})`, JSON.stringify(insertData, null, 2));
       
+      // Log the auth state - important for debugging
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error("Error getting session during request submission:", sessionError);
+      } else {
+        console.log("Current session during request submission:", 
+          session ? `Authenticated as ${session.user.id}` : "No active session");
+      }
+      
       // Use .select() to return the inserted data
       const { data, error } = await supabase
         .from("requests")
@@ -128,9 +136,14 @@ export const useRequests = () => {
         } else if (error.code === '23505') {
           throw new Error(`الطلب موجود بالفعل.\nرمز الخطأ: ${error.code}\nتفاصيل: ${error.message || 'غير معروف'}`);
         } else if (error.code === '42501') {
-          throw new Error(`ليس لديك صلاحية لإنشاء هذا الطلب.\nرمز الخطأ: ${error.code}\nتفاصيل: ${error.message || 'غير معروف'}`);
+          throw new Error(`ليس لديك صلاحية لإنشاء هذا الطلب.\nرمز الخطأ: ${error.code}\nتفاصيل: ${error.message || 'غير معروف'}\nيرجى التأكد من تسجيل الدخول مرة أخرى.`);
         } else if (error.code === '42P01') {
           throw new Error(`خطأ في قاعدة البيانات: الجدول غير موجود.\nرمز الخطأ: ${error.code}\nتفاصيل: ${error.message || 'غير معروف'}`);
+        } else if (error.message?.includes('infinite recursion')) {
+          throw new Error(JSON.stringify({
+            message: `خطأ في سياسات أمان قاعدة البيانات. يرجى التواصل مع مدير النظام.`,
+            details: `رمز الخطأ: ${error.code}\nتفاصيل: ${error.message}`
+          }));
         } else if (retryCount < MAX_RETRIES) {
           // Retry with exponential backoff
           const delayTime = RETRY_DELAY * Math.pow(2, retryCount);
@@ -140,7 +153,10 @@ export const useRequests = () => {
           return performDatabaseInsert(insertData, retryCount + 1);
         } else {
           // If we've exhausted retries, throw the error
-          throw new Error(`فشل إنشاء الطلب بعد ${MAX_RETRIES} محاولات.\nرمز الخطأ: ${error.code}\nتفاصيل: ${error.message || 'غير معروف'}`);
+          throw new Error(JSON.stringify({
+            message: `فشل إنشاء الطلب بعد ${MAX_RETRIES} محاولات.`,
+            details: `رمز الخطأ: ${error.code}\nتفاصيل: ${error.message || 'غير معروف'}`
+          }));
         }
       }
       
@@ -179,6 +195,9 @@ export const useRequests = () => {
         if (!session) {
           throw new Error("جلسة المستخدم غير موجودة. يرجى تسجيل الدخول مرة أخرى");
         }
+        
+        console.log("User is authenticated as:", user.id);
+        console.log("Session user ID:", session.user.id);
         
         // Fetch the request type to get form schema
         setSubmissionStep("جلب معلومات نوع الطلب");
