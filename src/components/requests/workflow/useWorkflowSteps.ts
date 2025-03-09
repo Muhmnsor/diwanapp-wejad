@@ -7,19 +7,22 @@ import { getInitialStepState } from "./utils";
 
 interface UseWorkflowStepsProps {
   requestTypeId: string | null;
+  workflowId?: string | null;
   onWorkflowStepsUpdated?: (steps: WorkflowStep[]) => void;
 }
 
 export const useWorkflowSteps = ({ 
   requestTypeId,
+  workflowId: externalWorkflowId,
   onWorkflowStepsUpdated
 }: UseWorkflowStepsProps) => {
   const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
-  const [workflowId, setWorkflowId] = useState<string | null>(null);
+  const [workflowId, setWorkflowId] = useState<string | null>(externalWorkflowId || null);
   const [currentStep, setCurrentStep] = useState<WorkflowStep>(getInitialStepState(1));
   const [editingStepIndex, setEditingStepIndex] = useState<number | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Fetch users for approver selection
   useEffect(() => {
@@ -46,36 +49,46 @@ export const useWorkflowSteps = ({
     fetchUsers();
   }, []);
 
-  // Fetch workflow steps when request type changes
+  // Update workflowId when it changes externally
+  useEffect(() => {
+    if (externalWorkflowId !== undefined) {
+      setWorkflowId(externalWorkflowId);
+    }
+  }, [externalWorkflowId]);
+
+  // Fetch workflow steps when request type or workflow ID changes
   useEffect(() => {
     const fetchWorkflowSteps = async () => {
-      if (!requestTypeId) {
+      if (!requestTypeId && !workflowId) {
         setWorkflowSteps([]);
-        setWorkflowId(null);
         return;
       }
 
       setIsLoading(true);
 
       try {
-        console.log("Fetching workflow for request type ID:", requestTypeId);
-        // First, get the default workflow ID for this request type
-        const { data: requestType, error: requestTypeError } = await supabase
-          .from('request_types')
-          .select('default_workflow_id')
-          .eq('id', requestTypeId)
-          .single();
+        let workflowIdToUse = workflowId;
+        
+        // If we have requestTypeId but no workflowId, fetch the default workflow ID for this request type
+        if (requestTypeId && !workflowIdToUse) {
+          console.log("Fetching workflow for request type ID:", requestTypeId);
+          const { data: requestType, error: requestTypeError } = await supabase
+            .from('request_types')
+            .select('default_workflow_id')
+            .eq('id', requestTypeId)
+            .single();
 
-        if (requestTypeError) {
-          console.error("Error fetching request type:", requestTypeError);
-          throw requestTypeError;
+          if (requestTypeError) {
+            console.error("Error fetching request type:", requestTypeError);
+            throw requestTypeError;
+          }
+
+          workflowIdToUse = requestType?.default_workflow_id;
+          console.log("Default workflow ID:", workflowIdToUse);
+          setWorkflowId(workflowIdToUse);
         }
 
-        const workflowId = requestType?.default_workflow_id;
-        console.log("Default workflow ID:", workflowId);
-        setWorkflowId(workflowId);
-
-        if (!workflowId) {
+        if (!workflowIdToUse) {
           setWorkflowSteps([]);
           setIsLoading(false);
           return;
@@ -85,7 +98,7 @@ export const useWorkflowSteps = ({
         const { data: steps, error: stepsError } = await supabase
           .from('workflow_steps')
           .select('*')
-          .eq('workflow_id', workflowId)
+          .eq('workflow_id', workflowIdToUse)
           .order('step_order', { ascending: true });
 
         if (stepsError) {
@@ -109,7 +122,85 @@ export const useWorkflowSteps = ({
     };
 
     fetchWorkflowSteps();
-  }, [requestTypeId, onWorkflowStepsUpdated]);
+  }, [requestTypeId, workflowId, onWorkflowStepsUpdated]);
+
+  // Save workflow steps to database
+  const saveWorkflowSteps = async (steps: WorkflowStep[], workflowIdToUse: string) => {
+    if (!workflowIdToUse) {
+      console.error("No workflow ID provided for saving steps");
+      return false;
+    }
+
+    setIsSaving(true);
+    
+    try {
+      // First delete any existing steps for this workflow
+      const { error: deleteError } = await supabase
+        .from('workflow_steps')
+        .delete()
+        .eq('workflow_id', workflowIdToUse);
+
+      if (deleteError) {
+        console.error("Error deleting existing workflow steps:", deleteError);
+        throw deleteError;
+      }
+
+      if (steps.length === 0) {
+        setIsSaving(false);
+        return true;
+      }
+
+      // Insert new steps with the correct order and workflow ID
+      const stepsToInsert = steps.map((step, index) => ({
+        workflow_id: workflowIdToUse,
+        step_order: index + 1,
+        step_name: step.step_name,
+        step_type: step.step_type || 'opinion',
+        approver_type: step.approver_type || 'user',
+        approver_id: step.approver_id,
+        instructions: step.instructions,
+        is_required: step.is_required
+      }));
+
+      const { error: insertError } = await supabase
+        .from('workflow_steps')
+        .insert(stepsToInsert);
+
+      if (insertError) {
+        console.error("Error inserting workflow steps:", insertError);
+        throw insertError;
+      }
+
+      // Fetch the updated steps
+      const { data: updatedSteps, error: fetchError } = await supabase
+        .from('workflow_steps')
+        .select('*')
+        .eq('workflow_id', workflowIdToUse)
+        .order('step_order', { ascending: true });
+
+      if (fetchError) {
+        console.error("Error fetching updated workflow steps:", fetchError);
+        throw fetchError;
+      }
+
+      // Update local state with server data
+      setWorkflowSteps(updatedSteps || []);
+      
+      // Call the callback if provided
+      if (onWorkflowStepsUpdated) {
+        onWorkflowStepsUpdated(updatedSteps || []);
+      }
+      
+      toast.success('تم حفظ خطوات سير العمل بنجاح');
+      return true;
+    } catch (error) {
+      console.error('Error saving workflow steps:', error);
+      toast.error('فشل في حفظ خطوات سير العمل');
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Add or update a step in local state only
   const handleAddStep = () => {
@@ -222,10 +313,14 @@ export const useWorkflowSteps = ({
     editingStepIndex,
     users,
     isLoading,
+    isSaving,
+    workflowId,
+    setWorkflowId,
     setCurrentStep,
     handleAddStep,
     handleRemoveStep,
     handleEditStep,
     handleMoveStep,
+    saveWorkflowSteps
   };
 };

@@ -8,11 +8,13 @@ import { Separator } from "@/components/ui/separator";
 
 interface WorkflowStepsConfigProps {
   requestTypeId: string | null;
+  workflowId?: string | null;
   onWorkflowStepsUpdated: (steps: WorkflowStep[]) => void;
 }
 
 export const WorkflowStepsConfig = ({ 
   requestTypeId, 
+  workflowId,
   onWorkflowStepsUpdated 
 }: WorkflowStepsConfigProps) => {
   const {
@@ -26,7 +28,11 @@ export const WorkflowStepsConfig = ({
     handleRemoveStep,
     handleEditStep,
     handleMoveStep,
-  } = useWorkflowSteps({ requestTypeId, onWorkflowStepsUpdated });
+  } = useWorkflowSteps({ 
+    requestTypeId, 
+    workflowId,
+    onWorkflowStepsUpdated 
+  });
 
   return (
     <div className="space-y-6">

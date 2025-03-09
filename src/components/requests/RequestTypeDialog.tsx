@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -39,6 +38,7 @@ import { FormSchema, FormField as FormFieldType, RequestType } from "./types";
 import { WorkflowStepsConfig } from "./WorkflowStepsConfig";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { useWorkflowSteps } from "./workflow/useWorkflowSteps";
 
 const requestTypeSchema = z.object({
   name: z.string().min(3, { message: "يجب أن يحتوي الاسم على 3 أحرف على الأقل" }),
@@ -86,6 +86,7 @@ export const RequestTypeDialog = ({
   const [workflowSteps, setWorkflowSteps] = useState([]);
   const [createdRequestTypeId, setCreatedRequestTypeId] = useState<string | null>(null);
   const isEditing = !!requestType;
+  const [isWorkflowSaving, setIsWorkflowSaving] = useState(false);
 
   const form = useForm<RequestTypeFormValues>({
     resolver: zodResolver(requestTypeSchema),
@@ -97,6 +98,24 @@ export const RequestTypeDialog = ({
         fields: [],
       },
     },
+  });
+
+  const {
+    workflowSteps,
+    workflowId,
+    setWorkflowId,
+    users,
+    isLoading: isStepsLoading,
+    isSaving: isStepsSaving,
+    handleAddStep,
+    handleRemoveStep,
+    handleEditStep,
+    handleMoveStep,
+    saveWorkflowSteps,
+  } = useWorkflowSteps({ 
+    requestTypeId: createdRequestTypeId, 
+    workflowId: requestType?.default_workflow_id || null,
+    onWorkflowStepsUpdated: handleWorkflowStepsUpdated 
   });
 
   // Load existing request type data when editing
@@ -325,6 +344,7 @@ export const RequestTypeDialog = ({
         .eq("id", requestTypeId);
 
       if (error) throw error;
+      return true;
     } catch (error) {
       console.error("Error updating default workflow:", error);
       throw error;
@@ -345,20 +365,29 @@ export const RequestTypeDialog = ({
       const requestTypeId = requestTypeResult.id;
       setCreatedRequestTypeId(requestTypeId);
       
-      // Step 2: Create/update workflow if we have steps
-      if (workflowSteps.length > 0) {
-        // Create or update the workflow
-        const workflow = await createOrUpdateWorkflow(requestTypeId);
+      // Step 2: Create/update workflow if we have steps or are editing an existing one
+      let workflowResult = null;
+      
+      if (workflowSteps.length > 0 || (isEditing && requestType?.default_workflow_id)) {
+        setIsWorkflowSaving(true);
         
-        if (workflow) {
+        // Create or update the workflow
+        workflowResult = await createOrUpdateWorkflow(requestTypeId);
+        
+        if (workflowResult) {
+          // Update the workflowId in the state
+          setWorkflowId(workflowResult.id);
+          
           // Save workflow steps
-          await saveWorkflowSteps(workflow.id, workflowSteps);
+          await saveWorkflowSteps(workflowSteps, workflowResult.id);
           
           // Update the request type with the default workflow ID if needed
-          if (!requestType?.default_workflow_id || requestType.default_workflow_id !== workflow.id) {
-            await updateDefaultWorkflow(requestTypeId, workflow.id);
+          if (!requestType?.default_workflow_id || requestType.default_workflow_id !== workflowResult.id) {
+            await updateDefaultWorkflow(requestTypeId, workflowResult.id);
           }
         }
+        
+        setIsWorkflowSaving(false);
       }
 
       toast.success(isEditing ? "تم تحديث نوع الطلب بنجاح" : "تم إنشاء نوع الطلب بنجاح");
@@ -369,6 +398,7 @@ export const RequestTypeDialog = ({
       toast.error(isEditing ? "حدث خطأ أثناء تحديث نوع الطلب" : "حدث خطأ أثناء إنشاء نوع الطلب");
     } finally {
       setIsLoading(false);
+      setIsWorkflowSaving(false);
     }
   };
 
@@ -627,6 +657,7 @@ export const RequestTypeDialog = ({
                   {/* Workflow Steps Section */}
                   <WorkflowStepsConfig 
                     requestTypeId={createdRequestTypeId}
+                    workflowId={workflowId}
                     onWorkflowStepsUpdated={handleWorkflowStepsUpdated}
                   />
                 </div>
@@ -634,8 +665,8 @@ export const RequestTypeDialog = ({
             </div>
 
             <DialogFooter className="mt-4 flex-row-reverse sm:justify-start">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading 
+              <Button type="submit" disabled={isLoading || isWorkflowSaving || isStepsSaving}>
+                {isLoading || isWorkflowSaving || isStepsSaving
                   ? (isEditing ? "جارٍ التحديث..." : "جارٍ الإنشاء...") 
                   : (isEditing ? "تحديث نوع الطلب" : "إنشاء نوع الطلب")
                 }

@@ -63,7 +63,7 @@ export const StepForm: React.FC<StepFormProps> = ({
           <Input
             id="step_name"
             name="step_name"
-            value={currentStep.step_name}
+            value={currentStep.step_name || ''}
             onChange={handleInputChange}
             placeholder="أدخل اسم الخطوة"
           />
@@ -72,7 +72,7 @@ export const StepForm: React.FC<StepFormProps> = ({
         <div className="space-y-2">
           <Label htmlFor="step_type">نوع الخطوة</Label>
           <Select
-            value={currentStep.step_type}
+            value={currentStep.step_type || 'opinion'}
             onValueChange={(value) => handleSelectChange("step_type", value)}
           >
             <SelectTrigger>
@@ -119,7 +119,7 @@ export const StepForm: React.FC<StepFormProps> = ({
       <div className="flex items-center space-x-2 space-x-reverse">
         <Checkbox
           id="is_required"
-          checked={currentStep.is_required}
+          checked={currentStep.is_required !== false}
           onCheckedChange={(checked) =>
             handleCheckboxChange("is_required", checked as boolean)
           }
