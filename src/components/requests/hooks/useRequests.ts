@@ -102,34 +102,48 @@ export const useRequests = () => {
       if (!user) throw new Error("User not authenticated");
       
       try {
-        // Get request type info
+        console.log("Creating request with provided data:", requestData);
+        
+        // Fetch the request type to get form schema
         const { data: requestType, error: typeError } = await supabase
           .from("request_types")
-          .select("default_workflow_id")
+          .select("default_workflow_id, form_schema")
           .eq("id", requestData.request_type_id)
           .single();
         
         if (typeError) {
           console.error("Error fetching request type:", typeError);
-          throw typeError;
+          throw new Error(`Failed to fetch request type: ${typeError.message}`);
+        }
+        
+        if (!requestType) {
+          throw new Error("Request type not found");
+        }
+        
+        // Validate form data against the schema
+        const formSchema = requestType.form_schema;
+        const validationResult = validateFormData(requestData.form_data, formSchema);
+        
+        if (!validationResult.valid) {
+          console.error("Form data validation failed:", validationResult.errors);
+          throw new Error(`Form validation failed: ${validationResult.errors.join(", ")}`);
         }
         
         const workflowId = requestType.default_workflow_id;
-        
         let currentStepId = null;
         
         if (workflowId) {
           // Get first step of workflow
           const { data: firstStep, error: stepError } = await supabase
             .from("workflow_steps")
-            .select("id")
+            .select("id, approver_id")
             .eq("workflow_id", workflowId)
             .eq("step_order", 1)
             .single();
           
           if (stepError && !stepError.message.includes("No rows found")) {
             console.error("Error fetching first step:", stepError);
-            throw stepError;
+            throw new Error(`Failed to fetch workflow step: ${stepError.message}`);
           }
           
           if (firstStep) {
@@ -137,7 +151,7 @@ export const useRequests = () => {
           }
         }
         
-        console.log("Creating request with data:", {
+        console.log("Creating request with processed data:", {
           requester_id: user.id,
           workflow_id: workflowId,
           current_step_id: currentStepId,
@@ -157,10 +171,14 @@ export const useRequests = () => {
 
         if (error) {
           console.error("Error creating request:", error);
-          throw error;
+          throw new Error(`Failed to create request: ${error.message}`);
         }
         
-        console.log("Request created:", data[0]);
+        if (!data || data.length === 0) {
+          throw new Error("Failed to create request: No data returned");
+        }
+        
+        console.log("Request created successfully:", data[0]);
         
         // If there's a current step, create approval record
         if (currentStepId) {
@@ -172,21 +190,21 @@ export const useRequests = () => {
           
           if (fetchStepError) {
             console.error("Error fetching step info:", fetchStepError);
-            throw fetchStepError;
-          }
-          
-          const { error: approvalError } = await supabase
-            .from("request_approvals")
-            .insert({
-              request_id: data[0].id,
-              step_id: currentStepId,
-              approver_id: step.approver_id,
-              status: "pending"
-            });
-          
-          if (approvalError) {
-            console.error("Error creating approval:", approvalError);
-            throw approvalError;
+            // Continue despite error, as request is already created
+          } else if (step && step.approver_id) {
+            const { error: approvalError } = await supabase
+              .from("request_approvals")
+              .insert({
+                request_id: data[0].id,
+                step_id: currentStepId,
+                approver_id: step.approver_id,
+                status: "pending"
+              });
+            
+            if (approvalError) {
+              console.error("Error creating approval:", approvalError);
+              // Continue despite error, as request is already created
+            }
           }
         }
         
@@ -200,9 +218,9 @@ export const useRequests = () => {
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       toast.success("تم إنشاء الطلب بنجاح");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error creating request:", error);
-      toast.error("حدث خطأ أثناء إنشاء الطلب");
+      toast.error(error.message || "حدث خطأ أثناء إنشاء الطلب");
     }
   });
 
@@ -211,6 +229,8 @@ export const useRequests = () => {
       if (!user) throw new Error("User not authenticated");
       
       try {
+        console.log("Approving request:", { requestId, stepId, comments });
+        
         // Create approval record
         const { data: approvalData, error: approvalError } = await supabase
           .from("request_approvals")
@@ -226,7 +246,7 @@ export const useRequests = () => {
         
         if (approvalError) {
           console.error("Error creating approval:", approvalError);
-          throw approvalError;
+          throw new Error(`Failed to create approval record: ${approvalError.message}`);
         }
         
         // Get request info
@@ -241,7 +261,7 @@ export const useRequests = () => {
             
         if (requestError) {
           console.error("Error fetching request:", requestError);
-          throw requestError;
+          throw new Error(`Failed to fetch request: ${requestError.message}`);
         }
         
         // Try to find next step
@@ -253,7 +273,7 @@ export const useRequests = () => {
           
         if (currentStepError) {
           console.error("Error fetching current step order:", currentStepError);
-          throw currentStepError;
+          throw new Error(`Failed to fetch current step: ${currentStepError.message}`);
         }
           
         const { data: nextStep, error: nextStepError } = await supabase
@@ -290,7 +310,7 @@ export const useRequests = () => {
           
           if (nextApprovalError) {
             console.error("Error creating next approval:", nextApprovalError);
-            throw nextApprovalError;
+            // Continue despite error
           }
         }
         
@@ -302,7 +322,7 @@ export const useRequests = () => {
         
         if (updateError) {
           console.error("Error updating request:", updateError);
-          throw updateError;
+          throw new Error(`Failed to update request: ${updateError.message}`);
         }
         
         return approvalData?.[0];
@@ -316,9 +336,9 @@ export const useRequests = () => {
       queryClient.invalidateQueries({ queryKey: ["request"] });
       toast.success("تمت الموافقة على الطلب بنجاح");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error approving request:", error);
-      toast.error("حدث خطأ أثناء الموافقة على الطلب");
+      toast.error(error.message || "حدث خطأ أثناء الموافقة على الطلب");
     }
   });
 
@@ -331,6 +351,8 @@ export const useRequests = () => {
       }
       
       try {
+        console.log("Rejecting request:", { requestId, stepId, comments });
+        
         // Create rejection record
         const { data: rejectionData, error: rejectionError } = await supabase
           .from("request_approvals")
@@ -346,7 +368,7 @@ export const useRequests = () => {
         
         if (rejectionError) {
           console.error("Error creating rejection:", rejectionError);
-          throw rejectionError;
+          throw new Error(`Failed to create rejection record: ${rejectionError.message}`);
         }
         
         // Update request status
@@ -357,7 +379,7 @@ export const useRequests = () => {
         
         if (updateError) {
           console.error("Error updating request:", updateError);
-          throw updateError;
+          throw new Error(`Failed to update request: ${updateError.message}`);
         }
         
         return rejectionData?.[0];
@@ -376,10 +398,80 @@ export const useRequests = () => {
       if (error.message === "يجب إدخال سبب الرفض") {
         toast.error(error.message);
       } else {
-        toast.error("حدث خطأ أثناء رفض الطلب");
+        toast.error(error.message || "حدث خطأ أثناء رفض الطلب");
       }
     }
   });
+
+  // Function to validate form data against schema
+  const validateFormData = (formData: Record<string, any>, schema: any): { valid: boolean; errors: string[] } => {
+    const errors: string[] = [];
+    const fields = schema?.fields || [];
+    
+    if (!fields || fields.length === 0) {
+      console.warn("No fields defined in schema for validation");
+      return { valid: true, errors: [] };
+    }
+    
+    // Check that all required fields are present and have valid values
+    fields.forEach((field: any) => {
+      const fieldName = field.name;
+      const fieldValue = formData[fieldName];
+      
+      // Check if required field exists
+      if (field.required && (fieldValue === undefined || fieldValue === null || fieldValue === '')) {
+        errors.push(`حقل "${field.label}" مطلوب`);
+        return;
+      }
+      
+      // Skip validation for empty optional fields
+      if (fieldValue === undefined || fieldValue === null || fieldValue === '') {
+        return;
+      }
+      
+      // Type-specific validations
+      switch (field.type) {
+        case 'number':
+          if (isNaN(Number(fieldValue))) {
+            errors.push(`حقل "${field.label}" يجب أن يكون رقماً`);
+          }
+          break;
+          
+        case 'date':
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(fieldValue)) {
+            errors.push(`حقل "${field.label}" يجب أن يكون تاريخاً صحيحاً`);
+          }
+          break;
+          
+        case 'select':
+          if (field.options && !field.options.includes(fieldValue)) {
+            errors.push(`قيمة "${fieldValue}" غير صالحة لحقل "${field.label}"`);
+          }
+          break;
+          
+        case 'array':
+          if (!Array.isArray(fieldValue)) {
+            errors.push(`حقل "${field.label}" يجب أن يكون قائمة`);
+          } else if (field.required && fieldValue.length === 0) {
+            errors.push(`حقل "${field.label}" يجب أن يحتوي على عنصر واحد على الأقل`);
+          } else if (field.subfields) {
+            // Validate each item in the array
+            fieldValue.forEach((item, index) => {
+              field.subfields.forEach((subfield: any) => {
+                const subfieldValue = item[subfield.name];
+                if (subfield.required && (subfieldValue === undefined || subfieldValue === null || subfieldValue === '')) {
+                  errors.push(`حقل "${subfield.label}" في العنصر ${index + 1} من "${field.label}" مطلوب`);
+                }
+              });
+            });
+          }
+          break;
+      }
+    });
+    
+    console.log("Form validation results:", { valid: errors.length === 0, errors });
+    return { valid: errors.length === 0, errors };
+  };
 
   return {
     incomingRequests,
