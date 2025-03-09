@@ -4148,10 +4148,33 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_request_approver: {
+      is_request_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_request_approver:
+        | {
+            Args: {
+              step_id: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              step_id: string
+              user_id: string
+            }
+            Returns: boolean
+          }
+      is_request_creator: {
+        Args: {
+          request_id: string
+        }
+        Returns: boolean
+      }
+      is_step_approver: {
         Args: {
           step_id: string
-          user_id: string
         }
         Returns: boolean
       }

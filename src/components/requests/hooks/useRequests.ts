@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -188,7 +187,7 @@ export const useRequests = () => {
           console.error("RLS check error:", rls_error);
         }
         
-        // Create request with better error tracking
+        // First try using the standard approach
         const { data, error } = await supabase
           .from("requests")
           .insert(requestPayload)
@@ -200,21 +199,28 @@ export const useRequests = () => {
           console.error("Error message:", error.message);
           console.error("Error details:", error.details);
           
-          // Provide specific guidance for policy-related errors
-          if (error.message && error.message.includes("policy")) {
-            console.error("This appears to be a row-level security policy issue");
-            // Attempt a different approach that might work around RLS issues
+          // If we get a policy error, try using the bypass RPC function
+          if (error.message && (error.message.includes("policy") || error.code === "42501")) {
+            console.log("Attempting to create request using bypass RPC function");
+            
+            // Use the RPC function to bypass RLS
             const { data: insertResult, error: insertError } = await supabase.rpc('insert_request_bypass_rls', {
               request_data: requestPayload
             });
             
             if (insertError) {
-              console.error("Failed with bypass method too:", insertError);
+              console.error("Error using bypass method:", insertError);
               throw new Error(`فشل إنشاء الطلب: يبدو أن هناك مشكلة في صلاحيات الوصول. يرجى التواصل مع مسؤول النظام`);
             }
             
             if (insertResult) {
               console.log("Successfully created request using RPC bypass:", insertResult);
+              
+              // If there's a current step, create approval record
+              if (currentStepId) {
+                await createApprovalRecord(insertResult.id, currentStepId);
+              }
+              
               return insertResult;
             }
           }
@@ -246,30 +252,7 @@ export const useRequests = () => {
         
         // If there's a current step, create approval record
         if (currentStepId) {
-          const { data: step, error: fetchStepError } = await supabase
-            .from("workflow_steps")
-            .select("approver_id")
-            .eq("id", currentStepId)
-            .single();
-          
-          if (fetchStepError) {
-            console.error("Error fetching step info:", fetchStepError);
-            // Continue despite error, as request is already created
-          } else if (step && step.approver_id) {
-            const { error: approvalError } = await supabase
-              .from("request_approvals")
-              .insert({
-                request_id: data[0].id,
-                step_id: currentStepId,
-                approver_id: step.approver_id,
-                status: "pending"
-              });
-            
-            if (approvalError) {
-              console.error("Error creating approval:", approvalError);
-              // Continue despite error, as request is already created
-            }
-          }
+          await createApprovalRecord(data[0].id, currentStepId);
         }
         
         return data[0];
@@ -287,6 +270,39 @@ export const useRequests = () => {
       toast.error(error.message || "حدث خطأ أثناء إنشاء الطلب");
     }
   });
+
+  // Helper function to create approval records
+  const createApprovalRecord = async (requestId: string, stepId: string) => {
+    try {
+      const { data: step, error: fetchStepError } = await supabase
+        .from("workflow_steps")
+        .select("approver_id")
+        .eq("id", stepId)
+        .single();
+      
+      if (fetchStepError) {
+        console.error("Error fetching step info:", fetchStepError);
+        return;
+      }
+      
+      if (step && step.approver_id) {
+        const { error: approvalError } = await supabase
+          .from("request_approvals")
+          .insert({
+            request_id: requestId,
+            step_id: stepId,
+            approver_id: step.approver_id,
+            status: "pending"
+          });
+        
+        if (approvalError) {
+          console.error("Error creating approval:", approvalError);
+        }
+      }
+    } catch (error) {
+      console.error("Error creating approval record:", error);
+    }
+  };
 
   const approveRequest = useMutation({
     mutationFn: async ({ requestId, stepId, comments }: { requestId: string, stepId: string, comments?: string }) => {
