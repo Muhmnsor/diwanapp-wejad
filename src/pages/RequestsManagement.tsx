@@ -111,6 +111,10 @@ const RequestsManagement = () => {
               <TabsContent value="incoming">
                 <div className="mb-6 flex justify-between items-center">
                   <h2 className="text-xl font-semibold">الطلبات الواردة</h2>
+                  <Button onClick={() => setActiveTab("forms")}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    تقديم طلب جديد
+                  </Button>
                 </div>
                 <RequestsTable
                   requests={incomingRequests || []}
@@ -125,6 +129,10 @@ const RequestsManagement = () => {
               <TabsContent value="outgoing">
                 <div className="mb-6 flex justify-between items-center">
                   <h2 className="text-xl font-semibold">الطلبات الصادرة</h2>
+                  <Button onClick={() => setActiveTab("forms")}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    تقديم طلب جديد
+                  </Button>
                 </div>
                 <RequestsTable
                   requests={outgoingRequests || []}
