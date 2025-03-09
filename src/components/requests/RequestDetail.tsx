@@ -1,7 +1,4 @@
 
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { RefreshCcw } from "lucide-react";
 import { RequestDetailsCard } from "./detail/RequestDetailsCard";
 import { RequestWorkflowCard } from "./detail/RequestWorkflowCard";
 import { RequestActionButtons } from "./detail/RequestActionButtons";
@@ -24,52 +21,20 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
     isRejectDialogOpen,
     setIsRejectDialogOpen,
     handleApproveClick,
-    handleRejectClick,
-    canApprove,
-    refetch
+    handleRejectClick
   } = useRequestDetail(requestId);
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-solid border-current border-r-transparent align-middle" />
-          <p className="mt-2">جاري التحميل...</p>
-        </div>
-      </div>
-    );
+    return <div>جاري التحميل...</div>;
   }
 
   if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertTitle>حدث خطأ أثناء تحميل تفاصيل الطلب</AlertTitle>
-        <AlertDescription className="space-y-4">
-          <p>{error.message || "لم نتمكن من تحميل البيانات، يرجى المحاولة مرة أخرى."}</p>
-          <div className="flex gap-2 mt-4">
-            <Button variant="outline" size="sm" onClick={() => refetch()}>
-              <RefreshCcw className="mr-2 h-4 w-4" />
-              إعادة المحاولة
-            </Button>
-            <Button variant="default" size="sm" onClick={onClose}>
-              العودة
-            </Button>
-          </div>
-        </AlertDescription>
-      </Alert>
-    );
+    console.error("Error loading request details:", error);
+    return <div>حدث خطأ أثناء تحميل تفاصيل الطلب: {error.message}</div>;
   }
 
   if (!data || !data.request) {
-    return (
-      <Alert>
-        <AlertTitle>لم يتم العثور على الطلب</AlertTitle>
-        <AlertDescription>
-          <p>لم نتمكن من العثور على بيانات الطلب المطلوب.</p>
-          <Button className="mt-4" onClick={onClose}>العودة</Button>
-        </AlertDescription>
-      </Alert>
-    );
+    return <div>لم يتم العثور على الطلب</div>;
   }
 
   const request = data.request;
@@ -89,7 +54,6 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
             onApprove={handleApproveClick}
             onReject={handleRejectClick}
             onClose={onClose}
-            canApprove={canApprove}
           />
         </div>
 

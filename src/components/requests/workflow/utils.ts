@@ -24,7 +24,6 @@ export const getInitialStepState = (stepOrder: number): WorkflowStep => ({
   step_name: "",
   step_type: "opinion",
   approver_id: null,
-  approver_type: "user",
   instructions: "",
   is_required: true,
 });

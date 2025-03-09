@@ -1,4 +1,3 @@
-
 import { 
   Table, 
   TableBody, 
@@ -17,8 +16,7 @@ import {
   Eye, 
   MoreHorizontal, 
   Check, 
-  X,
-  RefreshCcw
+  X 
 } from "lucide-react";
 import { 
   DropdownMenu,
@@ -27,29 +25,23 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface RequestTableProps {
   requests: any[];
   isLoading: boolean;
-  error: any;
   type: 'incoming' | 'outgoing';
   onViewRequest: (request: any) => void;
   onApproveRequest?: (request: any) => void;
   onRejectRequest?: (request: any) => void;
-  onRefresh: () => void;
 }
 
 export const RequestsTable = ({ 
   requests, 
   isLoading, 
-  error,
   type,
   onViewRequest,
   onApproveRequest,
-  onRejectRequest,
-  onRefresh
+  onRejectRequest
 }: RequestTableProps) => {
   
   const renderStatusBadge = (status: string) => {
@@ -86,90 +78,20 @@ export const RequestsTable = ({
     }
   };
 
-  if (error) {
-    return (
-      <Alert variant="destructive" className="mb-4">
-        <AlertTitle>حدث خطأ</AlertTitle>
-        <AlertDescription>
-          <div className="mb-2">
-            {error.message || "فشل في استرداد بيانات الطلبات. الرجاء المحاولة مرة أخرى."}
-          </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={onRefresh}
-            className="mt-2"
-          >
-            <RefreshCcw className="h-4 w-4 mr-2" />
-            إعادة المحاولة
-          </Button>
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
   if (isLoading) {
-    return (
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[100px]">رقم الطلب</TableHead>
-              <TableHead>العنوان</TableHead>
-              <TableHead>نوع الطلب</TableHead>
-              <TableHead>الحالة</TableHead>
-              <TableHead>الأولوية</TableHead>
-              <TableHead>تاريخ الإنشاء</TableHead>
-              <TableHead className="text-left">الإجراءات</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {Array(3).fill(0).map((_, i) => (
-              <TableRow key={i}>
-                <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                <TableCell><Skeleton className="h-6 w-20" /></TableCell>
-                <TableCell><Skeleton className="h-6 w-20" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                <TableCell><Skeleton className="h-8 w-24" /></TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    );
+    return <div>جاري التحميل...</div>;
   }
 
   if (!requests || requests.length === 0) {
     return (
-      <div className="text-center py-8 border rounded-md">
-        <p className="text-muted-foreground mb-4">لا توجد طلبات</p>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={onRefresh}
-        >
-          <RefreshCcw className="h-4 w-4 mr-2" />
-          تحديث البيانات
-        </Button>
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">لا توجد طلبات</p>
       </div>
     );
   }
 
   return (
     <div className="rounded-md border">
-      <div className="p-2 flex justify-end">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={onRefresh}
-          className="ml-2"
-        >
-          <RefreshCcw className="h-4 w-4 ml-2" />
-          تحديث
-        </Button>
-      </div>
       <Table>
         <TableHeader>
           <TableRow>

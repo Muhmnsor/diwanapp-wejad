@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -35,7 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
-import { FormSchema, FormField as FormFieldType, RequestType, WorkflowStep } from "./types";
+import { FormSchema, FormField as FormFieldType, RequestType } from "./types";
 import { WorkflowStepsConfig } from "./WorkflowStepsConfig";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -83,7 +82,7 @@ export const RequestTypeDialog = ({
   });
   const [editingFieldIndex, setEditingFieldIndex] = useState<number | null>(null);
   const [currentOption, setCurrentOption] = useState("");
-  const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
+  const [workflowSteps, setWorkflowSteps] = useState([]);
   const [createdRequestTypeId, setCreatedRequestTypeId] = useState<string | null>(null);
   const isEditing = !!requestType;
 
@@ -211,7 +210,7 @@ export const RequestTypeDialog = ({
     });
   };
 
-  const handleWorkflowStepsUpdated = (steps: WorkflowStep[]) => {
+  const handleWorkflowStepsUpdated = (steps) => {
     console.log("Workflow steps updated:", steps);
     setWorkflowSteps(steps);
   };
@@ -314,9 +313,9 @@ export const RequestTypeDialog = ({
       step_name: step.step_name,
       step_type: step.step_type,
       approver_id: step.approver_id,
-      instructions: step.instructions || "",
+      instructions: step.instructions,
       is_required: step.is_required,
-      approver_type: step.approver_type || 'user'
+      approver_type: 'user'
     }));
 
     const { error } = await supabase

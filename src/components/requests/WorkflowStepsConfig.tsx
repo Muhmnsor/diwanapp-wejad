@@ -27,10 +27,7 @@ export const WorkflowStepsConfig = ({
     handleRemoveStep,
     handleEditStep,
     handleMoveStep,
-  } = useWorkflowSteps({ 
-    requestTypeId, 
-    onWorkflowStepsUpdated 
-  });
+  } = useWorkflowSteps({ requestTypeId, onWorkflowStepsUpdated });
 
   // Update parent component whenever workflow steps change
   useEffect(() => {

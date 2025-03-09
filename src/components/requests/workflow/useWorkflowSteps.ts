@@ -105,7 +105,7 @@ export const useWorkflowSteps = ({
     try {
       // For a new request type, we can't create the workflow yet since the request type doesn't exist
       // We'll return a temporary ID that will be replaced when the actual workflow is created
-      if (!requestTypeId || requestTypeId === 'temp-id') {
+      if (!requestTypeId) {
         return 'temp-workflow-id';
       }
 
@@ -151,7 +151,7 @@ export const useWorkflowSteps = ({
 
   // Save workflow steps to database 
   const saveWorkflowSteps = async (steps: WorkflowStep[]) => {
-    if (!requestTypeId || requestTypeId === 'temp-id') {
+    if (!requestTypeId) {
       // For new request types, just update the local state
       updateWorkflowSteps(steps);
       return;
@@ -162,7 +162,7 @@ export const useWorkflowSteps = ({
     try {
       // Ensure workflow exists
       const currentWorkflowId = await ensureWorkflowExists();
-      
+
       // Skip database operations if we have a temporary workflow ID
       if (currentWorkflowId === 'temp-workflow-id') {
         updateWorkflowSteps(steps);
@@ -185,8 +185,7 @@ export const useWorkflowSteps = ({
         const stepsToInsert = steps.map((step, index) => ({
           ...step,
           workflow_id: currentWorkflowId,
-          step_order: index + 1,
-          approver_type: step.approver_type || 'user' // Default to 'user' if not set
+          step_order: index + 1
         }));
 
         const { error: insertError } = await supabase
@@ -214,26 +213,15 @@ export const useWorkflowSteps = ({
       return;
     }
 
-    if (!currentStep.approver_id) {
-      toast.error('يرجى تحديد المسؤول عن الاعتماد');
-      return;
-    }
-
     let updatedSteps: WorkflowStep[];
 
     if (editingStepIndex !== null) {
       // Update existing step
       updatedSteps = [...workflowSteps];
-      updatedSteps[editingStepIndex] = { 
-        ...currentStep,
-        approver_type: currentStep.approver_type || 'user' 
-      };
+      updatedSteps[editingStepIndex] = { ...currentStep };
     } else {
       // Add new step
-      updatedSteps = [...workflowSteps, { 
-        ...currentStep,
-        approver_type: currentStep.approver_type || 'user' 
-      }];
+      updatedSteps = [...workflowSteps, { ...currentStep }];
     }
 
     saveWorkflowSteps(updatedSteps);
