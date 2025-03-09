@@ -1,7 +1,7 @@
 
 import { Navigation } from "@/components/Navigation";
 import { UserNav } from "@/components/navigation/UserNav";
-import { useLocation } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { Logo } from "./header/Logo";
 import { HomeButton } from "./header/HomeButton";
@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const TopHeader = () => {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const {
     isAuthenticated,
     user
@@ -59,9 +60,14 @@ export const TopHeader = () => {
         setActiveTab('overview');
       }
     } else if (isRequestsPage) {
-      setActiveTab('incoming');
+      const tabParam = searchParams.get('tab');
+      if (tabParam) {
+        setActiveTab(tabParam);
+      } else {
+        setActiveTab('incoming');
+      }
     }
-  }, [location.pathname, location.hash, isTasksPage, isRequestsPage]);
+  }, [location.pathname, location.hash, isTasksPage, isRequestsPage, searchParams]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);

@@ -2575,6 +2575,243 @@ export type Database = {
           },
         ]
       }
+      request_approvals: {
+        Row: {
+          approved_at: string | null
+          approver_id: string | null
+          comments: string | null
+          created_at: string | null
+          id: string
+          request_id: string | null
+          status: string
+          step_id: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approver_id?: string | null
+          comments?: string | null
+          created_at?: string | null
+          id?: string
+          request_id?: string | null
+          status?: string
+          step_id?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approver_id?: string | null
+          comments?: string | null
+          created_at?: string | null
+          id?: string
+          request_id?: string | null
+          status?: string
+          step_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_approvals_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "request_approvals_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      request_attachments: {
+        Row: {
+          approval_id: string | null
+          created_at: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          request_id: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          approval_id?: string | null
+          created_at?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          request_id?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          approval_id?: string | null
+          created_at?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          request_id?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_attachments_approval_id_fkey"
+            columns: ["approval_id"]
+            isOneToOne: false
+            referencedRelation: "request_approvals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "request_attachments_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      request_types: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          default_workflow_id: string | null
+          description: string | null
+          form_schema: Json
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          default_workflow_id?: string | null
+          description?: string | null
+          form_schema?: Json
+          id?: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          default_workflow_id?: string | null
+          description?: string | null
+          form_schema?: Json
+          id?: string
+          is_active?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
+      request_workflows: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          request_type_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          request_type_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          request_type_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_workflows_request_type_id_fkey"
+            columns: ["request_type_id"]
+            isOneToOne: false
+            referencedRelation: "request_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      requests: {
+        Row: {
+          created_at: string | null
+          current_step_id: string | null
+          due_date: string | null
+          form_data: Json
+          id: string
+          priority: string | null
+          request_type_id: string | null
+          requester_id: string | null
+          status: string
+          title: string
+          updated_at: string | null
+          workflow_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_step_id?: string | null
+          due_date?: string | null
+          form_data?: Json
+          id?: string
+          priority?: string | null
+          request_type_id?: string | null
+          requester_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string | null
+          workflow_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_step_id?: string | null
+          due_date?: string | null
+          form_data?: Json
+          id?: string
+          priority?: string | null
+          request_type_id?: string | null
+          requester_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string | null
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requests_current_step_id_fkey"
+            columns: ["current_step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requests_request_type_id_fkey"
+            columns: ["request_type_id"]
+            isOneToOne: false
+            referencedRelation: "request_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requests_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "request_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resource_distributions: {
         Row: {
           amount: number
@@ -3641,6 +3878,50 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      workflow_steps: {
+        Row: {
+          approver_id: string | null
+          approver_type: string
+          created_at: string | null
+          id: string
+          instructions: string | null
+          is_required: boolean | null
+          step_name: string
+          step_order: number
+          workflow_id: string | null
+        }
+        Insert: {
+          approver_id?: string | null
+          approver_type: string
+          created_at?: string | null
+          id?: string
+          instructions?: string | null
+          is_required?: boolean | null
+          step_name: string
+          step_order: number
+          workflow_id?: string | null
+        }
+        Update: {
+          approver_id?: string | null
+          approver_type?: string
+          created_at?: string | null
+          id?: string
+          instructions?: string | null
+          is_required?: boolean | null
+          step_name?: string
+          step_order?: number
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_steps_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "request_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       workspace_members: {
         Row: {
