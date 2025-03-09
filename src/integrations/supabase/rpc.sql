@@ -16,6 +16,27 @@ BEGIN
 END;
 $$;
 
+-- Function to check if the current user is an approver for a specific step
+CREATE OR REPLACE FUNCTION public.is_step_approver(p_step_id uuid)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 
+    FROM workflow_steps ws
+    WHERE ws.id = p_step_id
+    AND (
+      ws.approver_id = auth.uid() OR
+      (ws.approver_type = 'role' AND EXISTS (
+        SELECT 1 FROM user_roles ur WHERE ur.user_id = auth.uid() AND ur.role_id = ws.approver_id
+      ))
+    )
+  );
+END;
+$$;
+
 -- Function to insert a request bypassing RLS
 CREATE OR REPLACE FUNCTION public.insert_request_bypass_rls(request_data jsonb)
 RETURNS jsonb

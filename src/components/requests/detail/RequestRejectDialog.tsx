@@ -29,7 +29,11 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
 
   const rejectRequest = useMutation({
     mutationFn: async () => {
-      const { data: rejectionData, error: rejectionError } = await supabase
+      if (!comments.trim()) {
+        throw new Error("يجب إدخال سبب الرفض");
+      }
+
+      const { data: approvalData, error: approvalError } = await supabase
         .from("request_approvals")
         .insert({
           request_id: requestId,
@@ -41,7 +45,7 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
         })
         .select();
       
-      if (rejectionError) throw rejectionError;
+      if (approvalError) throw approvalError;
 
       const { error: requestError } = await supabase
         .from("requests")
@@ -52,7 +56,7 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
       
       if (requestError) throw requestError;
 
-      return rejectionData;
+      return approvalData;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["request-details", requestId] });
@@ -63,7 +67,11 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
     },
     onError: (error) => {
       console.error("Error rejecting request:", error);
-      toast.error("حدث خطأ أثناء رفض الطلب");
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("حدث خطأ أثناء رفض الطلب");
+      }
     }
   });
 
@@ -73,30 +81,31 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
         <DialogHeader>
           <DialogTitle>رفض الطلب</DialogTitle>
           <DialogDescription>
-            هل أنت متأكد من رغبتك في رفض هذا الطلب؟
+            يرجى توضيح سبب رفض هذا الطلب
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
-          <label htmlFor="reject-comments" className="block text-sm font-medium mb-2">
-            سبب الرفض (مطلوب)
+          <label htmlFor="comments" className="block text-sm font-medium mb-2 text-destructive">
+            سبب الرفض (مطلوب) *
           </label>
           <Textarea
-            id="reject-comments"
-            placeholder="أدخل سبب الرفض..."
+            id="comments"
+            placeholder="اكتب سبب الرفض هنا..."
             value={comments}
             onChange={(e) => setComments(e.target.value)}
             rows={4}
-            className="border-red-200 focus:border-red-300"
+            className={!comments.trim() ? "border-destructive" : ""}
+            required
           />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             إلغاء
           </Button>
-          <Button
-            variant="destructive"
-            onClick={() => rejectRequest.mutate()}
+          <Button 
+            onClick={() => rejectRequest.mutate()} 
             disabled={rejectRequest.isPending || !comments.trim()}
+            variant="destructive"
           >
             {rejectRequest.isPending ? "جاري المعالجة..." : "رفض الطلب"}
           </Button>
