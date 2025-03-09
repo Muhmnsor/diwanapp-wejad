@@ -1,4 +1,3 @@
-
 export interface RequestType {
   id: string;
   name: string;
@@ -39,6 +38,22 @@ export interface Request {
   updated_at: string;
 }
 
+export interface User {
+  id: string;
+  display_name: string | null;
+  email: string | null;
+}
+
+export interface WorkflowStep {
+  id?: string;
+  step_order: number;
+  step_name: string;
+  step_type: 'opinion' | 'decision';
+  approver_id: string | null;
+  instructions: string | null;
+  is_required: boolean;
+}
+
 export interface RequestApproval {
   id: string;
   request_id: string;
@@ -57,18 +72,6 @@ export interface RequestWorkflow {
   description: string | null;
   is_active: boolean;
   created_by: string | null;
-  created_at: string;
-}
-
-export interface WorkflowStep {
-  id: string;
-  workflow_id: string;
-  step_order: number;
-  approver_type: 'role' | 'user' | 'department';
-  approver_id: string | null;
-  step_name: string;
-  instructions: string | null;
-  is_required: boolean;
   created_at: string;
 }
 
