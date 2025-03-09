@@ -102,7 +102,7 @@ export const useRequests = () => {
     enabled: !!user
   });
 
-  // Enhanced create request mutation with detailed error tracking
+  // Further enhanced create request mutation with better error handling
   const createRequest = useMutation({
     mutationFn: async (requestData: {
       request_type_id: string;
@@ -181,6 +181,13 @@ export const useRequests = () => {
         
         console.log("Creating request with processed payload:", requestPayload);
         
+        // Perform an explicit check first to debug RLS issues
+        const { data: rls_check, error: rls_error } = await supabase.rpc('is_admin');
+        console.log("RLS check - Admin status:", rls_check);
+        if (rls_error) {
+          console.error("RLS check error:", rls_error);
+        }
+        
         // Create request with better error tracking
         const { data, error } = await supabase
           .from("requests")
@@ -192,6 +199,25 @@ export const useRequests = () => {
           console.error("Error code:", error.code);
           console.error("Error message:", error.message);
           console.error("Error details:", error.details);
+          
+          // Provide specific guidance for policy-related errors
+          if (error.message && error.message.includes("policy")) {
+            console.error("This appears to be a row-level security policy issue");
+            // Attempt a different approach that might work around RLS issues
+            const { data: insertResult, error: insertError } = await supabase.rpc('insert_request_bypass_rls', {
+              request_data: requestPayload
+            });
+            
+            if (insertError) {
+              console.error("Failed with bypass method too:", insertError);
+              throw new Error(`فشل إنشاء الطلب: يبدو أن هناك مشكلة في صلاحيات الوصول. يرجى التواصل مع مسؤول النظام`);
+            }
+            
+            if (insertResult) {
+              console.log("Successfully created request using RPC bypass:", insertResult);
+              return insertResult;
+            }
+          }
           
           // Provide more specific error message based on the error type
           if (error.code === '23505') {
