@@ -199,7 +199,7 @@ const AdminDashboard = () => {
       title: "إدارة الطلبات",
       icon: Inbox,
       path: "/requests",
-      description: "إدارة ومتابعة الطلبات والاستمارات",
+      description: "إدارة ومتابعة الطلبات والاستمارات والاعتمادات",
       notifications: 0
     }
   ];
