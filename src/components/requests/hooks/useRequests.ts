@@ -51,16 +51,16 @@ export const useRequests = () => {
           request_id,
           step_id,
           status,
-          request:requests(
+          request:requests!inner(
             id,
             title,
             status,
             priority,
             created_at,
             current_step_id,
-            request_type:request_types(id, name)
+            request_type:request_types!inner(id, name)
           ),
-          step:workflow_steps(id, step_name, step_type, approver_id)
+          step:workflow_steps!inner(id, step_name, step_type, approver_id)
         `)
         .eq("approver_id", user.id)
         .eq("status", "pending")
@@ -80,8 +80,8 @@ export const useRequests = () => {
           ...item.request,
           approval_id: item.id,
           step_id: item.step_id,
-          step_name: item.step?.step_name,
-          step_type: item.step?.step_type
+          step_name: item.step.step_name,
+          step_type: item.step.step_type
         }));
       
       console.log(`Fetched ${requests.length} incoming requests`);
