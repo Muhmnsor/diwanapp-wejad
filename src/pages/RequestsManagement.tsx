@@ -27,7 +27,8 @@ const RequestsManagement = () => {
     outgoingRequests, 
     incomingLoading, 
     outgoingLoading,
-    createRequest 
+    createRequest,
+    refetchOutgoing 
   } = useRequests();
 
   // Update the URL parameter when tab changes from external source
@@ -38,6 +39,14 @@ const RequestsManagement = () => {
       setSearchParams(searchParams);
     }
   }, [activeTab, searchParams, setSearchParams]);
+  
+  // Refetch outgoing requests when switching to that tab
+  useEffect(() => {
+    if (activeTab === "outgoing") {
+      console.log("Fetching outgoing requests on tab change");
+      refetchOutgoing();
+    }
+  }, [activeTab, refetchOutgoing]);
 
   const handleNewRequest = () => {
     setShowNewRequestDialog(false);
@@ -53,6 +62,9 @@ const RequestsManagement = () => {
     createRequest.mutate(formData, {
       onSuccess: () => {
         handleNewRequest();
+        // Switch to outgoing tab to show the new request
+        searchParams.set("tab", "outgoing");
+        setSearchParams(searchParams);
       }
     });
   };
@@ -99,6 +111,15 @@ const RequestsManagement = () => {
           <div>
             <div className="mb-6">
               <h2 className="text-xl font-semibold">الطلبات الصادرة</h2>
+              {outgoingRequests && outgoingRequests.length > 0 ? (
+                <p className="text-sm text-muted-foreground mt-2">
+                  لديك {outgoingRequests.length} طلب مرسل
+                </p>
+              ) : !outgoingLoading ? (
+                <p className="text-sm text-muted-foreground mt-2">
+                  لا توجد طلبات صادرة
+                </p>
+              ) : null}
             </div>
             <RequestsTable
               requests={outgoingRequests || []}

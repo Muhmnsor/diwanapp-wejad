@@ -66,7 +66,8 @@ export const useRequests = () => {
     try {
       console.log("Fetching outgoing requests for user:", user.id);
       
-      const { data, error } = await supabase
+      // First try direct query
+      let { data, error } = await supabase
         .from("requests")
         .select(`
           *,
@@ -76,13 +77,33 @@ export const useRequests = () => {
         .order("created_at", { ascending: false });
       
       if (error) {
-        console.error("Error fetching outgoing requests:", error);
+        console.error("Error fetching outgoing requests (direct method):", error);
         console.error("Error code:", error.code);
         console.error("Error message:", error.message);
+        
+        // Fallback to RPC if needed
+        if (error.code === '42P17' || error.message.includes("policy") || error.code === "42501") {
+          console.log("Attempting to fetch requests using RPC method");
+          
+          const { data: rpcData, error: rpcError } = await supabase.rpc('get_user_outgoing_requests', {
+            user_id: user.id
+          });
+          
+          if (rpcError) {
+            console.error("Error in RPC fallback method:", rpcError);
+            return [];
+          }
+          
+          if (rpcData) {
+            console.log(`Fetched ${rpcData.length || 0} outgoing requests via RPC`);
+            return rpcData;
+          }
+        }
+        
         return [];
       }
       
-      console.log(`Fetched ${data?.length || 0} outgoing requests`);
+      console.log(`Fetched ${data?.length || 0} outgoing requests directly`);
       return data || [];
     } catch (error) {
       console.error("Error in fetchOutgoingRequests:", error);
@@ -96,13 +117,12 @@ export const useRequests = () => {
     enabled: !!user
   });
 
-  const { data: outgoingRequests, isLoading: outgoingLoading } = useQuery({
+  const { data: outgoingRequests, isLoading: outgoingLoading, refetch: refetchOutgoing } = useQuery({
     queryKey: ["requests", "outgoing"],
     queryFn: fetchOutgoingRequests,
     enabled: !!user
   });
 
-  // Improved create request mutation with better error handling
   const createRequest = useMutation({
     mutationFn: async (requestData: {
       request_type_id: string;
@@ -270,8 +290,13 @@ export const useRequests = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      // Invalidate both incoming and outgoing queries to ensure proper updates
+      queryClient.invalidateQueries({ queryKey: ["requests", "incoming"] });
+      queryClient.invalidateQueries({ queryKey: ["requests", "outgoing"] });
       toast.success("تم إنشاء الطلب بنجاح");
+      
+      // Explicitly refetch the outgoing requests to force an update
+      refetchOutgoing();
     },
     onError: (error: any) => {
       console.error("Error creating request:", error);
@@ -576,6 +601,7 @@ export const useRequests = () => {
     outgoingLoading,
     createRequest,
     approveRequest,
-    rejectRequest
+    rejectRequest,
+    refetchOutgoing
   };
 };
