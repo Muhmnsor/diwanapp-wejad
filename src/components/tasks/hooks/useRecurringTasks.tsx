@@ -40,24 +40,7 @@ export const useRecurringTasks = () => {
       const { data, error } = await supabase
         .from('recurring_tasks')
         .select(`
-          id,
-          title,
-          description,
-          recurrence_type,
-          interval,
-          day_of_month,
-          day_of_week,
-          priority,
-          category,
-          project_id,
-          workspace_id,
-          created_by,
-          created_at,
-          is_active,
-          assign_to,
-          last_generated_date,
-          next_generation_date,
-          requires_deliverable,
+          *,
           projects:project_id (
             title
           ),
@@ -174,62 +157,7 @@ export const useRecurringTasks = () => {
       toast.success(`تم إنشاء ${data.tasksCreated} مهمة بنجاح`);
       
       // Refresh the recurring tasks list after generation
-      const { data: refreshedData, error: refreshError } = await supabase
-        .from('recurring_tasks')
-        .select(`
-          id,
-          title,
-          description,
-          recurrence_type,
-          interval,
-          day_of_month,
-          day_of_week,
-          priority,
-          category,
-          project_id,
-          workspace_id,
-          created_by,
-          created_at,
-          is_active,
-          assign_to,
-          last_generated_date,
-          next_generation_date,
-          requires_deliverable,
-          projects:project_id (
-            title
-          ),
-          workspaces:workspace_id (
-            name
-          ),
-          profiles:assign_to (
-            display_name
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (refreshError) {
-        console.error("Error refreshing tasks:", refreshError);
-        throw refreshError;
-      }
-
-      // Process refreshed data using the same format function
-      const formattedTasks: RecurringTask[] = refreshedData.map(task => {
-        // Extract related names using helper functions
-        const projectName = getProjectName(task as RecurringTask);
-        const workspaceName = getWorkspaceName(task as RecurringTask);
-        const assigneeName = getAssigneeName(task as RecurringTask);
-
-        const formattedTask: RecurringTask = {
-          ...task,
-          project_name: projectName,
-          workspace_name: workspaceName,
-          assignee_name: assigneeName,
-        };
-        
-        return formattedTask;
-      });
-
-      setRecurringTasks(formattedTasks);
+      fetchRecurringTasks();
     } catch (error) {
       console.error('Error generating tasks:', error);
       const errorMessage = error instanceof Error ? error.message : 'حدث خطأ أثناء إنشاء المهام';

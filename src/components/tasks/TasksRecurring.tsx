@@ -26,6 +26,9 @@ export const TasksRecurring = () => {
     return true;
   });
 
+  console.log("TasksRecurring - All tasks:", recurringTasks.length);
+  console.log("TasksRecurring - Filtered tasks:", filteredTasks.length);
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center p-8">
