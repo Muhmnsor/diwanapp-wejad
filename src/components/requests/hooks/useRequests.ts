@@ -11,6 +11,7 @@ export const useRequests = () => {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const { processFormFiles, isUploading } = useFileUpload();
+  const [submissionSuccess, setSubmissionSuccess] = useState(false);
   
   const fetchIncomingRequests = async () => {
     if (!user) throw new Error("User not authenticated");
@@ -102,6 +103,7 @@ export const useRequests = () => {
       status?: string;
     }) => {
       if (!user) throw new Error("User not authenticated");
+      setSubmissionSuccess(false);
       
       try {
         console.log("Creating request with provided data:", requestData);
@@ -156,13 +158,15 @@ export const useRequests = () => {
           }
         }
         
-        // Prepare request data
+        // Prepare request data - CRITICAL: Set requester_id to current user's ID
         const insertData = {
           requester_id: user.id,
           workflow_id: workflowId,
           current_step_id: currentStepId,
-          ...requestData,
-          form_data: processedFormData
+          title: requestData.title,
+          priority: requestData.priority || 'medium',
+          form_data: processedFormData,
+          status: 'pending'
         };
         
         console.log("Creating request with processed data:", insertData);
@@ -216,6 +220,7 @@ export const useRequests = () => {
           }
         }
         
+        setSubmissionSuccess(true);
         return data[0];
       } catch (error) {
         console.error("Error in createRequest:", error);
@@ -224,7 +229,7 @@ export const useRequests = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["requests"] });
-      toast.success("تم إنشاء الطلب بنجاح");
+      toast.success("تم إنشاء الطلب بنجاح وحفظه في قاعدة البيانات");
     },
     onError: (error: any) => {
       console.error("Error creating request:", error);
@@ -418,6 +423,7 @@ export const useRequests = () => {
     outgoingLoading,
     createRequest,
     isUploading,
+    submissionSuccess,
     approveRequest,
     rejectRequest
   };

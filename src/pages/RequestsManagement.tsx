@@ -30,7 +30,10 @@ const RequestsManagement = () => {
     incomingLoading, 
     outgoingLoading,
     createRequest,
-    isUploading 
+    isUploading,
+    submissionSuccess,
+    approveRequest,
+    rejectRequest
   } = useRequests();
 
   // Update the URL parameter when tab changes from external source
@@ -58,7 +61,10 @@ const RequestsManagement = () => {
     setError(null);
     createRequest.mutate(formData, {
       onSuccess: () => {
-        handleNewRequest();
+        // Don't close dialog immediately to allow user to see success message
+        setTimeout(() => {
+          handleNewRequest();
+        }, 2000);
       },
       onError: (err: any) => {
         console.error("Error creating request:", err);
@@ -205,6 +211,7 @@ const RequestsManagement = () => {
           onSubmit={handleCreateRequest}
           isSubmitting={createRequest.isPending}
           isUploading={isUploading}
+          submissionSuccess={submissionSuccess}
         />
       )}
 

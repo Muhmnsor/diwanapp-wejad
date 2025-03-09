@@ -39,6 +39,7 @@ interface NewRequestDialogProps {
   onSubmit: (data: any) => void;
   isSubmitting?: boolean;
   isUploading?: boolean;
+  submissionSuccess?: boolean;
 }
 
 const formSchema = z.object({
@@ -55,6 +56,7 @@ export const NewRequestDialog = ({
   onSubmit,
   isSubmitting = false,
   isUploading = false,
+  submissionSuccess = false
 }: NewRequestDialogProps) => {
   const [step, setStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
@@ -200,6 +202,7 @@ export const NewRequestDialog = ({
             onSubmit={handleStep2Submit}
             onBack={handleBack}
             isSubmitting={isSubmitting || isUploading}
+            showSuccess={submissionSuccess}
           />
         )}
 

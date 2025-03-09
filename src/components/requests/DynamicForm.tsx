@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,28 +13,48 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { validateFormData } from "./utils/formValidator";
 
 interface DynamicFormProps {
   schema: any;
   onSubmit: (data: any) => void;
   isSubmitting?: boolean;
   onBack?: () => void;
+  showSuccess?: boolean;
 }
 
 export const DynamicForm = ({ 
   schema, 
   onSubmit, 
   isSubmitting = false,
-  onBack 
+  onBack,
+  showSuccess = false
 }: DynamicFormProps) => {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<string[]>([]);
   const [success, setSuccess] = useState<string | null>(null);
   const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  // Clear success message when form changes
+  useEffect(() => {
+    if (Object.keys(touched).length > 0) {
+      setSuccess(null);
+    }
+  }, [formData, touched]);
+
+  // Set success message when showSuccess prop changes
+  useEffect(() => {
+    if (showSuccess) {
+      setSuccess("تم إرسال البيانات بنجاح وحفظها في قاعدة البيانات");
+    }
+  }, [showSuccess]);
 
   const handleChange = (name: string, value: any) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear any errors when user changes a field
+    setTouched((prev) => ({ ...prev, [name]: true }));
+    
+    // Clear any errors for this field
     setErrors(errors.filter(error => !error.includes(name)));
   };
 
@@ -62,24 +82,10 @@ export const DynamicForm = ({
   };
 
   const validateForm = (): boolean => {
-    const newErrors: string[] = [];
-    
-    if (!schema || !schema.fields || !Array.isArray(schema.fields)) {
-      newErrors.push("خطأ في تعريف النموذج");
-      setErrors(newErrors);
-      return false;
-    }
-    
-    schema.fields.forEach((field: any) => {
-      const value = formData[field.name];
-      
-      if (field.required && (value === undefined || value === null || value === '')) {
-        newErrors.push(`حقل "${field.label}" مطلوب`);
-      }
-    });
-    
-    setErrors(newErrors);
-    return newErrors.length === 0;
+    // Use the imported validation function
+    const validationResult = validateFormData(formData, schema);
+    setErrors(validationResult.errors);
+    return validationResult.valid;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -91,8 +97,8 @@ export const DynamicForm = ({
     }
     
     try {
+      // Only call onSubmit if validation passed
       onSubmit(formData);
-      setSuccess("تم إرسال البيانات بنجاح");
     } catch (error) {
       console.error("Error submitting form:", error);
       if (error instanceof Error) {
