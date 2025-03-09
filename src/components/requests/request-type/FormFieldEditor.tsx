@@ -13,10 +13,22 @@ interface FormFieldEditorProps {
 }
 
 export const FormFieldEditor = ({ form }: FormFieldEditorProps) => {
-  return (
-    <div className="space-y-4">
-      <FieldEditor form={form} />
-      <Separator />
-    </div>
-  );
+  try {
+    return (
+      <div className="space-y-4">
+        <FieldEditor form={form} />
+        <Separator />
+      </div>
+    );
+  } catch (error) {
+    console.error("Error rendering FormFieldEditor:", error);
+    return (
+      <div className="space-y-4">
+        <div className="p-4 border border-red-300 bg-red-50 rounded-md">
+          <p className="text-red-500">حدث خطأ في تحميل محرر الحقول. يرجى المحاولة مرة أخرى.</p>
+        </div>
+        <Separator />
+      </div>
+    );
+  }
 };
