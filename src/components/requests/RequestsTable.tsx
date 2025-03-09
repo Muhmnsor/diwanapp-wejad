@@ -1,186 +1,161 @@
 
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { 
-  Badge 
-} from "@/components/ui/badge";
-import { 
-  Button 
-} from "@/components/ui/button";
-import { 
-  Eye, 
-  MoreHorizontal, 
-  Check, 
-  X,
-  FileText
-} from "lucide-react";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
+import React from "react";
 import { format } from "date-fns";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { ArrowDown, Eye, CheckCircle, XCircle, Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { RequestStatusBadge } from "./detail/RequestStatusBadge";
+import { RequestPriorityBadge } from "./detail/RequestPriorityBadge";
+import { getStepTypeLabel, getStepTypeBadgeClass } from "./workflow/utils";
 
-interface RequestTableProps {
+interface RequestsTableProps {
   requests: any[];
   isLoading: boolean;
-  type: 'incoming' | 'outgoing';
+  type: "incoming" | "outgoing";
   onViewRequest: (request: any) => void;
   onApproveRequest?: (request: any) => void;
   onRejectRequest?: (request: any) => void;
 }
 
-export const RequestsTable = ({ 
-  requests, 
-  isLoading, 
+export const RequestsTable = ({
+  requests,
+  isLoading,
   type,
   onViewRequest,
   onApproveRequest,
-  onRejectRequest
-}: RequestTableProps) => {
-  
-  const renderStatusBadge = (status: string) => {
-    switch (status) {
-      case 'draft':
-        return <Badge variant="outline">مسودة</Badge>;
-      case 'pending':
-        return <Badge variant="secondary">قيد الانتظار</Badge>;
-      case 'in_progress':
-        return <Badge variant="default">قيد المعالجة</Badge>;
-      case 'approved':
-        return <Badge variant="success">تمت الموافقة</Badge>;
-      case 'rejected':
-        return <Badge variant="destructive">مرفوض</Badge>;
-      case 'cancelled':
-        return <Badge variant="outline" className="bg-gray-200">ملغي</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
-  const renderPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case 'low':
-        return <Badge variant="outline">منخفضة</Badge>;
-      case 'medium':
-        return <Badge variant="secondary">متوسطة</Badge>;
-      case 'high':
-        return <Badge variant="default">عالية</Badge>;
-      case 'urgent':
-        return <Badge variant="destructive">عاجلة</Badge>;
-      default:
-        return <Badge variant="outline">{priority}</Badge>;
-    }
-  };
-
-  const renderStepTypeBadge = (stepType: string) => {
-    if (!stepType) return null;
-    return stepType === 'opinion' ? 
-      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">رأي</Badge> : 
-      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">قرار</Badge>;
-  };
-
+  onRejectRequest,
+}: RequestsTableProps) => {
   if (isLoading) {
-    return <div className="py-8 text-center">جاري التحميل...</div>;
+    return (
+      <div className="flex justify-center items-center h-48">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   if (!requests || requests.length === 0) {
     return (
-      <div className="text-center py-8">
-        <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-2 opacity-50" />
-        <p className="text-muted-foreground">لا توجد طلبات</p>
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-8 text-center">
+        <Info className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+        <h3 className="text-lg font-medium">لا توجد طلبات</h3>
+        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          {type === "incoming"
+            ? "لا توجد طلبات واردة تحتاج إلى موافقة"
+            : "لم تقم بإرسال أي طلبات بعد"}
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[100px]">رقم الطلب</TableHead>
-            <TableHead>العنوان</TableHead>
-            <TableHead>نوع الطلب</TableHead>
-            {type === 'incoming' && <TableHead>نوع الخطوة</TableHead>}
-            <TableHead>الحالة</TableHead>
-            <TableHead>الأولوية</TableHead>
-            <TableHead>تاريخ الإنشاء</TableHead>
-            <TableHead className="text-left">الإجراءات</TableHead>
+            <TableHead className="text-right">عنوان الطلب</TableHead>
+            <TableHead className="text-right">نوع الطلب</TableHead>
+            {type === "incoming" && (
+              <TableHead className="text-right">نوع الإجراء</TableHead>
+            )}
+            <TableHead className="text-right">الحالة</TableHead>
+            <TableHead className="text-right">الأولوية</TableHead>
+            <TableHead className="text-right">تاريخ الإنشاء</TableHead>
+            <TableHead className="text-right">الإجراءات</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {requests.map((request) => (
             <TableRow key={request.id}>
-              <TableCell className="font-medium">
-                {request.id.substring(0, 8)}
+              <TableCell className="font-medium">{request.title}</TableCell>
+              <TableCell>
+                {request.request_type?.name || "غير محدد"}
               </TableCell>
-              <TableCell>{request.title}</TableCell>
-              <TableCell>{request.request_type?.name || "غير معروف"}</TableCell>
-              {type === 'incoming' && (
+              {type === "incoming" && (
                 <TableCell>
-                  <div className="flex flex-col gap-1">
-                    {renderStepTypeBadge(request.step_type)}
-                    <span className="text-xs text-muted-foreground mt-1">{request.step_name}</span>
-                  </div>
+                  {request.step_type && (
+                    <span className={`px-2 py-1 text-xs rounded-full border ${getStepTypeBadgeClass(request.step_type)}`}>
+                      {getStepTypeLabel(request.step_type)}
+                    </span>
+                  )}
                 </TableCell>
               )}
-              <TableCell>{renderStatusBadge(request.status)}</TableCell>
-              <TableCell>{renderPriorityBadge(request.priority)}</TableCell>
+              <TableCell>
+                <RequestStatusBadge status={request.status} />
+              </TableCell>
+              <TableCell>
+                <RequestPriorityBadge priority={request.priority} />
+              </TableCell>
               <TableCell>
                 {format(new Date(request.created_at), "yyyy-MM-dd")}
               </TableCell>
               <TableCell>
-                {type === 'incoming' ? (
-                  <div className="flex items-center gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => onViewRequest(request)}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      عرض
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700"
-                      onClick={() => onApproveRequest && onApproveRequest(request)}
-                    >
-                      <Check className="h-4 w-4 mr-2" />
-                      موافقة
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
-                      onClick={() => onRejectRequest && onRejectRequest(request)}
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      رفض
-                    </Button>
-                  </div>
-                ) : (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => onViewRequest(request)}>
-                        <Eye className="h-4 w-4 mr-2" />
-                        عرض التفاصيل
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onViewRequest(request)}
+                  >
+                    <Eye className="h-4 w-4 ml-1" />
+                    عرض
+                  </Button>
+                  {type === "incoming" &&
+                    request.status === "pending" &&
+                    onApproveRequest &&
+                    onRejectRequest && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-green-50 text-green-600 hover:bg-green-100 border-green-200"
+                              onClick={() => onApproveRequest(request)}
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>الموافقة على الطلب</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  {type === "incoming" &&
+                    request.status === "pending" &&
+                    onRejectRequest && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-red-50 text-red-600 hover:bg-red-100 border-red-200"
+                              onClick={() => onRejectRequest(request)}
+                            >
+                              <XCircle className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>رفض الطلب</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                </div>
               </TableCell>
             </TableRow>
           ))}

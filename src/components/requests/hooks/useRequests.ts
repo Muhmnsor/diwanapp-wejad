@@ -1,9 +1,36 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Request, RequestType } from "../types";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
+
+// Interface for the response from request approvals query
+interface RequestApprovalResponse {
+  id: string;
+  request_id: string;
+  step_id: string;
+  status: string;
+  request: {
+    id: string;
+    title: string;
+    status: string;
+    priority: string;
+    created_at: string;
+    current_step_id: string;
+    request_type: {
+      id: string;
+      name: string;
+    };
+  };
+  step: {
+    id: string;
+    step_name: string;
+    step_type: string;
+    approver_id: string;
+  };
+}
 
 export const useRequests = () => {
   const { user } = useAuthStore();
@@ -47,7 +74,7 @@ export const useRequests = () => {
       }
       
       // Transform the data to match the expected format
-      const requests = data
+      const requests = (data as RequestApprovalResponse[])
         .filter(item => item.request) // Filter out any null requests
         .map(item => ({
           ...item.request,
