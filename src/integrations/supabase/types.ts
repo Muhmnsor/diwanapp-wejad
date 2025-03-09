@@ -3892,7 +3892,6 @@ export type Database = {
           is_required: boolean | null
           step_name: string
           step_order: number
-          step_type: string
           workflow_id: string | null
         }
         Insert: {
@@ -3904,7 +3903,6 @@ export type Database = {
           is_required?: boolean | null
           step_name: string
           step_order: number
-          step_type?: string
           workflow_id?: string | null
         }
         Update: {
@@ -3916,7 +3914,6 @@ export type Database = {
           is_required?: boolean | null
           step_name?: string
           step_order?: number
-          step_type?: string
           workflow_id?: string | null
         }
         Relationships: [

@@ -22,7 +22,7 @@ import { RequestType } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RequestTypeDialog } from "./request-type/RequestTypeDialog";
+import { RequestTypeDialog } from "./RequestTypeDialog";
 
 export const AdminWorkflows = () => {
   const queryClient = useQueryClient();

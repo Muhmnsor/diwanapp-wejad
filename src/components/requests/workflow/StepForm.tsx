@@ -55,32 +55,24 @@ export const StepForm: React.FC<StepFormProps> = ({
     });
   };
 
-  const isApproverSelected = !!currentStep.approver_id;
-  const isStepNameEntered = !!currentStep.step_name && currentStep.step_name.trim() !== '';
-
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="step_name">اسم الخطوة *</Label>
+          <Label htmlFor="step_name">اسم الخطوة</Label>
           <Input
             id="step_name"
             name="step_name"
-            value={currentStep.step_name || ''}
+            value={currentStep.step_name}
             onChange={handleInputChange}
             placeholder="أدخل اسم الخطوة"
-            className={!isStepNameEntered ? "border-red-300" : ""}
-            required
           />
-          {!isStepNameEntered && (
-            <p className="text-sm text-red-500">اسم الخطوة مطلوب</p>
-          )}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="step_type">نوع الخطوة</Label>
           <Select
-            value={currentStep.step_type || 'opinion'}
+            value={currentStep.step_type}
             onValueChange={(value) => handleSelectChange("step_type", value)}
           >
             <SelectTrigger>
@@ -95,12 +87,12 @@ export const StepForm: React.FC<StepFormProps> = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="approver_id">المسؤول عن الاعتماد *</Label>
+        <Label htmlFor="approver_id">المسؤول عن الاعتماد</Label>
         <Select
           value={currentStep.approver_id || ""}
           onValueChange={(value) => handleSelectChange("approver_id", value)}
         >
-          <SelectTrigger className={!isApproverSelected ? "border-red-300" : ""}>
+          <SelectTrigger>
             <SelectValue placeholder="اختر المسؤول" />
           </SelectTrigger>
           <SelectContent>
@@ -109,26 +101,6 @@ export const StepForm: React.FC<StepFormProps> = ({
                 {user.display_name || user.email}
               </SelectItem>
             ))}
-          </SelectContent>
-        </Select>
-        {!isApproverSelected && (
-          <p className="text-sm text-red-500">المسؤول عن الاعتماد مطلوب</p>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="approver_type">نوع المعتمد</Label>
-        <Select
-          value={currentStep.approver_type || 'user'}
-          onValueChange={(value) => handleSelectChange("approver_type", value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="اختر نوع المعتمد" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="user">مستخدم</SelectItem>
-            <SelectItem value="role">دور وظيفي</SelectItem>
-            <SelectItem value="department">قسم</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -147,7 +119,7 @@ export const StepForm: React.FC<StepFormProps> = ({
       <div className="flex items-center space-x-2 space-x-reverse">
         <Checkbox
           id="is_required"
-          checked={currentStep.is_required !== false}
+          checked={currentStep.is_required}
           onCheckedChange={(checked) =>
             handleCheckboxChange("is_required", checked as boolean)
           }
@@ -157,7 +129,7 @@ export const StepForm: React.FC<StepFormProps> = ({
 
       <Button
         type="button"
-        disabled={isLoading || !isStepNameEntered || !isApproverSelected}
+        disabled={isLoading}
         onClick={onAddStep}
         className="w-full"
       >

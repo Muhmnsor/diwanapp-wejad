@@ -1,22 +1,18 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { WorkflowStep } from "./types";
 import { StepForm } from "./workflow/StepForm";
 import { StepsList } from "./workflow/StepsList";
 import { useWorkflowSteps } from "./workflow/useWorkflowSteps";
 import { Separator } from "@/components/ui/separator";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
 
 interface WorkflowStepsConfigProps {
   requestTypeId: string | null;
-  workflowId?: string | null;
-  onWorkflowStepsUpdated: (steps: WorkflowStep[], workflowId: string | null) => void;
+  onWorkflowStepsUpdated: (steps: WorkflowStep[]) => void;
 }
 
 export const WorkflowStepsConfig = ({ 
   requestTypeId, 
-  workflowId,
   onWorkflowStepsUpdated 
 }: WorkflowStepsConfigProps) => {
   const {
@@ -25,25 +21,12 @@ export const WorkflowStepsConfig = ({
     editingStepIndex,
     users,
     isLoading,
-    error,
-    workflowId: actualWorkflowId,
     setCurrentStep,
     handleAddStep,
     handleRemoveStep,
     handleEditStep,
     handleMoveStep,
-  } = useWorkflowSteps({ 
-    requestTypeId, 
-    workflowId,
-    onWorkflowStepsUpdated 
-  });
-
-  // Every time workflow steps or workflowId change, call the update function
-  useEffect(() => {
-    if (workflowSteps) {
-      onWorkflowStepsUpdated(workflowSteps, actualWorkflowId);
-    }
-  }, [workflowSteps, actualWorkflowId, onWorkflowStepsUpdated]);
+  } = useWorkflowSteps({ requestTypeId, onWorkflowStepsUpdated });
 
   return (
     <div className="space-y-6">
@@ -51,16 +34,6 @@ export const WorkflowStepsConfig = ({
         <h3 className="text-lg font-medium">خطوات سير العمل</h3>
       </div>
       <Separator />
-      
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>خطأ</AlertTitle>
-          <AlertDescription>
-            {error}
-          </AlertDescription>
-        </Alert>
-      )}
       
       <StepForm
         currentStep={currentStep}
