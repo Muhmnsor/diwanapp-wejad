@@ -1,260 +1,350 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { FormSchema, FormField as FormFieldType } from "./types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
-import { validateFormData } from "./utils/formValidator";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 interface DynamicFormProps {
-  schema: any;
+  schema: FormSchema;
   onSubmit: (data: any) => void;
+  defaultValues?: Record<string, any>;
   isSubmitting?: boolean;
-  onBack?: () => void;
-  showSuccess?: boolean;
 }
 
-export const DynamicForm = ({ 
-  schema, 
-  onSubmit, 
+export const DynamicForm = ({
+  schema,
+  onSubmit,
+  defaultValues = {},
   isSubmitting = false,
-  onBack,
-  showSuccess = false
 }: DynamicFormProps) => {
-  const [formData, setFormData] = useState<Record<string, any>>({});
-  const [errors, setErrors] = useState<string[]>([]);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
-
-  // Clear success message when form changes
-  useEffect(() => {
-    if (Object.keys(touched).length > 0) {
-      setSuccess(null);
-    }
-  }, [formData, touched]);
-
-  // Set success message when showSuccess prop changes
-  useEffect(() => {
-    if (showSuccess) {
-      setSuccess("تم إرسال البيانات بنجاح وحفظها في قاعدة البيانات");
-    }
-  }, [showSuccess]);
-
-  const handleChange = (name: string, value: any) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setTouched((prev) => ({ ...prev, [name]: true }));
+  // Build zod schema dynamically based on the form schema
+  const buildZodSchema = (fields: FormFieldType[]) => {
+    const schemaMap: Record<string, any> = {};
     
-    // Clear any errors for this field
-    setErrors(errors.filter(error => !error.includes(name)));
-  };
-
-  const handleFileChange = (name: string, file: File | null) => {
-    if (file) {
-      // Simple client-side validation for file size (10MB)
-      const maxSize = 10 * 1024 * 1024;
-      if (file.size > maxSize) {
-        setErrors([...errors, `حجم الملف ${file.name} يتجاوز الحد المسموح به (10 ميجابايت)`]);
-        return;
-      }
-
-      setUploadingFiles({ ...uploadingFiles, [name]: true });
+    fields.forEach((field) => {
+      let fieldSchema;
       
-      // Set the File object directly in formData
-      handleChange(name, file);
-      
-      // Clear uploading state after a short delay (for UI feedback)
-      setTimeout(() => {
-        setUploadingFiles(prev => ({ ...prev, [name]: false }));
-      }, 1000);
-    } else {
-      handleChange(name, null);
-    }
-  };
-
-  const validateForm = (): boolean => {
-    // Use the imported validation function
-    const validationResult = validateFormData(formData, schema);
-    setErrors(validationResult.errors);
-    return validationResult.valid;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSuccess(null);
-    
-    if (!validateForm()) {
-      return;
-    }
-    
-    try {
-      // Only call onSubmit if validation passed
-      onSubmit(formData);
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      if (error instanceof Error) {
-        setErrors([...errors, error.message]);
-      } else {
-        setErrors([...errors, "حدث خطأ أثناء إرسال البيانات"]);
+      switch (field.type) {
+        case "text":
+        case "textarea":
+          fieldSchema = z.string();
+          if (field.required) {
+            fieldSchema = fieldSchema.min(1, "هذا الحقل مطلوب");
+          } else {
+            fieldSchema = fieldSchema.optional();
+          }
+          break;
+          
+        case "number":
+          fieldSchema = z.coerce.number();
+          if (field.required) {
+            fieldSchema = fieldSchema.min(0, "يجب أن تكون القيمة أكبر من أو تساوي 0");
+          } else {
+            fieldSchema = fieldSchema.optional();
+          }
+          break;
+          
+        case "date":
+          fieldSchema = z.string();
+          if (field.required) {
+            fieldSchema = fieldSchema.min(1, "هذا الحقل مطلوب");
+          } else {
+            fieldSchema = fieldSchema.optional();
+          }
+          break;
+          
+        case "select":
+          fieldSchema = z.string();
+          if (field.required) {
+            fieldSchema = fieldSchema.min(1, "هذا الحقل مطلوب");
+          } else {
+            fieldSchema = fieldSchema.optional();
+          }
+          break;
+          
+        case "array":
+          if (field.subfields) {
+            const subSchemaMap = buildZodSchema(field.subfields);
+            const subSchema = z.object(subSchemaMap);
+            fieldSchema = z.array(subSchema);
+            
+            if (field.required) {
+              fieldSchema = fieldSchema.min(1, "يجب إضافة عنصر واحد على الأقل");
+            }
+          } else {
+            fieldSchema = z.array(z.string());
+            if (field.required) {
+              fieldSchema = fieldSchema.min(1, "يجب إضافة عنصر واحد على الأقل");
+            }
+          }
+          break;
+          
+        default:
+          fieldSchema = z.string().optional();
       }
-    }
+      
+      schemaMap[field.name] = fieldSchema;
+    });
+    
+    return schemaMap;
   };
 
-  const renderField = (field: any) => {
-    const { type, name, label, required, placeholder, options, description } = field;
-    const value = formData[name] || '';
-    
-    switch (type) {
-      case 'text':
-        return (
-          <div className="space-y-2" key={name}>
-            <Label htmlFor={name}>
-              {label} {required && <span className="text-red-500">*</span>}
-            </Label>
-            <Input
-              id={name}
-              name={name}
-              value={value}
-              placeholder={placeholder}
-              onChange={(e) => handleChange(name, e.target.value)}
-              required={required}
-            />
-            {description && <p className="text-sm text-muted-foreground">{description}</p>}
-          </div>
-        );
-        
-      case 'textarea':
-        return (
-          <div className="space-y-2" key={name}>
-            <Label htmlFor={name}>
-              {label} {required && <span className="text-red-500">*</span>}
-            </Label>
-            <Textarea
-              id={name}
-              name={name}
-              value={value}
-              placeholder={placeholder}
-              onChange={(e) => handleChange(name, e.target.value)}
-              required={required}
-              rows={4}
-            />
-            {description && <p className="text-sm text-muted-foreground">{description}</p>}
-          </div>
-        );
-        
-      case 'select':
-        return (
-          <div className="space-y-2" key={name}>
-            <Label htmlFor={name}>
-              {label} {required && <span className="text-red-500">*</span>}
-            </Label>
-            <Select
-              value={value}
-              onValueChange={(value) => handleChange(name, value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={placeholder || "اختر قيمة"} />
-              </SelectTrigger>
-              <SelectContent>
-                {options?.map((option: string) => (
-                  <SelectItem key={option} value={option}>
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {description && <p className="text-sm text-muted-foreground">{description}</p>}
-          </div>
-        );
-        
-      case 'file':
-        return (
-          <div className="space-y-2" key={name}>
-            <Label htmlFor={name}>
-              {label} {required && <span className="text-red-500">*</span>}
-            </Label>
-            <div className="flex items-center space-x-2">
-              <Input
-                id={name}
-                name={name}
-                type="file"
-                onChange={(e) => handleFileChange(name, e.target.files?.[0] || null)}
-                required={required}
-                className="rtl:space-x-reverse"
-              />
-              {uploadingFiles[name] && (
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+  const formSchema = z.object(buildZodSchema(schema.fields));
+  
+  // Initialize the form
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: defaultValues,
+  });
+
+  // Render form fields based on the schema
+  const renderFields = (fields: FormFieldType[], parentPath = "") => {
+    return fields.map((fieldDef) => {
+      const fieldPath = parentPath ? `${parentPath}.${fieldDef.name}` : fieldDef.name;
+      
+      switch (fieldDef.type) {
+        case "text":
+          return (
+            <FormField
+              key={fieldPath}
+              control={form.control}
+              name={fieldPath}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{fieldDef.label}</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-              {formData[name] instanceof File && !uploadingFiles[name] && (
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
+            />
+          );
+          
+        case "textarea":
+          return (
+            <FormField
+              key={fieldPath}
+              control={form.control}
+              name={fieldPath}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{fieldDef.label}</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          );
+          
+        case "number":
+          return (
+            <FormField
+              key={fieldPath}
+              control={form.control}
+              name={fieldPath}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{fieldDef.label}</FormLabel>
+                  <FormControl>
+                    <Input type="number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          );
+          
+        case "date":
+          return (
+            <FormField
+              key={fieldPath}
+              control={form.control}
+              name={fieldPath}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{fieldDef.label}</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          );
+          
+        case "select":
+          return (
+            <FormField
+              key={fieldPath}
+              control={form.control}
+              name={fieldPath}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{fieldDef.label}</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="اختر قيمة" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {fieldDef.options?.map((option: string) => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          );
+          
+        case "array":
+          return (
+            <div key={fieldPath} className="space-y-4">
+              <FormLabel>{fieldDef.label}</FormLabel>
+              {fieldDef.subfields && (
+                <FieldArray
+                  name={fieldPath}
+                  control={form.control}
+                  subfields={fieldDef.subfields}
+                />
               )}
             </div>
-            {description && <p className="text-sm text-muted-foreground">{description}</p>}
-            <p className="text-xs text-muted-foreground">
-              الحد الأقصى لحجم الملف: 10 ميجابايت
-            </p>
-          </div>
-        );
-        
-      default:
-        return null;
-    }
+          );
+          
+        default:
+          return null;
+      }
+    });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {errors.length > 0 && (
-        <Alert variant="destructive" className="my-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            <ul className="list-disc list-inside">
-              {errors.map((error, index) => (
-                <li key={index}>{error}</li>
-              ))}
-            </ul>
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      {success && (
-        <Alert variant="success" className="my-4">
-          <CheckCircle2 className="h-4 w-4" />
-          <AlertDescription>{success}</AlertDescription>
-        </Alert>
-      )}
-      
-      {schema?.fields?.map((field: any) => renderField(field))}
-      
-      <div className="flex justify-between">
-        {onBack && (
-          <Button type="button" variant="outline" onClick={onBack}>
-            رجوع
-          </Button>
-        )}
-        <Button 
-          type="submit" 
-          disabled={isSubmitting || Object.values(uploadingFiles).some(v => v)}
-          className="mr-auto"
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-              جاري الإرسال...
-            </>
-          ) : (
-            "إرسال"
-          )}
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {renderFields(schema.fields)}
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "جاري التقديم..." : "تقديم الطلب"}
         </Button>
-      </div>
-    </form>
+      </form>
+    </Form>
+  );
+};
+
+// Component for handling array fields
+const FieldArray = ({ 
+  name, 
+  control, 
+  subfields 
+}: { 
+  name: string; 
+  control: any; 
+  subfields: FormFieldType[] 
+}) => {
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name,
+  });
+
+  return (
+    <div className="space-y-4">
+      {fields.map((item, index) => (
+        <div key={item.id} className="border p-4 rounded-md space-y-4">
+          {subfields.map((subfieldDef) => {
+            const fieldName = `${name}.${index}.${subfieldDef.name}`;
+            
+            switch (subfieldDef.type) {
+              case "text":
+                return (
+                  <FormField
+                    key={fieldName}
+                    control={control}
+                    name={fieldName}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{subfieldDef.label}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                );
+                
+              case "number":
+                return (
+                  <FormField
+                    key={fieldName}
+                    control={control}
+                    name={fieldName}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{subfieldDef.label}</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                );
+                
+              default:
+                return null;
+            }
+          })}
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            onClick={() => remove(index)}
+          >
+            حذف
+          </Button>
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => {
+          const newItem = subfields.reduce((acc, subfield) => {
+            acc[subfield.name] = "";
+            return acc;
+          }, {} as Record<string, string>);
+          append(newItem);
+        }}
+      >
+        إضافة عنصر جديد
+      </Button>
+    </div>
   );
 };
