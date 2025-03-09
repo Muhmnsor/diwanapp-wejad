@@ -16,7 +16,7 @@ import { useAuthStore } from "@/store/authStore";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 const RequestsManagement = () => {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "incoming";
   const [selectedRequestType, setSelectedRequestType] = useState<RequestType | null>(null);
@@ -58,6 +58,11 @@ const RequestsManagement = () => {
   };
 
   const handleCreateRequest = (formData: any) => {
+    if (!user) {
+      setError("يجب تسجيل الدخول لإنشاء طلب جديد");
+      return;
+    }
+    
     setError(null);
     createRequest.mutate(formData, {
       onSuccess: () => {

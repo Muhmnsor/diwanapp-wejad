@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -102,7 +103,7 @@ export const useRequests = () => {
       due_date?: string;
       status?: string;
     }) => {
-      if (!user) throw new Error("User not authenticated");
+      if (!user) throw new Error("يجب تسجيل الدخول لإنشاء طلب جديد");
       setSubmissionSuccess(false);
       
       try {
@@ -117,11 +118,11 @@ export const useRequests = () => {
         
         if (typeError) {
           console.error("Error fetching request type:", typeError);
-          throw new Error(`Failed to fetch request type: ${typeError.message}`);
+          throw new Error(`فشل في العثور على نوع الطلب: ${typeError.message}`);
         }
         
         if (!requestType) {
-          throw new Error("Request type not found");
+          throw new Error("نوع الطلب غير موجود");
         }
         
         // Validate form data before uploading files
@@ -150,7 +151,7 @@ export const useRequests = () => {
           
           if (stepError && !stepError.message.includes("No rows found")) {
             console.error("Error fetching first step:", stepError);
-            throw new Error(`Failed to fetch workflow step: ${stepError.message}`);
+            throw new Error(`فشل في العثور على خطوة سير العمل: ${stepError.message}`);
           }
           
           if (firstStep) {
@@ -163,6 +164,7 @@ export const useRequests = () => {
           requester_id: user.id,
           workflow_id: workflowId,
           current_step_id: currentStepId,
+          request_type_id: requestData.request_type_id,
           title: requestData.title,
           priority: requestData.priority || 'medium',
           form_data: processedFormData,
@@ -171,7 +173,7 @@ export const useRequests = () => {
         
         console.log("Creating request with processed data:", insertData);
         
-        // Create request
+        // Use .select() to return the inserted data
         const { data, error } = await supabase
           .from("requests")
           .insert(insertData)
@@ -179,15 +181,23 @@ export const useRequests = () => {
 
         if (error) {
           console.error("Error creating request:", error);
-          if (error.code === '42P17') {
-            throw new Error("حدث خطأ في سياسات أمان قاعدة البيانات. الرجاء التواصل مع المسؤول");
+          
+          // More specific error messages
+          if (error.code === '23503') {
+            throw new Error("خطأ في العلاقات بين الجداول. الرجاء التحقق من البيانات المدخلة");
+          } else if (error.code === '23505') {
+            throw new Error("الطلب موجود بالفعل");
+          } else if (error.code === '42501') {
+            throw new Error("ليس لديك صلاحية لإنشاء هذا الطلب");
+          } else if (error.code === '42P01') {
+            throw new Error("خطأ في قاعدة البيانات: الجدول غير موجود");
           } else {
             throw new Error(`فشل إنشاء الطلب: ${error.message}`);
           }
         }
         
         if (!data || data.length === 0) {
-          throw new Error("Failed to create request: No data returned");
+          throw new Error("تم إنشاء الطلب ولكن لم يتم استرجاع البيانات");
         }
         
         console.log("Request created successfully:", data[0]);

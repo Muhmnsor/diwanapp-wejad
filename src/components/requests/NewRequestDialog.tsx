@@ -31,6 +31,7 @@ import { Loader2 } from "lucide-react";
 import { RequestType } from "./types";
 import { DynamicForm } from "./DynamicForm";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuthStore } from "@/store/authStore";
 
 interface NewRequestDialogProps {
   isOpen: boolean;
@@ -58,6 +59,7 @@ export const NewRequestDialog = ({
   isUploading = false,
   submissionSuccess = false
 }: NewRequestDialogProps) => {
+  const { isAuthenticated, user } = useAuthStore();
   const [step, setStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [requestData, setRequestData] = useState<{
@@ -78,6 +80,11 @@ export const NewRequestDialog = ({
   });
 
   const handleStep1Submit = (data: z.infer<typeof formSchema>) => {
+    if (!isAuthenticated || !user) {
+      setError("يجب تسجيل الدخول لإنشاء طلب جديد");
+      return;
+    }
+    
     setRequestData({
       ...requestData,
       title: data.title,
@@ -88,6 +95,11 @@ export const NewRequestDialog = ({
 
   const handleStep2Submit = (formData: Record<string, any>) => {
     try {
+      if (!isAuthenticated || !user) {
+        setError("يجب تسجيل الدخول لإنشاء طلب جديد");
+        return;
+      }
+      
       setError(null);
       const fullData = {
         request_type_id: requestType.id,
