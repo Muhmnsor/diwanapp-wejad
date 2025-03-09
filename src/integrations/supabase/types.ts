@@ -4136,12 +4136,23 @@ export type Database = {
         }
         Returns: Json
       }
-      is_admin: {
+      insert_request_bypass_rls: {
         Args: {
-          user_id: string
+          request_data: Json
         }
-        Returns: boolean
+        Returns: Json
       }
+      is_admin:
+        | {
+            Args: Record<PropertyKey, never>
+            Returns: boolean
+          }
+        | {
+            Args: {
+              user_id: string
+            }
+            Returns: boolean
+          }
       is_admin_user: {
         Args: {
           user_id: string

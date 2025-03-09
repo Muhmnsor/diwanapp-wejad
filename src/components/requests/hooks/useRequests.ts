@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -101,7 +102,7 @@ export const useRequests = () => {
     enabled: !!user
   });
 
-  // Further enhanced create request mutation with better error handling
+  // Improved create request mutation with better error handling
   const createRequest = useMutation({
     mutationFn: async (requestData: {
       request_type_id: string;
@@ -146,22 +147,29 @@ export const useRequests = () => {
         let currentStepId = null;
         
         if (workflowId) {
-          // Get first step of workflow
-          const { data: firstStep, error: stepError } = await supabase
-            .from("workflow_steps")
-            .select("id, approver_id")
-            .eq("workflow_id", workflowId)
-            .eq("step_order", 1)
-            .single();
-          
-          if (stepError && !stepError.message.includes("No rows found")) {
-            console.error("Error fetching first step:", stepError);
-            throw new Error(`Failed to fetch workflow step: ${stepError.message}`);
-          }
-          
-          if (firstStep) {
-            currentStepId = firstStep.id;
-            console.log("Found first workflow step:", currentStepId);
+          try {
+            // Get first step of workflow
+            const { data: firstStep, error: stepError } = await supabase
+              .from("workflow_steps")
+              .select("id, approver_id")
+              .eq("workflow_id", workflowId)
+              .eq("step_order", 1)
+              .maybeSingle(); // Use maybeSingle instead of single to handle case when no step is found
+            
+            if (stepError) {
+              console.error("Error fetching first step:", stepError);
+              console.log("Will continue without a workflow step");
+            }
+            
+            if (firstStep) {
+              currentStepId = firstStep.id;
+              console.log("Found first workflow step:", currentStepId);
+            } else {
+              console.log("No workflow steps found for this workflow");
+            }
+          } catch (stepErr) {
+            console.error("Error in workflow step retrieval:", stepErr);
+            // Continue without a workflow step
           }
         }
         
