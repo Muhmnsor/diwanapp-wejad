@@ -24,7 +24,7 @@ export const FormFieldEditor = ({ form }: FormFieldEditorProps) => {
     label: "",
     type: "text",
     required: false,
-    options: [],
+    options: []
   });
   const [editingFieldIndex, setEditingFieldIndex] = useState<number | null>(null);
   const [currentOption, setCurrentOption] = useState("");
@@ -35,7 +35,7 @@ export const FormFieldEditor = ({ form }: FormFieldEditorProps) => {
       label: "",
       type: "text",
       required: false,
-      options: [],
+      options: []
     });
     setEditingFieldIndex(null);
     setCurrentOption("");
