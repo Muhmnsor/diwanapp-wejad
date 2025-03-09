@@ -6,8 +6,11 @@ import { NewRequestDialog } from "@/components/requests/NewRequestDialog";
 import { RequestsPageHeader } from "@/components/requests/page/RequestsPageHeader";
 import { RequestsPageContent } from "@/components/requests/page/RequestsPageContent";
 import { useRequestsPage } from "@/components/requests/hooks/useRequestsPage";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const RequestsManagement = () => {
+  const navigate = useNavigate();
   const {
     isAuthenticated,
     user,
@@ -34,6 +37,21 @@ const RequestsManagement = () => {
     handleCloseDetailView,
     handleLogin
   } = useRequestsPage();
+
+  React.useEffect(() => {
+    // Handle authentication and redirect if needed
+    if (!authChecking && !isAuthenticated) {
+      toast.error("يجب تسجيل الدخول لاستخدام نظام الطلبات");
+      navigate("/login", { state: { returnUrl: "/requests" } });
+    }
+  }, [authChecking, isAuthenticated, navigate]);
+
+  React.useEffect(() => {
+    // Show toast notifications for errors
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
 
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">

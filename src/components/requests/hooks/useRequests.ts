@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,6 +56,11 @@ export const useRequests = () => {
       
       if (error) {
         console.error("Error fetching incoming requests:", error);
+        
+        if (error.message.includes("permission denied")) {
+          throw new Error("ليس لديك صلاحية للوصول إلى هذه البيانات");
+        }
+        
         return [];
       }
       
@@ -83,6 +89,11 @@ export const useRequests = () => {
       
       if (error) {
         console.error("Error fetching outgoing requests:", error);
+        
+        if (error.message.includes("permission denied")) {
+          throw new Error("ليس لديك صلاحية للوصول إلى هذه البيانات");
+        }
+        
         return [];
       }
       
@@ -97,13 +108,17 @@ export const useRequests = () => {
   const { data: incomingRequests, isLoading: incomingLoading } = useQuery({
     queryKey: ["requests", "incoming"],
     queryFn: fetchIncomingRequests,
-    enabled: !!user
+    enabled: !!user,
+    retry: 1, // Only retry once
+    retryDelay: 2000 // Wait 2 seconds before retry
   });
 
   const { data: outgoingRequests, isLoading: outgoingLoading } = useQuery({
     queryKey: ["requests", "outgoing"],
     queryFn: fetchOutgoingRequests,
-    enabled: !!user
+    enabled: !!user,
+    retry: 1, // Only retry once
+    retryDelay: 2000 // Wait 2 seconds before retry
   });
 
   const performDatabaseInsert = async (insertData: any, retryCount = 0): Promise<any> => {
@@ -118,6 +133,12 @@ export const useRequests = () => {
       } else {
         console.log("Current session during request submission:", 
           session ? `Authenticated as ${session.user.id}` : "No active session");
+      }
+      
+      // IMPORTANT: Ensure requester_id is set to the current user's ID
+      if (!insertData.requester_id && session?.user?.id) {
+        console.log("Setting requester_id to current user:", session.user.id);
+        insertData.requester_id = session.user.id;
       }
       
       // Use .select() to return the inserted data
@@ -140,10 +161,9 @@ export const useRequests = () => {
         } else if (error.code === '42P01') {
           throw new Error(`خطأ في قاعدة البيانات: الجدول غير موجود.\nرمز الخطأ: ${error.code}\nتفاصيل: ${error.message || 'غير معروف'}`);
         } else if (error.message?.includes('infinite recursion')) {
-          throw new Error(JSON.stringify({
-            message: `خطأ في سياسات أمان قاعدة البيانات. يرجى التواصل مع مدير النظام.`,
-            details: `رمز الخطأ: ${error.code}\nتفاصيل: ${error.message}`
-          }));
+          throw new Error(`خطأ في سياسات أمان قاعدة البيانات. يرجى التواصل مع مدير النظام.`);
+        } else if (error.message?.includes('violates row-level security policy')) {
+          throw new Error(`خطأ في الصلاحيات: تأكد من تسجيل الدخول وأن لديك صلاحية إنشاء الطلبات.`);
         } else if (retryCount < MAX_RETRIES) {
           // Retry with exponential backoff
           const delayTime = RETRY_DELAY * Math.pow(2, retryCount);
@@ -153,10 +173,7 @@ export const useRequests = () => {
           return performDatabaseInsert(insertData, retryCount + 1);
         } else {
           // If we've exhausted retries, throw the error
-          throw new Error(JSON.stringify({
-            message: `فشل إنشاء الطلب بعد ${MAX_RETRIES} محاولات.`,
-            details: `رمز الخطأ: ${error.code}\nتفاصيل: ${error.message || 'غير معروف'}`
-          }));
+          throw new Error(`فشل إنشاء الطلب بعد ${MAX_RETRIES} محاولات.`);
         }
       }
       
@@ -180,6 +197,7 @@ export const useRequests = () => {
       priority?: string;
       due_date?: string;
       status?: string;
+      requester_id?: string;
     }) => {
       if (!user) throw new Error("يجب تسجيل الدخول لإنشاء طلب جديد");
       setSubmissionSuccess(false);
@@ -198,6 +216,9 @@ export const useRequests = () => {
         
         console.log("User is authenticated as:", user.id);
         console.log("Session user ID:", session.user.id);
+        
+        // CRITICAL: Ensure requester_id is set to the current user's ID
+        requestData.requester_id = session.user.id;
         
         // Fetch the request type to get form schema
         setSubmissionStep("جلب معلومات نوع الطلب");
@@ -258,7 +279,7 @@ export const useRequests = () => {
         
         // Prepare request data - CRITICAL: Set requester_id to current user's ID
         const insertData = {
-          requester_id: user.id,
+          requester_id: session.user.id, // Use the session user ID to ensure current user
           workflow_id: workflowId,
           current_step_id: currentStepId,
           request_type_id: requestData.request_type_id,
@@ -269,7 +290,7 @@ export const useRequests = () => {
         };
         
         console.log("Request insert data prepared:", insertData);
-        console.log("User ID for this request:", user.id);
+        console.log("User ID for this request:", session.user.id);
         
         // Perform the insert operation with retry logic
         const insertedRequest = await performDatabaseInsert(insertData);
