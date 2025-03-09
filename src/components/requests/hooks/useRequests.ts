@@ -90,6 +90,7 @@ export const useRequests = () => {
     enabled: !!user
   });
 
+  // Fixed create request mutation with better error handling and debugging
   const createRequest = useMutation({
     mutationFn: async (requestData: {
       request_type_id: string;
@@ -104,7 +105,7 @@ export const useRequests = () => {
       try {
         console.log("Creating request with provided data:", requestData);
         
-        // Fetch the request type to get form schema
+        // Fetch the request type to get form schema and workflow
         const { data: requestType, error: typeError } = await supabase
           .from("request_types")
           .select("default_workflow_id, form_schema")
@@ -151,31 +152,49 @@ export const useRequests = () => {
           }
         }
         
-        console.log("Creating request with processed data:", {
+        // Prepare request data with clearer structure
+        const requestPayload = {
           requester_id: user.id,
           workflow_id: workflowId,
           current_step_id: currentStepId,
-          ...requestData
-        });
+          title: requestData.title,
+          form_data: requestData.form_data,
+          request_type_id: requestData.request_type_id,
+          priority: requestData.priority || 'medium',
+          status: requestData.status || 'pending',
+          due_date: requestData.due_date || null
+        };
         
-        // Create request
+        console.log("Creating request with processed payload:", requestPayload);
+        
+        // Create request with better error tracking
         const { data, error } = await supabase
           .from("requests")
-          .insert({
-            requester_id: user.id,
-            workflow_id: workflowId,
-            current_step_id: currentStepId,
-            ...requestData
-          })
+          .insert(requestPayload)
           .select();
 
         if (error) {
           console.error("Error creating request:", error);
-          throw new Error(`Failed to create request: ${error.message}`);
+          // Provide more specific error message based on the error type
+          if (error.code === '23505') {
+            throw new Error("طلب مشابه موجود بالفعل");
+          } else if (error.code === '23503') {
+            throw new Error("خطأ في العلاقات: قد يكون أحد المعرفات غير صالح");
+          } else if (error.code === '42P01') {
+            throw new Error("خطأ في قاعدة البيانات: الجدول غير موجود");
+          } else if (error.code === '42703') {
+            throw new Error("خطأ في قاعدة البيانات: عمود غير موجود");
+          } else if (error.code === '23502') {
+            throw new Error("البيانات المطلوبة غير مكتملة");
+          } else if (error.message && error.message.includes("policy")) {
+            throw new Error("ليس لديك صلاحية لإنشاء طلب");
+          } else {
+            throw new Error(`فشل إنشاء الطلب: ${error.message}`);
+          }
         }
         
         if (!data || data.length === 0) {
-          throw new Error("Failed to create request: No data returned");
+          throw new Error("تم إرسال الطلب ولكن لم يتم استلام بيانات الإنشاء");
         }
         
         console.log("Request created successfully:", data[0]);

@@ -4142,6 +4142,19 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin_user: {
+        Args: {
+          user_id: string
+        }
+        Returns: boolean
+      }
+      is_request_approver: {
+        Args: {
+          step_id: string
+          user_id: string
+        }
+        Returns: boolean
+      }
       log_user_activity: {
         Args: {
           user_id: string
