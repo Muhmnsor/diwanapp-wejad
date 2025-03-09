@@ -27,7 +27,6 @@ export interface WorkflowStep {
   step_order: number;
   step_name: string;
   step_type: 'opinion' | 'decision';
-  approver_type: 'role' | 'user' | 'department';
   approver_id: string | null;
   instructions: string | null;
   is_required: boolean;
@@ -44,16 +43,6 @@ interface User {
   email: string | null;
 }
 
-interface Role {
-  id: string;
-  name: string;
-}
-
-interface Department {
-  id: string;
-  name: string;
-}
-
 export const WorkflowStepsConfig = ({ 
   requestTypeId, 
   onWorkflowStepsUpdated 
@@ -63,20 +52,17 @@ export const WorkflowStepsConfig = ({
     step_order: 0,
     step_name: "",
     step_type: "opinion",
-    approver_type: "user",
     approver_id: null,
     instructions: "",
     is_required: true,
   });
   const [editingStepIndex, setEditingStepIndex] = useState<number | null>(null);
   const [users, setUsers] = useState<User[]>([]);
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch users, roles and departments on component mount
+  // Fetch users on component mount
   useEffect(() => {
-    const fetchApprovers = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
       try {
         // Fetch users
@@ -87,22 +73,6 @@ export const WorkflowStepsConfig = ({
 
         if (usersError) throw usersError;
         setUsers(usersData || []);
-
-        // Fetch roles
-        const { data: rolesData, error: rolesError } = await supabase
-          .from("roles")
-          .select("id, name");
-
-        if (rolesError) throw rolesError;
-        setRoles(rolesData || []);
-
-        // Fetch departments
-        const { data: deptsData, error: deptsError } = await supabase
-          .from("departments")
-          .select("id, name");
-
-        if (deptsError) throw deptsError;
-        setDepartments(deptsData || []);
 
         // Fetch existing workflow steps if requestTypeId is provided
         if (requestTypeId) {
@@ -125,13 +95,13 @@ export const WorkflowStepsConfig = ({
           }
         }
       } catch (error) {
-        console.error("Error fetching approvers data:", error);
+        console.error("Error fetching data:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchApprovers();
+    fetchData();
   }, [requestTypeId]);
 
   const resetStepForm = () => {
@@ -139,7 +109,6 @@ export const WorkflowStepsConfig = ({
       step_order: workflowSteps.length, // Set to the next order
       step_name: "",
       step_type: "opinion",
-      approver_type: "user",
       approver_id: null,
       instructions: "",
       is_required: true,
@@ -223,20 +192,9 @@ export const WorkflowStepsConfig = ({
   // Helper function to get approver name by id
   const getApproverName = (step: WorkflowStep) => {
     if (!step.approver_id) return "غير محدد";
-
-    switch (step.approver_type) {
-      case "user":
-        const user = users.find(u => u.id === step.approver_id);
-        return user ? (user.display_name || user.email) : "غير محدد";
-      case "role":
-        const role = roles.find(r => r.id === step.approver_id);
-        return role ? role.name : "غير محدد";
-      case "department":
-        const dept = departments.find(d => d.id === step.approver_id);
-        return dept ? dept.name : "غير محدد";
-      default:
-        return "غير محدد";
-    }
+    
+    const user = users.find(u => u.id === step.approver_id);
+    return user ? (user.display_name || user.email) : "غير محدد";
   };
 
   return (
@@ -280,29 +238,6 @@ export const WorkflowStepsConfig = ({
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">نوع المعتمد</label>
-              <Select
-                value={currentStep.approver_type}
-                onValueChange={(value: 'user' | 'role' | 'department') =>
-                  setCurrentStep({ 
-                    ...currentStep, 
-                    approver_type: value,
-                    approver_id: null // Reset approver_id when type changes
-                  })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="اختر نوع المعتمد" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="user">مستخدم محدد</SelectItem>
-                  <SelectItem value="role">وظيفة</SelectItem>
-                  <SelectItem value="department">قسم</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
               <label className="text-sm font-medium">المعتمد</label>
               <Select
                 value={currentStep.approver_id || ""}
@@ -314,19 +249,9 @@ export const WorkflowStepsConfig = ({
                   <SelectValue placeholder="اختر المعتمد" />
                 </SelectTrigger>
                 <SelectContent>
-                  {currentStep.approver_type === "user" && users.map((user) => (
+                  {users.map((user) => (
                     <SelectItem key={user.id} value={user.id}>
                       {user.display_name || user.email}
-                    </SelectItem>
-                  ))}
-                  {currentStep.approver_type === "role" && roles.map((role) => (
-                    <SelectItem key={role.id} value={role.id}>
-                      {role.name}
-                    </SelectItem>
-                  ))}
-                  {currentStep.approver_type === "department" && departments.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id}>
-                      {dept.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
