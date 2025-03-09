@@ -23,6 +23,7 @@ export const useWorkflowSteps = ({
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch users for approver selection
   useEffect(() => {
@@ -65,6 +66,7 @@ export const useWorkflowSteps = ({
       }
 
       setIsLoading(true);
+      setError(null);
 
       try {
         let workflowIdToUse = workflowId;
@@ -115,6 +117,7 @@ export const useWorkflowSteps = ({
         }
       } catch (error) {
         console.error('Error fetching workflow steps:', error);
+        setError('فشل في جلب خطوات سير العمل');
         toast.error('فشل في جلب خطوات سير العمل');
       } finally {
         setIsLoading(false);
@@ -128,10 +131,12 @@ export const useWorkflowSteps = ({
   const saveWorkflowSteps = async (steps: WorkflowStep[], workflowIdToUse: string) => {
     if (!workflowIdToUse) {
       console.error("No workflow ID provided for saving steps");
+      setError("لا يوجد معرف لسير العمل لحفظ الخطوات");
       return false;
     }
 
     setIsSaving(true);
+    setError(null);
     
     try {
       // First delete any existing steps for this workflow
@@ -195,6 +200,7 @@ export const useWorkflowSteps = ({
       return true;
     } catch (error) {
       console.error('Error saving workflow steps:', error);
+      setError('فشل في حفظ خطوات سير العمل');
       toast.error('فشل في حفظ خطوات سير العمل');
       return false;
     } finally {
@@ -203,65 +209,145 @@ export const useWorkflowSteps = ({
   };
 
   // Add or update a step in local state only
-  const handleAddStep = () => {
+  const handleAddStep = async () => {
     if (!currentStep.step_name) {
       toast.error('يرجى إدخال اسم الخطوة');
       return;
     }
 
-    let updatedSteps: WorkflowStep[];
-
-    if (editingStepIndex !== null) {
-      // Update existing step
-      updatedSteps = [...workflowSteps];
-      updatedSteps[editingStepIndex] = { ...currentStep };
-    } else {
-      // Add new step
-      updatedSteps = [...workflowSteps, { ...currentStep }];
+    if (!currentStep.approver_id) {
+      toast.error('يرجى تحديد المسؤول عن الاعتماد');
+      return;
     }
 
-    // Update the step order for all steps
-    updatedSteps = updatedSteps.map((step, index) => ({
-      ...step,
-      step_order: index + 1
-    }));
+    setIsLoading(true);
+    setError(null);
 
-    setWorkflowSteps(updatedSteps);
-    
-    // Notify parent component about the updated steps
-    if (onWorkflowStepsUpdated) {
-      onWorkflowStepsUpdated(updatedSteps);
+    try {
+      // Create a workflow first if needed (for initial steps)
+      if (!workflowId && requestTypeId) {
+        const { data: workflow, error } = await supabase
+          .from("request_workflows")
+          .insert([
+            {
+              name: `سير عمل مؤقت`,
+              description: `سير عمل تلقائي مؤقت`,
+              request_type_id: requestTypeId,
+              is_active: true,
+            },
+          ])
+          .select();
+
+        if (error) throw error;
+        
+        // Set the new workflow ID
+        if (workflow && workflow.length > 0) {
+          setWorkflowId(workflow[0].id);
+          
+          // Update the request type with this workflow ID
+          const { error: updateError } = await supabase
+            .from("request_types")
+            .update({ default_workflow_id: workflow[0].id })
+            .eq("id", requestTypeId);
+            
+          if (updateError) {
+            console.warn("Could not set default workflow:", updateError);
+          }
+          
+          console.log("Created new workflow:", workflow[0].id);
+        }
+      }
+
+      // Proceed with adding/updating the step
+      let updatedSteps: WorkflowStep[];
+
+      if (editingStepIndex !== null) {
+        // Update existing step
+        updatedSteps = [...workflowSteps];
+        updatedSteps[editingStepIndex] = { ...currentStep };
+      } else {
+        // Add new step
+        updatedSteps = [...workflowSteps, { ...currentStep }];
+      }
+
+      // Update the step order for all steps
+      updatedSteps = updatedSteps.map((step, index) => ({
+        ...step,
+        step_order: index + 1
+      }));
+
+      // Save to database if we have a workflow ID
+      if (workflowId) {
+        const saved = await saveWorkflowSteps(updatedSteps, workflowId);
+        if (!saved) {
+          throw new Error("فشل في حفظ الخطوات");
+        }
+      } else {
+        // Just update state if we don't have a workflow ID yet
+        setWorkflowSteps(updatedSteps);
+        
+        // Notify parent component about the updated steps
+        if (onWorkflowStepsUpdated) {
+          onWorkflowStepsUpdated(updatedSteps);
+        }
+      }
+      
+      // Reset the current step form
+      setCurrentStep(getInitialStepState(updatedSteps.length + 1));
+      setEditingStepIndex(null);
+      
+      toast.success(editingStepIndex !== null ? 'تم تحديث الخطوة بنجاح' : 'تم إضافة الخطوة بنجاح');
+    } catch (error) {
+      console.error("Error adding/updating step:", error);
+      setError(error instanceof Error ? error.message : 'حدث خطأ أثناء حفظ الخطوة');
+      toast.error('فشل في حفظ الخطوة');
+    } finally {
+      setIsLoading(false);
     }
-    
-    // Reset the current step form
-    setCurrentStep(getInitialStepState(updatedSteps.length + 1));
-    setEditingStepIndex(null);
-    
-    toast.success(editingStepIndex !== null ? 'تم تحديث الخطوة بنجاح' : 'تم إضافة الخطوة بنجاح');
   };
 
   // Remove a step from local state
-  const handleRemoveStep = (index: number) => {
-    const updatedSteps = workflowSteps
-      .filter((_, i) => i !== index)
-      .map((step, i) => ({
-        ...step,
-        step_order: i + 1
-      }));
-    
-    setWorkflowSteps(updatedSteps);
-    
-    // Notify parent component
-    if (onWorkflowStepsUpdated) {
-      onWorkflowStepsUpdated(updatedSteps);
-    }
+  const handleRemoveStep = async (index: number) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const updatedSteps = workflowSteps
+        .filter((_, i) => i !== index)
+        .map((step, i) => ({
+          ...step,
+          step_order: i + 1
+        }));
+      
+      // Save to database if we have a workflow ID
+      if (workflowId) {
+        const saved = await saveWorkflowSteps(updatedSteps, workflowId);
+        if (!saved) {
+          throw new Error("فشل في حذف الخطوة");
+        }
+      } else {
+        // Just update state if we don't have a workflow ID yet
+        setWorkflowSteps(updatedSteps);
+        
+        // Notify parent component
+        if (onWorkflowStepsUpdated) {
+          onWorkflowStepsUpdated(updatedSteps);
+        }
+      }
 
-    if (editingStepIndex === index) {
-      setEditingStepIndex(null);
-      setCurrentStep(getInitialStepState(updatedSteps.length + 1));
+      if (editingStepIndex === index) {
+        setEditingStepIndex(null);
+        setCurrentStep(getInitialStepState(updatedSteps.length + 1));
+      }
+      
+      toast.success('تم حذف الخطوة بنجاح');
+    } catch (error) {
+      console.error("Error removing step:", error);
+      setError('فشل في حذف الخطوة');
+      toast.error('فشل في حذف الخطوة');
+    } finally {
+      setIsLoading(false);
     }
-    
-    toast.success('تم حذف الخطوة بنجاح');
   };
 
   // Edit a step
@@ -271,7 +357,7 @@ export const useWorkflowSteps = ({
   };
 
   // Move a step up or down
-  const handleMoveStep = (index: number, direction: 'up' | 'down') => {
+  const handleMoveStep = async (index: number, direction: 'up' | 'down') => {
     if (
       (direction === 'up' && index === 0) || 
       (direction === 'down' && index === workflowSteps.length - 1)
@@ -279,32 +365,52 @@ export const useWorkflowSteps = ({
       return;
     }
 
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    const updatedSteps = [...workflowSteps];
-    
-    // Swap steps
-    [updatedSteps[index], updatedSteps[newIndex]] = [updatedSteps[newIndex], updatedSteps[index]];
-    
-    // Update step orders
-    updatedSteps.forEach((step, i) => {
-      step.step_order = i + 1;
-    });
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const newIndex = direction === 'up' ? index - 1 : index + 1;
+      const updatedSteps = [...workflowSteps];
+      
+      // Swap steps
+      [updatedSteps[index], updatedSteps[newIndex]] = [updatedSteps[newIndex], updatedSteps[index]];
+      
+      // Update step orders
+      updatedSteps.forEach((step, i) => {
+        step.step_order = i + 1;
+      });
 
-    setWorkflowSteps(updatedSteps);
-    
-    // Notify parent component
-    if (onWorkflowStepsUpdated) {
-      onWorkflowStepsUpdated(updatedSteps);
+      // Save to database if we have a workflow ID
+      if (workflowId) {
+        const saved = await saveWorkflowSteps(updatedSteps, workflowId);
+        if (!saved) {
+          throw new Error("فشل في تحريك الخطوة");
+        }
+      } else {
+        // Just update state if we don't have a workflow ID yet
+        setWorkflowSteps(updatedSteps);
+        
+        // Notify parent component
+        if (onWorkflowStepsUpdated) {
+          onWorkflowStepsUpdated(updatedSteps);
+        }
+      }
+      
+      // Update editing index if needed
+      if (editingStepIndex === index) {
+        setEditingStepIndex(newIndex);
+      } else if (editingStepIndex === newIndex) {
+        setEditingStepIndex(index);
+      }
+      
+      toast.success(direction === 'up' ? 'تم نقل الخطوة للأعلى' : 'تم نقل الخطوة للأسفل');
+    } catch (error) {
+      console.error("Error moving step:", error);
+      setError('فشل في تحريك الخطوة');
+      toast.error('فشل في تحريك الخطوة');
+    } finally {
+      setIsLoading(false);
     }
-    
-    // Update editing index if needed
-    if (editingStepIndex === index) {
-      setEditingStepIndex(newIndex);
-    } else if (editingStepIndex === newIndex) {
-      setEditingStepIndex(index);
-    }
-    
-    toast.success(direction === 'up' ? 'تم نقل الخطوة للأعلى' : 'تم نقل الخطوة للأسفل');
   };
 
   return {
@@ -314,6 +420,7 @@ export const useWorkflowSteps = ({
     users,
     isLoading,
     isSaving,
+    error,
     workflowId,
     setWorkflowId,
     setCurrentStep,

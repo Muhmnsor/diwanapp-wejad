@@ -39,7 +39,6 @@ import { FormSchema, FormField as FormFieldType, RequestType, WorkflowStep } fro
 import { WorkflowStepsConfig } from "./WorkflowStepsConfig";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { useWorkflowSteps } from "./workflow/useWorkflowSteps";
 
 const requestTypeSchema = z.object({
   name: z.string().min(3, { message: "يجب أن يحتوي الاسم على 3 أحرف على الأقل" }),
@@ -85,13 +84,10 @@ export const RequestTypeDialog = ({
   const [editingFieldIndex, setEditingFieldIndex] = useState<number | null>(null);
   const [currentOption, setCurrentOption] = useState("");
   const [createdRequestTypeId, setCreatedRequestTypeId] = useState<string | null>(null);
+  const [workflowId, setWorkflowId] = useState<string | null>(null);
+  const [savedWorkflowSteps, setSavedWorkflowSteps] = useState<WorkflowStep[]>([]);
   const isEditing = !!requestType;
   const [isWorkflowSaving, setIsWorkflowSaving] = useState(false);
-
-  // Define handleWorkflowStepsUpdated before it's used
-  const handleWorkflowStepsUpdated = (steps: WorkflowStep[]) => {
-    // Just update state with the new steps, we'll save them when the form is submitted
-  };
 
   const form = useForm<RequestTypeFormValues>({
     resolver: zodResolver(requestTypeSchema),
@@ -105,24 +101,6 @@ export const RequestTypeDialog = ({
     },
   });
 
-  const {
-    workflowSteps,
-    workflowId,
-    setWorkflowId,
-    users,
-    isLoading: isStepsLoading,
-    isSaving: isStepsSaving,
-    handleAddStep,
-    handleRemoveStep,
-    handleEditStep,
-    handleMoveStep,
-    saveWorkflowSteps,
-  } = useWorkflowSteps({ 
-    requestTypeId: createdRequestTypeId, 
-    workflowId: requestType?.default_workflow_id || null,
-    onWorkflowStepsUpdated: handleWorkflowStepsUpdated 
-  });
-
   // Load existing request type data when editing
   useEffect(() => {
     if (requestType) {
@@ -134,6 +112,7 @@ export const RequestTypeDialog = ({
       });
       setFormFields(requestType.form_schema.fields || []);
       setCreatedRequestTypeId(requestType.id);
+      setWorkflowId(requestType.default_workflow_id);
     } else {
       form.reset({
         name: "",
@@ -145,6 +124,8 @@ export const RequestTypeDialog = ({
       });
       setFormFields([]);
       setCreatedRequestTypeId(null);
+      setWorkflowId(null);
+      setSavedWorkflowSteps([]);
     }
   }, [requestType, form]);
 
@@ -216,6 +197,12 @@ export const RequestTypeDialog = ({
     });
   };
 
+  // Handle when workflow steps are updated
+  const handleWorkflowStepsUpdated = (steps: WorkflowStep[]) => {
+    console.log("Workflow steps updated:", steps);
+    setSavedWorkflowSteps(steps);
+  };
+
   // Save request type to database
   const saveRequestType = async (values: RequestTypeFormValues) => {
     values.form_schema = { fields: formFields };
@@ -262,7 +249,7 @@ export const RequestTypeDialog = ({
   // Create or update workflow
   const createOrUpdateWorkflow = async (requestTypeId: string) => {
     try {
-      if (isEditing && requestType?.default_workflow_id) {
+      if (workflowId) {
         // Update existing workflow
         const { data, error } = await supabase
           .from("request_workflows")
@@ -271,7 +258,7 @@ export const RequestTypeDialog = ({
             description: `سير عمل تلقائي لنوع الطلب: ${form.getValues("name")}`,
             is_active: true,
           })
-          .eq("id", requestType.default_workflow_id)
+          .eq("id", workflowId)
           .select();
 
         if (error) throw error;
@@ -315,6 +302,44 @@ export const RequestTypeDialog = ({
     }
   };
 
+  // Save workflow steps to the database
+  const saveWorkflowSteps = async (steps: WorkflowStep[], workflowId: string) => {
+    if (!workflowId || steps.length === 0) return true;
+    
+    try {
+      // First delete any existing steps
+      const { error: deleteError } = await supabase
+        .from("workflow_steps")
+        .delete()
+        .eq("workflow_id", workflowId);
+
+      if (deleteError) throw deleteError;
+
+      // Then insert the new steps
+      const stepsToInsert = steps.map((step, index) => ({
+        workflow_id: workflowId,
+        step_order: index + 1,
+        step_name: step.step_name,
+        step_type: step.step_type || 'opinion',
+        approver_type: step.approver_type || 'user',
+        approver_id: step.approver_id,
+        instructions: step.instructions,
+        is_required: step.is_required !== false
+      }));
+
+      const { error: insertError } = await supabase
+        .from("workflow_steps")
+        .insert(stepsToInsert);
+
+      if (insertError) throw insertError;
+      
+      return true;
+    } catch (error) {
+      console.error("Error saving workflow steps:", error);
+      throw error;
+    }
+  };
+
   const onSubmit = async (values: RequestTypeFormValues) => {
     if (formFields.length === 0) {
       toast.error("يجب إضافة حقل واحد على الأقل للنموذج");
@@ -331,23 +356,26 @@ export const RequestTypeDialog = ({
       
       // Step 2: Create/update workflow if we have steps or are editing an existing one
       let workflowResult = null;
+      let newWorkflowId = null;
       
-      if (workflowSteps.length > 0 || (isEditing && requestType?.default_workflow_id)) {
+      if (savedWorkflowSteps.length > 0 || workflowId) {
         setIsWorkflowSaving(true);
         
         // Create or update the workflow
         workflowResult = await createOrUpdateWorkflow(requestTypeId);
         
         if (workflowResult) {
-          // Update the workflowId in the state
-          setWorkflowId(workflowResult.id);
+          newWorkflowId = workflowResult.id;
+          
+          // Update the state with the new workflow ID
+          setWorkflowId(newWorkflowId);
           
           // Save workflow steps
-          await saveWorkflowSteps(workflowSteps, workflowResult.id);
+          await saveWorkflowSteps(savedWorkflowSteps, newWorkflowId);
           
           // Update the request type with the default workflow ID if needed
-          if (!requestType?.default_workflow_id || requestType.default_workflow_id !== workflowResult.id) {
-            await updateDefaultWorkflow(requestTypeId, workflowResult.id);
+          if (!workflowId || workflowId !== newWorkflowId) {
+            await updateDefaultWorkflow(requestTypeId, newWorkflowId);
           }
         }
         
@@ -629,8 +657,8 @@ export const RequestTypeDialog = ({
             </div>
 
             <DialogFooter className="mt-4 flex-row-reverse sm:justify-start">
-              <Button type="submit" disabled={isLoading || isWorkflowSaving || isStepsSaving}>
-                {isLoading || isWorkflowSaving || isStepsSaving
+              <Button type="submit" disabled={isLoading || isWorkflowSaving}>
+                {isLoading || isWorkflowSaving
                   ? (isEditing ? "جارٍ التحديث..." : "جارٍ الإنشاء...") 
                   : (isEditing ? "تحديث نوع الطلب" : "إنشاء نوع الطلب")
                 }
