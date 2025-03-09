@@ -162,7 +162,7 @@ export const useWorkflowSteps = ({
     try {
       // Ensure workflow exists
       const currentWorkflowId = await ensureWorkflowExists();
-
+      
       // Skip database operations if we have a temporary workflow ID
       if (currentWorkflowId === 'temp-workflow-id') {
         updateWorkflowSteps(steps);
