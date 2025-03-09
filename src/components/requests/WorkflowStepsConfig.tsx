@@ -1,10 +1,11 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { WorkflowStep } from "./types";
 import { StepForm } from "./workflow/StepForm";
 import { StepsList } from "./workflow/StepsList";
 import { useWorkflowSteps } from "./workflow/useWorkflowSteps";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
 
 interface WorkflowStepsConfigProps {
   requestTypeId: string | null;
@@ -27,6 +28,13 @@ export const WorkflowStepsConfig = ({
     handleEditStep,
     handleMoveStep,
   } = useWorkflowSteps({ requestTypeId, onWorkflowStepsUpdated });
+
+  // Update parent component whenever workflow steps change
+  useEffect(() => {
+    if (Array.isArray(workflowSteps)) {
+      onWorkflowStepsUpdated(workflowSteps);
+    }
+  }, [workflowSteps, onWorkflowStepsUpdated]);
 
   return (
     <div className="space-y-6">

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { WorkflowStep, User } from "../types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -50,6 +50,7 @@ export const useWorkflowSteps = ({
   useEffect(() => {
     const fetchWorkflowSteps = async () => {
       if (!requestTypeId) {
+        // For new request types, just initialize with empty steps
         setWorkflowSteps([]);
         setWorkflowId(null);
         return;
@@ -102,6 +103,12 @@ export const useWorkflowSteps = ({
     if (workflowId) return workflowId;
 
     try {
+      // For a new request type, we can't create the workflow yet since the request type doesn't exist
+      // We'll return a temporary ID that will be replaced when the actual workflow is created
+      if (!requestTypeId) {
+        return 'temp-workflow-id';
+      }
+
       // Create a new workflow if one doesn't exist
       const { data: newWorkflow, error: createError } = await supabase
         .from('request_workflows')
@@ -132,15 +139,36 @@ export const useWorkflowSteps = ({
     }
   };
 
-  // Save workflow steps
+  // Save workflow steps to local state first
+  const updateWorkflowSteps = useCallback((steps: WorkflowStep[]) => {
+    setWorkflowSteps(steps);
+    
+    // Notify parent component about the updated steps
+    if (onWorkflowStepsUpdated) {
+      onWorkflowStepsUpdated(steps);
+    }
+  }, [onWorkflowStepsUpdated]);
+
+  // Save workflow steps to database 
   const saveWorkflowSteps = async (steps: WorkflowStep[]) => {
-    if (!requestTypeId) return;
+    if (!requestTypeId) {
+      // For new request types, just update the local state
+      updateWorkflowSteps(steps);
+      return;
+    }
     
     setIsLoading(true);
 
     try {
       // Ensure workflow exists
       const currentWorkflowId = await ensureWorkflowExists();
+
+      // Skip database operations if we have a temporary workflow ID
+      if (currentWorkflowId === 'temp-workflow-id') {
+        updateWorkflowSteps(steps);
+        setIsLoading(false);
+        return;
+      }
 
       // Delete existing steps
       if (steps.length > 0) {
@@ -167,10 +195,8 @@ export const useWorkflowSteps = ({
         if (insertError) throw insertError;
       }
 
-      setWorkflowSteps(steps);
-      if (onWorkflowStepsUpdated) {
-        onWorkflowStepsUpdated(steps);
-      }
+      // Update local state
+      updateWorkflowSteps(steps);
       toast.success('تم حفظ خطوات سير العمل بنجاح');
     } catch (error) {
       console.error('Error saving workflow steps:', error);

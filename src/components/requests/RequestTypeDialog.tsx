@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -99,7 +98,6 @@ export const RequestTypeDialog = ({
     },
   });
 
-  // Load existing request type data when editing
   useEffect(() => {
     if (requestType) {
       form.reset({
@@ -111,7 +109,6 @@ export const RequestTypeDialog = ({
       setFormFields(requestType.form_schema.fields || []);
       setCreatedRequestTypeId(requestType.id);
 
-      // Fetch workflow steps if this request type has a default workflow
       const fetchWorkflowSteps = async () => {
         if (requestType.default_workflow_id) {
           const { data, error } = await supabase
@@ -214,6 +211,7 @@ export const RequestTypeDialog = ({
   };
 
   const handleWorkflowStepsUpdated = (steps) => {
+    console.log("Workflow steps updated:", steps);
     setWorkflowSteps(steps);
   };
 
@@ -257,6 +255,9 @@ export const RequestTypeDialog = ({
   const createWorkflow = async (requestTypeId: string) => {
     if (workflowSteps.length === 0) return null;
 
+    console.log("Creating workflow for request type:", requestTypeId);
+    console.log("With steps:", workflowSteps);
+
     if (isEditing && requestType?.default_workflow_id) {
       // Update existing workflow
       const { data, error } = await supabase
@@ -293,6 +294,9 @@ export const RequestTypeDialog = ({
   const saveWorkflowSteps = async (workflowId: string) => {
     if (workflowSteps.length === 0) return;
 
+    console.log("Saving workflow steps for workflow:", workflowId);
+    console.log("Steps to save:", workflowSteps);
+
     // If editing, first delete existing steps
     if (isEditing && requestType?.default_workflow_id) {
       const { error: deleteError } = await supabase
@@ -303,21 +307,25 @@ export const RequestTypeDialog = ({
       if (deleteError) throw deleteError;
     }
 
-    const stepsToInsert = workflowSteps.map(step => ({
+    const stepsToInsert = workflowSteps.map((step, index) => ({
       workflow_id: workflowId,
-      step_order: step.step_order,
+      step_order: index + 1,
       step_name: step.step_name,
       step_type: step.step_type,
       approver_id: step.approver_id,
       instructions: step.instructions,
-      is_required: step.is_required
+      is_required: step.is_required,
+      approver_type: 'user'
     }));
 
     const { error } = await supabase
       .from("workflow_steps")
       .insert(stepsToInsert);
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error inserting workflow steps:", error);
+      throw error;
+    }
   };
 
   const updateDefaultWorkflow = async (requestTypeId: string, workflowId: string) => {
@@ -337,11 +345,14 @@ export const RequestTypeDialog = ({
 
     setIsLoading(true);
     try {
+      console.log("Submitting form with workflow steps:", workflowSteps);
+      
       const requestTypeResult = await saveRequestType(values);
       const requestTypeId = requestTypeResult.id;
       setCreatedRequestTypeId(requestTypeId);
       
       if (workflowSteps.length > 0) {
+        console.log("Creating workflow for steps:", workflowSteps.length);
         const workflow = await createWorkflow(requestTypeId);
         
         if (workflow) {
@@ -448,7 +459,6 @@ export const RequestTypeDialog = ({
             <div className="flex-1 overflow-hidden space-y-6">
               <ScrollArea className="h-[calc(65vh-220px)]">
                 <div className="px-1 space-y-8">
-                  {/* Form Fields Section */}
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-medium">حقول النموذج</h3>
@@ -616,7 +626,6 @@ export const RequestTypeDialog = ({
                     )}
                   </div>
 
-                  {/* Workflow Steps Section */}
                   <WorkflowStepsConfig 
                     requestTypeId={createdRequestTypeId}
                     onWorkflowStepsUpdated={handleWorkflowStepsUpdated}
