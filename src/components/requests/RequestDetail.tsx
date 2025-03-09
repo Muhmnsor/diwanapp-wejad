@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -63,56 +64,18 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [comments, setComments] = useState("");
 
-  const { data: request, isLoading } = useQuery({
-    queryKey: ["request", requestId],
+  // Use the new RPC function to fetch request details
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["request-details", requestId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("requests")
-        .select(`
-          *,
-          request_type:request_types(*),
-          workflow:request_workflows(*),
-          current_step:workflow_steps(*)
-        `)
-        .eq("id", requestId)
-        .single();
+        .rpc('get_request_details', { p_request_id: requestId });
       
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  const { data: approvals, isLoading: approvalsLoading } = useQuery({
-    queryKey: ["approvals", requestId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("request_approvals")
-        .select(`
-          *,
-          step:workflow_steps(*),
-          approver:profiles(display_name, email)
-        `)
-        .eq("request_id", requestId)
-        .order("created_at");
+      if (error) {
+        console.error("Error fetching request details:", error);
+        throw error;
+      }
       
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  const { data: attachments, isLoading: attachmentsLoading } = useQuery({
-    queryKey: ["attachments", requestId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("request_attachments")
-        .select(`
-          *,
-          uploader:profiles(display_name, email)
-        `)
-        .eq("request_id", requestId)
-        .order("created_at");
-      
-      if (error) throw error;
       return data;
     }
   });
@@ -123,7 +86,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
         .from("request_approvals")
         .insert({
           request_id: requestId,
-          step_id: request?.current_step?.id,
+          step_id: data?.request?.current_step_id,
           approver_id: user?.id,
           status: "approved",
           comments: comments,
@@ -145,8 +108,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
       return approvalData;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["request", requestId] });
-      queryClient.invalidateQueries({ queryKey: ["approvals", requestId] });
+      queryClient.invalidateQueries({ queryKey: ["request-details", requestId] });
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       toast.success("تمت الموافقة على الطلب بنجاح");
       setIsApproveDialogOpen(false);
@@ -164,7 +126,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
         .from("request_approvals")
         .insert({
           request_id: requestId,
-          step_id: request?.current_step?.id,
+          step_id: data?.request?.current_step_id,
           approver_id: user?.id,
           status: "rejected",
           comments: comments,
@@ -186,8 +148,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
       return rejectionData;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["request", requestId] });
-      queryClient.invalidateQueries({ queryKey: ["approvals", requestId] });
+      queryClient.invalidateQueries({ queryKey: ["request-details", requestId] });
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       toast.success("تم رفض الطلب بنجاح");
       setIsRejectDialogOpen(false);
@@ -282,9 +243,21 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
     return <div>جاري التحميل...</div>;
   }
 
-  if (!request) {
+  if (error) {
+    console.error("Error loading request details:", error);
+    return <div>حدث خطأ أثناء تحميل تفاصيل الطلب: {error.message}</div>;
+  }
+
+  if (!data || !data.request) {
     return <div>لم يتم العثور على الطلب</div>;
   }
+
+  const request = data.request;
+  const requestType = data.request_type;
+  const workflow = data.workflow;
+  const currentStep = data.current_step;
+  const approvals = data.approvals || [];
+  const attachments = data.attachments || [];
 
   return (
     <>
@@ -318,7 +291,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
                   <div>
                     <CardTitle>{request.title}</CardTitle>
                     <CardDescription>
-                      نوع الطلب: {request.request_type?.name}
+                      نوع الطلب: {requestType?.name || "غير محدد"}
                     </CardDescription>
                   </div>
                   <div className="flex flex-col items-end gap-2">
@@ -360,9 +333,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
                   </TabsContent>
                   
                   <TabsContent value="approvals">
-                    {approvalsLoading ? (
-                      <div>جاري التحميل...</div>
-                    ) : approvals && approvals.length > 0 ? (
+                    {approvals.length > 0 ? (
                       <Table>
                         <TableHeader>
                           <TableRow>
@@ -399,9 +370,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
                   </TabsContent>
                   
                   <TabsContent value="attachments">
-                    {attachmentsLoading ? (
-                      <div>جاري التحميل...</div>
-                    ) : attachments && attachments.length > 0 ? (
+                    {attachments.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {attachments.map((attachment) => (
                           <Card key={attachment.id}>
@@ -440,21 +409,21 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
               <CardHeader>
                 <CardTitle>مسار العمل</CardTitle>
                 <CardDescription>
-                  {request.workflow?.name || "لا يوجد مسار عمل محدد"}
+                  {workflow?.name || "لا يوجد مسار عمل محدد"}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {request.workflow ? (
+                {workflow ? (
                   <div className="space-y-4">
                     <div className="p-4 bg-gray-50 rounded-md">
                       <h4 className="font-medium mb-2">الخطوة الحالية</h4>
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4 text-primary" />
-                        <span>{request.current_step?.step_name || "غير محدد"}</span>
+                        <span>{currentStep?.step_name || "غير محدد"}</span>
                       </div>
-                      {request.current_step?.instructions && (
+                      {currentStep?.instructions && (
                         <p className="text-sm text-muted-foreground mt-2">
-                          {request.current_step.instructions}
+                          {currentStep.instructions}
                         </p>
                       )}
                     </div>
