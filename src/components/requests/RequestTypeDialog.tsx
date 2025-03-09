@@ -216,12 +216,12 @@ export const RequestTypeDialog = ({
   const saveWorkflowSteps = async (workflowId: string) => {
     if (workflowSteps.length === 0) return;
 
-    // Prepare steps for insertion
+    // Prepare steps for insertion - remove approver_type and include step_type
     const stepsToInsert = workflowSteps.map(step => ({
       workflow_id: workflowId,
       step_order: step.step_order,
       step_name: step.step_name,
-      approver_type: step.approver_type,
+      step_type: step.step_type,
       approver_id: step.approver_id,
       instructions: step.instructions,
       is_required: step.is_required
