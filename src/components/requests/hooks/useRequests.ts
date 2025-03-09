@@ -90,7 +90,7 @@ export const useRequests = () => {
     enabled: !!user
   });
 
-  // Fixed create request mutation with better error handling and debugging
+  // Enhanced create request mutation with detailed error tracking
   const createRequest = useMutation({
     mutationFn: async (requestData: {
       request_type_id: string;
@@ -103,6 +103,7 @@ export const useRequests = () => {
       if (!user) throw new Error("User not authenticated");
       
       try {
+        console.log("=== بدء إنشاء طلب جديد ===");
         console.log("Creating request with provided data:", requestData);
         
         // Fetch the request type to get form schema and workflow
@@ -149,6 +150,7 @@ export const useRequests = () => {
           
           if (firstStep) {
             currentStepId = firstStep.id;
+            console.log("Found first workflow step:", currentStepId);
           }
         }
         
@@ -175,6 +177,10 @@ export const useRequests = () => {
 
         if (error) {
           console.error("Error creating request:", error);
+          console.error("Error code:", error.code);
+          console.error("Error message:", error.message);
+          console.error("Error details:", error.details);
+          
           // Provide more specific error message based on the error type
           if (error.code === '23505') {
             throw new Error("طلب مشابه موجود بالفعل");
@@ -187,7 +193,7 @@ export const useRequests = () => {
           } else if (error.code === '23502') {
             throw new Error("البيانات المطلوبة غير مكتملة");
           } else if (error.message && error.message.includes("policy")) {
-            throw new Error("ليس لديك صلاحية لإنشاء طلب");
+            throw new Error("ليس لديك صلاحية لإنشاء طلب. تأكد من تسجيل الدخول بشكل صحيح");
           } else {
             throw new Error(`فشل إنشاء الطلب: ${error.message}`);
           }
@@ -198,6 +204,7 @@ export const useRequests = () => {
         }
         
         console.log("Request created successfully:", data[0]);
+        console.log("=== تم إنشاء الطلب بنجاح ===");
         
         // If there's a current step, create approval record
         if (currentStepId) {
