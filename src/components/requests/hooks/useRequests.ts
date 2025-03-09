@@ -14,6 +14,8 @@ export const useRequests = () => {
     if (!user) throw new Error("User not authenticated");
     
     try {
+      console.log("Fetching incoming requests for user:", user.id);
+      
       // Fetch workflow steps where user is approver
       const { data: approverSteps, error: approverError } = await supabase
         .from("workflow_steps")
@@ -26,10 +28,12 @@ export const useRequests = () => {
       }
       
       if (!approverSteps || approverSteps.length === 0) {
+        console.log("No approver steps found for user");
         return [];
       }
       
       const stepIds = approverSteps.map(step => step.id);
+      console.log("Found step IDs for approver:", stepIds);
       
       // Fetch requests for those steps
       const { data, error } = await supabase
@@ -43,9 +47,12 @@ export const useRequests = () => {
       
       if (error) {
         console.error("Error fetching incoming requests:", error);
+        console.error("Error code:", error.code);
+        console.error("Error message:", error.message);
         return [];
       }
       
+      console.log(`Fetched ${data?.length || 0} incoming requests`);
       return data || [];
     } catch (error) {
       console.error("Error in fetchIncomingRequests:", error);
@@ -57,6 +64,8 @@ export const useRequests = () => {
     if (!user) throw new Error("User not authenticated");
     
     try {
+      console.log("Fetching outgoing requests for user:", user.id);
+      
       const { data, error } = await supabase
         .from("requests")
         .select(`
@@ -68,9 +77,12 @@ export const useRequests = () => {
       
       if (error) {
         console.error("Error fetching outgoing requests:", error);
+        console.error("Error code:", error.code);
+        console.error("Error message:", error.message);
         return [];
       }
       
+      console.log(`Fetched ${data?.length || 0} outgoing requests`);
       return data || [];
     } catch (error) {
       console.error("Error in fetchOutgoingRequests:", error);
@@ -272,6 +284,8 @@ export const useRequests = () => {
         
         if (approvalError) {
           console.error("Error creating approval:", approvalError);
+          console.error("Error code:", approvalError.code);
+          console.error("Error message:", approvalError.message);
           throw new Error(`Failed to create approval record: ${approvalError.message}`);
         }
         
@@ -348,6 +362,8 @@ export const useRequests = () => {
         
         if (updateError) {
           console.error("Error updating request:", updateError);
+          console.error("Error code:", updateError.code);
+          console.error("Error message:", updateError.message);
           throw new Error(`Failed to update request: ${updateError.message}`);
         }
         
@@ -394,6 +410,8 @@ export const useRequests = () => {
         
         if (rejectionError) {
           console.error("Error creating rejection:", rejectionError);
+          console.error("Error code:", rejectionError.code);
+          console.error("Error message:", rejectionError.message);
           throw new Error(`Failed to create rejection record: ${rejectionError.message}`);
         }
         
@@ -405,6 +423,8 @@ export const useRequests = () => {
         
         if (updateError) {
           console.error("Error updating request:", updateError);
+          console.error("Error code:", updateError.code);
+          console.error("Error message:", updateError.message);
           throw new Error(`Failed to update request: ${updateError.message}`);
         }
         
