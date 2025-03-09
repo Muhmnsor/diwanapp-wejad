@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -25,9 +25,6 @@ import {
 } from "@/components/ui/form";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { ImageUpload } from "@/components/ui/image-upload";
-import { supabase } from "@/integrations/supabase/client";
-import { v4 as uuidv4 } from "uuid";
 
 interface DynamicFormProps {
   schema: FormSchema;
@@ -43,9 +40,6 @@ export const DynamicForm = ({
   isSubmitting = false,
 }: DynamicFormProps) => {
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [fileUploads, setFileUploads] = useState<Record<string, File | null>>({});
-  const [fileUrls, setFileUrls] = useState<Record<string, string>>({});
-  const [isUploading, setIsUploading] = useState(false);
   
   // Build zod schema dynamically based on the form schema
   const buildZodSchema = (fields: FormFieldType[]) => {
@@ -113,8 +107,7 @@ export const DynamicForm = ({
           break;
           
         case "file":
-          // For file type, we'll store the file URL after upload
-          fieldSchema = z.string();
+          fieldSchema = z.any(); // File handling would need more specific validation
           if (!field.required) {
             fieldSchema = fieldSchema.optional();
           }
@@ -151,70 +144,24 @@ export const DynamicForm = ({
     defaultValues: prepareDefaultValues(),
   });
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = (data: any) => {
     try {
-      setValidationErrors([]);
+      console.log("Form data before submission:", data);
       
-      // First validate the data
+      // Additional validation to ensure all data conforms to expected types
       const errors = validateFormDataTypes(data, schema.fields);
+      
       if (errors.length > 0) {
         setValidationErrors(errors);
         return;
       }
       
-      // If there are files to upload, upload them first
-      const hasFiles = Object.keys(fileUploads).length > 0;
-      if (hasFiles) {
-        setIsUploading(true);
-        
-        // Process all file uploads and collect URLs
-        const fileData: Record<string, any> = {};
-        
-        for (const fieldName in fileUploads) {
-          const file = fileUploads[fieldName];
-          if (file) {
-            try {
-              const fileName = `${uuidv4()}-${file.name}`;
-              const { error: uploadError, data: uploadData } = await supabase.storage
-                .from('request-attachments')
-                .upload(fileName, file);
-                
-              if (uploadError) {
-                throw new Error(`فشل في رفع الملف: ${uploadError.message}`);
-              }
-              
-              const { data: { publicUrl } } = supabase.storage
-                .from('request-attachments')
-                .getPublicUrl(fileName);
-                
-              fileData[fieldName] = {
-                url: publicUrl,
-                name: file.name,
-                type: file.type
-              };
-            } catch (error: any) {
-              setValidationErrors([`فشل في رفع الملف: ${error.message || 'خطأ غير معروف'}`]);
-              setIsUploading(false);
-              return;
-            }
-          }
-        }
-        
-        // Update the form data with file URLs
-        for (const fieldName in fileData) {
-          data[fieldName] = fileData[fieldName];
-        }
-        
-        setIsUploading(false);
-      }
-      
-      // Now submit the form with file URLs included
-      console.log("Form data before submission:", data);
+      setValidationErrors([]);
       onSubmit(data);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error in form submission:", error);
       setValidationErrors([
-        `حدث خطأ أثناء معالجة النموذج: ${error.message || "يرجى التحقق من صحة البيانات المدخلة"}`
+        "حدث خطأ أثناء معالجة النموذج. يرجى التحقق من صحة البيانات المدخلة."
       ]);
     }
   };
@@ -269,40 +216,11 @@ export const DynamicForm = ({
             });
           }
           break;
-          
-        case "file":
-          // Check if a file is selected for required file fields
-          if (field.required && !fileUploads[field.name] && !value) {
-            errors.push(`الملف مطلوب لحقل ${field.label}`);
-          }
-          break;
       }
     });
     
     return errors;
   };
-
-  // Handle file change
-  const handleFileChange = (fieldName: string, file: File | null) => {
-    if (file) {
-      setFileUploads((prev) => ({ ...prev, [fieldName]: file }));
-      
-      // Generate a preview URL for images
-      if (file.type.startsWith('image/')) {
-        const url = URL.createObjectURL(file);
-        setFileUrls((prev) => ({ ...prev, [fieldName]: url }));
-      }
-    }
-  };
-
-  // Clean up object URLs on component unmount
-  useEffect(() => {
-    return () => {
-      Object.values(fileUrls).forEach(url => {
-        URL.revokeObjectURL(url);
-      });
-    };
-  }, [fileUrls]);
 
   // Render form fields based on the schema
   const renderFields = (fields: FormFieldType[], parentPath = "") => {
@@ -444,13 +362,12 @@ export const DynamicForm = ({
                 <FormItem>
                   <FormLabel>{fieldDef.label} {fieldDef.required && <span className="text-destructive">*</span>}</FormLabel>
                   <FormControl>
-                    <ImageUpload 
-                      onChange={(file) => {
-                        handleFileChange(fieldDef.name, file);
-                        // Set a placeholder value to satisfy form validation
-                        field.onChange(file ? file.name : '');
-                      }}
-                      value={fileUrls[fieldDef.name]}
+                    <Input 
+                      type="file" 
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        field.onChange(file);
+                      }} 
                     />
                   </FormControl>
                   <FormMessage />
@@ -484,8 +401,8 @@ export const DynamicForm = ({
         
         {renderFields(schema.fields)}
         
-        <Button type="submit" disabled={isSubmitting || isUploading}>
-          {isUploading ? "جاري رفع الملفات..." : isSubmitting ? "جاري التقديم..." : "تقديم الطلب"}
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "جاري التقديم..." : "تقديم الطلب"}
         </Button>
       </form>
     </Form>
