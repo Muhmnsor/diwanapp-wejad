@@ -8,18 +8,21 @@ import { getInitialStepState } from "./utils";
 interface UseWorkflowStepsProps {
   requestTypeId: string | null;
   onWorkflowStepsUpdated?: (steps: WorkflowStep[]) => void;
+  initialSteps?: WorkflowStep[];
 }
 
 export const useWorkflowSteps = ({ 
   requestTypeId,
-  onWorkflowStepsUpdated
+  onWorkflowStepsUpdated,
+  initialSteps = []
 }: UseWorkflowStepsProps) => {
-  const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
+  const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>(initialSteps);
   const [workflowId, setWorkflowId] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<WorkflowStep>(getInitialStepState(1));
   const [editingStepIndex, setEditingStepIndex] = useState<number | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   // Fetch users for approver selection
   useEffect(() => {
@@ -46,12 +49,27 @@ export const useWorkflowSteps = ({
     fetchUsers();
   }, []);
 
+  // Initialize with initialSteps if provided
+  useEffect(() => {
+    if (initialSteps.length > 0 && !initialized) {
+      console.log("Initializing workflow steps from initialSteps:", initialSteps);
+      setWorkflowSteps(initialSteps);
+      setCurrentStep(getInitialStepState(initialSteps.length + 1));
+      setInitialized(true);
+    }
+  }, [initialSteps, initialized]);
+
   // Fetch workflow steps when request type changes
   useEffect(() => {
     const fetchWorkflowSteps = async () => {
       if (!requestTypeId) {
-        // For new request types, just initialize with empty steps
-        setWorkflowSteps([]);
+        // For new request types, use initialSteps or empty array
+        if (!initialized && initialSteps.length > 0) {
+          setWorkflowSteps(initialSteps);
+          setInitialized(true);
+        } else if (!initialized) {
+          setWorkflowSteps([]);
+        }
         setWorkflowId(null);
         return;
       }
@@ -72,8 +90,13 @@ export const useWorkflowSteps = ({
         setWorkflowId(workflowId);
 
         if (!workflowId) {
-          setWorkflowSteps([]);
+          if (!initialized && initialSteps.length > 0) {
+            setWorkflowSteps(initialSteps);
+          } else if (!initialized) {
+            setWorkflowSteps([]);
+          }
           setIsLoading(false);
+          setInitialized(true);
           return;
         }
 
@@ -87,17 +110,26 @@ export const useWorkflowSteps = ({
         if (stepsError) throw stepsError;
         
         console.log("Fetched workflow steps:", steps);
-        setWorkflowSteps(steps || []);
+        setWorkflowSteps(steps || initialSteps);
+        setInitialized(true);
       } catch (error) {
         console.error('Error fetching workflow steps:', error);
         toast.error('فشل في جلب خطوات سير العمل');
+        
+        // If there's an error, use initialSteps if available
+        if (!initialized && initialSteps.length > 0) {
+          setWorkflowSteps(initialSteps);
+          setInitialized(true);
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchWorkflowSteps();
-  }, [requestTypeId]);
+    if (!initialized) {
+      fetchWorkflowSteps();
+    }
+  }, [requestTypeId, initialSteps, initialized]);
 
   // Create or update a workflow for the request type
   const ensureWorkflowExists = async (): Promise<string> => {
@@ -145,6 +177,7 @@ export const useWorkflowSteps = ({
 
   // Save workflow steps to local state first
   const updateWorkflowSteps = useCallback((steps: WorkflowStep[]) => {
+    console.log("Updating workflow steps locally:", steps);
     setWorkflowSteps(steps);
     
     // Notify parent component about the updated steps
@@ -157,6 +190,7 @@ export const useWorkflowSteps = ({
   const saveWorkflowSteps = async (steps: WorkflowStep[]) => {
     if (!requestTypeId) {
       // For new request types, just update the local state
+      console.log("Saving steps locally for new request type:", steps);
       updateWorkflowSteps(steps);
       return;
     }
@@ -238,6 +272,9 @@ export const useWorkflowSteps = ({
       updatedSteps = [...workflowSteps, { ...currentStep }];
     }
 
+    console.log("Adding/updating step:", currentStep);
+    console.log("Updated steps:", updatedSteps);
+    
     saveWorkflowSteps(updatedSteps);
     setCurrentStep(getInitialStepState(updatedSteps.length + 1));
     setEditingStepIndex(null);
@@ -250,6 +287,9 @@ export const useWorkflowSteps = ({
       step_order: i + 1
     }));
     
+    console.log("Removing step at index:", index);
+    console.log("Updated steps after removal:", updatedSteps);
+    
     saveWorkflowSteps(updatedSteps);
 
     if (editingStepIndex === index) {
@@ -260,6 +300,7 @@ export const useWorkflowSteps = ({
 
   // Edit a step
   const handleEditStep = (index: number) => {
+    console.log("Editing step at index:", index);
     setCurrentStep({ ...workflowSteps[index] });
     setEditingStepIndex(index);
   };
@@ -284,6 +325,9 @@ export const useWorkflowSteps = ({
       step.step_order = i + 1;
     });
 
+    console.log(`Moving step ${index} ${direction} to ${newIndex}`);
+    console.log("Updated steps after move:", updatedSteps);
+    
     saveWorkflowSteps(updatedSteps);
     
     // Update editing index if needed

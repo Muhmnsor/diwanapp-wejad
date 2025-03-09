@@ -9,11 +9,13 @@ import { Separator } from "@/components/ui/separator";
 interface WorkflowStepsConfigProps {
   requestTypeId: string | null;
   onWorkflowStepsUpdated: (steps: WorkflowStep[]) => void;
+  initialSteps?: WorkflowStep[];
 }
 
 export const WorkflowStepsConfig = ({ 
   requestTypeId, 
-  onWorkflowStepsUpdated 
+  onWorkflowStepsUpdated,
+  initialSteps = []
 }: WorkflowStepsConfigProps) => {
   const {
     workflowSteps,
@@ -26,7 +28,11 @@ export const WorkflowStepsConfig = ({
     handleRemoveStep,
     handleEditStep,
     handleMoveStep,
-  } = useWorkflowSteps({ requestTypeId, onWorkflowStepsUpdated });
+  } = useWorkflowSteps({ 
+    requestTypeId, 
+    onWorkflowStepsUpdated,
+    initialSteps
+  });
 
   // Update parent component whenever workflow steps change
   useEffect(() => {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -35,7 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
-import { FormSchema, FormField as FormFieldType, RequestType } from "./types";
+import { FormSchema, FormField as FormFieldType, RequestType, WorkflowStep } from "./types";
 import { WorkflowStepsConfig } from "./WorkflowStepsConfig";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -83,7 +82,7 @@ export const RequestTypeDialog = ({
   });
   const [editingFieldIndex, setEditingFieldIndex] = useState<number | null>(null);
   const [currentOption, setCurrentOption] = useState("");
-  const [workflowSteps, setWorkflowSteps] = useState([]);
+  const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
   const [createdRequestTypeId, setCreatedRequestTypeId] = useState<string | null>(null);
   const isEditing = !!requestType;
 
@@ -217,7 +216,7 @@ export const RequestTypeDialog = ({
   };
 
   const handleWorkflowStepsUpdated = (steps) => {
-    console.log("Workflow steps updated:", steps);
+    console.log("Workflow steps updated in RequestTypeDialog:", steps);
     setWorkflowSteps(steps);
   };
 
@@ -305,14 +304,14 @@ export const RequestTypeDialog = ({
     }
   };
 
-  const saveWorkflowSteps = async (workflowId: string) => {
-    if (workflowSteps.length === 0) {
+  const saveWorkflowSteps = async (workflowId: string, steps: WorkflowStep[]) => {
+    if (steps.length === 0) {
       console.log("No workflow steps to save");
       return;
     }
 
     console.log("Saving workflow steps for workflow:", workflowId);
-    console.log("Steps to save:", workflowSteps);
+    console.log("Steps to save:", steps);
 
     try {
       // If editing, first delete existing steps
@@ -330,7 +329,7 @@ export const RequestTypeDialog = ({
         console.log("Deleted existing workflow steps");
       }
 
-      const stepsToInsert = workflowSteps.map((step, index) => ({
+      const stepsToInsert = steps.map((step, index) => ({
         workflow_id: workflowId,
         step_order: index + 1,
         step_name: step.step_name,
@@ -385,6 +384,13 @@ export const RequestTypeDialog = ({
       return;
     }
 
+    if (workflowSteps.length === 0) {
+      toast.error("يجب إضافة خطوة واحدة على الأقل لسير العمل");
+      return;
+    }
+
+    console.log("Starting form submission with workflow steps:", workflowSteps);
+    
     setIsLoading(true);
     try {
       console.log("Submitting form with workflow steps count:", workflowSteps.length);
@@ -397,17 +403,14 @@ export const RequestTypeDialog = ({
       console.log("Request type saved:", requestTypeResult);
       
       // 2. Create or update workflow
-      if (workflowSteps.length > 0) {
-        console.log("Creating workflow for steps:", workflowSteps.length);
-        const workflow = await createWorkflow(requestTypeId);
+      const workflow = await createWorkflow(requestTypeId);
+      
+      if (workflow) {
+        // 3. Make sure the request type points to the workflow first
+        await updateDefaultWorkflow(requestTypeId, workflow.id);
         
-        if (workflow) {
-          // 3. Make sure the request type points to the workflow first
-          await updateDefaultWorkflow(requestTypeId, workflow.id);
-          
-          // 4. Then save workflow steps
-          await saveWorkflowSteps(workflow.id);
-        }
+        // 4. Then save workflow steps
+        await saveWorkflowSteps(workflow.id, workflowSteps);
       }
 
       toast.success(isEditing ? "تم تحديث نوع الطلب بنجاح" : "تم إنشاء نوع الطلب بنجاح");
@@ -675,6 +678,7 @@ export const RequestTypeDialog = ({
                   <WorkflowStepsConfig 
                     requestTypeId={createdRequestTypeId}
                     onWorkflowStepsUpdated={handleWorkflowStepsUpdated}
+                    initialSteps={workflowSteps}
                   />
                 </div>
               </ScrollArea>
