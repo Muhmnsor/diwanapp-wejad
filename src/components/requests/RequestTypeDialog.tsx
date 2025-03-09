@@ -42,7 +42,8 @@ import {
 } from "@/components/ui/select";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { FormSchema, FormField as FormFieldType } from "./types";
-import { WorkflowStepsConfig, WorkflowStep } from "./WorkflowStepsConfig";
+import { WorkflowStepsConfig } from "./WorkflowStepsConfig";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const requestTypeSchema = z.object({
   name: z.string().min(3, { message: "يجب أن يحتوي الاسم على 3 أحرف على الأقل" }),
@@ -85,7 +86,7 @@ export const RequestTypeDialog = ({
   });
   const [editingFieldIndex, setEditingFieldIndex] = useState<number | null>(null);
   const [currentOption, setCurrentOption] = useState("");
-  const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
+  const [workflowSteps, setWorkflowSteps] = useState([]);
   const [activeTab, setActiveTab] = useState("form-fields");
   const [createdRequestTypeId, setCreatedRequestTypeId] = useState<string | null>(null);
 
@@ -170,7 +171,7 @@ export const RequestTypeDialog = ({
     });
   };
 
-  const handleWorkflowStepsUpdated = (steps: WorkflowStep[]) => {
+  const handleWorkflowStepsUpdated = (steps) => {
     setWorkflowSteps(steps);
   };
 
@@ -216,7 +217,7 @@ export const RequestTypeDialog = ({
   const saveWorkflowSteps = async (workflowId: string) => {
     if (workflowSteps.length === 0) return;
 
-    // Prepare steps for insertion - remove approver_type and include step_type
+    // Prepare steps for insertion
     const stepsToInsert = workflowSteps.map(step => ({
       workflow_id: workflowId,
       step_order: step.step_order,
@@ -294,7 +295,7 @@ export const RequestTypeDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-4xl rtl" dir="rtl">
         <DialogHeader>
           <DialogTitle>إضافة نوع طلب جديد</DialogTitle>
           <DialogDescription>
@@ -302,70 +303,73 @@ export const RequestTypeDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="form-fields">حقول النموذج</TabsTrigger>
-            <TabsTrigger value="workflow">خطوات سير العمل</TabsTrigger>
-          </TabsList>
-          
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                <div className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>اسم نوع الطلب</FormLabel>
-                        <FormControl>
-                          <Input placeholder="أدخل اسم نوع الطلب" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Basic info fields - moved above the tabs */}
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>اسم نوع الطلب</FormLabel>
+                      <FormControl>
+                        <Input placeholder="أدخل اسم نوع الطلب" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>الوصف</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="أدخل وصفاً لنوع الطلب (اختياري)"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <FormField
+                  control={form.control}
+                  name="is_active"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 h-[72px]">
+                      <div className="space-y-0.5">
+                        <FormLabel>نشط</FormLabel>
+                        <FormDescription>
+                          تفعيل أو تعطيل نوع الطلب
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-                  <FormField
-                    control={form.control}
-                    name="is_active"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                        <div className="space-y-0.5">
-                          <FormLabel>نشط</FormLabel>
-                          <FormDescription>
-                            تفعيل أو تعطيل نوع الطلب
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>الوصف</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="أدخل وصفاً لنوع الطلب (اختياري)"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-                <TabsContent value="form-fields" className="mt-0">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="form-fields">حقول النموذج</TabsTrigger>
+                <TabsTrigger value="workflow">خطوات سير العمل</TabsTrigger>
+              </TabsList>
+              
+              <ScrollArea className="max-h-[60vh] overflow-y-auto pr-4 mt-4">
+                <TabsContent value="form-fields" className="mt-4">
                   <div className="space-y-6">
                     <h3 className="text-lg font-medium">إدارة حقول النموذج</h3>
                     <Card>
@@ -373,7 +377,7 @@ export const RequestTypeDialog = ({
                         <h4 className="text-sm font-medium">إضافة حقل جديد</h4>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div className="space-y-2">
                             <label className="text-sm font-medium">اسم الحقل</label>
                             <Input
@@ -396,7 +400,7 @@ export const RequestTypeDialog = ({
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div className="space-y-2">
                             <label className="text-sm font-medium">نوع الحقل</label>
                             <Select
@@ -480,7 +484,7 @@ export const RequestTypeDialog = ({
                         <Button
                           type="button"
                           onClick={handleAddField}
-                          className="ms-auto"
+                          className="mr-auto"
                         >
                           {editingFieldIndex !== null ? "تحديث الحقل" : "إضافة الحقل"}
                         </Button>
@@ -530,25 +534,25 @@ export const RequestTypeDialog = ({
                   </div>
                 </TabsContent>
 
-                <TabsContent value="workflow" className="mt-0">
+                <TabsContent value="workflow" className="mt-4">
                   <WorkflowStepsConfig 
                     requestTypeId={createdRequestTypeId}
                     onWorkflowStepsUpdated={handleWorkflowStepsUpdated}
                   />
                 </TabsContent>
-              </div>
+              </ScrollArea>
+            </Tabs>
 
-              <DialogFooter>
-                <Button variant="outline" type="button" onClick={onClose}>
-                  إلغاء
-                </Button>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? "جارٍ الإنشاء..." : "إنشاء نوع الطلب"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </Tabs>
+            <DialogFooter className="mt-6 flex-row-reverse sm:justify-start">
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "جارٍ الإنشاء..." : "إنشاء نوع الطلب"}
+              </Button>
+              <Button variant="outline" type="button" onClick={onClose}>
+                إلغاء
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
