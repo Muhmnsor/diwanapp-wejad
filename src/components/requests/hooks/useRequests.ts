@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +12,6 @@ export const useRequests = () => {
   const fetchIncomingRequests = async () => {
     if (!user) throw new Error("User not authenticated");
     
-    // Get requests where the user is an approver
     const { data: approverSteps, error: approverError } = await supabase
       .from("workflow_steps")
       .select("id")
@@ -92,7 +90,6 @@ export const useRequests = () => {
       let currentStepId = null;
       
       if (workflowId) {
-        // Get the first step in the workflow
         const { data: firstStep, error: stepError } = await supabase
           .from("workflow_steps")
           .select("id")
@@ -109,7 +106,6 @@ export const useRequests = () => {
         }
       }
       
-      // Create the request
       const { data, error } = await supabase
         .from("requests")
         .insert({
@@ -125,7 +121,6 @@ export const useRequests = () => {
         throw error;
       }
       
-      // If there's a current step, create an approval record
       if (currentStepId) {
         const { data: step, error: fetchStepError } = await supabase
           .from("workflow_steps")
@@ -159,11 +154,151 @@ export const useRequests = () => {
     }
   });
 
+  const approveRequest = useMutation({
+    mutationFn: async ({ requestId, stepId, comments }: { requestId: string, stepId: string, comments?: string }) => {
+      if (!user) throw new Error("User not authenticated");
+      
+      const { data: approvalData, error: approvalError } = await supabase
+        .from("request_approvals")
+        .insert({
+          request_id: requestId,
+          step_id: stepId,
+          approver_id: user.id,
+          status: "approved",
+          comments: comments,
+          approved_at: new Date().toISOString()
+        })
+        .select();
+      
+      if (approvalError) throw approvalError;
+      
+      const { data: request, error: requestError } = await supabase
+        .from("requests")
+        .select(`
+          workflow_id,
+          current_step_id
+        `)
+        .eq("id", requestId)
+        .single();
+        
+      if (requestError) throw requestError;
+      
+      const { data: nextStep, error: nextStepError } = await supabase
+        .from("workflow_steps")
+        .select("id")
+        .eq("workflow_id", request.workflow_id)
+        .gt("step_order", 
+          supabase
+            .from("workflow_steps")
+            .select("step_order")
+            .eq("id", stepId)
+            .single()
+        )
+        .order("step_order", { ascending: true })
+        .limit(1)
+        .single();
+      
+      const updateData: any = {};
+      
+      if (nextStepError && nextStepError.message.includes("No rows found")) {
+        updateData.status = "approved";
+      } else if (!nextStepError) {
+        updateData.current_step_id = nextStep.id;
+        updateData.status = "in_progress";
+        
+        const { data: step, error: fetchStepError } = await supabase
+          .from("workflow_steps")
+          .select("approver_id")
+          .eq("id", nextStep.id)
+          .single();
+        
+        if (fetchStepError) throw fetchStepError;
+        
+        const { error: nextApprovalError } = await supabase
+          .from("request_approvals")
+          .insert({
+            request_id: requestId,
+            step_id: nextStep.id,
+            approver_id: step.approver_id,
+            status: "pending"
+          });
+        
+        if (nextApprovalError) throw nextApprovalError;
+      }
+      
+      const { error: updateError } = await supabase
+        .from("requests")
+        .update(updateData)
+        .eq("id", requestId);
+      
+      if (updateError) throw updateError;
+      
+      return approvalData?.[0];
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      queryClient.invalidateQueries({ queryKey: ["request"] });
+      toast.success("تمت الموافقة على الطلب بنجاح");
+    },
+    onError: (error) => {
+      console.error("Error approving request:", error);
+      toast.error("حدث خطأ أثناء الموافقة على الطلب");
+    }
+  });
+
+  const rejectRequest = useMutation({
+    mutationFn: async ({ requestId, stepId, comments }: { requestId: string, stepId: string, comments: string }) => {
+      if (!user) throw new Error("User not authenticated");
+      
+      if (!comments || comments.trim() === '') {
+        throw new Error("يجب إدخال سبب الرفض");
+      }
+      
+      const { data: rejectionData, error: rejectionError } = await supabase
+        .from("request_approvals")
+        .insert({
+          request_id: requestId,
+          step_id: stepId,
+          approver_id: user.id,
+          status: "rejected",
+          comments: comments,
+          approved_at: new Date().toISOString()
+        })
+        .select();
+      
+      if (rejectionError) throw rejectionError;
+      
+      const { error: updateError } = await supabase
+        .from("requests")
+        .update({ status: "rejected" })
+        .eq("id", requestId);
+      
+      if (updateError) throw updateError;
+      
+      return rejectionData?.[0];
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      queryClient.invalidateQueries({ queryKey: ["request"] });
+      toast.success("تم رفض الطلب بنجاح");
+    },
+    onError: (error: any) => {
+      console.error("Error rejecting request:", error);
+      if (error.message === "يجب إدخال سبب الرفض") {
+        toast.error(error.message);
+      } else {
+        toast.error("حدث خطأ أثناء رفض الطلب");
+      }
+    }
+  });
+
   return {
     incomingRequests,
     outgoingRequests,
     incomingLoading,
     outgoingLoading,
-    createRequest
+    createRequest,
+    approveRequest,
+    rejectRequest
   };
 };
