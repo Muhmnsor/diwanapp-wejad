@@ -90,6 +90,59 @@ export const useRequests = () => {
     enabled: !!user
   });
 
+  // Helper function to handle file uploads
+  const handleFileUploads = async (formData: Record<string, any>): Promise<Record<string, any>> => {
+    const processedData = { ...formData };
+    
+    // Find file fields in the form data
+    for (const [key, value] of Object.entries(formData)) {
+      if (value instanceof File) {
+        console.log(`Uploading file for field ${key}:`, value);
+        
+        try {
+          // Generate a unique file name
+          const fileExt = value.name.split('.').pop();
+          const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+          const filePath = `${user!.id}/${fileName}`;
+          
+          // Upload file to Supabase storage
+          const { data, error } = await supabase.storage
+            .from('request-attachments')
+            .upload(filePath, value);
+          
+          if (error) {
+            console.error(`Error uploading file for ${key}:`, error);
+            throw new Error(`فشل في رفع الملف: ${error.message}`);
+          }
+          
+          // Get public URL for the uploaded file
+          const { data: { publicUrl } } = supabase.storage
+            .from('request-attachments')
+            .getPublicUrl(filePath);
+          
+          // Replace the file object with the file path and metadata
+          processedData[key] = {
+            name: value.name,
+            size: value.size,
+            type: value.type,
+            url: publicUrl,
+            path: filePath
+          };
+          
+          console.log(`File uploaded successfully for ${key}:`, publicUrl);
+        } catch (error) {
+          console.error(`Error in file upload for ${key}:`, error);
+          throw error;
+        }
+      } else if (value && typeof value === 'object' && value._type === 'file') {
+        // Handle already processed file object from form
+        console.log(`Processing existing file object for ${key}:`, value);
+      }
+    }
+    
+    return processedData;
+  };
+
   const createRequest = useMutation({
     mutationFn: async (requestData: {
       request_type_id: string;
@@ -120,9 +173,12 @@ export const useRequests = () => {
           throw new Error("Request type not found");
         }
         
-        // Validate form data against the schema
+        // Process and upload any files in the form data
+        const processedFormData = await handleFileUploads(requestData.form_data);
+        
+        // Validate processed form data against the schema
         const formSchema = requestType.form_schema;
-        const validationResult = validateFormData(requestData.form_data, formSchema);
+        const validationResult = validateFormData(processedFormData, formSchema);
         
         if (!validationResult.valid) {
           console.error("Form data validation failed:", validationResult.errors);
@@ -155,7 +211,9 @@ export const useRequests = () => {
           requester_id: user.id,
           workflow_id: workflowId,
           current_step_id: currentStepId,
-          ...requestData
+          form_data: processedFormData,
+          ...requestData,
+          form_data: processedFormData
         });
         
         // Create request
@@ -165,13 +223,18 @@ export const useRequests = () => {
             requester_id: user.id,
             workflow_id: workflowId,
             current_step_id: currentStepId,
-            ...requestData
+            ...requestData,
+            form_data: processedFormData
           })
           .select();
 
         if (error) {
           console.error("Error creating request:", error);
-          throw new Error(`Failed to create request: ${error.message}`);
+          if (error.code === '42P17') {
+            throw new Error("حدث خطأ في سياسات أمان قاعدة البيانات. الرجاء التواصل مع المسؤول");
+          } else {
+            throw new Error(`Failed to create request: ${error.message}`);
+          }
         }
         
         if (!data || data.length === 0) {
@@ -446,6 +509,19 @@ export const useRequests = () => {
         case 'select':
           if (field.options && !field.options.includes(fieldValue)) {
             errors.push(`قيمة "${fieldValue}" غير صالحة لحقل "${field.label}"`);
+          }
+          break;
+          
+        case 'file':
+          // For file fields, check if we have a valid file object or metadata
+          if (fieldValue) {
+            if (typeof fieldValue !== 'object') {
+              errors.push(`حقل "${field.label}" يجب أن يكون ملفاً`);
+            } 
+            // If it's a processed file object with url/path, it's valid
+            else if (!fieldValue.url && !fieldValue.path && !(fieldValue instanceof File)) {
+              errors.push(`صيغة الملف في حقل "${field.label}" غير صالحة`);
+            }
           }
           break;
           

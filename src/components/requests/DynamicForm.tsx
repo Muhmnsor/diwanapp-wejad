@@ -23,7 +23,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Upload, Paperclip, X } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface DynamicFormProps {
@@ -40,6 +40,7 @@ export const DynamicForm = ({
   isSubmitting = false,
 }: DynamicFormProps) => {
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [fileFields, setFileFields] = useState<Record<string, File | null>>({});
   
   // Build zod schema dynamically based on the form schema
   const buildZodSchema = (fields: FormFieldType[]) => {
@@ -89,6 +90,14 @@ export const DynamicForm = ({
           }
           break;
           
+        case "file":
+          // For file fields, we'll handle validation separately
+          fieldSchema = z.any();
+          if (!field.required) {
+            fieldSchema = fieldSchema.optional();
+          }
+          break;
+          
         case "array":
           if (field.subfields) {
             const subSchemaMap = buildZodSchema(field.subfields);
@@ -103,13 +112,6 @@ export const DynamicForm = ({
             if (field.required) {
               fieldSchema = fieldSchema.min(1, `يجب إضافة عنصر واحد على الأقل في ${field.label}`);
             }
-          }
-          break;
-          
-        case "file":
-          fieldSchema = z.any(); // File handling would need more specific validation
-          if (!field.required) {
-            fieldSchema = fieldSchema.optional();
           }
           break;
           
@@ -144,12 +146,28 @@ export const DynamicForm = ({
     defaultValues: prepareDefaultValues(),
   });
 
+  // Handle file selection for file fields
+  const handleFileChange = (fieldName: string, file: File | null) => {
+    setFileFields((prev) => ({
+      ...prev,
+      [fieldName]: file,
+    }));
+  };
+
   const handleSubmit = (data: any) => {
     try {
       console.log("Form data before submission:", data);
       
+      // Merge file fields into form data
+      const mergedData = { ...data };
+      Object.entries(fileFields).forEach(([fieldName, file]) => {
+        if (file) {
+          mergedData[fieldName] = file;
+        }
+      });
+      
       // Additional validation to ensure all data conforms to expected types
-      const errors = validateFormDataTypes(data, schema.fields);
+      const errors = validateFormDataTypes(mergedData, schema.fields);
       
       if (errors.length > 0) {
         setValidationErrors(errors);
@@ -157,7 +175,7 @@ export const DynamicForm = ({
       }
       
       setValidationErrors([]);
-      onSubmit(data);
+      onSubmit(mergedData);
     } catch (error) {
       console.error("Error in form submission:", error);
       setValidationErrors([
@@ -179,7 +197,14 @@ export const DynamicForm = ({
       }
       
       if (field.required && (value === undefined || value === null || value === '')) {
-        errors.push(`حقل ${field.label} مطلوب`);
+        // For file fields, check the fileFields state
+        if (field.type === 'file') {
+          if (!fileFields[field.name]) {
+            errors.push(`حقل ${field.label} مطلوب`);
+          }
+        } else {
+          errors.push(`حقل ${field.label} مطلوب`);
+        }
         return;
       }
       
@@ -200,6 +225,10 @@ export const DynamicForm = ({
           if (value && field.options && !field.options.includes(value)) {
             errors.push(`قيمة غير صالحة لحقل ${field.label}`);
           }
+          break;
+          
+        case "file":
+          // File validation handled by fileFields state
           break;
           
         case "array":
@@ -338,6 +367,45 @@ export const DynamicForm = ({
             />
           );
           
+        case "file":
+          return (
+            <FormItem key={fieldPath} className="space-y-2">
+              <FormLabel>{fieldDef.label} {fieldDef.required && <span className="text-destructive">*</span>}</FormLabel>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="file"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      handleFileChange(fieldDef.name, file);
+                    }}
+                    className="flex-1"
+                  />
+                  {fileFields[fieldDef.name] && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleFileChange(fieldDef.name, null)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                
+                {fileFields[fieldDef.name] && (
+                  <div className="flex items-center gap-2 p-2 border rounded-md bg-gray-50">
+                    <Paperclip className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">{fileFields[fieldDef.name]?.name}</span>
+                  </div>
+                )}
+              </div>
+              {fieldDef.required && !fileFields[fieldDef.name] && form.formState.isSubmitted && (
+                <p className="text-sm font-medium text-destructive">هذا الحقل مطلوب</p>
+              )}
+            </FormItem>
+          );
+          
         case "array":
           return (
             <div key={fieldPath} className="space-y-4">
@@ -350,30 +418,6 @@ export const DynamicForm = ({
                 />
               )}
             </div>
-          );
-          
-        case "file":
-          return (
-            <FormField
-              key={fieldPath}
-              control={form.control}
-              name={fieldPath}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{fieldDef.label} {fieldDef.required && <span className="text-destructive">*</span>}</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="file" 
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        field.onChange(file);
-                      }} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           );
           
         default:
@@ -401,8 +445,18 @@ export const DynamicForm = ({
         
         {renderFields(schema.fields)}
         
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "جاري التقديم..." : "تقديم الطلب"}
+        <Button type="submit" disabled={isSubmitting} className="w-full">
+          {isSubmitting ? (
+            <div className="flex items-center">
+              <span className="mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              جاري التقديم...
+            </div>
+          ) : (
+            <>
+              <Upload className="h-4 w-4 mr-2" />
+              تقديم الطلب
+            </>
+          )}
         </Button>
       </form>
     </Form>
