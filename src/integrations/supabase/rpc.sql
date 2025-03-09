@@ -60,28 +60,3 @@ BEGIN
   RETURN result;
 END;
 $$;
-
--- Function to get user's outgoing requests bypassing RLS
-CREATE OR REPLACE FUNCTION public.get_user_outgoing_requests(user_id uuid)
-RETURNS SETOF json
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  RETURN QUERY
-  SELECT json_build_object(
-    'id', r.id,
-    'title', r.title,
-    'status', r.status,
-    'priority', r.priority,
-    'created_at', r.created_at,
-    'requester_id', r.requester_id,
-    'form_data', r.form_data,
-    'request_type', json_build_object('name', rt.name)
-  )
-  FROM requests r
-  JOIN request_types rt ON r.request_type_id = rt.id
-  WHERE r.requester_id = user_id
-  ORDER BY r.created_at DESC;
-END;
-$$;
