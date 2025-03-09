@@ -313,9 +313,9 @@ export const RequestTypeDialog = ({
       step_name: step.step_name,
       step_type: step.step_type,
       approver_id: step.approver_id,
-      instructions: step.instructions,
+      instructions: step.instructions || "",
       is_required: step.is_required,
-      approver_type: 'user'
+      approver_type: step.approver_type || 'user'
     }));
 
     const { error } = await supabase
