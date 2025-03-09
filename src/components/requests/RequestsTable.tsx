@@ -1,4 +1,3 @@
-
 import { 
   Table, 
   TableBody, 
@@ -54,7 +53,7 @@ export const RequestsTable = ({
       case 'in_progress':
         return <Badge variant="default">قيد المعالجة</Badge>;
       case 'approved':
-        return <Badge variant="success" className="bg-green-500 hover:bg-green-600">تمت الموافقة</Badge>;
+        return <Badge variant="success">تمت الموافقة</Badge>;
       case 'rejected':
         return <Badge variant="destructive">مرفوض</Badge>;
       case 'cancelled':

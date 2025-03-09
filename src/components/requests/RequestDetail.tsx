@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -120,7 +119,6 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
 
   const approveRequest = useMutation({
     mutationFn: async () => {
-      // First create an approval record
       const { data: approvalData, error: approvalError } = await supabase
         .from("request_approvals")
         .insert({
@@ -135,7 +133,6 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
       
       if (approvalError) throw approvalError;
 
-      // Update the request status
       const { error: requestError } = await supabase
         .from("requests")
         .update({
@@ -163,7 +160,6 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
 
   const rejectRequest = useMutation({
     mutationFn: async () => {
-      // First create a rejection record
       const { data: rejectionData, error: rejectionError } = await supabase
         .from("request_approvals")
         .insert({
@@ -178,7 +174,6 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
       
       if (rejectionError) throw rejectionError;
 
-      // Update the request status
       const { error: requestError } = await supabase
         .from("requests")
         .update({
@@ -213,7 +208,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
       case 'in_progress':
         return <Badge variant="default">قيد المعالجة</Badge>;
       case 'approved':
-        return <Badge variant="success" className="bg-green-500 hover:bg-green-600">تمت الموافقة</Badge>;
+        return <Badge variant="success">تمت الموافقة</Badge>;
       case 'rejected':
         return <Badge variant="destructive">مرفوض</Badge>;
       case 'cancelled':
@@ -248,7 +243,6 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
 
   const renderFormData = (formData: Record<string, any>) => {
     return Object.entries(formData).map(([key, value]) => {
-      // Handle different types of form data
       if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
         return (
           <div key={key} className="mb-4">
@@ -386,7 +380,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
                               <TableCell>{approval.approver?.display_name || approval.approver?.email || "غير معروف"}</TableCell>
                               <TableCell>
                                 {approval.status === "approved" ? 
-                                  <Badge variant="success" className="bg-green-500">تمت الموافقة</Badge> : 
+                                  <Badge variant="success">تمت الموافقة</Badge> : 
                                   <Badge variant="destructive">مرفوض</Badge>}
                               </TableCell>
                               <TableCell>{approval.comments || "-"}</TableCell>
@@ -476,7 +470,6 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
         </div>
       </div>
 
-      {/* Approve Dialog */}
       <Dialog open={isApproveDialogOpen} onOpenChange={setIsApproveDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -508,7 +501,6 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
         </DialogContent>
       </Dialog>
 
-      {/* Reject Dialog */}
       <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
         <DialogContent>
           <DialogHeader>

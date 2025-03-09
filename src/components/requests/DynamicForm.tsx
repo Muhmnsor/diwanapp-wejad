@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { FormSchema } from "./types";
+import { FormSchema, FormField as FormFieldType } from "./types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -38,7 +38,7 @@ export const DynamicForm = ({
   isSubmitting = false,
 }: DynamicFormProps) => {
   // Build zod schema dynamically based on the form schema
-  const buildZodSchema = (fields: any[]) => {
+  const buildZodSchema = (fields: FormFieldType[]) => {
     const schemaMap: Record<string, any> = {};
     
     fields.forEach((field) => {
@@ -118,11 +118,11 @@ export const DynamicForm = ({
   });
 
   // Render form fields based on the schema
-  const renderFields = (fields: any[], parentPath = "") => {
-    return fields.map((field) => {
-      const fieldPath = parentPath ? `${parentPath}.${field.name}` : field.name;
+  const renderFields = (fields: FormFieldType[], parentPath = "") => {
+    return fields.map((fieldDef) => {
+      const fieldPath = parentPath ? `${parentPath}.${fieldDef.name}` : fieldDef.name;
       
-      switch (field.type) {
+      switch (fieldDef.type) {
         case "text":
           return (
             <FormField
@@ -131,7 +131,7 @@ export const DynamicForm = ({
               name={fieldPath}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{field.label}</FormLabel>
+                  <FormLabel>{fieldDef.label}</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -149,7 +149,7 @@ export const DynamicForm = ({
               name={fieldPath}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{field.label}</FormLabel>
+                  <FormLabel>{fieldDef.label}</FormLabel>
                   <FormControl>
                     <Textarea {...field} />
                   </FormControl>
@@ -167,7 +167,7 @@ export const DynamicForm = ({
               name={fieldPath}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{field.label}</FormLabel>
+                  <FormLabel>{fieldDef.label}</FormLabel>
                   <FormControl>
                     <Input type="number" {...field} />
                   </FormControl>
@@ -185,7 +185,7 @@ export const DynamicForm = ({
               name={fieldPath}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{field.label}</FormLabel>
+                  <FormLabel>{fieldDef.label}</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
                   </FormControl>
@@ -203,7 +203,7 @@ export const DynamicForm = ({
               name={fieldPath}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{field.label}</FormLabel>
+                  <FormLabel>{fieldDef.label}</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -214,7 +214,7 @@ export const DynamicForm = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {field.options?.map((option: string) => (
+                      {fieldDef.options?.map((option: string) => (
                         <SelectItem key={option} value={option}>
                           {option}
                         </SelectItem>
@@ -230,12 +230,12 @@ export const DynamicForm = ({
         case "array":
           return (
             <div key={fieldPath} className="space-y-4">
-              <FormLabel>{field.label}</FormLabel>
-              {field.subfields && (
+              <FormLabel>{fieldDef.label}</FormLabel>
+              {fieldDef.subfields && (
                 <FieldArray
                   name={fieldPath}
                   control={form.control}
-                  subfields={field.subfields}
+                  subfields={fieldDef.subfields}
                 />
               )}
             </div>
@@ -260,7 +260,15 @@ export const DynamicForm = ({
 };
 
 // Component for handling array fields
-const FieldArray = ({ name, control, subfields }: { name: string; control: any; subfields: any[] }) => {
+const FieldArray = ({ 
+  name, 
+  control, 
+  subfields 
+}: { 
+  name: string; 
+  control: any; 
+  subfields: FormFieldType[] 
+}) => {
   const { fields, append, remove } = useFieldArray({
     control,
     name,
@@ -270,10 +278,10 @@ const FieldArray = ({ name, control, subfields }: { name: string; control: any; 
     <div className="space-y-4">
       {fields.map((item, index) => (
         <div key={item.id} className="border p-4 rounded-md space-y-4">
-          {subfields.map((subfield) => {
-            const fieldName = `${name}.${index}.${subfield.name}`;
+          {subfields.map((subfieldDef) => {
+            const fieldName = `${name}.${index}.${subfieldDef.name}`;
             
-            switch (subfield.type) {
+            switch (subfieldDef.type) {
               case "text":
                 return (
                   <FormField
@@ -282,7 +290,7 @@ const FieldArray = ({ name, control, subfields }: { name: string; control: any; 
                     name={fieldName}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{subfield.label}</FormLabel>
+                        <FormLabel>{subfieldDef.label}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -300,7 +308,7 @@ const FieldArray = ({ name, control, subfields }: { name: string; control: any; 
                     name={fieldName}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{subfield.label}</FormLabel>
+                        <FormLabel>{subfieldDef.label}</FormLabel>
                         <FormControl>
                           <Input type="number" {...field} />
                         </FormControl>
