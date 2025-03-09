@@ -23,6 +23,7 @@ export const useWorkflowSteps = ({
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch users for approver selection
   useEffect(() => {
@@ -43,6 +44,7 @@ export const useWorkflowSteps = ({
       } catch (error) {
         console.error('Error fetching users:', error);
         toast.error('فشل في جلب قائمة المستخدمين');
+        setError('فشل في جلب قائمة المستخدمين');
       }
     };
 
@@ -51,7 +53,7 @@ export const useWorkflowSteps = ({
 
   // Initialize with initialSteps if provided
   useEffect(() => {
-    if (initialSteps.length > 0 && !initialized) {
+    if (initialSteps && initialSteps.length > 0 && !initialized) {
       console.log("Initializing workflow steps from initialSteps:", initialSteps);
       setWorkflowSteps(initialSteps);
       setCurrentStep(getInitialStepState(initialSteps.length + 1));
@@ -75,6 +77,7 @@ export const useWorkflowSteps = ({
       }
 
       setIsLoading(true);
+      setError(null);
 
       try {
         // First, get the default workflow ID for this request type
@@ -115,6 +118,7 @@ export const useWorkflowSteps = ({
       } catch (error) {
         console.error('Error fetching workflow steps:', error);
         toast.error('فشل في جلب خطوات سير العمل');
+        setError('فشل في جلب خطوات سير العمل');
         
         // If there's an error, use initialSteps if available
         if (!initialized && initialSteps.length > 0) {
@@ -171,6 +175,7 @@ export const useWorkflowSteps = ({
     } catch (error) {
       console.error('Error creating workflow:', error);
       toast.error('فشل في إنشاء مسار العمل');
+      setError('فشل في إنشاء مسار العمل');
       throw error;
     }
   };
@@ -196,6 +201,7 @@ export const useWorkflowSteps = ({
     }
     
     setIsLoading(true);
+    setError(null);
 
     try {
       // Ensure workflow exists
@@ -235,7 +241,10 @@ export const useWorkflowSteps = ({
           .from('workflow_steps')
           .insert(stepsToInsert);
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error("Error inserting workflow steps:", insertError);
+          throw insertError;
+        }
       }
 
       // Update local state
@@ -244,6 +253,7 @@ export const useWorkflowSteps = ({
     } catch (error) {
       console.error('Error saving workflow steps:', error);
       toast.error('فشل في حفظ خطوات سير العمل');
+      setError('فشل في حفظ خطوات سير العمل');
     } finally {
       setIsLoading(false);
     }
@@ -344,6 +354,7 @@ export const useWorkflowSteps = ({
     editingStepIndex,
     users,
     isLoading,
+    error,
     setCurrentStep,
     handleAddStep,
     handleRemoveStep,

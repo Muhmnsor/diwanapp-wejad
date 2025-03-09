@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -25,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Plus, X, Edit, Trash2 } from "lucide-react";
+import { Plus, X, Edit, Trash2, AlertTriangle } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -38,6 +39,7 @@ import { FormSchema, FormField as FormFieldType, RequestType, WorkflowStep } fro
 import { WorkflowStepsConfig } from "./WorkflowStepsConfig";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const requestTypeSchema = z.object({
   name: z.string().min(3, { message: "يجب أن يحتوي الاسم على 3 أحرف على الأقل" }),
@@ -84,6 +86,7 @@ export const RequestTypeDialog = ({
   const [currentOption, setCurrentOption] = useState("");
   const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
   const [createdRequestTypeId, setCreatedRequestTypeId] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const isEditing = !!requestType;
 
   const form = useForm<RequestTypeFormValues>({
@@ -161,7 +164,7 @@ export const RequestTypeDialog = ({
 
   const handleAddField = () => {
     if (!currentField.name || !currentField.label) {
-      toast.error("اسم الحقل وعنوانه مطلوبان");
+      toast.error('اسم الحقل وعنوانه مطلوبان');
       return;
     }
 
@@ -215,13 +218,19 @@ export const RequestTypeDialog = ({
     });
   };
 
-  const handleWorkflowStepsUpdated = (steps) => {
+  const handleWorkflowStepsUpdated = (steps: WorkflowStep[]) => {
     console.log("Workflow steps updated in RequestTypeDialog:", steps);
     setWorkflowSteps(steps);
   };
 
   const saveRequestType = async (values: RequestTypeFormValues) => {
     values.form_schema = { fields: formFields };
+
+    // Check if we have workflow steps
+    if (workflowSteps.length === 0) {
+      setFormError('يجب إضافة خطوة واحدة على الأقل لسير العمل');
+      throw new Error('يجب إضافة خطوة واحدة على الأقل لسير العمل');
+    }
 
     if (isEditing && requestType) {
       // Update existing request type
@@ -307,7 +316,8 @@ export const RequestTypeDialog = ({
   const saveWorkflowSteps = async (workflowId: string, steps: WorkflowStep[]) => {
     if (steps.length === 0) {
       console.log("No workflow steps to save");
-      return;
+      setFormError('يجب إضافة خطوة واحدة على الأقل لسير العمل');
+      throw new Error('يجب إضافة خطوة واحدة على الأقل لسير العمل');
     }
 
     console.log("Saving workflow steps for workflow:", workflowId);
@@ -333,7 +343,7 @@ export const RequestTypeDialog = ({
         workflow_id: workflowId,
         step_order: index + 1,
         step_name: step.step_name,
-        step_type: step.step_type,
+        step_type: step.step_type || 'decision',
         approver_id: step.approver_id,
         instructions: step.instructions,
         is_required: step.is_required === false ? false : true,
@@ -342,10 +352,11 @@ export const RequestTypeDialog = ({
 
       console.log("Inserting workflow steps:", stepsToInsert);
       
+      // Use the rpc function to bypass RLS
       const { data, error } = await supabase
-        .from("workflow_steps")
-        .insert(stepsToInsert)
-        .select();
+        .rpc('insert_workflow_steps', {
+          steps: stepsToInsert
+        });
 
       if (error) {
         console.error("Error inserting workflow steps:", error);
@@ -380,15 +391,16 @@ export const RequestTypeDialog = ({
 
   const onSubmit = async (values: RequestTypeFormValues) => {
     if (formFields.length === 0) {
-      toast.error("يجب إضافة حقل واحد على الأقل للنموذج");
+      setFormError("يجب إضافة حقل واحد على الأقل للنموذج");
       return;
     }
 
     if (workflowSteps.length === 0) {
-      toast.error("يجب إضافة خطوة واحدة على الأقل لسير العمل");
+      setFormError("يجب إضافة خطوة واحدة على الأقل لسير العمل");
       return;
     }
 
+    setFormError(null);
     console.log("Starting form submission with workflow steps:", workflowSteps);
     
     setIsLoading(true);
@@ -411,14 +423,15 @@ export const RequestTypeDialog = ({
         
         // 4. Then save workflow steps
         await saveWorkflowSteps(workflow.id, workflowSteps);
-      }
 
-      toast.success(isEditing ? "تم تحديث نوع الطلب بنجاح" : "تم إنشاء نوع الطلب بنجاح");
-      onRequestTypeCreated();
-      onClose();
+        toast.success(isEditing ? "تم تحديث نوع الطلب بنجاح" : "تم إنشاء نوع الطلب بنجاح");
+        onRequestTypeCreated();
+        onClose();
+      }
     } catch (error) {
       console.error("Error saving request type:", error);
       toast.error(isEditing ? "حدث خطأ أثناء تحديث نوع الطلب" : "حدث خطأ أثناء إنشاء نوع الطلب");
+      setFormError(`${error.message || "حدث خطأ غير متوقع أثناء العملية"}`);
     } finally {
       setIsLoading(false);
     }
@@ -446,6 +459,13 @@ export const RequestTypeDialog = ({
             {isEditing ? "عدّل بيانات نوع الطلب وحقول النموذج وخطوات سير العمل" : "أنشئ نوع طلب جديد وحدد حقول النموذج المطلوبة وخطوات سير العمل"}
           </DialogDescription>
         </DialogHeader>
+
+        {formError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{formError}</AlertDescription>
+          </Alert>
+        )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex-1 flex flex-col overflow-hidden">

@@ -5,6 +5,7 @@ import { StepForm } from "./workflow/StepForm";
 import { StepsList } from "./workflow/StepsList";
 import { useWorkflowSteps } from "./workflow/useWorkflowSteps";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
 
 interface WorkflowStepsConfigProps {
   requestTypeId: string | null;
@@ -23,6 +24,7 @@ export const WorkflowStepsConfig = ({
     editingStepIndex,
     users,
     isLoading,
+    error,
     setCurrentStep,
     handleAddStep,
     handleRemoveStep,
@@ -33,6 +35,13 @@ export const WorkflowStepsConfig = ({
     onWorkflowStepsUpdated,
     initialSteps
   });
+
+  // Display error if there's any
+  useEffect(() => {
+    if (error) {
+      toast.error(`خطأ في إدارة خطوات سير العمل: ${error}`);
+    }
+  }, [error]);
 
   // Update parent component whenever workflow steps change
   useEffect(() => {
