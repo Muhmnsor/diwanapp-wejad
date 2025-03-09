@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { 
@@ -10,7 +11,8 @@ import {
   Users, 
   Bell,
   BellRing,
-  Clock
+  Clock,
+  Inbox
 } from "lucide-react";
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -192,6 +194,13 @@ const AdminDashboard = () => {
       path: "/notifications",
       description: "عرض وإدارة إشعارات النظام",
       notifications: notificationCounts.notifications
+    },
+    {
+      title: "إدارة الطلبات",
+      icon: Inbox,
+      path: "/requests",
+      description: "إدارة ومتابعة الطلبات والاستمارات",
+      notifications: 0
     }
   ];
 
