@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -102,7 +101,6 @@ export const useRequests = () => {
     enabled: !!user
   });
 
-  // Improved create request mutation with better error handling
   const createRequest = useMutation({
     mutationFn: async (requestData: {
       request_type_id: string;
@@ -118,7 +116,6 @@ export const useRequests = () => {
         console.log("=== بدء إنشاء طلب جديد ===");
         console.log("Creating request with provided data:", requestData);
         
-        // Fetch the request type to get form schema and workflow
         const { data: requestType, error: typeError } = await supabase
           .from("request_types")
           .select("default_workflow_id, form_schema")
@@ -134,7 +131,6 @@ export const useRequests = () => {
           throw new Error("Request type not found");
         }
         
-        // Validate form data against the schema
         const formSchema = requestType.form_schema;
         const validationResult = validateFormData(requestData.form_data, formSchema);
         
@@ -148,13 +144,12 @@ export const useRequests = () => {
         
         if (workflowId) {
           try {
-            // Get first step of workflow
             const { data: firstStep, error: stepError } = await supabase
               .from("workflow_steps")
               .select("id, approver_id")
               .eq("workflow_id", workflowId)
               .eq("step_order", 1)
-              .maybeSingle(); // Use maybeSingle instead of single to handle case when no step is found
+              .maybeSingle();
             
             if (stepError) {
               console.error("Error fetching first step:", stepError);
@@ -173,7 +168,6 @@ export const useRequests = () => {
           }
         }
         
-        // Prepare request data with clearer structure
         const requestPayload = {
           requester_id: user.id,
           workflow_id: workflowId,
@@ -188,14 +182,12 @@ export const useRequests = () => {
         
         console.log("Creating request with processed payload:", requestPayload);
         
-        // Perform an explicit check first to debug RLS issues
         const { data: rls_check, error: rls_error } = await supabase.rpc('is_admin');
         console.log("RLS check - Admin status:", rls_check);
         if (rls_error) {
           console.error("RLS check error:", rls_error);
         }
         
-        // First try using the standard approach
         const { data, error } = await supabase
           .from("requests")
           .insert(requestPayload)
@@ -207,11 +199,9 @@ export const useRequests = () => {
           console.error("Error message:", error.message);
           console.error("Error details:", error.details);
           
-          // If we get a policy error, try using the bypass RPC function
           if (error.message && (error.message.includes("policy") || error.code === "42501")) {
             console.log("Attempting to create request using bypass RPC function");
             
-            // Use the RPC function to bypass RLS
             const { data: insertResult, error: insertError } = await supabase.rpc('insert_request_bypass_rls', {
               request_data: requestPayload
             });
@@ -224,7 +214,6 @@ export const useRequests = () => {
             if (insertResult) {
               console.log("Successfully created request using RPC bypass:", insertResult);
               
-              // If there's a current step, create approval record
               if (currentStepId) {
                 await createApprovalRecord(insertResult.id, currentStepId);
               }
@@ -233,7 +222,6 @@ export const useRequests = () => {
             }
           }
           
-          // Provide more specific error message based on the error type
           if (error.code === '23505') {
             throw new Error("طلب مشابه موجود بالفعل");
           } else if (error.code === '23503') {
@@ -258,7 +246,6 @@ export const useRequests = () => {
         console.log("Request created successfully:", data[0]);
         console.log("=== تم إنشاء الطلب بنجاح ===");
         
-        // If there's a current step, create approval record
         if (currentStepId) {
           await createApprovalRecord(data[0].id, currentStepId);
         }
@@ -270,7 +257,8 @@ export const useRequests = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      queryClient.invalidateQueries({ queryKey: ["requests", "incoming"] });
+      queryClient.invalidateQueries({ queryKey: ["requests", "outgoing"] });
       toast.success("تم إنشاء الطلب بنجاح");
     },
     onError: (error: any) => {
@@ -279,7 +267,6 @@ export const useRequests = () => {
     }
   });
 
-  // Helper function to create approval records
   const createApprovalRecord = async (requestId: string, stepId: string) => {
     try {
       const { data: step, error: fetchStepError } = await supabase
@@ -319,7 +306,6 @@ export const useRequests = () => {
       try {
         console.log("Approving request:", { requestId, stepId, comments });
         
-        // Create approval record
         const { data: approvalData, error: approvalError } = await supabase
           .from("request_approvals")
           .insert({
@@ -339,7 +325,6 @@ export const useRequests = () => {
           throw new Error(`Failed to create approval record: ${approvalError.message}`);
         }
         
-        // Get request info
         const { data: request, error: requestError } = await supabase
           .from("requests")
           .select(`
@@ -354,7 +339,6 @@ export const useRequests = () => {
           throw new Error(`Failed to fetch request: ${requestError.message}`);
         }
         
-        // Try to find next step
         const { data: currentStepData, error: currentStepError } = await supabase
           .from("workflow_steps")
           .select("step_order")
@@ -375,20 +359,16 @@ export const useRequests = () => {
           .limit(1)
           .single();
         
-        // Update request based on whether there's a next step
         const updateData: any = {};
         
         if (nextStepError && nextStepError.message.includes("No rows found")) {
-          // No next step, request is completed
           updateData.status = "approved";
           console.log("Request approved (final step)");
         } else if (!nextStepError) {
-          // Move to next step
           updateData.current_step_id = nextStep.id;
           updateData.status = "in_progress";
           console.log("Moving to next step:", nextStep.id);
           
-          // Create approval record for next step
           const { error: nextApprovalError } = await supabase
             .from("request_approvals")
             .insert({
@@ -400,11 +380,9 @@ export const useRequests = () => {
           
           if (nextApprovalError) {
             console.error("Error creating next approval:", nextApprovalError);
-            // Continue despite error
           }
         }
         
-        // Update request
         const { error: updateError } = await supabase
           .from("requests")
           .update(updateData)
@@ -424,7 +402,8 @@ export const useRequests = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      queryClient.invalidateQueries({ queryKey: ["requests", "incoming"] });
+      queryClient.invalidateQueries({ queryKey: ["requests", "outgoing"] });
       queryClient.invalidateQueries({ queryKey: ["request"] });
       toast.success("تمت الموافقة على الطلب بنجاح");
     },
@@ -445,7 +424,6 @@ export const useRequests = () => {
       try {
         console.log("Rejecting request:", { requestId, stepId, comments });
         
-        // Create rejection record
         const { data: rejectionData, error: rejectionError } = await supabase
           .from("request_approvals")
           .insert({
@@ -465,7 +443,6 @@ export const useRequests = () => {
           throw new Error(`Failed to create rejection record: ${rejectionError.message}`);
         }
         
-        // Update request status
         const { error: updateError } = await supabase
           .from("requests")
           .update({ status: "rejected" })
@@ -485,7 +462,8 @@ export const useRequests = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["requests"] });
+      queryClient.invalidateQueries({ queryKey: ["requests", "incoming"] });
+      queryClient.invalidateQueries({ queryKey: ["requests", "outgoing"] });
       queryClient.invalidateQueries({ queryKey: ["request"] });
       toast.success("تم رفض الطلب بنجاح");
     },
@@ -499,7 +477,6 @@ export const useRequests = () => {
     }
   });
 
-  // Function to validate form data against schema
   const validateFormData = (formData: Record<string, any>, schema: any): { valid: boolean; errors: string[] } => {
     const errors: string[] = [];
     const fields = schema?.fields || [];
@@ -509,23 +486,19 @@ export const useRequests = () => {
       return { valid: true, errors: [] };
     }
     
-    // Check that all required fields are present and have valid values
     fields.forEach((field: any) => {
       const fieldName = field.name;
       const fieldValue = formData[fieldName];
       
-      // Check if required field exists
       if (field.required && (fieldValue === undefined || fieldValue === null || fieldValue === '')) {
         errors.push(`حقل "${field.label}" مطلوب`);
         return;
       }
       
-      // Skip validation for empty optional fields
       if (fieldValue === undefined || fieldValue === null || fieldValue === '') {
         return;
       }
       
-      // Type-specific validations
       switch (field.type) {
         case 'number':
           if (isNaN(Number(fieldValue))) {
@@ -551,7 +524,6 @@ export const useRequests = () => {
           } else if (field.required && fieldValue.length === 0) {
             errors.push(`حقل "${field.label}" يجب أن يحتوي على عنصر واحد على الأقل`);
           } else if (field.subfields) {
-            // Validate each item in the array
             fieldValue.forEach((item, index) => {
               field.subfields.forEach((subfield: any) => {
                 const subfieldValue = item[subfield.name];
