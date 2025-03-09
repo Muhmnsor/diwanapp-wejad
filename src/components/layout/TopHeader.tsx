@@ -7,7 +7,7 @@ import { Logo } from "./header/Logo";
 import { HomeButton } from "./header/HomeButton";
 import { AdminActions } from "./header/AdminActions";
 import { Button } from "@/components/ui/button";
-import { Calendar, FolderKanban, LayoutDashboard, FileText, User, ClipboardList, Repeat } from "lucide-react";
+import { Calendar, FolderKanban, LayoutDashboard, FileText, User, ClipboardList, Repeat, Inbox } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,7 @@ export const TopHeader = () => {
   const isEventsPage = location.pathname.includes('/events') || location.pathname === '/' || location.pathname === '/dashboard' || location.pathname.includes('/create-project') || location.pathname.includes('/projects') || location.pathname === '/settings';
   const isEventOrProjectDetails = location.pathname.includes('/events/') || location.pathname.includes('/projects/');
   const isTasksPage = location.pathname.includes('/tasks') || location.pathname.includes('/portfolios') || location.pathname.includes('/portfolio-workspaces') || location.pathname.includes('/general-tasks');
+  const isRequestsPage = location.pathname.includes('/requests');
 
   useEffect(() => {
     const fetchUserDisplayName = async () => {
@@ -57,8 +58,10 @@ export const TopHeader = () => {
       } else {
         setActiveTab('overview');
       }
+    } else if (isRequestsPage) {
+      setActiveTab('incoming');
     }
-  }, [location.pathname, location.hash, isTasksPage]);
+  }, [location.pathname, location.hash, isTasksPage, isRequestsPage]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -81,7 +84,7 @@ export const TopHeader = () => {
             </div>
           </div>
 
-          {isEventsPage && !isTasksPage && <div className="w-full">
+          {isEventsPage && !isTasksPage && !isRequestsPage && <div className="w-full">
               <AdminActions isAuthenticated={isAuthenticated} isEventsPage={isEventsPage} />
             </div>}
 
@@ -116,6 +119,32 @@ export const TopHeader = () => {
                   <Link to="/tasks#reports" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "reports" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`} onClick={() => handleTabChange("reports")}>
                     <FileText className="h-4 w-4" />
                     <span>التقارير</span>
+                  </Link>
+                </div>
+              </div>
+            </div>}
+
+          {isRequestsPage && <div className="w-full bg-white border-t py-3">
+              <div className="flex justify-center">
+                <div className="flex gap-6 items-center">
+                  <Link to="/requests" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "incoming" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}>
+                    <Inbox className="h-4 w-4" />
+                    <span>الطلبات الواردة</span>
+                  </Link>
+                  
+                  <Link to="/requests?tab=outgoing" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "outgoing" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}>
+                    <FileText className="h-4 w-4" />
+                    <span>الطلبات الصادرة</span>
+                  </Link>
+
+                  <Link to="/requests?tab=approvals" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "approvals" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}>
+                    <ClipboardList className="h-4 w-4" />
+                    <span>الاعتمادات</span>
+                  </Link>
+
+                  <Link to="/requests?tab=forms" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "forms" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}>
+                    <FolderKanban className="h-4 w-4" />
+                    <span>النماذج والاستمارات</span>
                   </Link>
                 </div>
               </div>
