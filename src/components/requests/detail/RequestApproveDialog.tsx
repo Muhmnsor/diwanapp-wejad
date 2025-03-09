@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store/authStore";
 
 interface RequestApproveDialogProps {
   requestId: string;
@@ -24,6 +25,7 @@ interface RequestApproveDialogProps {
 export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }: RequestApproveDialogProps) => {
   const [comments, setComments] = useState("");
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
 
   const approveRequest = useMutation({
     mutationFn: async () => {
