@@ -7,17 +7,19 @@ interface RequestActionButtonsProps {
   onApprove: () => void;
   onReject: () => void;
   onClose: () => void;
+  canApprove: boolean;
 }
 
 export const RequestActionButtons = ({ 
   status, 
   onApprove, 
   onReject, 
-  onClose 
+  onClose,
+  canApprove 
 }: RequestActionButtonsProps) => {
   return (
     <div className="flex gap-2">
-      {status === 'pending' || status === 'in_progress' ? (
+      {canApprove && (status === 'pending' || status === 'in_progress') ? (
         <>
           <Button variant="outline" onClick={onReject} className="bg-red-50 text-red-600 hover:bg-red-100">
             <X className="mr-2 h-4 w-4" />

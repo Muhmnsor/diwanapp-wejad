@@ -14,29 +14,44 @@ export const useRequests = () => {
   const {
     data: incomingRequests,
     isLoading: incomingLoading,
+    error: incomingError,
     refetch: refetchIncomingRequests,
   } = useQuery({
     queryKey: ["incomingRequests", user?.id],
     queryFn: async () => {
       if (!user) return [];
       
-      // Query for requests that have workflow steps assigned to the current user
-      const { data, error } = await supabase
-        .from("requests")
-        .select(`
-          *,
-          request_types:request_type_id (name),
-          workflow_steps!workflow_steps_id_fkey (*)
-        `)
-        .eq("workflow_steps.approver_id", user.id)
-        .eq("status", "pending");
-      
-      if (error) {
-        console.error("Error fetching incoming requests:", error);
+      try {
+        // Query for incoming requests using the security definer function
+        const { data, error } = await supabase
+          .rpc('get_user_incoming_requests', { p_user_id: user.id });
+        
+        if (error) {
+          console.error("Error fetching incoming requests:", error);
+          throw error;
+        }
+        
+        // Fetch related request types
+        if (data && data.length > 0) {
+          const requestTypeIds = [...new Set(data.map(req => req.request_type_id))];
+          
+          const { data: requestTypes } = await supabase
+            .from("request_types")
+            .select("id, name")
+            .in("id", requestTypeIds);
+            
+          // Attach request type name to each request
+          return data.map(request => ({
+            ...request,
+            request_type: requestTypes?.find(rt => rt.id === request.request_type_id)
+          }));
+        }
+        
+        return data || [];
+      } catch (error) {
+        console.error("Error in incoming requests query:", error);
         throw error;
       }
-      
-      return data || [];
     },
     enabled: !!user,
   });
@@ -45,26 +60,44 @@ export const useRequests = () => {
   const {
     data: outgoingRequests,
     isLoading: outgoingLoading,
+    error: outgoingError,
     refetch: refetchOutgoingRequests,
   } = useQuery({
     queryKey: ["outgoingRequests", user?.id],
     queryFn: async () => {
       if (!user) return [];
       
-      const { data, error } = await supabase
-        .from("requests")
-        .select(`
-          *,
-          request_types:request_type_id (name)
-        `)
-        .eq("requester_id", user.id);
-      
-      if (error) {
-        console.error("Error fetching outgoing requests:", error);
+      try {
+        // Query for outgoing requests using the security definer function
+        const { data, error } = await supabase
+          .rpc('get_user_outgoing_requests', { p_user_id: user.id });
+        
+        if (error) {
+          console.error("Error fetching outgoing requests:", error);
+          throw error;
+        }
+        
+        // Fetch related request types
+        if (data && data.length > 0) {
+          const requestTypeIds = [...new Set(data.map(req => req.request_type_id))];
+          
+          const { data: requestTypes } = await supabase
+            .from("request_types")
+            .select("id, name")
+            .in("id", requestTypeIds);
+            
+          // Attach request type name to each request
+          return data.map(request => ({
+            ...request,
+            request_type: requestTypes?.find(rt => rt.id === request.request_type_id)
+          }));
+        }
+        
+        return data || [];
+      } catch (error) {
+        console.error("Error in outgoing requests query:", error);
         throw error;
       }
-      
-      return data || [];
     },
     enabled: !!user,
   });
@@ -124,7 +157,14 @@ export const useRequests = () => {
         .eq("step_order", 1)
         .single();
       
-      if (stepError) throw stepError;
+      if (stepError) {
+        console.error("Error finding first workflow step:", stepError);
+        throw new Error("لم يتم العثور على خطوة بداية مسار العمل");
+      }
+      
+      if (!firstStep) {
+        throw new Error("لم يتم تعريف خطوات مسار العمل بشكل صحيح");
+      }
       
       // Create the request
       const { data, error } = await supabase
@@ -171,6 +211,10 @@ export const useRequests = () => {
         .single();
       
       if (requestError) throw requestError;
+
+      if (!request.current_step_id) {
+        throw new Error("الطلب ليس في حالة انتظار الموافقة");
+      }
       
       // Create approval record
       const { data: approval, error: approvalError } = await supabase
@@ -198,41 +242,46 @@ export const useRequests = () => {
       
       if (stepError) throw stepError;
       
-      const { data: nextStep, error: nextStepError } = await supabase
+      // Find the next step
+      const { data: nextSteps, error: nextStepError } = await supabase
         .from("workflow_steps")
         .select("id")
         .eq("workflow_id", request.workflow_id)
         .eq("step_order", currentStep.step_order + 1)
-        .single();
+        .order("step_order", { ascending: true })
+        .limit(1);
+      
+      let updateData: any = {};
       
       // If there's a next step, update the request to point to it
-      if (!nextStepError && nextStep) {
-        const { error: updateError } = await supabase
-          .from("requests")
-          .update({
-            current_step_id: nextStep.id,
-          })
-          .eq("id", requestId);
-        
-        if (updateError) throw updateError;
+      if (!nextStepError && nextSteps && nextSteps.length > 0) {
+        updateData = {
+          current_step_id: nextSteps[0].id,
+          status: "pending" // Keep as pending since there are more steps
+        };
       } else {
         // If there's no next step, mark the request as complete
-        const { error: completeError } = await supabase
-          .from("requests")
-          .update({
-            status: "approved",
-            current_step_id: null,
-          })
-          .eq("id", requestId);
-        
-        if (completeError) throw completeError;
+        updateData = {
+          status: "approved",
+          current_step_id: null, // No more steps
+        };
       }
+      
+      // Update the request status
+      const { error: updateError } = await supabase
+        .from("requests")
+        .update(updateData)
+        .eq("id", requestId);
+      
+      if (updateError) throw updateError;
       
       return approval[0];
     },
     onSuccess: () => {
       toast.success("تم اعتماد الطلب بنجاح");
       queryClient.invalidateQueries({ queryKey: ["incomingRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["outgoingRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["request-details"] });
     },
     onError: (error: any) => {
       console.error("Error approving request:", error);
@@ -245,13 +294,26 @@ export const useRequests = () => {
     mutationFn: async ({ requestId, comments }: { requestId: string; comments: string }) => {
       if (!user) throw new Error("يجب تسجيل الدخول لرفض الطلب");
       
+      if (!comments || comments.trim() === "") {
+        throw new Error("يجب إدخال سبب الرفض");
+      }
+      
+      // Get the current request details
+      const { data: request, error: requestError } = await supabase
+        .from("requests")
+        .select("current_step_id")
+        .eq("id", requestId)
+        .single();
+      
+      if (requestError) throw requestError;
+      
       // Create rejection record
       const { data: rejection, error: rejectionError } = await supabase
         .from("request_approvals")
         .insert([
           {
             request_id: requestId,
-            step_id: null, // Current step ID should be set properly
+            step_id: request.current_step_id,
             approver_id: user.id,
             status: "rejected",
             comments: comments,
@@ -262,11 +324,12 @@ export const useRequests = () => {
       
       if (rejectionError) throw rejectionError;
       
-      // Update the request status
+      // Update the request status to rejected and clear current_step_id
       const { error: updateError } = await supabase
         .from("requests")
         .update({
           status: "rejected",
+          current_step_id: null // No more steps needed
         })
         .eq("id", requestId);
       
@@ -277,6 +340,8 @@ export const useRequests = () => {
     onSuccess: () => {
       toast.success("تم رفض الطلب");
       queryClient.invalidateQueries({ queryKey: ["incomingRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["outgoingRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["request-details"] });
     },
     onError: (error: any) => {
       console.error("Error rejecting request:", error);
@@ -290,6 +355,8 @@ export const useRequests = () => {
     requestTypes,
     incomingLoading,
     outgoingLoading,
+    incomingError,
+    outgoingError,
     requestTypesLoading,
     refetchIncomingRequests,
     refetchOutgoingRequests,
