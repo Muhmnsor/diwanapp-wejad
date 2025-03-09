@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
@@ -25,6 +26,7 @@ export const FormFieldEditor = ({ form }: FormFieldEditorProps) => {
       type: field.type || "text",
       required: field.required ?? false,
       options: field.options || [],
+      subfields: field.subfields || [],
     })) || []
   );
 
@@ -61,6 +63,11 @@ export const FormFieldEditor = ({ form }: FormFieldEditorProps) => {
       ...currentField,
       name: formattedName,
     };
+
+    // If type is array and there are no subfields defined, initialize with empty array
+    if (newField.type === 'array' && !newField.subfields) {
+      newField.subfields = [];
+    }
 
     const updatedFields = [...formFields];
 
@@ -149,6 +156,7 @@ export const FormFieldEditor = ({ form }: FormFieldEditorProps) => {
                 <SelectItem value="number">رقم</SelectItem>
                 <SelectItem value="date">تاريخ</SelectItem>
                 <SelectItem value="select">قائمة منسدلة</SelectItem>
+                <SelectItem value="array">مصفوفة</SelectItem>
                 <SelectItem value="file">ملف</SelectItem>
               </SelectContent>
             </Select>
