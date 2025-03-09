@@ -122,6 +122,7 @@ export const RequestTypeDialog = ({
             return;
           }
           
+          console.log("Fetched existing workflow steps:", data);
           setWorkflowSteps(data || []);
         }
       };
@@ -270,7 +271,12 @@ export const RequestTypeDialog = ({
         .eq("id", requestType.default_workflow_id)
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating workflow:", error);
+        throw error;
+      }
+      
+      console.log("Updated existing workflow:", data);
       return data[0];
     } else {
       // Create new workflow
@@ -286,7 +292,12 @@ export const RequestTypeDialog = ({
         ])
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating workflow:", error);
+        throw error;
+      }
+      
+      console.log("Created new workflow:", data);
       return data[0];
     }
   };
@@ -304,7 +315,12 @@ export const RequestTypeDialog = ({
         .delete()
         .eq("workflow_id", requestType.default_workflow_id);
 
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        console.error("Error deleting existing workflow steps:", deleteError);
+        throw deleteError;
+      }
+      
+      console.log("Deleted existing workflow steps");
     }
 
     const stepsToInsert = workflowSteps.map((step, index) => ({
@@ -318,23 +334,36 @@ export const RequestTypeDialog = ({
       approver_type: 'user'
     }));
 
-    const { error } = await supabase
+    console.log("Inserting workflow steps:", stepsToInsert);
+    
+    const { data, error } = await supabase
       .from("workflow_steps")
-      .insert(stepsToInsert);
+      .insert(stepsToInsert)
+      .select();
 
     if (error) {
       console.error("Error inserting workflow steps:", error);
       throw error;
     }
+    
+    console.log("Inserted workflow steps:", data);
   };
 
   const updateDefaultWorkflow = async (requestTypeId: string, workflowId: string) => {
-    const { error } = await supabase
+    console.log(`Updating request type ${requestTypeId} with default workflow: ${workflowId}`);
+    
+    const { data, error } = await supabase
       .from("request_types")
       .update({ default_workflow_id: workflowId })
-      .eq("id", requestTypeId);
+      .eq("id", requestTypeId)
+      .select();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error updating default workflow:", error);
+      throw error;
+    }
+    
+    console.log("Updated request type with default workflow:", data);
   };
 
   const onSubmit = async (values: RequestTypeFormValues) => {
@@ -347,10 +376,14 @@ export const RequestTypeDialog = ({
     try {
       console.log("Submitting form with workflow steps:", workflowSteps);
       
+      // 1. Save or update the request type
       const requestTypeResult = await saveRequestType(values);
       const requestTypeId = requestTypeResult.id;
       setCreatedRequestTypeId(requestTypeId);
       
+      console.log("Request type saved:", requestTypeResult);
+      
+      // 2. Create or update workflow and workflow steps
       if (workflowSteps.length > 0) {
         console.log("Creating workflow for steps:", workflowSteps.length);
         const workflow = await createWorkflow(requestTypeId);
@@ -358,6 +391,7 @@ export const RequestTypeDialog = ({
         if (workflow) {
           await saveWorkflowSteps(workflow.id);
           
+          // 3. Make sure the request type points to the workflow
           if (!requestType?.default_workflow_id || requestType.default_workflow_id !== workflow.id) {
             await updateDefaultWorkflow(requestTypeId, workflow.id);
           }

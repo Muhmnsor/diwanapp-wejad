@@ -86,6 +86,7 @@ export const useWorkflowSteps = ({
 
         if (stepsError) throw stepsError;
         
+        console.log("Fetched workflow steps:", steps);
         setWorkflowSteps(steps || []);
       } catch (error) {
         console.error('Error fetching workflow steps:', error);
@@ -109,6 +110,8 @@ export const useWorkflowSteps = ({
         return 'temp-workflow-id';
       }
 
+      console.log("Creating new workflow for request type:", requestTypeId);
+      
       // Create a new workflow if one doesn't exist
       const { data: newWorkflow, error: createError } = await supabase
         .from('request_workflows')
@@ -131,6 +134,7 @@ export const useWorkflowSteps = ({
       if (updateError) throw updateError;
 
       setWorkflowId(newWorkflow.id);
+      console.log("Created new workflow:", newWorkflow.id);
       return newWorkflow.id;
     } catch (error) {
       console.error('Error creating workflow:', error);
@@ -170,6 +174,8 @@ export const useWorkflowSteps = ({
         return;
       }
 
+      console.log("Saving workflow steps to workflow:", currentWorkflowId);
+      
       // Delete existing steps
       if (steps.length > 0) {
         const { error: deleteError } = await supabase
@@ -185,9 +191,12 @@ export const useWorkflowSteps = ({
         const stepsToInsert = steps.map((step, index) => ({
           ...step,
           workflow_id: currentWorkflowId,
-          step_order: index + 1
+          step_order: index + 1,
+          approver_type: step.approver_type || 'user'
         }));
 
+        console.log("Inserting workflow steps:", stepsToInsert);
+        
         const { error: insertError } = await supabase
           .from('workflow_steps')
           .insert(stepsToInsert);
@@ -210,6 +219,11 @@ export const useWorkflowSteps = ({
   const handleAddStep = () => {
     if (!currentStep.step_name) {
       toast.error('يرجى إدخال اسم الخطوة');
+      return;
+    }
+    
+    if (!currentStep.approver_id) {
+      toast.error('يرجى اختيار المعتمد');
       return;
     }
 

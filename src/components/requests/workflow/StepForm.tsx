@@ -1,9 +1,9 @@
 
 import React from "react";
-import { WorkflowStep, User } from "../types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -11,8 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import { WorkflowStep, User } from "../types";
 
 interface StepFormProps {
   currentStep: WorkflowStep;
@@ -23,57 +22,42 @@ interface StepFormProps {
   onAddStep: () => void;
 }
 
-export const StepForm: React.FC<StepFormProps> = ({
+export const StepForm = ({
   currentStep,
   editingStepIndex,
   users,
   isLoading,
   onStepChange,
-  onAddStep,
-}) => {
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
+  onAddStep
+}: StepFormProps) => {
+  const handleInputChange = (field: string, value: any) => {
     onStepChange({
       ...currentStep,
-      [name]: value,
-    });
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    onStepChange({
-      ...currentStep,
-      [name]: value,
-    });
-  };
-
-  const handleCheckboxChange = (name: string, checked: boolean) => {
-    onStepChange({
-      ...currentStep,
-      [name]: checked,
+      [field]: value
     });
   };
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="space-y-4 border rounded-md p-4">
+      <h4 className="text-sm font-medium">
+        {editingStepIndex !== null ? "تعديل الخطوة" : "إضافة خطوة جديدة"}
+      </h4>
+      
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="step_name">اسم الخطوة</Label>
+          <label className="text-sm font-medium">اسم الخطوة</label>
           <Input
-            id="step_name"
-            name="step_name"
-            value={currentStep.step_name}
-            onChange={handleInputChange}
+            value={currentStep.step_name || ''}
+            onChange={(e) => handleInputChange('step_name', e.target.value)}
             placeholder="أدخل اسم الخطوة"
           />
         </div>
-
+        
         <div className="space-y-2">
-          <Label htmlFor="step_type">نوع الخطوة</Label>
+          <label className="text-sm font-medium">نوع الخطوة</label>
           <Select
-            value={currentStep.step_type}
-            onValueChange={(value) => handleSelectChange("step_type", value)}
+            value={currentStep.step_type || 'opinion'}
+            onValueChange={(value) => handleInputChange('step_type', value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="اختر نوع الخطوة" />
@@ -85,60 +69,63 @@ export const StepForm: React.FC<StepFormProps> = ({
           </Select>
         </div>
       </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="approver_id">المسؤول عن الاعتماد</Label>
-        <Select
-          value={currentStep.approver_id || ""}
-          onValueChange={(value) => handleSelectChange("approver_id", value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="اختر المسؤول" />
-          </SelectTrigger>
-          <SelectContent>
-            {users.map((user) => (
-              <SelectItem key={user.id} value={user.id}>
-                {user.display_name || user.email}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">المعتمد</label>
+          <Select
+            value={currentStep.approver_id || ''}
+            onValueChange={(value) => handleInputChange('approver_id', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="اختر المعتمد" />
+            </SelectTrigger>
+            <SelectContent>
+              {users.map((user) => (
+                <SelectItem key={user.id} value={user.id}>
+                  {user.display_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="flex items-end space-x-4 space-x-reverse">
+          <div className="flex items-center space-x-2 space-x-reverse">
+            <Switch
+              id="is-required"
+              checked={currentStep.is_required !== false}
+              onCheckedChange={(checked) => handleInputChange('is_required', checked)}
+            />
+            <label htmlFor="is-required" className="text-sm font-medium">
+              إلزامي
+            </label>
+          </div>
+        </div>
       </div>
-
+      
       <div className="space-y-2">
-        <Label htmlFor="instructions">التعليمات</Label>
+        <label className="text-sm font-medium">تعليمات</label>
         <Textarea
-          id="instructions"
-          name="instructions"
-          value={currentStep.instructions || ""}
-          onChange={handleInputChange}
-          placeholder="أدخل تعليمات للمسؤول عن الاعتماد"
+          value={currentStep.instructions || ''}
+          onChange={(e) => handleInputChange('instructions', e.target.value)}
+          placeholder="أدخل تعليمات للمعتمد (اختياري)"
         />
       </div>
-
-      <div className="flex items-center space-x-2 space-x-reverse">
-        <Checkbox
-          id="is_required"
-          checked={currentStep.is_required}
-          onCheckedChange={(checked) =>
-            handleCheckboxChange("is_required", checked as boolean)
+      
+      <div className="flex justify-end">
+        <Button
+          onClick={onAddStep}
+          disabled={isLoading || !currentStep.step_name || !currentStep.approver_id}
+        >
+          {isLoading 
+            ? "جاري الحفظ..." 
+            : editingStepIndex !== null 
+              ? "تحديث الخطوة" 
+              : "إضافة الخطوة"
           }
-        />
-        <Label htmlFor="is_required">إلزامي</Label>
+        </Button>
       </div>
-
-      <Button
-        type="button"
-        disabled={isLoading}
-        onClick={onAddStep}
-        className="w-full"
-      >
-        {isLoading
-          ? "جار الحفظ..."
-          : editingStepIndex !== null
-          ? "تحديث الخطوة"
-          : "إضافة الخطوة"}
-      </Button>
     </div>
   );
 };
