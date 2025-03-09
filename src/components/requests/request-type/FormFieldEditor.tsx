@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
@@ -18,7 +17,17 @@ interface FormFieldEditorProps {
 }
 
 export const FormFieldEditor = ({ form }: FormFieldEditorProps) => {
-  const [formFields, setFormFields] = useState<FormField[]>(form.getValues().form_schema.fields || []);
+  // Initialize with empty array and ensure FormField type
+  const [formFields, setFormFields] = useState<FormField[]>(
+    form.getValues().form_schema?.fields?.map(field => ({
+      name: field.name || "",
+      label: field.label || "",
+      type: field.type || "text",
+      required: field.required ?? false,
+      options: field.options || [],
+    })) || []
+  );
+
   const [currentField, setCurrentField] = useState<FormField>({
     name: "",
     label: "",

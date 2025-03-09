@@ -1,4 +1,3 @@
-
 export interface RequestType {
   id: string;
   name: string;
@@ -21,7 +20,6 @@ export interface FormField {
   type: 'text' | 'textarea' | 'number' | 'date' | 'select' | 'array' | 'file';
   required: boolean;
   options?: string[];
-  subfields?: FormField[];
 }
 
 export interface Request {
