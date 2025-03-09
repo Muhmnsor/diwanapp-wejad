@@ -35,7 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
-import { FormSchema } from "./types";
+import { FormSchema, FormField as FormFieldType } from "./types";
 
 const requestTypeSchema = z.object({
   name: z.string().min(3, { message: "يجب أن يحتوي الاسم على 3 أحرف على الأقل" }),
@@ -46,7 +46,7 @@ const requestTypeSchema = z.object({
       z.object({
         name: z.string().min(1, { message: "اسم الحقل مطلوب" }),
         label: z.string().min(1, { message: "عنوان الحقل مطلوب" }),
-        type: z.string(),
+        type: z.enum(['text', 'textarea', 'number', 'date', 'select', 'array', 'file']),
         required: z.boolean().default(false),
         options: z.array(z.string()).optional(),
       })
@@ -68,14 +68,8 @@ export const RequestTypeDialog = ({
   onRequestTypeCreated,
 }: RequestTypeDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [formFields, setFormFields] = useState<FormSchema["fields"]>([]);
-  const [currentField, setCurrentField] = useState<{
-    name: string;
-    label: string;
-    type: string;
-    required: boolean;
-    options?: string[];
-  }>({
+  const [formFields, setFormFields] = useState<FormFieldType[]>([]);
+  const [currentField, setCurrentField] = useState<FormFieldType>({
     name: "",
     label: "",
     type: "text",
@@ -118,7 +112,7 @@ export const RequestTypeDialog = ({
     // Convert spaces to underscores in the field name and ensure it's lowercase
     const formattedName = currentField.name.replace(/\s+/g, "_").toLowerCase();
     
-    const newField = {
+    const newField: FormFieldType = {
       ...currentField,
       name: formattedName,
     };
@@ -317,7 +311,7 @@ export const RequestTypeDialog = ({
                         <label className="text-sm font-medium">نوع الحقل</label>
                         <Select
                           value={currentField.type}
-                          onValueChange={(value) =>
+                          onValueChange={(value: 'text' | 'textarea' | 'number' | 'date' | 'select' | 'array' | 'file') =>
                             setCurrentField({ ...currentField, type: value })
                           }
                         >
