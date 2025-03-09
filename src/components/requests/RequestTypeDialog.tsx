@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -120,7 +119,6 @@ export const RequestTypeDialog = ({
       return;
     }
 
-    // Convert spaces to underscores in the field name and ensure it's lowercase
     const formattedName = currentField.name.replace(/\s+/g, "_").toLowerCase();
     
     const newField: FormFieldType = {
@@ -176,7 +174,6 @@ export const RequestTypeDialog = ({
   };
 
   const saveRequestType = async (values: RequestTypeFormValues) => {
-    // Ensure the form schema is set correctly
     values.form_schema = { fields: formFields };
 
     const { data, error } = await supabase
@@ -217,7 +214,6 @@ export const RequestTypeDialog = ({
   const saveWorkflowSteps = async (workflowId: string) => {
     if (workflowSteps.length === 0) return;
 
-    // Prepare steps for insertion
     const stepsToInsert = workflowSteps.map(step => ({
       workflow_id: workflowId,
       step_order: step.step_order,
@@ -252,19 +248,15 @@ export const RequestTypeDialog = ({
 
     setIsLoading(true);
     try {
-      // Step 1: Create the request type
       const requestType = await saveRequestType(values);
       setCreatedRequestTypeId(requestType.id);
       
-      // Step 2: If workflow steps exist, create a workflow
       if (workflowSteps.length > 0) {
         const workflow = await createWorkflow(requestType.id);
         
-        // Step 3: Save workflow steps
         if (workflow) {
           await saveWorkflowSteps(workflow.id);
           
-          // Step 4: Set this workflow as default for the request type
           await updateDefaultWorkflow(requestType.id, workflow.id);
         }
       }
@@ -295,7 +287,7 @@ export const RequestTypeDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl rtl" dir="rtl">
+      <DialogContent className="max-w-4xl rtl max-h-[95vh] overflow-hidden flex flex-col" dir="rtl">
         <DialogHeader>
           <DialogTitle>إضافة نوع طلب جديد</DialogTitle>
           <DialogDescription>
@@ -304,8 +296,7 @@ export const RequestTypeDialog = ({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Basic info fields - moved above the tabs */}
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex-1 flex flex-col overflow-hidden">
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
@@ -362,188 +353,190 @@ export const RequestTypeDialog = ({
               />
             </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="form-fields">حقول النموذج</TabsTrigger>
                 <TabsTrigger value="workflow">خطوات سير العمل</TabsTrigger>
               </TabsList>
               
-              <ScrollArea className="max-h-[60vh] overflow-y-auto pr-4 mt-4">
-                <TabsContent value="form-fields" className="mt-4">
-                  <div className="space-y-6">
-                    <h3 className="text-lg font-medium">إدارة حقول النموذج</h3>
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <h4 className="text-sm font-medium">إضافة حقل جديد</h4>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">اسم الحقل</label>
-                            <Input
-                              placeholder="اسم الحقل (بدون مسافات)"
-                              value={currentField.name}
-                              onChange={(e) =>
-                                setCurrentField({ ...currentField, name: e.target.value })
-                              }
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">عنوان الحقل</label>
-                            <Input
-                              placeholder="العنوان الظاهر للمستخدم"
-                              value={currentField.label}
-                              onChange={(e) =>
-                                setCurrentField({ ...currentField, label: e.target.value })
-                              }
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">نوع الحقل</label>
-                            <Select
-                              value={currentField.type}
-                              onValueChange={(value: 'text' | 'textarea' | 'number' | 'date' | 'select' | 'array' | 'file') =>
-                                setCurrentField({ ...currentField, type: value })
-                              }
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="اختر نوع الحقل" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="text">نص</SelectItem>
-                                <SelectItem value="textarea">نص طويل</SelectItem>
-                                <SelectItem value="number">رقم</SelectItem>
-                                <SelectItem value="date">تاريخ</SelectItem>
-                                <SelectItem value="select">قائمة اختيار</SelectItem>
-                                <SelectItem value="file">ملف مرفق</SelectItem>
-                                <SelectItem value="array">قائمة عناصر</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="flex items-end">
-                            <div className="flex items-center space-x-2 space-x-reverse">
-                              <Switch
-                                id="required-field"
-                                checked={currentField.required}
-                                onCheckedChange={(checked) =>
-                                  setCurrentField({ ...currentField, required: checked })
+              <div className="flex-1 overflow-hidden mt-4">
+                <ScrollArea className="h-[calc(65vh-220px)]">
+                  <TabsContent value="form-fields" className="mt-0 px-1">
+                    <div className="space-y-6">
+                      <h3 className="text-lg font-medium">إدارة حقول النموذج</h3>
+                      <Card>
+                        <CardHeader className="pb-3">
+                          <h4 className="text-sm font-medium">إضافة حقل جديد</h4>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium">اسم الحقل</label>
+                              <Input
+                                placeholder="اسم الحقل (بدون مسافات)"
+                                value={currentField.name}
+                                onChange={(e) =>
+                                  setCurrentField({ ...currentField, name: e.target.value })
                                 }
                               />
-                              <label
-                                htmlFor="required-field"
-                                className="text-sm font-medium"
-                              >
-                                حقل مطلوب
-                              </label>
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium">عنوان الحقل</label>
+                              <Input
+                                placeholder="العنوان الظاهر للمستخدم"
+                                value={currentField.label}
+                                onChange={(e) =>
+                                  setCurrentField({ ...currentField, label: e.target.value })
+                                }
+                              />
                             </div>
                           </div>
-                        </div>
 
-                        {currentField.type === "select" && (
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">خيارات القائمة</label>
-                            <div className="flex space-x-2 space-x-reverse">
-                              <Input
-                                placeholder="أدخل خياراً"
-                                value={currentOption}
-                                onChange={(e) => setCurrentOption(e.target.value)}
-                              />
-                              <Button
-                                type="button"
-                                size="sm"
-                                onClick={handleAddOption}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium">نوع الحقل</label>
+                              <Select
+                                value={currentField.type}
+                                onValueChange={(value: 'text' | 'textarea' | 'number' | 'date' | 'select' | 'array' | 'file') =>
+                                  setCurrentField({ ...currentField, type: value })
+                                }
                               >
-                                <Plus className="h-4 w-4" />
-                              </Button>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="اختر نوع الحقل" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="text">نص</SelectItem>
+                                  <SelectItem value="textarea">نص طويل</SelectItem>
+                                  <SelectItem value="number">رقم</SelectItem>
+                                  <SelectItem value="date">تاريخ</SelectItem>
+                                  <SelectItem value="select">قائمة اختيار</SelectItem>
+                                  <SelectItem value="file">ملف مرفق</SelectItem>
+                                  <SelectItem value="array">قائمة عناصر</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </div>
-                            <div className="space-y-1 pt-2">
-                              {(currentField.options || []).map((option, index) => (
-                                <div
-                                  key={index}
-                                  className="flex items-center justify-between bg-muted p-2 rounded-md"
+                            <div className="flex items-end">
+                              <div className="flex items-center space-x-2 space-x-reverse">
+                                <Switch
+                                  id="required-field"
+                                  checked={currentField.required}
+                                  onCheckedChange={(checked) =>
+                                    setCurrentField({ ...currentField, required: checked })
+                                  }
+                                />
+                                <label
+                                  htmlFor="required-field"
+                                  className="text-sm font-medium"
                                 >
-                                  <span>{option}</span>
+                                  حقل مطلوب
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+
+                          {currentField.type === "select" && (
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium">خيارات القائمة</label>
+                              <div className="flex space-x-2 space-x-reverse">
+                                <Input
+                                  placeholder="أدخل خياراً"
+                                  value={currentOption}
+                                  onChange={(e) => setCurrentOption(e.target.value)}
+                                />
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  onClick={handleAddOption}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              <div className="space-y-1 pt-2">
+                                {(currentField.options || []).map((option, index) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-center justify-between bg-muted p-2 rounded-md"
+                                  >
+                                    <span>{option}</span>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleRemoveOption(index)}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                        <CardFooter>
+                          <Button
+                            type="button"
+                            onClick={handleAddField}
+                            className="mr-auto"
+                          >
+                            {editingFieldIndex !== null ? "تحديث الحقل" : "إضافة الحقل"}
+                          </Button>
+                        </CardFooter>
+                      </Card>
+
+                      {formFields.length > 0 && (
+                        <div className="border rounded-md p-4 space-y-3">
+                          <h4 className="text-sm font-medium">حقول النموذج</h4>
+                          <div className="space-y-2">
+                            {formFields.map((field, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between bg-muted p-3 rounded-md"
+                              >
+                                <div className="flex-1">
+                                  <div className="font-medium">{field.label}</div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {field.name} - {getFieldTypeLabel(field.type)}
+                                    {field.required && " (مطلوب)"}
+                                  </div>
+                                </div>
+                                <div className="flex space-x-2 space-x-reverse">
                                   <Button
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => handleRemoveOption(index)}
+                                    onClick={() => handleEditField(index)}
                                   >
-                                    <X className="h-4 w-4" />
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-red-500"
+                                    onClick={() => handleRemoveField(index)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </div>
-                              ))}
-                            </div>
+                              </div>
+                            ))}
                           </div>
-                        )}
-                      </CardContent>
-                      <CardFooter>
-                        <Button
-                          type="button"
-                          onClick={handleAddField}
-                          className="mr-auto"
-                        >
-                          {editingFieldIndex !== null ? "تحديث الحقل" : "إضافة الحقل"}
-                        </Button>
-                      </CardFooter>
-                    </Card>
-
-                    {formFields.length > 0 && (
-                      <div className="border rounded-md p-4 space-y-3">
-                        <h4 className="text-sm font-medium">حقول النموذج</h4>
-                        <div className="space-y-2">
-                          {formFields.map((field, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between bg-muted p-3 rounded-md"
-                            >
-                              <div className="flex-1">
-                                <div className="font-medium">{field.label}</div>
-                                <div className="text-sm text-muted-foreground">
-                                  {field.name} - {getFieldTypeLabel(field.type)}
-                                  {field.required && " (مطلوب)"}
-                                </div>
-                              </div>
-                              <div className="flex space-x-2 space-x-reverse">
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleEditField(index)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-red-500"
-                                  onClick={() => handleRemoveField(index)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
                         </div>
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
+                      )}
+                    </div>
+                  </TabsContent>
 
-                <TabsContent value="workflow" className="mt-4">
-                  <WorkflowStepsConfig 
-                    requestTypeId={createdRequestTypeId}
-                    onWorkflowStepsUpdated={handleWorkflowStepsUpdated}
-                  />
-                </TabsContent>
-              </ScrollArea>
+                  <TabsContent value="workflow" className="mt-0 px-1">
+                    <WorkflowStepsConfig 
+                      requestTypeId={createdRequestTypeId}
+                      onWorkflowStepsUpdated={handleWorkflowStepsUpdated}
+                    />
+                  </TabsContent>
+                </ScrollArea>
+              </div>
             </Tabs>
 
-            <DialogFooter className="mt-6 flex-row-reverse sm:justify-start">
+            <DialogFooter className="mt-4 flex-row-reverse sm:justify-start">
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? "جارٍ الإنشاء..." : "إنشاء نوع الطلب"}
               </Button>
