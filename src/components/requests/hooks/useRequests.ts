@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -539,6 +538,10 @@ export const useRequests = () => {
     }
   });
 
+  const refetchRequests = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["requests"] });
+  }, [queryClient]);
+
   return {
     incomingRequests,
     outgoingRequests,
@@ -551,6 +554,7 @@ export const useRequests = () => {
     detailedError,
     submissionStep,
     approveRequest,
-    rejectRequest
+    rejectRequest,
+    refetchRequests
   };
 };

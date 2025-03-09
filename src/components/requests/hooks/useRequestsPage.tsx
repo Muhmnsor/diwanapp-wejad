@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { useRequests } from "@/components/requests/hooks/useRequests";
@@ -28,8 +28,15 @@ export const useRequestsPage = () => {
     uploadProgress,
     submissionSuccess,
     detailedError,
-    submissionStep
+    submissionStep,
+    refetchRequests
   } = useRequests();
+
+  // Fetch data function for manual refresh
+  const fetchData = useCallback(() => {
+    setError(null);
+    refetchRequests();
+  }, [refetchRequests]);
 
   // Check session on mount with retry mechanism
   useEffect(() => {
@@ -80,7 +87,12 @@ export const useRequestsPage = () => {
   useEffect(() => {
     // If we have a detailed error from the request creation process, show it
     if (detailedError) {
-      setError(detailedError);
+      // Check for recursion error and provide a more user-friendly message
+      if (detailedError.includes("recursion") || detailedError.includes("deadlock")) {
+        setError("حدث خطأ في نظام الصلاحيات. يرجى المحاولة مرة أخرى أو الاتصال بالدعم الفني.");
+      } else {
+        setError(detailedError);
+      }
     }
   }, [detailedError]);
 
@@ -123,7 +135,11 @@ export const useRequestsPage = () => {
         console.error("Error creating request:", err);
         
         // Handle specific errors
-        if (err.message?.includes('violates row-level security policy')) {
+        if (err.message?.includes('recursion') || err.message?.includes('deadlock')) {
+          setError("حدث خطأ في النظام. يرجى المحاولة مرة أخرى لاحقاً.");
+          // Attempt to refresh the cache
+          fetchData();
+        } else if (err.message?.includes('violates row-level security policy')) {
           setError("خطأ في الصلاحيات: تأكد من تسجيل الدخول وأن لديك صلاحية إنشاء الطلبات");
         } else if (err.message?.includes('infinite recursion')) {
           setError("حدث خطأ في النظام: تواصل مع مدير النظام (خطأ في سياسات قاعدة البيانات)");
@@ -159,6 +175,7 @@ export const useRequestsPage = () => {
     outgoingRequests,
     incomingLoading,
     outgoingLoading,
+    fetchData,
     createRequest,
     isUploading,
     uploadProgress,

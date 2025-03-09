@@ -8,6 +8,9 @@ import { RequestsPageContent } from "@/components/requests/page/RequestsPageCont
 import { useRequestsPage } from "@/components/requests/hooks/useRequestsPage";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const RequestsManagement = () => {
   const navigate = useNavigate();
@@ -24,6 +27,7 @@ const RequestsManagement = () => {
     outgoingRequests,
     incomingLoading,
     outgoingLoading,
+    fetchData,
     createRequest,
     isUploading,
     uploadProgress,
@@ -53,6 +57,11 @@ const RequestsManagement = () => {
     }
   }, [error]);
 
+  const handleRefresh = () => {
+    fetchData();
+    toast.success("تم تحديث البيانات");
+  };
+
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
       <TopHeader />
@@ -61,7 +70,28 @@ const RequestsManagement = () => {
         <RequestsPageHeader 
           title="إدارة الطلبات"
           description="إدارة ومتابعة الطلبات والاستمارات والاعتمادات الواردة"
+          onRefresh={handleRefresh}
         />
+        
+        {error && error.includes("recursion") && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4 ml-2" />
+            <AlertDescription>
+              <div className="flex flex-col">
+                <p>حدث خطأ في نظام الصلاحيات. يرجى إعادة تحميل البيانات.</p>
+                <Button
+                  onClick={handleRefresh}
+                  variant="outline"
+                  size="sm"
+                  className="mt-2 self-start"
+                >
+                  <RefreshCw className="h-4 w-4 ml-2" />
+                  إعادة تحميل البيانات
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
         
         <RequestsPageContent 
           activeTab={activeTab}
