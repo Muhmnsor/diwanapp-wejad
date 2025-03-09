@@ -110,26 +110,6 @@ export const RequestTypeDialog = ({
       });
       setFormFields(requestType.form_schema.fields || []);
       setCreatedRequestTypeId(requestType.id);
-
-      // Fetch workflow steps if this request type has a default workflow
-      const fetchWorkflowSteps = async () => {
-        if (requestType.default_workflow_id) {
-          const { data, error } = await supabase
-            .from("workflow_steps")
-            .select("*")
-            .eq("workflow_id", requestType.default_workflow_id)
-            .order("step_order", { ascending: true });
-          
-          if (error) {
-            console.error("Error fetching workflow steps:", error);
-            return;
-          }
-          
-          setWorkflowSteps(data || []);
-        }
-      };
-      
-      fetchWorkflowSteps();
     } else {
       form.reset({
         name: "",
@@ -217,116 +197,138 @@ export const RequestTypeDialog = ({
     setWorkflowSteps(steps);
   };
 
+  // Save request type to database
   const saveRequestType = async (values: RequestTypeFormValues) => {
     values.form_schema = { fields: formFields };
 
-    if (isEditing && requestType) {
-      // Update existing request type
-      const { data, error } = await supabase
-        .from("request_types")
-        .update({
-          name: values.name,
-          description: values.description || null,
-          is_active: values.is_active,
-          form_schema: values.form_schema,
-        })
-        .eq("id", requestType.id)
-        .select();
-
-      if (error) throw error;
-      return data[0];
-    } else {
-      // Create new request type
-      const { data, error } = await supabase
-        .from("request_types")
-        .insert([
-          {
+    try {
+      if (isEditing && requestType) {
+        // Update existing request type
+        const { data, error } = await supabase
+          .from("request_types")
+          .update({
             name: values.name,
             description: values.description || null,
             is_active: values.is_active,
             form_schema: values.form_schema,
-          },
-        ])
-        .select();
+          })
+          .eq("id", requestType.id)
+          .select();
 
-      if (error) throw error;
-      return data[0];
+        if (error) throw error;
+        return data[0];
+      } else {
+        // Create new request type
+        const { data, error } = await supabase
+          .from("request_types")
+          .insert([
+            {
+              name: values.name,
+              description: values.description || null,
+              is_active: values.is_active,
+              form_schema: values.form_schema,
+            },
+          ])
+          .select();
+
+        if (error) throw error;
+        return data[0];
+      }
+    } catch (error) {
+      console.error("Error saving request type:", error);
+      throw error;
     }
   };
 
-  const createWorkflow = async (requestTypeId: string) => {
-    if (workflowSteps.length === 0) return null;
-
-    if (isEditing && requestType?.default_workflow_id) {
-      // Update existing workflow
-      const { data, error } = await supabase
-        .from("request_workflows")
-        .update({
-          name: `سير عمل ${form.getValues("name")}`,
-          description: `سير عمل تلقائي لنوع الطلب: ${form.getValues("name")}`,
-          is_active: true,
-        })
-        .eq("id", requestType.default_workflow_id)
-        .select();
-
-      if (error) throw error;
-      return data[0];
-    } else {
-      // Create new workflow
-      const { data, error } = await supabase
-        .from("request_workflows")
-        .insert([
-          {
+  // Create or update workflow
+  const createOrUpdateWorkflow = async (requestTypeId: string) => {
+    try {
+      if (isEditing && requestType?.default_workflow_id) {
+        // Update existing workflow
+        const { data, error } = await supabase
+          .from("request_workflows")
+          .update({
             name: `سير عمل ${form.getValues("name")}`,
             description: `سير عمل تلقائي لنوع الطلب: ${form.getValues("name")}`,
-            request_type_id: requestTypeId,
             is_active: true,
-          },
-        ])
-        .select();
+          })
+          .eq("id", requestType.default_workflow_id)
+          .select();
+
+        if (error) throw error;
+        return data[0];
+      } else {
+        // Create new workflow
+        const { data, error } = await supabase
+          .from("request_workflows")
+          .insert([
+            {
+              name: `سير عمل ${form.getValues("name")}`,
+              description: `سير عمل تلقائي لنوع الطلب: ${form.getValues("name")}`,
+              request_type_id: requestTypeId,
+              is_active: true,
+            },
+          ])
+          .select();
+
+        if (error) throw error;
+        return data[0];
+      }
+    } catch (error) {
+      console.error("Error creating/updating workflow:", error);
+      throw error;
+    }
+  };
+
+  // Delete existing workflow steps and create new ones
+  const saveWorkflowSteps = async (workflowId: string, steps: any[]) => {
+    try {
+      // If editing, first delete existing steps
+      if (workflowId) {
+        const { error: deleteError } = await supabase
+          .from("workflow_steps")
+          .delete()
+          .eq("workflow_id", workflowId);
+
+        if (deleteError) throw deleteError;
+      }
+
+      if (steps.length === 0) return;
+
+      const stepsToInsert = steps.map(step => ({
+        workflow_id: workflowId,
+        step_order: step.step_order,
+        step_name: step.step_name,
+        step_type: step.step_type,
+        approver_id: step.approver_id,
+        instructions: step.instructions,
+        is_required: step.is_required
+      }));
+
+      const { error } = await supabase
+        .from("workflow_steps")
+        .insert(stepsToInsert);
 
       if (error) throw error;
-      return data[0];
+    } catch (error) {
+      console.error("Error saving workflow steps:", error);
+      throw error;
     }
   };
 
-  const saveWorkflowSteps = async (workflowId: string) => {
-    if (workflowSteps.length === 0) return;
-
-    // If editing, first delete existing steps
-    if (isEditing && requestType?.default_workflow_id) {
-      const { error: deleteError } = await supabase
-        .from("workflow_steps")
-        .delete()
-        .eq("workflow_id", requestType.default_workflow_id);
-
-      if (deleteError) throw deleteError;
-    }
-
-    const stepsToInsert = workflowSteps.map(step => ({
-      workflow_id: workflowId,
-      step_order: step.step_order,
-      step_name: step.step_name,
-      step_type: step.step_type,
-      approver_id: step.approver_id,
-      instructions: step.instructions,
-      is_required: step.is_required
-    }));
-
-    const { error } = await supabase
-      .from("workflow_steps")
-      .insert(stepsToInsert);
-
-    if (error) throw error;
-  };
-
+  // Update request type with default workflow ID
   const updateDefaultWorkflow = async (requestTypeId: string, workflowId: string) => {
-    const { error } = await supabase
-      .from("request_types")
-      .update({ default_workflow_id: workflowId })
-      .eq("id", requestTypeId);
+    try {
+      const { error } = await supabase
+        .from("request_types")
+        .update({ default_workflow_id: workflowId })
+        .eq("id", requestTypeId);
 
-    if (error) throw error;
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error updating default workflow:", error);
+      throw error;
+    }
   };
 
   const onSubmit = async (values: RequestTypeFormValues) => {
@@ -336,17 +338,23 @@ export const RequestTypeDialog = ({
     }
 
     setIsLoading(true);
+    
     try {
+      // Step 1: Save the request type
       const requestTypeResult = await saveRequestType(values);
       const requestTypeId = requestTypeResult.id;
       setCreatedRequestTypeId(requestTypeId);
       
+      // Step 2: Create/update workflow if we have steps
       if (workflowSteps.length > 0) {
-        const workflow = await createWorkflow(requestTypeId);
+        // Create or update the workflow
+        const workflow = await createOrUpdateWorkflow(requestTypeId);
         
         if (workflow) {
-          await saveWorkflowSteps(workflow.id);
+          // Save workflow steps
+          await saveWorkflowSteps(workflow.id, workflowSteps);
           
+          // Update the request type with the default workflow ID if needed
           if (!requestType?.default_workflow_id || requestType.default_workflow_id !== workflow.id) {
             await updateDefaultWorkflow(requestTypeId, workflow.id);
           }
@@ -357,7 +365,7 @@ export const RequestTypeDialog = ({
       onRequestTypeCreated();
       onClose();
     } catch (error) {
-      console.error("Error saving request type:", error);
+      console.error("Error in submission process:", error);
       toast.error(isEditing ? "حدث خطأ أثناء تحديث نوع الطلب" : "حدث خطأ أثناء إنشاء نوع الطلب");
     } finally {
       setIsLoading(false);
