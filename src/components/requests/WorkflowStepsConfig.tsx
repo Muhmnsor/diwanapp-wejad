@@ -5,7 +5,6 @@ import { StepForm } from "./workflow/StepForm";
 import { StepsList } from "./workflow/StepsList";
 import { useWorkflowSteps } from "./workflow/useWorkflowSteps";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
 
 interface WorkflowStepsConfigProps {
   requestTypeId: string | null;
@@ -32,6 +31,7 @@ export const WorkflowStepsConfig = ({
   // Update parent component whenever workflow steps change
   useEffect(() => {
     if (Array.isArray(workflowSteps)) {
+      console.log("WorkflowStepsConfig updating parent with steps:", workflowSteps);
       onWorkflowStepsUpdated(workflowSteps);
     }
   }, [workflowSteps, onWorkflowStepsUpdated]);

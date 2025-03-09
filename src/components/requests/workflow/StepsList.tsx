@@ -1,9 +1,9 @@
 
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { ArrowUp, ArrowDown, Edit, Trash2 } from "lucide-react";
 import { WorkflowStep, User } from "../types";
-import { getApproverName } from "./utils";
+import { Button } from "@/components/ui/button";
+import { ChevronUp, ChevronDown, Edit, Trash2 } from "lucide-react";
+import { getApproverName, getStepTypeLabel, getStepTypeBadgeClass } from "./utils";
 
 interface StepsListProps {
   workflowSteps: WorkflowStep[];
@@ -13,55 +13,69 @@ interface StepsListProps {
   onRemoveStep: (index: number) => void;
 }
 
-export const StepsList = ({ 
-  workflowSteps, 
-  users, 
-  onMoveStep, 
-  onEditStep, 
-  onRemoveStep 
+export const StepsList = ({
+  workflowSteps,
+  users,
+  onMoveStep,
+  onEditStep,
+  onRemoveStep,
 }: StepsListProps) => {
   if (workflowSteps.length === 0) {
-    return null;
+    return (
+      <div className="text-center p-4 border rounded-md bg-muted">
+        <p className="text-muted-foreground">لم يتم إضافة خطوات لسير العمل بعد</p>
+      </div>
+    );
   }
 
   return (
-    <div className="border rounded-md p-4 space-y-3">
-      <h4 className="text-sm font-medium">خطوات سير العمل</h4>
+    <div className="space-y-4">
+      <h4 className="text-sm font-medium">الخطوات المضافة</h4>
       <div className="space-y-2">
         {workflowSteps.map((step, index) => (
           <div
             key={index}
-            className="flex items-center justify-between bg-muted p-3 rounded-md"
+            className="flex items-center justify-between border rounded-md p-3 bg-card"
           >
             <div className="flex-1">
-              <div className="font-medium">{step.step_name}</div>
-              <div className="text-sm text-muted-foreground">
-                {step.step_type === 'opinion' ? 'رأي' : 'قرار'} - 
-                المعتمد: {getApproverName(step, users)}
-                {step.is_required ? " (إلزامي)" : " (اختياري)"}
+              <div className="flex items-center space-x-2 space-x-reverse mb-1">
+                <div className="font-medium">{step.step_name}</div>
+                <div className={`text-xs px-2 py-0.5 rounded border ${getStepTypeBadgeClass(step.step_type)}`}>
+                  {getStepTypeLabel(step.step_type)}
+                </div>
+                {step.is_required && (
+                  <div className="text-xs px-2 py-0.5 rounded border bg-red-50 text-red-600 border-red-200">
+                    إلزامي
+                  </div>
+                )}
               </div>
+              <div className="text-sm text-muted-foreground">
+                المعتمد: {getApproverName(step, users)}
+              </div>
+              {step.instructions && (
+                <div className="mt-1 text-xs text-muted-foreground">
+                  تعليمات: {step.instructions}
+                </div>
+              )}
             </div>
-            <div className="flex space-x-2 space-x-reverse">
+            <div className="flex space-x-1 space-x-reverse">
               <Button
-                type="button"
                 variant="ghost"
                 size="sm"
                 onClick={() => onMoveStep(index, 'up')}
                 disabled={index === 0}
               >
-                <ArrowUp className="h-4 w-4" />
+                <ChevronUp className="h-4 w-4" />
               </Button>
               <Button
-                type="button"
                 variant="ghost"
                 size="sm"
                 onClick={() => onMoveStep(index, 'down')}
                 disabled={index === workflowSteps.length - 1}
               >
-                <ArrowDown className="h-4 w-4" />
+                <ChevronDown className="h-4 w-4" />
               </Button>
               <Button
-                type="button"
                 variant="ghost"
                 size="sm"
                 onClick={() => onEditStep(index)}
@@ -69,7 +83,6 @@ export const StepsList = ({
                 <Edit className="h-4 w-4" />
               </Button>
               <Button
-                type="button"
                 variant="ghost"
                 size="sm"
                 className="text-red-500"
