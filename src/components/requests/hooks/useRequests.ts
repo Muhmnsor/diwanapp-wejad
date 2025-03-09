@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,16 +7,22 @@ import { toast } from "sonner";
 import { useFileUpload } from "./useFileUpload";
 import { validateFormData } from "../utils/formValidator";
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
+
 export const useRequests = () => {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
-  const { processFormFiles, isUploading } = useFileUpload();
+  const { processFormFiles, isUploading, uploadProgress } = useFileUpload();
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
+  const [detailedError, setDetailedError] = useState<string | null>(null);
   
   const fetchIncomingRequests = async () => {
     if (!user) throw new Error("User not authenticated");
     
     try {
+      console.log("Fetching incoming requests for user:", user.id);
+      
       // Fetch workflow steps where user is approver
       const { data: approverSteps, error: approverError } = await supabase
         .from("workflow_steps")
@@ -30,10 +35,12 @@ export const useRequests = () => {
       }
       
       if (!approverSteps || approverSteps.length === 0) {
+        console.log("No approver steps found for user:", user.id);
         return [];
       }
       
       const stepIds = approverSteps.map(step => step.id);
+      console.log("Found approver step IDs:", stepIds);
       
       // Fetch requests for those steps
       const { data, error } = await supabase
@@ -50,6 +57,7 @@ export const useRequests = () => {
         return [];
       }
       
+      console.log("Fetched incoming requests:", data?.length || 0);
       return data || [];
     } catch (error) {
       console.error("Error in fetchIncomingRequests:", error);
@@ -61,6 +69,8 @@ export const useRequests = () => {
     if (!user) throw new Error("User not authenticated");
     
     try {
+      console.log("Fetching outgoing requests for user:", user.id);
+      
       const { data, error } = await supabase
         .from("requests")
         .select(`
@@ -75,6 +85,7 @@ export const useRequests = () => {
         return [];
       }
       
+      console.log("Fetched outgoing requests:", data?.length || 0);
       return data || [];
     } catch (error) {
       console.error("Error in fetchOutgoingRequests:", error);
@@ -94,6 +105,52 @@ export const useRequests = () => {
     enabled: !!user
   });
 
+  const performDatabaseInsert = async (insertData: any, retryCount = 0): Promise<any> => {
+    try {
+      console.log(`Creating request (attempt ${retryCount + 1})`, insertData);
+      
+      // Use .select() to return the inserted data
+      const { data, error } = await supabase
+        .from("requests")
+        .insert(insertData)
+        .select();
+
+      if (error) {
+        console.error(`Error creating request (attempt ${retryCount + 1}):`, error);
+        
+        // More specific error messages
+        if (error.code === '23503') {
+          throw new Error(`خطأ في العلاقات بين الجداول. يرجى التحقق من صحة البيانات المدخلة.\nرمز الخطأ: ${error.code}\nتفاصيل: ${error.message || 'غير معروف'}`);
+        } else if (error.code === '23505') {
+          throw new Error(`الطلب موجود بالفعل.\nرمز الخطأ: ${error.code}\nتفاصيل: ${error.message || 'غير معروف'}`);
+        } else if (error.code === '42501') {
+          throw new Error(`ليس لديك صلاحية لإنشاء هذا الطلب.\nرمز الخطأ: ${error.code}\nتفاصيل: ${error.message || 'غير معروف'}`);
+        } else if (error.code === '42P01') {
+          throw new Error(`خطأ في قاعدة البيانات: الجدول غير موجود.\nرمز الخطأ: ${error.code}\nتفاصيل: ${error.message || 'غير معروف'}`);
+        } else if (retryCount < MAX_RETRIES) {
+          // Retry with exponential backoff
+          const delayTime = RETRY_DELAY * Math.pow(2, retryCount);
+          console.log(`Retrying after ${delayTime}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delayTime));
+          return performDatabaseInsert(insertData, retryCount + 1);
+        } else {
+          // If we've exhausted retries, throw the error
+          throw new Error(`فشل إنشاء الطلب بعد ${MAX_RETRIES} محاولات.\nرمز الخطأ: ${error.code}\nتفاصيل: ${error.message || 'غير معروف'}`);
+        }
+      }
+      
+      if (!data || data.length === 0) {
+        throw new Error("تم إنشاء الطلب ولكن لم يتم استرجاع البيانات");
+      }
+      
+      console.log("Request created successfully:", data[0]);
+      return data[0];
+    } catch (error) {
+      console.error("Error in performDatabaseInsert:", error);
+      throw error;
+    }
+  };
+
   const createRequest = useMutation({
     mutationFn: async (requestData: {
       request_type_id: string;
@@ -105,9 +162,16 @@ export const useRequests = () => {
     }) => {
       if (!user) throw new Error("يجب تسجيل الدخول لإنشاء طلب جديد");
       setSubmissionSuccess(false);
+      setDetailedError(null);
       
       try {
-        console.log("Creating request with provided data:", requestData);
+        console.log("Starting request creation process with data:", requestData);
+        
+        // Verify user authentication explicitly
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          throw new Error("جلسة المستخدم غير موجودة. يرجى تسجيل الدخول مرة أخرى");
+        }
         
         // Fetch the request type to get form schema
         const { data: requestType, error: typeError } = await supabase
@@ -137,6 +201,8 @@ export const useRequests = () => {
         // Process and upload any files in the form data
         const processedFormData = await processFormFiles(requestData.form_data, user.id);
         
+        console.log("Form data processed successfully, preparing workflow data");
+        
         const workflowId = requestType.default_workflow_id;
         let currentStepId = null;
         
@@ -156,6 +222,7 @@ export const useRequests = () => {
           
           if (firstStep) {
             currentStepId = firstStep.id;
+            console.log("Found workflow first step:", firstStep);
           }
         }
         
@@ -171,39 +238,15 @@ export const useRequests = () => {
           status: 'pending'
         };
         
-        console.log("Creating request with processed data:", insertData);
+        console.log("Request insert data prepared:", insertData);
         
-        // Use .select() to return the inserted data
-        const { data, error } = await supabase
-          .from("requests")
-          .insert(insertData)
-          .select();
-
-        if (error) {
-          console.error("Error creating request:", error);
-          
-          // More specific error messages
-          if (error.code === '23503') {
-            throw new Error("خطأ في العلاقات بين الجداول. الرجاء التحقق من البيانات المدخلة");
-          } else if (error.code === '23505') {
-            throw new Error("الطلب موجود بالفعل");
-          } else if (error.code === '42501') {
-            throw new Error("ليس لديك صلاحية لإنشاء هذا الطلب");
-          } else if (error.code === '42P01') {
-            throw new Error("خطأ في قاعدة البيانات: الجدول غير موجود");
-          } else {
-            throw new Error(`فشل إنشاء الطلب: ${error.message}`);
-          }
-        }
-        
-        if (!data || data.length === 0) {
-          throw new Error("تم إنشاء الطلب ولكن لم يتم استرجاع البيانات");
-        }
-        
-        console.log("Request created successfully:", data[0]);
+        // Perform the insert operation with retry logic
+        const insertedRequest = await performDatabaseInsert(insertData);
         
         // If there's a current step, create approval record
-        if (currentStepId) {
+        if (currentStepId && insertedRequest) {
+          console.log("Creating approval record for request:", insertedRequest.id);
+          
           const { data: step, error: fetchStepError } = await supabase
             .from("workflow_steps")
             .select("approver_id")
@@ -217,7 +260,7 @@ export const useRequests = () => {
             const { error: approvalError } = await supabase
               .from("request_approvals")
               .insert({
-                request_id: data[0].id,
+                request_id: insertedRequest.id,
                 step_id: currentStepId,
                 approver_id: step.approver_id,
                 status: "pending"
@@ -226,14 +269,25 @@ export const useRequests = () => {
             if (approvalError) {
               console.error("Error creating approval:", approvalError);
               // Continue despite error, as request is already created
+            } else {
+              console.log("Approval record created successfully");
             }
           }
         }
         
         setSubmissionSuccess(true);
-        return data[0];
+        console.log("Request creation completed successfully!");
+        return insertedRequest;
       } catch (error) {
         console.error("Error in createRequest:", error);
+        
+        // Store detailed error information
+        if (error instanceof Error) {
+          setDetailedError(error.message);
+        } else {
+          setDetailedError("حدث خطأ غير معروف أثناء إنشاء الطلب");
+        }
+        
         throw error;
       }
     },
@@ -242,7 +296,7 @@ export const useRequests = () => {
       toast.success("تم إنشاء الطلب بنجاح وحفظه في قاعدة البيانات");
     },
     onError: (error: any) => {
-      console.error("Error creating request:", error);
+      console.error("Error creating request (from mutation handler):", error);
       toast.error(error.message || "حدث خطأ أثناء إنشاء الطلب");
     }
   });
@@ -433,7 +487,9 @@ export const useRequests = () => {
     outgoingLoading,
     createRequest,
     isUploading,
+    uploadProgress,
     submissionSuccess,
+    detailedError,
     approveRequest,
     rejectRequest
   };

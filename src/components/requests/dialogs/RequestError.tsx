@@ -4,15 +4,18 @@ import { AlertCircle } from "lucide-react";
 
 interface RequestErrorProps {
   error: string | null;
+  showIcon?: boolean;
 }
 
-export const RequestError = ({ error }: RequestErrorProps) => {
+export const RequestError = ({ error, showIcon = true }: RequestErrorProps) => {
   if (!error) return null;
   
   return (
     <Alert variant="destructive">
-      <AlertCircle className="h-4 w-4 ml-2" />
-      <AlertDescription>{error}</AlertDescription>
+      {showIcon && <AlertCircle className="h-4 w-4 ml-2" />}
+      <AlertDescription>
+        <div className="whitespace-pre-line">{error}</div>
+      </AlertDescription>
     </Alert>
   );
 };

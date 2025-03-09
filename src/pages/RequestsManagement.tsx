@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useSearchParams } from "react-router-dom";
@@ -13,6 +13,10 @@ import { WelcomeCard } from "@/components/requests/tabs/WelcomeCard";
 import { IncomingRequestsTab } from "@/components/requests/tabs/IncomingRequestsTab";
 import { OutgoingRequestsTab } from "@/components/requests/tabs/OutgoingRequestsTab";
 import { FormsTab } from "@/components/requests/tabs/FormsTab";
+import { supabase } from "@/integrations/supabase/client";
+import { Progress } from "@/components/ui/progress";
+import { RequestError } from "@/components/requests/dialogs/RequestError";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const RequestsManagement = () => {
   const { isAuthenticated, user } = useAuthStore();
@@ -22,6 +26,7 @@ const RequestsManagement = () => {
   const [showNewRequestDialog, setShowNewRequestDialog] = useState<boolean>(false);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [authChecking, setAuthChecking] = useState<boolean>(true);
   
   const { 
     incomingRequests, 
@@ -30,8 +35,44 @@ const RequestsManagement = () => {
     outgoingLoading,
     createRequest,
     isUploading,
+    uploadProgress,
     submissionSuccess,
+    detailedError,
   } = useRequests();
+
+  // Check session on mount
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        setAuthChecking(true);
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Session check error:", sessionError);
+          setError("حدث خطأ أثناء التحقق من حالة تسجيل الدخول");
+        }
+        
+        if (!session) {
+          console.log("No active session");
+          setError("يرجى تسجيل الدخول لاستخدام نظام الطلبات");
+        }
+      } catch (err) {
+        console.error("Error checking session:", err);
+        setError("حدث خطأ غير متوقع");
+      } finally {
+        setAuthChecking(false);
+      }
+    };
+    
+    checkSession();
+  }, []);
+
+  useEffect(() => {
+    // If we have a detailed error from the request creation process, show it
+    if (detailedError) {
+      setError(detailedError);
+    }
+  }, [detailedError]);
 
   const handleNewRequest = () => {
     setShowNewRequestDialog(false);
@@ -42,6 +83,11 @@ const RequestsManagement = () => {
   const handleSelectRequestType = (requestType: RequestType) => {
     setSelectedRequestType(requestType);
     setShowNewRequestDialog(true);
+    setError(null);
+  };
+
+  const handleTabChange = (value: string) => {
+    setSearchParams({ tab: value });
     setError(null);
   };
 
@@ -76,6 +122,15 @@ const RequestsManagement = () => {
 
   // Render content based on the active tab
   const renderContent = () => {
+    if (authChecking) {
+      return (
+        <div className="flex flex-col items-center justify-center p-8">
+          <p className="mb-4 text-muted-foreground">جاري التحقق من حالة تسجيل الدخول...</p>
+          <Progress value={100} className="w-64 h-2 animate-pulse" />
+        </div>
+      );
+    }
+
     if (selectedRequestId) {
       return (
         <RequestDetail
@@ -85,43 +140,50 @@ const RequestsManagement = () => {
       );
     }
 
-    switch (activeTab) {
-      case "incoming":
-        return (
-          <IncomingRequestsTab 
-            requests={incomingRequests || []}
-            isLoading={incomingLoading}
-            error={error}
-            onViewRequest={handleViewRequest}
-          />
-        );
-        
-      case "outgoing":
-        return (
-          <OutgoingRequestsTab 
-            requests={outgoingRequests || []}
-            isLoading={outgoingLoading}
-            error={error}
-            onViewRequest={handleViewRequest}
-          />
-        );
-        
-      case "approvals":
-        return <AdminWorkflows />;
-        
-      case "forms":
-        return <FormsTab onSelectType={handleSelectRequestType} />;
-        
-      default:
-        return (
-          <IncomingRequestsTab 
-            requests={incomingRequests || []}
-            isLoading={incomingLoading}
-            error={error}
-            onViewRequest={handleViewRequest}
-          />
-        );
+    if (!isAuthenticated) {
+      return <WelcomeCard />;
     }
+
+    return (
+      <>
+        <RequestError error={error} />
+        
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="incoming">الطلبات الواردة</TabsTrigger>
+            <TabsTrigger value="outgoing">الطلبات الصادرة</TabsTrigger>
+            <TabsTrigger value="forms">تقديم طلب جديد</TabsTrigger>
+            {user?.isAdmin && <TabsTrigger value="approvals">إدارة سير العمل</TabsTrigger>}
+          </TabsList>
+          
+          <TabsContent value="incoming">
+            <IncomingRequestsTab 
+              requests={incomingRequests || []}
+              isLoading={incomingLoading}
+              error={error}
+              onViewRequest={handleViewRequest}
+            />
+          </TabsContent>
+          
+          <TabsContent value="outgoing">
+            <OutgoingRequestsTab 
+              requests={outgoingRequests || []}
+              isLoading={outgoingLoading}
+              error={error}
+              onViewRequest={handleViewRequest}
+            />
+          </TabsContent>
+          
+          <TabsContent value="forms">
+            <FormsTab onSelectType={handleSelectRequestType} />
+          </TabsContent>
+          
+          <TabsContent value="approvals">
+            <AdminWorkflows />
+          </TabsContent>
+        </Tabs>
+      </>
+    );
   };
 
   return (
@@ -134,11 +196,7 @@ const RequestsManagement = () => {
           <p className="text-gray-600 mt-2">إدارة ومتابعة الطلبات والاستمارات والاعتمادات الواردة</p>
         </div>
         
-        {isAuthenticated ? (
-          renderContent()
-        ) : (
-          <WelcomeCard />
-        )}
+        {renderContent()}
       </div>
 
       {selectedRequestType && (
@@ -149,7 +207,9 @@ const RequestsManagement = () => {
           onSubmit={handleCreateRequest}
           isSubmitting={createRequest.isPending}
           isUploading={isUploading}
+          uploadProgress={uploadProgress}
           submissionSuccess={submissionSuccess}
+          error={error}
         />
       )}
 

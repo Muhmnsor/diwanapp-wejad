@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,9 +10,11 @@ import {
 import { RequestType } from "./types";
 import { DynamicForm } from "./DynamicForm";
 import { useAuthStore } from "@/store/authStore";
-import { RequestBasicInfoForm, RequestBasicInfo, formSchema } from "./dialogs/RequestBasicInfoForm";
+import { RequestBasicInfoForm, RequestBasicInfo } from "./dialogs/RequestBasicInfoForm";
 import { RequestError } from "./dialogs/RequestError";
 import { RequestSubmitLoader } from "./dialogs/RequestSubmitLoader";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle2 } from "lucide-react";
 
 interface NewRequestDialogProps {
   isOpen: boolean;
@@ -21,7 +23,9 @@ interface NewRequestDialogProps {
   onSubmit: (data: any) => void;
   isSubmitting?: boolean;
   isUploading?: boolean;
+  uploadProgress?: number;
   submissionSuccess?: boolean;
+  error?: string | null;
 }
 
 export const NewRequestDialog = ({
@@ -31,11 +35,13 @@ export const NewRequestDialog = ({
   onSubmit,
   isSubmitting = false,
   isUploading = false,
-  submissionSuccess = false
+  uploadProgress = 0,
+  submissionSuccess = false,
+  error = null
 }: NewRequestDialogProps) => {
   const { isAuthenticated, user } = useAuthStore();
   const [step, setStep] = useState(1);
-  const [error, setError] = useState<string | null>(null);
+  const [internalError, setInternalError] = useState<string | null>(null);
   const [requestData, setRequestData] = useState<{
     title: string;
     priority: string;
@@ -45,9 +51,24 @@ export const NewRequestDialog = ({
     priority: "medium",
   });
 
+  // Clear internal error when external error changes
+  useEffect(() => {
+    if (error) {
+      setInternalError(error);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    // Reset state when dialog opens
+    if (isOpen) {
+      setStep(1);
+      setInternalError(null);
+    }
+  }, [isOpen]);
+
   const handleStep1Submit = (data: RequestBasicInfo) => {
     if (!isAuthenticated || !user) {
-      setError("يجب تسجيل الدخول لإنشاء طلب جديد");
+      setInternalError("يجب تسجيل الدخول لإنشاء طلب جديد");
       return;
     }
     
@@ -57,35 +78,39 @@ export const NewRequestDialog = ({
       priority: data.priority,
     });
     setStep(2);
+    setInternalError(null);
   };
 
   const handleStep2Submit = (formData: Record<string, any>) => {
     try {
       if (!isAuthenticated || !user) {
-        setError("يجب تسجيل الدخول لإنشاء طلب جديد");
+        setInternalError("يجب تسجيل الدخول لإنشاء طلب جديد");
         return;
       }
       
-      setError(null);
+      setInternalError(null);
       const fullData = {
         request_type_id: requestType.id,
         title: requestData.title,
         priority: requestData.priority,
         form_data: formData,
       };
+      
+      console.log("Submitting request with data:", fullData);
       onSubmit(fullData);
     } catch (err) {
       console.error("Error submitting request:", err);
       if (err instanceof Error) {
-        setError(err.message);
+        setInternalError(err.message);
       } else {
-        setError("حدث خطأ أثناء إرسال الطلب");
+        setInternalError("حدث خطأ أثناء إرسال الطلب");
       }
     }
   };
 
   const handleBack = () => {
     setStep(1);
+    setInternalError(null);
   };
 
   const handleClose = () => {
@@ -95,7 +120,7 @@ export const NewRequestDialog = ({
       priority: "medium",
     });
     setStep(1);
-    setError(null);
+    setInternalError(null);
     onClose();
   };
 
@@ -115,7 +140,14 @@ export const NewRequestDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <RequestError error={error} />
+        <RequestError error={internalError} />
+
+        {submissionSuccess && (
+          <Alert variant="success" className="my-4 bg-green-50 border-green-200">
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            <AlertDescription>تم إرسال الطلب بنجاح وحفظه في قاعدة البيانات</AlertDescription>
+          </Alert>
+        )}
 
         {step === 1 ? (
           <RequestBasicInfoForm 
@@ -134,7 +166,8 @@ export const NewRequestDialog = ({
 
         <RequestSubmitLoader 
           isSubmitting={isSubmitting} 
-          isUploading={isUploading} 
+          isUploading={isUploading}
+          progress={uploadProgress}
         />
       </DialogContent>
     </Dialog>
