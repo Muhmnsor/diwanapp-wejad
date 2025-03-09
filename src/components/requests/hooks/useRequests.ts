@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Request, RequestType } from "../types";
@@ -16,6 +17,7 @@ export const useRequests = () => {
   const { processFormFiles, isUploading, uploadProgress } = useFileUpload();
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
   const [detailedError, setDetailedError] = useState<string | null>(null);
+  const [submissionStep, setSubmissionStep] = useState<string>("");
   
   const fetchIncomingRequests = async () => {
     if (!user) throw new Error("User not authenticated");
@@ -107,7 +109,8 @@ export const useRequests = () => {
 
   const performDatabaseInsert = async (insertData: any, retryCount = 0): Promise<any> => {
     try {
-      console.log(`Creating request (attempt ${retryCount + 1})`, insertData);
+      setSubmissionStep("إرسال البيانات لقاعدة البيانات");
+      console.log(`Creating request (attempt ${retryCount + 1})`, JSON.stringify(insertData, null, 2));
       
       // Use .select() to return the inserted data
       const { data, error } = await supabase
@@ -117,6 +120,7 @@ export const useRequests = () => {
 
       if (error) {
         console.error(`Error creating request (attempt ${retryCount + 1}):`, error);
+        console.error("Request data that caused error:", JSON.stringify(insertData, null, 2));
         
         // More specific error messages
         if (error.code === '23503') {
@@ -131,6 +135,7 @@ export const useRequests = () => {
           // Retry with exponential backoff
           const delayTime = RETRY_DELAY * Math.pow(2, retryCount);
           console.log(`Retrying after ${delayTime}ms...`);
+          setSubmissionStep(`إعادة المحاولة (${retryCount + 1}/${MAX_RETRIES})...`);
           await new Promise(resolve => setTimeout(resolve, delayTime));
           return performDatabaseInsert(insertData, retryCount + 1);
         } else {
@@ -163,17 +168,20 @@ export const useRequests = () => {
       if (!user) throw new Error("يجب تسجيل الدخول لإنشاء طلب جديد");
       setSubmissionSuccess(false);
       setDetailedError(null);
+      setSubmissionStep("التحقق من صحة البيانات");
       
       try {
         console.log("Starting request creation process with data:", requestData);
         
         // Verify user authentication explicitly
+        setSubmissionStep("التحقق من جلسة المستخدم");
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
           throw new Error("جلسة المستخدم غير موجودة. يرجى تسجيل الدخول مرة أخرى");
         }
         
         // Fetch the request type to get form schema
+        setSubmissionStep("جلب معلومات نوع الطلب");
         const { data: requestType, error: typeError } = await supabase
           .from("request_types")
           .select("default_workflow_id, form_schema")
@@ -190,6 +198,7 @@ export const useRequests = () => {
         }
         
         // Validate form data before uploading files
+        setSubmissionStep("التحقق من صحة بيانات النموذج");
         const formSchema = requestType.form_schema;
         const validationResult = validateFormData(requestData.form_data, formSchema);
         
@@ -199,10 +208,12 @@ export const useRequests = () => {
         }
         
         // Process and upload any files in the form data
+        setSubmissionStep("معالجة وتحميل الملفات");
         const processedFormData = await processFormFiles(requestData.form_data, user.id);
         
         console.log("Form data processed successfully, preparing workflow data");
         
+        setSubmissionStep("إعداد سير العمل");
         const workflowId = requestType.default_workflow_id;
         let currentStepId = null;
         
@@ -239,12 +250,14 @@ export const useRequests = () => {
         };
         
         console.log("Request insert data prepared:", insertData);
+        console.log("User ID for this request:", user.id);
         
         // Perform the insert operation with retry logic
         const insertedRequest = await performDatabaseInsert(insertData);
         
         // If there's a current step, create approval record
         if (currentStepId && insertedRequest) {
+          setSubmissionStep("إنشاء سجل الموافقة");
           console.log("Creating approval record for request:", insertedRequest.id);
           
           const { data: step, error: fetchStepError } = await supabase
@@ -257,24 +270,30 @@ export const useRequests = () => {
             console.error("Error fetching step info:", fetchStepError);
             // Continue despite error, as request is already created
           } else if (step && step.approver_id) {
-            const { error: approvalError } = await supabase
-              .from("request_approvals")
-              .insert({
-                request_id: insertedRequest.id,
-                step_id: currentStepId,
-                approver_id: step.approver_id,
-                status: "pending"
-              });
-            
-            if (approvalError) {
-              console.error("Error creating approval:", approvalError);
-              // Continue despite error, as request is already created
-            } else {
-              console.log("Approval record created successfully");
+            try {
+              const { error: approvalError } = await supabase
+                .from("request_approvals")
+                .insert({
+                  request_id: insertedRequest.id,
+                  step_id: currentStepId,
+                  approver_id: step.approver_id,
+                  status: "pending"
+                });
+              
+              if (approvalError) {
+                console.error("Error creating approval:", approvalError);
+                // Continue despite error, as request is already created
+              } else {
+                console.log("Approval record created successfully");
+              }
+            } catch (approvalInsertError) {
+              console.error("Exception during approval creation:", approvalInsertError);
+              // Continue since the main request was created
             }
           }
         }
         
+        setSubmissionStep("اكتمال العملية");
         setSubmissionSuccess(true);
         console.log("Request creation completed successfully!");
         return insertedRequest;
@@ -490,6 +509,7 @@ export const useRequests = () => {
     uploadProgress,
     submissionSuccess,
     detailedError,
+    submissionStep,
     approveRequest,
     rejectRequest
   };

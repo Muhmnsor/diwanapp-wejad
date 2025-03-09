@@ -6,12 +6,14 @@ interface RequestSubmitLoaderProps {
   isSubmitting: boolean;
   isUploading: boolean;
   progress?: number;
+  submissionStep?: string;
 }
 
 export const RequestSubmitLoader = ({ 
   isSubmitting, 
   isUploading,
-  progress = 0
+  progress = 0,
+  submissionStep = ""
 }: RequestSubmitLoaderProps) => {
   if (!isSubmitting && !isUploading) return null;
   
@@ -24,6 +26,9 @@ export const RequestSubmitLoader = ({
         <span className="mr-2">
           {isUploading ? "جاري رفع الملفات..." : "جاري معالجة الطلب..."}
         </span>
+        {submissionStep && (
+          <span className="text-xs text-muted-foreground">({submissionStep})</span>
+        )}
       </div>
       
       {showProgress && (

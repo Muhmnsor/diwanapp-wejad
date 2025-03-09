@@ -38,6 +38,7 @@ const RequestsManagement = () => {
     uploadProgress,
     submissionSuccess,
     detailedError,
+    submissionStep
   } = useRequests();
 
   // Check session on mount
@@ -210,6 +211,7 @@ const RequestsManagement = () => {
           uploadProgress={uploadProgress}
           submissionSuccess={submissionSuccess}
           error={error}
+          submissionStep={submissionStep}
         />
       )}
 

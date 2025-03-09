@@ -26,6 +26,7 @@ interface NewRequestDialogProps {
   uploadProgress?: number;
   submissionSuccess?: boolean;
   error?: string | null;
+  submissionStep?: string;
 }
 
 export const NewRequestDialog = ({
@@ -37,7 +38,8 @@ export const NewRequestDialog = ({
   isUploading = false,
   uploadProgress = 0,
   submissionSuccess = false,
-  error = null
+  error = null,
+  submissionStep = ""
 }: NewRequestDialogProps) => {
   const { isAuthenticated, user } = useAuthStore();
   const [step, setStep] = useState(1);
@@ -89,6 +91,8 @@ export const NewRequestDialog = ({
       }
       
       setInternalError(null);
+      console.log("Form data before submission:", formData);
+      
       const fullData = {
         request_type_id: requestType.id,
         title: requestData.title,
@@ -124,6 +128,14 @@ export const NewRequestDialog = ({
     onClose();
   };
 
+  const handleRetry = () => {
+    if (step === 2 && requestData.form_data) {
+      // Retry the form submission
+      handleStep2Submit(requestData.form_data);
+    }
+    setInternalError(null);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-[600px]">
@@ -140,7 +152,10 @@ export const NewRequestDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <RequestError error={internalError} />
+        <RequestError 
+          error={internalError} 
+          retryAction={internalError ? handleRetry : undefined}
+        />
 
         {submissionSuccess && (
           <Alert variant="success" className="my-4 bg-green-50 border-green-200">
@@ -168,6 +183,7 @@ export const NewRequestDialog = ({
           isSubmitting={isSubmitting} 
           isUploading={isUploading}
           progress={uploadProgress}
+          submissionStep={submissionStep}
         />
       </DialogContent>
     </Dialog>
