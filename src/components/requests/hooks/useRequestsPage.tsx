@@ -1,0 +1,143 @@
+
+import { useState, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/store/authStore";
+import { useRequests } from "@/components/requests/hooks/useRequests";
+import { supabase } from "@/integrations/supabase/client";
+import { RequestType } from "@/components/requests/types";
+
+export const useRequestsPage = () => {
+  const { isAuthenticated, user } = useAuthStore();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "incoming";
+  const [selectedRequestType, setSelectedRequestType] = useState<RequestType | null>(null);
+  const [showNewRequestDialog, setShowNewRequestDialog] = useState<boolean>(false);
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [authChecking, setAuthChecking] = useState<boolean>(true);
+  const navigate = useNavigate();
+  
+  const { 
+    incomingRequests, 
+    outgoingRequests, 
+    incomingLoading, 
+    outgoingLoading,
+    createRequest,
+    isUploading,
+    uploadProgress,
+    submissionSuccess,
+    detailedError,
+    submissionStep
+  } = useRequests();
+
+  // Check session on mount
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        setAuthChecking(true);
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Session check error:", sessionError);
+          setError("حدث خطأ أثناء التحقق من حالة تسجيل الدخول");
+        }
+        
+        if (!session) {
+          console.log("No active session");
+          setError("يرجى تسجيل الدخول لاستخدام نظام الطلبات");
+        }
+      } catch (err) {
+        console.error("Error checking session:", err);
+        setError("حدث خطأ غير متوقع");
+      } finally {
+        setAuthChecking(false);
+      }
+    };
+    
+    checkSession();
+  }, []);
+
+  useEffect(() => {
+    // If we have a detailed error from the request creation process, show it
+    if (detailedError) {
+      setError(detailedError);
+    }
+  }, [detailedError]);
+
+  const handleNewRequest = () => {
+    setShowNewRequestDialog(false);
+    setSelectedRequestType(null);
+    setError(null);
+  };
+
+  const handleSelectRequestType = (requestType: RequestType) => {
+    setSelectedRequestType(requestType);
+    setShowNewRequestDialog(true);
+    setError(null);
+  };
+
+  const handleTabChange = (value: string) => {
+    setSearchParams({ tab: value });
+    setError(null);
+  };
+
+  const handleCreateRequest = (formData: any) => {
+    if (!user) {
+      setError("يجب تسجيل الدخول لإنشاء طلب جديد");
+      return;
+    }
+    
+    setError(null);
+    createRequest.mutate(formData, {
+      onSuccess: () => {
+        // Don't close dialog immediately to allow user to see success message
+        setTimeout(() => {
+          handleNewRequest();
+        }, 2000);
+      },
+      onError: (err: any) => {
+        console.error("Error creating request:", err);
+        setError(err.message || "حدث خطأ أثناء إنشاء الطلب");
+      }
+    });
+  };
+
+  const handleViewRequest = (request: any) => {
+    setSelectedRequestId(request.id);
+  };
+
+  const handleCloseDetailView = () => {
+    setSelectedRequestId(null);
+  };
+
+  const handleLogin = () => {
+    navigate('/login', { state: { returnUrl: '/requests' } });
+  };
+
+  return {
+    isAuthenticated,
+    user,
+    activeTab,
+    selectedRequestType,
+    showNewRequestDialog,
+    selectedRequestId,
+    error,
+    authChecking,
+    incomingRequests,
+    outgoingRequests,
+    incomingLoading,
+    outgoingLoading,
+    createRequest,
+    isUploading,
+    uploadProgress,
+    submissionSuccess,
+    submissionStep,
+    handleNewRequest,
+    handleSelectRequestType,
+    handleTabChange,
+    handleCreateRequest,
+    handleViewRequest,
+    handleCloseDetailView,
+    handleLogin
+  };
+};
