@@ -539,7 +539,7 @@ export const useRequests = () => {
     try {
       const { data: step, error: fetchStepError } = await supabase
         .from("workflow_steps")
-        .select("approver_id")
+        .select("approver_id, approver_type")
         .eq("id", stepId)
         .single();
       
@@ -549,17 +549,50 @@ export const useRequests = () => {
       }
       
       if (step && step.approver_id) {
-        const { error: approvalError } = await supabase
-          .from("request_approvals")
-          .insert({
-            request_id: requestId,
-            step_id: stepId,
-            approver_id: step.approver_id,
-            status: "pending"
-          });
-        
-        if (approvalError) {
-          console.error("Error creating approval:", approvalError);
+        // For role-based approvers, we need to find all users with that role
+        if (step.approver_type === 'role') {
+          console.log("Creating approval records for role-based approver:", step.approver_id);
+          
+          // Get all users with this role
+          const { data: usersWithRole, error: roleError } = await supabase
+            .from("user_roles")
+            .select("user_id")
+            .eq("role_id", step.approver_id);
+            
+          if (roleError) {
+            console.error("Error fetching users with role:", roleError);
+            return;
+          }
+          
+          // Create an approval record for each user with this role
+          for (const userRole of usersWithRole || []) {
+            const { error: approvalError } = await supabase
+              .from("request_approvals")
+              .insert({
+                request_id: requestId,
+                step_id: stepId,
+                approver_id: userRole.user_id,
+                status: "pending"
+              });
+            
+            if (approvalError) {
+              console.error("Error creating role-based approval:", approvalError);
+            }
+          }
+        } else {
+          // Standard user-based approver
+          const { error: approvalError } = await supabase
+            .from("request_approvals")
+            .insert({
+              request_id: requestId,
+              step_id: stepId,
+              approver_id: step.approver_id,
+              status: "pending"
+            });
+          
+          if (approvalError) {
+            console.error("Error creating approval:", approvalError);
+          }
         }
       }
     } catch (error) {

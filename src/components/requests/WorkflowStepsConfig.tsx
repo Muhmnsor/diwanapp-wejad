@@ -6,6 +6,8 @@ import { StepsList } from "./workflow/StepsList";
 import { useWorkflowSteps } from "./workflow/useWorkflowSteps";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface WorkflowStepsConfigProps {
   requestTypeId: string | null;
@@ -57,6 +59,15 @@ export const WorkflowStepsConfig = ({
         <h3 className="text-lg font-medium">خطوات سير العمل</h3>
       </div>
       <Separator />
+      
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {error}
+          </AlertDescription>
+        </Alert>
+      )}
       
       <StepForm
         currentStep={currentStep}

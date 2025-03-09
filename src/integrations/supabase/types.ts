@@ -4189,6 +4189,12 @@ export type Database = {
         }
         Returns: Json
       }
+      insert_workflow_steps: {
+        Args: {
+          steps: Json[]
+        }
+        Returns: Json
+      }
       is_admin:
         | {
             Args: Record<PropertyKey, never>
