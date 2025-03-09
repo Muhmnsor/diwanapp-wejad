@@ -91,8 +91,12 @@ export const DynamicForm = ({
     }
     
     try {
+      // We'll only show success after the parent component handles the submission
+      // The parent component will handle setting isSubmitting=false when done
       onSubmit(formData);
-      setSuccess("تم إرسال البيانات بنجاح");
+      
+      // We don't set success here anymore as it should be set based on actual submission result
+      // The parent component should handle success messaging
     } catch (error) {
       console.error("Error submitting form:", error);
       if (error instanceof Error) {
@@ -102,6 +106,14 @@ export const DynamicForm = ({
       }
     }
   };
+
+  // Set success message when submission completes successfully
+  React.useEffect(() => {
+    // If we were submitting but now we're not, and there are no errors, then it was successful
+    if (!isSubmitting && errors.length === 0 && Object.keys(formData).length > 0) {
+      setSuccess("تم إرسال البيانات بنجاح وحفظها في قاعدة البيانات");
+    }
+  }, [isSubmitting, errors.length, formData]);
 
   const renderField = (field: any) => {
     const { type, name, label, required, placeholder, options, description } = field;
