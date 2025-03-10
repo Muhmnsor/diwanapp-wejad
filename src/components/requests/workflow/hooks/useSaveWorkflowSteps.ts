@@ -156,21 +156,10 @@ export const useSaveWorkflowSteps = ({
         console.warn("Error logging operation (non-critical):", logError);
       }
       
-      // Convert steps to JSON strings for RPC function
-      const jsonSteps = stepsToInsert.map(step => {
-        // Log each step for debugging
-        console.log("Preparing step for RPC:", step);
-        // Return the JSON string
-        return JSON.stringify(step);
-      });
-      
-      // Debug log: Final JSON steps being sent to RPC
-      console.log("JSON steps for RPC:", jsonSteps);
-      
-      // Call the RPC function to insert steps
+      // FIXED: Don't stringify the steps data here, send it as a proper JSON array
       const { data: rpcResult, error: rpcError } = await supabase
         .rpc('insert_workflow_steps', {
-          steps: jsonSteps
+          steps: stepsToInsert
         });
 
       // Debug log: RPC call result
