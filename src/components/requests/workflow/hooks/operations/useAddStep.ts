@@ -34,8 +34,7 @@ export const useAddStep = (
       const { session, isAdmin } = await checkUserPermissions();
       if (!session) return;
 
-      // IMPORTANT: Ensure we're using the actual workflow ID, not the temporary one
-      // This is a critical fix to ensure all steps get the correct workflow_id
+      // Determine the correct workflow ID
       const workflowId = currentWorkflowId && currentWorkflowId !== 'temp-workflow-id' 
         ? currentWorkflowId 
         : currentStep.workflow_id && currentStep.workflow_id !== 'temp-workflow-id'
@@ -43,6 +42,19 @@ export const useAddStep = (
           : 'temp-workflow-id';
       
       console.log("Adding step with workflow ID:", workflowId);
+      
+      // Log validation info
+      if (workflowId === 'temp-workflow-id') {
+        console.log("WARNING: Using temporary workflow ID. Steps will only be saved locally.");
+      } else {
+        // Validate UUID format
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(workflowId)) {
+          console.error("Invalid workflow ID format:", workflowId);
+          toast.error("خطأ في تنسيق معرف سير العمل");
+          return;
+        }
+      }
       
       // Create a new step or update existing one
       const newStep: WorkflowStep = {

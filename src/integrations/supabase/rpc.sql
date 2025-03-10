@@ -15,6 +15,8 @@ DECLARE
   v_workflow_ids uuid[] := '{}';
   v_step_count int := 0;
   v_is_valid_uuid boolean;
+  v_step_id uuid;
+  v_loop_index int;
 BEGIN
   -- Start transaction to ensure all steps are inserted or none
   BEGIN
@@ -27,15 +29,15 @@ BEGIN
     RAISE NOTICE 'Processing % workflow steps', v_step_count;
     
     -- First collect all workflow IDs to delete existing steps
-    FOR i IN 1..v_step_count LOOP
-      step := steps[i];
+    FOR v_loop_index IN 1..v_step_count LOOP
+      step := steps[v_loop_index];
       
       -- Log the raw step data for debugging
-      RAISE NOTICE 'Step % raw data: %', i, step;
+      RAISE NOTICE 'Step % raw data: %', v_loop_index, step;
       
       -- Validate workflow ID exists in each step
       IF step->>'workflow_id' IS NULL OR (step->>'workflow_id') = '' THEN
-        RAISE EXCEPTION 'Workflow ID is required for step %', i;
+        RAISE EXCEPTION 'Workflow ID is required for step %', v_loop_index;
       END IF;
       
       -- Check if workflow_id is a valid UUID
@@ -43,15 +45,15 @@ BEGIN
         v_workflow_id := (step->>'workflow_id')::uuid;
         v_is_valid_uuid := true;
       EXCEPTION WHEN others THEN
-        RAISE NOTICE 'Invalid UUID format for workflow_id in step %: %', i, step->>'workflow_id';
+        RAISE NOTICE 'Invalid UUID format for workflow_id in step %: %', v_loop_index, step->>'workflow_id';
         v_is_valid_uuid := false;
       END;
       
       IF NOT v_is_valid_uuid THEN
-        RAISE EXCEPTION 'Invalid UUID format for workflow_id in step %: %', i, step->>'workflow_id';
+        RAISE EXCEPTION 'Invalid UUID format for workflow_id in step %: %', v_loop_index, step->>'workflow_id';
       END IF;
       
-      RAISE NOTICE 'Step % has workflow_id: %', i, v_workflow_id;
+      RAISE NOTICE 'Step % has workflow_id: %', v_loop_index, v_workflow_id;
       
       -- Add to workflow IDs array if not already there
       IF NOT (v_workflow_id = ANY(v_workflow_ids)) THEN
@@ -68,14 +70,14 @@ BEGIN
     END IF;
     
     -- Process each step
-    FOR i IN 1..v_step_count LOOP
-      step := steps[i];
+    FOR v_loop_index IN 1..v_step_count LOOP
+      step := steps[v_loop_index];
       
       -- Ensure workflow_id is a valid UUID before casting
       BEGIN
         v_workflow_id := (step->>'workflow_id')::uuid;
       EXCEPTION WHEN others THEN
-        RAISE EXCEPTION 'Invalid UUID format for workflow_id in step %: %', i, step->>'workflow_id';
+        RAISE EXCEPTION 'Invalid UUID format for workflow_id in step %: %', v_loop_index, step->>'workflow_id';
       END;
       
       -- Validate workflow exists
@@ -85,11 +87,11 @@ BEGIN
       
       -- Validate other required fields
       IF step->>'step_name' IS NULL OR (step->>'step_name') = '' THEN
-        RAISE EXCEPTION 'Step name is required for step %', i;
+        RAISE EXCEPTION 'Step name is required for step %', v_loop_index;
       END IF;
       
       IF step->>'approver_id' IS NULL OR (step->>'approver_id') = '' THEN
-        RAISE EXCEPTION 'Approver ID is required for step %', i;
+        RAISE EXCEPTION 'Approver ID is required for step %', v_loop_index;
       END IF;
       
       -- Validate approver_id is a valid UUID
@@ -101,75 +103,97 @@ BEGIN
           v_approver_id := (step->>'approver_id')::uuid;
           v_is_valid_approver_uuid := true;
         EXCEPTION WHEN others THEN
-          RAISE NOTICE 'Invalid UUID format for approver_id in step %: %', i, step->>'approver_id';
+          RAISE NOTICE 'Invalid UUID format for approver_id in step %: %', v_loop_index, step->>'approver_id';
           v_is_valid_approver_uuid := false;
         END;
         
         IF NOT v_is_valid_approver_uuid THEN
-          RAISE EXCEPTION 'Invalid UUID format for approver_id in step %: %', i, step->>'approver_id';
+          RAISE EXCEPTION 'Invalid UUID format for approver_id in step %: %', v_loop_index, step->>'approver_id';
         END IF;
       END;
       
-      -- Insert the step and capture the result
-      RAISE NOTICE 'Inserting step % for workflow %', i, v_workflow_id;
+      -- Check if approver exists (user table)
+      IF NOT EXISTS (SELECT 1 FROM auth.users WHERE id = (step->>'approver_id')::uuid) THEN
+        RAISE NOTICE 'User with ID % does not exist - creating step anyway', step->>'approver_id';
+      END IF;
+      
+      -- Create new step or reuse ID if provided
+      IF step->>'id' IS NOT NULL AND (step->>'id') != '' AND (step->>'id') != 'null' THEN
+        BEGIN
+          v_step_id := (step->>'id')::uuid;
+        EXCEPTION WHEN others THEN
+          v_step_id := uuid_generate_v4();
+        END;
+      ELSE
+        v_step_id := uuid_generate_v4();
+      END IF;
+      
+      RAISE NOTICE 'Inserting step % with ID %', v_loop_index, v_step_id;
       
       BEGIN
-        WITH inserted AS (
-          INSERT INTO workflow_steps (
-            workflow_id,
-            step_order,
-            step_name,
-            step_type,
-            approver_id,
-            instructions,
-            is_required,
-            approver_type
-          ) VALUES (
-            v_workflow_id,
-            COALESCE((step->>'step_order')::int, i),
-            step->>'step_name',
-            COALESCE(step->>'step_type', 'decision'),
-            (step->>'approver_id')::uuid,
-            step->>'instructions',
-            COALESCE((step->>'is_required')::boolean, true),
-            COALESCE(step->>'approver_type', 'user')
+        INSERT INTO workflow_steps (
+          id,
+          workflow_id,
+          step_order,
+          step_name,
+          step_type,
+          approver_id,
+          approver_type,
+          instructions,
+          is_required,
+          created_at
+        ) VALUES (
+          v_step_id,
+          v_workflow_id,
+          (step->>'step_order')::integer,
+          step->>'step_name',
+          COALESCE(step->>'step_type', 'decision'),
+          (step->>'approver_id')::uuid,
+          COALESCE(step->>'approver_type', 'user'),
+          step->>'instructions',
+          COALESCE((step->>'is_required')::boolean, true),
+          COALESCE(
+            (step->>'created_at')::timestamp with time zone,
+            now()
           )
-          RETURNING row_to_json(workflow_steps.*)::jsonb AS step_data
-        )
-        SELECT step_data INTO step_result FROM inserted;
+        );
+        
+        -- Add to inserted steps array
+        inserted_steps := array_append(inserted_steps, jsonb_build_object(
+          'id', v_step_id,
+          'workflow_id', v_workflow_id,
+          'step_order', (step->>'step_order')::integer,
+          'step_name', step->>'step_name',
+          'step_type', COALESCE(step->>'step_type', 'decision'),
+          'approver_id', (step->>'approver_id')::uuid,
+          'approver_type', COALESCE(step->>'approver_type', 'user'),
+          'instructions', step->>'instructions',
+          'is_required', COALESCE((step->>'is_required')::boolean, true),
+          'created_at', now()
+        ));
+        
+        RAISE NOTICE 'Successfully inserted step %', v_loop_index;
       EXCEPTION WHEN others THEN
-        GET STACKED DIAGNOSTICS v_error = MESSAGE_TEXT;
-        RAISE EXCEPTION 'Error inserting step %: %', i, v_error;
+        v_error := 'Error inserting step ' || v_loop_index || ': ' || SQLERRM;
+        RAISE NOTICE '%', v_error;
+        RAISE EXCEPTION '%', v_error;
       END;
-      
-      -- Add to our result array
-      IF step_result IS NOT NULL THEN
-        inserted_steps := array_append(inserted_steps, step_result);
-        RAISE NOTICE 'Successfully inserted step %', i;
-      ELSE
-        RAISE EXCEPTION 'Failed to insert step %', i;
-      END IF;
     END LOOP;
     
-    -- Create a result object
+    -- Return success result with inserted steps
     result := jsonb_build_object(
       'success', true,
-      'message', 'Successfully inserted ' || v_step_count::text || ' workflow steps',
+      'message', 'Successfully inserted ' || array_length(inserted_steps, 1) || ' workflow steps',
       'data', inserted_steps
     );
     
     RETURN result;
-  
-  EXCEPTION WHEN OTHERS THEN
-    -- Get the error details
-    GET STACKED DIAGNOSTICS v_error = MESSAGE_TEXT;
-    RAISE NOTICE 'Error in insert_workflow_steps: %', v_error;
-    
-    -- Create an error result
+  EXCEPTION WHEN others THEN
+    -- Return error result
     result := jsonb_build_object(
       'success', false,
-      'error', v_error,
-      'message', 'Error inserting workflow steps: ' || v_error
+      'message', 'Error inserting workflow steps: ' || SQLERRM,
+      'error', SQLERRM
     );
     
     RETURN result;

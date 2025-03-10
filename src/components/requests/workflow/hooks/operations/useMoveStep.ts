@@ -1,61 +1,62 @@
 
 import { WorkflowStep } from "../../../types";
 import { toast } from "sonner";
-import { checkUserPermissions } from "../utils/permissionUtils";
 
 export const useMoveStep = (
   saveWorkflowSteps: (steps: WorkflowStep[]) => Promise<boolean | undefined>,
   setEditingStepIndex: (index: number | null) => void
 ) => {
   const handleMoveStep = async (
-    stepIndex: number, 
-    direction: 'up' | 'down', 
+    index: number,
+    direction: 'up' | 'down',
     workflowSteps: WorkflowStep[],
     editingStepIndex: number | null,
     currentWorkflowId: string | null
   ) => {
     try {
-      // Check if move is possible
+      // Determine the correct workflow ID
+      const workflowId = currentWorkflowId && currentWorkflowId !== 'temp-workflow-id' 
+        ? currentWorkflowId 
+        : workflowSteps.length > 0 && workflowSteps[0].workflow_id && workflowSteps[0].workflow_id !== 'temp-workflow-id'
+          ? workflowSteps[0].workflow_id
+          : 'temp-workflow-id';
+      
+      console.log(`Moving step at index ${index} ${direction} with workflow ID:`, workflowId);
+      
       if (
-        (direction === 'up' && stepIndex === 0) || 
-        (direction === 'down' && stepIndex === workflowSteps.length - 1)
+        (direction === 'up' && index === 0) ||
+        (direction === 'down' && index === workflowSteps.length - 1)
       ) {
-        return; // Can't move beyond boundaries
+        return;
       }
 
-      // Check user permissions
-      const { session, isAdmin } = await checkUserPermissions();
-      if (!session) return;
-
-      // Create a copy of the steps array
+      const newIndex = direction === 'up' ? index - 1 : index + 1;
       const updatedSteps = [...workflowSteps];
+      const temp = updatedSteps[index];
+      updatedSteps[index] = updatedSteps[newIndex];
+      updatedSteps[newIndex] = temp;
 
-      // Calculate the new index
-      const newIndex = direction === 'up' ? stepIndex - 1 : stepIndex + 1;
+      // Update editing index if the moved step is being edited
+      if (editingStepIndex === index) {
+        setEditingStepIndex(newIndex);
+      } else if (editingStepIndex === newIndex) {
+        setEditingStepIndex(index);
+      }
 
-      // Swap the steps
-      [updatedSteps[stepIndex], updatedSteps[newIndex]] = [updatedSteps[newIndex], updatedSteps[stepIndex]];
-
-      // Update step order for all steps
-      const reorderedSteps = updatedSteps.map((step, index) => ({
+      // Update step order
+      const reorderedSteps = updatedSteps.map((step, i) => ({
         ...step,
-        step_order: index + 1
+        step_order: i + 1,
+        workflow_id: workflowId // Ensure consistent workflow ID
       }));
 
       // Save the updated steps
       await saveWorkflowSteps(reorderedSteps);
 
-      // If we're editing one of the moved steps, update the editing index
-      if (editingStepIndex === stepIndex) {
-        setEditingStepIndex(newIndex);
-      } else if (editingStepIndex === newIndex) {
-        setEditingStepIndex(stepIndex);
-      }
-
-      toast.success("تم تغيير ترتيب الخطوات بنجاح");
+      toast.success("تم تغيير ترتيب الخطوة بنجاح");
     } catch (error) {
       console.error("Error moving step:", error);
-      toast.error(error.message || "حدث خطأ أثناء تغيير ترتيب الخطوات");
+      toast.error(error.message || "حدث خطأ أثناء تغيير ترتيب الخطوة");
     }
   };
 

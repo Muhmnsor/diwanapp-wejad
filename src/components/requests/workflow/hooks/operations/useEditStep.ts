@@ -5,17 +5,28 @@ export const useEditStep = (
   setCurrentStep: (step: WorkflowStep) => void,
   setEditingStepIndex: (index: number | null) => void
 ) => {
-  const handleEditStep = (stepIndex: number, workflowSteps: WorkflowStep[], currentWorkflowId: string | null) => {
-    if (stepIndex < 0 || stepIndex >= workflowSteps.length) return;
+  const handleEditStep = (
+    index: number, 
+    workflowSteps: WorkflowStep[],
+    currentWorkflowId: string | null
+  ) => {
+    // Determine the correct workflow ID
+    const workflowId = currentWorkflowId && currentWorkflowId !== 'temp-workflow-id' 
+      ? currentWorkflowId 
+      : workflowSteps.length > 0 && workflowSteps[0].workflow_id && workflowSteps[0].workflow_id !== 'temp-workflow-id'
+        ? workflowSteps[0].workflow_id
+        : 'temp-workflow-id';
     
-    const stepToEdit = workflowSteps[stepIndex];
-    setCurrentStep({
-      ...stepToEdit,
-      id: stepToEdit.id || null,
-      workflow_id: stepToEdit.workflow_id || currentWorkflowId || 'temp-workflow-id',
-      created_at: stepToEdit.created_at || null
-    });
-    setEditingStepIndex(stepIndex);
+    console.log(`Editing step at index ${index} with workflow ID:`, workflowId);
+    
+    // Ensure the step has the correct workflow ID
+    const step = {
+      ...workflowSteps[index],
+      workflow_id: workflowId
+    };
+    
+    setCurrentStep(step);
+    setEditingStepIndex(index);
   };
 
   return { handleEditStep };
