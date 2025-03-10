@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
@@ -16,6 +17,8 @@ import FinancialReports from './components/finance/reports/FinancialReports';
 import DeveloperSettings from './pages/DeveloperSettings';
 
 export default function AppRoutes() {
+  const DeveloperPerformance = React.lazy(() => import('./pages/DeveloperPerformance'));
+  
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
@@ -78,7 +81,9 @@ export default function AppRoutes() {
       } />
       <Route path="/developer/performance" element={
         <ProtectedRoute>
-          <React.lazy(() => import('./pages/DeveloperPerformance')) />
+          <React.Suspense fallback={<div>Loading...</div>}>
+            <DeveloperPerformance />
+          </React.Suspense>
         </ProtectedRoute>
       } />
     </Routes>
