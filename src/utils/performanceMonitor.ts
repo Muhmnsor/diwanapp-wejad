@@ -1,3 +1,4 @@
+
 /**
  * Performance monitoring utility for developers
  */
