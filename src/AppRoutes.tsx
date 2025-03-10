@@ -25,12 +25,17 @@ const AppRoutes = () => {
   useEffect(() => {
     const checkDeveloperStatus = async () => {
       if (isAuthenticated && user) {
+        // Show developer toolbar for both users with developer role and admin users
         const hasDeveloperRole = await isDeveloper(user.id);
-        setShowDevTools(hasDeveloperRole);
+        const shouldShowTools = hasDeveloperRole || user.isAdmin;
+        setShowDevTools(shouldShowTools);
+        
         console.log('Developer tools visibility:', { 
-          show: hasDeveloperRole, 
+          show: shouldShowTools, 
           userId: user.id, 
-          email: user.email 
+          email: user.email,
+          isAdmin: user.isAdmin,
+          hasDeveloperRole: hasDeveloperRole
         });
       } else {
         setShowDevTools(false);
