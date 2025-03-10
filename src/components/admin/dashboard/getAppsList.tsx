@@ -9,7 +9,8 @@ import {
   Users, 
   Bell,
   Clock,
-  Inbox
+  Inbox,
+  Code
 } from "lucide-react";
 import { AppItem } from "./DashboardApps";
 import { NotificationCounts } from "@/hooks/dashboard/useNotificationCounts";
@@ -84,6 +85,13 @@ export const getAppsList = (notificationCounts: NotificationCounts): AppItem[] =
       icon: Inbox,
       path: "/requests",
       description: "إدارة ومتابعة الطلبات والاستمارات والاعتمادات",
+      notifications: 0
+    },
+    {
+      title: "المطورين",
+      icon: Code,
+      path: "/developer-settings",
+      description: "إعدادات وأدوات المطورين",
       notifications: 0
     }
   ];

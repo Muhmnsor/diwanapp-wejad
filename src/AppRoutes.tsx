@@ -36,6 +36,7 @@ import Notifications from "./pages/Notifications";
 import React from "react";
 import GeneralTasks from "./pages/GeneralTasks";
 import RequestsManagement from "./pages/RequestsManagement";
+import DeveloperSettings from "./pages/DeveloperSettings";
 
 const AppRoutes = () => {
   const { isAuthenticated } = useAuthStore();
@@ -182,6 +183,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <UsersManagement />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/developer-settings" 
+        element={
+          <ProtectedRoute>
+            <DeveloperSettings />
           </ProtectedRoute>
         } 
       />
