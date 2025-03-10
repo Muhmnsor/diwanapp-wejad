@@ -1,4 +1,3 @@
-
 /**
  * Performance monitoring utility for developers
  */
@@ -8,6 +7,11 @@ interface PerformanceEvent {
   startTime: number;
   endTime?: number;
   duration?: number;
+  type?: 'navigation' | 'resource' | 'paint' | 'custom';
+  metadata?: {
+    resourceType?: string;
+    [key: string]: any;
+  };
 }
 
 class PerformanceMonitor {
@@ -30,7 +34,11 @@ class PerformanceMonitor {
               name: entry.name,
               startTime: entry.startTime,
               duration: entry.duration,
-              endTime: entry.startTime + entry.duration
+              endTime: entry.startTime + entry.duration,
+              type: entry.entryType as 'navigation' | 'resource' | 'paint',
+              metadata: {
+                resourceType: entry instanceof PerformanceResourceTiming ? entry.initiatorType : undefined
+              }
             });
           }
         });
@@ -108,6 +116,15 @@ class PerformanceMonitor {
     
     const totalDuration = events.reduce((sum, event) => sum + (event.duration || 0), 0);
     return totalDuration / events.length;
+  }
+
+  getMetrics() {
+    return {
+      navigationEvents: this.events.filter(e => e.type === 'navigation'),
+      resourceEvents: this.events.filter(e => e.type === 'resource'),
+      paintEvents: this.events.filter(e => e.type === 'paint'),
+      customEvents: this.events.filter(e => e.type === 'custom')
+    };
   }
 }
 

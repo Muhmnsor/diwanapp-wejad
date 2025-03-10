@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -63,7 +62,6 @@ const DeveloperPerformance = () => {
   };
 
   const checkMonitoringStatus = () => {
-    // Check if monitoring is enabled by attempting to access metrics
     try {
       const metrics = performanceMonitor.getMetrics();
       setIsMonitoringEnabled(performanceMonitor.getEvents().length > 0);
@@ -95,14 +93,16 @@ const DeveloperPerformance = () => {
     
     // Get all performance events
     const events = performanceMonitor.getEvents();
+    const metrics = performanceMonitor.getMetrics();
     
     // Process navigation and paint events for overview
-    const navigationEvents = events.filter(e => e.type === 'navigation' || e.type === 'paint');
-    setPerformanceData(navigationEvents.map(e => ({
-      name: e.name,
-      value: e.duration || e.startTime,
-      type: e.type
-    })));
+    const navigationEvents = events.filter(e => e.type === 'navigation' || e.type === 'paint')
+      .map(e => ({
+        name: e.name,
+        value: e.duration || e.startTime,
+        type: e.type
+      }));
+    setPerformanceData(navigationEvents);
     
     // Process resource events
     const resources = events.filter(e => e.type === 'resource');
@@ -113,13 +113,11 @@ const DeveloperPerformance = () => {
       return acc;
     }, {} as Record<string, any[]>);
     
-    const resourceChartData = Object.entries(resourcesByType).map(([type, items]) => {
-      return {
-        name: type,
-        count: items.length,
-        avgDuration: items.reduce((sum, item) => sum + item.duration, 0) / items.length
-      };
-    });
+    const resourceChartData = Object.entries(resourcesByType).map(([type, items]) => ({
+      name: type,
+      count: items.length,
+      avgDuration: items.reduce((sum, item) => sum + (item.duration || 0), 0) / items.length
+    }));
     
     setResourceData(resourceChartData);
     
@@ -389,3 +387,4 @@ export default function ProtectedPerformancePage() {
     </DeveloperRoute>
   );
 }
+
