@@ -1,3 +1,4 @@
+
 import { IdeaMetadata } from "@/components/ideas/details/IdeaMetadata";
 import { IdeaDetails } from "@/components/ideas/details/IdeaDetails";
 import { VoteSection } from "@/components/ideas/voting/VoteSection";
@@ -7,7 +8,6 @@ import { Vote, Idea, Comment } from "../types";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { populateExistingDisplayNames } from "@/components/ideas/comments/migration/populateExistingDisplayNames";
 
 interface IdeaContentProps {
   idea: Idea;
@@ -34,11 +34,6 @@ export const IdeaContent = ({
   const handleCommentFocus = () => {
     setIsDetailsOpen(false);
   };
-
-  // Run the migration for display names only once when the component loads
-  useEffect(() => {
-    populateExistingDisplayNames();
-  }, []);
 
   // التحقق مما إذا كان المستخدم مديرًا
   useEffect(() => {
