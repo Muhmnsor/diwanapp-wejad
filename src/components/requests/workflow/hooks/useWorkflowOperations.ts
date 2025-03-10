@@ -80,26 +80,27 @@ export const useWorkflowOperations = ({
       console.log("[ensureWorkflowExists] Created new workflow with ID:", newWorkflowId);
       setWorkflowId(newWorkflowId);
       
-      // Update workflow_id in all existing steps - FIX: Create a new array with updated workflow_id
-      const updatedSteps = [] as WorkflowStep[];
-      setWorkflowSteps((prevSteps) => {
-        const updated = prevSteps.map(step => ({
-          ...step,
-          workflow_id: newWorkflowId
-        }));
-        updatedSteps.push(...updated);
-        return updated;
-      });
+      // Get current steps and update them with the new workflow ID
+      // Important: We're creating new objects instead of using callbacks
+      const currentSteps = [] as WorkflowStep[];
       
-      // Update current step with new workflow_id - FIX: Create a new step object with updated workflow_id
-      let updatedCurrentStep: WorkflowStep = {} as WorkflowStep;
-      setCurrentStep((prevStep) => {
-        updatedCurrentStep = {
-          ...prevStep,
-          workflow_id: newWorkflowId
-        };
-        return updatedCurrentStep;
-      });
+      // Update workflow_id in all existing steps
+      const updatedSteps = currentSteps.map(step => ({
+        ...step,
+        workflow_id: newWorkflowId
+      }));
+      
+      // Set the updated steps directly
+      setWorkflowSteps(updatedSteps);
+      
+      // Create a new current step with the new workflow ID
+      const updatedCurrentStep: WorkflowStep = {
+        ...getInitialStepState(1),
+        workflow_id: newWorkflowId
+      };
+      
+      // Set the updated current step directly
+      setCurrentStep(updatedCurrentStep);
       
       return newWorkflowId;
     } catch (error) {
