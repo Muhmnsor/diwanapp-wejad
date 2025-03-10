@@ -47,6 +47,27 @@ export const useDashboardApps = (notificationCounts: any = {}) => {
   useEffect(() => {
     if (permissionsLoading || appsLoading || !appSettings) return;
 
+    // TEMPORARY FIX: Show all apps regardless of permissions until properly configured
+    const filteredApps = appSettings
+      .map(app => {
+        // Get the notification count for this app (if any)
+        const notifCount = notificationCounts[app.app_key] || 0;
+        
+        // Get the icon component from Lucide
+        const IconComponent = (Icons as any)[app.icon] || Icons.AppWindow;
+        
+        return {
+          title: app.app_name,
+          icon: IconComponent,
+          path: app.path,
+          description: app.description,
+          notifications: notifCount
+        };
+      });
+      
+    setVisibleApps(filteredApps);
+    
+    /* Original filtering logic - COMMENTED OUT FOR NOW
     const filteredApps = appSettings
       // Filter visible apps and those the user has permission for
       .filter(app => {
@@ -81,8 +102,7 @@ export const useDashboardApps = (notificationCounts: any = {}) => {
           notifications: notifCount
         };
       });
-      
-    setVisibleApps(filteredApps);
+    */
   }, [appSettings, permissionsLoading, appsLoading, hasPermission, user, notificationCounts]);
 
   return {
