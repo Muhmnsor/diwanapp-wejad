@@ -3,22 +3,19 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, ChevronDown, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/refactored-auth";
-
-interface AppPermission {
-  id: string;
-  name: string;
-  description: string;
-  isAssigned: boolean;
-}
+import { PermissionData } from "@/components/users/permissions/types";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { permissionGroups, getModuleDisplayName } from "@/utils/developer/permissionsMapping";
 
 export function AppPermissionsTab() {
   const { user } = useAuthStore();
   const [roleId, setRoleId] = useState<string | null>(null);
+  const [expandedModules, setExpandedModules] = useState<string[]>([]);
 
   // Fetch developer role ID
   useEffect(() => {
@@ -43,16 +40,16 @@ export function AppPermissionsTab() {
   }, []);
 
   // Fetch permissions with assigned status
-  const { data: appPermissions, isLoading, error, refetch } = useQuery({
+  const { data: permissions, isLoading, error, refetch } = useQuery({
     queryKey: ['app-permissions', roleId],
     queryFn: async () => {
-      if (!roleId) return [];
+      if (!roleId) return {};
       
-      // Get all app visibility permissions
-      const { data: permissions, error: permissionsError } = await supabase
+      // Get all permissions
+      const { data: allPermissions, error: permissionsError } = await supabase
         .from('permissions')
         .select('*')
-        .eq('module', 'apps_visibility');
+        .order('module');
         
       if (permissionsError) {
         throw permissionsError;
@@ -71,15 +68,23 @@ export function AppPermissionsTab() {
       // Create an array of assigned permission IDs
       const assignedPermissionIds = rolePermissions.map(rp => rp.permission_id);
       
-      // Map permissions with assigned status
-      const mappedPermissions: AppPermission[] = permissions.map(p => ({
-        id: p.id,
-        name: p.name,
-        description: p.description,
-        isAssigned: assignedPermissionIds.includes(p.id)
-      }));
+      // Group permissions by module
+      const groupedPermissions: Record<string, PermissionData[]> = {};
       
-      return mappedPermissions;
+      allPermissions.forEach(permission => {
+        const module = permission.module || 'other';
+        
+        if (!groupedPermissions[module]) {
+          groupedPermissions[module] = [];
+        }
+        
+        groupedPermissions[module].push({
+          ...permission,
+          isAssigned: assignedPermissionIds.includes(permission.id)
+        });
+      });
+      
+      return groupedPermissions;
     },
     enabled: !!roleId
   });
@@ -116,6 +121,16 @@ export function AppPermissionsTab() {
     }
   };
 
+  const toggleModule = (module: string) => {
+    setExpandedModules(prev => 
+      prev.includes(module) 
+        ? prev.filter(m => m !== module) 
+        : [...prev, module]
+    );
+  };
+
+  const isModuleExpanded = (module: string) => expandedModules.includes(module);
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center p-8">
@@ -139,53 +154,62 @@ export function AppPermissionsTab() {
     );
   }
 
-  const getAppNameFromPermission = (permissionName: string) => {
-    // Extract app name from permission name (view_xxx_app -> xxx)
-    const match = permissionName.match(/view_(.+)_app/);
-    return match ? match[1] : '';
-  };
-
   return (
     <Card>
       <CardHeader>
         <CardTitle>إدارة صلاحيات التطبيقات</CardTitle>
         <CardDescription>
-          تحكم في التطبيقات المرئية للمستخدمين في النظام
+          تحكم في التطبيقات وصلاحياتها المرئية للمستخدمين في النظام
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {appPermissions?.map((permission) => (
-            <div key={permission.id} className="flex items-center justify-between border-b pb-3">
-              <div className="flex items-center space-x-4 rtl:space-x-reverse">
-                <Checkbox 
-                  id={permission.id} 
-                  checked={permission.isAssigned}
-                  onCheckedChange={(checked) => {
-                    handlePermissionToggle(permission.id, checked === true);
-                  }}
-                />
-                <div>
-                  <label 
-                    htmlFor={permission.id} 
-                    className="font-medium cursor-pointer"
-                  >
-                    {permission.description || permission.name}
-                  </label>
+        <Accordion type="multiple" className="space-y-4">
+          {permissions && Object.keys(permissions).map((module) => (
+            <AccordionItem key={module} value={module} className="border rounded-md">
+              <AccordionTrigger className="px-4 hover:no-underline">
+                <div className="flex items-center">
                   <Badge variant="outline" className="mr-2">
-                    {getAppNameFromPermission(permission.name)}
+                    {getModuleDisplayName(module)}
                   </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    ({permissions[module].length} صلاحية)
+                  </span>
                 </div>
-              </div>
-            </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pt-2 pb-4">
+                <div className="space-y-3">
+                  {permissions[module].map((permission) => (
+                    <div key={permission.id} className="flex items-center justify-between border-b pb-2">
+                      <div className="flex items-center space-x-4 rtl:space-x-reverse">
+                        <Checkbox 
+                          id={permission.id} 
+                          checked={permission.isAssigned}
+                          onCheckedChange={(checked) => {
+                            handlePermissionToggle(permission.id, checked === true);
+                          }}
+                        />
+                        <div>
+                          <label 
+                            htmlFor={permission.id} 
+                            className="font-medium cursor-pointer text-sm"
+                          >
+                            {permission.description || permission.name}
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
           ))}
+        </Accordion>
 
-          {(!appPermissions || appPermissions.length === 0) && (
-            <div className="text-center p-8 text-muted-foreground">
-              لا توجد صلاحيات تطبيقات متاحة
-            </div>
-          )}
-        </div>
+        {(!permissions || Object.keys(permissions).length === 0) && (
+          <div className="text-center p-8 text-muted-foreground">
+            لا توجد صلاحيات تطبيقات متاحة
+          </div>
+        )}
       </CardContent>
     </Card>
   );
