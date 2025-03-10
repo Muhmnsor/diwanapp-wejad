@@ -32,33 +32,63 @@ export const SystemOverview = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <ModuleCard 
               title="نظام إدارة الفعاليات" 
-              description="إدارة الفعاليات والأنشطة، التسجيل، الحضور، التقييم" 
+              description="إدارة الفعاليات والأنشطة، التسجيل، الحضور، التقييم، إصدار الشهادات" 
               path="/events"
             />
             <ModuleCard 
               title="نظام إدارة المشاريع" 
-              description="إدارة المشاريع، الأنشطة، المشاركين، متابعة التقدم" 
+              description="إدارة المشاريع، الأنشطة، المشاركين، متابعة التقدم، المراحل والمهام" 
               path="/projects"
             />
             <ModuleCard 
+              title="نظام المحافظ" 
+              description="إدارة محافظ المشاريع، مساحات العمل، المهام، التقارير والمتابعة" 
+              path="/portfolios"
+            />
+            <ModuleCard 
               title="نظام إدارة المهام" 
-              description="إنشاء المهام، تعيين المسؤوليات، متابعة الإنجاز" 
+              description="إنشاء المهام، تعيين المسؤوليات، متابعة الإنجاز، التسليمات والمرفقات" 
               path="/tasks"
             />
             <ModuleCard 
               title="نظام الأفكار والمبادرات" 
-              description="إدارة الأفكار، التصويت، الموافقات، التنفيذ" 
+              description="إدارة الأفكار، التصويت، المناقشات، الموافقات، متابعة التنفيذ" 
               path="/ideas"
             />
             <ModuleCard 
-              title="نظام التقارير والشهادات" 
-              description="إصدار التقارير، الشهادات، الإحصائيات" 
+              title="نظام إدارة الشهادات" 
+              description="إصدار الشهادات، التوقيعات، التحقق، القوالب والتصاميم" 
+              path="/certificates"
+            />
+            <ModuleCard 
+              title="نظام التقارير والإحصائيات" 
+              description="إصدار التقارير، الإحصائيات، مؤشرات الأداء، التحليلات" 
               path="/admin/dashboard"
             />
             <ModuleCard 
+              title="نظام إدارة الموارد المالية" 
+              description="إدارة الموارد، المصروفات، الميزانيات، التقارير المالية" 
+              path="/financial"
+            />
+            <ModuleCard 
               title="نظام الإشعارات والرسائل" 
-              description="إدارة الإشعارات، قوالب الرسائل، التواصل" 
-              path="/settings"
+              description="إدارة الإشعارات، قوالب الرسائل، التواصل عبر الواتساب" 
+              path="/notifications"
+            />
+            <ModuleCard 
+              title="نظام إدارة المستندات" 
+              description="إدارة المستندات، التصنيف، الأرشفة، متابعة الصلاحية" 
+              path="/documents"
+            />
+            <ModuleCard 
+              title="نظام إدارة الاشتراكات" 
+              description="إدارة الاشتراكات، التجديد، المدفوعات، التنبيهات" 
+              path="/subscriptions"
+            />
+            <ModuleCard 
+              title="نظام إدارة الصلاحيات" 
+              description="إدارة الأدوار، الصلاحيات، المستخدمين، الوصول" 
+              path="/permissions"
             />
           </div>
         </CardContent>
