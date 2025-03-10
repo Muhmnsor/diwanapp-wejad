@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/refactored-auth';
 import { isDeveloper } from '@/utils/developerRole';
 import { toast } from 'sonner';
+import { DeveloperSettings } from '@/types/developer';
 
 export const useDeveloperSettings = () => {
   const { user } = useAuthStore();
@@ -23,7 +24,7 @@ export const useDeveloperSettings = () => {
     checkDeveloperStatus();
   }, [user?.id]);
 
-  const updateSettings = async (settings: Partial<any>) => {
+  const updateSettings = async (settings: Partial<DeveloperSettings>) => {
     try {
       if (!user?.id) return;
 
@@ -46,4 +47,3 @@ export const useDeveloperSettings = () => {
     updateSettings
   };
 };
-

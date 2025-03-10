@@ -1,9 +1,12 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs } from "@/components/ui/tabs";
 import { useRoleManagement } from "./hooks/useRoleManagement";
 import { RoleManagementContent } from "./roles/RoleManagementContent";
 import { TabsNavigation } from "./roles/TabsNavigation";
 import { RoleDialogs } from "./roles/RoleDialogs";
+import { useEffect } from "react";
+import { initializeDeveloperRole } from "@/utils/developerRole";
 
 export const RoleManagement = () => {
   const {

@@ -1,8 +1,9 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { DeveloperPermission } from '@/components/users/permissions/types';
 
-export const initializeDeveloperRole = async () => {
+export const initializeDeveloperRole = async (): Promise<boolean> => {
   try {
     // First check if developer role exists
     const { data: existingRole } = await supabase
@@ -27,17 +28,17 @@ export const initializeDeveloperRole = async () => {
       // Add developer permissions
       const permissions = [
         {
-          name: 'view_developer_tools',
+          name: 'view_developer_tools' as DeveloperPermission,
           description: 'Access developer tools and debugging features',
           module: 'developer'
         },
         {
-          name: 'manage_developer_settings',
+          name: 'manage_developer_settings' as DeveloperPermission,
           description: 'Manage developer mode settings and configurations',
           module: 'developer'
         },
         {
-          name: 'view_performance_metrics',
+          name: 'view_performance_metrics' as DeveloperPermission,
           description: 'View application performance metrics and logs',
           module: 'developer'
         }
@@ -97,4 +98,3 @@ export const isDeveloper = async (userId: string): Promise<boolean> => {
     return false;
   }
 };
-
