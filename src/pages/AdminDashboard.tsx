@@ -1,3 +1,4 @@
+
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
 import { DashboardApps } from "@/components/admin/dashboard/DashboardApps";
@@ -5,7 +6,7 @@ import { DashboardNotifications } from "@/components/admin/dashboard/DashboardNo
 import { DashboardHeader } from "@/components/admin/dashboard/DashboardHeader";
 import { useNotificationCounts } from "@/hooks/dashboard/useNotificationCounts";
 import { useUserName } from "@/hooks/dashboard/useUserName";
-import { getAppsList } from "@/components/admin/dashboard/getAppsList";
+import { useDashboardApps } from "@/hooks/useDashboardApps";
 import { DeveloperToolbar } from "@/components/developer/DeveloperToolbar";
 import { useAuthStore } from "@/store/refactored-auth";
 
@@ -14,7 +15,8 @@ const AdminDashboard = () => {
   const { data: notificationCounts } = useNotificationCounts();
   const { user } = useAuthStore();
   
-  const apps = getAppsList(notificationCounts);
+  // Use the permission-based hook instead of direct list
+  const { apps, isLoading: isLoadingApps } = useDashboardApps(notificationCounts);
 
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
@@ -26,7 +28,18 @@ const AdminDashboard = () => {
           isLoading={isLoadingUser} 
         />
         
-        <DashboardApps apps={apps} />
+        {isLoadingApps ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+            {[...Array(9)].map((_, index) => (
+              <div 
+                key={index} 
+                className="h-64 bg-muted rounded-lg"
+              ></div>
+            ))}
+          </div>
+        ) : (
+          <DashboardApps apps={apps} />
+        )}
 
         <DashboardNotifications 
           notificationCount={notificationCounts.notifications} 
@@ -34,7 +47,8 @@ const AdminDashboard = () => {
       </div>
 
       <Footer />
-      {user?.isAdmin && <DeveloperToolbar />}
+      {/* Show developer toolbar for both admin and developer users */}
+      {(user?.isAdmin || user?.role === 'developer') && <DeveloperToolbar />}
     </div>
   );
 };

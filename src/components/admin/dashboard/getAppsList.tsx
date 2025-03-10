@@ -10,11 +10,14 @@ import {
   Bell,
   Clock,
   Inbox,
-  Code
+  Code,
+  AppWindow
 } from "lucide-react";
 import { AppItem } from "./DashboardApps";
 import { NotificationCounts } from "@/hooks/dashboard/useNotificationCounts";
 
+// Legacy function for backwards compatibility
+// Use useDashboardApps instead for permission-based app visibility
 export const getAppsList = (notificationCounts: NotificationCounts): AppItem[] => {
   return [
     {

@@ -1,3 +1,4 @@
+
 import { Route } from "react-router-dom";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Settings from "@/pages/Settings";
@@ -13,6 +14,7 @@ import Notifications from "@/pages/Notifications";
 import RequestsManagement from "@/pages/RequestsManagement";
 import React from "react";
 import DeveloperRoute from "@/components/DeveloperRoute";
+import AppPermissionsManager from "@/pages/AppPermissionsManager";
 
 export const ProtectedRoutes = [
   <Route 
@@ -102,6 +104,15 @@ export const ProtectedRoutes = [
     element={
       <ProtectedRoute>
         <UsersManagement />
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="app-permissions"
+    path="/admin/app-permissions" 
+    element={
+      <ProtectedRoute>
+        <AppPermissionsManager />
       </ProtectedRoute>
     } 
   />,
