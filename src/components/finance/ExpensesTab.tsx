@@ -2,15 +2,22 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 export const ExpensesTab = () => {
   const [expenses, setExpenses] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+
+  const { isLoading, error } = useQuery({
+    queryKey: ['finance', 'expenses'],
+    queryFn: async () => {
+      // Simulating API call
+      return new Promise(resolve => setTimeout(() => resolve([]), 1000));
+    },
+    enabled: true,
+  });
 
   return (
     <div className="space-y-4">

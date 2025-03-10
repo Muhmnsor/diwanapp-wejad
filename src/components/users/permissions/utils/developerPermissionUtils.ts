@@ -13,7 +13,12 @@ export const checkDeveloperPermissions = async (userId: string): Promise<Develop
       canModifySystemSettings: false,
       canAccessApiLogs: false,
       canManageDeveloperSettings: false,
-      canViewPerformanceMetrics: false
+      canViewPerformanceMetrics: false,
+      canDebugQueries: false,
+      canManageRealtime: false,
+      canAccessAdminPanel: false,
+      canExportData: false,
+      canImportData: false
     };
     
     // Check if user exists
@@ -45,7 +50,12 @@ export const checkDeveloperPermissions = async (userId: string): Promise<Develop
       canModifySystemSettings: data.can_modify_system_settings || false,
       canAccessApiLogs: data.can_access_api_logs || false,
       canManageDeveloperSettings: data.can_manage_developer_settings || false,
-      canViewPerformanceMetrics: data.can_view_performance_metrics || false
+      canViewPerformanceMetrics: data.can_view_performance_metrics || false,
+      canDebugQueries: data.can_debug_queries || false,
+      canManageRealtime: data.can_manage_realtime || false,
+      canAccessAdminPanel: data.can_access_admin_panel || false,
+      canExportData: data.can_export_data || false,
+      canImportData: data.can_import_data || false
     };
   } catch (error) {
     console.error('Error in checkDeveloperPermissions:', error);
@@ -54,7 +64,12 @@ export const checkDeveloperPermissions = async (userId: string): Promise<Develop
       canModifySystemSettings: false,
       canAccessApiLogs: false,
       canManageDeveloperSettings: false,
-      canViewPerformanceMetrics: false
+      canViewPerformanceMetrics: false,
+      canDebugQueries: false,
+      canManageRealtime: false,
+      canAccessAdminPanel: false,
+      canExportData: false,
+      canImportData: false
     };
   }
 };

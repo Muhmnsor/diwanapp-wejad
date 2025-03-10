@@ -1,17 +1,7 @@
 
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
-
-interface UserSettings {
-  id: string;
-  user_id: string;
-  theme: 'light' | 'dark' | 'system';
-  language: string;
-  notifications_enabled: boolean;
-  email_notifications: boolean;
-  created_at: string;
-  updated_at: string;
-}
+import { UserSettings } from '@/types/userSettings';
 
 interface UserSettingsStore {
   settings: UserSettings | null;
@@ -51,7 +41,10 @@ export const useUserSettingsStore = create<UserSettingsStore>((set, get) => ({
               theme: 'system',
               language: 'ar',
               notifications_enabled: true,
-              email_notifications: true
+              email_notifications: true,
+              cache_duration_minutes: 5,
+              developer_mode: false,
+              realtime_updates: false
             })
             .select()
             .single();

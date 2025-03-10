@@ -35,6 +35,80 @@ export const isDeveloper = async (userId: string): Promise<boolean> => {
   }
 };
 
+export const isDeveloperModeEnabled = async (userId: string): Promise<boolean> => {
+  try {
+    // Check if developer_settings table exists
+    const { data, error } = await supabase
+      .from('developer_settings')
+      .select('is_enabled')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (error) {
+      console.error('Error checking developer mode:', error);
+      return false;
+    }
+    
+    return data?.is_enabled || false;
+  } catch (error) {
+    console.error('Error checking developer mode:', error);
+    return false;
+  }
+};
+
+export const toggleDeveloperMode = async (userId: string, isEnabled: boolean): Promise<boolean> => {
+  try {
+    // Check if the user has a developer_settings record
+    const { data: existing, error: checkError } = await supabase
+      .from('developer_settings')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (checkError) {
+      console.error('Error checking developer settings:', checkError);
+      return false;
+    }
+    
+    if (existing) {
+      // Update existing settings
+      const { error } = await supabase
+        .from('developer_settings')
+        .update({ is_enabled: isEnabled })
+        .eq('user_id', userId);
+      
+      if (error) {
+        console.error('Error updating developer mode:', error);
+        return false;
+      }
+    } else {
+      // Create new settings
+      const { error } = await supabase
+        .from('developer_settings')
+        .insert({
+          user_id: userId,
+          is_enabled: isEnabled,
+          cache_time_minutes: 5,
+          update_interval_seconds: 30,
+          debug_level: 'info',
+          realtime_enabled: false,
+          show_toolbar: true
+        });
+      
+      if (error) {
+        console.error('Error creating developer settings:', error);
+        return false;
+      }
+    }
+    
+    toast.success(isEnabled ? 'تم تفعيل وضع المطور' : 'تم تعطيل وضع المطور');
+    return true;
+  } catch (error) {
+    console.error('Error toggling developer mode:', error);
+    return false;
+  }
+};
+
 export const initializeDeveloperRole = async (userId: string): Promise<boolean> => {
   try {
     // Check if developer_permissions table exists

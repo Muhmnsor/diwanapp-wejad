@@ -1,88 +1,96 @@
 
 import { QueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { UserSettings } from '@/store/userSettingsStore';
-import { DeveloperSettings } from '@/types/developer.d';
-
-// Default cache durations
-const DEFAULT_CACHE_DURATION = 5; // 5 minutes
+import { UserSettings } from '@/types/userSettings';
+import { DeveloperSettings } from '@/types/developer';
 
 /**
- * Create a QueryClient with settings customized for the user
+ * Create a query client based on user settings
  */
-export const createUserQueryClient = (
-  userSettings?: UserSettings | null,
-  developerSettings?: DeveloperSettings | null
+export const createQueryClient = (
+  userSettings: UserSettings | null = null,
+  devSettings: DeveloperSettings | null = null
 ): QueryClient => {
-  // Use developer settings cache time if available, otherwise use default
-  const cacheDuration = developerSettings?.cache_time_minutes || DEFAULT_CACHE_DURATION;
+  // Default cache duration of 5 minutes
+  const cacheDuration = userSettings?.cache_duration_minutes || devSettings?.cache_time_minutes || 5;
   
-  // Determine if developer mode is enabled
-  const devModeEnabled = developerSettings?.is_enabled || false;
-  
+  // Create a new query client
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: cacheDuration * 60 * 1000, // Convert minutes to milliseconds
-        retry: devModeEnabled ? 0 : 1, // Disable retries in dev mode
-        refetchOnWindowFocus: !devModeEnabled, // Disable auto refetch in dev mode
-        refetchOnMount: !devModeEnabled, // Disable refetch on mount in dev mode
+        staleTime: cacheDuration * 60 * 1000, // Minutes to milliseconds
+        gcTime: cacheDuration * 120 * 1000, // Twice the stale time
+        retry: 1,
+        refetchOnWindowFocus: false, // Disable by default, should be controlled by settings
       },
     },
   });
   
-  // Configure error handling based on developer settings
-  configureErrorHandling(queryClient, developerSettings);
+  // Set up error handling for TanStack Query v5
+  queryClient.getQueryCache().subscribe(event => {
+    if (event.type === 'error' && event.error) {
+      const error = event.error as Error;
+      
+      // Log error for developers
+      const isDeveloperMode = userSettings?.developer_mode || false;
+      
+      if (isDeveloperMode) {
+        console.error('Query error:', error, event);
+        toast.error(`خطأ في الاستعلام: ${error.message}`);
+      } else {
+        // Simplified error for users
+        console.error('Query error:', error);
+        toast.error(`حدث خطأ أثناء جلب البيانات`);
+      }
+    }
+  });
+  
+  // Add mutation error handling
+  queryClient.getMutationCache().subscribe(event => {
+    if (event.type === 'error' && event.error) {
+      const error = event.error as Error;
+      
+      // Log error for developers
+      const isDeveloperMode = userSettings?.developer_mode || false;
+      
+      if (isDeveloperMode) {
+        console.error('Mutation error:', error, event);
+        toast.error(`خطأ في تحديث البيانات: ${error.message}`);
+      } else {
+        // Simplified error for users
+        console.error('Mutation error:', error);
+        toast.error(`حدث خطأ أثناء تحديث البيانات`);
+      }
+    }
+  });
   
   return queryClient;
 };
 
 /**
- * Configure error handling for query and mutation errors
+ * Initialize query keys for caching
  */
-const configureErrorHandling = (
-  queryClient: QueryClient,
-  developerSettings?: DeveloperSettings | null
-): void => {
-  // Configure debug level based on developer settings
-  const debugLevel = developerSettings?.debug_level || 'error';
-  const shouldShowToasts = !(developerSettings?.is_enabled || false);
-  
-  // Setup query cache subscription for error handling
-  queryClient.getQueryCache().subscribe(() => {
-    const failedQueries = queryClient.getQueryCache().findAll({ 
-      predicate: query => query.state.status === 'error' 
-    });
-    
-    if (failedQueries.length > 0) {
-      // Log errors based on debug level
-      if (debugLevel === 'debug' || debugLevel === 'info') {
-        console.error('Query cache errors:', failedQueries);
-      }
-      
-      // Show toast notifications if not in developer mode
-      if (shouldShowToasts) {
-        toast.error('حدث خطأ أثناء جلب البيانات');
-      }
-    }
-  });
-  
-  // Setup mutation cache subscription for error handling
-  queryClient.getMutationCache().subscribe(() => {
-    const failedMutations = queryClient.getMutationCache().findAll({
-      predicate: mutation => mutation.state.status === 'error'
-    });
-    
-    if (failedMutations.length > 0) {
-      // Log errors based on debug level
-      if (debugLevel === 'debug' || debugLevel === 'info') {
-        console.error('Mutation cache errors:', failedMutations);
-      }
-      
-      // Show toast notifications if not in developer mode
-      if (shouldShowToasts) {
-        toast.error('حدث خطأ أثناء تحديث البيانات');
-      }
-    }
-  });
+export const initializeQueryKeys = () => {
+  return {
+    events: {
+      all: ['events'],
+      detail: (id: string) => ['events', id],
+      registrations: (eventId: string) => ['events', eventId, 'registrations'],
+      feedback: (eventId: string) => ['events', eventId, 'feedback'],
+      stats: (eventId: string) => ['events', eventId, 'stats'],
+    },
+    users: {
+      all: ['users'],
+      detail: (id: string) => ['users', id],
+      roles: ['users', 'roles'],
+      permissions: (userId: string) => ['users', userId, 'permissions'],
+    },
+    finance: {
+      all: ['finance'],
+      expenses: ['finance', 'expenses'],
+      resources: ['finance', 'resources'],
+      targets: ['finance', 'targets'],
+      reports: ['finance', 'reports'],
+    },
+  };
 };

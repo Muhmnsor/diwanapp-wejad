@@ -1,19 +1,23 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/refactored-auth';
-import { isDeveloper, isDeveloperModeEnabled } from '@/utils/developerRole';
-import { toast } from 'sonner';
+import { isDeveloper } from '@/utils/developerRole';
 
-export const useDeveloperSettings = () => {
+interface DeveloperSettingsHook {
+  isDeveloperMode: boolean;
+  isLoading: boolean;
+  error: Error | null;
+}
+
+export const useDeveloperSettings = (): DeveloperSettingsHook => {
   const { user } = useAuthStore();
-  const [hasDeveloperRole, setHasDeveloperRole] = useState(false);
   const [isDeveloperMode, setIsDeveloperMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const checkDeveloperStatus = async () => {
+    const checkDevMode = async () => {
       if (!user) {
-        setHasDeveloperRole(false);
         setIsDeveloperMode(false);
         setIsLoading(false);
         return;
@@ -21,32 +25,20 @@ export const useDeveloperSettings = () => {
 
       try {
         setIsLoading(true);
-        
-        // التحقق مما إذا كان المستخدم لديه دور المطور
-        const hasDevRole = await isDeveloper(user.id);
-        setHasDeveloperRole(hasDevRole);
-        
-        // التحقق مما إذا كان وضع المطور مفعّل
-        if (hasDevRole) {
-          const devModeEnabled = await isDeveloperModeEnabled(user.id);
-          setIsDeveloperMode(devModeEnabled);
-        } else {
-          setIsDeveloperMode(false);
-        }
-      } catch (error) {
-        console.error('Error checking developer settings:', error);
-        toast.error('حدث خطأ أثناء التحقق من إعدادات المطور');
+        const hasDeveloperRole = await isDeveloper(user.id);
+        setIsDeveloperMode(hasDeveloperRole);
+        setError(null);
+      } catch (err) {
+        console.error('Error checking developer mode:', err);
+        setError(err instanceof Error ? err : new Error('Unknown error checking developer mode'));
+        setIsDeveloperMode(false);
       } finally {
         setIsLoading(false);
       }
     };
-    
-    checkDeveloperStatus();
+
+    checkDevMode();
   }, [user]);
-  
-  return {
-    hasDeveloperRole,
-    isDeveloperMode,
-    isLoading
-  };
+
+  return { isDeveloperMode, isLoading, error };
 };

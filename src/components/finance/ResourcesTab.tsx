@@ -5,11 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Database, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useQuery } from "@tanstack/react-query";
 
 export const ResourcesTab = () => {
   const [resources, setResources] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+
+  const { isLoading, error } = useQuery({
+    queryKey: ['finance', 'resources'],
+    queryFn: async () => {
+      // Simulating API call
+      return new Promise(resolve => setTimeout(() => resolve([]), 1000));
+    },
+    enabled: true,
+  });
 
   return (
     <div className="space-y-4">
