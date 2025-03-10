@@ -1,4 +1,3 @@
-
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
@@ -59,7 +58,6 @@ export const useNotificationsState = () => {
 
       if (error) throw error;
       
-      // تحديث الحالة المحلية
       setNotifications(prev => 
         prev.map(notification => 
           notification.id === id 
@@ -89,7 +87,6 @@ export const useNotificationsState = () => {
 
       if (error) throw error;
       
-      // تحديث الحالة المحلية
       setNotifications(prev => 
         prev.map(notification => ({ ...notification, read: true }))
       );
@@ -98,6 +95,31 @@ export const useNotificationsState = () => {
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
       toast.error('حدث خطأ أثناء تحديث الإشعارات');
+    }
+  };
+
+  const deleteReadNotifications = async () => {
+    if (!user) return;
+    
+    try {
+      console.log('حذف الإشعارات المقروءة للمستخدم:', user.id);
+      
+      const { error } = await supabase
+        .from('in_app_notifications')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('read', true);
+
+      if (error) throw error;
+      
+      setNotifications(prev => prev.filter(notification => !notification.read));
+      
+      toast.success('تم حذف جميع الإشعارات المقروءة');
+      return true;
+    } catch (error) {
+      console.error('خطأ في حذف الإشعارات المقروءة:', error);
+      toast.error('حدث خطأ أثناء حذف الإشعارات المقروءة');
+      return false;
     }
   };
 
@@ -159,7 +181,6 @@ export const useNotificationsState = () => {
     
     fetchNotifications();
 
-    // Make sure we have a proper channel name that won't conflict with other channels
     const channelName = `notifications_${user.id}_${Date.now()}`;
     console.log('Creating realtime subscription channel:', channelName);
     
@@ -191,11 +212,10 @@ export const useNotificationsState = () => {
         }
       });
 
-    // Add periodic refresh as a fallback
     const intervalId = setInterval(() => {
       console.log('Refreshing notifications (periodic)');
       fetchNotifications();
-    }, 30000); // Refresh every 30 seconds
+    }, 30000);
 
     return () => {
       console.log('إلغاء اشتراك الإشعارات');
@@ -210,6 +230,7 @@ export const useNotificationsState = () => {
     loading,
     markAsRead,
     markAllAsRead,
+    deleteReadNotifications,
     fetchNotifications,
     filterType,
     setFilterType,

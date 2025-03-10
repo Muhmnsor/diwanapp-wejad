@@ -3,7 +3,7 @@ import React from 'react';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { NotificationItem } from './NotificationItem';
 import { Button } from '@/components/ui/button';
-import { Loader2, CheckCheck, Filter } from 'lucide-react';
+import { Loader2, CheckCheck, Filter, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -12,7 +12,8 @@ export const NotificationList: React.FC = () => {
     notifications, 
     unreadCount, 
     loading, 
-    markAllAsRead, 
+    markAllAsRead,
+    deleteReadNotifications,
     filterType, 
     setFilterType,
     showUnreadOnly,
@@ -22,6 +23,9 @@ export const NotificationList: React.FC = () => {
   const handleReadStatusChange = (value: string) => {
     setShowUnreadOnly(value === 'unread');
   };
+  
+  // Calculate the number of read notifications
+  const readCount = notifications.filter(n => n.read).length;
   
   // إظهار جميع الإشعارات في البوبوفر
   const displayedNotifications = showUnreadOnly 
@@ -86,17 +90,31 @@ export const NotificationList: React.FC = () => {
             </SelectContent>
           </Select>
           
-          {unreadCount > 0 && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-xs h-7 flex items-center" 
-              onClick={markAllAsRead}
-            >
-              <CheckCheck className="h-3 w-3 ml-1" />
-              تحديد الكل
-            </Button>
-          )}
+          <div className="flex gap-1">
+            {unreadCount > 0 && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-xs h-7 flex items-center p-1" 
+                onClick={markAllAsRead}
+                title="تحديد الكل كمقروء"
+              >
+                <CheckCheck className="h-3 w-3" />
+              </Button>
+            )}
+            
+            {readCount > 0 && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-xs h-7 flex items-center p-1 text-destructive hover:bg-destructive/10" 
+                onClick={deleteReadNotifications}
+                title="حذف الإشعارات المقروءة"
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
       

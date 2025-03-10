@@ -5,7 +5,7 @@ import { Footer } from '@/components/layout/Footer';
 import { useNotifications, NotificationType, NotificationSort } from '@/contexts/NotificationContext';
 import { NotificationItem } from './NotificationItem';
 import { Button } from '@/components/ui/button';
-import { CheckCheck, Loader2, Search, Filter, SortDesc } from 'lucide-react';
+import { CheckCheck, Loader2, Search, Filter, SortDesc, Trash2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,7 +17,8 @@ export const NotificationPage: React.FC = () => {
     notifications, 
     unreadCount, 
     loading, 
-    markAllAsRead, 
+    markAllAsRead,
+    deleteReadNotifications,
     fetchNotifications,
     filterType,
     setFilterType,
@@ -30,6 +31,9 @@ export const NotificationPage: React.FC = () => {
   } = useNotifications();
   
   const { user } = useAuthStore();
+  
+  // Count read notifications
+  const readCount = notifications.filter(n => n.read).length;
   
   useEffect(() => {
     // تعطيل تصفية "غير المقروءة فقط" عند تحميل الصفحة
@@ -69,17 +73,30 @@ export const NotificationPage: React.FC = () => {
       <div className="container mx-auto px-4 py-8 flex-grow">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">الإشعارات</h1>
-          {unreadCount > 0 && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={markAllAsRead}
-              className="flex items-center"
-            >
-              <CheckCheck className="h-4 w-4 ml-2" />
-              تحديد الكل كمقروء
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {unreadCount > 0 && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={markAllAsRead}
+                className="flex items-center"
+              >
+                <CheckCheck className="h-4 w-4 ml-2" />
+                تحديد الكل كمقروء
+              </Button>
+            )}
+            {readCount > 0 && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={deleteReadNotifications}
+                className="flex items-center text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="h-4 w-4 ml-2" />
+                حذف الإشعارات المقروءة
+              </Button>
+            )}
+          </div>
         </div>
         
         <div className="space-y-4">
