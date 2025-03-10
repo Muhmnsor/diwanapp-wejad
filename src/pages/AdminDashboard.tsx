@@ -1,3 +1,4 @@
+
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
 import { DashboardApps } from "@/components/admin/dashboard/DashboardApps";
@@ -34,7 +35,7 @@ const AdminDashboard = () => {
       </div>
 
       <Footer />
-      {user?.isAdmin && <DeveloperToolbar />}
+      <DeveloperToolbar />
     </div>
   );
 };
