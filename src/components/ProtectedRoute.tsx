@@ -104,7 +104,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   // Check for admin-only routes
-  const adminOnlyRoutes = ['/settings', '/users-management']; 
+  const adminOnlyRoutes = ['/settings', '/users-management', '/admin/users-management']; 
   if (adminOnlyRoutes.some(route => location.pathname === route) && !user?.isAdmin) {
     console.log('User is not admin, redirecting from:', location.pathname);
     toast.error("ليس لديك صلاحية الوصول إلى هذه الصفحة");

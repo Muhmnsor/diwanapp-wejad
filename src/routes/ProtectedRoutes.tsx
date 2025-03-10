@@ -98,6 +98,15 @@ export const ProtectedRoutes = [
     } 
   />,
   <Route 
+    key="admin-users-management"
+    path="/admin/users-management" 
+    element={
+      <ProtectedRoute>
+        <UsersManagement />
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
     key="notifications"
     path="/notifications" 
     element={

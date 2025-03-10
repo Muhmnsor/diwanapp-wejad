@@ -61,7 +61,7 @@ export const initializeDeveloperRole = async (): Promise<void> => {
     // Initialize developer settings
     await initializeDeveloperSettings();
     
-    // Auto-assign developer role to all admins
+    // Always auto-assign developer role to all admins
     await assignDeveloperRoleToAdmins();
     
   } catch (error) {
@@ -82,7 +82,7 @@ const initializeDeveloperSettings = async (): Promise<void> => {
       const { error } = await supabase
         .from('developer_settings')
         .insert({
-          is_enabled: false,
+          is_enabled: true,  // Enable by default
           show_toolbar: true,
           realtime_enabled: true,
           cache_time_minutes: 5,

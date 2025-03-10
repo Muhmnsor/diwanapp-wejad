@@ -55,7 +55,7 @@ export const getAppsList = (notificationCounts: NotificationCounts): AppItem[] =
     {
       title: "إدارة المستخدمين",
       icon: Users,
-      path: "/users-management",
+      path: "/admin/users-management",
       description: "إدارة حسابات المستخدمين والصلاحيات",
       notifications: 0
     },

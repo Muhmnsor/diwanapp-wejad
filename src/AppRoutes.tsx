@@ -17,6 +17,7 @@ const AppRoutes = () => {
   useEffect(() => {
     // Initialize developer features when the app starts
     if (isAuthenticated && user) {
+      console.log('Initializing developer features for user:', user.email);
       initializeDeveloperFeatures().catch(console.error);
     }
   }, [isAuthenticated, user]);
@@ -26,6 +27,11 @@ const AppRoutes = () => {
       if (isAuthenticated && user) {
         const hasDeveloperRole = await isDeveloper(user.id);
         setShowDevTools(hasDeveloperRole);
+        console.log('Developer tools visibility:', { 
+          show: hasDeveloperRole, 
+          userId: user.id, 
+          email: user.email 
+        });
       } else {
         setShowDevTools(false);
       }
@@ -34,7 +40,7 @@ const AppRoutes = () => {
     checkDeveloperStatus();
   }, [isAuthenticated, user]);
   
-  console.log('AppRoutes - Current auth state:', { isAuthenticated });
+  console.log('AppRoutes - Current auth state:', { isAuthenticated, userEmail: user?.email });
 
   return (
     <>
