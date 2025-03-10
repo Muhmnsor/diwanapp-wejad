@@ -80,19 +80,26 @@ export const useWorkflowOperations = ({
       console.log("[ensureWorkflowExists] Created new workflow with ID:", newWorkflowId);
       setWorkflowId(newWorkflowId);
       
-      // Update workflow_id in all existing steps
-      setWorkflowSteps(prevSteps => 
-        prevSteps.map(step => ({
+      // Update workflow_id in all existing steps - FIX: Create a new array with updated workflow_id
+      const updatedSteps = [] as WorkflowStep[];
+      setWorkflowSteps((prevSteps) => {
+        const updated = prevSteps.map(step => ({
           ...step,
           workflow_id: newWorkflowId
-        }))
-      );
+        }));
+        updatedSteps.push(...updated);
+        return updated;
+      });
       
-      // Update current step with new workflow_id
-      setCurrentStep(prevStep => ({
-        ...prevStep,
-        workflow_id: newWorkflowId
-      }));
+      // Update current step with new workflow_id - FIX: Create a new step object with updated workflow_id
+      let updatedCurrentStep: WorkflowStep = {} as WorkflowStep;
+      setCurrentStep((prevStep) => {
+        updatedCurrentStep = {
+          ...prevStep,
+          workflow_id: newWorkflowId
+        };
+        return updatedCurrentStep;
+      });
       
       return newWorkflowId;
     } catch (error) {
@@ -250,10 +257,8 @@ export const useWorkflowOperations = ({
     
     saveWorkflowSteps(updatedSteps);
     
-    setCurrentStep({
-      ...getInitialStepState(updatedSteps.length + 1),
-      workflow_id: current_workflow_id
-    });
+    const newStep = getInitialStepState(updatedSteps.length + 1, current_workflow_id);
+    setCurrentStep(newStep);
     setEditingStepIndex(null);
   };
 
@@ -273,10 +278,8 @@ export const useWorkflowOperations = ({
 
     if (editingStepIndex === index) {
       setEditingStepIndex(null);
-      setCurrentStep({
-        ...getInitialStepState(updatedSteps.length + 1),
-        workflow_id: workflowId || 'temp-workflow-id'
-      });
+      const newStep = getInitialStepState(updatedSteps.length + 1, workflowId || 'temp-workflow-id');
+      setCurrentStep(newStep);
     }
   };
 
