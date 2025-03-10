@@ -134,136 +134,146 @@ export const TechnicalDocumentation = () => {
                     <div className="border rounded-md p-3 mb-4">
                       <code className="text-sm">
                         <div><Badge variant="outline" className="mr-2">📁</Badge> src/</div>
+                        
+                        {/* Core Components */}
                         <div className="mr-6"><Badge variant="outline" className="mr-2">📁</Badge> components/ - مكونات التطبيق المختلفة</div>
-                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> events/ - مكونات الفعاليات</div>
-                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> projects/ - مكونات المشاريع</div>
-                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> tasks/ - مكونات المهام</div>
-                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> layout/ - مكونات التخطيط العام</div>
-                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> ui/ - مكونات واجهة المستخدم الأساسية</div>
-                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> settings/ - مكونات الإعدادات</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> activities/ - مكونات الأنشطة والفعاليات</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> admin/ - مكونات لوحة التحكم</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> certificates/ - مكونات إدارة الشهادات</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> dashboard/ - مكونات لوحة القيادة</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> developer/ - أدوات المطور</div>
                         <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> documentation/ - مكونات التوثيق</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> events/ - مكونات الفعاليات</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> finance/ - المكونات المالية</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> ideas/ - مكونات إدارة الأفكار</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> layout/ - مكونات التخطيط العام</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> projects/ - مكونات المشاريع</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> requests/ - مكونات الطلبات</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> settings/ - مكونات الإعدادات</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> tasks/ - مكونات المهام</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> ui/ - مكونات واجهة المستخدم الأساسية</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> users/ - مكونات إدارة المستخدمين</div>
+                        
+                        {/* Core App Files */}
                         <div className="mr-6"><Badge variant="outline" className="mr-2">📁</Badge> pages/ - صفحات التطبيق</div>
                         <div className="mr-6"><Badge variant="outline" className="mr-2">📁</Badge> hooks/ - الدوال الخطافية</div>
                         <div className="mr-6"><Badge variant="outline" className="mr-2">📁</Badge> integrations/ - تكامل مع الخدمات الخارجية</div>
                         <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> supabase/ - تكامل مع Supabase</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> whatsapp/ - تكامل مع WhatsApp</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> asana/ - تكامل مع Asana</div>
+                        
+                        {/* State Management */}
                         <div className="mr-6"><Badge variant="outline" className="mr-2">📁</Badge> store/ - مخازن حالة التطبيق</div>
-                        <div className="mr-6"><Badge variant="outline" className="mr-2">📁</Badge> lib/ - مكتبات مساعدة</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📄</Badge> authStore.ts - إدارة المصادقة</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📄</Badge> eventStore.ts - إدارة الفعاليات</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📄</Badge> financeStore.ts - إدارة الموارد المالية</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📄</Badge> portfolioStore.ts - إدارة المحافظ</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📄</Badge> notificationsStore.ts - إدارة الإشعارات</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📄</Badge> documentsStore.ts - إدارة المستندات</div>
+                        
+                        {/* Utils and Types */}
                         <div className="mr-6"><Badge variant="outline" className="mr-2">📁</Badge> utils/ - دوال مساعدة</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> export/ - تصدير البيانات</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> files/ - إدارة الملفات</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> print/ - الطباعة</div>
+                        <div className="mr-12"><Badge variant="outline" className="mr-2">📁</Badge> reports/ - التقارير</div>
                         <div className="mr-6"><Badge variant="outline" className="mr-2">📁</Badge> types/ - التعريفات النمطية</div>
                       </code>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
                 
-                <AccordionItem value="state-management">
-                  <AccordionTrigger>إدارة الحالة</AccordionTrigger>
+                <AccordionItem value="subsystems">
+                  <AccordionTrigger>الأنظمة الفرعية</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm mb-2">يستخدم النظام Zustand لإدارة حالة التطبيق، وتوجد المخازن في المسار التالي:</p>
-                    <ul className="list-disc list-inside space-y-1 text-sm mb-4">
-                      <li><code>src/store/developerStore.ts</code> - إدارة إعدادات المطورين</li>
-                      <li><code>src/store/eventStore.ts</code> - إدارة بيانات الفعاليات</li>
-                      <li><code>src/store/authStore.ts</code> - إدارة المصادقة والمستخدمين</li>
-                      <li><code>src/store/refactored-auth.ts</code> - النسخة المحدثة من مخزن المصادقة</li>
-                      <li><code>src/store/financeStore.ts</code> - إدارة الموارد المالية</li>
-                      <li><code>src/store/portfolioStore.ts</code> - إدارة المحافظ والمشاريع</li>
-                      <li><code>src/store/notificationsStore.ts</code> - إدارة الإشعارات</li>
-                      <li><code>src/store/documentsStore.ts</code> - إدارة المستندات</li>
-                    </ul>
-                    
-                    <p className="text-sm mb-2">كيفية استخدام المخزن:</p>
-                    <CodeBlock
-                      code={`import { useDeveloperStore } from '@/store/developerStore';
-
-// داخل المكون
-const { settings, isLoading, fetchSettings } = useDeveloperStore();`}
-                      language="typescript"
-                    />
-                  </AccordionContent>
-                </AccordionItem>
-                
-                <AccordionItem value="routing">
-                  <AccordionTrigger>إدارة التنقل والمسارات</AccordionTrigger>
-                  <AccordionContent>
-                    <p className="text-sm mb-2">يستخدم النظام React Router لإدارة التنقل، ويوجد تعريف المسارات في:</p>
-                    <code className="block p-2 bg-muted rounded-md mb-4">src/AppRoutes.tsx</code>
-                    
-                    <p className="text-sm mb-2">مسارات النظام الرئيسية:</p>
-                    <ul className="list-disc list-inside space-y-1 text-sm mb-4">
-                      <li><code>/</code> - الصفحة الرئيسية</li>
-                      <li><code>/events</code> - صفحة الفعاليات</li>
-                      <li><code>/events/:id</code> - تفاصيل الفعالية</li>
-                      <li><code>/admin/developer-settings</code> - إعدادات المطورين</li>
-                      <li><code>/admin/dashboard</code> - لوحة التحكم</li>
-                      <li><code>/projects</code> - صفحة المشاريع</li>
-                      <li><code>/projects/:id</code> - تفاصيل المشروع</li>
-                      <li><code>/ideas</code> - صفحة الأفكار</li>
-                      <li><code>/ideas/:id</code> - تفاصيل الفكرة</li>
-                      <li><code>/tasks</code> - صفحة المهام</li>
-                      <li><code>/finance</code> - الإدارة المالية</li>
-                      <li><code>/portfolio</code> - إدارة المحافظ</li>
-                      <li><code>/documents</code> - إدارة المستندات</li>
-                      <li><code>/subscriptions</code> - إدارة الاشتراكات</li>
-                      <li><code>/requests</code> - إدارة الطلبات</li>
-                      <li><code>/certificates</code> - إدارة الشهادات</li>
-                      <li><code>/notifications</code> - إدارة الإشعارات</li>
-                    </ul>
-                    
-                    <p className="text-sm mb-2">كيفية استخدام التنقل البرمجي:</p>
-                    <CodeBlock
-                      code={`import { useNavigate } from 'react-router-dom';
-
-// داخل المكون
-const navigate = useNavigate();
-
-// الانتقال إلى مسار
-navigate('/events');
-
-// الانتقال إلى الخلف
-navigate(-1);`}
-                      language="typescript"
-                    />
-                  </AccordionContent>
-                </AccordionItem>
-                
-                <AccordionItem value="database">
-                  <AccordionTrigger>هيكل قاعدة البيانات</AccordionTrigger>
-                  <AccordionContent>
-                    <p className="text-sm mb-2">يستخدم النظام Supabase كقاعدة بيانات، ويمكن الاطلاع على هيكل الجداول في:</p>
-                    <code className="block p-2 bg-muted rounded-md mb-4">src/db/schema.sql</code>
-                    
-                    <p className="text-sm mb-2">الجداول الرئيسية:</p>
-                    <ul className="list-disc list-inside space-y-1 text-sm mb-4">
-                      <li><code>events</code> - بيانات الفعاليات</li>
-                      <li><code>registrations</code> - تسجيلات المشاركين</li>
-                      <li><code>profiles</code> - ملفات المستخدمين</li>
-                      <li><code>developer_settings</code> - إعدادات المطورين</li>
-                      <li><code>projects</code> - بيانات المشاريع</li>
-                      <li><code>tasks</code> - المهام</li>
-                    </ul>
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-medium mb-2">نظام إدارة الأفكار</h4>
+                        <ul className="list-disc list-inside space-y-1 text-sm">
+                          <li>إدارة مقترحات المشاريع والأفكار</li>
+                          <li>نظام التصويت والتعليقات</li>
+                          <li>متابعة حالة الأفكار</li>
+                          <li>تحميل الملفات الداعمة</li>
+                        </ul>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-medium mb-2">نظام إدارة المستندات</h4>
+                        <ul className="list-disc list-inside space-y-1 text-sm">
+                          <li>تخزين وتنظيم المستندات</li>
+                          <li>تتبع تواريخ الانتهاء</li>
+                          <li>إدارة الإصدارات</li>
+                          <li>التحكم في الصلاحيات</li>
+                        </ul>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-medium mb-2">نظام الطلبات</h4>
+                        <ul className="list-disc list-inside space-y-1 text-sm">
+                          <li>إنشاء وإدارة نماذج الطلبات</li>
+                          <li>تدفق العمل والموافقات</li>
+                          <li>متابعة حالة الطلبات</li>
+                          <li>إشعارات تلقائية</li>
+                        </ul>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-medium mb-2">نظام الصلاحيات</h4>
+                        <ul className="list-disc list-inside space-y-1 text-sm">
+                          <li>إدارة الأدوار والصلاحيات</li>
+                          <li>تحكم دقيق بالوصول</li>
+                          <li>سجلات الأنشطة</li>
+                          <li>التكامل مع المصادقة</li>
+                        </ul>
+                      </div>
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
 
-                <AccordionItem value="components">
-                  <AccordionTrigger>المكونات الأساسية</AccordionTrigger>
+                <AccordionItem value="modules">
+                  <AccordionTrigger>الوحدات الرئيسية</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm mb-2">المكونات الأساسية للنظام:</p>
-                    <ul className="list-disc list-inside space-y-1 text-sm mb-4">
-                      <li><code>Layout</code> - تخطيط الصفحات الأساسي</li>
-                      <li><code>TopHeader</code> - الشريط العلوي للتنقل</li>
-                      <li><code>Footer</code> - تذييل الصفحات</li>
-                      <li><code>EventCard</code> - بطاقة عرض الفعالية</li>
-                      <li><code>ProjectCard</code> - بطاقة عرض المشروع</li>
-                      <li><code>TaskCard</code> - بطاقة عرض المهمة</li>
-                      <li><code>Notification</code> - مكون الإشعارات</li>
-                      <li><code>DocumentsTable</code> - جدول المستندات</li>
-                      <li><code>RegistrationsTable</code> - جدول التسجيلات</li>
-                      <li><code>AttendanceTable</code> - جدول الحضور</li>
-                      <li><code>CertificateTemplates</code> - قوالب الشهادات</li>
-                      <li><code>DashboardStats</code> - إحصائيات لوحة القيادة</li>
-                      <li><code>UserNav</code> - تنقل المستخدم</li>
-                      <li><code>ProtectedRoute</code> - حماية المسارات</li>
-                      <li><code>DeveloperRoute</code> - مسارات المطورين</li>
-                    </ul>
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-medium mb-2">إدارة الملفات</h4>
+                        <ul className="list-disc list-inside space-y-1 text-sm">
+                          <li>رفع وتنزيل الملفات</li>
+                          <li>معالجة الصور والمستندات</li>
+                          <li>تخزين آمن في Supabase</li>
+                          <li>تنظيم المجلدات</li>
+                        </ul>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-medium mb-2">معالجة التقارير</h4>
+                        <ul className="list-disc list-inside space-y-1 text-sm">
+                          <li>إنشاء تقارير PDF</li>
+                          <li>تصدير إلى Excel</li>
+                          <li>رسوم بيانية تفاعلية</li>
+                          <li>تخصيص القوالب</li>
+                        </ul>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-medium mb-2">نظام الإشعارات</h4>
+                        <ul className="list-disc list-inside space-y-1 text-sm">
+                          <li>إشعارات في الوقت الحقيقي</li>
+                          <li>رسائل WhatsApp</li>
+                          <li>إشعارات البريد الإلكتروني</li>
+                          <li>تخصيص الإشعارات</li>
+                        </ul>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-medium mb-2">التكاملات الخارجية</h4>
+                        <ul className="list-disc list-inside space-y-1 text-sm">
+                          <li>Supabase للتخزين والمصادقة</li>
+                          <li>WhatsApp للرسائل</li>
+                          <li>Asana لإدارة المشاريع</li>
+                          <li>خدمات أخرى</li>
+                        </ul>
+                      </div>
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
@@ -772,12 +782,4 @@ const createAsanaTask = async (taskData) => {
                     يمكن مراقبة أداء التطبيق من خلال قسم الأداء.
                     المسار: <code>/admin/developer-settings?tab=performance</code>
                   </p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
+                </Card
