@@ -39,7 +39,8 @@ export const WorkflowStepsConfig = ({
     handleRemoveStep,
     handleEditStep,
     handleMoveStep,
-    saveWorkflowSteps
+    saveWorkflowSteps,
+    workflowId: currentWorkflowId
   } = useWorkflowSteps({ 
     requestTypeId, 
     onWorkflowStepsUpdated,
@@ -85,6 +86,10 @@ export const WorkflowStepsConfig = ({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium">خطوات سير العمل</h3>
+        {/* Debug info - workflowId */}
+        <div className="text-xs text-gray-400">
+          {currentWorkflowId ? `Workflow ID: ${currentWorkflowId}` : 'No Workflow ID'}
+        </div>
       </div>
       <Separator />
       
@@ -122,6 +127,21 @@ export const WorkflowStepsConfig = ({
           >
             {isLoading ? "جاري الحفظ..." : "حفظ خطوات سير العمل"}
           </Button>
+        </div>
+      )}
+
+      {/* Debug info panel */}
+      {process.env.NODE_ENV !== 'production' && (
+        <div className="mt-8 p-4 border border-gray-200 rounded-md bg-gray-50">
+          <h4 className="text-sm font-medium mb-2">Debug Information:</h4>
+          <div className="text-xs font-mono overflow-auto max-h-40">
+            <div>Request Type ID: {requestTypeId || 'None'}</div>
+            <div>Workflow ID: {currentWorkflowId || 'None'}</div>
+            <div>Steps Count: {workflowSteps.length}</div>
+            <div>Editing Step: {editingStepIndex !== null ? editingStepIndex : 'None'}</div>
+            <div>Loading: {isLoading ? 'Yes' : 'No'}</div>
+            <div>Error: {error || 'None'}</div>
+          </div>
         </div>
       )}
     </div>

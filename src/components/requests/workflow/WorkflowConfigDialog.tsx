@@ -14,6 +14,8 @@ import { WorkflowStepsConfig } from "../WorkflowStepsConfig";
 import { WorkflowStep } from "../types";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface WorkflowConfigDialogProps {
   isOpen: boolean;
@@ -33,21 +35,30 @@ export const WorkflowConfigDialog = ({
   onWorkflowSaved
 }: WorkflowConfigDialogProps) => {
   const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
+  const [error, setError] = useState<string | null>(null);
   
   // Fetch existing workflow steps if editing
-  const { data: initialSteps, isLoading } = useQuery({
+  const { data: initialSteps, isLoading, error: fetchError } = useQuery({
     queryKey: ["workflowSteps", workflowId, requestTypeId],
     queryFn: async () => {
       if (!workflowId) return [];
       
-      const { data, error } = await supabase
-        .from("workflow_steps")
-        .select("*")
-        .eq("workflow_id", workflowId)
-        .order("step_order", { ascending: true });
+      try {
+        const { data, error } = await supabase
+          .from("workflow_steps")
+          .select("*")
+          .eq("workflow_id", workflowId)
+          .order("step_order", { ascending: true });
+          
+        if (error) throw error;
         
-      if (error) throw error;
-      return data as WorkflowStep[];
+        console.log("Fetched workflow steps:", data);
+        return data as WorkflowStep[];
+      } catch (error) {
+        console.error("Error fetching workflow steps:", error);
+        setError(`فشل في جلب خطوات سير العمل: ${error.message}`);
+        return [];
+      }
     },
     enabled: !!workflowId && isOpen
   });
@@ -55,18 +66,29 @@ export const WorkflowConfigDialog = ({
   // Set the initial steps when they're loaded
   useEffect(() => {
     if (initialSteps && initialSteps.length > 0) {
+      console.log("Setting initial steps:", initialSteps);
       setWorkflowSteps(initialSteps);
     }
   }, [initialSteps]);
   
+  // Set error if fetch fails
+  useEffect(() => {
+    if (fetchError) {
+      setError(`فشل في جلب خطوات سير العمل: ${fetchError.message}`);
+    }
+  }, [fetchError]);
+  
   const handleWorkflowStepsUpdated = (steps: WorkflowStep[]) => {
+    console.log("Workflow steps updated in dialog:", steps);
     setWorkflowSteps(steps);
   };
   
   const handleWorkflowSaved = () => {
+    console.log("Workflow saved successfully");
     if (onWorkflowSaved) {
       onWorkflowSaved();
     }
+    toast.success("تم حفظ خطوات سير العمل بنجاح");
     onClose();
   };
   
@@ -79,6 +101,13 @@ export const WorkflowConfigDialog = ({
             تكوين خطوات سير العمل لنوع الطلب: {requestTypeName}
           </DialogDescription>
         </DialogHeader>
+        
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         
         {isLoading ? (
           <div className="py-8 text-center">

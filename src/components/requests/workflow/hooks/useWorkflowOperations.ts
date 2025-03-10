@@ -69,26 +69,24 @@ export const useWorkflowOperations = ({
         .select()
         .single();
 
-      if (createError) throw createError;
+      if (createError) {
+        console.error("Error creating workflow:", createError);
+        throw createError;
+      }
 
       const newWorkflowId = newWorkflow.id;
       console.log("Created new workflow with ID:", newWorkflowId);
       setWorkflowId(newWorkflowId);
       
-      // Fix: Create a new array with updated workflow_id instead of using a callback
-      const updatedSteps = (prev: WorkflowStep[]) => 
-        prev.map(step => ({
-          ...step,
-          workflow_id: newWorkflowId
-        }));
-      setWorkflowSteps(updatedSteps([]));
+      // Create new steps array with updated workflow_id
+      const updatedSteps: WorkflowStep[] = [];
+      setWorkflowSteps(updatedSteps);
       
-      // Fix: Create a new step object with updated workflow_id instead of using a callback
-      const updatedStep = (prev: WorkflowStep) => ({
-        ...prev,
+      // Create a new step with updated workflow_id
+      setCurrentStep({
+        ...getInitialStepState(1),
         workflow_id: newWorkflowId
       });
-      setCurrentStep(updatedStep(getInitialStepState(1)));
       
       return newWorkflowId;
     } catch (error) {
@@ -139,6 +137,7 @@ export const useWorkflowOperations = ({
         return;
       }
       
+      // Prepare steps for insertion with complete data
       const stepsToInsert = steps.map((step, index) => ({
         ...step,
         workflow_id: currentWorkflowId,
@@ -151,13 +150,16 @@ export const useWorkflowOperations = ({
       console.log("Inserting workflow steps using RPC bypass function with workflow_id:", currentWorkflowId);
       console.log("Steps to insert:", stepsToInsert);
       
+      // Validate that all steps have workflow_id
       if (stepsToInsert.some(step => !step.workflow_id)) {
         console.error("Cannot insert steps with missing workflow_id");
         throw new Error("بعض الخطوات تفتقد إلى معرّف سير العمل");
       }
       
+      // Convert steps to JSON strings for RPC function
       const jsonSteps = stepsToInsert.map(step => JSON.stringify(step));
       
+      // Call the RPC function to insert steps
       const { data: rpcResult, error: rpcError } = await supabase
         .rpc('insert_workflow_steps', {
           steps: jsonSteps
@@ -170,6 +172,7 @@ export const useWorkflowOperations = ({
 
       console.log("RPC function result:", rpcResult);
 
+      // Check if the RPC function returned an error
       if (!rpcResult || !rpcResult.success) {
         const errorMessage = rpcResult?.error || rpcResult?.message || 'حدث خطأ غير معروف';
         console.error("Error returned from RPC function:", errorMessage);
@@ -178,10 +181,25 @@ export const useWorkflowOperations = ({
 
       console.log("Successfully inserted workflow steps via RPC:", rpcResult);
       
+      // Update the UI with the inserted steps
       if (rpcResult.data && Array.isArray(rpcResult.data)) {
         updateWorkflowSteps(rpcResult.data);
       } else {
         updateWorkflowSteps(stepsToInsert);
+      }
+
+      // Update default workflow for request type
+      if (requestTypeId && currentWorkflowId) {
+        console.log("Setting default workflow for request type:", requestTypeId, currentWorkflowId);
+        const { error: updateError } = await supabase
+          .from('request_types')
+          .update({ default_workflow_id: currentWorkflowId })
+          .eq('id', requestTypeId);
+
+        if (updateError) {
+          console.warn("Could not set default workflow for request type:", updateError);
+          // Non-fatal error, continue
+        }
       }
 
       return true;
@@ -227,13 +245,25 @@ export const useWorkflowOperations = ({
     console.log("Adding/updating step with workflow_id:", stepWithWorkflowId);
     console.log("Updated steps:", updatedSteps);
     
-    saveWorkflowSteps(updatedSteps);
-    
-    setCurrentStep({
-      ...getInitialStepState(updatedSteps.length + 1),
-      workflow_id: current_workflow_id
-    });
-    setEditingStepIndex(null);
+    // Actually save the steps
+    try {
+      saveWorkflowSteps(updatedSteps)
+        .then(() => {
+          toast.success(editingStepIndex !== null ? 'تم تحديث الخطوة بنجاح' : 'تمت إضافة الخطوة بنجاح');
+          
+          setCurrentStep({
+            ...getInitialStepState(updatedSteps.length + 1),
+            workflow_id: current_workflow_id
+          });
+          setEditingStepIndex(null);
+        })
+        .catch((error) => {
+          toast.error(`فشل في حفظ الخطوة: ${error.message}`);
+        });
+    } catch (error) {
+      console.error("Error during save:", error);
+      toast.error(`فشل في حفظ الخطوة: ${error.message}`);
+    }
   };
 
   const handleRemoveStep = (index: number, workflowSteps: WorkflowStep[], editingStepIndex: number | null) => {
@@ -248,15 +278,21 @@ export const useWorkflowOperations = ({
     console.log("Removing step at index:", index);
     console.log("Updated steps after removal:", updatedSteps);
     
-    saveWorkflowSteps(updatedSteps);
-
-    if (editingStepIndex === index) {
-      setEditingStepIndex(null);
-      setCurrentStep({
-        ...getInitialStepState(updatedSteps.length + 1),
-        workflow_id: workflowId || 'temp-workflow-id'
+    saveWorkflowSteps(updatedSteps)
+      .then(() => {
+        toast.success('تم حذف الخطوة بنجاح');
+        
+        if (editingStepIndex === index) {
+          setEditingStepIndex(null);
+          setCurrentStep({
+            ...getInitialStepState(updatedSteps.length + 1),
+            workflow_id: workflowId || 'temp-workflow-id'
+          });
+        }
+      })
+      .catch((error) => {
+        toast.error(`فشل في حذف الخطوة: ${error.message}`);
       });
-    }
   };
 
   const handleEditStep = (index: number, workflowSteps: WorkflowStep[]) => {
@@ -290,13 +326,19 @@ export const useWorkflowOperations = ({
     console.log(`Moving step ${index} ${direction} to ${newIndex}`);
     console.log("Updated steps after move:", updatedSteps);
     
-    saveWorkflowSteps(updatedSteps);
-    
-    if (editingStepIndex === index) {
-      setEditingStepIndex(newIndex);
-    } else if (editingStepIndex === newIndex) {
-      setEditingStepIndex(index);
-    }
+    saveWorkflowSteps(updatedSteps)
+      .then(() => {
+        toast.success(`تم ${direction === 'up' ? 'رفع' : 'خفض'} الخطوة بنجاح`);
+        
+        if (editingStepIndex === index) {
+          setEditingStepIndex(newIndex);
+        } else if (editingStepIndex === newIndex) {
+          setEditingStepIndex(index);
+        }
+      })
+      .catch((error) => {
+        toast.error(`فشل في تحريك الخطوة: ${error.message}`);
+      });
   };
 
   return {
