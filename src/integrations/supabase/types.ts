@@ -473,60 +473,6 @@ export type Database = {
         }
         Relationships: []
       }
-      developer_permissions: {
-        Row: {
-          can_access_admin_panel: boolean
-          can_access_api_logs: boolean
-          can_access_developer_tools: boolean
-          can_debug_queries: boolean
-          can_export_data: boolean
-          can_import_data: boolean
-          can_manage_developer_settings: boolean
-          can_manage_realtime: boolean
-          can_modify_system_settings: boolean
-          can_view_performance_metrics: boolean
-          created_at: string
-          id: string
-          is_developer: boolean
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          can_access_admin_panel?: boolean
-          can_access_api_logs?: boolean
-          can_access_developer_tools?: boolean
-          can_debug_queries?: boolean
-          can_export_data?: boolean
-          can_import_data?: boolean
-          can_manage_developer_settings?: boolean
-          can_manage_realtime?: boolean
-          can_modify_system_settings?: boolean
-          can_view_performance_metrics?: boolean
-          created_at?: string
-          id?: string
-          is_developer?: boolean
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          can_access_admin_panel?: boolean
-          can_access_api_logs?: boolean
-          can_access_developer_tools?: boolean
-          can_debug_queries?: boolean
-          can_export_data?: boolean
-          can_import_data?: boolean
-          can_manage_developer_settings?: boolean
-          can_manage_realtime?: boolean
-          can_modify_system_settings?: boolean
-          can_view_performance_metrics?: boolean
-          created_at?: string
-          id?: string
-          is_developer?: boolean
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       developer_settings: {
         Row: {
           cache_time_minutes: number | null
@@ -4481,12 +4427,6 @@ export type Database = {
             Returns: boolean
           }
       is_admin_user: {
-        Args: {
-          user_id: string
-        }
-        Returns: boolean
-      }
-      is_developer: {
         Args: {
           user_id: string
         }

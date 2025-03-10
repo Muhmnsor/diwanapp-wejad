@@ -1,141 +1,149 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
+import { setupDefaultDeveloperPermissions } from "@/components/users/permissions/utils/developerPermissionUtils";
+import { toast } from "sonner";
 
 /**
- * Assign the developer role to a user
+ * دالة للتحقق من وجود دور المطور وإنشائه إذا لم يكن موجوداً
+ */
+export const ensureDeveloperRole = async (): Promise<string | null> => {
+  try {
+    // التحقق من وجود دور المطور
+    const { data: existingRole, error: fetchError } = await supabase
+      .from('roles')
+      .select('id')
+      .eq('name', 'developer')
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = not found
+      console.error('Error checking developer role:', fetchError);
+      return null;
+    }
+
+    // إذا كان الدور موجوداً، نعيد معرّفه
+    if (existingRole?.id) {
+      return existingRole.id;
+    }
+
+    // إنشاء دور المطور إذا لم يكن موجوداً
+    const { data: newRole, error: insertError } = await supabase
+      .from('roles')
+      .insert({
+        name: 'developer',
+        description: 'دور المطور مع صلاحيات للوصول إلى أدوات التطوير وإعدادات النظام'
+      })
+      .select('id')
+      .single();
+
+    if (insertError) {
+      console.error('Error creating developer role:', insertError);
+      return null;
+    }
+
+    return newRole?.id || null;
+  } catch (error) {
+    console.error('Unexpected error in ensureDeveloperRole:', error);
+    return null;
+  }
+};
+
+/**
+ * دالة لتعيين دور المطور للمستخدم
  */
 export const assignDeveloperRole = async (userId: string): Promise<boolean> => {
-  if (!userId) return false;
-  
   try {
-    // Check if the user already has developer permissions
-    const { data: existingPermissions } = await supabase
-      .from('developer_permissions')
+    if (!userId) {
+      console.error('Invalid user ID');
+      return false;
+    }
+
+    // الحصول على معرّف دور المطور أو إنشائه
+    const developerRoleId = await ensureDeveloperRole();
+    
+    if (!developerRoleId) {
+      toast.error('فشل في الحصول على دور المطور');
+      return false;
+    }
+
+    // التحقق مما إذا كان المستخدم لديه بالفعل دور المطور
+    const { data: existingRole } = await supabase
+      .from('user_roles')
       .select('id')
       .eq('user_id', userId)
+      .eq('role_id', developerRoleId)
       .single();
-    
-    if (existingPermissions) {
-      // Update existing permissions
-      const { error } = await supabase
-        .from('developer_permissions')
-        .update({
-          is_developer: true,
-          can_access_developer_tools: true,
-          can_view_performance_metrics: true,
-          can_access_api_logs: true
-        })
-        .eq('user_id', userId);
-      
-      if (error) {
-        console.error('Error updating developer permissions:', error);
-        return false;
-      }
-    } else {
-      // Create new permissions
-      const { error } = await supabase
-        .from('developer_permissions')
-        .insert({
-          user_id: userId,
-          is_developer: true,
-          can_access_developer_tools: true,
-          can_modify_system_settings: false,
-          can_access_api_logs: true,
-          can_manage_developer_settings: false,
-          can_view_performance_metrics: true
-        });
-      
-      if (error) {
-        console.error('Error creating developer permissions:', error);
-        return false;
-      }
+
+    if (existingRole?.id) {
+      // المستخدم لديه بالفعل دور المطور
+      return true;
     }
-    
-    // Create developer settings if they don't exist
-    const { data: existingSettings } = await supabase
-      .from('developer_settings')
-      .select('id')
-      .eq('user_id', userId)
-      .single();
-    
-    if (!existingSettings) {
-      const { error } = await supabase
-        .from('developer_settings')
-        .insert({
-          user_id: userId,
-          is_enabled: true,
-          cache_time_minutes: 5,
-          update_interval_seconds: 30,
-          debug_level: 'info',
-          realtime_enabled: false,
-          show_toolbar: true
-        });
-      
-      if (error) {
-        console.error('Error creating developer settings:', error);
-        return false;
-      }
-    } else {
-      // Update existing settings
-      const { error } = await supabase
-        .from('developer_settings')
-        .update({
-          is_enabled: true
-        })
-        .eq('user_id', userId);
-        
-      if (error) {
-        console.error('Error updating developer settings:', error);
-        return false;
-      }
+
+    // تعيين دور المطور للمستخدم
+    const { error } = await supabase
+      .from('user_roles')
+      .insert({
+        user_id: userId,
+        role_id: developerRoleId
+      });
+
+    if (error) {
+      console.error('Error assigning developer role:', error);
+      toast.error('فشل في تعيين دور المطور');
+      return false;
     }
+
+    // إعداد أذونات المطور الافتراضية
+    await setupDefaultDeveloperPermissions(developerRoleId);
     
+    toast.success('تم تعيين دور المطور بنجاح');
     return true;
   } catch (error) {
     console.error('Error in assignDeveloperRole:', error);
+    toast.error('حدث خطأ أثناء تعيين دور المطور');
     return false;
   }
 };
 
 /**
- * Remove the developer role from a user
+ * دالة لإزالة دور المطور من المستخدم
  */
 export const removeDeveloperRole = async (userId: string): Promise<boolean> => {
-  if (!userId) return false;
-  
   try {
-    // Update developer permissions
+    if (!userId) {
+      console.error('Invalid user ID');
+      return false;
+    }
+
+    // الحصول على معرّف دور المطور
+    const { data: developerRole } = await supabase
+      .from('roles')
+      .select('id')
+      .eq('name', 'developer')
+      .single();
+
+    if (!developerRole?.id) {
+      // إذا لم يكن دور المطور موجوداً، فلا حاجة لإزالته
+      return true;
+    }
+
+    // إزالة دور المطور من المستخدم
     const { error } = await supabase
-      .from('developer_permissions')
-      .update({
-        is_developer: false,
-        can_access_developer_tools: false,
-        can_modify_system_settings: false,
-        can_access_api_logs: false,
-        can_manage_developer_settings: false,
-        can_view_performance_metrics: false
-      })
-      .eq('user_id', userId);
-    
+      .from('user_roles')
+      .delete()
+      .eq('user_id', userId)
+      .eq('role_id', developerRole.id);
+
     if (error) {
-      console.error('Error removing developer permissions:', error);
+      console.error('Error removing developer role:', error);
+      toast.error('فشل في إزالة دور المطور');
       return false;
     }
-    
-    // Disable developer mode
-    const { error: settingsError } = await supabase
-      .from('developer_settings')
-      .update({ is_enabled: false })
-      .eq('user_id', userId);
-    
-    if (settingsError) {
-      console.error('Error disabling developer mode:', settingsError);
-      return false;
-    }
-    
+
+    toast.success('تم إزالة دور المطور بنجاح');
     return true;
   } catch (error) {
     console.error('Error in removeDeveloperRole:', error);
+    toast.error('حدث خطأ أثناء إزالة دور المطور');
     return false;
   }
 };

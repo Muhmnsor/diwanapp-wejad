@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Module, PermissionData } from "./types";
 import { Role } from "../types";
 import { fetchPermissions, fetchRolePermissions, saveRolePermissions } from "./api/permissionsApi";
-import { groupPermissionsByModule } from "./utils/permissionsUtils";
+import { organizePermissionsByModule } from "./utils/permissionsUtils";
 import { usePermissionOperations } from "./hooks/usePermissionOperations";
 
 export const usePermissions = (role: Role) => {
@@ -45,7 +45,7 @@ export const usePermissions = (role: Role) => {
   // Organize permissions by module when permissions data changes
   useEffect(() => {
     if (permissions.length > 0) {
-      setModules(groupPermissionsByModule(permissions));
+      setModules(organizePermissionsByModule(permissions));
     }
   }, [permissions]);
 

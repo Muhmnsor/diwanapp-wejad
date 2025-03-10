@@ -1,61 +1,105 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { DeveloperPermissionChecks } from '../types';
+import { supabase } from "@/integrations/supabase/client";
+import { DeveloperPermissionChecks } from "../types";
 
 /**
- * Check if a user has developer permissions
+ * فحص ما إذا كان المستخدم لديه أذونات المطور
  */
 export const checkDeveloperPermissions = async (userId: string): Promise<DeveloperPermissionChecks> => {
-  if (!userId) {
-    return getDefaultPermissions();
-  }
-
   try {
-    // Check if user has developer permissions
-    const { data, error } = await supabase
-      .from('developer_permissions')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
-    
-    if (error) {
-      console.error('Error checking developer permissions:', error);
-      return getDefaultPermissions();
-    }
-    
-    if (!data) {
-      return getDefaultPermissions();
-    }
+    // الحصول على دور المستخدم
+    const { data: userRoles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId);
 
+    // التحقق مما إذا كان المستخدم لديه دور المطور
+    const isDeveloper = userRoles?.some(ur => ur.role === 'developer') || false;
+    
+    // الحصول على أذونات المطور
+    const { data: permissions } = await supabase
+      .from('role_permissions')
+      .select(`
+        permission_id,
+        permissions:permission_id (
+          id,
+          name
+        )
+      `)
+      .eq('role_id', 'developer');
+
+    // تحديد الأذونات المحددة
+    const permissionNames = permissions?.map(p => {
+      // تأكد من وجود البيانات قبل الوصول إلى الخصائص
+      if (p.permissions && typeof p.permissions === 'object' && 'name' in p.permissions) {
+        return p.permissions.name;
+      }
+      return null;
+    }).filter(Boolean) || [];
+    
     return {
-      canAccessDeveloperTools: data.can_access_developer_tools || false,
-      canModifySystemSettings: data.can_modify_system_settings || false,
-      canAccessApiLogs: data.can_access_api_logs || false,
-      canManageDeveloperSettings: data.can_manage_developer_settings || false,
-      canViewPerformanceMetrics: data.can_view_performance_metrics || false,
-      canDebugQueries: data.can_debug_queries || false,
-      canManageRealtime: data.can_manage_realtime || false,
-      canAccessAdminPanel: data.can_access_admin_panel || false,
-      canExportData: data.can_export_data || false,
-      canImportData: data.can_import_data || false
+      canAccessDeveloperTools: isDeveloper && permissionNames.includes('view_developer_tools'),
+      canModifySystemSettings: isDeveloper && permissionNames.includes('modify_system_settings'),
+      canAccessApiLogs: isDeveloper && permissionNames.includes('access_api_logs')
     };
   } catch (error) {
-    console.error('Error in checkDeveloperPermissions:', error);
-    return getDefaultPermissions();
+    console.error('Error checking developer permissions:', error);
+    return {
+      canAccessDeveloperTools: false,
+      canModifySystemSettings: false,
+      canAccessApiLogs: false
+    };
   }
 };
 
-const getDefaultPermissions = (): DeveloperPermissionChecks => {
-  return {
-    canAccessDeveloperTools: false,
-    canModifySystemSettings: false,
-    canAccessApiLogs: false,
-    canManageDeveloperSettings: false,
-    canViewPerformanceMetrics: false,
-    canDebugQueries: false,
-    canManageRealtime: false,
-    canAccessAdminPanel: false,
-    canExportData: false,
-    canImportData: false
-  };
+/**
+ * إعداد أذونات المطور الافتراضية
+ */
+export const setupDefaultDeveloperPermissions = async (developerId: string): Promise<boolean> => {
+  try {
+    // الحصول على معرّفات أذونات المطور
+    const { data: developerPermissions } = await supabase
+      .from('permissions')
+      .select('id')
+      .in('name', ['view_developer_tools', 'modify_system_settings', 'access_api_logs']);
+      
+    if (!developerPermissions?.length) {
+      console.error('Developer permissions not found');
+      return false;
+    }
+
+    // الحصول على معرّف دور المطور
+    const { data: developerRole } = await supabase
+      .from('roles')
+      .select('id')
+      .eq('name', 'developer')
+      .single();
+
+    if (!developerRole?.id) {
+      console.error('Developer role not found');
+      return false;
+    }
+
+    // إضافة الأذونات إلى دور المطور
+    const rolePermissions = developerPermissions.map(permission => ({
+      role_id: developerRole.id,
+      permission_id: permission.id
+    }));
+
+    // حذف الأذونات الحالية
+    await supabase
+      .from('role_permissions')
+      .delete()
+      .eq('role_id', developerRole.id);
+
+    // إضافة الأذونات الجديدة
+    const { error } = await supabase
+      .from('role_permissions')
+      .insert(rolePermissions);
+
+    return !error;
+  } catch (error) {
+    console.error('Error setting up developer permissions:', error);
+    return false;
+  }
 };

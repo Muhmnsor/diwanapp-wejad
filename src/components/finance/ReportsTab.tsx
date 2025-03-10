@@ -1,56 +1,78 @@
 
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { FileText, AlertTriangle } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useQuery } from "@tanstack/react-query";
+import { ReportsHeader } from "./reports/ReportsHeader";
+import { useFinancialData } from "./reports/hooks/useFinancialData";
+import { formatCurrency } from "./reports/utils/formatters";
+import { exportFinancialReport } from "./reports/utils/exportReport";
+import { toast } from "sonner";
+import { FinancialSummaryCard } from "./reports/FinancialSummaryCard";
+import { TargetsComparisonChart } from "./reports/TargetsComparisonChart";
+import { ExportReportDialog } from "./reports/ExportReportDialog";
 
 export const ReportsTab = () => {
-  const [reports, setReports] = useState([]);
+  const { financialData, loading, comparisonData } = useFinancialData();
+  const [isExporting, setIsExporting] = useState(false);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [selectedReportType, setSelectedReportType] = useState<string | null>(null);
 
-  const { isLoading, error } = useQuery({
-    queryKey: ['finance', 'reports'],
-    queryFn: async () => {
-      // Simulating API call
-      return new Promise(resolve => setTimeout(() => resolve([]), 1000));
-    },
-    enabled: true,
-  });
+  const handleExportReport = async (reportType: string, options: any) => {
+    setIsExporting(true);
+    try {
+      // Create a FinancialData object that matches the expected interface
+      const exportData = {
+        totalResources: financialData.totalResources,
+        totalExpenses: financialData.totalExpenses,
+        netBalance: financialData.totalResources - financialData.totalExpenses,
+        resourcesData: options.includeResourceDetails ? (financialData.resourcesData || []) : undefined,
+        expensesData: options.includeExpenseDetails ? (financialData.expensesData || []) : undefined,
+        timePeriod: options.timePeriod,
+        startDate: options.timePeriod === 'custom' ? options.startDate : undefined,
+        endDate: options.timePeriod === 'custom' ? options.endDate : undefined
+      };
+      
+      await exportFinancialReport(exportData, comparisonData, formatCurrency, reportType);
+      toast.success(`تم تصدير تقرير ${options.reportTitle} بنجاح`);
+    } catch (error) {
+      console.error("Error exporting report:", error);
+      toast.error("حدث خطأ أثناء تصدير التقرير");
+    } finally {
+      setIsExporting(false);
+      setIsExportDialogOpen(false);
+    }
+  };
+
+  const openExportDialog = (reportType: string) => {
+    setSelectedReportType(reportType);
+    setIsExportDialogOpen(true);
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">التقارير المالية</h2>
-        <Button size="sm">
-          <FileText className="h-4 w-4 ml-2" />
-          إنشاء تقرير جديد
-        </Button>
+    <div className="space-y-6">
+      <ReportsHeader 
+        onExport={openExportDialog} 
+        isExporting={isExporting} 
+      />
+      
+      <div className="space-y-6">
+        <FinancialSummaryCard
+          financialData={financialData}
+          loading={loading}
+          formatCurrency={formatCurrency}
+        />
+        
+        <div className="mt-8">
+          <h3 className="text-xl font-semibold mb-4">مقارنة المستهدفات والمصروفات</h3>
+          <TargetsComparisonChart data={comparisonData} loading={loading} />
+        </div>
       </div>
 
-      <Card className="p-4">
-        {error ? (
-          <Alert variant="destructive" className="mb-4">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              حدث خطأ أثناء تحميل البيانات. الرجاء المحاولة مرة أخرى.
-            </AlertDescription>
-          </Alert>
-        ) : isLoading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-          </div>
-        ) : reports.length > 0 ? (
-          <div className="space-y-2">
-            {/* Report items would be mapped here */}
-          </div>
-        ) : (
-          <p className="text-muted-foreground">لا توجد تقارير مالية متاحة حالياً.</p>
-        )}
-      </Card>
+      <ExportReportDialog 
+        isOpen={isExportDialogOpen}
+        onClose={() => setIsExportDialogOpen(false)}
+        onExport={handleExportReport}
+        reportType={selectedReportType}
+        isExporting={isExporting}
+      />
     </div>
   );
 };

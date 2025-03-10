@@ -1,55 +1,53 @@
 
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Database, AlertTriangle } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useQuery } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
+import { ResourcesTable } from "./ResourcesTable";
+import { ResourceForm } from "./resource-form";
 
 export const ResourcesTab = () => {
-  const [resources, setResources] = useState([]);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
-  const { isLoading, error } = useQuery({
-    queryKey: ['finance', 'resources'],
-    queryFn: async () => {
-      // Simulating API call
-      return new Promise(resolve => setTimeout(() => resolve([]), 1000));
-    },
-    enabled: true,
-  });
+  const handleOpenForm = () => setIsFormOpen(true);
+  const handleCloseForm = () => setIsFormOpen(false);
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">الموارد المالية</h2>
-        <Button size="sm">
-          <Database className="h-4 w-4 ml-2" />
-          إضافة مورد مالي
+        <h2 className="text-2xl font-bold">الموارد المالية</h2>
+        <Button onClick={handleOpenForm} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
+          <span>إضافة مورد جديد</span>
         </Button>
       </div>
 
-      <Card className="p-4">
-        {error ? (
-          <Alert variant="destructive" className="mb-4">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              حدث خطأ أثناء تحميل البيانات. الرجاء المحاولة مرة أخرى.
-            </AlertDescription>
-          </Alert>
-        ) : isLoading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-          </div>
-        ) : resources.length > 0 ? (
-          <div className="space-y-2">
-            {/* Resource items would be mapped here */}
-          </div>
-        ) : (
-          <p className="text-muted-foreground">لا توجد موارد مالية مسجلة حالياً.</p>
-        )}
+      {isFormOpen && (
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle className="text-right">إضافة مورد جديد</CardTitle>
+            <CardDescription className="text-right">أدخل تفاصيل المورد المالي والتوزيع على البنود</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResourceForm onCancel={handleCloseForm} onSubmit={handleCloseForm} />
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-right">قائمة الموارد</CardTitle>
+          <CardDescription className="text-right">جميع الموارد المالية التي تمت إضافتها</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ResourcesTable />
+        </CardContent>
       </Card>
     </div>
   );

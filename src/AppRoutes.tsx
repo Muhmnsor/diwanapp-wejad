@@ -1,91 +1,47 @@
 
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import Dashboard from './pages/Dashboard';
-import Login from './pages/Login';
-import Settings from './pages/Settings';
-import Users from './pages/Users';
-import ProtectedRoute from './components/ProtectedRoute';
-import AdminDashboard from './pages/AdminDashboard';
-import AdminRoute from './components/AdminRoute';
-import UserProfile from './pages/UserProfile';
-import Tasks from './pages/Tasks';
-import Projects from './pages/Projects';
-import { FinanceDashboard } from './components/finance/FinanceDashboard';
-import FinancialTargets from './components/finance/targets/FinancialTargets';
-import FinancialReports from './components/finance/reports/FinancialReports';
-import DeveloperSettings from './pages/DeveloperSettings';
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuthStore } from "@/store/refactored-auth";
+import { MainRoutes } from "./routes/MainRoutes";
+import { ProtectedRoutes } from "./routes/ProtectedRoutes";
+import { PortfolioRoutes } from "./routes/PortfolioRoutes";
+import { TaskRoutes } from "./routes/TaskRoutes";
+import { DeveloperToolbar } from "./components/developer/DeveloperToolbar";
+import { useEffect, useState } from "react";
+import { isDeveloper } from "./utils/developerRole";
 
-export default function AppRoutes() {
-  const DeveloperPerformance = React.lazy(() => import('./pages/DeveloperPerformance'));
+const AppRoutes = () => {
+  const { isAuthenticated, user } = useAuthStore();
+  const [showDevTools, setShowDevTools] = useState(false);
   
+  useEffect(() => {
+    const checkDeveloperStatus = async () => {
+      if (isAuthenticated && user) {
+        const hasDeveloperRole = await isDeveloper(user.id);
+        setShowDevTools(hasDeveloperRole);
+      } else {
+        setShowDevTools(false);
+      }
+    };
+    
+    checkDeveloperStatus();
+  }, [isAuthenticated, user]);
+  
+  console.log('AppRoutes - Current auth state:', { isAuthenticated });
+
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/" element={
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/settings" element={
-        <ProtectedRoute>
-          <Settings />
-        </ProtectedRoute>
-      } />
-      <Route path="/users" element={
-        <AdminRoute>
-          <Users />
-        </AdminRoute>
-      } />
-      <Route path="/profile/:userId" element={
-        <ProtectedRoute>
-          <UserProfile />
-        </ProtectedRoute>
-      } />
-      <Route path="/tasks" element={
-        <ProtectedRoute>
-          <Tasks />
-        </ProtectedRoute>
-      } />
-      <Route path="/projects" element={
-        <ProtectedRoute>
-          <Projects />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/dashboard" element={
-        <AdminRoute>
-          <AdminDashboard />
-        </AdminRoute>
-      } />
-      <Route path="/finance/dashboard" element={
-        <ProtectedRoute>
-          <FinanceDashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/finance/targets" element={
-        <ProtectedRoute>
-          <FinancialTargets />
-        </ProtectedRoute>
-      } />
-      <Route path="/finance/reports" element={
-        <ProtectedRoute>
-          <FinancialReports />
-        </ProtectedRoute>
-      } />
+    <>
+      <Routes>
+        {MainRoutes}
+        {ProtectedRoutes}
+        {PortfolioRoutes}
+        {TaskRoutes}
+        <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
       
-      {/* Developer routes */}
-      <Route path="/developer/settings" element={
-        <ProtectedRoute>
-          <DeveloperSettings />
-        </ProtectedRoute>
-      } />
-      <Route path="/developer/performance" element={
-        <ProtectedRoute>
-          <React.Suspense fallback={<div>Loading...</div>}>
-            <DeveloperPerformance />
-          </React.Suspense>
-        </ProtectedRoute>
-      } />
-    </Routes>
+      {showDevTools && <DeveloperToolbar />}
+    </>
   );
-}
+};
+
+export default AppRoutes;

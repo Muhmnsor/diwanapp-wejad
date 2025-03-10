@@ -1,56 +1,88 @@
 
-import { useState } from "react";
-import { Card } from "@/components/ui/card";
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Target, AlertTriangle } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useQuery } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
+import { TargetsContainer } from "./targets/TargetsContainer";
+import { TargetForm } from "./targets/TargetForm";
+import { useTargetsData } from "./targets/hooks/useTargetsData";
+import { useTargetFormState } from "./targets/hooks/useTargetFormState";
+import { useTargetActions } from "./targets/hooks/useTargetActions";
+import { FinancialTarget } from "./targets/TargetsDataService";
+import { TargetsHeader } from "./targets/TargetsHeader";
 
 export const TargetsTab = () => {
-  const [targets, setTargets] = useState([]);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingTarget, setEditingTarget] = useState<FinancialTarget | null>(null);
 
-  const { isLoading, error } = useQuery({
-    queryKey: ['finance', 'targets'],
-    queryFn: async () => {
-      // Simulating API call
-      return new Promise(resolve => setTimeout(() => resolve([]), 1000));
-    },
-    enabled: true,
-  });
+  const { targets, setTargets, budgetItems, loading, loadTargets } = useTargetsData();
+  const { formData, setFormData, resetForm, handleInputChange, handleSelectChange } = useTargetFormState();
+  const { handleSubmit, handleUpdate, handleDelete } = useTargetActions(
+    loadTargets,
+    setTargets,
+    formData,
+    resetForm,
+    setShowAddForm,
+    setEditingTarget
+  );
+
+  const handleOpenAddForm = () => {
+    resetForm();
+    setShowAddForm(true);
+    setEditingTarget(null);
+  };
+
+  const handleCancelForm = () => {
+    resetForm();
+    setShowAddForm(false);
+    setEditingTarget(null);
+  };
+
+  const handleEditTarget = (target: FinancialTarget) => {
+    setFormData({
+      year: target.year,
+      quarter: target.quarter,
+      period_type: target.period_type,
+      type: target.type,
+      target_amount: target.target_amount,
+      actual_amount: target.actual_amount,
+      budget_item_id: target.budget_item_id || "",
+      resource_source: target.resource_source || "",
+    });
+    setEditingTarget(target);
+    setShowAddForm(true);
+  };
+
+  const handleUpdateTarget = () => {
+    if (editingTarget) {
+      handleUpdate(editingTarget);
+    }
+  };
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">الأهداف المالية</h2>
-        <Button size="sm">
-          <Target className="h-4 w-4 ml-2" />
-          إضافة هدف مالي
-        </Button>
-      </div>
+      <TargetsHeader onOpenAddForm={handleOpenAddForm} />
 
-      <Card className="p-4">
-        {error ? (
-          <Alert variant="destructive" className="mb-4">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              حدث خطأ أثناء تحميل البيانات. الرجاء المحاولة مرة أخرى.
-            </AlertDescription>
-          </Alert>
-        ) : isLoading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-          </div>
-        ) : targets.length > 0 ? (
-          <div className="space-y-2">
-            {/* Target items would be mapped here */}
-          </div>
-        ) : (
-          <p className="text-muted-foreground">لا توجد أهداف مالية محددة حالياً.</p>
-        )}
-      </Card>
+      {showAddForm && (
+        <TargetForm
+          budgetItems={budgetItems}
+          editingTarget={editingTarget}
+          onSubmit={handleSubmit}
+          onUpdate={handleUpdateTarget}
+          onCancel={handleCancelForm}
+          formData={formData}
+          handleInputChange={handleInputChange}
+          handleSelectChange={handleSelectChange}
+        />
+      )}
+
+      <TargetsContainer
+        targets={targets}
+        loading={loading}
+        onEdit={handleEditTarget}
+        onDelete={handleDelete}
+        budgetItems={budgetItems}
+      />
     </div>
   );
 };

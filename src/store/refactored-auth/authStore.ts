@@ -4,18 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { AuthState } from './types';
 import { initializeSession, clearSession, checkUserRole, getUserRole } from './sessionManager';
-import { isDeveloper } from '@/utils/developerRole';
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
   initialize: async () => {
     const { user, isAuthenticated } = await initializeSession();
-    if (user && user.id) {
-      // Check if user is a developer
-      const hasDeveloperRole = await isDeveloper(user.id);
-      user.isDeveloper = hasDeveloperRole;
-    }
     set({ user, isAuthenticated });
   },
 
@@ -33,15 +27,13 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       const isAdmin = await checkUserRole(authData.user.id);
       const role = await getUserRole(authData.user.id);
-      const hasDeveloperRole = await isDeveloper(authData.user.id);
 
       set({
         user: {
           id: authData.user.id,
           email: authData.user.email ?? '',
           isAdmin,
-          role: role || undefined,
-          isDeveloper: hasDeveloperRole
+          role: role || undefined
         },
         isAuthenticated: true
       });
@@ -61,19 +53,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       console.error('AuthStore: Logout error:', error);
       toast.error('حدث خطأ أثناء تسجيل الخروج');
       throw error;
-    }
-  },
-
-  checkDeveloperStatus: async (userId: string) => {
-    try {
-      const hasDeveloperRole = await isDeveloper(userId);
-      set(state => ({
-        user: state.user ? { ...state.user, isDeveloper: hasDeveloperRole } : null
-      }));
-      return hasDeveloperRole;
-    } catch (error) {
-      console.error('Error checking developer status:', error);
-      return false;
     }
   }
 }));

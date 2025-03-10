@@ -1,55 +1,53 @@
 
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, AlertTriangle } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useQuery } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
+import { ExpensesTable } from "./ExpensesTable";
+import { ExpenseForm } from "./ExpenseForm";
 
 export const ExpensesTab = () => {
-  const [expenses, setExpenses] = useState([]);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
-  const { isLoading, error } = useQuery({
-    queryKey: ['finance', 'expenses'],
-    queryFn: async () => {
-      // Simulating API call
-      return new Promise(resolve => setTimeout(() => resolve([]), 1000));
-    },
-    enabled: true,
-  });
+  const handleOpenForm = () => setIsFormOpen(true);
+  const handleCloseForm = () => setIsFormOpen(false);
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">المصروفات</h2>
-        <Button size="sm">
-          <PlusCircle className="h-4 w-4 ml-2" />
-          إضافة مصروف
+        <h2 className="text-2xl font-bold">المصروفات المالية</h2>
+        <Button onClick={handleOpenForm} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
+          <span>إضافة مصروف جديد</span>
         </Button>
       </div>
 
-      <Card className="p-4">
-        {error ? (
-          <Alert variant="destructive" className="mb-4">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              حدث خطأ أثناء تحميل البيانات. الرجاء المحاولة مرة أخرى.
-            </AlertDescription>
-          </Alert>
-        ) : isLoading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-          </div>
-        ) : expenses.length > 0 ? (
-          <div className="space-y-2">
-            {/* Expense items would be mapped here */}
-          </div>
-        ) : (
-          <p className="text-muted-foreground">لا توجد مصروفات مسجلة حالياً.</p>
-        )}
+      {isFormOpen && (
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle>إضافة مصروف جديد</CardTitle>
+            <CardDescription>أدخل تفاصيل المصروف والبند المصروف منه</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ExpenseForm onCancel={handleCloseForm} onSubmit={handleCloseForm} />
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>قائمة المصروفات</CardTitle>
+          <CardDescription>جميع المصروفات التي تم تسجيلها</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ExpensesTable />
+        </CardContent>
       </Card>
     </div>
   );

@@ -1,23 +1,19 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/refactored-auth';
-import { isDeveloper } from '@/utils/developerRole';
+import { isDeveloper, isDeveloperModeEnabled } from '@/utils/developerRole';
+import { toast } from 'sonner';
 
-interface DeveloperSettingsHook {
-  isDeveloperMode: boolean;
-  isLoading: boolean;
-  error: Error | null;
-}
-
-export const useDeveloperSettings = (): DeveloperSettingsHook => {
+export const useDeveloperSettings = () => {
   const { user } = useAuthStore();
+  const [hasDeveloperRole, setHasDeveloperRole] = useState(false);
   const [isDeveloperMode, setIsDeveloperMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const checkDevMode = async () => {
+    const checkDeveloperStatus = async () => {
       if (!user) {
+        setHasDeveloperRole(false);
         setIsDeveloperMode(false);
         setIsLoading(false);
         return;
@@ -25,20 +21,32 @@ export const useDeveloperSettings = (): DeveloperSettingsHook => {
 
       try {
         setIsLoading(true);
-        const hasDeveloperRole = await isDeveloper(user.id);
-        setIsDeveloperMode(hasDeveloperRole);
-        setError(null);
-      } catch (err) {
-        console.error('Error checking developer mode:', err);
-        setError(err instanceof Error ? err : new Error('Unknown error checking developer mode'));
-        setIsDeveloperMode(false);
+        
+        // التحقق مما إذا كان المستخدم لديه دور المطور
+        const hasDevRole = await isDeveloper(user.id);
+        setHasDeveloperRole(hasDevRole);
+        
+        // التحقق مما إذا كان وضع المطور مفعّل
+        if (hasDevRole) {
+          const devModeEnabled = await isDeveloperModeEnabled(user.id);
+          setIsDeveloperMode(devModeEnabled);
+        } else {
+          setIsDeveloperMode(false);
+        }
+      } catch (error) {
+        console.error('Error checking developer settings:', error);
+        toast.error('حدث خطأ أثناء التحقق من إعدادات المطور');
       } finally {
         setIsLoading(false);
       }
     };
-
-    checkDevMode();
+    
+    checkDeveloperStatus();
   }, [user]);
-
-  return { isDeveloperMode, isLoading, error };
+  
+  return {
+    hasDeveloperRole,
+    isDeveloperMode,
+    isLoading
+  };
 };
