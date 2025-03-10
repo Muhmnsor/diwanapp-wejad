@@ -4087,6 +4087,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      delete_request_type: {
+        Args: {
+          p_request_type_id: string
+        }
+        Returns: Json
+      }
       delete_task: {
         Args: {
           p_task_id: string

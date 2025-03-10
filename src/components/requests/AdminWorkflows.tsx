@@ -24,12 +24,16 @@ import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RequestTypeDialog } from "./RequestTypeDialog";
 import { WorkflowConfigDialog } from "./workflow/WorkflowConfigDialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const AdminWorkflows = () => {
   const queryClient = useQueryClient();
   const [showRequestTypeDialog, setShowRequestTypeDialog] = useState(false);
   const [showWorkflowDialog, setShowWorkflowDialog] = useState(false);
   const [selectedRequestType, setSelectedRequestType] = useState<RequestType | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const { data: requestTypes, isLoading: typesLoading } = useQuery({
     queryKey: ["requestTypes"],
@@ -68,38 +72,34 @@ export const AdminWorkflows = () => {
     toast.success("تم حفظ خطوات سير العمل بنجاح");
   };
 
+  const confirmDeleteRequestType = (requestType: RequestType) => {
+    setSelectedRequestType(requestType);
+    setDeleteError(null);
+    setShowDeleteDialog(true);
+  };
+
   const deleteRequestType = useMutation({
     mutationFn: async (typeId: string) => {
-      // First check if there are any workflows using this request type
-      const { data: relatedWorkflows, error: checkError } = await supabase
-        .from("request_workflows")
-        .select("id")
-        .eq("request_type_id", typeId);
-      
-      if (checkError) throw checkError;
-      
-      if (relatedWorkflows && relatedWorkflows.length > 0) {
-        throw new Error("لا يمكن حذف نوع الطلب لأنه مرتبط بمسارات عمل");
-      }
-      
-      const { error } = await supabase
-        .from("request_types")
-        .delete()
-        .eq("id", typeId);
+      const { data, error } = await supabase
+        .rpc('delete_request_type', { p_request_type_id: typeId });
       
       if (error) throw error;
-      return typeId;
+      if (!data.success) throw new Error(data.message);
+      
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["requestTypes"] });
-      toast.success("تم حذف نوع الطلب بنجاح");
+      setShowDeleteDialog(false);
+      toast.success(data.message || "تم حذف نوع الطلب بنجاح");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Error deleting request type:", error);
-      if (error instanceof Error) {
-        toast.error(error.message);
+      
+      if (error.message) {
+        setDeleteError(error.message);
       } else {
-        toast.error("حدث خطأ أثناء حذف نوع الطلب");
+        setDeleteError("حدث خطأ أثناء حذف نوع الطلب");
       }
     }
   });
@@ -162,7 +162,7 @@ export const AdminWorkflows = () => {
                           variant="outline"
                           size="sm"
                           className="text-red-500"
-                          onClick={() => deleteRequestType.mutate(type.id)}
+                          onClick={() => confirmDeleteRequestType(type)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -199,6 +199,35 @@ export const AdminWorkflows = () => {
           onWorkflowSaved={handleWorkflowSaved}
         />
       )}
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>هل أنت متأكد من حذف نوع الطلب؟</AlertDialogTitle>
+            <AlertDialogDescription>
+              سيتم حذف نوع الطلب "{selectedRequestType?.name}" بشكل نهائي.
+              لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          {deleteError && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertDescription>{deleteError}</AlertDescription>
+            </Alert>
+          )}
+          
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteError(null)}>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => selectedRequestType && deleteRequestType.mutate(selectedRequestType.id)}
+              disabled={deleteRequestType.isPending}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {deleteRequestType.isPending ? "جاري الحذف..." : "حذف"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
