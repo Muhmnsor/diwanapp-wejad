@@ -8,7 +8,7 @@ import { TaskRoutes } from "./routes/TaskRoutes";
 import { DeveloperRoutes } from "./routes/DeveloperRoutes";
 import { DeveloperToolbar } from "./components/developer/DeveloperToolbar";
 import { useEffect, useState } from "react";
-import { isDeveloper } from "./utils/developerRole";
+import { isDeveloper } from "./utils/developer/roleManagement";
 
 const AppRoutes = () => {
   const { isAuthenticated, user } = useAuthStore();

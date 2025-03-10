@@ -2,7 +2,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/refactored-auth";
 import { useEffect, useState } from "react";
-import { isDeveloper } from "@/utils/developerRole";
+import { isDeveloper } from "@/utils/developer/roleManagement";
 import { toast } from "sonner";
 
 interface DeveloperRouteProps {

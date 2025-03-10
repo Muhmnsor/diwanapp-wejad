@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useDeveloperStore } from '@/store/developerStore';
 import { Code, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/store/refactored-auth';
-import { isDeveloperModeEnabled, toggleDeveloperMode } from '@/utils/developerRole';
+import { isDeveloperModeEnabled, toggleDeveloperMode } from '@/utils/developer/modeManagement';
 
 export const DeveloperToolbar = () => {
   const { user } = useAuthStore();
