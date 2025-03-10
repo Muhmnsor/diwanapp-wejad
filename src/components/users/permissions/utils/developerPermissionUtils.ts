@@ -11,18 +11,6 @@ export const checkDeveloperPermissions = async (userId: string): Promise<Develop
   }
 
   try {
-    // First check if the table exists to avoid errors
-    const { data: tableExists, error: tableCheckError } = await supabase
-      .from('developer_permissions')
-      .select('id', { count: 'exact', head: true })
-      .limit(1);
-    
-    if (tableCheckError) {
-      // Table doesn't exist, so we can't check permissions
-      console.error('Error checking developer permissions table:', tableCheckError);
-      return getDefaultPermissions();
-    }
-    
     // Check if user has developer permissions
     const { data, error } = await supabase
       .from('developer_permissions')
