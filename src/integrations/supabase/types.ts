@@ -4113,6 +4113,28 @@ export type Database = {
       }
     }
     Views: {
+      resource_obligations_view: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          resource_date: string | null
+          resource_id: string | null
+          resource_net_amount: number | null
+          resource_source: string | null
+          resource_total_amount: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_obligations_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "financial_resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workflow_operations_view: {
         Row: {
           created_at: string | null
