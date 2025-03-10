@@ -28,7 +28,7 @@ export const useDeveloperSettings = () => {
         
         // التحقق مما إذا كان وضع المطور مفعّل
         if (hasDevRole) {
-          const devModeEnabled = await isDeveloperModeEnabled();
+          const devModeEnabled = await isDeveloperModeEnabled(user.id);
           setIsDeveloperMode(devModeEnabled);
         } else {
           setIsDeveloperMode(false);
