@@ -33,7 +33,8 @@ export const FinanceDashboard = () => {
     totalCashFlow: 0,
     remainingBalance: 0,
     expensePercentage: 0,
-    transactionsCount: { resources: 0, expenses: 0, obligations: 0 }
+    transactionsCount: { resources: 0, expenses: 0, obligations: 0 },
+    remainingObligationsBalance: 0
   });
   const [pieData, setPieData] = useState<{ name: string; value: number; color: string }[]>([]);
   const [monthlyData, setMonthlyData] = useState<{ name: string; الموارد: number; المصروفات: number }[]>([]);
@@ -85,6 +86,13 @@ export const FinanceDashboard = () => {
         
       if (obligationsError) throw obligationsError;
       
+      // 6. جلب بيانات أرصدة الالتزامات
+      const { data: obligationBalancesData, error: obligationBalancesError } = await supabase
+        .from('obligation_balances_view')
+        .select('original_amount, remaining_balance');
+        
+      if (obligationBalancesError) throw obligationBalancesError;
+      
       // حساب المجاميع
       const totalResources = resourcesData.reduce((sum, resource) => sum + resource.net_amount, 0);
       const totalExpenses = expensesData.reduce((sum, expense) => sum + expense.amount, 0);
@@ -92,6 +100,12 @@ export const FinanceDashboard = () => {
       const totalCashFlow = resourcesData.reduce((sum, resource) => sum + resource.total_amount, 0);
       const remainingBalance = totalResources - totalExpenses;
       const expensePercentage = totalResources > 0 ? Math.round((totalExpenses / totalResources) * 100) : 0;
+      
+      // حساب الرصيد المتبقي من الالتزامات
+      const remainingObligationsBalance = obligationBalancesData?.reduce(
+        (sum, balance) => sum + balance.remaining_balance, 
+        0
+      ) || 0;
       
       // إعداد بيانات الرسم البياني الدائري
       const pieChartData = budgetItemsData.map((item, index) => {
@@ -126,7 +140,8 @@ export const FinanceDashboard = () => {
           resources: resourcesData.length,
           expenses: expensesData.length,
           obligations: obligationsData.length
-        }
+        },
+        remainingObligationsBalance
       });
       
       setPieData(pieChartData);
@@ -221,10 +236,15 @@ export const FinanceDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{dashboardData.totalObligations.toLocaleString()} ريال</div>
-            <p className="text-xs text-muted-foreground">
-              <TrendingDown className="inline h-4 w-4 ml-1 text-yellow-500" />
-              عدد الالتزامات: {dashboardData.transactionsCount.obligations}
-            </p>
+            <div className="flex justify-between items-center">
+              <p className="text-xs text-muted-foreground">
+                <TrendingDown className="inline h-4 w-4 ml-1 text-yellow-500" />
+                عدد الالتزامات: {dashboardData.transactionsCount.obligations}
+              </p>
+              <p className="text-xs text-green-600 font-medium">
+                المتبقي: {dashboardData.remainingObligationsBalance.toLocaleString()} ريال
+              </p>
+            </div>
           </CardContent>
         </Card>
 
