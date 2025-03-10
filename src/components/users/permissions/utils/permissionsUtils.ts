@@ -1,8 +1,11 @@
 
 import { Module, PermissionData } from "../types";
 
-// Organize permissions by module
+/**
+ * تنظيم الأذونات حسب الوحدة
+ */
 export const organizePermissionsByModule = (permissions: PermissionData[]): Module[] => {
+  // تجميع الأذونات حسب الوحدة
   const moduleMap: Record<string, PermissionData[]> = {};
   
   permissions.forEach(permission => {
@@ -12,35 +15,31 @@ export const organizePermissionsByModule = (permissions: PermissionData[]): Modu
     moduleMap[permission.module].push(permission);
   });
   
-  // Make sure tasks module includes general tasks permissions
-  if (moduleMap["tasks"] && !moduleMap["general_tasks"]) {
-    const generalTaskPermissions = permissions.filter(p => 
-      p.name.toString().includes("general_task") || p.description.includes("مهام عامة")
-    );
-    
-    if (generalTaskPermissions.length > 0) {
-      moduleMap["tasks"] = [...moduleMap["tasks"], ...generalTaskPermissions];
-    }
-  }
-  
-  return Object.entries(moduleMap).map(([name, perms]) => ({
+  // تحويل التجميع إلى مصفوفة من كائنات الوحدة
+  const modules: Module[] = Object.entries(moduleMap).map(([name, modulePermissions]) => ({
     name,
-    permissions: perms.sort((a, b) => a.name.toString().localeCompare(b.name.toString())),
-    isOpen: false
+    permissions: modulePermissions,
+    isOpen: false // مغلقة افتراضيًا
   }));
+  
+  // ترتيب الوحدات أبجديًا
+  return modules.sort((a, b) => a.name.localeCompare(b.name));
 };
 
-export const checkAllModulePermissionsSelected = (
-  modulePermissions: string[],
-  selectedPermissions: string[]
-): boolean => {
-  return modulePermissions.every(permId => selectedPermissions.includes(permId));
+/**
+ * التحقق مما إذا كان المستخدم لديه إذن معين
+ */
+export const hasPermission = (userPermissions: string[], permissionName: string): boolean => {
+  return userPermissions.includes(permissionName);
 };
 
-export const checkSomeModulePermissionsSelected = (
-  modulePermissions: string[],
-  selectedPermissions: string[]
-): boolean => {
-  return modulePermissions.some(permId => selectedPermissions.includes(permId)) &&
-         !checkAllModulePermissionsSelected(modulePermissions, selectedPermissions);
+/**
+ * تحويل الأذونات من التنسيق الداخلي إلى تنسيق واجهة المستخدم
+ */
+export const formatPermissionName = (name: string): string => {
+  // تحويل snake_case إلى كلمات بحروف كبيرة
+  return name
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 };

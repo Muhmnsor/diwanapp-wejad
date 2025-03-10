@@ -1,37 +1,45 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { Module } from "../types";
 
 export const usePermissionOperations = () => {
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
 
-  const handlePermissionToggle = (permissionId: string, isChecked: boolean) => {
-    if (isChecked) {
-      setSelectedPermissions(prev => [...prev, permissionId]);
-    } else {
-      setSelectedPermissions(prev => prev.filter(id => id !== permissionId));
-    }
-  };
+  // تبديل إذن معين
+  const handlePermissionToggle = useCallback((permissionId: string) => {
+    setSelectedPermissions(prev => {
+      if (prev.includes(permissionId)) {
+        return prev.filter(id => id !== permissionId);
+      } else {
+        return [...prev, permissionId];
+      }
+    });
+  }, []);
 
-  const handleModuleToggle = (modulePermissions: string[], areAllSelected: boolean) => {
-    if (areAllSelected) {
-      // Remove all permissions in this module
+  // تبديل كل أذونات الوحدة
+  const handleModuleToggle = useCallback((module: Module) => {
+    const modulePermissionIds = module.permissions.map(p => p.id);
+    const allSelected = modulePermissionIds.every(id => selectedPermissions.includes(id));
+    
+    if (allSelected) {
+      // إزالة كل أذونات الوحدة
       setSelectedPermissions(prev => 
-        prev.filter(id => !modulePermissions.includes(id))
+        prev.filter(id => !modulePermissionIds.includes(id))
       );
     } else {
-      // Add all permissions in this module
-      setSelectedPermissions(prev => {
-        const newPermissions = modulePermissions.filter(id => !prev.includes(id));
-        return [...prev, ...newPermissions];
-      });
+      // إضافة كل أذونات الوحدة غير المحددة
+      const missingPermissions = modulePermissionIds.filter(
+        id => !selectedPermissions.includes(id)
+      );
+      setSelectedPermissions(prev => [...prev, ...missingPermissions]);
     }
-  };
+  }, [selectedPermissions]);
 
-  const toggleModuleOpen = (moduleName: string, modules: any[], setModules: (modules: any[]) => void) => {
-    setModules(modules.map(m => 
-      m.name === moduleName ? { ...m, isOpen: !m.isOpen } : m
-    ));
-  };
+  // تبديل حالة فتح/إغلاق وحدة
+  const toggleModuleOpen = useCallback((moduleName: string) => {
+    console.log(`تبديل حالة الوحدة: ${moduleName}`);
+    // تم نقل المنطق إلى المكون الرئيسي
+  }, []);
 
   return {
     selectedPermissions,

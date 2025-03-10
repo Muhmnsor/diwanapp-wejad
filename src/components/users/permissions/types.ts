@@ -1,16 +1,7 @@
 
-import { 
-  DeveloperPermission, 
-  UserPermission, 
-  EventPermission, 
-  TaskPermission, 
-  ProjectPermission,
-  Permission
-} from '@/components/users/permissions/types';
-
 export interface PermissionData {
   id: string;
-  name: Permission;
+  name: string;
   description: string;
   module: string;
   created_at?: string;
@@ -23,12 +14,40 @@ export interface Module {
   isOpen: boolean;
 }
 
-// قم بتصدير الأنواع التي تم استيرادها لمنع تعارض التعريفات المتكررة
-export type { 
-  DeveloperPermission, 
-  UserPermission, 
-  EventPermission, 
-  TaskPermission, 
-  ProjectPermission,
-  Permission 
-} from '@/components/users/permissions/types';
+// تعريف أنواع الأذونات
+export type DeveloperPermission = 
+  | 'view_developer_tools'
+  | 'modify_system_settings'
+  | 'access_api_logs';
+
+export type UserPermission = 
+  | 'create_user'
+  | 'update_user'
+  | 'delete_user'
+  | 'view_users';
+
+export type EventPermission = 
+  | 'create_event'
+  | 'update_event'
+  | 'delete_event'
+  | 'view_events';
+
+export type TaskPermission = 
+  | 'create_task'
+  | 'update_task'
+  | 'delete_task'
+  | 'view_tasks';
+
+export type ProjectPermission = 
+  | 'create_project'
+  | 'update_project'
+  | 'delete_project'
+  | 'view_projects';
+
+// تعريف النوع الرئيسي للأذونات
+export type Permission = 
+  | DeveloperPermission
+  | UserPermission
+  | EventPermission
+  | TaskPermission
+  | ProjectPermission;
