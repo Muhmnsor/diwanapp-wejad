@@ -467,6 +467,45 @@ export type Database = {
         }
         Relationships: []
       }
+      developer_settings: {
+        Row: {
+          cache_time_minutes: number | null
+          created_at: string
+          debug_level: string | null
+          id: string
+          is_enabled: boolean
+          realtime_enabled: boolean | null
+          show_toolbar: boolean | null
+          update_interval_seconds: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cache_time_minutes?: number | null
+          created_at?: string
+          debug_level?: string | null
+          id?: string
+          is_enabled?: boolean
+          realtime_enabled?: boolean | null
+          show_toolbar?: boolean | null
+          update_interval_seconds?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cache_time_minutes?: number | null
+          created_at?: string
+          debug_level?: string | null
+          id?: string
+          is_enabled?: boolean
+          realtime_enabled?: boolean | null
+          show_toolbar?: boolean | null
+          update_interval_seconds?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           created_at: string
@@ -1021,6 +1060,7 @@ export type Database = {
           attachment_url: string | null
           content: string
           created_at: string
+          display_name: string | null
           id: string
           idea_id: string | null
           parent_id: string | null
@@ -1035,6 +1075,7 @@ export type Database = {
           attachment_url?: string | null
           content: string
           created_at?: string
+          display_name?: string | null
           id?: string
           idea_id?: string | null
           parent_id?: string | null
@@ -1049,6 +1090,7 @@ export type Database = {
           attachment_url?: string | null
           content?: string
           created_at?: string
+          display_name?: string | null
           id?: string
           idea_id?: string | null
           parent_id?: string | null
