@@ -40,6 +40,26 @@ export const useStepManagement = ({
         return;
       }
 
+      // Check if user has admin role
+      const { data: userRoles, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role_id, roles:roles(name)')
+        .eq('user_id', session.user.id);
+        
+      if (roleError) {
+        console.error("Error checking user roles:", roleError);
+        toast.error("خطأ في التحقق من صلاحيات المستخدم");
+        return;
+      }
+      
+      const isAdmin = userRoles?.some(role => 
+        role.roles?.name === 'admin' || role.roles?.name === 'app_admin'
+      );
+      
+      if (!isAdmin) {
+        console.warn("User might not have permission to add workflow steps");
+      }
+
       const current_workflow_id = workflowId || 'temp-workflow-id';
       
       // Ensure workflow_id is consistent
@@ -83,7 +103,15 @@ export const useStepManagement = ({
         setEditingStepIndex(null);
       } catch (error) {
         console.error("Error during save:", error);
-        toast.error(`فشل في حفظ الخطوة: ${error.message}`);
+        
+        // Provide more specific error messages for common issues
+        if (error.message && error.message.includes('صلاحية')) {
+          toast.error(`ليس لديك صلاحية لإضافة خطوات سير العمل`);
+        } else if (error.message && error.message.includes('foreign key')) {
+          toast.error(`خطأ في العلاقات بين البيانات. يرجى التأكد من وجود مسار العمل`);
+        } else {
+          toast.error(`فشل في حفظ الخطوة: ${error.message}`);
+        }
       }
     } catch (error) {
       console.error("Error checking authentication:", error);
@@ -103,6 +131,26 @@ export const useStepManagement = ({
       if (!session) {
         toast.error("يجب تسجيل الدخول لحذف خطوات سير العمل");
         return;
+      }
+
+      // Check if user has admin role
+      const { data: userRoles, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role_id, roles:roles(name)')
+        .eq('user_id', session.user.id);
+        
+      if (roleError) {
+        console.error("Error checking user roles:", roleError);
+        toast.error("خطأ في التحقق من صلاحيات المستخدم");
+        return;
+      }
+      
+      const isAdmin = userRoles?.some(role => 
+        role.roles?.name === 'admin' || role.roles?.name === 'app_admin'
+      );
+      
+      if (!isAdmin) {
+        console.warn("User might not have permission to remove workflow steps");
       }
 
       const current_workflow_id = workflowId || 'temp-workflow-id';
@@ -129,7 +177,13 @@ export const useStepManagement = ({
       }
     } catch (error) {
       console.error("Error during step removal:", error);
-      toast.error(`فشل في حذف الخطوة: ${error.message}`);
+      
+      // Provide more specific error messages for common issues
+      if (error.message && error.message.includes('صلاحية')) {
+        toast.error(`ليس لديك صلاحية لحذف خطوات سير العمل`);
+      } else {
+        toast.error(`فشل في حذف الخطوة: ${error.message}`);
+      }
     }
   };
 
@@ -178,6 +232,26 @@ export const useStepManagement = ({
         return;
       }
 
+      // Check if user has admin role
+      const { data: userRoles, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role_id, roles:roles(name)')
+        .eq('user_id', session.user.id);
+        
+      if (roleError) {
+        console.error("Error checking user roles:", roleError);
+        toast.error("خطأ في التحقق من صلاحيات المستخدم");
+        return;
+      }
+      
+      const isAdmin = userRoles?.some(role => 
+        role.roles?.name === 'admin' || role.roles?.name === 'app_admin'
+      );
+      
+      if (!isAdmin) {
+        console.warn("User might not have permission to reorder workflow steps");
+      }
+
       const current_workflow_id = workflowId || 'temp-workflow-id';
       const newIndex = direction === 'up' ? index - 1 : index + 1;
       const updatedSteps = [...workflowSteps];
@@ -202,7 +276,13 @@ export const useStepManagement = ({
       }
     } catch (error) {
       console.error("Error moving step:", error);
-      toast.error(`فشل في تحريك الخطوة: ${error.message}`);
+      
+      // Provide more specific error messages for common issues
+      if (error.message && error.message.includes('صلاحية')) {
+        toast.error(`ليس لديك صلاحية لتغيير ترتيب خطوات سير العمل`);
+      } else {
+        toast.error(`فشل في تحريك الخطوة: ${error.message}`);
+      }
     }
   };
 

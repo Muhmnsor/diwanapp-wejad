@@ -48,6 +48,25 @@ export const useSaveWorkflowSteps = ({
         throw new Error("يجب تسجيل الدخول لحفظ خطوات سير العمل");
       }
 
+      // Check if user has admin role
+      const { data: userRoles, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role_id, roles:roles(name)')
+        .eq('user_id', session.user.id);
+        
+      if (roleError) {
+        console.error("Error checking user roles:", roleError);
+        throw new Error("خطأ في التحقق من صلاحيات المستخدم");
+      }
+      
+      const isAdmin = userRoles?.some(role => 
+        role.roles?.name === 'admin' || role.roles?.name === 'app_admin'
+      );
+      
+      if (!isAdmin) {
+        console.warn("User might not have permission to save workflow steps");
+      }
+
       const currentWorkflowId = await ensureWorkflowExists();
       console.log("Working with workflow ID:", currentWorkflowId);
 
@@ -72,35 +91,36 @@ export const useSaveWorkflowSteps = ({
       
       // Prepare steps for insertion with complete data and ensure valid UUIDs
       const stepsToInsert = steps.map((step, index) => {
-        // Verify UUID format and add validation checks
-        if (!step.workflow_id) {
-          console.error("Step missing workflow_id", step);
-          throw new Error("خطأ: بعض الخطوات تفتقد إلى معرّف سير العمل");
+        // Verify workflow_id format
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        
+        if (!step.workflow_id || !uuidRegex.test(currentWorkflowId)) {
+          console.error("Step missing valid workflow_id", step);
+          throw new Error("خطأ: بعض الخطوات تفتقد إلى معرّف سير العمل الصحيح");
         }
         
-        // Make sure UUIDs are properly formatted
+        if (!step.approver_id || !uuidRegex.test(step.approver_id)) {
+          console.error("Step missing valid approver_id", step);
+          throw new Error("خطأ: بعض الخطوات تفتقد إلى معرّف صحيح للمعتمد");
+        }
+        
+        // Create a clean step object with only the required properties
         return {
-          ...step,
           workflow_id: currentWorkflowId,
           step_order: index + 1,
+          step_name: step.step_name,
           step_type: step.step_type || 'decision',
+          approver_id: step.approver_id,
+          instructions: step.instructions || null,
           is_required: step.is_required === false ? false : true,
-          approver_type: step.approver_type || 'user',
-          // Ensure approver_id is valid
-          approver_id: step.approver_id
+          approver_type: step.approver_type || 'user'
         };
       });
 
-      console.log("Inserting workflow steps using RPC bypass function with workflow_id:", currentWorkflowId);
+      console.log("Inserting workflow steps using RPC function with workflow_id:", currentWorkflowId);
       console.log("Steps to insert:", stepsToInsert);
       
-      // Validate that all steps have workflow_id
-      if (stepsToInsert.some(step => !step.workflow_id)) {
-        console.error("Cannot insert steps with missing workflow_id");
-        throw new Error("بعض الخطوات تفتقد إلى معرّف سير العمل");
-      }
-      
-      // Convert steps to JSON strings for RPC function - ensure proper UUID formatting
+      // Convert steps to JSON strings for RPC function
       const jsonSteps = stepsToInsert.map(step => {
         // Log each step for debugging
         console.log("Preparing step for RPC:", step);

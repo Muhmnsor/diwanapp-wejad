@@ -23,8 +23,29 @@ export const useWorkflowCreation = ({
           console.error("Invalid workflow ID format:", currentWorkflowId);
           throw new Error("Invalid workflow ID format");
         }
-        console.log("Using existing workflow ID:", currentWorkflowId);
-        return currentWorkflowId;
+        
+        // Verify workflow exists in database
+        const { data: existingWorkflow, error: workflowCheckError } = await supabase
+          .from('request_workflows')
+          .select('id, name')
+          .eq('id', currentWorkflowId)
+          .single();
+          
+        if (workflowCheckError) {
+          console.error("Error validating workflow:", workflowCheckError);
+          if (workflowCheckError.code === 'PGRST116') {
+            throw new Error("ليس لديك صلاحية للوصول إلى مسار العمل");
+          }
+          throw new Error(`خطأ في التحقق من مسار العمل: ${workflowCheckError.message}`);
+        }
+        
+        if (existingWorkflow) {
+          console.log("Using existing workflow:", existingWorkflow.name, existingWorkflow.id);
+          return currentWorkflowId;
+        } else {
+          console.error("Workflow ID not found in database:", currentWorkflowId);
+          throw new Error("مسار العمل غير موجود في قاعدة البيانات");
+        }
       } catch (error) {
         console.error("Error validating workflow ID:", error);
         // Fall through to create a new workflow
@@ -53,15 +74,37 @@ export const useWorkflowCreation = ({
         throw new Error("يجب تسجيل الدخول لإنشاء مسار العمل");
       }
 
-      const { data: newWorkflow, error: createError } = await supabase
-        .from('request_workflows')
-        .insert({
-          name: 'مسار افتراضي',
-          request_type_id: requestTypeId,
-          is_active: true
-        })
-        .select()
-        .single();
+      // Check if user has admin role
+      const { data: userRoles, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role_id, roles:roles(name)')
+        .eq('user_id', session.user.id);
+        
+      if (roleError) {
+        console.error("Error checking user roles:", roleError);
+        throw new Error("خطأ في التحقق من صلاحيات المستخدم");
+      }
+      
+      const isAdmin = userRoles?.some(role => 
+        role.roles?.name === 'admin' || role.roles?.name === 'app_admin'
+      );
+      
+      if (!isAdmin) {
+        console.warn("User is not an admin, may not have permission to create workflows");
+      }
+
+      // Create new workflow using RPC function
+      const { data: newWorkflow, error: createError } = await supabase.rpc(
+        'upsert_workflow',
+        {
+          workflow_data: {
+            name: 'مسار افتراضي',
+            request_type_id: requestTypeId,
+            is_active: true
+          },
+          is_update: false
+        }
+      );
 
       if (createError) {
         console.error("Error creating workflow:", createError);
@@ -69,6 +112,10 @@ export const useWorkflowCreation = ({
           throw new Error("ليس لديك صلاحية لإنشاء مسار العمل");
         }
         throw createError;
+      }
+
+      if (!newWorkflow || !newWorkflow.id) {
+        throw new Error("فشل في إنشاء مسار العمل: لم يتم إرجاع معرف");
       }
 
       const newWorkflowId = newWorkflow.id;
@@ -105,10 +152,13 @@ export const useWorkflowCreation = ({
       }
 
       console.log("Setting default workflow for request type:", requestTypeId, workflowId);
-      const { error: updateError } = await supabase
-        .from('request_types')
-        .update({ default_workflow_id: workflowId })
-        .eq('id', requestTypeId);
+      const { error: updateError } = await supabase.rpc(
+        'set_default_workflow',
+        {
+          p_request_type_id: requestTypeId,
+          p_workflow_id: workflowId
+        }
+      );
 
       if (updateError) {
         console.warn("Could not set default workflow for request type:", updateError);
