@@ -241,7 +241,7 @@ export const useWorkflowSteps = ({
 
         console.log("Inserting workflow steps using RPC bypass function:", stepsToInsert);
         
-        // Convert steps to JSON string array for RPC function
+        // Convert steps to JSON objects for RPC function
         const jsonSteps = stepsToInsert.map(step => JSON.stringify(step));
         
         // Use the improved RPC function to bypass RLS
@@ -255,6 +255,8 @@ export const useWorkflowSteps = ({
           throw new Error(`فشل في إدخال خطوات سير العمل: ${rpcError.message}`);
         }
 
+        console.log("RPC function result:", insertResult);
+
         if (!insertResult || !insertResult.success) {
           const errorMessage = insertResult?.message || insertResult?.error || 'حدث خطأ غير معروف';
           console.error("Error returned from RPC function:", errorMessage);
@@ -262,10 +264,20 @@ export const useWorkflowSteps = ({
         }
 
         console.log("Successfully inserted workflow steps via RPC:", insertResult);
+        
+        // Update local state with the data from the database which includes IDs
+        if (insertResult.data && Array.isArray(insertResult.data)) {
+          const stepsWithIds = insertResult.data;
+          updateWorkflowSteps(stepsWithIds);
+        } else {
+          // If no data returned, just use our local steps
+          updateWorkflowSteps(steps);
+        }
+      } else {
+        // No steps to insert, just update local state
+        updateWorkflowSteps([]);
       }
 
-      // Update local state
-      updateWorkflowSteps(steps);
       toast.success('تم حفظ خطوات سير العمل بنجاح');
     } catch (error) {
       console.error('Error saving workflow steps:', error);
