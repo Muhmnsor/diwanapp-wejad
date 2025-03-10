@@ -9,7 +9,7 @@ export const DocumentationSection = () => {
         <CardTitle>توثيق النظام</CardTitle>
         <CardDescription>توثيق شامل للنظام، وظائفه، ومكوناته</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pr-0 pl-0">
         <DocumentationContainer />
       </CardContent>
     </Card>
