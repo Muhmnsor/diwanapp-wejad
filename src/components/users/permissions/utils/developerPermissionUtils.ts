@@ -31,7 +31,7 @@ export const checkDeveloperPermissions = async (userId: string): Promise<Develop
     // تحديد الأذونات المحددة
     const permissionNames = permissions?.map(p => {
       // تأكد من وجود البيانات قبل الوصول إلى الخصائص
-      if (p.permissions && typeof p.permissions === 'object') {
+      if (p.permissions && typeof p.permissions === 'object' && 'name' in p.permissions) {
         return p.permissions.name;
       }
       return null;
