@@ -92,6 +92,7 @@ export const isDeveloper = async (userId: string): Promise<boolean> => {
 
     if (error) throw error;
     
+    // The correct way to access the nested role name from the joined table
     return data?.roles?.name === 'developer';
   } catch (error) {
     console.error('Error checking developer status:', error);
