@@ -1,136 +1,198 @@
-
-/**
- * Performance monitoring utility for developers
- */
-
-interface PerformanceEvent {
+interface PerformanceMetric {
   name: string;
   startTime: number;
-  endTime?: number;
   duration?: number;
-  type?: 'navigation' | 'resource' | 'paint' | 'custom';
-  metadata?: {
-    resourceType?: string;
-    [key: string]: any;
-  };
+  metadata?: Record<string, any>;
+}
+
+interface PerformanceEventData {
+  type: 'navigation' | 'resource' | 'paint' | 'custom';
+  name: string;
+  duration: number;
+  startTime: number;
+  metadata?: Record<string, any>;
 }
 
 class PerformanceMonitor {
-  private events: PerformanceEvent[] = [];
+  private metrics: Map<string, PerformanceMetric> = new Map();
   private isEnabled: boolean = false;
-  private observer: PerformanceObserver | null = null;
-
+  private logToConsole: boolean = true;
+  private maxStoredEvents: number = 100;
+  private events: PerformanceEventData[] = [];
+  
   constructor() {
-    this.setupObserver();
+    this.setupPerformanceObserver();
   }
-
-  private setupObserver() {
-    if (typeof window !== 'undefined' && 'PerformanceObserver' in window) {
-      try {
-        this.observer = new PerformanceObserver((entryList) => {
-          if (!this.isEnabled) return;
-
-          for (const entry of entryList.getEntries()) {
-            this.addEvent({
-              name: entry.name,
-              startTime: entry.startTime,
-              duration: entry.duration,
-              endTime: entry.startTime + entry.duration,
-              type: entry.entryType as 'navigation' | 'resource' | 'paint',
-              metadata: {
-                resourceType: entry instanceof PerformanceResourceTiming ? entry.initiatorType : undefined
-              }
-            });
-          }
-        });
-
-        this.observer.observe({ entryTypes: ['resource', 'navigation', 'paint'] });
-      } catch (e) {
-        console.error('Performance monitoring not supported:', e);
-      }
-    }
-  }
-
-  enable(clearExisting: boolean = false) {
-    if (clearExisting) {
-      this.events = [];
-    }
+  
+  public enable(logToConsole = true) {
     this.isEnabled = true;
-
-    // Add page load event
-    if (typeof window !== 'undefined' && window.performance) {
-      const pageLoadTime = window.performance.timing.loadEventEnd - window.performance.timing.navigationStart;
-      this.addEvent({
-        name: 'page-load',
-        startTime: 0,
-        duration: pageLoadTime,
-        endTime: pageLoadTime
-      });
-    }
-
-    return this;
+    this.logToConsole = logToConsole;
+    console.log('Performance monitoring enabled');
   }
-
-  disable() {
+  
+  public disable() {
     this.isEnabled = false;
-    return this;
+    console.log('Performance monitoring disabled');
   }
-
-  addEvent(event: PerformanceEvent) {
+  
+  public startMeasure(name: string, metadata?: Record<string, any>) {
     if (!this.isEnabled) return;
-    this.events.push(event);
-    return this;
-  }
-
-  getEvents() {
-    return [...this.events];
-  }
-
-  clearEvents() {
-    this.events = [];
-    return this;
-  }
-
-  startMeasure(name: string) {
-    if (!this.isEnabled) return;
-    const startTime = performance.now();
-    this.addEvent({ 
-      name, 
-      startTime, 
-      type: 'custom' 
-    });
-    return () => this.endMeasure(name, startTime);
-  }
-
-  endMeasure(name: string, startTime: number) {
-    if (!this.isEnabled) return;
-    const endTime = performance.now();
-    const event = this.events.find(e => e.name === name && e.startTime === startTime);
     
-    if (event) {
-      event.endTime = endTime;
-      event.duration = endTime - startTime;
+    const startTime = performance.now();
+    this.metrics.set(name, { name, startTime, metadata });
+    
+    if (this.logToConsole) {
+      console.log(`Performance measure started: ${name}`);
     }
     
-    return endTime - startTime;
-  }
-
-  getAverageEventDuration(eventName: string) {
-    const events = this.events.filter(e => e.name === eventName && e.duration !== undefined);
-    if (events.length === 0) return 0;
-    
-    const totalDuration = events.reduce((sum, event) => sum + (event.duration || 0), 0);
-    return totalDuration / events.length;
-  }
-
-  getMetrics() {
     return {
-      navigationEvents: this.events.filter(e => e.type === 'navigation'),
-      resourceEvents: this.events.filter(e => e.type === 'resource'),
-      paintEvents: this.events.filter(e => e.type === 'paint'),
-      customEvents: this.events.filter(e => e.type === 'custom')
+      end: () => this.endMeasure(name),
     };
+  }
+  
+  public endMeasure(name: string) {
+    if (!this.isEnabled) return 0;
+    
+    const metric = this.metrics.get(name);
+    if (!metric) {
+      console.warn(`Performance measure not found: ${name}`);
+      return 0;
+    }
+    
+    const endTime = performance.now();
+    const duration = endTime - metric.startTime;
+    
+    this.metrics.set(name, {
+      ...metric,
+      duration,
+    });
+    
+    this.storeEvent({
+      type: 'custom',
+      name,
+      duration,
+      startTime: metric.startTime,
+      metadata: metric.metadata,
+    });
+    
+    if (this.logToConsole) {
+      console.log(`Performance measure completed: ${name} (${duration.toFixed(2)}ms)`);
+    }
+    
+    return duration;
+  }
+  
+  public getMetrics() {
+    return Array.from(this.metrics.values());
+  }
+  
+  public getEvents() {
+    return this.events;
+  }
+  
+  public clearMetrics() {
+    this.metrics.clear();
+    this.events = [];
+  }
+  
+  private setupPerformanceObserver() {
+    if (typeof window === 'undefined' || !window.PerformanceObserver) return;
+    
+    // Observe page navigation timing
+    try {
+      const navigationObserver = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          if (this.isEnabled && entry.entryType === 'navigation') {
+            this.storeEvent({
+              type: 'navigation',
+              name: 'page-load',
+              duration: entry.duration,
+              startTime: entry.startTime,
+              metadata: {
+                domContentLoaded: (entry as PerformanceNavigationTiming).domContentLoadedEventEnd,
+                loadEvent: (entry as PerformanceNavigationTiming).loadEventEnd,
+              },
+            });
+            
+            if (this.logToConsole) {
+              console.log(`Page load: ${entry.duration.toFixed(2)}ms`);
+            }
+          }
+        }
+      });
+      
+      navigationObserver.observe({ type: 'navigation', buffered: true });
+    } catch (e) {
+      console.warn('Navigation performance observer not supported');
+    }
+    
+    // Observe resource loading
+    try {
+      const resourceObserver = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          if (this.isEnabled && entry.entryType === 'resource') {
+            this.storeEvent({
+              type: 'resource',
+              name: (entry as PerformanceResourceTiming).name.split('/').pop() || 'resource',
+              duration: entry.duration,
+              startTime: entry.startTime,
+              metadata: {
+                resourceType: (entry as PerformanceResourceTiming).initiatorType,
+                url: (entry as PerformanceResourceTiming).name,
+              },
+            });
+            
+            if (this.logToConsole && (entry as PerformanceResourceTiming).initiatorType === 'fetch') {
+              console.log(`API request: ${(entry as PerformanceResourceTiming).name} (${entry.duration.toFixed(2)}ms)`);
+            }
+          }
+        }
+      });
+      
+      resourceObserver.observe({ type: 'resource', buffered: true });
+    } catch (e) {
+      console.warn('Resource performance observer not supported');
+    }
+    
+    // Observe paint timing
+    try {
+      const paintObserver = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          if (this.isEnabled && entry.entryType === 'paint') {
+            this.storeEvent({
+              type: 'paint',
+              name: entry.name,
+              duration: 0,
+              startTime: entry.startTime,
+            });
+            
+            if (this.logToConsole) {
+              console.log(`Paint event: ${entry.name} at ${entry.startTime.toFixed(2)}ms`);
+            }
+          }
+        }
+      });
+      
+      paintObserver.observe({ type: 'paint', buffered: true });
+    } catch (e) {
+      console.warn('Paint performance observer not supported');
+    }
+  }
+  
+  private storeEvent(event: PerformanceEventData) {
+    this.events.unshift(event);
+    
+    // Keep only the latest events to limit memory usage
+    if (this.events.length > this.maxStoredEvents) {
+      this.events = this.events.slice(0, this.maxStoredEvents);
+    }
   }
 }
 
+// Export singleton instance
 export const performanceMonitor = new PerformanceMonitor();
+
+// Helper hook for components
+export const usePerformanceMonitor = () => {
+  return performanceMonitor;
+};

@@ -4,6 +4,18 @@ import { toast } from "sonner";
 
 export const isDeveloper = async (userId: string): Promise<boolean> => {
   try {
+    // First check if the table exists to avoid errors
+    const { data: tableExists, error: tableCheckError } = await supabase
+      .from('developer_permissions')
+      .select('id', { count: 'exact', head: true })
+      .limit(1);
+    
+    if (tableCheckError) {
+      // Table doesn't exist, so we can't check permissions
+      console.error('Error checking developer role:', tableCheckError);
+      return false;
+    }
+    
     // Check if user has developer permissions
     const { data, error } = await supabase
       .from('developer_permissions')
@@ -89,22 +101,6 @@ export const toggleDeveloperMode = async (userId: string, isEnabled: boolean): P
       }
     }
     
-    // Also update the developer_permissions table
-    const { error: permError } = await supabase
-      .from('developer_permissions')
-      .upsert({
-        user_id: userId,
-        can_access_developer_tools: isEnabled,
-        can_view_performance_metrics: isEnabled,
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'user_id'
-      });
-      
-    if (permError) {
-      console.error('Error updating developer permissions:', permError);
-    }
-    
     toast.success(isEnabled ? 'تم تفعيل وضع المطور' : 'تم تعطيل وضع المطور');
     return true;
   } catch (error) {
@@ -115,6 +111,17 @@ export const toggleDeveloperMode = async (userId: string, isEnabled: boolean): P
 
 export const initializeDeveloperRole = async (userId: string): Promise<boolean> => {
   try {
+    // Check if developer_permissions table exists
+    const { error: tableCheckError } = await supabase.rpc('check_table_exists', { 
+      table_name: 'developer_permissions' 
+    });
+    
+    if (tableCheckError) {
+      console.error('Developer permissions functionality is not configured:', tableCheckError);
+      toast.error('تعذر تهيئة صلاحيات المطور');
+      return false;
+    }
+    
     // Check if the user already has a record
     const { data: existingRecord, error: recordCheckError } = await supabase
       .from('developer_permissions')
@@ -134,16 +141,18 @@ export const initializeDeveloperRole = async (userId: string): Promise<boolean> 
         .insert({
           user_id: userId,
           is_developer: false,
-          can_access_developer_tools: false,
-          can_modify_system_settings: false,
-          can_access_api_logs: false,
-          can_manage_developer_settings: false,
-          can_view_performance_metrics: false,
-          can_debug_queries: false,
-          can_manage_realtime: false,
-          can_access_admin_panel: false,
-          can_export_data: false,
-          can_import_data: false
+          permissions: {
+            canAccessDeveloperTools: false,
+            canModifySystemSettings: false,
+            canAccessApiLogs: false,
+            canManageDeveloperSettings: false,
+            canViewPerformanceMetrics: false,
+            canDebugQueries: false,
+            canManageRealtime: false,
+            canAccessAdminPanel: false,
+            canExportData: false,
+            canImportData: false
+          }
         });
       
       if (insertError) {
