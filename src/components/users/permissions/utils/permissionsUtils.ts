@@ -1,45 +1,63 @@
 
-import { Module, PermissionData } from "../types";
+import { Module, PermissionData } from '../types';
 
-/**
- * تنظيم الأذونات حسب الوحدة
- */
-export const organizePermissionsByModule = (permissions: PermissionData[]): Module[] => {
-  // تجميع الأذونات حسب الوحدة
-  const moduleMap: Record<string, PermissionData[]> = {};
+export const groupPermissionsByModule = (permissions: PermissionData[]): Module[] => {
+  if (!permissions || permissions.length === 0) {
+    return [];
+  }
+
+  // Create a map to group permissions by module
+  const moduleMap = new Map<string, PermissionData[]>();
   
+  // Group permissions by their module key
   permissions.forEach(permission => {
-    if (!moduleMap[permission.module]) {
-      moduleMap[permission.module] = [];
+    const moduleKey = permission.key.split('.')[0];
+    if (!moduleMap.has(moduleKey)) {
+      moduleMap.set(moduleKey, []);
     }
-    moduleMap[permission.module].push(permission);
+    moduleMap.get(moduleKey)?.push(permission);
   });
   
-  // تحويل التجميع إلى مصفوفة من كائنات الوحدة
-  const modules: Module[] = Object.entries(moduleMap).map(([name, modulePermissions]) => ({
-    name,
-    permissions: modulePermissions,
-    isOpen: false // مغلقة افتراضيًا
-  }));
+  // Convert the map to the Module array format
+  const modules: Module[] = Array.from(moduleMap.entries()).map(([key, permissions]) => {
+    return {
+      id: key,
+      name: key.charAt(0).toUpperCase() + key.slice(1),
+      key: key,
+      description: `${key} module permissions`,
+      permissions,
+      isOpen: false
+    };
+  });
   
-  // ترتيب الوحدات أبجديًا
-  return modules.sort((a, b) => a.name.localeCompare(b.name));
+  return modules;
 };
 
-/**
- * التحقق مما إذا كان المستخدم لديه إذن معين
- */
-export const hasPermission = (userPermissions: string[], permissionName: string): boolean => {
-  return userPermissions.includes(permissionName);
+export const toggleModule = (modules: Module[], moduleId: string): Module[] => {
+  return modules.map(module => {
+    if (module.id === moduleId) {
+      return { ...module, isOpen: !module.isOpen };
+    }
+    return module;
+  });
 };
 
-/**
- * تحويل الأذونات من التنسيق الداخلي إلى تنسيق واجهة المستخدم
- */
-export const formatPermissionName = (name: string): string => {
-  // تحويل snake_case إلى كلمات بحروف كبيرة
-  return name
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+export const updatePermission = (
+  modules: Module[],
+  moduleId: string,
+  permissionId: string,
+  isGranted: boolean
+): Module[] => {
+  return modules.map(module => {
+    if (module.id === moduleId) {
+      const updatedPermissions = module.permissions.map(permission => {
+        if (permission.id === permissionId) {
+          return { ...permission, isGranted };
+        }
+        return permission;
+      });
+      return { ...module, permissions: updatedPermissions };
+    }
+    return module;
+  });
 };

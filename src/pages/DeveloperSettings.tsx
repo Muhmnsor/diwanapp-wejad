@@ -25,7 +25,12 @@ const DeveloperSettings = () => {
     canModifySystemSettings: false,
     canAccessApiLogs: false,
     canManageDeveloperSettings: false,
-    canViewPerformanceMetrics: false
+    canViewPerformanceMetrics: false,
+    canDebugQueries: false,
+    canManageRealtime: false,
+    canAccessAdminPanel: false,
+    canExportData: false,
+    canImportData: false
   });
   const [roleAssigning, setRoleAssigning] = useState(false);
   
@@ -440,7 +445,7 @@ const DeveloperSettings = () => {
                     <div className="text-blue-400">[DEBUG] {new Date().toISOString()} - تهيئة الاتصال بقاعدة البيانات</div>
                     <div className="text-blue-400">[DEBUG] {new Date().toISOString()} - تحميل إعدادات المستخدم</div>
                     <div className="text-yellow-400">[WARN] {new Date().toISOString()} - استجابة بطيئة من طلب الواجهة</div>
-                    <div className="text-blue-400">[DEBUG] {new Date().toISOString()} - تح��يل البيانات من الذاكرة المؤقتة</div>
+                    <div className="text-blue-400">[DEBUG] {new Date().toISOString()} - تحميل البيانات من الذاكرة المؤقتة</div>
                     <div className="text-red-400">[ERROR] {new Date().toISOString()} - فشل تحميل الصورة: network timeout</div>
                     <div className="text-blue-400">[DEBUG] {new Date().toISOString()} - محاولة إعادة تحميل الصورة</div>
                     <div className="text-green-400">[INFO] {new Date().toISOString()} - تم تسجيل دخول المستخدم</div>
@@ -487,4 +492,3 @@ const DeveloperSettings = () => {
 };
 
 export default DeveloperSettings;
-

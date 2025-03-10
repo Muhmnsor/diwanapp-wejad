@@ -1,14 +1,13 @@
 
-import { DeveloperPermissionChecks } from '../types';
 import { supabase } from '@/integrations/supabase/client';
+import { DeveloperPermissionChecks } from '../types';
 
 /**
  * Check if a user has developer permissions
  */
 export const checkDeveloperPermissions = async (userId: string): Promise<DeveloperPermissionChecks> => {
-  try {
-    // Default permissions - all false
-    const defaultPermissions: DeveloperPermissionChecks = {
+  if (!userId) {
+    return {
       canAccessDeveloperTools: false,
       canModifySystemSettings: false,
       canAccessApiLogs: false,
@@ -20,31 +19,37 @@ export const checkDeveloperPermissions = async (userId: string): Promise<Develop
       canExportData: false,
       canImportData: false
     };
+  }
+
+  try {
+    // First check if the table exists to avoid errors
+    const { data: tableExists, error: tableCheckError } = await supabase
+      .from('developer_permissions')
+      .select('id', { count: 'exact', head: true })
+      .limit(1);
     
-    // Check if user exists
-    if (!userId) {
-      console.error('No user ID provided for permission check');
-      return defaultPermissions;
+    if (tableCheckError) {
+      // Table doesn't exist, so we can't check permissions
+      console.error('Error checking developer permissions table:', tableCheckError);
+      return getDefaultPermissions();
     }
     
-    // Query database for user's developer permissions
+    // Check if user has developer permissions
     const { data, error } = await supabase
       .from('developer_permissions')
       .select('*')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
     
     if (error) {
       console.error('Error checking developer permissions:', error);
-      return defaultPermissions;
+      return getDefaultPermissions();
     }
     
     if (!data) {
-      console.log('No developer permissions found for user:', userId);
-      return defaultPermissions;
+      return getDefaultPermissions();
     }
-    
-    // Return permissions based on data
+
     return {
       canAccessDeveloperTools: data.can_access_developer_tools || false,
       canModifySystemSettings: data.can_modify_system_settings || false,
@@ -59,17 +64,21 @@ export const checkDeveloperPermissions = async (userId: string): Promise<Develop
     };
   } catch (error) {
     console.error('Error in checkDeveloperPermissions:', error);
-    return {
-      canAccessDeveloperTools: false,
-      canModifySystemSettings: false,
-      canAccessApiLogs: false,
-      canManageDeveloperSettings: false,
-      canViewPerformanceMetrics: false,
-      canDebugQueries: false,
-      canManageRealtime: false,
-      canAccessAdminPanel: false,
-      canExportData: false,
-      canImportData: false
-    };
+    return getDefaultPermissions();
   }
+};
+
+const getDefaultPermissions = (): DeveloperPermissionChecks => {
+  return {
+    canAccessDeveloperTools: false,
+    canModifySystemSettings: false,
+    canAccessApiLogs: false,
+    canManageDeveloperSettings: false,
+    canViewPerformanceMetrics: false,
+    canDebugQueries: false,
+    canManageRealtime: false,
+    canAccessAdminPanel: false,
+    canExportData: false,
+    canImportData: false
+  };
 };

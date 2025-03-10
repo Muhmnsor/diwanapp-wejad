@@ -1,100 +1,92 @@
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useUserSettingsStore } from '@/store/userSettingsStore';
-import { useAuthStore } from '@/store/refactored-auth';
-import { toast } from 'sonner';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
-interface UseRealtimeSubscriptionOptions {
+type SubscriptionConfig = {
   table: string;
   schema?: string;
   filter?: string;
   event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
+  onData?: (payload: any) => void;
   enabled?: boolean;
-  onRecordChange?: (payload: any) => void;
-  onError?: (error: Error) => void;
-}
+};
 
-export function useRealtimeSubscription({
-  table,
-  schema = 'public',
-  filter,
-  event = '*',
-  enabled = true,
-  onRecordChange,
-  onError
-}: UseRealtimeSubscriptionOptions) {
-  const { user } = useAuthStore();
-  const { settings } = useUserSettingsStore();
+/**
+ * A hook to easily subscribe to Supabase realtime changes
+ */
+export function useRealtimeSubscription(config: SubscriptionConfig) {
+  const {
+    table,
+    schema = 'public',
+    filter,
+    event = '*',
+    onData,
+    enabled = true
+  } = config;
+
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [isEnabled, setIsEnabled] = useState(enabled);
   const [error, setError] = useState<Error | null>(null);
+  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
 
   useEffect(() => {
-    if (!user || !isEnabled || !settings?.realtime_updates) {
+    if (!enabled) {
       return;
     }
 
-    try {
-      // Create a unique channel name based on table and filter
-      const channelName = `${table}_${filter || 'all'}_${Date.now()}`;
-      
-      // Create the channel
-      const channel = supabase.channel(channelName);
-      
-      // Subscribe to the postgres changes
-      channel
-        .on(
-          'postgres_changes',
-          {
-            event: event,
-            schema: schema,
-            table: table,
-            filter: filter ? `${filter}=eq.${user.id}` : undefined,
-          },
-          (payload) => {
-            console.log('Realtime update:', payload);
-            if (onRecordChange) {
-              onRecordChange(payload);
-            }
-          }
-        )
-        .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            console.log(`Subscribed to ${table} changes`);
-            setIsSubscribed(true);
-          } else if (status === 'CHANNEL_ERROR') {
-            console.error(`Error subscribing to ${table} changes`);
-            setError(new Error(`Error subscribing to ${table} changes`));
-            if (onError) {
-              onError(new Error(`Error subscribing to ${table} changes`));
-            }
-          }
-        });
+    let channelName = `realtime:${schema}:${table}`;
+    if (filter) {
+      channelName += `:${filter}`;
+    }
 
+    try {
+      // Create a channel for this specific subscription
+      const realtimeChannel = supabase.channel(channelName);
+
+      // Configure the channel
+      const configuredChannel = realtimeChannel.on(
+        'postgres_changes',
+        {
+          event: event,
+          schema: schema,
+          table: table,
+          ...(filter ? { filter: filter } : {})
+        },
+        (payload) => {
+          if (onData) {
+            onData(payload);
+          }
+        }
+      );
+
+      // Subscribe and set the channel
+      configuredChannel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          setIsSubscribed(true);
+        } else if (status === 'CHANNEL_ERROR') {
+          setError(new Error('Failed to subscribe to realtime updates'));
+          setIsSubscribed(false);
+        }
+      });
+
+      setChannel(configuredChannel);
+
+      // Cleanup function
       return () => {
-        console.log(`Unsubscribing from ${table} changes`);
-        supabase.removeChannel(channel);
+        supabase.removeChannel(configuredChannel);
+        setChannel(null);
         setIsSubscribed(false);
       };
     } catch (err) {
       console.error('Error setting up realtime subscription:', err);
       setError(err instanceof Error ? err : new Error('Unknown error in realtime subscription'));
-      if (onError) {
-        onError(err instanceof Error ? err : new Error('Unknown error in realtime subscription'));
-      }
+      return () => {};
     }
-  }, [user, table, schema, filter, event, isEnabled, settings?.realtime_updates, onRecordChange, onError]);
+  }, [table, schema, filter, event, onData, enabled]);
 
-  const toggleSubscription = (value?: boolean) => {
-    const newValue = value !== undefined ? value : !isEnabled;
-    setIsEnabled(newValue);
-    if (!newValue && !isSubscribed) {
-      toast.info(`تم إيقاف اشتراك التحديثات المباشرة لـ ${table}`);
-    } else if (newValue && !isSubscribed) {
-      toast.info(`تم تفعيل اشتراك التحديثات المباشرة لـ ${table}`);
-    }
+  return {
+    isSubscribed,
+    error,
+    channel
   };
-
-  return { isSubscribed, error, toggleSubscription, isEnabled };
 }

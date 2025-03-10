@@ -2,95 +2,60 @@
 import { QueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { UserSettings } from '@/types/userSettings';
-import { DeveloperSettings } from '@/types/developer';
 
 /**
- * Create a query client based on user settings
+ * Creates and configures a QueryClient with the appropriate settings
  */
-export const createQueryClient = (
-  userSettings: UserSettings | null = null,
-  devSettings: DeveloperSettings | null = null
-): QueryClient => {
-  // Default cache duration of 5 minutes
-  const cacheDuration = userSettings?.cache_duration_minutes || devSettings?.cache_time_minutes || 5;
+export const createQueryClient = (userSettings: UserSettings | null): QueryClient => {
+  const isDeveloper = userSettings?.developer_mode || false;
+  const cacheDuration = userSettings?.cache_duration_minutes || 5;
   
-  // Create a new query client
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: cacheDuration * 60 * 1000, // Minutes to milliseconds
-        gcTime: cacheDuration * 120 * 1000, // Twice the stale time
-        retry: 1,
-        refetchOnWindowFocus: false, // Disable by default, should be controlled by settings
+        staleTime: cacheDuration * 60 * 1000, // Convert minutes to milliseconds
+        retry: isDeveloper ? 0 : 1, // Disable retry for developers
+        refetchOnWindowFocus: !isDeveloper,
+        refetchOnMount: !isDeveloper,
       },
     },
   });
-  
-  // Set up error handling for TanStack Query v5
-  queryClient.getQueryCache().subscribe(event => {
-    if (event.type === 'error' && event.error) {
-      const error = event.error as Error;
-      
-      // Log error for developers
-      const isDeveloperMode = userSettings?.developer_mode || false;
-      
-      if (isDeveloperMode) {
-        console.error('Query error:', error, event);
-        toast.error(`خطأ في الاستعلام: ${error.message}`);
-      } else {
-        // Simplified error for users
-        console.error('Query error:', error);
-        toast.error(`حدث خطأ أثناء جلب البيانات`);
-      }
+
+  // Setup global error handler
+  queryClient.getQueryCache().subscribe({
+    onError: (error) => {
+      console.error('Query error:', error);
+      toast.error('حدث خطأ أثناء تحميل البيانات');
     }
   });
-  
-  // Add mutation error handling
-  queryClient.getMutationCache().subscribe(event => {
-    if (event.type === 'error' && event.error) {
-      const error = event.error as Error;
-      
-      // Log error for developers
-      const isDeveloperMode = userSettings?.developer_mode || false;
-      
-      if (isDeveloperMode) {
-        console.error('Mutation error:', error, event);
-        toast.error(`خطأ في تحديث البيانات: ${error.message}`);
-      } else {
-        // Simplified error for users
-        console.error('Mutation error:', error);
-        toast.error(`حدث خطأ أثناء تحديث البيانات`);
-      }
-    }
-  });
-  
+
   return queryClient;
 };
 
 /**
- * Initialize query keys for caching
+ * Configures real-time invalidation for a QueryClient
  */
-export const initializeQueryKeys = () => {
-  return {
-    events: {
-      all: ['events'],
-      detail: (id: string) => ['events', id],
-      registrations: (eventId: string) => ['events', eventId, 'registrations'],
-      feedback: (eventId: string) => ['events', eventId, 'feedback'],
-      stats: (eventId: string) => ['events', eventId, 'stats'],
-    },
-    users: {
-      all: ['users'],
-      detail: (id: string) => ['users', id],
-      roles: ['users', 'roles'],
-      permissions: (userId: string) => ['users', userId, 'permissions'],
-    },
-    finance: {
-      all: ['finance'],
-      expenses: ['finance', 'expenses'],
-      resources: ['finance', 'resources'],
-      targets: ['finance', 'targets'],
-      reports: ['finance', 'reports'],
-    },
-  };
+export const setupQueryInvalidation = (
+  queryClient: QueryClient,
+  tables: string[],
+  invalidateKeys: Record<string, string[]>
+): void => {
+  // In a real implementation, this would use Supabase's realtime feature
+  // to invalidate specific queries when database changes occur
+  
+  queryClient.getQueryCache().subscribe({
+    onError: (error) => {
+      console.error('Query invalidation error:', error);
+    }
+  });
+};
+
+/**
+ * Utility to clear cache for specific tables
+ */
+export const clearTableCache = (queryClient: QueryClient, tables: string[]): void => {
+  tables.forEach(table => {
+    queryClient.invalidateQueries({ queryKey: [table] });
+  });
+  toast.success('تم مسح ذاكرة التخزين المؤقت');
 };

@@ -26,4 +26,5 @@ export interface Module {
   description: string;
   key: string;
   permissions: PermissionData[];
+  isOpen?: boolean; // Add this property to fix the errors
 }
