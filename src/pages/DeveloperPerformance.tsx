@@ -13,11 +13,11 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuthStore } from "@/store/refactored-auth";
-import { RefreshCw, Activity, Clock, Database, BarChart, Loader2 } from "lucide-react";
+import { RefreshCw, Activity, Clock, Database, BarChart as BarChartIcon, Loader2 } from "lucide-react";
 import { checkDeveloperPermissions } from "@/components/users/permissions/utils/developerPermissionUtils";
 import { performanceMonitor } from "@/utils/performanceMonitor";
 import {
-  BarChart as RechartsBarChart,
+  BarChart,
   Bar,
   XAxis,
   YAxis,
@@ -210,7 +210,7 @@ const DeveloperPerformance = () => {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" />
                         <YAxis />
-                        <Tooltip formatter={(value) => `${value.toFixed(2)} ms`} />
+                        <Tooltip formatter={(value: any) => `${typeof value === 'number' ? value.toFixed(2) : value} ms`} />
                         <Bar dataKey="value" fill="#8884d8" name="الوقت (بالمللي ثانية)" />
                       </BarChart>
                     </ResponsiveContainer>
@@ -240,7 +240,7 @@ const DeveloperPerformance = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center">
-                      <BarChart className="h-5 w-5 text-muted-foreground ml-2" />
+                      <BarChartIcon className="h-5 w-5 text-muted-foreground ml-2" />
                       <span className="text-2xl font-bold">
                         {(performanceData.find(d => d.name === 'first-paint')?.value || 0).toFixed(0)} 
                         <span className="text-sm font-normal text-muted-foreground mr-1">مللي ثانية</span>
@@ -336,7 +336,7 @@ const DeveloperPerformance = () => {
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="name" />
                             <YAxis />
-                            <Tooltip formatter={(value) => `${value.toFixed(2)} ms`} />
+                            <Tooltip formatter={(value: any) => `${typeof value === 'number' ? value.toFixed(2) : value} ms`} />
                             <Bar dataKey="duration" fill="#8884d8" name="الوقت (بالمللي ثانية)" />
                           </BarChart>
                         </ResponsiveContainer>

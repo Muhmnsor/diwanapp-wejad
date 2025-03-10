@@ -1,63 +1,89 @@
 
 import { create } from 'zustand';
-import { DeveloperSettings, DeveloperStore } from '@/types/developer';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { DeveloperSettings, DeveloperStore } from '@/types/developer.d';
+import { useAuthStore } from './refactored-auth';
 
 export const useDeveloperStore = create<DeveloperStore>((set, get) => ({
   settings: null,
   isLoading: false,
   error: null,
-
+  
   fetchSettings: async () => {
+    const { user } = useAuthStore.getState();
+    
+    if (!user) {
+      set({ error: new Error('User not authenticated') });
+      return;
+    }
+    
+    set({ isLoading: true });
+    
     try {
-      set({ isLoading: true, error: null });
-      
       const { data, error } = await supabase
         .from('developer_settings')
         .select('*')
+        .eq('user_id', user.id)
         .single();
-
+      
       if (error) throw error;
       
-      set({ settings: data });
+      set({ settings: data, isLoading: false });
     } catch (error) {
       console.error('Error fetching developer settings:', error);
-      set({ error: error as Error });
-    } finally {
-      set({ isLoading: false });
+      set({ 
+        error: error instanceof Error ? error : new Error('Unknown error fetching developer settings'),
+        isLoading: false 
+      });
     }
   },
-
-  updateSettings: async (newSettings) => {
+  
+  updateSettings: async (settings: Partial<DeveloperSettings>) => {
+    const { user } = useAuthStore.getState();
+    const currentSettings = get().settings;
+    
+    if (!user) {
+      set({ error: new Error('User not authenticated') });
+      return;
+    }
+    
+    if (!currentSettings) {
+      set({ error: new Error('No settings to update') });
+      return;
+    }
+    
+    set({ isLoading: true });
+    
     try {
-      const { settings } = get();
-      if (!settings?.id) return;
-
-      set({ isLoading: true, error: null });
-      
       const { error } = await supabase
         .from('developer_settings')
-        .update(newSettings)
-        .eq('id', settings.id);
-
+        .update(settings)
+        .eq('user_id', user.id);
+      
       if (error) throw error;
       
-      set({ settings: { ...settings, ...newSettings } });
-      toast.success('تم تحديث إعدادات المطور بنجاح');
+      // Update local state with new settings
+      set({ 
+        settings: { ...currentSettings, ...settings },
+        isLoading: false 
+      });
     } catch (error) {
       console.error('Error updating developer settings:', error);
-      set({ error: error as Error });
-      toast.error('حدث خطأ أثناء تحديث الإعدادات');
-    } finally {
-      set({ isLoading: false });
+      set({ 
+        error: error instanceof Error ? error : new Error('Unknown error updating developer settings'),
+        isLoading: false 
+      });
     }
   },
-
+  
   toggleDevMode: async () => {
-    const { settings, updateSettings } = get();
-    if (settings) {
-      await updateSettings({ is_enabled: !settings.is_enabled });
+    const { settings } = get();
+    
+    if (!settings) {
+      set({ error: new Error('No settings to toggle') });
+      return;
     }
-  },
+    
+    await get().updateSettings({ is_enabled: !settings.is_enabled });
+  }
 }));

@@ -23,7 +23,9 @@ const DeveloperSettings = () => {
   const [permissions, setPermissions] = useState<DeveloperPermissionChecks>({
     canAccessDeveloperTools: false,
     canModifySystemSettings: false,
-    canAccessApiLogs: false
+    canAccessApiLogs: false,
+    canManageDeveloperSettings: false,
+    canViewPerformanceMetrics: false
   });
   const [roleAssigning, setRoleAssigning] = useState(false);
   
@@ -257,6 +259,26 @@ const DeveloperSettings = () => {
                         {permissions.canAccessApiLogs ? 'مسموح' : 'غير مسموح'}
                       </div>
                     </div>
+                    
+                    <div className="p-2 border rounded flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">إدارة إعدادات المطور</p>
+                        <p className="text-sm text-muted-foreground">السماح بتعديل إعدادات المطور</p>
+                      </div>
+                      <div className={`px-2 py-1 rounded text-sm ${permissions.canManageDeveloperSettings ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {permissions.canManageDeveloperSettings ? 'مسموح' : 'غير مسموح'}
+                      </div>
+                    </div>
+                    
+                    <div className="p-2 border rounded flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">قياس الأداء</p>
+                        <p className="text-sm text-muted-foreground">السماح بقياس الأداء</p>
+                      </div>
+                      <div className={`px-2 py-1 rounded text-sm ${permissions.canViewPerformanceMetrics ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {permissions.canViewPerformanceMetrics ? 'مسموح' : 'غير مسموح'}
+                      </div>
+                    </div>
                   </div>
                   
                   <Button 
@@ -418,7 +440,7 @@ const DeveloperSettings = () => {
                     <div className="text-blue-400">[DEBUG] {new Date().toISOString()} - تهيئة الاتصال بقاعدة البيانات</div>
                     <div className="text-blue-400">[DEBUG] {new Date().toISOString()} - تحميل إعدادات المستخدم</div>
                     <div className="text-yellow-400">[WARN] {new Date().toISOString()} - استجابة بطيئة من طلب الواجهة</div>
-                    <div className="text-blue-400">[DEBUG] {new Date().toISOString()} - تحميل البيانات من الذاكرة المؤقتة</div>
+                    <div className="text-blue-400">[DEBUG] {new Date().toISOString()} - تح��يل البيانات من الذاكرة المؤقتة</div>
                     <div className="text-red-400">[ERROR] {new Date().toISOString()} - فشل تحميل الصورة: network timeout</div>
                     <div className="text-blue-400">[DEBUG] {new Date().toISOString()} - محاولة إعادة تحميل الصورة</div>
                     <div className="text-green-400">[INFO] {new Date().toISOString()} - تم تسجيل دخول المستخدم</div>
@@ -465,3 +487,4 @@ const DeveloperSettings = () => {
 };
 
 export default DeveloperSettings;
+

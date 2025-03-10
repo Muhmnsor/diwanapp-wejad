@@ -11,7 +11,7 @@ import AdminRoute from './components/AdminRoute';
 import UserProfile from './pages/UserProfile';
 import Tasks from './pages/Tasks';
 import Projects from './pages/Projects';
-import FinanceDashboard from './components/finance/FinanceDashboard';
+import { FinanceDashboard } from './components/finance/FinanceDashboard';
 import FinancialTargets from './components/finance/targets/FinancialTargets';
 import FinancialReports from './components/finance/reports/FinancialReports';
 import DeveloperSettings from './pages/DeveloperSettings';

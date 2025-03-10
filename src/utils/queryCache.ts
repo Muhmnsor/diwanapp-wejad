@@ -3,7 +3,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 export const getQueryClient = (userIsDeveloper: boolean = false, cacheDuration: number = 5) => {
-  return new QueryClient({
+  const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
         staleTime: cacheDuration * 60 * 1000, // Convert minutes to milliseconds
@@ -12,13 +12,17 @@ export const getQueryClient = (userIsDeveloper: boolean = false, cacheDuration: 
         refetchOnMount: !userIsDeveloper, // Disable refetch on mount for developers
       },
     },
-    queryCache: {
-      onError: (error) => {
-        console.error('Query cache error:', error);
-        toast.error('حدث خطأ أثناء جلب البيانات');
-      },
+  });
+  
+  // Add error handler to the query cache  
+  queryClient.getQueryCache().subscribe({
+    onError: (error) => {
+      console.error('Query cache error:', error);
+      toast.error('حدث خطأ أثناء جلب البيانات');
     }
   });
+  
+  return queryClient;
 };
 
 /**
