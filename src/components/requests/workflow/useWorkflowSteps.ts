@@ -216,66 +216,53 @@ export const useWorkflowSteps = ({
 
       console.log("Saving workflow steps to workflow:", currentWorkflowId);
       
-      // Delete existing steps
-      if (steps.length > 0) {
-        const { error: deleteError } = await supabase
-          .from('workflow_steps')
-          .delete()
-          .eq('workflow_id', currentWorkflowId);
-
-        if (deleteError) {
-          console.error("Error deleting existing workflow steps:", deleteError);
-          // Continue with insert - we'll try to replace steps
-        }
-      }
-
-      // Insert new steps if there are any
-      if (steps.length > 0) {
-        // Prepare steps for RPC function
-        const stepsToInsert = steps.map((step, index) => ({
-          ...step,
-          workflow_id: currentWorkflowId,
-          step_order: index + 1,
-          approver_type: step.approver_type || 'user'
-        }));
-
-        console.log("Inserting workflow steps using RPC bypass function:", stepsToInsert);
-        
-        // Convert steps to JSON objects for RPC function
-        const jsonSteps = stepsToInsert.map(step => JSON.stringify(step));
-        
-        // Use the improved RPC function to bypass RLS
-        const { data: insertResult, error: rpcError } = await supabase
-          .rpc('insert_workflow_steps', {
-            steps: jsonSteps
-          });
-
-        if (rpcError) {
-          console.error("Error inserting workflow steps via RPC:", rpcError);
-          throw new Error(`فشل في إدخال خطوات سير العمل: ${rpcError.message}`);
-        }
-
-        console.log("RPC function result:", insertResult);
-
-        if (!insertResult || !insertResult.success) {
-          const errorMessage = insertResult?.message || insertResult?.error || 'حدث خطأ غير معروف';
-          console.error("Error returned from RPC function:", errorMessage);
-          throw new Error(`فشل في إدخال خطوات سير العمل: ${errorMessage}`);
-        }
-
-        console.log("Successfully inserted workflow steps via RPC:", insertResult);
-        
-        // Update local state with the data from the database which includes IDs
-        if (insertResult.data && Array.isArray(insertResult.data)) {
-          const stepsWithIds = insertResult.data;
-          updateWorkflowSteps(stepsWithIds);
-        } else {
-          // If no data returned, just use our local steps
-          updateWorkflowSteps(steps);
-        }
-      } else {
+      if (steps.length === 0) {
         // No steps to insert, just update local state
         updateWorkflowSteps([]);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Prepare steps for RPC function
+      const stepsToInsert = steps.map((step, index) => ({
+        ...step,
+        workflow_id: currentWorkflowId,
+        step_order: index + 1,
+        approver_type: step.approver_type || 'user'
+      }));
+
+      console.log("Inserting workflow steps using RPC bypass function:", stepsToInsert);
+      
+      // Convert steps to JSON objects for RPC function
+      const jsonSteps = stepsToInsert.map(step => JSON.stringify(step));
+      
+      // Use the improved RPC function to bypass RLS
+      const { data: rpcResult, error: rpcError } = await supabase
+        .rpc('insert_workflow_steps', {
+          steps: jsonSteps
+        });
+
+      if (rpcError) {
+        console.error("Error inserting workflow steps via RPC:", rpcError);
+        throw new Error(`فشل في إدخال خطوات سير العمل: ${rpcError.message}`);
+      }
+
+      console.log("RPC function result:", rpcResult);
+
+      if (!rpcResult || !rpcResult.success) {
+        const errorMessage = rpcResult?.error || rpcResult?.message || 'حدث خطأ غير معروف';
+        console.error("Error returned from RPC function:", errorMessage);
+        throw new Error(`فشل في إدخال خطوات سير العمل: ${errorMessage}`);
+      }
+
+      console.log("Successfully inserted workflow steps via RPC:", rpcResult);
+      
+      // Update local state with the data returned from the RPC function
+      if (rpcResult.data && Array.isArray(rpcResult.data)) {
+        updateWorkflowSteps(rpcResult.data);
+      } else {
+        // If no proper data returned, just use our local steps
+        updateWorkflowSteps(steps);
       }
 
       toast.success('تم حفظ خطوات سير العمل بنجاح');
