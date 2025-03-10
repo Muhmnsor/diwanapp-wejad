@@ -111,7 +111,12 @@ export const ObligationDetailsDialog = ({
           </Button>
         </div>
 
-        <ObligationExpensesTable expenses={expenses} loading={loading} />
+        <ObligationExpensesTable 
+          expenses={expenses} 
+          loading={loading} 
+          totalSpent={balance?.spent_amount}
+          originalAmount={balance?.original_amount}
+        />
       </DialogContent>
     </Dialog>
   );
