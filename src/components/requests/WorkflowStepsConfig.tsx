@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 interface WorkflowStepsConfigProps {
   requestTypeId: string | null;
   onWorkflowStepsUpdated: (steps: WorkflowStep[]) => void;
-  onWorkflowSaved?: () => void; // New callback for when workflow is successfully saved
+  onWorkflowSaved?: () => void; // Callback for when workflow is successfully saved
   initialSteps?: WorkflowStep[];
   workflowId?: string | null;
   standalone?: boolean; // Whether this component is used standalone
