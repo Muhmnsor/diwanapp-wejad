@@ -94,7 +94,11 @@ class PerformanceMonitor {
   startMeasure(name: string) {
     if (!this.isEnabled) return;
     const startTime = performance.now();
-    this.addEvent({ name, startTime });
+    this.addEvent({ 
+      name, 
+      startTime, 
+      type: 'custom' 
+    });
     return () => this.endMeasure(name, startTime);
   }
 
