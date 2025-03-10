@@ -28,32 +28,67 @@ export const useWorkflowInitialization = ({
 }: UseWorkflowInitializationProps) => {
   // Initialize with provided steps if available
   useEffect(() => {
-    if ((initialSteps && initialSteps.length > 0 && !initialized) || 
-        (initialWorkflowId && !initialized)) {
-      console.log("Initializing workflow steps with:", { 
-        initialSteps, 
-        initialWorkflowId 
-      });
-      
-      const effectiveWorkflowId = initialWorkflowId || 
-                                  (initialSteps[0]?.workflow_id) || 
-                                  'temp-workflow-id';
-      
-      console.log("Using workflow ID for initialization:", effectiveWorkflowId);
-      
-      const stepsWithWorkflowId = initialSteps.map(step => ({
-        ...step,
-        workflow_id: step.workflow_id || effectiveWorkflowId
-      }));
-      
-      setWorkflowSteps(stepsWithWorkflowId);
-      setCurrentStep({
-        ...getInitialStepState(initialSteps.length + 1),
-        workflow_id: effectiveWorkflowId
-      });
-      
-      setWorkflowId(effectiveWorkflowId);
-      setInitialized(true);
+    if (initialized) {
+      console.log("Workflow already initialized, skipping initialization");
+      return;
     }
-  }, [initialSteps, initialWorkflowId, initialized, setCurrentStep, setInitialized, setWorkflowId, setWorkflowSteps]);
+
+    console.log("Initializing workflow with:", {
+      requestTypeId,
+      initialSteps: initialSteps.length,
+      initialWorkflowId,
+      workflowId,
+      initialized
+    });
+
+    try {
+      if (initialSteps && initialSteps.length > 0) {
+        console.log("Initializing with existing steps");
+        
+        const effectiveWorkflowId = initialWorkflowId || 
+                                  (initialSteps[0]?.workflow_id) || 
+                                  workflowId ||
+                                  'temp-workflow-id';
+        
+        console.log("Using workflow ID for initialization:", effectiveWorkflowId);
+        
+        // Ensure all steps have a workflow_id
+        const stepsWithWorkflowId = initialSteps.map(step => ({
+          ...step,
+          workflow_id: step.workflow_id || effectiveWorkflowId
+        }));
+        
+        setWorkflowSteps(stepsWithWorkflowId);
+        setCurrentStep({
+          ...getInitialStepState(stepsWithWorkflowId.length + 1),
+          workflow_id: effectiveWorkflowId
+        });
+        
+        setWorkflowId(effectiveWorkflowId);
+      } else if (initialWorkflowId) {
+        console.log("Initializing with workflow ID but no steps");
+        setWorkflowId(initialWorkflowId);
+        setWorkflowSteps([]);
+        setCurrentStep({
+          ...getInitialStepState(1),
+          workflow_id: initialWorkflowId
+        });
+      } else {
+        console.log("Initializing with default values");
+        const defaultWorkflowId = 'temp-workflow-id';
+        setWorkflowId(defaultWorkflowId);
+        setWorkflowSteps([]);
+        setCurrentStep({
+          ...getInitialStepState(1),
+          workflow_id: defaultWorkflowId
+        });
+      }
+      
+      setInitialized(true);
+      console.log("Workflow initialization complete");
+    } catch (error) {
+      console.error("Error during workflow initialization:", error);
+    }
+  }, [initialSteps, initialWorkflowId, workflowId, initialized, requestTypeId, 
+      setWorkflowId, setWorkflowSteps, setCurrentStep, setInitialized]);
 };
