@@ -1,4 +1,3 @@
-
 import { QueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
@@ -15,16 +14,11 @@ export const getQueryClient = (userIsDeveloper: boolean = false, cacheDuration: 
   });
   
   // Add global error handler for TanStack Query v5
-  // In v5, error handling uses the global listener pattern
   queryClient.getQueryCache().subscribe({
-    onQueryAdded(query) {
-      // Subscribe to each query's error events individually
-      query.subscribe({
-        onError: (error) => {
-          console.error('Query error:', error);
-          toast.error('حدث خطأ أثناء جلب البيانات');
-        }
-      });
+    type: 'all',
+    onError: (error) => {
+      console.error('Query error:', error);
+      toast.error('حدث خطأ أثناء جلب البيانات');
     }
   });
   

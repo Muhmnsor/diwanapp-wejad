@@ -26,37 +26,33 @@ export const initializeQueryClient = async (userSettings: UserSettings | null): 
       },
     });
     
-    // Configure global error handling
+    // Configure global error handling with correct syntax for React Query v5
     queryClient.getQueryCache().subscribe({
-      onQueryAdded(query) {
-        // Subscribe to each query's error events individually
-        query.subscribe({
-          onError: (error) => {
-            console.error('Query cache error in QueryManager:', error);
-            toast.error('حدث خطأ أثناء جلب البيانات');
-          }
-        });
+      type: 'all',
+      onError: (error) => {
+        console.error('Query cache error in QueryManager:', error);
+        toast.error('حدث خطأ أثناء جلب البيانات');
       }
     });
     
     // Add observer for performance monitoring if in developer mode
     if (isDeveloper) {
+      // Monitor all queries for performance
       queryClient.getQueryCache().subscribe({
-        onQueryAdded(query) {
-          // Subscribe to each query for measuring performance
-          query.subscribe({
-            onSuccess: (data) => {
-              const queryTime = query.state.dataUpdatedAt - query.state.fetchStatus === 'fetching' ? 
-                query.state.fetchTime ?? 0 : 0;
-              
-              console.log(`Query ${query.queryKey.join('.')} completed in ${queryTime}ms`);
-              
-              // Log to database if significant query time (>500ms)
-              if (queryTime > 500 && isDeveloper) {
-                logSlowQuery(query.queryKey.join('.'), queryTime);
-              }
+        type: 'updated',
+        onSuccess: (query) => {
+          const queryTime = query.state.dataUpdatedAt - query.state.fetchTime;
+          
+          if (queryTime && typeof queryTime === 'number') {
+            const queryKeyStr = Array.isArray(query.queryKey) ? query.queryKey.join('.') : String(query.queryKey);
+            
+            console.log(`Query ${queryKeyStr} completed in ${queryTime}ms`);
+            
+            // Log to database if significant query time (>500ms)
+            if (queryTime > 500) {
+              logSlowQuery(queryKeyStr, queryTime);
             }
-          });
+          }
         }
       });
     }

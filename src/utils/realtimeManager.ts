@@ -1,133 +1,119 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { RealtimeChannel } from '@supabase/supabase-js';
-import { UserSettings } from '@/types/userSettings';
+import { toast } from 'sonner';
+
+type RealtimeCallback = (payload: any) => void;
+
+interface RealtimeSubscription {
+  tableName: string;
+  callback: RealtimeCallback;
+  channel: any;
+}
+
+// Store active subscriptions
+const activeSubscriptions: RealtimeSubscription[] = [];
 
 /**
- * Initialize realtime subscription based on user settings
+ * Subscribe to realtime changes for a specific table
  */
-export const initializeRealtime = (
-  userSettings: UserSettings | null,
-  onEvent: (payload: any) => void
-): { channel: RealtimeChannel | null, cleanup: () => void } => {
-  if (!userSettings?.realtime_updates) {
-    // If realtime updates are disabled, return a no-op cleanup
-    return { channel: null, cleanup: () => {} };
-  }
+export const subscribeToTable = (
+  tableName: string,
+  callback: RealtimeCallback
+): string => {
+  // Check if subscription already exists
+  const existingSubscription = activeSubscriptions.find(
+    (sub) => sub.tableName === tableName
+  );
   
-  // Use a more unique channel name based on user ID to prevent conflicts
-  const channelName = `realtime_${userSettings.user_id}_main`;
-  let realtimeChannel: RealtimeChannel | null = null;
+  if (existingSubscription) {
+    console.log(`Subscription for ${tableName} already exists, reusing`);
+    return tableName;
+  }
   
   try {
-    // Create and configure channel
-    realtimeChannel = supabase.channel(channelName);
+    // Use type assertion for the channel subscription
+    const channel = supabase
+      .channel(`realtime-${tableName}`)
+      .on('postgres_changes' as any, {
+        event: '*',
+        schema: 'public',
+        table: tableName,
+      }, callback)
+      .subscribe(status => {
+        console.log(`Realtime subscription status for ${tableName}:`, status);
+      });
     
-    // Setup event handlers for different tables
-    setupEventHandlers(realtimeChannel, onEvent);
-    
-    // Subscribe to the channel
-    realtimeChannel.subscribe((status) => {
-      console.log(`Realtime subscription status: ${status}`);
-      
-      if (status === 'CHANNEL_ERROR') {
-        console.error('Failed to subscribe to realtime updates');
-      }
+    // Store the subscription
+    activeSubscriptions.push({
+      tableName,
+      callback,
+      channel,
     });
     
-    // Return the channel and cleanup function
-    return {
-      channel: realtimeChannel,
-      cleanup: () => {
-        if (realtimeChannel) {
-          supabase.removeChannel(realtimeChannel);
-        }
-      }
-    };
-  } catch (err) {
-    console.error('Error setting up realtime manager:', err);
-    return { channel: null, cleanup: () => {} };
+    console.log(`Subscribed to realtime updates for ${tableName}`);
+    return tableName;
+  } catch (error) {
+    console.error(`Error subscribing to ${tableName}:`, error);
+    toast.error(`فشل في الاشتراك في التحديثات المباشرة لـ ${tableName}`);
+    return '';
   }
 };
 
-// Setup event handlers for different tables
-const setupEventHandlers = (
-  channel: RealtimeChannel,
-  onEvent: (payload: any) => void
-) => {
-  // Listen for task updates
-  channel.on(
-    // Fix the type issue by using string literal with 'as any'
-    'postgres_changes' as any,
-    {
-      event: '*',
-      schema: 'public',
-      table: 'tasks'
-    },
-    (payload) => {
-      onEvent({
-        type: 'task',
-        action: payload.eventType,
-        data: payload.new,
-        old: payload.old
-      });
-    }
+/**
+ * Unsubscribe from realtime changes for a specific table
+ */
+export const unsubscribeFromTable = (tableName: string): boolean => {
+  const index = activeSubscriptions.findIndex(
+    (sub) => sub.tableName === tableName
   );
   
-  // Listen for notification updates
-  channel.on(
-    // Fix the type issue by using string literal with 'as any'
-    'postgres_changes' as any,
-    {
-      event: '*',
-      schema: 'public',
-      table: 'notifications'
-    },
-    (payload) => {
-      onEvent({
-        type: 'notification',
-        action: payload.eventType,
-        data: payload.new
-      });
-    }
-  );
-  
-  // Add additional tables as needed
-};
-
-// Utility to track user presence in a shared workspace
-export const trackUserPresence = (
-  workspaceId: string, 
-  userId: string,
-  userInfo: { name: string, role: string }
-): { channel: RealtimeChannel | null, cleanup: () => void } => {
-  if (!workspaceId || !userId) {
-    return { channel: null, cleanup: () => {} };
+  if (index === -1) {
+    console.warn(`No subscription found for ${tableName}`);
+    return false;
   }
   
-  const channelName = `presence_${workspaceId}`;
-  const presenceChannel = supabase.channel(channelName);
-  
-  // Track user presence
-  const userStatus = {
-    user_id: userId,
-    workspace_id: workspaceId,
-    online_at: new Date().toISOString(),
-    user_info: userInfo
-  };
-  
-  presenceChannel.subscribe(async (status) => {
-    if (status === 'SUBSCRIBED') {
-      await presenceChannel.track(userStatus);
-    }
-  });
-  
-  return {
-    channel: presenceChannel,
-    cleanup: () => {
-      if (presenceChannel) {
-        supabase.removeChannel(presenceChannel);
-      }
-    }
-  };
+  try {
+    const { channel } = activeSubscriptions[index];
+    supabase.removeChannel(channel);
+    
+    // Remove from active subscriptions
+    activeSubscriptions.splice(index, 1);
+    console.log(`Unsubscribed from realtime updates for ${tableName}`);
+    return true;
+  } catch (error) {
+    console.error(`Error unsubscribing from ${tableName}:`, error);
+    return false;
+  }
+};
+
+/**
+ * Unsubscribe from all realtime subscriptions
+ */
+export const unsubscribeFromAll = (): boolean => {
+  try {
+    activeSubscriptions.forEach(({ channel }) => {
+      supabase.removeChannel(channel);
+    });
+    
+    // Clear all subscriptions
+    activeSubscriptions.length = 0;
+    console.log('Unsubscribed from all realtime updates');
+    return true;
+  } catch (error) {
+    console.error('Error unsubscribing from all tables:', error);
+    return false;
+  }
+};
+
+/**
+ * Get all active subscriptions
+ */
+export const getActiveSubscriptions = (): string[] => {
+  return activeSubscriptions.map((sub) => sub.tableName);
+};
+
+/**
+ * Check if a table has an active subscription
+ */
+export const hasActiveSubscription = (tableName: string): boolean => {
+  return activeSubscriptions.some((sub) => sub.tableName === tableName);
 };
