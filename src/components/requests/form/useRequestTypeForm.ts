@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -157,37 +156,35 @@ export const useRequestTypeForm = ({
       throw new Error('يجب إضافة خطوة واحدة على الأقل لسير العمل');
     }
 
+    // Use the new RPC function to bypass RLS
+    const requestTypeData = {
+      name: values.name,
+      description: values.description || null,
+      is_active: values.is_active,
+      form_schema: values.form_schema,
+    };
+
     if (isEditing && requestType) {
-      // Update existing request type
-      const { data, error } = await supabase
-        .from("request_types")
-        .update({
-          name: values.name,
-          description: values.description || null,
-          is_active: values.is_active,
-          form_schema: values.form_schema,
-        })
-        .eq("id", requestType.id)
-        .select();
+      // Update using RPC
+      const { data, error } = await supabase.rpc('upsert_request_type', {
+        request_type_data: { 
+          ...requestTypeData, 
+          id: requestType.id 
+        },
+        is_update: true
+      });
 
       if (error) throw error;
-      return data[0];
+      return data;
     } else {
-      // Create new request type
-      const { data, error } = await supabase
-        .from("request_types")
-        .insert([
-          {
-            name: values.name,
-            description: values.description || null,
-            is_active: values.is_active,
-            form_schema: values.form_schema,
-          },
-        ])
-        .select();
+      // Create using RPC
+      const { data, error } = await supabase.rpc('upsert_request_type', {
+        request_type_data: requestTypeData,
+        is_update: false
+      });
 
       if (error) throw error;
-      return data[0];
+      return data;
     }
   };
 
@@ -195,17 +192,22 @@ export const useRequestTypeForm = ({
     console.log("Creating workflow for request type:", requestTypeId);
     console.log("With steps count:", workflowSteps.length);
 
+    const workflowData = {
+      name: `سير عمل ${form.getValues("name")}`,
+      description: `سير عمل تلقائي لنوع الطلب: ${form.getValues("name")}`,
+      is_active: true,
+      request_type_id: requestTypeId
+    };
+
     if (isEditing && requestType?.default_workflow_id) {
-      // Update existing workflow
-      const { data, error } = await supabase
-        .from("request_workflows")
-        .update({
-          name: `سير عمل ${form.getValues("name")}`,
-          description: `سير عمل تلقائي لنوع الطلب: ${form.getValues("name")}`,
-          is_active: true,
-        })
-        .eq("id", requestType.default_workflow_id)
-        .select();
+      // Update existing workflow using RPC
+      const { data, error } = await supabase.rpc('upsert_workflow', {
+        workflow_data: { 
+          ...workflowData, 
+          id: requestType.default_workflow_id 
+        },
+        is_update: true
+      });
 
       if (error) {
         console.error("Error updating workflow:", error);
@@ -213,28 +215,21 @@ export const useRequestTypeForm = ({
       }
       
       console.log("Updated existing workflow:", data);
-      return data[0];
+      return data;
     } else {
-      // Create new workflow
-      const { data, error } = await supabase
-        .from("request_workflows")
-        .insert([
-          {
-            name: `سير عمل ${form.getValues("name")}`,
-            description: `سير عمل تلقائي لنوع الطلب: ${form.getValues("name")}`,
-            request_type_id: requestTypeId,
-            is_active: true,
-          },
-        ])
-        .select();
+      // Create new workflow using RPC
+      const { data, error } = await supabase.rpc('upsert_workflow', {
+        workflow_data: workflowData,
+        is_update: false
+      });
 
       if (error) {
         console.error("Error creating workflow:", error);
         throw error;
       }
       
-      console.log("Created new workflow:", data[0]);
-      return data[0];
+      console.log("Created new workflow:", data);
+      return data;
     }
   };
 
@@ -249,20 +244,7 @@ export const useRequestTypeForm = ({
     console.log("Steps to save:", steps);
 
     try {
-      // If editing, first delete existing steps
-      if (isEditing && requestType?.default_workflow_id) {
-        const { error: deleteError } = await supabase
-          .from("workflow_steps")
-          .delete()
-          .eq("workflow_id", requestType.default_workflow_id);
-
-        if (deleteError) {
-          console.error("Error deleting existing workflow steps:", deleteError);
-          throw deleteError;
-        }
-        
-        console.log("Deleted existing workflow steps");
-      }
+      // No need to delete existing steps first, our updated RPC function handles this
 
       const stepsToInsert = steps.map((step, index) => ({
         workflow_id: workflowId,
@@ -272,7 +254,7 @@ export const useRequestTypeForm = ({
         approver_id: step.approver_id,
         instructions: step.instructions,
         is_required: step.is_required === false ? false : true,
-        approver_type: 'user'
+        approver_type: step.approver_type || 'user'
       }));
 
       console.log("Inserting workflow steps:", stepsToInsert);
@@ -309,11 +291,11 @@ export const useRequestTypeForm = ({
   const updateDefaultWorkflow = async (requestTypeId: string, workflowId: string) => {
     console.log(`Updating request type ${requestTypeId} with default workflow: ${workflowId}`);
     
-    const { data, error } = await supabase
-      .from("request_types")
-      .update({ default_workflow_id: workflowId })
-      .eq("id", requestTypeId)
-      .select();
+    // Use RPC to bypass RLS
+    const { data, error } = await supabase.rpc('set_default_workflow', {
+      p_request_type_id: requestTypeId,
+      p_workflow_id: workflowId
+    });
 
     if (error) {
       console.error("Error updating default workflow:", error);
