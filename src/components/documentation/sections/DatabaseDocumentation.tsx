@@ -16,73 +16,102 @@ export const DatabaseDocumentation = () => {
           <h3 className="text-lg font-semibold mb-4">الجداول الرئيسية</h3>
           
           <DatabaseTable
-            title="جداول إدارة المستخدمين"
+            title="جداول المستخدمين وإعداداتهم"
             tables={[
               { name: "profiles", description: "معلومات المستخدمين الأساسية" },
-              { name: "roles", description: "الأدوار المتاحة في النظام" },
-              { name: "permissions", description: "الصلاحيات المختلفة" },
-              { name: "user_roles", description: "العلاقة بين المستخدمين والأدوار" },
+              { name: "user_settings", description: "إعدادات المستخدمين" },
+              { name: "user_notification_preferences", description: "تفضيلات الإشعارات" },
+              { name: "user_activities", description: "سجل نشاط المستخدمين" },
+              { name: "user_performance_stats", description: "إحصائيات أداء المستخدمين" },
+              { name: "user_achievements", description: "إنجازات المستخدمين" },
             ]}
           />
           
           <DatabaseTable
-            title="جداول إدارة الفعاليات"
+            title="جداول إدارة المطورين"
             tables={[
-              { name: "events", description: "الفعاليات والأنشطة" },
-              { name: "registrations", description: "تسجيلات المشاركين" },
-              { name: "attendance_records", description: "سجلات الحضور" },
-              { name: "event_feedback", description: "تقييمات الفعاليات" },
-              { name: "event_reports", description: "تقارير الفعاليات" },
+              { name: "developer_settings", description: "إعدادات وضع المطور" },
+              { name: "developer_permissions", description: "صلاحيات المطورين" },
+              { name: "workflow_operation_logs", description: "سجلات عمليات سير العمل" }
             ]}
           />
-          
+
           <DatabaseTable
-            title="جداول إدارة المشاريع"
+            title="جداول المستندات والأفكار"
             tables={[
-              { name: "projects", description: "المشاريع الأساسية" },
-              { name: "project_activities", description: "أنشطة المشاريع" },
-              { name: "project_stages", description: "مراحل المشاريع" },
-              { name: "project_tasks", description: "مهام المشاريع" },
+              { name: "documents", description: "المستندات والوثائق" },
+              { name: "ideas", description: "الأفكار والمقترحات" },
+              { name: "idea_comments", description: "تعليقات على الأفكار" },
+              { name: "idea_versions", description: "إصدارات الأفكار" },
+              { name: "idea_votes", description: "تصويت على الأفكار" },
+              { name: "idea_categories", description: "تصنيفات الأفكار" }
             ]}
           />
           
           <DatabaseTable
-            title="جداول إدارة المهام"
+            title="جداول إدارة الطلبات"
+            tables={[
+              { name: "requests", description: "الطلبات الرئيسية" },
+              { name: "request_types", description: "أنواع الطلبات" },
+              { name: "request_workflows", description: "مسارات عمل الطلبات" },
+              { name: "workflow_steps", description: "خطوات سير العمل" },
+              { name: "request_approvals", description: "موافقات الطلبات" },
+              { name: "request_attachments", description: "مرفقات الطلبات" }
+            ]}
+          />
+          
+          <DatabaseTable
+            title="جداول إدارة الموارد المالية"
+            tables={[
+              { name: "financial_resources", description: "الموارد المالية" },
+              { name: "resource_distributions", description: "توزيع الموارد" },
+              { name: "resource_obligations", description: "الالتزامات المالية" },
+              { name: "expenses", description: "المصروفات" },
+              { name: "budget_items", description: "بنود الميزانية" },
+              { name: "financial_targets", description: "الأهداف المالية" }
+            ]}
+          />
+          
+          <DatabaseTable
+            title="جداول الاشتراكات"
+            tables={[
+              { name: "subscriptions", description: "الاشتراكات الأساسية" },
+              { name: "subscription_attachments", description: "مرفقات الاشتراكات" }
+            ]}
+          />
+          
+          <DatabaseTable
+            title="جداول المهام والمشاريع"
             tables={[
               { name: "tasks", description: "المهام الرئيسية" },
               { name: "subtasks", description: "المهام الفرعية" },
               { name: "task_comments", description: "تعليقات المهام" },
               { name: "task_attachments", description: "مرفقات المهام" },
               { name: "task_history", description: "سجل تغييرات المهام" },
+              { name: "task_dependencies", description: "اعتماديات المهام" },
+              { name: "recurring_tasks", description: "المهام المتكررة" }
             ]}
           />
-          
+
           <DatabaseTable
-            title="جداول إدارة المحافظ"
+            title="جداول إدارة الفعاليات"
             tables={[
-              { name: "portfolios", description: "المحافظ الرئيسية" },
-              { name: "portfolio_workspaces", description: "مساحات العمل" },
-              { name: "portfolio_projects", description: "مشاريع المحافظ" },
-              { name: "portfolio_tasks", description: "مهام المحافظ" },
+              { name: "events", description: "الفعاليات والأنشطة" },
+              { name: "event_registration_fields", description: "حقول التسجيل في الفعاليات" },
+              { name: "event_feedback", description: "تقييمات الفعاليات" },
+              { name: "event_reports", description: "تقارير الفعاليات" },
+              { name: "event_notification_settings", description: "إعدادات إشعارات الفعاليات" }
             ]}
           />
-          
+
           <DatabaseTable
             title="جداول الإشعارات"
             tables={[
-              { name: "whatsapp_settings", description: "إعدادات الواتساب" },
+              { name: "notifications", description: "الإشعارات العامة" },
+              { name: "in_app_notifications", description: "إشعارات داخل التطبيق" },
+              { name: "notification_logs", description: "سجلات الإشعارات" },
               { name: "whatsapp_templates", description: "قوالب رسائل الواتساب" },
-              { name: "notification_logs", description: "سجلات الإشعارات المرسلة" },
-            ]}
-          />
-          
-          <DatabaseTable
-            title="جداول الشهادات"
-            tables={[
-              { name: "certificate_templates", description: "قوالب الشهادات" },
-              { name: "certificate_signatures", description: "توقيعات الشهادات" },
-              { name: "certificates", description: "الشهادات المصدرة" },
-              { name: "certificate_verifications", description: "عمليات التحقق من الشهادات" },
+              { name: "whatsapp_settings", description: "إعدادات الواتساب" }
             ]}
           />
         </CardContent>
