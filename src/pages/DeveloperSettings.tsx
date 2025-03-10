@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useDeveloperStore } from "@/store/developerStore";
@@ -9,18 +9,63 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Save, RefreshCw, Clock, Gauge, Bug, Database, Activity } from "lucide-react";
+import { Loader2, Save, RefreshCw, Clock, Gauge, Bug, Database, Activity, Users, Shield } from "lucide-react";
 import { useAuthStore } from "@/store/refactored-auth";
 import { toast } from "sonner";
+import { assignDeveloperRole, removeDeveloperRole } from "@/utils/developerRoleIntegration";
+import { checkDeveloperPermissions } from "@/components/users/permissions/utils/developerPermissionUtils";
+import { DeveloperPermissionChecks } from "@/components/users/permissions/types";
 
 const DeveloperSettings = () => {
   const { settings, isLoading, updateSettings, fetchSettings } = useDeveloperStore();
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState("general");
+  const [permissions, setPermissions] = useState<DeveloperPermissionChecks>({
+    canAccessDeveloperTools: false,
+    canModifySystemSettings: false,
+    canAccessApiLogs: false
+  });
+  const [roleAssigning, setRoleAssigning] = useState(false);
+  
+  useEffect(() => {
+    if (user?.id) {
+      loadDeveloperPermissions(user.id);
+    }
+  }, [user?.id]);
+  
+  const loadDeveloperPermissions = async (userId: string) => {
+    const permissionChecks = await checkDeveloperPermissions(userId);
+    setPermissions(permissionChecks);
+  };
   
   const handleRefresh = async () => {
     await fetchSettings();
+    if (user?.id) {
+      await loadDeveloperPermissions(user.id);
+    }
     toast.success("تم تحديث الإعدادات بنجاح");
+  };
+  
+  const handleToggleDeveloperRole = async () => {
+    if (!user?.id) return;
+    
+    setRoleAssigning(true);
+    try {
+      const hasDeveloperTools = permissions.canAccessDeveloperTools;
+      
+      if (hasDeveloperTools) {
+        await removeDeveloperRole(user.id);
+      } else {
+        await assignDeveloperRole(user.id);
+      }
+      
+      await loadDeveloperPermissions(user.id);
+    } catch (error) {
+      console.error('Error toggling developer role:', error);
+      toast.error("حدث خطأ أثناء تغيير دور المطور");
+    } finally {
+      setRoleAssigning(false);
+    }
   };
   
   if (!user?.isAdmin) {
@@ -68,6 +113,7 @@ const DeveloperSettings = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="mb-6">
               <TabsTrigger value="general">عام</TabsTrigger>
+              <TabsTrigger value="permissions">الصلاحيات</TabsTrigger>
               <TabsTrigger value="cache">الذاكرة المؤقتة</TabsTrigger>
               <TabsTrigger value="debug">التصحيح</TabsTrigger>
               <TabsTrigger value="performance">الأداء</TabsTrigger>
@@ -136,6 +182,90 @@ const DeveloperSettings = () => {
                   >
                     <Save className="h-4 w-4 ml-2" />
                     حفظ الإعدادات
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="permissions" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>صلاحيات المطور</CardTitle>
+                  <CardDescription>إدارة صلاحيات الوصول إلى أدوات المطور</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="mb-4 p-4 border rounded-md bg-muted/40">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Shield className="h-5 w-5 text-primary" />
+                      <h3 className="font-medium">حالة دور المطور</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      دور المطور يمنح صلاحيات إضافية للوصول إلى أدوات وإعدادات المطور. 
+                      {permissions.canAccessDeveloperTools 
+                        ? " أنت تمتلك حالياً صلاحيات المطور." 
+                        : " أنت لا تمتلك حالياً صلاحيات المطور."}
+                    </p>
+                    <Button
+                      className="w-full"
+                      variant={permissions.canAccessDeveloperTools ? "destructive" : "default"}
+                      onClick={handleToggleDeveloperRole}
+                      disabled={roleAssigning}
+                    >
+                      {roleAssigning ? (
+                        <>
+                          <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                          جاري المعالجة...
+                        </>
+                      ) : (
+                        <>
+                          <Users className="h-4 w-4 ml-2" />
+                          {permissions.canAccessDeveloperTools ? "إزالة دور المطور" : "تعيين دور المطور"}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h3 className="font-medium mb-2">الصلاحيات الحالية</h3>
+                    
+                    <div className="p-2 border rounded flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">الوصول إلى أدوات المطور</p>
+                        <p className="text-sm text-muted-foreground">السماح بعرض أدوات المطور المختلفة</p>
+                      </div>
+                      <div className={`px-2 py-1 rounded text-sm ${permissions.canAccessDeveloperTools ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {permissions.canAccessDeveloperTools ? 'مسموح' : 'غير مسموح'}
+                      </div>
+                    </div>
+                    
+                    <div className="p-2 border rounded flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">تعديل إعدادات النظام</p>
+                        <p className="text-sm text-muted-foreground">السماح بتعديل الإعدادات الأساسية للنظام</p>
+                      </div>
+                      <div className={`px-2 py-1 rounded text-sm ${permissions.canModifySystemSettings ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {permissions.canModifySystemSettings ? 'مسموح' : 'غير مسموح'}
+                      </div>
+                    </div>
+                    
+                    <div className="p-2 border rounded flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">الوصول إلى سجلات API</p>
+                        <p className="text-sm text-muted-foreground">السماح بعرض وتحليل سجلات طلبات API</p>
+                      </div>
+                      <div className={`px-2 py-1 rounded text-sm ${permissions.canAccessApiLogs ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {permissions.canAccessApiLogs ? 'مسموح' : 'غير مسموح'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    className="mt-4 w-full" 
+                    variant="outline"
+                    onClick={handleRefresh}
+                  >
+                    <RefreshCw className="h-4 w-4 ml-2" />
+                    تحديث الصلاحيات
                   </Button>
                 </CardContent>
               </Card>
@@ -335,4 +465,3 @@ const DeveloperSettings = () => {
 };
 
 export default DeveloperSettings;
-

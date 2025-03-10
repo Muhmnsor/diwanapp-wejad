@@ -1,5 +1,5 @@
 
-import { Module, PermissionData } from "./types";
+import { Module } from "./types";
 import { ModuleHeader } from "./components/ModuleHeader";
 import { ModulePermissionsContent } from "./components/ModulePermissionsContent";
 
@@ -27,10 +27,6 @@ export const ModuleCollapsible = ({
       selectedPermissions.includes(permission.id)
     ) && !areAllSelected;
 
-  const handleModuleToggle = () => {
-    onModuleToggle(module);
-  };
-
   const handleToggleOpen = () => {
     toggleOpen(module.name);
   };
@@ -41,7 +37,7 @@ export const ModuleCollapsible = ({
         module={module}
         areAllSelected={areAllSelected}
         areSomeSelected={areSomeSelected}
-        onModuleToggle={handleModuleToggle}
+        onModuleToggle={onModuleToggle}
         onToggleOpen={handleToggleOpen}
       />
       

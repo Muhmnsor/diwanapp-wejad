@@ -30,8 +30,7 @@ export const usePermissions = (role: Role) => {
     selectedPermissions,
     setSelectedPermissions,
     handlePermissionToggle,
-    handleModuleToggle,
-    toggleModuleOpen: operationsToggleModuleOpen
+    handleModuleToggle
   } = usePermissionOperations();
 
   // Update selected permissions when role permissions change

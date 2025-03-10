@@ -40,18 +40,10 @@ export const usePermissionOperations = (initialPermissions: string[] = []) => {
     }
   };
 
-  // Toggle module open/closed state
-  const toggleModuleOpen = (modules: Module[], moduleName: string): Module[] => {
-    return modules.map(m => 
-      m.name === moduleName ? { ...m, isOpen: !m.isOpen } : m
-    );
-  };
-
   return {
     selectedPermissions,
     setSelectedPermissions,
     handlePermissionToggle,
-    handleModuleToggle,
-    toggleModuleOpen
+    handleModuleToggle
   };
 };

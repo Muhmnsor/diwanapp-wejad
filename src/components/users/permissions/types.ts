@@ -51,3 +51,10 @@ export type Permission =
   | EventPermission
   | TaskPermission
   | ProjectPermission;
+
+// إضافة دعم التحقق من صلاحيات المطور
+export interface DeveloperPermissionChecks {
+  canAccessDeveloperTools: boolean;
+  canModifySystemSettings: boolean;
+  canAccessApiLogs: boolean;
+}

@@ -1,11 +1,11 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { DeveloperPermission } from '@/components/users/permissions/types';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { assignDeveloperRole } from "./developerRoleIntegration";
 
-export const initializeDeveloperRole = async (): Promise<boolean> => {
+export const initializeDeveloperRole = async (): Promise<void> => {
   try {
-    // First check if developer role exists
+    // التحقق من وجود دور المطور
     const { data: existingRole } = await supabase
       .from('roles')
       .select('id')
@@ -13,172 +13,111 @@ export const initializeDeveloperRole = async (): Promise<boolean> => {
       .single();
 
     if (!existingRole) {
-      // Create developer role
-      const { data: role, error: roleError } = await supabase
+      // إنشاء دور المطور إذا لم يكن موجوداً
+      const { data: newRole, error: roleError } = await supabase
         .from('roles')
         .insert({
           name: 'developer',
-          description: 'Role for application developers with access to development tools and settings'
+          description: 'دور المطور مع صلاحيات للوصول إلى أدوات التطوير وإعدادات النظام'
         })
-        .select()
+        .select('id')
         .single();
 
-      if (roleError) throw roleError;
+      if (roleError) {
+        console.error('Error creating developer role:', roleError);
+        return;
+      }
 
-      // Add developer permissions
-      const permissions = [
+      console.log('Developer role created successfully:', newRole);
+      
+      // التحقق من وجود جدول الأذونات
+      await supabase.rpc('create_permissions_if_not_exist');
+      
+      // إضافة أذونات المطور
+      const developerPermissions = [
         {
-          name: 'view_developer_tools' as DeveloperPermission,
-          description: 'Access developer tools and debugging features',
+          name: 'view_developer_tools',
+          description: 'الوصول إلى أدوات المطور',
           module: 'developer'
         },
         {
-          name: 'manage_developer_settings' as DeveloperPermission,
-          description: 'Manage developer mode settings and configurations',
+          name: 'modify_system_settings',
+          description: 'تعديل إعدادات النظام',
           module: 'developer'
         },
         {
-          name: 'view_performance_metrics' as DeveloperPermission,
-          description: 'View application performance metrics and logs',
+          name: 'access_api_logs',
+          description: 'الوصول إلى سجلات API',
           module: 'developer'
         }
       ];
-
-      const { error: permError } = await supabase
+      
+      const { error: permissionsError } = await supabase
         .from('permissions')
-        .insert(permissions);
-
-      if (permError) throw permError;
-
-      // Link permissions to role
-      const { data: permData } = await supabase
-        .from('permissions')
-        .select('id')
-        .eq('module', 'developer');
-
-      if (permData) {
-        const rolePermissions = permData.map(perm => ({
-          role_id: role.id,
-          permission_id: perm.id
-        }));
-
-        const { error: linkError } = await supabase
-          .from('role_permissions')
-          .insert(rolePermissions);
-
-        if (linkError) throw linkError;
+        .upsert(developerPermissions, { onConflict: 'name' });
+        
+      if (permissionsError) {
+        console.error('Error creating developer permissions:', permissionsError);
       }
     }
-
-    return true;
+    
+    // التحقق من وجود إعدادات المطور
+    await initializeDeveloperSettings();
+    
   } catch (error) {
-    console.error('Error initializing developer role:', error);
-    toast.error('Failed to initialize developer role');
-    return false;
+    console.error('Error in initializeDeveloperRole:', error);
   }
 };
 
-export const isDeveloper = async (userId: string): Promise<boolean> => {
+const initializeDeveloperSettings = async (): Promise<void> => {
   try {
-    // Check if the user has developer role
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select(`
-        roles (
-          name
-        )
-      `)
-      .eq('user_id', userId);
-
-    if (error) throw error;
-    
-    // Check if any of the roles is 'developer'
-    const hasDeveloperRole = data?.some(
-      (userRole) => userRole.roles && (userRole.roles as any).name === 'developer'
-    );
-    
-    // Also check if user has admin role, which includes developer privileges
-    const { data: adminData, error: adminError } = await supabase
-      .from('user_roles')
-      .select(`
-        roles (
-          name
-        )
-      `)
-      .eq('user_id', userId);
-      
-    if (adminError) throw adminError;
-    
-    const hasAdminRole = adminData?.some(
-      (userRole) => userRole.roles && ((userRole.roles as any).name === 'admin' || (userRole.roles as any).name === 'app_admin')
-    );
-    
-    return hasDeveloperRole || hasAdminRole;
-  } catch (error) {
-    console.error('Error checking developer status:', error);
-    return false;
-  }
-};
-
-// Function to toggle developer mode in user settings
-export const toggleDeveloperMode = async (userId: string, enabled: boolean): Promise<boolean> => {
-  try {
-    // Check if user settings exist
-    const { data: existingSettings, error: settingsError } = await supabase
-      .from('user_settings')
+    // التحقق من وجود إعدادات المطور
+    const { data: existingSettings } = await supabase
+      .from('developer_settings')
       .select('id')
-      .eq('user_id', userId)
       .single();
-    
-    if (settingsError && settingsError.code !== 'PGRST116') {
-      // Error other than "no rows returned"
-      throw settingsError;
-    }
-    
-    if (existingSettings) {
-      // Update existing settings
+      
+    if (!existingSettings) {
+      // إنشاء إعدادات المطور الافتراضية
       const { error } = await supabase
-        .from('user_settings')
-        .update({ developer_mode: enabled })
-        .eq('user_id', userId);
+        .from('developer_settings')
+        .insert({
+          is_enabled: false,
+          show_toolbar: true,
+          realtime_enabled: true,
+          cache_time_minutes: 5,
+          update_interval_seconds: 30,
+          debug_level: 'info'
+        });
         
-      if (error) throw error;
-    } else {
-      // Create new settings
-      const { error } = await supabase
-        .from('user_settings')
-        .insert({ user_id: userId, developer_mode: enabled });
-        
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating developer settings:', error);
+      } else {
+        console.log('Developer settings created successfully');
+      }
     }
-    
-    return true;
   } catch (error) {
-    console.error('Error toggling developer mode:', error);
-    return false;
+    console.error('Error in initializeDeveloperSettings:', error);
   }
 };
 
-// Function to check if developer mode is enabled for a user
-export const isDeveloperModeEnabled = async (userId: string): Promise<boolean> => {
+// دالة تلقائية لتعيين دور المطور للمستخدم الحالي
+export const autoAssignDeveloperRole = async (userId: string): Promise<void> => {
+  if (!userId) return;
+  
   try {
-    const { data, error } = await supabase
-      .from('user_settings')
-      .select('developer_mode')
-      .eq('user_id', userId)
+    // التحقق مما إذا كان المستخدم مسؤولاً
+    const { data: userData } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', userId)
       .single();
       
-    if (error) {
-      if (error.code === 'PGRST116') {
-        // No settings found, return default (false)
-        return false;
-      }
-      throw error;
+    if (userData?.is_admin) {
+      // تعيين دور المطور تلقائياً للمسؤول
+      await assignDeveloperRole(userId);
     }
-    
-    return data.developer_mode || false;
   } catch (error) {
-    console.error('Error checking developer mode:', error);
-    return false;
+    console.error('Error in autoAssignDeveloperRole:', error);
   }
 };
