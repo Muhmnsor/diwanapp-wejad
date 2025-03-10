@@ -56,9 +56,13 @@ export const useWorkflowSteps = ({
     if (initialSteps && initialSteps.length > 0 && !initialized) {
       console.log("Initializing workflow steps from initialSteps:", initialSteps);
       
-      // Make sure all steps have workflow_id
-      const currentWorkflowId = workflowId || initialSteps[0]?.workflow_id || 'temp-workflow-id';
+      // Extract workflow ID from the first step or use a fallback
+      const extractedWorkflowId = initialSteps[0]?.workflow_id || null;
+      const currentWorkflowId = workflowId || extractedWorkflowId || 'temp-workflow-id';
       
+      console.log("Using workflow ID for initialization:", currentWorkflowId);
+      
+      // Make sure all steps have workflow_id
       const stepsWithWorkflowId = initialSteps.map(step => ({
         ...step,
         workflow_id: step.workflow_id || currentWorkflowId
@@ -70,8 +74,12 @@ export const useWorkflowSteps = ({
         workflow_id: currentWorkflowId
       });
       
-      if (!workflowId && initialSteps[0]?.workflow_id) {
-        setWorkflowId(initialSteps[0].workflow_id);
+      if (!workflowId && extractedWorkflowId) {
+        console.log("Setting workflow ID from initial steps:", extractedWorkflowId);
+        setWorkflowId(extractedWorkflowId);
+      } else if (!workflowId) {
+        console.log("Setting temporary workflow ID");
+        setWorkflowId(currentWorkflowId);
       }
       
       setInitialized(true);
@@ -84,6 +92,7 @@ export const useWorkflowSteps = ({
       if (!requestTypeId) {
         if (!initialized && initialSteps.length > 0) {
           const workflowIdToUse = initialSteps[0]?.workflow_id || 'temp-workflow-id';
+          console.log("No request type ID, using workflowId from initial steps:", workflowIdToUse);
           const stepsWithWorkflowId = initialSteps.map(step => ({
             ...step,
             workflow_id: step.workflow_id || workflowIdToUse
@@ -112,8 +121,8 @@ export const useWorkflowSteps = ({
         if (requestTypeError) throw requestTypeError;
 
         const workflow_id = requestType?.default_workflow_id || 'temp-workflow-id';
+        console.log("Got workflow ID from request type:", workflow_id);
         setWorkflowId(workflow_id);
-        console.log("Set workflow ID to:", workflow_id);
 
         if (!requestType?.default_workflow_id) {
           if (!initialized && initialSteps.length > 0) {
@@ -209,8 +218,8 @@ export const useWorkflowSteps = ({
       if (createError) throw createError;
 
       const newWorkflowId = newWorkflow.id;
+      console.log("Created new workflow with ID:", newWorkflowId);
       setWorkflowId(newWorkflowId);
-      console.log("Created new workflow:", newWorkflowId);
       
       // Update all existing steps with the new workflow ID
       setWorkflowSteps(prevSteps => 
@@ -367,6 +376,8 @@ export const useWorkflowSteps = ({
     }
 
     const current_workflow_id = workflowId || 'temp-workflow-id';
+    
+    // Always ensure the step has a workflow_id
     const stepWithWorkflowId = {
       ...currentStep,
       workflow_id: current_workflow_id
