@@ -31,6 +31,7 @@ export const StepForm = ({
   onAddStep
 }: StepFormProps) => {
   const handleInputChange = (field: string, value: any) => {
+    console.log(`[StepForm] Changing field ${field} to:`, value);
     onStepChange({
       ...currentStep,
       [field]: value
@@ -75,19 +76,31 @@ export const StepForm = ({
           <label className="text-sm font-medium">المعتمد</label>
           <Select
             value={currentStep.approver_id || ''}
-            onValueChange={(value) => handleInputChange('approver_id', value)}
+            onValueChange={(value) => {
+              console.log("[StepForm] Selected approver ID:", value);
+              handleInputChange('approver_id', value);
+              // Also set approver_type to 'user' when an approver is selected
+              handleInputChange('approver_type', 'user');
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="اختر المعتمد" />
             </SelectTrigger>
             <SelectContent>
-              {users.map((user) => (
-                <SelectItem key={user.id} value={user.id}>
-                  {user.display_name}
-                </SelectItem>
-              ))}
+              {users.length === 0 ? (
+                <SelectItem value="" disabled>جاري تحميل قائمة المستخدمين...</SelectItem>
+              ) : (
+                users.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.display_name || user.email}
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
+          {users.length === 0 && (
+            <p className="text-xs text-red-500">لم يتم العثور على مستخدمين</p>
+          )}
         </div>
         
         <div className="flex items-end space-x-4 space-x-reverse">

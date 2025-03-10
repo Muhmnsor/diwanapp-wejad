@@ -42,5 +42,5 @@ export const getApproverName = (step: WorkflowStep, users: User[]): string => {
   if (!step.approver_id) return "غير محدد";
   
   const user = users.find(u => u.id === step.approver_id);
-  return user ? user.display_name : "غير موجود";
+  return user ? (user.display_name || user.email || "مستخدم") : "غير موجود";
 };

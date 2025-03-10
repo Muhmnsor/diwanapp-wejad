@@ -30,17 +30,20 @@ export const useWorkflowInitialization = ({
   useEffect(() => {
     if ((initialSteps && initialSteps.length > 0 && !initialized) || 
         (initialWorkflowId && !initialized)) {
-      console.log("Initializing workflow steps with:", { 
+      console.log("[useWorkflowInitialization] Initializing workflow steps with:", { 
         initialSteps, 
-        initialWorkflowId 
+        initialWorkflowId,
+        stepsCount: initialSteps.length
       });
       
+      // Determine the effective workflow ID to use
       const effectiveWorkflowId = initialWorkflowId || 
                                   (initialSteps[0]?.workflow_id) || 
                                   'temp-workflow-id';
       
-      console.log("Using workflow ID for initialization:", effectiveWorkflowId);
+      console.log("[useWorkflowInitialization] Using workflow ID for initialization:", effectiveWorkflowId);
       
+      // Ensure all steps have the correct workflow_id
       const stepsWithWorkflowId = initialSteps.map(step => ({
         ...step,
         workflow_id: step.workflow_id || effectiveWorkflowId
@@ -54,6 +57,8 @@ export const useWorkflowInitialization = ({
       
       setWorkflowId(effectiveWorkflowId);
       setInitialized(true);
+      
+      console.log("[useWorkflowInitialization] Initialization complete with steps:", stepsWithWorkflowId);
     }
   }, [initialSteps, initialWorkflowId, initialized, setCurrentStep, setInitialized, setWorkflowId, setWorkflowSteps]);
 };
