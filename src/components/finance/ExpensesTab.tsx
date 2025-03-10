@@ -3,10 +3,14 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 export const ExpensesTab = () => {
   const [expenses, setExpenses] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   return (
     <div className="space-y-4">
@@ -19,9 +23,18 @@ export const ExpensesTab = () => {
       </div>
 
       <Card className="p-4">
-        {isLoading ? (
-          <div className="flex justify-center p-4">
-            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+        {error ? (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              حدث خطأ أثناء تحميل البيانات. الرجاء المحاولة مرة أخرى.
+            </AlertDescription>
+          </Alert>
+        ) : isLoading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
           </div>
         ) : expenses.length > 0 ? (
           <div className="space-y-2">

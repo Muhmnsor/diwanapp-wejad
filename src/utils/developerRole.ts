@@ -1,172 +1,95 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-/**
- * Check if developer mode is enabled for a user
- */
-export const isDeveloperModeEnabled = async (userId: string): Promise<boolean> => {
-  if (!userId) return false;
-  
-  try {
-    const { data, error } = await supabase
-      .from('developer_settings')
-      .select('is_enabled')
-      .eq('user_id', userId)
-      .single();
-    
-    if (error) {
-      console.error('Error checking developer mode:', error);
-      return false;
-    }
-    
-    return data?.is_enabled || false;
-  } catch (error) {
-    console.error('Error in isDeveloperModeEnabled:', error);
-    return false;
-  }
-};
-
-/**
- * Toggle developer mode for a user
- */
-export const toggleDeveloperMode = async (userId: string, enabled: boolean): Promise<boolean> => {
-  if (!userId) return false;
-  
-  try {
-    // Check if settings exist first
-    const { data: existingSettings } = await supabase
-      .from('developer_settings')
-      .select('id')
-      .eq('user_id', userId)
-      .single();
-    
-    if (existingSettings) {
-      // Update existing settings
-      const { error } = await supabase
-        .from('developer_settings')
-        .update({ is_enabled: enabled })
-        .eq('user_id', userId);
-      
-      if (error) {
-        console.error('Error updating developer mode:', error);
-        return false;
-      }
-    } else {
-      // Create new settings
-      const { error } = await supabase
-        .from('developer_settings')
-        .insert({
-          user_id: userId,
-          is_enabled: enabled,
-          cache_time_minutes: 5,
-          update_interval_seconds: 30,
-          debug_level: 'info',
-          realtime_enabled: false,
-          show_toolbar: true
-        });
-      
-      if (error) {
-        console.error('Error creating developer settings:', error);
-        return false;
-      }
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error in toggleDeveloperMode:', error);
-    return false;
-  }
-};
-
-/**
- * Check if a user has the developer role
- */
 export const isDeveloper = async (userId: string): Promise<boolean> => {
-  if (!userId) return false;
-  
   try {
-    // Check if the user has the developer role
-    const { data, error } = await supabase
+    // First check if the table exists to avoid errors
+    const { data: tableExists, error: tableCheckError } = await supabase
       .from('developer_permissions')
-      .select('can_access_developer_tools')
-      .eq('user_id', userId)
-      .single();
+      .select('id', { count: 'exact', head: true })
+      .limit(1);
     
-    if (error) {
-      console.error('Error checking developer role:', error);
+    if (tableCheckError) {
+      // Table doesn't exist, so we can't check permissions
+      console.error('Error checking developer role:', tableCheckError);
       return false;
     }
     
-    return data?.can_access_developer_tools || false;
+    // Check if user has developer permissions
+    const { data, error } = await supabase
+      .from('developer_permissions')
+      .select('is_developer')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (error) {
+      console.error('Error checking developer permissions:', error);
+      return false;
+    }
+    
+    return data?.is_developer || false;
   } catch (error) {
-    console.error('Error in isDeveloper:', error);
+    console.error('Error checking developer role:', error);
     return false;
   }
 };
 
-/**
- * Initialize developer role for a user
- * This was missing in the original file
- */
 export const initializeDeveloperRole = async (userId: string): Promise<boolean> => {
-  if (!userId) return false;
-  
   try {
-    // Check if developer permissions already exist
-    const { data: existingPermissions } = await supabase
+    // Check if developer_permissions table exists
+    const { error: tableCheckError } = await supabase.rpc('check_table_exists', { 
+      table_name: 'developer_permissions' 
+    });
+    
+    if (tableCheckError) {
+      console.error('Developer permissions functionality is not configured:', tableCheckError);
+      toast.error('تعذر تهيئة صلاحيات المطور');
+      return false;
+    }
+    
+    // Check if the user already has a record
+    const { data: existingRecord, error: recordCheckError } = await supabase
       .from('developer_permissions')
       .select('id')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
     
-    if (!existingPermissions) {
-      // Create default permissions (all false)
-      const { error } = await supabase
+    if (recordCheckError) {
+      console.error('Error checking existing developer record:', recordCheckError);
+      return false;
+    }
+    
+    // If user doesn't have a record, create one
+    if (!existingRecord) {
+      const { error: insertError } = await supabase
         .from('developer_permissions')
         .insert({
           user_id: userId,
-          can_access_developer_tools: false,
-          can_modify_system_settings: false,
-          can_access_api_logs: false,
-          can_manage_developer_settings: false,
-          can_view_performance_metrics: false
+          is_developer: false,
+          permissions: {
+            canAccessDeveloperTools: false,
+            canModifySystemSettings: false,
+            canAccessApiLogs: false,
+            canManageDeveloperSettings: false,
+            canViewPerformanceMetrics: false,
+            canDebugQueries: false,
+            canManageRealtime: false,
+            canAccessAdminPanel: false,
+            canExportData: false,
+            canImportData: false
+          }
         });
       
-      if (error) {
-        console.error('Error initializing developer permissions:', error);
-        return false;
-      }
-    }
-    
-    // Create developer settings if they don't exist
-    const { data: existingSettings } = await supabase
-      .from('developer_settings')
-      .select('id')
-      .eq('user_id', userId)
-      .single();
-    
-    if (!existingSettings) {
-      const { error } = await supabase
-        .from('developer_settings')
-        .insert({
-          user_id: userId,
-          is_enabled: false,
-          cache_time_minutes: 5,
-          update_interval_seconds: 30,
-          debug_level: 'info',
-          realtime_enabled: false,
-          show_toolbar: false
-        });
-      
-      if (error) {
-        console.error('Error initializing developer settings:', error);
+      if (insertError) {
+        console.error('Error initializing developer role:', insertError);
         return false;
       }
     }
     
     return true;
   } catch (error) {
-    console.error('Error in initializeDeveloperRole:', error);
+    console.error('Error initializing developer role:', error);
     return false;
   }
 };

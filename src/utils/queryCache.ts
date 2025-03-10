@@ -1,4 +1,3 @@
-
 import { QueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
@@ -15,13 +14,9 @@ export const getQueryClient = (userIsDeveloper: boolean = false, cacheDuration: 
   });
   
   // Add global error handler that works with TanStack Query v5
-  queryClient.getQueryCache().subscribe(() => {
-    const failedQueries = queryClient.getQueryCache().findAll({ 
-      predicate: query => query.state.status === 'error' 
-    });
-    
-    if (failedQueries.length > 0) {
-      console.error('Query cache errors:', failedQueries);
+  queryClient.getQueryCache().subscribe({
+    onError: (error) => {
+      console.error('Query cache error:', error);
       toast.error('حدث خطأ أثناء جلب البيانات');
     }
   });

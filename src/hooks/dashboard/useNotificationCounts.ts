@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/authStore";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export interface NotificationCounts {
   tasks: number;
@@ -16,67 +17,107 @@ export const useNotificationCounts = () => {
   return useQuery({
     queryKey: ['notification-counts'],
     queryFn: async () => {
-      const { data: pendingPortfolioTasks, error: portfolioError } = await supabase
-        .from('portfolio_tasks')
-        .select('id', { count: 'exact' })
-        .eq('assigned_to', user?.id)
-        .neq('status', 'completed');
+      try {
+        if (!user?.id) {
+          console.log('No user ID available for notification counts');
+          return {
+            tasks: 0,
+            notifications: 0,
+            ideas: 0,
+            finance: 0
+          };
+        }
 
-      const { data: pendingRegularTasks, error: tasksError } = await supabase
-        .from('tasks')
-        .select('id', { count: 'exact' })
-        .eq('assigned_to', user?.id)
-        .neq('status', 'completed');
+        // Use Promise.allSettled to prevent one failing query from stopping others
+        const results = await Promise.allSettled([
+          // Portfolio tasks
+          supabase
+            .from('portfolio_tasks')
+            .select('id', { count: 'exact' })
+            .eq('assigned_to', user.id)
+            .neq('status', 'completed'),
+          
+          // Regular tasks
+          supabase
+            .from('tasks')
+            .select('id', { count: 'exact' })
+            .eq('assigned_to', user.id)
+            .neq('status', 'completed'),
+          
+          // Subtasks
+          supabase
+            .from('subtasks')
+            .select('id', { count: 'exact' })
+            .eq('assigned_to', user.id)
+            .neq('status', 'completed'),
+          
+          // Notifications
+          supabase
+            .from('notifications')
+            .select('id', { count: 'exact' })
+            .eq('is_read', false)
+            .eq('user_id', user.id),
+          
+          // Ideas
+          supabase
+            .from('ideas')
+            .select('id', { count: 'exact' })
+            .eq('status', 'new'),
+          
+          // Financial resources
+          supabase
+            .from('financial_resources')
+            .select('id', { count: 'exact' })
+            .eq('status', 'pending')
+        ]);
 
-      const { data: pendingSubtasks, error: subtasksError } = await supabase
-        .from('subtasks')
-        .select('id', { count: 'exact' })
-        .eq('assigned_to', user?.id)
-        .neq('status', 'completed');
+        // Log any errors for debugging
+        results.forEach((result, index) => {
+          if (result.status === 'rejected') {
+            console.error(`Query ${index} failed:`, result.reason);
+          }
+        });
 
-      if (portfolioError || tasksError || subtasksError) {
-        console.error("Error fetching tasks counts:", 
-          portfolioError || tasksError || subtasksError
-        );
+        // Safely extract counts
+        const [portfolioTasks, regularTasks, subtasks, notifications, ideas, finance] = results;
+        
+        const portfolioTasksCount = portfolioTasks.status === 'fulfilled' ? portfolioTasks.value.data?.length || 0 : 0;
+        const regularTasksCount = regularTasks.status === 'fulfilled' ? regularTasks.value.data?.length || 0 : 0;
+        const subtasksCount = subtasks.status === 'fulfilled' ? subtasks.value.data?.length || 0 : 0;
+        const notificationsCount = notifications.status === 'fulfilled' ? notifications.value.data?.length || 0 : 0;
+        const ideasCount = ideas.status === 'fulfilled' ? ideas.value.data?.length || 0 : 0;
+        const financeCount = finance.status === 'fulfilled' ? finance.value.data?.length || 0 : 0;
+
+        const totalTasksCount = portfolioTasksCount + regularTasksCount + subtasksCount;
+
+        return {
+          tasks: totalTasksCount,
+          notifications: notificationsCount,
+          ideas: ideasCount,
+          finance: financeCount
+        };
+      } catch (error) {
+        console.error("Failed to fetch notification counts:", error);
+        // Return default values on error instead of throwing
+        return {
+          tasks: 0,
+          notifications: 0,
+          ideas: 0,
+          finance: 0
+        };
       }
-
-      const totalPendingTasks = 
-        (pendingPortfolioTasks?.length || 0) + 
-        (pendingRegularTasks?.length || 0) + 
-        (pendingSubtasks?.length || 0);
-
-      const { data: unreadNotifications, error: notificationsError } = await supabase
-        .from('notifications')
-        .select('id', { count: 'exact' })
-        .eq('is_read', false)
-        .eq('user_id', user?.id);
-
-      const { data: newIdeas, error: ideasError } = await supabase
-        .from('ideas')
-        .select('id', { count: 'exact' })
-        .eq('status', 'new');
-
-      const { data: pendingFinance, error: financeError } = await supabase
-        .from('financial_resources')
-        .select('id', { count: 'exact' })
-        .eq('status', 'pending');
-
-      if (tasksError || notificationsError || ideasError || financeError) {
-        console.error("Error fetching notification counts:", tasksError || notificationsError || ideasError || financeError);
-      }
-
-      return {
-        tasks: totalPendingTasks,
-        notifications: unreadNotifications?.length || 0,
-        ideas: newIdeas?.length || 0,
-        finance: pendingFinance?.length || 0,
-      };
     },
+    // Enable only if we have a user ID
+    enabled: !!user?.id,
+    // Provide default values
     initialData: {
       tasks: 0,
       notifications: 0,
       ideas: 0,
       finance: 0
-    }
+    },
+    // Add retry and stale time for better UX
+    retry: 1,
+    staleTime: 60 * 1000 // 1 minute
   });
 };
