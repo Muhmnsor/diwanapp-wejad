@@ -22,11 +22,44 @@ export const checkUserRole = async (userId: string): Promise<boolean> => {
   // Check if any role is a developer role
   for (const userRole of userRoles) {
     if (userRole.roles) {
-      const roleName = Array.isArray(userRole.roles) 
-        ? (userRole.roles[0]?.name) 
-        : (userRole.roles as any).name;
+      const roleName = Array.isArray(userRole.roles) ? 
+        (userRole.roles[0]?.name) : 
+        (userRole.roles as any).name;
         
       if (roleName === 'developer') {
+        return true;
+      }
+    }
+  }
+
+  return false;
+};
+
+// New function to check if user has admin role
+export const checkAdminRole = async (userId: string): Promise<boolean> => {
+  const { data: userRoles, error: roleIdsError } = await supabase
+    .from('user_roles')
+    .select('role_id, roles(name)')
+    .eq('user_id', userId);
+
+  if (roleIdsError) {
+    console.error("SessionManager: Error checking admin role:", roleIdsError);
+    return false;
+  }
+
+  if (!userRoles || userRoles.length === 0) {
+    console.log("SessionManager: No roles found for user");
+    return false;
+  }
+
+  // Check if any role is an admin role
+  for (const userRole of userRoles) {
+    if (userRole.roles) {
+      const roleName = Array.isArray(userRole.roles) ? 
+        (userRole.roles[0]?.name) : 
+        (userRole.roles as any).name;
+        
+      if (roleName === 'admin' || roleName === 'app_admin') {
         return true;
       }
     }
@@ -90,12 +123,14 @@ export const initializeSession = async (): Promise<{ user: User | null; isAuthen
     }
 
     const isDev = await checkUserRole(session.user.id);
+    const isAdmin = await checkAdminRole(session.user.id);
     const role = await getUserRole(session.user.id);
 
     console.log("SessionManager: Session initialized:", {
       userId: session.user.id,
       email: session.user.email,
       isDeveloper: isDev,
+      isAdmin: isAdmin,
       role: role
     });
 
@@ -103,7 +138,7 @@ export const initializeSession = async (): Promise<{ user: User | null; isAuthen
       user: {
         id: session.user.id,
         email: session.user.email ?? '',
-        isAdmin: false,
+        isAdmin: isAdmin,
         role: role || undefined
       },
       isAuthenticated: true

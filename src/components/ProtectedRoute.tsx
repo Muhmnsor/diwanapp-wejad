@@ -87,6 +87,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   console.log('Protected route check:', { 
     isAuthenticated, 
     user, 
+    userIsAdmin: user?.isAdmin,
     pathname: location.pathname,
     isLoading
   });

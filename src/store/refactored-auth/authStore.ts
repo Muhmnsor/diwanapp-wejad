@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { AuthState } from './types';
-import { initializeSession, clearSession, checkUserRole, getUserRole } from './sessionManager';
+import { initializeSession, clearSession, checkUserRole, checkAdminRole, getUserRole } from './sessionManager';
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
@@ -25,7 +25,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       if (signInError) throw signInError;
       if (!authData.user) throw new Error('No user data available');
 
-      const isAdmin = await checkUserRole(authData.user.id);
+      const isAdmin = await checkAdminRole(authData.user.id);
       const role = await getUserRole(authData.user.id);
 
       set({
