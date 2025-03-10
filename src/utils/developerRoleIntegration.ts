@@ -65,15 +65,14 @@ export const assignDeveloperRole = async (userId: string): Promise<boolean> => {
       return false;
     }
 
-    // التحقق مما إذا كان المستخدم لديه بالفعل دور المطور
-    const { data: existingRole } = await supabase
+    // التحقق مما إذا كان المستخدم لديه بالفعل دور المطور - FIXED: don't select 'id'
+    const { data: existingRoles } = await supabase
       .from('user_roles')
-      .select('id')
+      .select('role_id')
       .eq('user_id', userId)
-      .eq('role_id', developerRoleId)
-      .single();
+      .eq('role_id', developerRoleId);
 
-    if (existingRole?.id) {
+    if (existingRoles && existingRoles.length > 0) {
       // المستخدم لديه بالفعل دور المطور
       return true;
     }

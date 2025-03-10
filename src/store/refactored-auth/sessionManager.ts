@@ -3,58 +3,66 @@ import { supabase } from '@/integrations/supabase/client';
 import { User } from './types';
 
 export const checkUserRole = async (userId: string): Promise<boolean> => {
-  const { data: roleIds, error: roleIdsError } = await supabase
+  // FIXED: don't try to access role_id column directly
+  const { data: userRoles, error: roleIdsError } = await supabase
     .from('user_roles')
-    .select('role_id')
-    .eq('user_id', userId)
-    .single();
+    .select('role_id, roles(name)')
+    .eq('user_id', userId);
 
   if (roleIdsError) {
     console.error("SessionManager: Error fetching role IDs:", roleIdsError);
     return false;
   }
 
-  if (!roleIds) {
+  if (!userRoles || userRoles.length === 0) {
     console.log("SessionManager: No roles found for user");
     return false;
   }
 
-  const { data: roles, error: rolesError } = await supabase
-    .from('roles')
-    .select('name')
-    .eq('id', roleIds.role_id)
-    .single();
-
-  if (rolesError) {
-    console.error("SessionManager: Error fetching role names:", rolesError);
-    return false;
+  // Check if any role is a developer role
+  for (const userRole of userRoles) {
+    if (userRole.roles) {
+      const roleName = Array.isArray(userRole.roles) 
+        ? (userRole.roles[0]?.name) 
+        : (userRole.roles as any).name;
+        
+      if (roleName === 'developer') {
+        return true;
+      }
+    }
   }
 
-  return roles?.name === 'developer';
+  return false;
 };
 
 export const getUserRole = async (userId: string): Promise<string | null> => {
   try {
-    const { data: userRole, error } = await supabase
+    const { data: userRoles, error } = await supabase
       .from('user_roles')
       .select(`
         roles (
           name
         )
       `)
-      .eq('user_id', userId)
-      .single();
+      .eq('user_id', userId);
     
     if (error) {
       console.error("SessionManager: Error fetching user role:", error);
       return null;
     }
     
-    if (userRole?.roles) {
-      if (Array.isArray(userRole.roles)) {
-        return userRole.roles[0]?.name || null;
-      } else {
-        return (userRole.roles as any).name || null;
+    if (!userRoles || userRoles.length === 0) {
+      return null;
+    }
+    
+    // Find the first valid role
+    for (const userRole of userRoles) {
+      if (userRole?.roles) {
+        if (Array.isArray(userRole.roles)) {
+          return userRole.roles[0]?.name || null;
+        } else {
+          return (userRole.roles as any).name || null;
+        }
       }
     }
     

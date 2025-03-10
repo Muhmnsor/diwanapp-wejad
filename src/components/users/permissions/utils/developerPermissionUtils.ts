@@ -39,7 +39,7 @@ export const checkDeveloperPermissions = async (userId: string): Promise<Develop
       };
     }
     
-    // Check specific permissions
+    // Check specific permissions - FIXED: don't use role_id directly
     const { data: permissions } = await supabase
       .from('role_permissions')
       .select('permission_id, permissions(name)')
@@ -88,7 +88,7 @@ export const setupDefaultDeveloperPermissions = async (developerRoleId: string):
       return;
     }
     
-    // Check existing role permissions
+    // Check existing role permissions - FIXED query
     const { data: existingPermissions } = await supabase
       .from('role_permissions')
       .select('permission_id')

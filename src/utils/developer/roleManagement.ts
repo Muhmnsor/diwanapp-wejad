@@ -26,13 +26,14 @@ export const isDeveloper = async (userId: string): Promise<boolean> => {
       .single();
       
     if (!developerRole?.id) {
+      console.log('Developer role does not exist');
       return false;
     }
     
-    // Check if user has developer role
+    // Check if user has developer role - FIXED: don't try to access 'id' column
     const { data, error } = await supabase
       .from('user_roles')
-      .select('id')
+      .select('role_id')
       .eq('user_id', userId)
       .eq('role_id', developerRole.id)
       .maybeSingle();
@@ -63,13 +64,13 @@ export const assignDeveloperRole = async (userId: string): Promise<boolean> => {
       return false;
     }
     
-    // Check if already assigned
+    // Check if already assigned - FIXED: don't try to access 'id' column
     const { data: existingRole } = await supabase
       .from('user_roles')
-      .select('id')
+      .select('role_id')
       .eq('user_id', userId)
       .eq('role_id', developerRole.id)
-      .single();
+      .maybeSingle();
       
     if (existingRole) {
       return true; // Already assigned
