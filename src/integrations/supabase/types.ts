@@ -3882,6 +3882,70 @@ export type Database = {
         }
         Relationships: []
       }
+      workflow_operation_logs: {
+        Row: {
+          created_at: string
+          details: string | null
+          error_message: string | null
+          id: string
+          operation_type: string
+          request_data: Json | null
+          request_type_id: string | null
+          response_data: Json | null
+          step_id: string | null
+          user_id: string | null
+          workflow_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          error_message?: string | null
+          id?: string
+          operation_type: string
+          request_data?: Json | null
+          request_type_id?: string | null
+          response_data?: Json | null
+          step_id?: string | null
+          user_id?: string | null
+          workflow_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          error_message?: string | null
+          id?: string
+          operation_type?: string
+          request_data?: Json | null
+          request_type_id?: string | null
+          response_data?: Json | null
+          step_id?: string | null
+          user_id?: string | null
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_operation_logs_request_type_id_fkey"
+            columns: ["request_type_id"]
+            isOneToOne: false
+            referencedRelation: "request_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_operation_logs_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_operation_logs_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "request_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workflow_steps: {
         Row: {
           approver_id: string | null
@@ -4049,7 +4113,48 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      workflow_operations_view: {
+        Row: {
+          created_at: string | null
+          details: string | null
+          error_message: string | null
+          id: string | null
+          operation_type: string | null
+          request_data: Json | null
+          request_type_id: string | null
+          request_type_name: string | null
+          response_data: Json | null
+          step_id: string | null
+          step_name: string | null
+          user_email: string | null
+          user_name: string | null
+          workflow_id: string | null
+          workflow_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_operation_logs_request_type_id_fkey"
+            columns: ["request_type_id"]
+            isOneToOne: false
+            referencedRelation: "request_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_operation_logs_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_operation_logs_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "request_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       anonymize_user_data: {
@@ -4253,6 +4358,19 @@ export type Database = {
           user_id: string
           activity_type: string
           details: string
+        }
+        Returns: string
+      }
+      log_workflow_operation: {
+        Args: {
+          p_operation_type: string
+          p_request_type_id?: string
+          p_workflow_id?: string
+          p_step_id?: string
+          p_request_data?: Json
+          p_response_data?: Json
+          p_error_message?: string
+          p_details?: string
         }
         Returns: string
       }
