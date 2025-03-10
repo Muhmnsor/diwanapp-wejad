@@ -1,8 +1,8 @@
 
+import { useState, useCallback } from "react";
 import { WorkflowStep } from "../../types";
-import { toast } from "sonner";
-import { getInitialStepState } from "../utils";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface UseStepManagementProps {
   saveWorkflowSteps: (steps: WorkflowStep[]) => Promise<boolean | undefined>;
@@ -15,32 +15,34 @@ export const useStepManagement = ({
   setCurrentStep,
   setEditingStepIndex
 }: UseStepManagementProps) => {
-
+  // Function to handle adding a new step or updating an existing one
   const handleAddStep = async (
-    currentStep: WorkflowStep,
-    workflowSteps: WorkflowStep[],
+    currentStep: WorkflowStep, 
+    workflowSteps: WorkflowStep[], 
     editingStepIndex: number | null,
-    workflowId: string | null
+    currentWorkflowId: string | null
   ) => {
-    if (!currentStep.step_name) {
-      toast.error('يرجى إدخال اسم الخطوة');
-      return;
-    }
-    
-    if (!currentStep.approver_id) {
-      toast.error('يرجى اختيار المعتمد');
-      return;
-    }
-
     try {
-      // Check if user is authenticated
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error("يجب تسجيل الدخول لإضافة خطوات سير العمل");
+      // Check if step has an approver
+      if (!currentStep.approver_id) {
+        toast.error("يرجى تحديد معتمد للخطوة");
         return;
       }
 
-      // Check if user has admin role
+      // Check if step has a name
+      if (!currentStep.step_name || currentStep.step_name.trim() === '') {
+        toast.error("يرجى إدخال اسم للخطوة");
+        return;
+      }
+
+      // Check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("يجب تسجيل الدخول لإضافة خطوات");
+        return;
+      }
+
+      // Check if user has admin role for permission check
       const { data: userRoles, error: roleError } = await supabase
         .from('user_roles')
         .select('role_id, roles(name)')
@@ -48,7 +50,6 @@ export const useStepManagement = ({
         
       if (roleError) {
         console.error("Error checking user roles:", roleError);
-        toast.error("خطأ في التحقق من صلاحيات المستخدم");
         return;
       }
       
@@ -66,76 +67,67 @@ export const useStepManagement = ({
         console.warn("User might not have permission to add workflow steps");
       }
 
-      const current_workflow_id = workflowId || 'temp-workflow-id';
+      // Determine workflow ID
+      const workflowId = currentWorkflowId || currentStep.workflow_id || 'temp-workflow-id';
       
-      // Ensure workflow_id is consistent
-      const stepWithWorkflowId = {
+      // Create a new step or update existing one
+      const newStep: WorkflowStep = {
         ...currentStep,
-        workflow_id: current_workflow_id
+        workflow_id: workflowId
       };
-
-      console.log("Current workflow ID:", current_workflow_id);
-      console.log("Step with workflow ID:", stepWithWorkflowId);
 
       let updatedSteps: WorkflowStep[];
 
-      // When editing, replace the step at the editing index
-      if (editingStepIndex !== null) {
+      // If we're editing an existing step
+      if (editingStepIndex !== null && editingStepIndex >= 0) {
         updatedSteps = [...workflowSteps];
-        updatedSteps[editingStepIndex] = stepWithWorkflowId;
+        updatedSteps[editingStepIndex] = newStep;
       } else {
-        // When adding, append the new step
-        updatedSteps = [...workflowSteps, stepWithWorkflowId];
+        // Add to the end of the array
+        updatedSteps = [...workflowSteps, newStep];
       }
 
-      // Make sure all steps have the same workflow_id
-      updatedSteps = updatedSteps.map(step => ({
+      // Update step order
+      updatedSteps = updatedSteps.map((step, index) => ({
         ...step,
-        workflow_id: current_workflow_id
+        step_order: index + 1
       }));
 
-      console.log("Adding/updating step with workflow_id:", stepWithWorkflowId);
-      console.log("Updated steps:", updatedSteps);
-      
-      // Actually save the steps
-      try {
-        await saveWorkflowSteps(updatedSteps);
-        toast.success(editingStepIndex !== null ? 'تم تحديث الخطوة بنجاح' : 'تمت إضافة الخطوة بنجاح');
-        
-        setCurrentStep({
-          ...getInitialStepState(updatedSteps.length + 1),
-          workflow_id: current_workflow_id
-        });
-        setEditingStepIndex(null);
-      } catch (error) {
-        console.error("Error during save:", error);
-        
-        // Provide more specific error messages for common issues
-        if (error.message && error.message.includes('صلاحية')) {
-          toast.error(`ليس لديك صلاحية لإضافة خطوات سير العمل`);
-        } else if (error.message && error.message.includes('foreign key')) {
-          toast.error(`خطأ في العلاقات بين البيانات. يرجى التأكد من وجود مسار العمل`);
-        } else {
-          toast.error(`فشل في حفظ الخطوة: ${error.message}`);
-        }
-      }
+      // Save the updated steps
+      await saveWorkflowSteps(updatedSteps);
+
+      // Reset the current step and editing index
+      setCurrentStep({
+        workflow_id: workflowId,
+        step_name: '',
+        step_type: 'decision',
+        approver_id: '',
+        instructions: '',
+        is_required: true,
+        approver_type: 'user',
+        step_order: updatedSteps.length + 1
+      });
+      setEditingStepIndex(null);
+
+      toast.success(editingStepIndex !== null ? "تم تحديث الخطوة بنجاح" : "تمت إضافة الخطوة بنجاح");
     } catch (error) {
-      console.error("Error checking authentication:", error);
-      toast.error(`فشل في التحقق من صلاحيات المستخدم: ${error.message}`);
+      console.error("Error adding/updating step:", error);
+      toast.error(error.message || "حدث خطأ أثناء حفظ الخطوة");
     }
   };
 
+  // Function to handle removing a step
   const handleRemoveStep = async (
-    index: number,
-    workflowSteps: WorkflowStep[],
+    stepIndex: number, 
+    workflowSteps: WorkflowStep[], 
     editingStepIndex: number | null,
-    workflowId: string | null
+    currentWorkflowId: string | null
   ) => {
     try {
       // Check if user is authenticated
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast.error("يجب تسجيل الدخول لحذف خطوات سير العمل");
+        toast.error("يجب تسجيل الدخول لحذف خطوات");
         return;
       }
 
@@ -147,7 +139,6 @@ export const useStepManagement = ({
         
       if (roleError) {
         console.error("Error checking user roles:", roleError);
-        toast.error("خطأ في التحقق من صلاحيات المستخدم");
         return;
       }
       
@@ -165,82 +156,75 @@ export const useStepManagement = ({
         console.warn("User might not have permission to remove workflow steps");
       }
 
-      const current_workflow_id = workflowId || 'temp-workflow-id';
-      const updatedSteps = workflowSteps
-        .filter((_, i) => i !== index)
-        .map((step, i) => ({
-          ...step,
-          step_order: i + 1,
-          workflow_id: step.workflow_id || current_workflow_id
-        }));
-      
-      console.log("Removing step at index:", index);
-      console.log("Updated steps after removal:", updatedSteps);
-      
-      await saveWorkflowSteps(updatedSteps);
-      toast.success('تم حذف الخطوة بنجاح');
-      
-      if (editingStepIndex === index) {
+      // Create a copy of steps and remove the specified one
+      const updatedSteps = workflowSteps.filter((_, index) => index !== stepIndex);
+
+      // If we're editing the step that's being removed, or a step after it,
+      // reset the editing state
+      if (editingStepIndex !== null && editingStepIndex >= stepIndex) {
         setEditingStepIndex(null);
+        // Reset current step
         setCurrentStep({
-          ...getInitialStepState(updatedSteps.length + 1),
-          workflow_id: current_workflow_id
+          workflow_id: currentWorkflowId || 'temp-workflow-id',
+          step_name: '',
+          step_type: 'decision',
+          approver_id: '',
+          instructions: '',
+          is_required: true,
+          approver_type: 'user',
+          step_order: updatedSteps.length + 1
         });
       }
+
+      // Update step order for all steps
+      const reorderedSteps = updatedSteps.map((step, index) => ({
+        ...step,
+        step_order: index + 1
+      }));
+
+      // Save the updated steps
+      await saveWorkflowSteps(reorderedSteps);
+
+      toast.success("تم حذف الخطوة بنجاح");
     } catch (error) {
-      console.error("Error during step removal:", error);
-      
-      // Provide more specific error messages for common issues
-      if (error.message && error.message.includes('صلاحية')) {
-        toast.error(`ليس لديك صلاحية لحذف خطوات سير العمل`);
-      } else {
-        toast.error(`فشل في حذف الخطوة: ${error.message}`);
-      }
+      console.error("Error removing step:", error);
+      toast.error(error.message || "حدث خطأ أثناء حذف الخطوة");
     }
   };
 
-  const handleEditStep = async (index: number, workflowSteps: WorkflowStep[], workflowId: string | null) => {
-    try {
-      // Check if user is authenticated
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error("يجب تسجيل الدخول لتعديل خطوات سير العمل");
-        return;
-      }
-
-      console.log("Editing step at index:", index);
-      const current_workflow_id = workflowId || 'temp-workflow-id';
-      const stepToEdit = {
-        ...workflowSteps[index],
-        workflow_id: workflowSteps[index].workflow_id || current_workflow_id
-      };
-      setCurrentStep(stepToEdit);
-      setEditingStepIndex(index);
-    } catch (error) {
-      console.error("Error checking authentication:", error);
-      toast.error(`فشل في التحقق من صلاحيات المستخدم: ${error.message}`);
-    }
+  // Function to put a step into edit mode
+  const handleEditStep = (stepIndex: number, workflowSteps: WorkflowStep[], currentWorkflowId: string | null) => {
+    if (stepIndex < 0 || stepIndex >= workflowSteps.length) return;
+    
+    const stepToEdit = workflowSteps[stepIndex];
+    setCurrentStep({
+      ...stepToEdit,
+      workflow_id: stepToEdit.workflow_id || currentWorkflowId || 'temp-workflow-id'
+    });
+    setEditingStepIndex(stepIndex);
   };
 
+  // Function to move a step up or down
   const handleMoveStep = async (
-    index: number,
-    direction: 'up' | 'down',
+    stepIndex: number, 
+    direction: 'up' | 'down', 
     workflowSteps: WorkflowStep[],
     editingStepIndex: number | null,
-    workflowId: string | null
+    currentWorkflowId: string | null
   ) => {
-    if (
-      (direction === 'up' && index === 0) || 
-      (direction === 'down' && index === workflowSteps.length - 1)
-    ) {
-      return;
-    }
-
     try {
+      // Check if move is possible
+      if (
+        (direction === 'up' && stepIndex === 0) || 
+        (direction === 'down' && stepIndex === workflowSteps.length - 1)
+      ) {
+        return; // Can't move beyond boundaries
+      }
+
       // Check if user is authenticated
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast.error("يجب تسجيل الدخول لتغيير ترتيب خطوات سير العمل");
+        toast.error("يجب تسجيل الدخول لتعديل ترتيب الخطوات");
         return;
       }
 
@@ -252,7 +236,6 @@ export const useStepManagement = ({
         
       if (roleError) {
         console.error("Error checking user roles:", roleError);
-        toast.error("خطأ في التحقق من صلاحيات المستخدم");
         return;
       }
       
@@ -270,37 +253,35 @@ export const useStepManagement = ({
         console.warn("User might not have permission to reorder workflow steps");
       }
 
-      const current_workflow_id = workflowId || 'temp-workflow-id';
-      const newIndex = direction === 'up' ? index - 1 : index + 1;
+      // Create a copy of the steps array
       const updatedSteps = [...workflowSteps];
-      
-      [updatedSteps[index], updatedSteps[newIndex]] = [updatedSteps[newIndex], updatedSteps[index]];
-      
-      updatedSteps.forEach((step, i) => {
-        step.step_order = i + 1;
-        step.workflow_id = step.workflow_id || current_workflow_id;
-      });
 
-      console.log(`Moving step ${index} ${direction} to ${newIndex}`);
-      console.log("Updated steps after move:", updatedSteps);
-      
-      await saveWorkflowSteps(updatedSteps);
-      toast.success(`تم ${direction === 'up' ? 'رفع' : 'خفض'} الخطوة بنجاح`);
-      
-      if (editingStepIndex === index) {
+      // Calculate the new index
+      const newIndex = direction === 'up' ? stepIndex - 1 : stepIndex + 1;
+
+      // Swap the steps
+      [updatedSteps[stepIndex], updatedSteps[newIndex]] = [updatedSteps[newIndex], updatedSteps[stepIndex]];
+
+      // Update step order for all steps
+      const reorderedSteps = updatedSteps.map((step, index) => ({
+        ...step,
+        step_order: index + 1
+      }));
+
+      // Save the updated steps
+      await saveWorkflowSteps(reorderedSteps);
+
+      // If we're editing one of the moved steps, update the editing index
+      if (editingStepIndex === stepIndex) {
         setEditingStepIndex(newIndex);
       } else if (editingStepIndex === newIndex) {
-        setEditingStepIndex(index);
+        setEditingStepIndex(stepIndex);
       }
+
+      toast.success("تم تغيير ترتيب الخطوات بنجاح");
     } catch (error) {
       console.error("Error moving step:", error);
-      
-      // Provide more specific error messages for common issues
-      if (error.message && error.message.includes('صلاحية')) {
-        toast.error(`ليس لديك صلاحية لتغيير ترتيب خطوات سير العمل`);
-      } else {
-        toast.error(`فشل في تحريك الخطوة: ${error.message}`);
-      }
+      toast.error(error.message || "حدث خطأ أثناء تغيير ترتيب الخطوات");
     }
   };
 
