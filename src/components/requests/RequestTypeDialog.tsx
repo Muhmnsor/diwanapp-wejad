@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -36,6 +36,8 @@ export const RequestTypeDialog = ({
   onRequestTypeCreated,
   requestType = null,
 }: RequestTypeDialogProps) => {
+  const [hasError, setHasError] = useState(false);
+  
   const {
     form,
     formFields,
@@ -65,6 +67,7 @@ export const RequestTypeDialog = ({
       console.error("Unhandled error:", event.error);
       toast.error("حدث خطأ غير متوقع في النظام");
       setFormError("حدث خطأ غير متوقع في النظام");
+      setHasError(true);
     };
 
     window.addEventListener('error', handleError);
@@ -79,9 +82,43 @@ export const RequestTypeDialog = ({
     e.stopPropagation();
   };
 
+  // Safely handle dialog closing
+  const handleDialogClose = (open: boolean) => {
+    if (!open && !isLoading) {
+      onClose();
+    }
+  };
+
+  // Prevent form submission if there's an error
+  const handleFormSubmit = (e: React.FormEvent) => {
+    if (hasError) {
+      e.preventDefault();
+      toast.error("يرجى معالجة الأخطاء قبل الحفظ");
+      return;
+    }
+    
+    // Continue with the form submission
+    form.handleSubmit(onSubmit)(e);
+  };
+
+  console.log("RequestTypeDialog render state:", { 
+    isOpen, 
+    isLoading, 
+    hasError,
+    formFields: formFields?.length,
+    workflowSteps: workflowSteps?.length
+  });
+
+  // Only render dialog content when isOpen is true
+  if (!isOpen) return null;
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl rtl max-h-[95vh] overflow-hidden flex flex-col" dir="rtl" onClick={handleDialogContentClick}>
+    <Dialog open={isOpen} onOpenChange={handleDialogClose}>
+      <DialogContent 
+        className="max-w-4xl rtl max-h-[95vh] overflow-hidden flex flex-col" 
+        dir="rtl" 
+        onClick={handleDialogContentClick}
+      >
         <DialogHeader>
           <DialogTitle>{isEditing ? "تعديل نوع الطلب" : "إضافة نوع طلب جديد"}</DialogTitle>
           <DialogDescription>
@@ -97,7 +134,7 @@ export const RequestTypeDialog = ({
         )}
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex-1 flex flex-col overflow-hidden">
+          <form onSubmit={handleFormSubmit} className="space-y-6 flex-1 flex flex-col overflow-hidden">
             <RequestTypeForm form={form} />
 
             <div className="flex-1 overflow-hidden space-y-6">
@@ -117,7 +154,7 @@ export const RequestTypeDialog = ({
                     />
 
                     <FormFieldsList
-                      formFields={formFields}
+                      formFields={formFields || []}
                       handleEditField={handleEditField}
                       handleRemoveField={handleRemoveField}
                     />
@@ -126,20 +163,25 @@ export const RequestTypeDialog = ({
                   <WorkflowStepsConfig 
                     requestTypeId={createdRequestTypeId}
                     onWorkflowStepsUpdated={handleWorkflowStepsUpdated}
-                    initialSteps={workflowSteps}
+                    initialSteps={workflowSteps || []}
                   />
                 </div>
               </ScrollArea>
             </div>
 
             <DialogFooter className="mt-4 flex-row-reverse sm:justify-start">
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading || hasError}>
                 {isLoading 
                   ? (isEditing ? "جارٍ التحديث..." : "جارٍ الإنشاء...") 
                   : (isEditing ? "تحديث نوع الطلب" : "إنشاء نوع الطلب")
                 }
               </Button>
-              <Button variant="outline" type="button" onClick={onClose}>
+              <Button 
+                variant="outline" 
+                type="button" 
+                onClick={() => !isLoading && onClose()}
+                disabled={isLoading}
+              >
                 إلغاء
               </Button>
             </DialogFooter>

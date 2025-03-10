@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { WorkflowStep } from "../../types";
 import { getInitialStepState } from "../utils";
 
@@ -12,11 +12,16 @@ export const useWorkflowState = ({
   initialSteps = [], 
   initialWorkflowId = null 
 }: UseWorkflowStateProps) => {
+  // Ensure initialSteps is always an array
+  const safeInitialSteps = Array.isArray(initialSteps) ? initialSteps : [];
+  
   // Always set a valid workflow ID, even if it's temporary
-  const defaultWorkflowId = initialWorkflowId || (initialSteps[0]?.workflow_id || 'temp-workflow-id');
+  const defaultWorkflowId = initialWorkflowId || 
+    (safeInitialSteps.length > 0 && safeInitialSteps[0]?.workflow_id) || 
+    'temp-workflow-id';
   
   // Ensure all steps have a workflow_id
-  const processedInitialSteps = initialSteps.map(step => ({
+  const processedInitialSteps = safeInitialSteps.map(step => ({
     ...step,
     workflow_id: step.workflow_id || defaultWorkflowId
   }));
@@ -28,16 +33,24 @@ export const useWorkflowState = ({
     defaultWorkflowId
   ));
   const [editingStepIndex, setEditingStepIndex] = useState<number | null>(null);
-  const [initialized, setInitialized] = useState(initialSteps.length > 0);
+  const [initialized, setInitialized] = useState(processedInitialSteps.length > 0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   console.log("[useWorkflowState] Initial state:", {
     workflowId,
     stepsCount: workflowSteps.length,
-    currentStep,
     initialized
   });
+
+  useEffect(() => {
+    // Log state changes for debugging
+    console.log("[useWorkflowState] State updated:", {
+      workflowId,
+      stepsCount: workflowSteps.length,
+      initialized
+    });
+  }, [workflowId, workflowSteps, initialized]);
 
   return {
     workflowId,
