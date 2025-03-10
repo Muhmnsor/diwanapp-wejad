@@ -1,5 +1,5 @@
 
--- UPDATED FUNCTION: Insert workflow steps bypassing RLS with improved UUID validation and error handling
+-- UPDATED FUNCTION: Insert workflow steps bypassing RLS with improved UUID validation, explicit column referencing, and more robust error handling
 CREATE OR REPLACE FUNCTION public.insert_workflow_steps(steps jsonb[])
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -17,6 +17,14 @@ DECLARE
   v_is_valid_uuid boolean;
   v_step_id uuid;
   v_loop_index int;
+  v_step_order int;
+  v_step_name text;
+  v_step_type text;
+  v_approver_id uuid;
+  v_approver_type text;
+  v_instructions text;
+  v_is_required boolean;
+  v_created_at timestamptz;
 BEGIN
   -- Start transaction to ensure all steps are inserted or none
   BEGIN
@@ -69,11 +77,11 @@ BEGIN
       WHERE workflow_id = ANY(v_workflow_ids);
     END IF;
     
-    -- Process each step
+    -- Process each step - FIXED: Using variables to avoid ambiguous column references
     FOR v_loop_index IN 1..v_step_count LOOP
       step := steps[v_loop_index];
       
-      -- Ensure workflow_id is a valid UUID before casting
+      -- Extract all values into variables first to avoid ambiguity
       BEGIN
         v_workflow_id := (step->>'workflow_id')::uuid;
       EXCEPTION WHEN others THEN
@@ -85,39 +93,32 @@ BEGIN
         RAISE EXCEPTION 'Workflow with ID % does not exist', v_workflow_id;
       END IF;
       
-      -- Validate other required fields
+      -- Validate and extract step_name
       IF step->>'step_name' IS NULL OR (step->>'step_name') = '' THEN
         RAISE EXCEPTION 'Step name is required for step %', v_loop_index;
       END IF;
+      v_step_name := step->>'step_name';
       
+      -- Validate and extract approver_id
       IF step->>'approver_id' IS NULL OR (step->>'approver_id') = '' THEN
         RAISE EXCEPTION 'Approver ID is required for step %', v_loop_index;
       END IF;
       
       -- Validate approver_id is a valid UUID
-      DECLARE
-        v_approver_id uuid;
-        v_is_valid_approver_uuid boolean;
       BEGIN
-        BEGIN
-          v_approver_id := (step->>'approver_id')::uuid;
-          v_is_valid_approver_uuid := true;
-        EXCEPTION WHEN others THEN
-          RAISE NOTICE 'Invalid UUID format for approver_id in step %: %', v_loop_index, step->>'approver_id';
-          v_is_valid_approver_uuid := false;
-        END;
-        
-        IF NOT v_is_valid_approver_uuid THEN
-          RAISE EXCEPTION 'Invalid UUID format for approver_id in step %: %', v_loop_index, step->>'approver_id';
-        END IF;
+        v_approver_id := (step->>'approver_id')::uuid;
+      EXCEPTION WHEN others THEN
+        RAISE EXCEPTION 'Invalid UUID format for approver_id in step %: %', v_loop_index, step->>'approver_id';
       END;
       
-      -- Check if approver exists (user table)
-      IF NOT EXISTS (SELECT 1 FROM auth.users WHERE id = (step->>'approver_id')::uuid) THEN
-        RAISE NOTICE 'User with ID % does not exist - creating step anyway', step->>'approver_id';
-      END IF;
+      -- Extract other fields with default values if missing
+      v_step_order := COALESCE((step->>'step_order')::integer, v_loop_index);
+      v_step_type := COALESCE(step->>'step_type', 'decision');
+      v_approver_type := COALESCE(step->>'approver_type', 'user');
+      v_instructions := step->>'instructions';
+      v_is_required := COALESCE((step->>'is_required')::boolean, true);
       
-      -- Create new step or reuse ID if provided
+      -- Check if step ID is provided and valid
       IF step->>'id' IS NOT NULL AND (step->>'id') != '' AND (step->>'id') != 'null' THEN
         BEGIN
           v_step_id := (step->>'id')::uuid;
@@ -128,8 +129,20 @@ BEGIN
         v_step_id := uuid_generate_v4();
       END IF;
       
-      RAISE NOTICE 'Inserting step % with ID %', v_loop_index, v_step_id;
+      -- Set creation timestamp
+      IF step->>'created_at' IS NOT NULL THEN
+        BEGIN
+          v_created_at := (step->>'created_at')::timestamp with time zone;
+        EXCEPTION WHEN others THEN
+          v_created_at := now();
+        END;
+      ELSE
+        v_created_at := now();
+      END IF;
       
+      RAISE NOTICE 'Inserting step % with ID % and workflow_id %', v_loop_index, v_step_id, v_workflow_id;
+      
+      -- Insert the step with explicit column names to prevent ambiguity
       BEGIN
         INSERT INTO workflow_steps (
           id,
@@ -145,31 +158,28 @@ BEGIN
         ) VALUES (
           v_step_id,
           v_workflow_id,
-          (step->>'step_order')::integer,
-          step->>'step_name',
-          COALESCE(step->>'step_type', 'decision'),
-          (step->>'approver_id')::uuid,
-          COALESCE(step->>'approver_type', 'user'),
-          step->>'instructions',
-          COALESCE((step->>'is_required')::boolean, true),
-          COALESCE(
-            (step->>'created_at')::timestamp with time zone,
-            now()
-          )
+          v_step_order,
+          v_step_name,
+          v_step_type,
+          v_approver_id,
+          v_approver_type,
+          v_instructions,
+          v_is_required,
+          v_created_at
         );
         
         -- Add to inserted steps array
         inserted_steps := array_append(inserted_steps, jsonb_build_object(
           'id', v_step_id,
           'workflow_id', v_workflow_id,
-          'step_order', (step->>'step_order')::integer,
-          'step_name', step->>'step_name',
-          'step_type', COALESCE(step->>'step_type', 'decision'),
-          'approver_id', (step->>'approver_id')::uuid,
-          'approver_type', COALESCE(step->>'approver_type', 'user'),
-          'instructions', step->>'instructions',
-          'is_required', COALESCE((step->>'is_required')::boolean, true),
-          'created_at', now()
+          'step_order', v_step_order,
+          'step_name', v_step_name,
+          'step_type', v_step_type,
+          'approver_id', v_approver_id,
+          'approver_type', v_approver_type,
+          'instructions', v_instructions,
+          'is_required', v_is_required,
+          'created_at', v_created_at
         ));
         
         RAISE NOTICE 'Successfully inserted step %', v_loop_index;
