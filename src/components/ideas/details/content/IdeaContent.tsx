@@ -103,21 +103,30 @@ export const IdeaContent = ({
   // تحديث بيانات القرار بعد التغيير
   const handleDecisionStatusChange = async () => {
     try {
-      // إعادة تحميل بيانات القرار
       console.log("Refreshing decision data after update");
       setIsLoadingDecision(true);
       
-      // إعادة تحميل بيانات الفكرة
+      // إعادة تحميل بيانات الفكرة لتحديث الحالة
       const { data: updatedIdea, error: ideaError } = await supabase
         .from("ideas")
         .select("*")
         .eq("id", idea.id)
         .single();
         
-      if (ideaError) throw ideaError;
+      if (ideaError) {
+        console.error("Error fetching updated idea:", ideaError);
+        throw ideaError;
+      }
       
-      // تحديث بيانات القرار
-      const { data: updatedDecision, error: decisionError } = await supabase
+      // تحديث بيانات الفكرة في المكون
+      if (updatedIdea) {
+        // تحديث حالة الفكرة محليًا
+        Object.assign(idea, updatedIdea);
+        console.log("Updated idea status:", updatedIdea.status);
+      }
+      
+      // إعادة تحميل بيانات القرار
+      const { data: refreshedDecision, error: decisionError } = await supabase
         .from('idea_decisions')
         .select('*')
         .eq('idea_id', idea.id)
@@ -125,17 +134,16 @@ export const IdeaContent = ({
         .limit(1)
         .maybeSingle();
         
-      if (decisionError) throw decisionError;
-      
-      // تحديث البيانات
-      if (updatedIdea) {
-        Object.assign(idea, updatedIdea);
+      if (decisionError) {
+        console.error("Error fetching updated decision:", decisionError);
+        throw decisionError;
       }
       
-      setDecision(updatedDecision);
-      console.log("Decision updated successfully:", updatedDecision);
+      // تحديث القرار المحلي (قد يكون null إذا تم حذف القرار)
+      setDecision(refreshedDecision);
+      console.log("Decision updated:", refreshedDecision);
       
-      toast.success("تم تحديث بيانات القرار بنجاح");
+      toast.success("تم تحديث بيانات الفكرة والقرار بنجاح");
     } catch (error) {
       console.error("Error updating decision data:", error);
       toast.error("حدث خطأ أثناء تحديث بيانات القرار");

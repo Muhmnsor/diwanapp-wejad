@@ -25,7 +25,7 @@ export const DecisionSection = ({
   const [reason, setReason] = useState<string>(decision?.reason || "");
   const [timeline, setTimeline] = useState<string>(decision?.timeline || "");
   const [budget, setBudget] = useState<string>(decision?.budget || "");
-  const [localDecision, setLocalDecision] = useState<Decision | undefined>(decision);
+  const [localDecision, setLocalDecision] = useState<Decision | null>(decision || null);
   
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -40,10 +40,9 @@ export const DecisionSection = ({
     ideaId, 
     status, 
     isAdmin, 
-    hasExistingDecision: Boolean(decision?.id),  
-    decisionFullDetails: decision,
+    hasExistingDecision: Boolean(localDecision?.id),  
+    decisionFullDetails: localDecision,
     ideaStatus: status,
-    localDecision,
     userRole: user?.role,
     canManageDecisions
   });
@@ -51,7 +50,28 @@ export const DecisionSection = ({
   const hasDecision = Boolean(localDecision?.id);
   
   useEffect(() => {
-    setLocalDecision(decision);
+    // تحديث البيانات المحلية عند تغير بيانات القرار من الأب
+    if (decision) {
+      setLocalDecision(decision);
+      setNewStatus(decision.status || "pending_decision");
+      setReason(decision.reason || "");
+      setTimeline(decision.timeline || "");
+      setBudget(decision.budget || "");
+      
+      if (decision.assignee) {
+        try {
+          const parsedAssignees = JSON.parse(decision.assignee);
+          if (Array.isArray(parsedAssignees)) {
+            setAssignees(parsedAssignees);
+          }
+        } catch (e) {
+          console.log("Cannot parse assignee data:", decision.assignee);
+        }
+      }
+    } else {
+      // إذا كان القرار null، يجب تحديث الحالة المحلية أيضًا
+      setLocalDecision(null);
+    }
   }, [decision]);
   
   useEffect(() => {
@@ -118,6 +138,7 @@ export const DecisionSection = ({
     try {
       console.log("Starting deletion process for decision:", localDecision.id);
       
+      // تحديث حالة الفكرة إلى قيد المناقشة
       const { error: ideaError } = await supabase
         .from("ideas")
         .update({ status: "under_review" })
@@ -130,6 +151,7 @@ export const DecisionSection = ({
       
       console.log("Successfully updated idea status to under_review");
       
+      // حذف القرار من قاعدة البيانات
       const { error: deleteError } = await supabase
         .from("idea_decisions")
         .delete()
@@ -142,15 +164,17 @@ export const DecisionSection = ({
       
       console.log("Successfully deleted decision");
       
-      setLocalDecision(undefined);
+      // تحديث الحالة المحلية
+      setLocalDecision(null);
       setAssignees([]);
       setReason("");
       setTimeline("");
       setBudget("");
-      setNewStatus("pending_decision");
+      setNewStatus("under_review");
       
       toast.success("تم حذف القرار بنجاح");
       
+      // إبلاغ المكون الأب بالتغييرات
       if (onStatusChange) {
         onStatusChange();
       }
@@ -209,21 +233,20 @@ export const DecisionSection = ({
       
       console.log("New decision created:", newDecision);
       
-      if (newStatus !== status) {
-        console.log("Updating idea status from", status, "to", newStatus);
-        const { error: ideaError } = await supabase
-          .from("ideas")
-          .update({ status: newStatus })
-          .eq("id", ideaId);
+      // تحديث حالة الفكرة لتعكس القرار الجديد
+      const { error: ideaError } = await supabase
+        .from("ideas")
+        .update({ status: newStatus })
+        .eq("id", ideaId);
           
-        if (ideaError) {
-          console.error("Error updating idea status:", ideaError);
-          throw ideaError;
-        }
-        
-        console.log("Successfully updated idea status");
+      if (ideaError) {
+        console.error("Error updating idea status:", ideaError);
+        throw ideaError;
       }
+        
+      console.log("Successfully updated idea status to", newStatus);
       
+      // تحديث الحالة المحلية
       if (newDecision) {
         setLocalDecision(newDecision);
         setNewStatus(newStatus);
@@ -236,6 +259,7 @@ export const DecisionSection = ({
       toast.success("تم حفظ القرار بنجاح");
       setIsEditing(false);
       
+      // إبلاغ المكون الأب بالتغييرات
       if (onStatusChange) {
         onStatusChange();
       }
@@ -247,29 +271,6 @@ export const DecisionSection = ({
       setIsSubmitting(false);
     }
   };
-
-  useEffect(() => {
-    if (localDecision?.assignee) {
-      try {
-        const parsedAssignees = JSON.parse(localDecision.assignee);
-        if (Array.isArray(parsedAssignees)) {
-          setAssignees(parsedAssignees);
-          console.log("تم تحميل قائمة المكلفين بنجاح:", parsedAssignees);
-        }
-      } catch (e) {
-        console.log("Cannot parse assignee data, might be old format:", localDecision.assignee);
-      }
-    }
-  }, [localDecision]);
-
-  useEffect(() => {
-    if (localDecision) {
-      setNewStatus(localDecision.status || "pending_decision");
-      setReason(localDecision.reason || "");
-      setTimeline(localDecision.timeline || "");
-      setBudget(localDecision.budget || "");
-    }
-  }, [localDecision]);
 
   // تحديث المنطق للسماح فقط للمدراء باتخاذ القرارات
   const showDecisionForm = !hasDecision || (canManageDecisions && isEditing);

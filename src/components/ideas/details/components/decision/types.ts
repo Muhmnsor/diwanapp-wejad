@@ -5,7 +5,7 @@ export interface DecisionProps {
   isAdmin?: boolean; 
   onStatusChange?: () => void;
   ideaTitle?: string;
-  decision?: Decision;
+  decision?: Decision | null;
 }
 
 export interface Decision {
@@ -40,7 +40,7 @@ export interface DecisionFormProps {
 }
 
 export interface DecisionDisplayProps {
-  decision?: Decision;
+  decision?: Decision | null;
   status: string;
   reason: string;
   assignees: AssigneeItem[];
