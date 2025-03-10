@@ -15,7 +15,13 @@ export {
 // Initialize developer features on application start
 export const initializeDeveloperFeatures = async (): Promise<void> => {
   try {
+    // Initialize developer role and make sure it exists
     await initializeDeveloperRole();
+    
+    // Auto-assign developer role to admin users if needed
+    // This can be commented out if you don't want to automatically assign roles
+    // await autoAssignDeveloperRole();
+    
     console.log('Developer features initialized successfully');
   } catch (error) {
     console.error('Failed to initialize developer features:', error);

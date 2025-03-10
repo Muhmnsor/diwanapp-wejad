@@ -10,7 +10,6 @@ import Finance from "@/pages/Finance";
 import WebsiteManagement from "@/pages/WebsiteManagement";
 import StoreManagement from "@/pages/StoreManagement";
 import UsersManagement from "@/pages/UsersManagement";
-import DeveloperSettings from "@/pages/DeveloperSettings";
 import Notifications from "@/pages/Notifications";
 import RequestsManagement from "@/pages/RequestsManagement";
 import React from "react";
@@ -96,15 +95,6 @@ export const ProtectedRoutes = [
       <ProtectedRoute>
         <UsersManagement />
       </ProtectedRoute>
-    } 
-  />,
-  <Route 
-    key="developer-settings"
-    path="/developer-settings" 
-    element={
-      <DeveloperRoute>
-        <DeveloperSettings />
-      </DeveloperRoute>
     } 
   />,
   <Route 

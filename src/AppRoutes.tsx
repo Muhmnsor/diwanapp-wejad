@@ -8,11 +8,18 @@ import { TaskRoutes } from "./routes/TaskRoutes";
 import { DeveloperRoutes } from "./routes/DeveloperRoutes";
 import { DeveloperToolbar } from "./components/developer/DeveloperToolbar";
 import { useEffect, useState } from "react";
-import { isDeveloper } from "./utils/developerRole";
+import { isDeveloper, initializeDeveloperFeatures } from "./utils/developerRole";
 
 const AppRoutes = () => {
   const { isAuthenticated, user } = useAuthStore();
   const [showDevTools, setShowDevTools] = useState(false);
+  
+  useEffect(() => {
+    // Initialize developer features when the app starts
+    if (isAuthenticated && user) {
+      initializeDeveloperFeatures().catch(console.error);
+    }
+  }, [isAuthenticated, user]);
   
   useEffect(() => {
     const checkDeveloperStatus = async () => {

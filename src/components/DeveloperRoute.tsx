@@ -26,9 +26,17 @@ const DeveloperRoute = ({ children }: DeveloperRouteProps) => {
       }
 
       try {
-        // Check if the user has developer role
+        // Check if the user has developer role or is admin
         const hasDeveloper = await isDeveloper(user.id);
         setHasDeveloperAccess(hasDeveloper || user.isAdmin);
+        
+        // Log the result for debugging
+        console.log('Developer access check:', { 
+          userId: user.id, 
+          isAdmin: user.isAdmin,
+          hasDeveloperRole: hasDeveloper,
+          hasDeveloperAccess: hasDeveloper || user.isAdmin
+        });
       } catch (error) {
         console.error('Error checking developer access:', error);
         setHasDeveloperAccess(false);
