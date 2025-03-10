@@ -13,12 +13,14 @@ interface WorkflowStepsConfigProps {
   requestTypeId: string | null;
   onWorkflowStepsUpdated: (steps: WorkflowStep[]) => void;
   initialSteps?: WorkflowStep[];
+  workflowId?: string | null;
 }
 
 export const WorkflowStepsConfig = ({ 
   requestTypeId, 
   onWorkflowStepsUpdated,
-  initialSteps = []
+  initialSteps = [],
+  workflowId = null
 }: WorkflowStepsConfigProps) => {
   const {
     workflowSteps,
@@ -35,7 +37,8 @@ export const WorkflowStepsConfig = ({
   } = useWorkflowSteps({ 
     requestTypeId, 
     onWorkflowStepsUpdated,
-    initialSteps
+    initialSteps,
+    initialWorkflowId: workflowId
   });
 
   // Display error if there's any

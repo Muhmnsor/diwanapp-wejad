@@ -4,11 +4,11 @@ export interface WorkflowStep {
   workflow_id: string;  // Ensure this is required
   step_order: number;
   step_name: string;
-  step_type?: string;
+  step_type: string;
   approver_id: string | null;
-  approver_type?: string;
+  approver_type: string;
   instructions: string | null;
-  is_required?: boolean;
+  is_required: boolean;
   created_at: string | null;
 }
 
@@ -40,7 +40,7 @@ export interface FormField {
   label: string;
   name: string;
   required?: boolean;
-  options?: { label: string; value: string }[];
+  options?: Array<string | { label: string; value: string }>;
   placeholder?: string;
   subfields?: FormField[];
   [key: string]: any;
