@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -16,6 +17,7 @@ import { assignDeveloperRole, removeDeveloperRole } from "@/utils/developerRoleI
 import { checkDeveloperPermissions } from "@/components/users/permissions/utils/developerPermissionUtils";
 import { DeveloperPermissionChecks } from "@/components/users/permissions/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SecondaryHeader } from "@/components/settings/developer/SecondaryHeader";
 
 const DeveloperSettings = () => {
   const { settings, isLoading, updateSettings, fetchSettings } = useDeveloperStore();
@@ -91,6 +93,7 @@ const DeveloperSettings = () => {
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
       <AdminHeader />
+      <SecondaryHeader />
       
       <div className="container mx-auto px-4 py-8 flex-grow">
         <div className="flex justify-between items-center mb-6">
