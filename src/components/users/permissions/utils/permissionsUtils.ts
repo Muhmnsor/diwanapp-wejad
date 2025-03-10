@@ -1,9 +1,9 @@
 
-import { Module, Permission } from "../types";
+import { Module, PermissionData } from "../types";
 
 // Organize permissions by module
-export const organizePermissionsByModule = (permissions: Permission[]): Module[] => {
-  const moduleMap: Record<string, Permission[]> = {};
+export const organizePermissionsByModule = (permissions: PermissionData[]): Module[] => {
+  const moduleMap: Record<string, PermissionData[]> = {};
   
   permissions.forEach(permission => {
     if (!moduleMap[permission.module]) {
@@ -15,7 +15,7 @@ export const organizePermissionsByModule = (permissions: Permission[]): Module[]
   // Make sure tasks module includes general tasks permissions
   if (moduleMap["tasks"] && !moduleMap["general_tasks"]) {
     const generalTaskPermissions = permissions.filter(p => 
-      p.name.includes("general_task") || p.description.includes("مهام عامة")
+      p.name.toString().includes("general_task") || p.description.includes("مهام عامة")
     );
     
     if (generalTaskPermissions.length > 0) {
@@ -25,7 +25,7 @@ export const organizePermissionsByModule = (permissions: Permission[]): Module[]
   
   return Object.entries(moduleMap).map(([name, perms]) => ({
     name,
-    permissions: perms.sort((a, b) => a.name.localeCompare(b.name)),
+    permissions: perms.sort((a, b) => a.name.toString().localeCompare(b.name.toString())),
     isOpen: false
   }));
 };

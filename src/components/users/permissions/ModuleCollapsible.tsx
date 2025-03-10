@@ -1,5 +1,5 @@
 
-import { Module } from "./types";
+import { Module, PermissionData } from "./types";
 import { ModuleHeader } from "./components/ModuleHeader";
 import { ModulePermissionsContent } from "./components/ModulePermissionsContent";
 

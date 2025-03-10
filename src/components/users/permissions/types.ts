@@ -1,36 +1,34 @@
 
-export type DeveloperPermission = 
-  | 'view_developer_tools'
-  | 'manage_developer_settings'
-  | 'view_performance_metrics';
+import { 
+  DeveloperPermission, 
+  UserPermission, 
+  EventPermission, 
+  TaskPermission, 
+  ProjectPermission,
+  Permission
+} from '@/components/users/permissions/types';
 
-export type UserPermission =
-  | 'view_users'
-  | 'create_users'
-  | 'edit_users'
-  | 'delete_users';
+export interface PermissionData {
+  id: string;
+  name: Permission;
+  description: string;
+  module: string;
+  created_at?: string;
+  updated_at?: string;
+}
 
-export type EventPermission =
-  | 'create_events'
-  | 'edit_events'
-  | 'delete_events'
-  | 'approve_events';
+export interface Module {
+  name: string;
+  permissions: PermissionData[];
+  isOpen: boolean;
+}
 
-export type TaskPermission =
-  | 'create_tasks'
-  | 'edit_tasks'
-  | 'delete_tasks'
-  | 'assign_tasks';
-
-export type ProjectPermission =
-  | 'create_projects'
-  | 'edit_projects'
-  | 'delete_projects'
-  | 'approve_projects';
-
-export type Permission =
-  | UserPermission
-  | EventPermission
-  | TaskPermission
-  | ProjectPermission
-  | DeveloperPermission;
+// قم بتصدير الأنواع التي تم استيرادها لمنع تعارض التعريفات المتكررة
+export type { 
+  DeveloperPermission, 
+  UserPermission, 
+  EventPermission, 
+  TaskPermission, 
+  ProjectPermission,
+  Permission 
+} from '@/components/users/permissions/types';

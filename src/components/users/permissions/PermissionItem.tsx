@@ -1,9 +1,9 @@
 
 import { Checkbox } from "@/components/ui/checkbox";
-import { Permission } from "./types";
+import { PermissionData } from "./types";
 
 interface PermissionItemProps {
-  permission: Permission;
+  permission: PermissionData;
   isChecked: boolean;
   onToggle: (permissionId: string) => void;
 }
@@ -24,7 +24,7 @@ export const PermissionItem = ({
         htmlFor={`permission-${permission.id}`}
         className="text-sm leading-none cursor-pointer select-none"
       >
-        {permission.name}
+        {permission.name.toString()}
       </label>
     </div>
   );

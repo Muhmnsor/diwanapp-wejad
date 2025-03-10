@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Module } from "../types";
+import { Module, PermissionData } from "../types";
 
 export const usePermissionOperations = (initialPermissions: string[] = []) => {
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>(initialPermissions);

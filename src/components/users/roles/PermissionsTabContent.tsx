@@ -5,16 +5,16 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
 interface PermissionsTabContentProps {
-  selectedRole: Role | null;
+  selectedRole: Role | undefined;
 }
 
 export const PermissionsTabContent = ({ selectedRole }: PermissionsTabContentProps) => {
   if (!selectedRole) {
     return (
       <Alert className="mb-4">
-        <AlertCircle className="h-4 w-4" />
+        <AlertCircle className="h-4 w-4 ml-2" />
         <AlertDescription>
-          الرجاء اختيار دور أولاً لعرض وتعديل الصلاحيات
+          يرجى اختيار دور أولاً لعرض وتعديل الصلاحيات
         </AlertDescription>
       </Alert>
     );

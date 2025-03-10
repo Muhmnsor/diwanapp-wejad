@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Module } from "./types";
+import { Module, PermissionData } from "./types";
 import { Role } from "../types";
 import { fetchPermissions, fetchRolePermissions, saveRolePermissions } from "./api/permissionsApi";
 import { organizePermissionsByModule } from "./utils/permissionsUtils";

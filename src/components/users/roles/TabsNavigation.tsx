@@ -1,5 +1,4 @@
 
-import { Role } from "../types";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface TabsNavigationProps {
@@ -8,10 +7,16 @@ interface TabsNavigationProps {
 
 export const TabsNavigation = ({ selectedRoleId }: TabsNavigationProps) => {
   return (
-    <TabsList>
-      <TabsTrigger value="roles">قائمة الأدوار</TabsTrigger>
-      <TabsTrigger value="permissions" disabled={!selectedRoleId}>
-        صلاحيات الدور
+    <TabsList className="w-full mb-4">
+      <TabsTrigger value="roles" className="flex-1">
+        الأدوار
+      </TabsTrigger>
+      <TabsTrigger 
+        value="permissions" 
+        className="flex-1"
+        disabled={!selectedRoleId}
+      >
+        الصلاحيات
       </TabsTrigger>
     </TabsList>
   );

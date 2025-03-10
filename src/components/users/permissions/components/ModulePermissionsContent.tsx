@@ -1,9 +1,9 @@
 
-import { Permission } from "../types";
+import { PermissionData } from "../types";
 import { PermissionItem } from "../PermissionItem";
 
 interface ModulePermissionsContentProps {
-  permissions: Permission[];
+  permissions: PermissionData[];
   selectedPermissions: string[];
   onPermissionToggle: (permissionId: string) => void;
 }
