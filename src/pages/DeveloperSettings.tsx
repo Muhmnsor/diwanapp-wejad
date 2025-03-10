@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Code, Settings, Apps } from "lucide-react";
+import { Code, Settings, LayoutGrid } from "lucide-react";
 import { useAuthStore } from "@/store/refactored-auth";
 import { isDeveloper } from "@/utils/developer/roleManagement";
 import { AppPermissionsTab } from "@/components/developer/AppPermissionsTab";
@@ -62,7 +62,7 @@ const DeveloperSettings = () => {
         <Tabs defaultValue="apps" className="space-y-6">
           <TabsList className="mb-4">
             <TabsTrigger value="apps" className="flex items-center gap-2">
-              <Apps className="h-4 w-4" />
+              <LayoutGrid className="h-4 w-4" />
               صلاحيات التطبيقات
             </TabsTrigger>
             <TabsTrigger value="developer-mode" className="flex items-center gap-2">
