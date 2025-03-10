@@ -7,6 +7,8 @@ export const useFinancialData = () => {
   const [financialData, setFinancialData] = useState({
     totalResources: 0,
     totalExpenses: 0,
+    totalObligations: 0,
+    totalCashFlow: 0,
     resourcesTarget: 0,
     resourcesPercentage: 0,
     resourcesRemaining: 0,
@@ -37,17 +39,10 @@ export const useFinancialData = () => {
       const resourceTargets = currentYearTargets.filter(target => target.type === "موارد");
       const expenseTargets = currentYearTargets.filter(target => target.type === "مصروفات");
       
-      // Calculate totals
-      const totalResources = resourceTargets.reduce((sum, target) => sum + target.actual_amount, 0);
-      const totalExpenses = expenseTargets.reduce((sum, target) => sum + target.actual_amount, 0);
-      const resourcesTarget = resourceTargets.reduce((sum, target) => sum + target.target_amount, 0);
-      const resourcesPercentage = resourcesTarget > 0 ? Math.round((totalResources / resourcesTarget) * 100) : 0;
-      const resourcesRemaining = resourcesTarget - totalResources > 0 ? resourcesTarget - totalResources : 0;
-      
       // Fetch resources data
       const { data: resourcesData, error: resourcesError } = await supabase
         .from('financial_resources')
-        .select('*')
+        .select('*, total_amount, obligations_amount')
         .order('date', { ascending: false });
       
       if (resourcesError) throw resourcesError;
@@ -66,9 +61,20 @@ export const useFinancialData = () => {
         budget_item_name: expense.budget_items?.name || 'غير محدد'
       }));
       
+      // Calculate totals
+      const totalResources = resourcesData.reduce((sum, resource) => sum + resource.net_amount, 0);
+      const totalExpenses = expensesData.reduce((sum, expense) => sum + expense.amount, 0);
+      const totalObligations = resourcesData.reduce((sum, resource) => sum + (resource.obligations_amount || 0), 0);
+      const totalCashFlow = resourcesData.reduce((sum, resource) => sum + (resource.total_amount || 0), 0);
+      const resourcesTarget = resourceTargets.reduce((sum, target) => sum + target.target_amount, 0);
+      const resourcesPercentage = resourcesTarget > 0 ? Math.round((totalResources / resourcesTarget) * 100) : 0;
+      const resourcesRemaining = resourcesTarget - totalResources > 0 ? resourcesTarget - totalResources : 0;
+      
       setFinancialData({
         totalResources,
         totalExpenses,
+        totalObligations,
+        totalCashFlow,
         resourcesTarget,
         resourcesPercentage,
         resourcesRemaining,

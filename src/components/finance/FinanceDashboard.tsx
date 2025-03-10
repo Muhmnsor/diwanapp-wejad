@@ -20,7 +20,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { Wallet, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, DollarSign, ArrowDownUp, FileText } from "lucide-react";
 import { BudgetItemsTable } from "./BudgetItemsTable";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -29,9 +29,11 @@ export const FinanceDashboard = () => {
   const [dashboardData, setDashboardData] = useState({
     totalResources: 0,
     totalExpenses: 0,
+    totalObligations: 0,
+    totalCashFlow: 0,
     remainingBalance: 0,
     expensePercentage: 0,
-    transactionsCount: { resources: 0, expenses: 0 }
+    transactionsCount: { resources: 0, expenses: 0, obligations: 0 }
   });
   const [pieData, setPieData] = useState<{ name: string; value: number; color: string }[]>([]);
   const [monthlyData, setMonthlyData] = useState<{ name: string; الموارد: number; المصروفات: number }[]>([]);
@@ -51,7 +53,7 @@ export const FinanceDashboard = () => {
       // 1. جلب إجمالي الموارد
       const { data: resourcesData, error: resourcesError } = await supabase
         .from('financial_resources')
-        .select('net_amount, date');
+        .select('net_amount, total_amount, obligations_amount, date');
       
       if (resourcesError) throw resourcesError;
       
@@ -76,9 +78,18 @@ export const FinanceDashboard = () => {
       
       if (expensesByItemError) throw expensesByItemError;
       
+      // 5. جلب بيانات الالتزامات
+      const { data: obligationsData, error: obligationsError } = await supabase
+        .from('resource_obligations')
+        .select('amount');
+        
+      if (obligationsError) throw obligationsError;
+      
       // حساب المجاميع
       const totalResources = resourcesData.reduce((sum, resource) => sum + resource.net_amount, 0);
       const totalExpenses = expensesData.reduce((sum, expense) => sum + expense.amount, 0);
+      const totalObligations = resourcesData.reduce((sum, resource) => sum + resource.obligations_amount, 0);
+      const totalCashFlow = resourcesData.reduce((sum, resource) => sum + resource.total_amount, 0);
       const remainingBalance = totalResources - totalExpenses;
       const expensePercentage = totalResources > 0 ? Math.round((totalExpenses / totalResources) * 100) : 0;
       
@@ -107,11 +118,14 @@ export const FinanceDashboard = () => {
       setDashboardData({
         totalResources,
         totalExpenses,
+        totalObligations,
+        totalCashFlow,
         remainingBalance,
         expensePercentage,
         transactionsCount: {
           resources: resourcesData.length,
-          expenses: expensesData.length
+          expenses: expensesData.length,
+          obligations: obligationsData.length
         }
       });
       
@@ -168,9 +182,9 @@ export const FinanceDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
         {/* بطاقة إجمالي الموارد */}
-        <Card>
+        <Card className="lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">إجمالي الموارد</CardTitle>
             <Wallet className="h-4 w-4 text-muted-foreground" />
@@ -184,8 +198,38 @@ export const FinanceDashboard = () => {
           </CardContent>
         </Card>
 
+        {/* بطاقة إجمالي التدفقات (الموارد بالالتزامات) - البطاقة الجديدة الأولى */}
+        <Card className="lg:col-span-1">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">إجمالي التدفقات</CardTitle>
+            <ArrowDownUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{dashboardData.totalCashFlow.toLocaleString()} ريال</div>
+            <p className="text-xs text-muted-foreground">
+              <TrendingUp className="inline h-4 w-4 ml-1 text-blue-500" />
+              الموارد مع الالتزامات
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* بطاقة إجمالي الالتزامات - البطاقة الجديدة الثانية */}
+        <Card className="lg:col-span-1">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">إجمالي الالتزامات</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{dashboardData.totalObligations.toLocaleString()} ريال</div>
+            <p className="text-xs text-muted-foreground">
+              <TrendingDown className="inline h-4 w-4 ml-1 text-yellow-500" />
+              عدد الالتزامات: {dashboardData.transactionsCount.obligations}
+            </p>
+          </CardContent>
+        </Card>
+
         {/* بطاقة إجمالي المصروفات */}
-        <Card>
+        <Card className="lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">إجمالي المصروفات</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -200,7 +244,7 @@ export const FinanceDashboard = () => {
         </Card>
 
         {/* بطاقة الرصيد المتبقي */}
-        <Card>
+        <Card className="lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">الرصيد المتبقي</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -214,7 +258,7 @@ export const FinanceDashboard = () => {
         </Card>
 
         {/* بطاقة أرقام إضافية */}
-        <Card>
+        <Card className="lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">عدد المعاملات</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />

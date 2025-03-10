@@ -5,6 +5,8 @@ interface FinancialSummaryCardProps {
   financialData: {
     totalResources: number;
     totalExpenses: number;
+    totalObligations?: number;
+    totalCashFlow?: number;
     resourcesTarget: number;
     resourcesPercentage: number;
     resourcesRemaining: number;
@@ -38,6 +40,18 @@ export const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
                 <span className="text-muted-foreground">إجمالي الموارد:</span>
                 <span className="font-medium">{formatCurrency(financialData.totalResources)}</span>
               </div>
+              {financialData.totalCashFlow !== undefined && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">إجمالي التدفقات:</span>
+                  <span className="font-medium">{formatCurrency(financialData.totalCashFlow)}</span>
+                </div>
+              )}
+              {financialData.totalObligations !== undefined && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">إجمالي الالتزامات:</span>
+                  <span className="font-medium">{formatCurrency(financialData.totalObligations)}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-muted-foreground">إجمالي المصروفات:</span>
                 <span className="font-medium">{formatCurrency(financialData.totalExpenses)}</span>
