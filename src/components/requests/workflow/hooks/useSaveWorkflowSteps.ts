@@ -48,6 +48,9 @@ export const useSaveWorkflowSteps = ({
         throw new Error("يجب تسجيل الدخول لحفظ خطوات سير العمل");
       }
 
+      // Debug log: Check authentication
+      console.log("User authenticated with ID:", session.user.id);
+
       // Check if user has admin role
       const { data: userRoles, error: roleError } = await supabase
         .from('user_roles')
@@ -59,6 +62,9 @@ export const useSaveWorkflowSteps = ({
         throw new Error("خطأ في التحقق من صلاحيات المستخدم");
       }
       
+      // Debug log: User roles
+      console.log("User roles:", userRoles);
+      
       const isAdmin = userRoles?.some(role => {
         if (role.roles) {
           const roleName = Array.isArray(role.roles) 
@@ -68,6 +74,9 @@ export const useSaveWorkflowSteps = ({
         }
         return false;
       });
+      
+      // Debug log: Admin status
+      console.log("Is user admin?", isAdmin);
       
       if (!isAdmin) {
         console.warn("User might not have permission to save workflow steps");
@@ -94,6 +103,9 @@ export const useSaveWorkflowSteps = ({
         setIsLoading(false);
         return true;
       }
+      
+      // Debug log: Workflow steps before processing
+      console.log("Original steps before processing:", steps);
       
       // Prepare steps for insertion with complete data and ensure valid UUIDs
       const stepsToInsert = steps.map((step, index) => {
@@ -136,14 +148,29 @@ export const useSaveWorkflowSteps = ({
         return JSON.stringify(step);
       });
       
+      // Debug log: Final JSON steps being sent to RPC
+      console.log("JSON steps for RPC:", jsonSteps);
+      
       // Call the RPC function to insert steps
       const { data: rpcResult, error: rpcError } = await supabase
         .rpc('insert_workflow_steps', {
           steps: jsonSteps
         });
 
+      // Debug log: RPC call result
+      console.log("RPC call completed. Result:", rpcResult, "Error:", rpcError);
+
       if (rpcError) {
         console.error("Error inserting workflow steps via RPC:", rpcError);
+        
+        // Debug log: Detailed error
+        console.error("RPC error details:", {
+          code: rpcError.code,
+          message: rpcError.message,
+          details: rpcError.details,
+          hint: rpcError.hint
+        });
+        
         if (rpcError.code === 'PGRST116') {
           throw new Error("ليس لديك صلاحية لإدخال خطوات سير العمل");
         }
@@ -156,6 +183,10 @@ export const useSaveWorkflowSteps = ({
       if (!rpcResult || !rpcResult.success) {
         const errorMessage = rpcResult?.error || rpcResult?.message || 'حدث خطأ غير معروف';
         console.error("Error returned from RPC function:", errorMessage);
+        
+        // Debug log: Error details
+        console.error("RPC result error details:", rpcResult);
+        
         throw new Error(`فشل في إدخال خطوات سير العمل: ${errorMessage}`);
       }
 
@@ -169,11 +200,21 @@ export const useSaveWorkflowSteps = ({
       }
 
       // Update default workflow for request type
+      console.log("Updating default workflow for request type:", requestTypeId, currentWorkflowId);
       await updateDefaultWorkflow(requestTypeId, currentWorkflowId);
+      console.log("Default workflow updated successfully");
 
       return true;
     } catch (error) {
       console.error('Error saving workflow steps:', error);
+      
+      // Debug log: Detailed error capture
+      console.error("Error details:", {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      });
+      
       setError(error.message || 'فشل في حفظ خطوات سير العمل');
       throw error;
     } finally {

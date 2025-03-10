@@ -7,6 +7,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import {
   Table,
@@ -17,7 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, Settings } from "lucide-react";
+import { Plus, Edit, Trash2, Settings, Bug } from "lucide-react";
 import { RequestType } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -26,6 +27,8 @@ import { RequestTypeDialog } from "./RequestTypeDialog";
 import { WorkflowConfigDialog } from "./workflow/WorkflowConfigDialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { WorkflowDebugPanel } from "./workflow/debug/WorkflowDebugPanel";
 
 export const AdminWorkflows = () => {
   const queryClient = useQueryClient();
@@ -34,6 +37,8 @@ export const AdminWorkflows = () => {
   const [selectedRequestType, setSelectedRequestType] = useState<RequestType | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("request-types");
 
   const { data: requestTypes, isLoading: typesLoading } = useQuery({
     queryKey: ["requestTypes"],
@@ -104,83 +109,113 @@ export const AdminWorkflows = () => {
     }
   });
 
+  const toggleDebugPanel = () => {
+    setShowDebugPanel(!showDebugPanel);
+    if (!showDebugPanel) {
+      setActiveTab("debug");
+    } else {
+      setActiveTab("request-types");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">إدارة أنواع الطلبات</h2>
-        <Button onClick={handleAddRequestType}>
-          <Plus className="mr-2 h-4 w-4" />
-          إضافة نوع طلب جديد
-        </Button>
+        <div className="flex space-x-2">
+          <Button variant="outline" onClick={toggleDebugPanel} title="عرض سجلات التتبع">
+            <Bug className="h-4 w-4 ml-2" />
+            {showDebugPanel ? "إخفاء سجلات التتبع" : "عرض سجلات التتبع"}
+          </Button>
+          <Button onClick={handleAddRequestType}>
+            <Plus className="mr-2 h-4 w-4" />
+            إضافة نوع طلب جديد
+          </Button>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>أنواع الطلبات</CardTitle>
-          <CardDescription>إدارة أنواع الطلبات ونماذج البيانات وخطوات سير العمل المرتبطة بها</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {typesLoading ? (
-            <Skeleton className="h-40 w-full" />
-          ) : requestTypes && requestTypes.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>اسم نوع الطلب</TableHead>
-                  <TableHead>الوصف</TableHead>
-                  <TableHead>عدد الحقول</TableHead>
-                  <TableHead>الحالة</TableHead>
-                  <TableHead>الإجراءات</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {requestTypes.map((type) => (
-                  <TableRow key={type.id}>
-                    <TableCell>{type.name}</TableCell>
-                    <TableCell>{type.description || "لا يوجد وصف"}</TableCell>
-                    <TableCell>{type.form_schema.fields?.length || 0}</TableCell>
-                    <TableCell>
-                      {type.is_active ? "نشط" : "غير نشط"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleConfigureWorkflow(type)}
-                        >
-                          <Settings className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleEditRequestType(type)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-red-500"
-                          onClick={() => confirmDeleteRequestType(type)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">
-                لا توجد أنواع طلبات مسجلة
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="request-types">أنواع الطلبات</TabsTrigger>
+          {showDebugPanel && <TabsTrigger value="debug">سجلات التتبع</TabsTrigger>}
+        </TabsList>
+        
+        <TabsContent value="request-types">
+          <Card>
+            <CardHeader>
+              <CardTitle>أنواع الطلبات</CardTitle>
+              <CardDescription>إدارة أنواع الطلبات ونماذج البيانات وخطوات سير العمل المرتبطة بها</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {typesLoading ? (
+                <Skeleton className="h-40 w-full" />
+              ) : requestTypes && requestTypes.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>اسم نوع الطلب</TableHead>
+                      <TableHead>الوصف</TableHead>
+                      <TableHead>عدد الحقول</TableHead>
+                      <TableHead>الحالة</TableHead>
+                      <TableHead>الإجراءات</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {requestTypes.map((type) => (
+                      <TableRow key={type.id}>
+                        <TableCell>{type.name}</TableCell>
+                        <TableCell>{type.description || "لا يوجد وصف"}</TableCell>
+                        <TableCell>{type.form_schema.fields?.length || 0}</TableCell>
+                        <TableCell>
+                          {type.is_active ? "نشط" : "غير نشط"}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleConfigureWorkflow(type)}
+                            >
+                              <Settings className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleEditRequestType(type)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-500"
+                              onClick={() => confirmDeleteRequestType(type)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">
+                    لا توجد أنواع طلبات مسجلة
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {showDebugPanel && (
+          <TabsContent value="debug">
+            <WorkflowDebugPanel />
+          </TabsContent>
+        )}
+      </Tabs>
 
       <RequestTypeDialog
         isOpen={showRequestTypeDialog}
