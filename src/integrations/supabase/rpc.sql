@@ -134,9 +134,9 @@ BEGIN
             COALESCE((step->>'is_required')::boolean, true),
             COALESCE(step->>'approver_type', 'user')
           )
-          RETURNING row_to_json(workflow_steps.*)::jsonb
+          RETURNING row_to_json(workflow_steps.*)::jsonb AS step_data
         )
-        SELECT i INTO step_result FROM inserted i;
+        SELECT step_data INTO step_result FROM inserted;
       EXCEPTION WHEN others THEN
         GET STACKED DIAGNOSTICS v_error = MESSAGE_TEXT;
         RAISE EXCEPTION 'Error inserting step %: %', i, v_error;
