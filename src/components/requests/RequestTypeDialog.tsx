@@ -74,9 +74,14 @@ export const RequestTypeDialog = ({
     };
   }, [setFormError]);
 
+  // Handle click propagation within DialogContent instead of on Dialog
+  const handleDialogContentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()} onClick={e => e.stopPropagation()}>
-      <DialogContent className="max-w-4xl rtl max-h-[95vh] overflow-hidden flex flex-col" dir="rtl">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-4xl rtl max-h-[95vh] overflow-hidden flex flex-col" dir="rtl" onClick={handleDialogContentClick}>
         <DialogHeader>
           <DialogTitle>{isEditing ? "تعديل نوع الطلب" : "إضافة نوع طلب جديد"}</DialogTitle>
           <DialogDescription>
