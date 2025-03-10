@@ -80,20 +80,32 @@ export const initializeDeveloperRole = async (): Promise<boolean> => {
 
 export const isDeveloper = async (userId: string): Promise<boolean> => {
   try {
+    // Changed the query to use proper join syntax and better handle the result
     const { data, error } = await supabase
       .from('user_roles')
       .select(`
-        roles (
-          name
-        )
+        role_id,
+        roles:roles(name)
       `)
-      .eq('user_id', userId)
-      .single();
+      .eq('user_id', userId);
 
     if (error) throw error;
     
-    // The correct way to access the nested role name from the joined table
-    return data?.roles?.name === 'developer';
+    if (!data || data.length === 0) {
+      return false;
+    }
+    
+    // Check if any of the roles is a developer role
+    return data.some(role => {
+      // Handle different return structures
+      if (role.roles && typeof role.roles === 'object') {
+        // If roles is an object, access its name property
+        if ('name' in role.roles) {
+          return role.roles.name === 'developer';
+        }
+      }
+      return false;
+    });
   } catch (error) {
     console.error('Error checking developer status:', error);
     return false;

@@ -1,8 +1,9 @@
 
 import { create } from 'zustand';
-import { DeveloperSettings, DeveloperStore } from '@/types/developer';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { DeveloperSettings, DeveloperStore } from '@/types/developer';
+import { useAuthStore } from './authStore';
 
 export const useDeveloperStore = create<DeveloperStore>((set, get) => ({
   settings: null,
@@ -10,54 +11,103 @@ export const useDeveloperStore = create<DeveloperStore>((set, get) => ({
   error: null,
 
   fetchSettings: async () => {
+    const { user } = useAuthStore.getState();
+    
+    if (!user) return;
+    
+    set({ isLoading: true, error: null });
+    
     try {
-      set({ isLoading: true, error: null });
+      // First check if user has the developer role
+      const isDev = await isDeveloper(user.id);
+      
+      if (!isDev) {
+        set({ settings: null, isLoading: false });
+        return;
+      }
       
       const { data, error } = await supabase
         .from('developer_settings')
         .select('*')
+        .eq('user_id', user.id)
         .single();
-
+      
       if (error) throw error;
       
-      set({ settings: data });
+      set({ settings: data, isLoading: false });
     } catch (error) {
       console.error('Error fetching developer settings:', error);
-      set({ error: error as Error });
-    } finally {
-      set({ isLoading: false });
+      set({ error: error as Error, isLoading: false });
     }
   },
-
-  updateSettings: async (newSettings) => {
+  
+  updateSettings: async (settings) => {
+    const { user } = useAuthStore.getState();
+    const currentSettings = get().settings;
+    
+    if (!user || !currentSettings) return;
+    
+    set({ isLoading: true, error: null });
+    
     try {
-      const { settings } = get();
-      if (!settings?.id) return;
-
-      set({ isLoading: true, error: null });
-      
       const { error } = await supabase
         .from('developer_settings')
-        .update(newSettings)
-        .eq('id', settings.id);
-
+        .update(settings)
+        .eq('user_id', user.id);
+      
       if (error) throw error;
       
-      set({ settings: { ...settings, ...newSettings } });
-      toast.success('تم تحديث إعدادات المطور بنجاح');
+      set({
+        settings: { ...currentSettings, ...settings },
+        isLoading: false
+      });
+      
+      toast.success('Developer settings updated');
     } catch (error) {
       console.error('Error updating developer settings:', error);
-      set({ error: error as Error });
-      toast.error('حدث خطأ أثناء تحديث الإعدادات');
-    } finally {
-      set({ isLoading: false });
+      set({ error: error as Error, isLoading: false });
+      toast.error('Failed to update developer settings');
     }
   },
-
+  
   toggleDevMode: async () => {
-    const { settings, updateSettings } = get();
-    if (settings) {
-      await updateSettings({ is_enabled: !settings.is_enabled });
-    }
-  },
+    const { settings } = get();
+    
+    if (!settings) return;
+    
+    await get().updateSettings({
+      is_enabled: !settings.is_enabled
+    });
+  }
 }));
+
+// Helper function to check if a user is a developer
+const isDeveloper = async (userId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select(`
+        role_id,
+        roles:roles(name)
+      `)
+      .eq('user_id', userId);
+
+    if (error) throw error;
+    
+    if (!data || data.length === 0) {
+      return false;
+    }
+    
+    return data.some(role => {
+      if (role.roles && typeof role.roles === 'object') {
+        if ('name' in role.roles) {
+          return role.roles.name === 'developer';
+        }
+      }
+      return false;
+    });
+  } catch (error) {
+    console.error('Error checking developer status:', error);
+    return false;
+  }
+};
