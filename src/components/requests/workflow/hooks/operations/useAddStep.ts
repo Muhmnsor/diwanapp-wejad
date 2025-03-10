@@ -34,8 +34,15 @@ export const useAddStep = (
       const { session, isAdmin } = await checkUserPermissions();
       if (!session) return;
 
-      // Determine workflow ID
-      const workflowId = currentWorkflowId || currentStep.workflow_id || 'temp-workflow-id';
+      // IMPORTANT: Ensure we're using the actual workflow ID, not the temporary one
+      // This is a critical fix to ensure all steps get the correct workflow_id
+      const workflowId = currentWorkflowId && currentWorkflowId !== 'temp-workflow-id' 
+        ? currentWorkflowId 
+        : currentStep.workflow_id && currentStep.workflow_id !== 'temp-workflow-id'
+          ? currentStep.workflow_id
+          : 'temp-workflow-id';
+      
+      console.log("Adding step with workflow ID:", workflowId);
       
       // Create a new step or update existing one
       const newStep: WorkflowStep = {
@@ -59,8 +66,13 @@ export const useAddStep = (
       // Update step order
       updatedSteps = updatedSteps.map((step, index) => ({
         ...step,
-        step_order: index + 1
+        step_order: index + 1,
+        // Ensure all steps have the same workflow_id
+        workflow_id: workflowId
       }));
+
+      // Log for debugging
+      console.log("Steps to save:", updatedSteps);
 
       // Save the updated steps
       await saveWorkflowSteps(updatedSteps);

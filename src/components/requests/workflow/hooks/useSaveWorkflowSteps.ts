@@ -82,6 +82,7 @@ export const useSaveWorkflowSteps = ({
         console.warn("User might not have permission to save workflow steps");
       }
 
+      // Get the actual workflow ID first - critical change
       const currentWorkflowId = await ensureWorkflowExists();
       console.log("Working with workflow ID:", currentWorkflowId);
 
@@ -107,17 +108,23 @@ export const useSaveWorkflowSteps = ({
       // Debug log: Workflow steps before processing
       console.log("Original steps before processing:", steps);
       
+      // CRITICAL FIX: Ensure all steps have the correct workflowId
+      // This needs to happen BEFORE preparing steps for insertion
+      const stepsWithCorrectWorkflowId = steps.map(step => ({
+        ...step,
+        workflow_id: currentWorkflowId
+      }));
+      
+      console.log("Steps with corrected workflow_id:", stepsWithCorrectWorkflowId);
+      
       // Prepare steps for insertion with complete data and ensure valid UUIDs
-      const stepsToInsert = steps.map((step, index) => {
-        // Ensure each step has a workflow_id that matches the expected format
-        const workflow_id = step.workflow_id || currentWorkflowId;
-        
+      const stepsToInsert = stepsWithCorrectWorkflowId.map((step, index) => {
         // Verify workflow_id format
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         
-        if (!workflow_id || (workflow_id !== 'temp-workflow-id' && !uuidRegex.test(workflow_id))) {
-          console.error("Step missing valid workflow_id", step);
-          throw new Error(`خطأ: بعض الخطوات تفتقد إلى معرّف سير العمل الصحيح (${workflow_id})`);
+        if (!currentWorkflowId || (currentWorkflowId === 'temp-workflow-id' || !uuidRegex.test(currentWorkflowId))) {
+          console.error("Invalid workflow_id detected:", currentWorkflowId);
+          throw new Error(`خطأ: معرّف سير العمل غير صالح (${currentWorkflowId})`);
         }
         
         if (!step.approver_id || !uuidRegex.test(step.approver_id)) {
@@ -127,7 +134,7 @@ export const useSaveWorkflowSteps = ({
         
         // Create a clean step object with only the required properties
         return {
-          workflow_id: workflow_id,
+          workflow_id: currentWorkflowId, // Always use the confirmed workflow ID
           step_order: index + 1,
           step_name: step.step_name,
           step_type: step.step_type || 'decision',
@@ -209,8 +216,8 @@ export const useSaveWorkflowSteps = ({
         try {
           await supabase.rpc('log_workflow_operation', {
             p_operation_type: 'insert_steps_result_error',
-            p_workflow_id: currentWorkflowId,
             p_request_type_id: requestTypeId,
+            p_workflow_id: currentWorkflowId,
             p_error_message: errorMessage,
             p_response_data: rpcResult,
             p_details: 'Error returned in successful RPC response'

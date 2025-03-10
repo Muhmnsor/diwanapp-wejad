@@ -70,9 +70,14 @@ export const WorkflowStepsConfig = ({
       return;
     }
 
-    // تأكد من أن جميع الخطوات تحمل معرّف سير العمل الصحيح
+    // الوظيفة المحسّنة: تأكد من أن جميع الخطوات تحمل معرّف سير العمل الصحيح
     const stepsToSave = workflowSteps.map(step => {
-      if (!step.workflow_id || step.workflow_id === 'temp-workflow-id') {
+      // سجل كل خطوة وحالة معرّف سير العمل الخاص بها للتصحيح
+      console.log(`Preparing step "${step.step_name}" with workflow_id:`, step.workflow_id);
+      
+      // Always update to current workflow ID regardless of previous value
+      if (currentWorkflowId && currentWorkflowId !== 'temp-workflow-id') {
+        console.log(`Updating step "${step.step_name}" workflow_id to:`, currentWorkflowId);
         return {
           ...step,
           workflow_id: currentWorkflowId,
@@ -83,6 +88,8 @@ export const WorkflowStepsConfig = ({
 
     try {
       console.log("Saving workflow steps with correct workflow_id:", stepsToSave);
+      console.log("Current workflow ID:", currentWorkflowId);
+      
       await saveWorkflowSteps(stepsToSave);
       toast.success('تم حفظ خطوات سير العمل بنجاح');
       if (onWorkflowSaved) {

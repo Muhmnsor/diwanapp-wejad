@@ -1,16 +1,10 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
-/**
- * Checks if the current user has admin permissions
- * @returns Object containing session and isAdmin status
- */
-export const checkUserPermissions = async () => {
+export async function checkUserPermissions() {
   // Check if user is authenticated
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
-    toast.error("يجب تسجيل الدخول للقيام بهذه العملية");
     return { session: null, isAdmin: false };
   }
 
@@ -34,10 +28,6 @@ export const checkUserPermissions = async () => {
     }
     return false;
   });
-  
-  if (!isAdmin) {
-    console.warn("User might not have permission for this operation");
-  }
 
   return { session, isAdmin };
-};
+}
