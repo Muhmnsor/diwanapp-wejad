@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Request, RequestType } from "../types";
-import { useAuthStore } from "@/store/authStore";
+import { useAuthStore } from "@/store/refactored-auth";
 import { toast } from "sonner";
 
 // Updated interface to match what Supabase actually returns

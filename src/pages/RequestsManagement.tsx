@@ -12,7 +12,7 @@ import { NewRequestDialog } from "@/components/requests/NewRequestDialog";
 import { RequestDetail } from "@/components/requests/RequestDetail";
 import { useRequests } from "@/components/requests/hooks/useRequests";
 import { RequestType } from "@/components/requests/types";
-import { useAuthStore } from "@/store/authStore";
+import { useAuthStore } from "@/store/refactored-auth";
 
 const RequestsManagement = () => {
   const { isAuthenticated } = useAuthStore();

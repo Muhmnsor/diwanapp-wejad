@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -22,7 +23,7 @@ import NewPortfolioProject from "./pages/NewPortfolioProject";
 import PortfolioProjectDetails from "./pages/PortfolioProjectDetails";
 import PortfolioWorkspaceDetails from "./pages/PortfolioWorkspaceDetails";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { useAuthStore } from "@/store/authStore";
+import { useAuthStore } from "@/store/refactored-auth";
 import IdeaDetails from "./pages/IdeaDetails";
 import UsersManagement from "./pages/UsersManagement";
 import WebsiteManagement from "./pages/WebsiteManagement";
