@@ -1560,6 +1560,64 @@ export type Database = {
         }
         Relationships: []
       }
+      obligation_expenses: {
+        Row: {
+          amount: number
+          beneficiary: string | null
+          created_at: string | null
+          created_by: string | null
+          date: string
+          description: string
+          id: string
+          obligation_id: string
+          reference_document: string | null
+        }
+        Insert: {
+          amount: number
+          beneficiary?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          date?: string
+          description: string
+          id?: string
+          obligation_id: string
+          reference_document?: string | null
+        }
+        Update: {
+          amount?: number
+          beneficiary?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          date?: string
+          description?: string
+          id?: string
+          obligation_id?: string
+          reference_document?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obligation_expenses_obligation_id_fkey"
+            columns: ["obligation_id"]
+            isOneToOne: false
+            referencedRelation: "obligation_balances_view"
+            referencedColumns: ["obligation_id"]
+          },
+          {
+            foreignKeyName: "obligation_expenses_obligation_id_fkey"
+            columns: ["obligation_id"]
+            isOneToOne: false
+            referencedRelation: "resource_obligations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obligation_expenses_obligation_id_fkey"
+            columns: ["obligation_id"]
+            isOneToOne: false
+            referencedRelation: "resource_obligations_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_transactions: {
         Row: {
           amount: number
@@ -4248,6 +4306,28 @@ export type Database = {
       }
     }
     Views: {
+      obligation_balances_view: {
+        Row: {
+          description: string | null
+          obligation_id: string | null
+          original_amount: number | null
+          remaining_balance: number | null
+          resource_date: string | null
+          resource_id: string | null
+          resource_source: string | null
+          spending_percentage: number | null
+          spent_amount: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_obligations_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "financial_resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resource_obligations_view: {
         Row: {
           amount: number | null
