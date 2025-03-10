@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "@/store/refactored-auth";
 import { MainRoutes } from "./routes/MainRoutes";
@@ -25,17 +24,14 @@ const AppRoutes = () => {
   useEffect(() => {
     const checkDeveloperStatus = async () => {
       if (isAuthenticated && user) {
-        // Show developer toolbar for both users with developer role and admin users
         const hasDeveloperRole = await isDeveloper(user.id);
-        const shouldShowTools = hasDeveloperRole || user.isAdmin;
-        setShowDevTools(shouldShowTools);
+        setShowDevTools(hasDeveloperRole);
         
         console.log('Developer tools visibility:', { 
-          show: shouldShowTools, 
+          show: hasDeveloperRole, 
           userId: user.id, 
           email: user.email,
-          isAdmin: user.isAdmin,
-          hasDeveloperRole: hasDeveloperRole
+          hasDeveloperRole
         });
       } else {
         setShowDevTools(false);

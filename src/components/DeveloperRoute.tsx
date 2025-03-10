@@ -26,26 +26,18 @@ const DeveloperRoute = ({ children }: DeveloperRouteProps) => {
       }
 
       try {
-        // Always grant access to admin users, but also check developer role for logging
         const hasDeveloper = await isDeveloper(user.id);
+        setHasDeveloperAccess(hasDeveloper);
         
-        // Important fix: Always grant access to admin users
-        // This ensures admin users like info@dfy.org.sa can always access developer features
-        const hasAccess = hasDeveloper || user.isAdmin;
-        setHasDeveloperAccess(hasAccess);
-        
-        // Log the result for debugging
         console.log('Developer access check:', { 
           userId: user.id, 
           email: user.email,
-          isAdmin: user.isAdmin,
           hasDeveloperRole: hasDeveloper,
-          hasDeveloperAccess: hasAccess
+          hasDeveloperAccess: hasDeveloper
         });
       } catch (error) {
         console.error('Error checking developer access:', error);
-        // For admins, grant access even if the developer role check fails
-        setHasDeveloperAccess(user.isAdmin || false);
+        setHasDeveloperAccess(false);
       } finally {
         setIsLoading(false);
       }

@@ -1,5 +1,3 @@
-
-
 import { supabase } from '@/integrations/supabase/client';
 import { User } from './types';
 
@@ -31,7 +29,7 @@ export const checkUserRole = async (userId: string): Promise<boolean> => {
     return false;
   }
 
-  return roles?.name === 'admin';
+  return roles?.name === 'developer';
 };
 
 export const getUserRole = async (userId: string): Promise<string | null> => {
@@ -51,13 +49,10 @@ export const getUserRole = async (userId: string): Promise<string | null> => {
       return null;
     }
     
-    // Access the name property correctly
     if (userRole?.roles) {
       if (Array.isArray(userRole.roles)) {
-        // If roles is an array, get the first role's name
         return userRole.roles[0]?.name || null;
       } else {
-        // If roles is a single object
         return (userRole.roles as any).name || null;
       }
     }
@@ -85,14 +80,14 @@ export const initializeSession = async (): Promise<{ user: User | null; isAuthen
       return { user: null, isAuthenticated: false };
     }
 
-    const isAdmin = await checkUserRole(session.user.id);
+    const isDev = await checkUserRole(session.user.id);
     const role = await getUserRole(session.user.id);
 
     return {
       user: {
         id: session.user.id,
         email: session.user.email ?? '',
-        isAdmin,
+        isAdmin: false,
         role: role || undefined
       },
       isAuthenticated: true
@@ -108,7 +103,6 @@ export const clearSession = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     
-    // Clear any local storage items
     localStorage.removeItem('supabase.auth.token');
     sessionStorage.clear();
     
@@ -118,4 +112,3 @@ export const clearSession = async () => {
     throw error;
   }
 };
-
