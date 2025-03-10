@@ -1,4 +1,3 @@
-
 -- Function to check if the current user is an admin
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS boolean
