@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
@@ -19,10 +18,12 @@ export const TechnicalDocumentation = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           <Tabs defaultValue="tech-stack" className="w-full">
-            <TabsList className="grid grid-cols-4 mb-4">
+            <TabsList className="grid grid-cols-6 mb-4">
               <TabsTrigger value="tech-stack">التقنيات المستخدمة</TabsTrigger>
               <TabsTrigger value="architecture">هيكل المشروع</TabsTrigger>
               <TabsTrigger value="code-examples">أمثلة الأكواد</TabsTrigger>
+              <TabsTrigger value="integrations">التكاملات الخارجية</TabsTrigger>
+              <TabsTrigger value="troubleshooting">استكشاف الأخطاء</TabsTrigger>
               <TabsTrigger value="installation">متطلبات التثبيت</TabsTrigger>
             </TabsList>
             
@@ -97,6 +98,30 @@ export const TechnicalDocumentation = () => {
                     <TableCell>إدارة حالة التطبيق</TableCell>
                     <TableCell><code>src/store/</code></TableCell>
                   </TableRow>
+                  <TableRow>
+                    <TableCell>PDF-Lib</TableCell>
+                    <TableCell>^1.17.1</TableCell>
+                    <TableCell>إنشاء وتعديل ملفات PDF</TableCell>
+                    <TableCell><code>src/components/certificates/</code></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>XLSX</TableCell>
+                    <TableCell>^0.18.5</TableCell>
+                    <TableCell>تصدير البيانات إلى Excel</TableCell>
+                    <TableCell><code>src/components/admin/ExportButton.tsx</code></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>html-to-image</TableCell>
+                    <TableCell>^1.11.11</TableCell>
+                    <TableCell>تحويل HTML إلى صور</TableCell>
+                    <TableCell><code>src/utils/exportUtils.ts</code></TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>JSZip</TableCell>
+                    <TableCell>^3.10.1</TableCell>
+                    <TableCell>ضغط الملفات</TableCell>
+                    <TableCell><code>src/components/ideas/details/</code></TableCell>
+                  </TableRow>
                 </TableBody>
               </Table>
             </TabsContent>
@@ -139,6 +164,10 @@ export const TechnicalDocumentation = () => {
                       <li><code>src/store/eventStore.ts</code> - إدارة بيانات الفعاليات</li>
                       <li><code>src/store/authStore.ts</code> - إدارة المصادقة والمستخدمين</li>
                       <li><code>src/store/refactored-auth.ts</code> - النسخة المحدثة من مخزن المصادقة</li>
+                      <li><code>src/store/financeStore.ts</code> - إدارة الموارد المالية</li>
+                      <li><code>src/store/portfolioStore.ts</code> - إدارة المحافظ والمشاريع</li>
+                      <li><code>src/store/notificationsStore.ts</code> - إدارة الإشعارات</li>
+                      <li><code>src/store/documentsStore.ts</code> - إدارة المستندات</li>
                     </ul>
                     
                     <p className="text-sm mb-2">كيفية استخدام المخزن:</p>
@@ -165,6 +194,18 @@ const { settings, isLoading, fetchSettings } = useDeveloperStore();`}
                       <li><code>/events/:id</code> - تفاصيل الفعالية</li>
                       <li><code>/admin/developer-settings</code> - إعدادات المطورين</li>
                       <li><code>/admin/dashboard</code> - لوحة التحكم</li>
+                      <li><code>/projects</code> - صفحة المشاريع</li>
+                      <li><code>/projects/:id</code> - تفاصيل المشروع</li>
+                      <li><code>/ideas</code> - صفحة الأفكار</li>
+                      <li><code>/ideas/:id</code> - تفاصيل الفكرة</li>
+                      <li><code>/tasks</code> - صفحة المهام</li>
+                      <li><code>/finance</code> - الإدارة المالية</li>
+                      <li><code>/portfolio</code> - إدارة المحافظ</li>
+                      <li><code>/documents</code> - إدارة المستندات</li>
+                      <li><code>/subscriptions</code> - إدارة الاشتراكات</li>
+                      <li><code>/requests</code> - إدارة الطلبات</li>
+                      <li><code>/certificates</code> - إدارة الشهادات</li>
+                      <li><code>/notifications</code> - إدارة الإشعارات</li>
                     </ul>
                     
                     <p className="text-sm mb-2">كيفية استخدام التنقل البرمجي:</p>
@@ -198,6 +239,30 @@ navigate(-1);`}
                       <li><code>developer_settings</code> - إعدادات المطورين</li>
                       <li><code>projects</code> - بيانات المشاريع</li>
                       <li><code>tasks</code> - المهام</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="components">
+                  <AccordionTrigger>المكونات الأساسية</AccordionTrigger>
+                  <AccordionContent>
+                    <p className="text-sm mb-2">المكونات الأساسية للنظام:</p>
+                    <ul className="list-disc list-inside space-y-1 text-sm mb-4">
+                      <li><code>Layout</code> - تخطيط الصفحات الأساسي</li>
+                      <li><code>TopHeader</code> - الشريط العلوي للتنقل</li>
+                      <li><code>Footer</code> - تذييل الصفحات</li>
+                      <li><code>EventCard</code> - بطاقة عرض الفعالية</li>
+                      <li><code>ProjectCard</code> - بطاقة عرض المشروع</li>
+                      <li><code>TaskCard</code> - بطاقة عرض المهمة</li>
+                      <li><code>Notification</code> - مكون الإشعارات</li>
+                      <li><code>DocumentsTable</code> - جدول المستندات</li>
+                      <li><code>RegistrationsTable</code> - جدول التسجيلات</li>
+                      <li><code>AttendanceTable</code> - جدول الحضور</li>
+                      <li><code>CertificateTemplates</code> - قوالب الشهادات</li>
+                      <li><code>DashboardStats</code> - إحصائيات لوحة القيادة</li>
+                      <li><code>UserNav</code> - تنقل المستخدم</li>
+                      <li><code>ProtectedRoute</code> - حماية المسارات</li>
+                      <li><code>DeveloperRoute</code> - مسارات المطورين</li>
                     </ul>
                   </AccordionContent>
                 </AccordionItem>
@@ -337,6 +402,267 @@ const CounterComponent = () => {
 };`}
                     language="typescript"
                   />
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">مثال على استخدام مكونات الطباعة</h3>
+                  <CodeBlock
+                    code={`import { certificateGenerator } from '@/utils/certificateUtils';
+
+// توليد شهادة PDF
+const generateCertificate = async (userData, templateId) => {
+  try {
+    const pdfBytes = await certificateGenerator.createCertificate({
+      userData,
+      templateId,
+      fontSize: 14,
+      fontColor: '#000000'
+    });
+    
+    // تنزيل الشهادة
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = \`certificate-\${userData.name}.pdf\`;
+    a.click();
+  } catch (error) {
+    console.error('Error generating certificate:', error);
+  }
+};`}
+                    language="typescript"
+                  />
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">مثال على استخدام الإشعارات</h3>
+                  <CodeBlock
+                    code={`import { toast } from 'sonner';
+import { sendNotification } from '@/services/notificationService';
+
+// إرسال إشعار للمستخدم
+const notifyUser = async (userId, message) => {
+  try {
+    // إرسال إشعار للقاعدة البيانات
+    await sendNotification({
+      userId,
+      title: 'إشعار جديد',
+      message,
+      type: 'info'
+    });
+    
+    // عرض إشعار على واجهة المستخدم
+    toast.success('تم إرسال الإشعار بنجاح');
+  } catch (error) {
+    toast.error('فشل في إرسال الإشعار');
+    console.error('Error sending notification:', error);
+  }
+};`}
+                    language="typescript"
+                  />
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">مثال على استخدام Excel للتصدير</h3>
+                  <CodeBlock
+                    code={`import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
+
+// تصدير البيانات إلى Excel
+const exportToExcel = (data, fileName = 'exported-data') => {
+  const worksheet = XLSX.utils.json_to_sheet(data);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+  
+  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  
+  saveAs(blob, \`\${fileName}.xlsx\`);
+};`}
+                    language="typescript"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="integrations">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">تكامل Supabase</h3>
+                  <p className="text-sm mb-4">يستخدم النظام Supabase كخدمة backend للمصادقة وقاعدة البيانات وتخزين الملفات.</p>
+                  <CodeBlock
+                    code={`import { supabase } from '@/integrations/supabase/client';
+
+// مثال على استخدام Supabase Storage
+const uploadFile = async (file, bucket = 'documents') => {
+  const fileExt = file.name.split('.').pop();
+  const fileName = \`\${Math.random().toString(36).slice(2)}-\${Date.now()}.\${fileExt}\`;
+  const filePath = \`\${bucket}/\${fileName}\`;
+
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .upload(filePath, file);
+    
+  if (error) throw error;
+  
+  const { data: { publicUrl } } = supabase.storage
+    .from(bucket)
+    .getPublicUrl(filePath);
+    
+  return publicUrl;
+};`}
+                    language="typescript"
+                  />
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">تكامل واتساب</h3>
+                  <p className="text-sm mb-4">يستخدم النظام واجهة واتساب لإرسال إشعارات للمستخدمين.</p>
+                  <CodeBlock
+                    code={`import { sendWhatsAppMessage } from '@/services/whatsappService';
+
+// إرسال رسالة واتساب
+const sendEventReminder = async (phone, eventDetails) => {
+  try {
+    await sendWhatsAppMessage({
+      to: phone,
+      templateName: 'event_reminder',
+      templateParams: {
+        eventName: eventDetails.title,
+        eventDate: eventDetails.date,
+        eventTime: eventDetails.time,
+        eventLocation: eventDetails.location
+      }
+    });
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to send WhatsApp message:', error);
+    return { success: false, error };
+  }
+};`}
+                    language="typescript"
+                  />
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">تكامل Asana</h3>
+                  <p className="text-sm mb-4">يستخدم النظام Asana لمزامنة المهام والمشاريع.</p>
+                  <CodeBlock
+                    code={`import { asanaClient } from '@/integrations/asana/client';
+
+// إنشاء مهمة في Asana
+const createAsanaTask = async (taskData) => {
+  try {
+    const response = await asanaClient.tasks.create({
+      name: taskData.title,
+      notes: taskData.description,
+      workspace: taskData.workspaceId,
+      projects: [taskData.projectId],
+      due_on: taskData.dueDate
+    });
+    
+    return {
+      success: true,
+      asanaGid: response.gid
+    };
+  } catch (error) {
+    console.error('Error creating Asana task:', error);
+    return { success: false, error };
+  }
+};`}
+                    language="typescript"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="troubleshooting">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">مشكلات شائعة وحلولها</h3>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>المشكلة</TableHead>
+                        <TableHead>الحل</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell>فشل المصادقة مع Supabase</TableCell>
+                        <TableCell>
+                          <ul className="list-disc list-inside">
+                            <li>تأكد من تكوين مفاتيح API بشكل صحيح</li>
+                            <li>تحقق من تمكين طرق المصادقة في لوحة تحكم Supabase</li>
+                            <li>تحقق من الجدران النارية وسياسات CORS</li>
+                          </ul>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>مشكلات في تحميل الصور</TableCell>
+                        <TableCell>
+                          <ul className="list-disc list-inside">
+                            <li>تأكد من تكوين تخزين Supabase بشكل صحيح</li>
+                            <li>تحقق من أحجام الملفات (الحد الأقصى 50 ميجابايت)</li>
+                            <li>تأكد من سياسات RLS المناسبة لتخزين الملفات</li>
+                          </ul>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>بطء أداء استعلامات قاعدة البيانات</TableCell>
+                        <TableCell>
+                          <ul className="list-disc list-inside">
+                            <li>استخدم مؤشرات الجدول المناسبة</li>
+                            <li>قلل من كمية البيانات المسترجعة باستخدام select الانتقائي</li>
+                            <li>استخدم التخزين المؤقت للاستعلامات المتكررة</li>
+                          </ul>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>أخطاء في إنشاء PDF</TableCell>
+                        <TableCell>
+                          <ul className="list-disc list-inside">
+                            <li>تأكد من تحميل الخطوط المطلوبة</li>
+                            <li>تحقق من صحة قالب الشهادة المستخدم</li>
+                            <li>تأكد من أن الصور مشفرة بشكل صحيح</li>
+                          </ul>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>مشكلات في تسجيل الدخول للمطورين</TableCell>
+                        <TableCell>
+                          <ul className="list-disc list-inside">
+                            <li>تأكد من وجود سجل في جدول developer_permissions</li>
+                            <li>تحقق من تعيين الأذونات الصحيحة</li>
+                            <li>أعد تحميل الصفحة بعد تحديث الإعدادات</li>
+                          </ul>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">سجلات وتتبع الأخطاء</h3>
+                  <p className="text-sm mb-4">يمكن تتبع الأخطاء من خلال:</p>
+                  <ul className="list-disc list-inside space-y-1 text-sm mb-4">
+                    <li>سجلات وحدة تحكم المتصفح</li>
+                    <li>سجلات الخطأ في Edge Functions من Supabase</li>
+                    <li>جدول workflow_operation_logs في قاعدة البيانات</li>
+                    <li>مكون أدوات المطورين في <code>/admin/developer-settings?tab=logs</code></li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">أفضل الممارسات للتطوير</h3>
+                  <ul className="list-disc list-inside space-y-1 text-sm mb-4">
+                    <li>استخدم TypeScript بشكل صحيح مع تعريفات النوع المناسبة</li>
+                    <li>اتبع نمط React Query لإدارة طلبات البيانات</li>
+                    <li>استخدم React.memo لمنع إعادة العرض غير الضرورية</li>
+                    <li>قم بتنظيم المكونات في ملفات منفصلة منطقياً</li>
+                    <li>استخدم الدوال الخطافية المخصصة لفصل المنطق عن العرض</li>
+                    <li>اختبر التغييرات في بيئة التطوير قبل الدفع للإنتاج</li>
+                  </ul>
                 </div>
               </div>
             </TabsContent>
