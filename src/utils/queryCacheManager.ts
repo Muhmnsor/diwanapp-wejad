@@ -1,3 +1,4 @@
+
 import { QueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,23 +27,29 @@ export const initializeQueryClient = async (userSettings: UserSettings | null): 
     });
     
     // Configure global error handling for React Query v5
-    queryClient.getQueryCache().subscribe((event) => {
-      if (event.type === 'error' && event.error instanceof Error) {
-        console.error('Query cache error in QueryManager:', event.error);
+    queryClient.getQueryCache().subscribe(event => {
+      if (event.type === 'updated' && event.query.state.status === 'error') {
+        const error = event.query.state.error;
+        console.error('Query cache error in QueryManager:', error);
         toast.error('حدث خطأ أثناء جلب البيانات');
       }
     });
     
     // Add observer for performance monitoring if in developer mode
     if (isDeveloper) {
-      queryClient.getQueryCache().subscribe((event) => {
+      queryClient.getQueryCache().subscribe(event => {
         if (event.type === 'updated' && event.query.state.status === 'success') {
-          const queryTime = event.query.state.dataUpdatedAt - (event.query.state.fetchMeta?.timestamp || 0);
+          const fetchStartTime = event.query.state.fetchMeta?.fetchTime;
+          const fetchEndTime = event.query.state.dataUpdatedAt;
           
-          if (typeof queryTime === 'number' && queryTime > 500) {
-            const queryKeyStr = Array.isArray(event.query.queryKey) ? event.query.queryKey.join('.') : String(event.query.queryKey);
-            console.log(`Query ${queryKeyStr} completed in ${queryTime}ms`);
-            logSlowQuery(queryKeyStr, queryTime);
+          if (fetchStartTime && fetchEndTime) {
+            const queryTime = fetchEndTime - fetchStartTime;
+            
+            if (typeof queryTime === 'number' && queryTime > 500) {
+              const queryKeyStr = Array.isArray(event.query.queryKey) ? event.query.queryKey.join('.') : String(event.query.queryKey);
+              console.log(`Query ${queryKeyStr} completed in ${queryTime}ms`);
+              logSlowQuery(queryKeyStr, queryTime);
+            }
           }
         }
       });
