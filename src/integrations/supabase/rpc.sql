@@ -98,7 +98,7 @@ END;
 $$;
 
 -- FIXED: Function to insert workflow steps bypassing RLS
--- Improved to handle array initialization and error reporting
+-- Improved to handle array initialization, error reporting, and workflow ID validation
 CREATE OR REPLACE FUNCTION public.insert_workflow_steps(steps jsonb[])
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -110,12 +110,35 @@ DECLARE
   inserted_steps jsonb[] := '{}';
   step_result jsonb;
   v_error text;
+  v_workflow_id uuid;
 BEGIN
   -- Start transaction to ensure all steps are inserted or none
   BEGIN
+    -- First delete existing steps for these workflows to avoid duplicates
+    FOR i IN 1..array_length(steps, 1) LOOP
+      step := steps[i];
+      v_workflow_id := (step->>'workflow_id')::uuid;
+      
+      -- Validate workflow ID exists
+      IF v_workflow_id IS NULL THEN
+        RAISE EXCEPTION 'Workflow ID is required for step %', i;
+      END IF;
+      
+      -- Delete existing steps for this workflow (if not already done)
+      IF i = 1 THEN
+        DELETE FROM workflow_steps WHERE workflow_id = v_workflow_id;
+      END IF;
+    END LOOP;
+    
     -- Process each step
     FOR i IN 1..array_length(steps, 1) LOOP
       step := steps[i];
+      v_workflow_id := (step->>'workflow_id')::uuid;
+      
+      -- Validate workflow exists
+      IF NOT EXISTS (SELECT 1 FROM request_workflows WHERE id = v_workflow_id) THEN
+        RAISE EXCEPTION 'Workflow with ID % does not exist', v_workflow_id;
+      END IF;
       
       -- Insert the step and capture the result
       WITH inserted AS (
@@ -129,7 +152,7 @@ BEGIN
           is_required,
           approver_type
         ) VALUES (
-          (step->>'workflow_id')::uuid,
+          v_workflow_id,
           (step->>'step_order')::int,
           step->>'step_name',
           COALESCE(step->>'step_type', 'decision'),
@@ -140,11 +163,11 @@ BEGIN
         )
         RETURNING row_to_json(workflow_steps.*)::jsonb
       )
-      SELECT jsonb_agg(i) INTO step_result FROM inserted i;
+      SELECT i INTO step_result FROM inserted i;
       
       -- Add to our result array
       IF step_result IS NOT NULL THEN
-        inserted_steps := inserted_steps || step_result;
+        inserted_steps := array_append(inserted_steps, step_result);
       END IF;
     END LOOP;
     

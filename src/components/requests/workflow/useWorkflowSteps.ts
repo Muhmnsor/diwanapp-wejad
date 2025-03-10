@@ -137,12 +137,16 @@ export const useWorkflowSteps = ({
 
   // Create or update a workflow for the request type
   const ensureWorkflowExists = async (): Promise<string> => {
-    if (workflowId) return workflowId;
+    if (workflowId) {
+      console.log("Using existing workflow ID:", workflowId);
+      return workflowId;
+    }
 
     try {
       // For a new request type, we can't create the workflow yet since the request type doesn't exist
       // We'll return a temporary ID that will be replaced when the actual workflow is created
       if (!requestTypeId) {
+        console.log("No request type ID, returning temporary workflow ID");
         return 'temp-workflow-id';
       }
 
@@ -206,16 +210,16 @@ export const useWorkflowSteps = ({
     try {
       // Ensure workflow exists
       const currentWorkflowId = await ensureWorkflowExists();
+      console.log("Working with workflow ID:", currentWorkflowId);
 
       // Skip database operations if we have a temporary workflow ID
       if (currentWorkflowId === 'temp-workflow-id') {
+        console.log("Using temporary workflow ID, saving steps locally only");
         updateWorkflowSteps(steps);
         setIsLoading(false);
         return;
       }
 
-      console.log("Saving workflow steps to workflow:", currentWorkflowId);
-      
       if (steps.length === 0) {
         // No steps to insert, just update local state
         updateWorkflowSteps([]);
@@ -223,7 +227,7 @@ export const useWorkflowSteps = ({
         return;
       }
       
-      // Prepare steps for RPC function
+      // Prepare steps for RPC function with explicit workflow_id
       const stepsToInsert = steps.map((step, index) => ({
         ...step,
         workflow_id: currentWorkflowId,
@@ -231,7 +235,8 @@ export const useWorkflowSteps = ({
         approver_type: step.approver_type || 'user'
       }));
 
-      console.log("Inserting workflow steps using RPC bypass function:", stepsToInsert);
+      console.log("Inserting workflow steps using RPC bypass function with workflow_id:", currentWorkflowId);
+      console.log("Steps to insert:", stepsToInsert);
       
       // Convert steps to JSON objects for RPC function
       const jsonSteps = stepsToInsert.map(step => JSON.stringify(step));
