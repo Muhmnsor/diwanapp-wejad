@@ -1,4 +1,3 @@
-
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { TopHeader } from "@/components/layout/TopHeader";
@@ -41,12 +40,19 @@ const IdeaDetails = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('idea_comments')
-        .select('*')
+        .select(`
+          *,
+          user:user_id(display_name)
+        `)
         .eq('idea_id', id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Comment[];
+      
+      return data.map(comment => ({
+        ...comment,
+        display_name: comment.user?.display_name || null
+      })) as Comment[];
     }
   });
 
@@ -73,9 +79,7 @@ const IdeaDetails = () => {
 
       const currentVote = votes.find(v => v.user_id === user.id);
 
-      // إذا كان المستخدم قد صوت من قبل
       if (currentVote) {
-        // إذا كان نفس التصويت السابق، نقوم بإزالته
         if (currentVote.vote_type === voteType) {
           const { error } = await supabase
             .from('idea_votes')
@@ -85,7 +89,6 @@ const IdeaDetails = () => {
 
           if (error) throw error;
         } else {
-          // إذا كان تصويت مختلف، نقوم بتحديث التصويت
           const { error } = await supabase
             .from('idea_votes')
             .update({ vote_type: voteType })
@@ -95,7 +98,6 @@ const IdeaDetails = () => {
           if (error) throw error;
         }
       } else {
-        // إذا لم يكن هناك تصويت سابق، نضيف تصويت جديد
         const { error } = await supabase
           .from('idea_votes')
           .insert([
@@ -128,6 +130,18 @@ const IdeaDetails = () => {
       if (!user) {
         throw new Error("يجب تسجيل الدخول لإضافة تعليق");
       }
+
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('id', user.id)
+        .single();
+        
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
+      }
+      
+      const displayName = profileData?.display_name;
 
       let attachmentUrl = null;
       let attachmentType = null;
@@ -172,6 +186,7 @@ const IdeaDetails = () => {
             content,
             parent_id: parentId,
             user_id: user.id,
+            display_name: displayName,
             attachment_url: attachmentUrl,
             attachment_type: attachmentType,
             attachment_name: attachmentName

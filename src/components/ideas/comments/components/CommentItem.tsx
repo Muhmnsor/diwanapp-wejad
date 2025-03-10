@@ -46,6 +46,9 @@ export const CommentItem = ({
   onReply,
   isReplyBeingAdded
 }: CommentItemProps) => {
+  // Use display_name as highest priority, then user_name, then user_email, then fallback to "مستخدم"
+  const displayName = comment.display_name || comment.user_name || comment.user_email || 'مستخدم';
+  
   return (
     <div className={`py-2 px-3 hover:bg-muted/50 transition-colors ${level > 0 ? 'mr-8' : ''}`}>
       <div className="flex gap-2">
@@ -56,7 +59,7 @@ export const CommentItem = ({
         </Avatar>
         <div className="flex-1 text-right">
           <div className="flex items-center gap-1 mb-0.5 justify-start">
-            <span className="font-medium">{comment.user_email || 'مستخدم'}</span>
+            <span className="font-medium">{displayName}</span>
             <span className="text-xs text-muted-foreground">
               {formatCommentDate(comment.created_at)}
             </span>
