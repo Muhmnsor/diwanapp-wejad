@@ -1021,6 +1021,7 @@ export type Database = {
           attachment_url: string | null
           content: string
           created_at: string
+          display_name: string | null
           id: string
           idea_id: string | null
           parent_id: string | null
@@ -1035,6 +1036,7 @@ export type Database = {
           attachment_url?: string | null
           content: string
           created_at?: string
+          display_name?: string | null
           id?: string
           idea_id?: string | null
           parent_id?: string | null
@@ -1049,6 +1051,7 @@ export type Database = {
           attachment_url?: string | null
           content?: string
           created_at?: string
+          display_name?: string | null
           id?: string
           idea_id?: string | null
           parent_id?: string | null

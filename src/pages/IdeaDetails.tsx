@@ -40,19 +40,13 @@ const IdeaDetails = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('idea_comments')
-        .select(`
-          *,
-          user:user_id(display_name)
-        `)
+        .select('*')
         .eq('idea_id', id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      return data.map(comment => ({
-        ...comment,
-        display_name: comment.user?.display_name || null
-      })) as Comment[];
+      return data as Comment[];
     }
   });
 
