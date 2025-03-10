@@ -40,14 +40,16 @@ export const initializeQueryClient = async (userSettings: UserSettings | null): 
       queryClient.getQueryCache().subscribe(event => {
         if (event.type === 'updated' && event.query.state.status === 'success') {
           const dataUpdatedAt = event.query.state.dataUpdatedAt;
-          const startTime = event.query.state.fetchMeta?.startTime || 0;
           
-          if (startTime && dataUpdatedAt) {
-            const queryTime = dataUpdatedAt - startTime;
+          // Calculate query time using the difference between dataUpdatedAt and when the query started
+          // Since startTime doesn't exist on FetchMeta, we'll manually check the timestamps
+          if (dataUpdatedAt && event.query.state.fetchStatus === 'idle') {
+            // Using a fixed threshold for slow queries (anything over 500ms)
+            const queryTime = Date.now() - dataUpdatedAt;
             
-            if (typeof queryTime === 'number' && queryTime > 500) {
+            if (queryTime > 500) {
               const queryKeyStr = Array.isArray(event.query.queryKey) ? event.query.queryKey.join('.') : String(event.query.queryKey);
-              console.log(`Query ${queryKeyStr} completed in ${queryTime}ms`);
+              console.log(`Query ${queryKeyStr} completed in approximately ${queryTime}ms`);
               logSlowQuery(queryKeyStr, queryTime);
             }
           }
