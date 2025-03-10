@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useDeveloperStore } from "@/store/developerStore";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
 import { DocumentationSection } from "@/components/settings/developer/documentation/DocumentationSection";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -17,11 +17,13 @@ import { checkDeveloperPermissions } from "@/components/users/permissions/utils/
 import { DeveloperPermissionChecks } from "@/components/users/permissions/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SecondaryHeader } from "@/components/settings/developer/SecondaryHeader";
+import { useSearchParams } from "react-router-dom";
 
 const DeveloperSettings = () => {
   const { settings, isLoading, error, fetchSettings, updateSettings } = useDeveloperStore();
   const { user } = useAuthStore();
-  const [activeTab, setActiveTab] = useState("general");
+  const [searchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "general";
   const [permissions, setPermissions] = useState<DeveloperPermissionChecks>({
     canAccessDeveloperTools: false,
     canModifySystemSettings: false,
@@ -114,22 +116,8 @@ const DeveloperSettings = () => {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : settings ? (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="mb-6">
-              <TabsTrigger value="general">عام</TabsTrigger>
-              <TabsTrigger value="documentation">التوثيق</TabsTrigger>
-              <TabsTrigger value="permissions">الصلاحيات</TabsTrigger>
-              <TabsTrigger value="cache">الذاكرة المؤقتة</TabsTrigger>
-              <TabsTrigger value="debug">التصحيح</TabsTrigger>
-              <TabsTrigger value="performance">الأداء</TabsTrigger>
-              <TabsTrigger value="logs">السجلات</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="documentation">
-              <DocumentationSection />
-            </TabsContent>
-            
-            <TabsContent value="general" className="space-y-4">
+          <div className="w-full">
+            <TabsContent value="general" className="space-y-4" forceMount={activeTab === "general"}>
               <Card>
                 <CardHeader>
                   <CardTitle>الإعدادات العامة</CardTitle>
@@ -196,7 +184,11 @@ const DeveloperSettings = () => {
               </Card>
             </TabsContent>
             
-            <TabsContent value="permissions" className="space-y-4">
+            <TabsContent value="documentation" className="space-y-4" forceMount={activeTab === "documentation"}>
+              <DocumentationSection />
+            </TabsContent>
+            
+            <TabsContent value="permissions" className="space-y-4" forceMount={activeTab === "permissions"}>
               <Card>
                 <CardHeader>
                   <CardTitle>صلاحيات المطور</CardTitle>
@@ -280,7 +272,7 @@ const DeveloperSettings = () => {
               </Card>
             </TabsContent>
             
-            <TabsContent value="cache" className="space-y-4">
+            <TabsContent value="cache" className="space-y-4" forceMount={activeTab === "cache"}>
               <Card>
                 <CardHeader>
                   <CardTitle>إعدادات الذاكرة المؤقتة</CardTitle>
@@ -333,7 +325,7 @@ const DeveloperSettings = () => {
               </Card>
             </TabsContent>
             
-            <TabsContent value="debug" className="space-y-4">
+            <TabsContent value="debug" className="space-y-4" forceMount={activeTab === "debug"}>
               <Card>
                 <CardHeader>
                   <CardTitle>إعدادات التصحيح</CardTitle>
@@ -368,7 +360,7 @@ const DeveloperSettings = () => {
               </Card>
             </TabsContent>
             
-            <TabsContent value="performance" className="space-y-4">
+            <TabsContent value="performance" className="space-y-4" forceMount={activeTab === "performance"}>
               <Card>
                 <CardHeader>
                   <CardTitle>قياس الأداء</CardTitle>
@@ -415,7 +407,7 @@ const DeveloperSettings = () => {
               </Card>
             </TabsContent>
             
-            <TabsContent value="logs" className="space-y-4">
+            <TabsContent value="logs" className="space-y-4" forceMount={activeTab === "logs"}>
               <Card>
                 <CardHeader>
                   <CardTitle>سجلات النظام</CardTitle>
@@ -450,7 +442,7 @@ const DeveloperSettings = () => {
                 </CardContent>
               </Card>
             </TabsContent>
-          </Tabs>
+          </div>
         ) : (
           <Card>
             <CardHeader>
@@ -474,4 +466,3 @@ const DeveloperSettings = () => {
 };
 
 export default DeveloperSettings;
-
