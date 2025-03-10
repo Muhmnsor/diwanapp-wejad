@@ -20,6 +20,7 @@ export const assignDeveloperRole = async (userId: string): Promise<boolean> => {
       const { error } = await supabase
         .from('developer_permissions')
         .update({
+          is_developer: true,
           can_access_developer_tools: true,
           can_view_performance_metrics: true,
           can_access_api_logs: true
@@ -36,6 +37,7 @@ export const assignDeveloperRole = async (userId: string): Promise<boolean> => {
         .from('developer_permissions')
         .insert({
           user_id: userId,
+          is_developer: true,
           can_access_developer_tools: true,
           can_modify_system_settings: false,
           can_access_api_logs: true,
@@ -73,6 +75,19 @@ export const assignDeveloperRole = async (userId: string): Promise<boolean> => {
         console.error('Error creating developer settings:', error);
         return false;
       }
+    } else {
+      // Update existing settings
+      const { error } = await supabase
+        .from('developer_settings')
+        .update({
+          is_enabled: true
+        })
+        .eq('user_id', userId);
+        
+      if (error) {
+        console.error('Error updating developer settings:', error);
+        return false;
+      }
     }
     
     return true;
@@ -93,6 +108,7 @@ export const removeDeveloperRole = async (userId: string): Promise<boolean> => {
     const { error } = await supabase
       .from('developer_permissions')
       .update({
+        is_developer: false,
         can_access_developer_tools: false,
         can_modify_system_settings: false,
         can_access_api_logs: false,
