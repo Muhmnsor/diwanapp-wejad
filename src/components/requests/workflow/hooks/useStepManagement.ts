@@ -169,6 +169,7 @@ export const useStepManagement = ({
         setEditingStepIndex(null);
         // Reset current step
         setCurrentStep({
+          id: null,
           workflow_id: currentWorkflowId || 'temp-workflow-id',
           step_name: '',
           step_type: 'decision',
@@ -176,7 +177,8 @@ export const useStepManagement = ({
           instructions: '',
           is_required: true,
           approver_type: 'user',
-          step_order: updatedSteps.length + 1
+          step_order: updatedSteps.length + 1,
+          created_at: null
         });
       }
 
