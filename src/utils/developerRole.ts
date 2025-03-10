@@ -61,6 +61,9 @@ export const initializeDeveloperRole = async (): Promise<void> => {
     // Initialize developer settings
     await initializeDeveloperSettings();
     
+    // Auto-assign developer role to all admins
+    await assignDeveloperRoleToAdmins();
+    
   } catch (error) {
     console.error('Error in initializeDeveloperRole:', error);
   }
@@ -95,6 +98,37 @@ const initializeDeveloperSettings = async (): Promise<void> => {
     }
   } catch (error) {
     console.error('Error in initializeDeveloperSettings:', error);
+  }
+};
+
+// Assign developer role to all admin users
+const assignDeveloperRoleToAdmins = async (): Promise<void> => {
+  try {
+    // Get all admin users
+    const { data: adminUsers, error: usersError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('is_admin', true);
+      
+    if (usersError) {
+      console.error('Error fetching admin users:', usersError);
+      return;
+    }
+    
+    if (!adminUsers || adminUsers.length === 0) {
+      console.log('No admin users found to assign developer role');
+      return;
+    }
+    
+    // Assign developer role to each admin
+    for (const admin of adminUsers) {
+      await autoAssignDeveloperRole(admin.id);
+    }
+    
+    console.log(`Developer role assigned to ${adminUsers.length} admin users`);
+    
+  } catch (error) {
+    console.error('Error in assignDeveloperRoleToAdmins:', error);
   }
 };
 
@@ -226,5 +260,15 @@ export const toggleDeveloperMode = async (userId: string, enableMode: boolean): 
     console.error('Error in toggleDeveloperMode:', error);
     toast.error('حدث خطأ أثناء تحديث وضع المطور');
     return false;
+  }
+};
+
+// Initialize developer role on application start
+export const initializeDeveloperFeatures = async (): Promise<void> => {
+  try {
+    await initializeDeveloperRole();
+    console.log('Developer features initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize developer features:', error);
   }
 };
