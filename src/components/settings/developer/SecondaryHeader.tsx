@@ -14,7 +14,7 @@ export const SecondaryHeader = () => {
             <Button 
               variant="ghost"
               className="gap-2"
-              onClick={() => navigate('/documentation')}
+              onClick={() => navigate('/admin/documentation')}
             >
               <FileText className="h-4 w-4" />
               التوثيق
@@ -22,7 +22,7 @@ export const SecondaryHeader = () => {
             <Button 
               variant="ghost" 
               className="gap-2"
-              onClick={() => navigate('/developer-settings')}
+              onClick={() => navigate('/admin/developer-settings')}
             >
               <Settings className="h-4 w-4" />
               إعدادات المطور

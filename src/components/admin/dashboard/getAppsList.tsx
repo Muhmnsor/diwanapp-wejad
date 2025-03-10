@@ -90,7 +90,7 @@ export const getAppsList = (notificationCounts: NotificationCounts): AppItem[] =
     {
       title: "المطورين",
       icon: Code,
-      path: "/developer-settings",
+      path: "/admin/developer-settings",
       description: "إعدادات وأدوات المطورين",
       notifications: 0
     }

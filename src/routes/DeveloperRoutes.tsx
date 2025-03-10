@@ -7,7 +7,7 @@ import DeveloperRoute from "@/components/DeveloperRoute";
 export const DeveloperRoutes = (
   <>
     <Route 
-      path="/developer-settings" 
+      path="/admin/developer-settings" 
       element={
         <DeveloperRoute>
           <DeveloperSettings />
@@ -15,7 +15,7 @@ export const DeveloperRoutes = (
       } 
     />
     <Route 
-      path="/documentation" 
+      path="/admin/documentation" 
       element={
         <DeveloperRoute>
           <Documentation />
