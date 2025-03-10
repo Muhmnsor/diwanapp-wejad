@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { User } from './types';
 
@@ -82,6 +83,13 @@ export const initializeSession = async (): Promise<{ user: User | null; isAuthen
 
     const isDev = await checkUserRole(session.user.id);
     const role = await getUserRole(session.user.id);
+
+    console.log("SessionManager: Session initialized:", {
+      userId: session.user.id,
+      email: session.user.email,
+      isDeveloper: isDev,
+      role: role
+    });
 
     return {
       user: {

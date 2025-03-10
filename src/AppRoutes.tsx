@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "@/store/refactored-auth";
 import { MainRoutes } from "./routes/MainRoutes";
@@ -7,19 +8,11 @@ import { TaskRoutes } from "./routes/TaskRoutes";
 import { DeveloperRoutes } from "./routes/DeveloperRoutes";
 import { DeveloperToolbar } from "./components/developer/DeveloperToolbar";
 import { useEffect, useState } from "react";
-import { isDeveloper, initializeDeveloperFeatures } from "./utils/developerRole";
+import { isDeveloper } from "./utils/developerRole";
 
 const AppRoutes = () => {
   const { isAuthenticated, user } = useAuthStore();
   const [showDevTools, setShowDevTools] = useState(false);
-  
-  useEffect(() => {
-    // Initialize developer features when the app starts
-    if (isAuthenticated && user) {
-      console.log('Initializing developer features for user:', user.email);
-      initializeDeveloperFeatures().catch(console.error);
-    }
-  }, [isAuthenticated, user]);
   
   useEffect(() => {
     const checkDeveloperStatus = async () => {
@@ -31,6 +24,7 @@ const AppRoutes = () => {
           show: hasDeveloperRole, 
           userId: user.id, 
           email: user.email,
+          role: user.role,
           hasDeveloperRole
         });
       } else {
@@ -41,7 +35,11 @@ const AppRoutes = () => {
     checkDeveloperStatus();
   }, [isAuthenticated, user]);
   
-  console.log('AppRoutes - Current auth state:', { isAuthenticated, userEmail: user?.email });
+  console.log('AppRoutes - Current auth state:', { 
+    isAuthenticated, 
+    userEmail: user?.email,
+    userRole: user?.role 
+  });
 
   return (
     <>
