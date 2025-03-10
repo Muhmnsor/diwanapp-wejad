@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useDeveloperStore } from "@/store/developerStore";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { DocumentationContainer } from "@/components/documentation/DocumentationContainer";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -28,7 +28,6 @@ const DeveloperSettings = () => {
   const urlParams = new URLSearchParams(location.search);
   const activeTab = urlParams.get('tab') || 'overview';
   
-  const [internalActiveTab, setInternalActiveTab] = useState("general");
   const [permissions, setPermissions] = useState<DeveloperPermissionChecks>({
     canAccessDeveloperTools: false,
     canModifySystemSettings: false,
@@ -101,10 +100,6 @@ const DeveloperSettings = () => {
     } finally {
       setRoleAssigning(false);
     }
-  };
-  
-  const handleInternalTabChange = (value: string) => {
-    setInternalActiveTab(value);
   };
   
   const isDocumentationTab = ['overview', 'components', 'database', 'ui', 'technical'].includes(activeTab);
@@ -202,16 +197,7 @@ const DeveloperSettings = () => {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : settings ? (
-          <Tabs value={internalActiveTab} onValueChange={handleInternalTabChange} className="w-full">
-            <TabsList className="mb-6">
-              <TabsTrigger value="general">عام</TabsTrigger>
-              <TabsTrigger value="permissions">الصلاحيات</TabsTrigger>
-              <TabsTrigger value="cache">الذاكرة المؤقتة</TabsTrigger>
-              <TabsTrigger value="debug">التصحيح</TabsTrigger>
-              <TabsTrigger value="performance">الأداء</TabsTrigger>
-              <TabsTrigger value="logs">السجلات</TabsTrigger>
-            </TabsList>
-            
+          <Tabs value={activeTab} className="w-full">
             <TabsContent value="general" className="space-y-4">
               <Card>
                 <CardHeader>
