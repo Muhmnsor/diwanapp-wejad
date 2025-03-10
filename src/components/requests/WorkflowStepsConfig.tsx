@@ -8,19 +8,24 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface WorkflowStepsConfigProps {
   requestTypeId: string | null;
   onWorkflowStepsUpdated: (steps: WorkflowStep[]) => void;
+  onWorkflowSaved?: () => void; // New callback for when workflow is successfully saved
   initialSteps?: WorkflowStep[];
   workflowId?: string | null;
+  standalone?: boolean; // Whether this component is used standalone
 }
 
 export const WorkflowStepsConfig = ({ 
   requestTypeId, 
   onWorkflowStepsUpdated,
+  onWorkflowSaved,
   initialSteps = [],
-  workflowId = null
+  workflowId = null,
+  standalone = false
 }: WorkflowStepsConfigProps) => {
   const {
     workflowSteps,
@@ -34,6 +39,7 @@ export const WorkflowStepsConfig = ({
     handleRemoveStep,
     handleEditStep,
     handleMoveStep,
+    saveWorkflowSteps
   } = useWorkflowSteps({ 
     requestTypeId, 
     onWorkflowStepsUpdated,
@@ -55,6 +61,25 @@ export const WorkflowStepsConfig = ({
       onWorkflowStepsUpdated(workflowSteps);
     }
   }, [workflowSteps, onWorkflowStepsUpdated]);
+
+  // Function to handle saving workflow when in standalone mode
+  const handleSaveWorkflow = async () => {
+    if (workflowSteps.length === 0) {
+      toast.error('يجب إضافة خطوة واحدة على الأقل لسير العمل');
+      return;
+    }
+
+    try {
+      await saveWorkflowSteps(workflowSteps);
+      toast.success('تم حفظ خطوات سير العمل بنجاح');
+      if (onWorkflowSaved) {
+        onWorkflowSaved();
+      }
+    } catch (error) {
+      console.error('Error saving workflow steps:', error);
+      toast.error(error.message || 'فشل في حفظ خطوات سير العمل');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -88,6 +113,17 @@ export const WorkflowStepsConfig = ({
         onEditStep={handleEditStep}
         onRemoveStep={handleRemoveStep}
       />
+
+      {standalone && (
+        <div className="flex justify-end mt-6">
+          <Button 
+            onClick={handleSaveWorkflow} 
+            disabled={isLoading || workflowSteps.length === 0}
+          >
+            {isLoading ? "جاري الحفظ..." : "حفظ خطوات سير العمل"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

@@ -17,16 +17,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Settings } from "lucide-react";
 import { RequestType } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RequestTypeDialog } from "./RequestTypeDialog";
+import { WorkflowConfigDialog } from "./workflow/WorkflowConfigDialog";
 
 export const AdminWorkflows = () => {
   const queryClient = useQueryClient();
   const [showRequestTypeDialog, setShowRequestTypeDialog] = useState(false);
+  const [showWorkflowDialog, setShowWorkflowDialog] = useState(false);
   const [selectedRequestType, setSelectedRequestType] = useState<RequestType | null>(null);
 
   const { data: requestTypes, isLoading: typesLoading } = useQuery({
@@ -51,9 +53,19 @@ export const AdminWorkflows = () => {
     setSelectedRequestType(requestType);
     setShowRequestTypeDialog(true);
   };
+  
+  const handleConfigureWorkflow = (requestType: RequestType) => {
+    setSelectedRequestType(requestType);
+    setShowWorkflowDialog(true);
+  };
 
   const handleRequestTypeCreated = () => {
     queryClient.invalidateQueries({ queryKey: ["requestTypes"] });
+  };
+  
+  const handleWorkflowSaved = () => {
+    queryClient.invalidateQueries({ queryKey: ["requestTypes"] });
+    toast.success("تم حفظ خطوات سير العمل بنجاح");
   };
 
   const deleteRequestType = useMutation({
@@ -135,6 +147,13 @@ export const AdminWorkflows = () => {
                         <Button 
                           variant="outline" 
                           size="sm"
+                          onClick={() => handleConfigureWorkflow(type)}
+                        >
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
                           onClick={() => handleEditRequestType(type)}
                         >
                           <Edit className="h-4 w-4" />
@@ -169,6 +188,17 @@ export const AdminWorkflows = () => {
         onRequestTypeCreated={handleRequestTypeCreated}
         requestType={selectedRequestType}
       />
+      
+      {selectedRequestType && (
+        <WorkflowConfigDialog
+          isOpen={showWorkflowDialog}
+          onClose={() => setShowWorkflowDialog(false)}
+          requestTypeId={selectedRequestType.id}
+          requestTypeName={selectedRequestType.name}
+          workflowId={selectedRequestType.default_workflow_id || null}
+          onWorkflowSaved={handleWorkflowSaved}
+        />
+      )}
     </div>
   );
 };

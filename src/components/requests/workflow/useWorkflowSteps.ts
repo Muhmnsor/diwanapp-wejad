@@ -37,7 +37,8 @@ export const useWorkflowSteps = ({
     isLoading,
     setIsLoading,
     error,
-    setError
+    setError,
+    resetWorkflowState
   } = useWorkflowState({ initialSteps, initialWorkflowId });
 
   // Initialize with provided steps if available
@@ -116,6 +117,8 @@ export const useWorkflowSteps = ({
     handleRemoveStep,
     handleEditStep,
     handleMoveStep,
+    saveWorkflowSteps,
+    resetWorkflowState,
     workflowId
   };
 };

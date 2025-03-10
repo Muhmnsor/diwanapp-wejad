@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { RequestType, WorkflowStep, FormField, FormSchema } from "../types";
+import { RequestType, FormField, FormSchema } from "../types";
 import { requestTypeSchema, RequestTypeFormValues } from "./RequestTypeForm";
 import { v4 as uuidv4 } from "uuid";
 
@@ -31,7 +31,6 @@ export const useRequestTypeForm = ({
     options: [],
   });
   const [editingFieldIndex, setEditingFieldIndex] = useState<number | null>(null);
-  const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
   const [createdRequestTypeId, setCreatedRequestTypeId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const isEditing = !!requestType;
@@ -58,36 +57,6 @@ export const useRequestTypeForm = ({
       });
       setFormFields(requestType.form_schema.fields || []);
       setCreatedRequestTypeId(requestType.id);
-
-      const fetchWorkflowSteps = async () => {
-        if (requestType.default_workflow_id) {
-          try {
-            const { data, error } = await supabase
-              .from("workflow_steps")
-              .select("*")
-              .eq("workflow_id", requestType.default_workflow_id)
-              .order("step_order", { ascending: true });
-            
-            if (error) {
-              console.error("Error fetching workflow steps:", error);
-              return;
-            }
-            
-            console.log("Fetched existing workflow steps:", data);
-            
-            const stepsWithWorkflowId = data ? data.map(step => ({
-              ...step,
-              workflow_id: step.workflow_id || requestType.default_workflow_id
-            })) : [];
-            
-            setWorkflowSteps(stepsWithWorkflowId);
-          } catch (error) {
-            console.error("Error in fetching workflow steps:", error);
-          }
-        }
-      };
-      
-      fetchWorkflowSteps();
     } else {
       form.reset({
         name: "",
@@ -98,7 +67,6 @@ export const useRequestTypeForm = ({
         },
       });
       setFormFields([]);
-      setWorkflowSteps([]);
       setCreatedRequestTypeId(null);
     }
   }, [requestType, form]);
@@ -153,34 +121,12 @@ export const useRequestTypeForm = ({
     setEditingFieldIndex(index);
   };
 
-  const handleWorkflowStepsUpdated = (steps: WorkflowStep[]) => {
-    console.log("Workflow steps updated in RequestTypeDialog:", steps);
-    
-    if (steps.some(step => !step.workflow_id)) {
-      console.warn("Some workflow steps are missing workflow_id");
-      
-      const fixedSteps = steps.map(step => ({
-        ...step,
-        workflow_id: step.workflow_id || (requestType?.default_workflow_id || 'temp-workflow-id')
-      }));
-      
-      setWorkflowSteps(fixedSteps);
-    } else {
-      setWorkflowSteps(steps);
-    }
-  };
-
   const saveRequestType = async (values: RequestTypeFormValues) => {
     const formSchemaWithFields: FormSchema = {
       fields: formFields,
     };
     
     values.form_schema = formSchemaWithFields;
-
-    if (workflowSteps.length === 0) {
-      setFormError('يجب إضافة خطوة واحدة على الأقل لسير العمل');
-      throw new Error('يجب إضافة خطوة واحدة على الأقل لسير العمل');
-    }
 
     const requestTypeData = {
       name: values.name,
@@ -211,165 +157,22 @@ export const useRequestTypeForm = ({
     }
   };
 
-  const createWorkflow = async (requestTypeId: string) => {
-    console.log("Creating workflow for request type:", requestTypeId);
-    console.log("With steps count:", workflowSteps.length);
-
-    const workflowData = {
-      name: `سير عمل ${form.getValues("name")}`,
-      description: `سير عمل تلقائي لنوع الطلب: ${form.getValues("name")}`,
-      is_active: true,
-      request_type_id: requestTypeId
-    };
-
-    if (isEditing && requestType?.default_workflow_id) {
-      const { data, error } = await supabase.rpc('upsert_workflow', {
-        workflow_data: { 
-          ...workflowData, 
-          id: requestType.default_workflow_id 
-        },
-        is_update: true
-      });
-
-      if (error) {
-        console.error("Error updating workflow:", error);
-        throw error;
-      }
-      
-      console.log("Updated existing workflow:", data);
-      return data;
-    } else {
-      const { data, error } = await supabase.rpc('upsert_workflow', {
-        workflow_data: workflowData,
-        is_update: false
-      });
-
-      if (error) {
-        console.error("Error creating workflow:", error);
-        throw error;
-      }
-      
-      console.log("Created new workflow:", data);
-      return data;
-    }
-  };
-
-  const saveWorkflowSteps = async (workflowId: string, steps: WorkflowStep[]) => {
-    if (steps.length === 0) {
-      console.log("No workflow steps to save");
-      setFormError('يجب إضافة خطوة واحدة على الأقل لسير العمل');
-      throw new Error('يجب إضافة خطوة واحدة على الأقل لسير العمل');
-    }
-
-    console.log("Saving workflow steps for workflow:", workflowId);
-    console.log("Steps to save:", steps);
-
-    try {
-      const stepsWithWorkflowId = steps.map((step, index) => ({
-        ...step,
-        workflow_id: workflowId,
-        step_order: index + 1,
-        step_type: step.step_type || 'decision',
-        is_required: step.is_required === false ? false : true,
-        approver_type: step.approver_type || 'user'
-      }));
-      
-      console.log("Prepared steps with workflow ID:", stepsWithWorkflowId);
-      
-      const jsonSteps = stepsWithWorkflowId.map(step => JSON.stringify(step));
-      
-      console.log("JSON steps for RPC:", jsonSteps);
-      
-      const { data, error } = await supabase
-        .rpc('insert_workflow_steps', {
-          steps: jsonSteps
-        });
-
-      if (error) {
-        console.error("Error calling insert_workflow_steps RPC:", error);
-        throw new Error(`فشل في إدخال خطوات سير العمل: ${error.message}`);
-      }
-      
-      if (!data || !data.success) {
-        const errorMessage = data?.message || data?.error || 'حدث خطأ غير معروف';
-        console.error("RPC function returned an error:", errorMessage);
-        throw new Error(`فشل في إدخال خطوات سير العمل: ${errorMessage}`);
-      }
-      
-      console.log("Inserted workflow steps successfully:", data);
-      return data.data;
-    } catch (error) {
-      console.error("Error in saveWorkflowSteps:", error);
-      throw error;
-    }
-  };
-
-  const updateDefaultWorkflow = async (requestTypeId: string, workflowId: string) => {
-    console.log(`Updating request type ${requestTypeId} with default workflow: ${workflowId}`);
-    
-    const { data, error } = await supabase.rpc('set_default_workflow', {
-      p_request_type_id: requestTypeId,
-      p_workflow_id: workflowId
-    });
-
-    if (error) {
-      console.error("Error updating default workflow:", error);
-      throw error;
-    }
-    
-    console.log("Updated request type with default workflow:", data);
-    return data;
-  };
-
   const onSubmit = async (values: RequestTypeFormValues) => {
     if (formFields.length === 0) {
       setFormError("يجب إضافة حقل واحد على الأقل للنموذج");
       return;
     }
 
-    if (workflowSteps.length === 0) {
-      setFormError("يجب إضافة خطوة واحدة على الأقل لسير العمل");
-      return;
-    }
-    
-    if (workflowSteps.some(step => !step.approver_id)) {
-      setFormError("جميع خطوات سير العمل يجب أن تحتوي على معتمد");
-      return;
-    }
-
     setFormError(null);
-    console.log("Starting form submission with workflow steps:", workflowSteps);
-    
     setIsLoading(true);
+    
     try {
-      console.log("Submitting form with workflow steps count:", workflowSteps.length);
-      
       const requestTypeResult = await saveRequestType(values);
-      const requestTypeId = requestTypeResult.id;
-      setCreatedRequestTypeId(requestTypeId);
+      setCreatedRequestTypeId(requestTypeResult.id);
       
-      console.log("Request type saved:", requestTypeResult);
-      
-      const workflow = await createWorkflow(requestTypeId);
-      
-      if (workflow) {
-        const workflowId = workflow.id;
-        
-        const updatedSteps = workflowSteps.map(step => ({
-          ...step,
-          workflow_id: workflowId
-        }));
-        
-        console.log("Steps with updated workflow ID:", updatedSteps);
-        
-        await updateDefaultWorkflow(requestTypeId, workflowId);
-        
-        await saveWorkflowSteps(workflowId, updatedSteps);
-
-        toast.success(isEditing ? "تم تحديث نوع الطلب بنجاح" : "تم إنشاء نوع الطلب بنجاح");
-        onRequestTypeCreated();
-        onClose();
-      }
+      toast.success(isEditing ? "تم تحديث نوع الطلب بنجاح" : "تم إنشاء نوع الطلب بنجاح");
+      onRequestTypeCreated();
+      onClose();
     } catch (error) {
       console.error("Error saving request type:", error);
       toast.error(isEditing ? "حدث خطأ أثناء تحديث نوع الطلب" : "حدث خطأ أثناء إنشاء نوع الطلب");
@@ -384,7 +187,6 @@ export const useRequestTypeForm = ({
     formFields,
     currentField,
     editingFieldIndex,
-    workflowSteps,
     createdRequestTypeId,
     isLoading,
     formError,
@@ -394,7 +196,6 @@ export const useRequestTypeForm = ({
     handleAddField,
     handleRemoveField,
     handleEditField,
-    handleWorkflowStepsUpdated,
     onSubmit
   };
 };

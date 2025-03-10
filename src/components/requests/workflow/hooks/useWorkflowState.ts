@@ -19,6 +19,13 @@ export const useWorkflowState = ({
   const [initialized, setInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Reset workflow state
+  const resetWorkflowState = () => {
+    setCurrentStep(getInitialStepState(1, workflowId || ''));
+    setEditingStepIndex(null);
+    setError(null);
+  };
 
   return {
     workflowId,
@@ -34,6 +41,7 @@ export const useWorkflowState = ({
     isLoading,
     setIsLoading,
     error,
-    setError
+    setError,
+    resetWorkflowState
   };
 };

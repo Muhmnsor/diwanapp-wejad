@@ -1,4 +1,3 @@
-
 import { useCallback } from "react";
 import { WorkflowStep } from "../../types";
 import { supabase } from "@/integrations/supabase/client";
@@ -181,11 +180,11 @@ export const useWorkflowOperations = ({
         updateWorkflowSteps(stepsToInsert);
       }
 
-      toast.success('تم حفظ خطوات سير العمل بنجاح');
+      return true;
     } catch (error) {
       console.error('Error saving workflow steps:', error);
-      toast.error(error.message || 'فشل في حفظ خطوات سير العمل');
       setError(error.message || 'فشل في حفظ خطوات سير العمل');
+      throw error;
     } finally {
       setIsLoading(false);
     }

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -17,7 +17,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Form } from "@/components/ui/form";
 import { RequestType } from "./types";
-import { WorkflowStepsConfig } from "./WorkflowStepsConfig";
 import { FormFieldEditor } from "./form/FormFieldEditor";
 import { FormFieldsList } from "./form/FormFieldsList";
 import { RequestTypeForm } from "./form/RequestTypeForm";
@@ -41,7 +40,6 @@ export const RequestTypeDialog = ({
     formFields,
     currentField,
     editingFieldIndex,
-    workflowSteps,
     createdRequestTypeId,
     isLoading,
     formError,
@@ -51,7 +49,6 @@ export const RequestTypeDialog = ({
     handleAddField,
     handleRemoveField,
     handleEditField,
-    handleWorkflowStepsUpdated,
     onSubmit
   } = useRequestTypeForm({
     requestType,
@@ -65,7 +62,7 @@ export const RequestTypeDialog = ({
         <DialogHeader>
           <DialogTitle>{isEditing ? "تعديل نوع الطلب" : "إضافة نوع طلب جديد"}</DialogTitle>
           <DialogDescription>
-            {isEditing ? "عدّل بيانات نوع الطلب وحقول النموذج وخطوات سير العمل" : "أنشئ نوع طلب جديد وحدد حقول النموذج المطلوبة وخطوات سير العمل"}
+            {isEditing ? "عدّل بيانات نوع الطلب وحقول النموذج" : "أنشئ نوع طلب جديد وحدد حقول النموذج المطلوبة"}
           </DialogDescription>
         </DialogHeader>
 
@@ -102,12 +99,6 @@ export const RequestTypeDialog = ({
                       handleRemoveField={handleRemoveField}
                     />
                   </div>
-
-                  <WorkflowStepsConfig 
-                    requestTypeId={createdRequestTypeId}
-                    onWorkflowStepsUpdated={handleWorkflowStepsUpdated}
-                    initialSteps={workflowSteps}
-                  />
                 </div>
               </ScrollArea>
             </div>
