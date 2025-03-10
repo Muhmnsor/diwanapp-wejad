@@ -1,6 +1,6 @@
 
 import { BrowserRouter } from "react-router-dom";
-import AppRoutes from "./AppRoutes";
+import AppRoutes from "@/AppRoutes";
 import { Toaster } from "./ui/toaster";
 import { Toaster as SonnerToaster } from "sonner";
 import { useEffect } from "react";
