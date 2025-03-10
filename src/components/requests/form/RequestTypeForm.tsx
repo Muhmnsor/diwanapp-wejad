@@ -15,7 +15,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { RequestTypeFormValues } from "../types";
 
 export const requestTypeSchema = z.object({
   name: z.string().min(3, { message: "يجب أن يحتوي الاسم على 3 أحرف على الأقل" }),
@@ -33,6 +32,8 @@ export const requestTypeSchema = z.object({
     ),
   }).default({ fields: [] }),
 });
+
+export type RequestTypeFormValues = z.infer<typeof requestTypeSchema>;
 
 interface RequestTypeFormProps {
   form: ReturnType<typeof useForm<RequestTypeFormValues>>;

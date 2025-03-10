@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { FormFieldType } from "../types";
+import { FormField } from "../types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -16,9 +16,9 @@ import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { toast } from "sonner";
 
 interface FormFieldEditorProps {
-  currentField: FormFieldType;
+  currentField: FormField;
   editingFieldIndex: number | null;
-  setCurrentField: (field: FormFieldType) => void;
+  setCurrentField: (field: FormField) => void;
   handleAddField: () => void;
 }
 

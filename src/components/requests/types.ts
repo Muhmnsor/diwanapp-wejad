@@ -1,4 +1,3 @@
-
 export interface RequestType {
   id: string;
   name: string;

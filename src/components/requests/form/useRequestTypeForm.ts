@@ -1,14 +1,11 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { RequestType, WorkflowStep, FormFieldType, RequestTypeFormValues } from "../types";
-import { requestTypeSchema } from "./RequestTypeForm";
-
-type RequestTypeFormValues = z.infer<typeof requestTypeSchema>;
+import { RequestType, WorkflowStep, FormField } from "../types";
+import { requestTypeSchema, RequestTypeFormValues } from "./RequestTypeForm";
 
 interface UseRequestTypeFormProps {
   requestType: RequestType | null;
@@ -22,8 +19,8 @@ export const useRequestTypeForm = ({
   onClose,
 }: UseRequestTypeFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [formFields, setFormFields] = useState<FormFieldType[]>([]);
-  const [currentField, setCurrentField] = useState<FormFieldType>({
+  const [formFields, setFormFields] = useState<FormField[]>([]);
+  const [currentField, setCurrentField] = useState<FormField>({
     name: "",
     label: "",
     type: "text",
@@ -116,7 +113,7 @@ export const useRequestTypeForm = ({
 
     const formattedName = currentField.name.replace(/\s+/g, "_").toLowerCase();
     
-    const newField: FormFieldType = {
+    const newField: FormField = {
       ...currentField,
       name: formattedName,
     };

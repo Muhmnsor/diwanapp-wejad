@@ -1,11 +1,11 @@
 
 import React from "react";
-import { FormFieldType } from "../types";
+import { FormField } from "../types";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2 } from "lucide-react";
 
 interface FormFieldsListProps {
-  formFields: FormFieldType[];
+  formFields: FormField[];
   handleEditField: (index: number) => void;
   handleRemoveField: (index: number) => void;
 }
