@@ -1,4 +1,3 @@
-
 export interface WorkflowStep {
   id: string | null;
   workflow_id: string;  // Ensure this is required

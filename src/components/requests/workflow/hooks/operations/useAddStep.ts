@@ -4,6 +4,7 @@ import { WorkflowStep } from "../../../types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { checkUserPermissions } from "../utils/permissionUtils";
+import { getInitialStepState } from "../../utils";
 
 export const useAddStep = (
   saveWorkflowSteps: (steps: WorkflowStep[]) => Promise<boolean | undefined>,
@@ -65,18 +66,7 @@ export const useAddStep = (
       await saveWorkflowSteps(updatedSteps);
 
       // Reset the current step and editing index
-      setCurrentStep({
-        id: null,
-        workflow_id: workflowId,
-        step_name: '',
-        step_type: 'decision',
-        approver_id: null,
-        instructions: null,
-        is_required: true,
-        approver_type: 'user',
-        step_order: updatedSteps.length + 1,
-        created_at: null
-      });
+      setCurrentStep(getInitialStepState(updatedSteps.length + 1, workflowId));
       setEditingStepIndex(null);
 
       toast.success(editingStepIndex !== null ? "تم تحديث الخطوة بنجاح" : "تمت إضافة الخطوة بنجاح");

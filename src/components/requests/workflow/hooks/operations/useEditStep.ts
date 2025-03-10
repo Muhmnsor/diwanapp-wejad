@@ -11,7 +11,9 @@ export const useEditStep = (
     const stepToEdit = workflowSteps[stepIndex];
     setCurrentStep({
       ...stepToEdit,
-      workflow_id: stepToEdit.workflow_id || currentWorkflowId || 'temp-workflow-id'
+      id: stepToEdit.id || null,
+      workflow_id: stepToEdit.workflow_id || currentWorkflowId || 'temp-workflow-id',
+      created_at: stepToEdit.created_at || null
     });
     setEditingStepIndex(stepIndex);
   };

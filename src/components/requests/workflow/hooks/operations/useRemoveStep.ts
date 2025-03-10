@@ -2,6 +2,7 @@
 import { WorkflowStep } from "../../../types";
 import { toast } from "sonner";
 import { checkUserPermissions } from "../utils/permissionUtils";
+import { getInitialStepState } from "../../utils";
 
 export const useRemoveStep = (
   saveWorkflowSteps: (steps: WorkflowStep[]) => Promise<boolean | undefined>,
@@ -26,19 +27,14 @@ export const useRemoveStep = (
       // reset the editing state
       if (editingStepIndex !== null && editingStepIndex >= stepIndex) {
         setEditingStepIndex(null);
+        
+        // Get workflowId from the steps if available, otherwise use the provided one
+        const workflowId = workflowSteps.length > 0 
+          ? workflowSteps[0].workflow_id 
+          : currentWorkflowId || 'temp-workflow-id';
+        
         // Reset current step
-        setCurrentStep({
-          id: null,
-          workflow_id: currentWorkflowId || 'temp-workflow-id',
-          step_name: '',
-          step_type: 'decision',
-          approver_id: null,
-          instructions: null,
-          is_required: true,
-          approver_type: 'user',
-          step_order: updatedSteps.length + 1,
-          created_at: null
-        });
+        setCurrentStep(getInitialStepState(updatedSteps.length + 1, workflowId));
       }
 
       // Update step order for all steps
