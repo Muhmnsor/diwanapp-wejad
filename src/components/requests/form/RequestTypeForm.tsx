@@ -16,6 +16,17 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 
+// Define field types explicitly for Zod
+const fieldTypes = [
+  "text", 
+  "textarea", 
+  "number", 
+  "date", 
+  "select", 
+  "array", 
+  "file"
+] as const;
+
 export const requestTypeSchema = z.object({
   name: z.string().min(3, { message: "يجب أن يحتوي الاسم على 3 أحرف على الأقل" }),
   description: z.string().optional(),
@@ -23,11 +34,20 @@ export const requestTypeSchema = z.object({
   form_schema: z.object({
     fields: z.array(
       z.object({
+        id: z.string(),
         name: z.string().min(1, { message: "اسم الحقل مطلوب" }),
         label: z.string().min(1, { message: "عنوان الحقل مطلوب" }),
-        type: z.enum(['text', 'textarea', 'number', 'date', 'select', 'array', 'file']),
+        type: z.enum(fieldTypes),
         required: z.boolean().default(false),
-        options: z.array(z.string()).optional(),
+        options: z.array(
+          z.union([
+            z.string(),
+            z.object({
+              label: z.string(),
+              value: z.string()
+            })
+          ])
+        ).optional(),
       })
     ),
   }).default({ fields: [] }),

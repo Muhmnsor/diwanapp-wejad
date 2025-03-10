@@ -1,11 +1,13 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { RequestType, WorkflowStep, FormField } from "../types";
+import { RequestType, WorkflowStep, FormField, FormSchema } from "../types";
 import { requestTypeSchema, RequestTypeFormValues } from "./RequestTypeForm";
+import { v4 as uuidv4 } from "uuid";
 
 interface UseRequestTypeFormProps {
   requestType: RequestType | null;
@@ -21,6 +23,7 @@ export const useRequestTypeForm = ({
   const [isLoading, setIsLoading] = useState(false);
   const [formFields, setFormFields] = useState<FormField[]>([]);
   const [currentField, setCurrentField] = useState<FormField>({
+    id: uuidv4(),
     name: "",
     label: "",
     type: "text",
@@ -102,6 +105,7 @@ export const useRequestTypeForm = ({
 
   const resetFieldForm = () => {
     setCurrentField({
+      id: uuidv4(),
       name: "",
       label: "",
       type: "text",
@@ -121,6 +125,7 @@ export const useRequestTypeForm = ({
     
     const newField: FormField = {
       ...currentField,
+      id: currentField.id || uuidv4(),
       name: formattedName,
     };
 
@@ -133,14 +138,14 @@ export const useRequestTypeForm = ({
     }
 
     setFormFields(updatedFields);
-    form.setValue("form_schema.fields", updatedFields);
+    form.setValue("form_schema.fields", updatedFields as any);
     resetFieldForm();
   };
 
   const handleRemoveField = (index: number) => {
     const updatedFields = formFields.filter((_, i) => i !== index);
     setFormFields(updatedFields);
-    form.setValue("form_schema.fields", updatedFields);
+    form.setValue("form_schema.fields", updatedFields as any);
   };
 
   const handleEditField = (index: number) => {
@@ -166,7 +171,11 @@ export const useRequestTypeForm = ({
   };
 
   const saveRequestType = async (values: RequestTypeFormValues) => {
-    values.form_schema = { fields: formFields };
+    const formSchemaWithFields: FormSchema = {
+      fields: formFields,
+    };
+    
+    values.form_schema = formSchemaWithFields;
 
     if (workflowSteps.length === 0) {
       setFormError('يجب إضافة خطوة واحدة على الأقل لسير العمل');
@@ -177,7 +186,7 @@ export const useRequestTypeForm = ({
       name: values.name,
       description: values.description || null,
       is_active: values.is_active,
-      form_schema: values.form_schema,
+      form_schema: formSchemaWithFields,
     };
 
     if (isEditing && requestType) {

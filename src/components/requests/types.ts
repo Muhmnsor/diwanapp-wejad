@@ -36,7 +36,7 @@ export interface FormSchema {
 
 export interface FormField {
   id: string;
-  type: string;
+  type: "text" | "textarea" | "number" | "date" | "select" | "array" | "file";
   label: string;
   name: string;
   required?: boolean;

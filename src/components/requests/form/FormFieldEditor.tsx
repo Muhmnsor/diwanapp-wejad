@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { toast } from "sonner";
+import { v4 as uuidv4 } from "uuid";
 
 interface FormFieldEditorProps {
   currentField: FormField;
@@ -74,7 +75,7 @@ export const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
                 setCurrentField({ 
                   ...currentField, 
                   name: formattedName,
-                  id: formattedName // Also update id to match name
+                  id: currentField.id || uuidv4() // Ensure id exists
                 });
               }}
             />
@@ -85,7 +86,11 @@ export const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
               placeholder="العنوان الظاهر للمستخدم"
               value={currentField.label}
               onChange={(e) =>
-                setCurrentField({ ...currentField, label: e.target.value })
+                setCurrentField({ 
+                  ...currentField, 
+                  label: e.target.value,
+                  id: currentField.id || uuidv4() // Ensure id exists
+                })
               }
             />
           </div>
@@ -96,11 +101,12 @@ export const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
             <label className="text-sm font-medium">نوع الحقل</label>
             <Select
               value={currentField.type}
-              onValueChange={(value: string) => {
+              onValueChange={(value: "text" | "textarea" | "number" | "date" | "select" | "array" | "file") => {
                 // Reset options if changing from select to another type
                 const newField = { 
                   ...currentField, 
                   type: value,
+                  id: currentField.id || uuidv4(), // Ensure id exists
                   // Clear options if not a select field
                   ...(value !== 'select' ? { options: [] } : {})
                 };
@@ -127,7 +133,7 @@ export const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
                 id="required-field"
                 checked={currentField.required}
                 onCheckedChange={(checked) =>
-                  setCurrentField({ ...currentField, required: checked })
+                  setCurrentField({ ...currentField, required: checked, id: currentField.id || uuidv4() })
                 }
               />
               <label
@@ -198,6 +204,14 @@ export const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
             if (currentField.type === 'select' && (!currentField.options || currentField.options.length === 0)) {
               toast.error('يجب إضافة خيار واحد على الأقل لقائمة الاختيار');
               return;
+            }
+            
+            // Ensure the field has an ID
+            if (!currentField.id) {
+              setCurrentField({
+                ...currentField,
+                id: uuidv4()
+              });
             }
             
             handleAddField();
