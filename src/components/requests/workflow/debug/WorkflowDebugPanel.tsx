@@ -51,7 +51,7 @@ export const WorkflowDebugPanel = () => {
   const [limit, setLimit] = useState<number>(50);
   const [expandedLogs, setExpandedLogs] = useState<string[]>([]);
 
-  const { data: logs, isLoading, refetch } = useQuery({
+  const { data: logs, isLoading, refetch, isError, error: queryError } = useQuery({
     queryKey: ["workflowLogs", operationType, limit],
     queryFn: async () => {
       let query = supabase
@@ -68,7 +68,9 @@ export const WorkflowDebugPanel = () => {
       
       if (error) throw error;
       return data as LogEntry[];
-    }
+    },
+    retry: 1,
+    refetchOnWindowFocus: false
   });
 
   const handleRefresh = () => {
@@ -162,6 +164,18 @@ export const WorkflowDebugPanel = () => {
       <CardContent>
         {isLoading ? (
           <Skeleton className="h-60 w-full" />
+        ) : isError ? (
+          <div className="p-6 text-center bg-red-50 border border-red-200 rounded-md">
+            <h3 className="font-medium text-red-800 mb-2">حدث خطأ أثناء تحميل السجلات</h3>
+            <p className="text-sm text-red-600">{(queryError as Error)?.message || "قد يكون الجدول أو الوظيفة غير موجودة بعد. قم بتنفيذ الكود SQL لإنشاء سجلات التتبع."}</p>
+            <Button 
+              variant="destructive"
+              className="mt-4"
+              onClick={handleRefresh}
+            >
+              إعادة المحاولة
+            </Button>
+          </div>
         ) : logs && logs.length > 0 ? (
           <div className="space-y-4">
             <div className="text-sm text-muted-foreground">

@@ -26,13 +26,17 @@ export const useWorkflowCreation = ({
           console.error("Invalid workflow ID format:", currentWorkflowId);
           
           // Log the invalid format
-          await supabase.rpc('log_workflow_operation', {
-            p_operation_type: 'workflow_validation_error',
-            p_workflow_id: null,
-            p_request_data: { workflow_id: currentWorkflowId },
-            p_error_message: 'Invalid workflow ID format',
-            p_details: 'Workflow ID does not match UUID format'
-          });
+          try {
+            await supabase.rpc('log_workflow_operation', {
+              p_operation_type: 'workflow_validation_error',
+              p_workflow_id: null,
+              p_request_data: { workflow_id: currentWorkflowId },
+              p_error_message: 'Invalid workflow ID format',
+              p_details: 'Workflow ID does not match UUID format'
+            });
+          } catch (logError) {
+            console.warn("Error logging validation (non-critical):", logError);
+          }
           
           throw new Error("Invalid workflow ID format");
         }
@@ -51,13 +55,17 @@ export const useWorkflowCreation = ({
           console.error("Error validating workflow:", workflowCheckError);
           
           // Log the validation error
-          await supabase.rpc('log_workflow_operation', {
-            p_operation_type: 'workflow_validation_error',
-            p_workflow_id: currentWorkflowId,
-            p_request_data: null,
-            p_error_message: workflowCheckError.message,
-            p_details: 'Error checking if workflow exists'
-          });
+          try {
+            await supabase.rpc('log_workflow_operation', {
+              p_operation_type: 'workflow_validation_error',
+              p_workflow_id: currentWorkflowId,
+              p_request_data: null,
+              p_error_message: workflowCheckError.message,
+              p_details: 'Error checking if workflow exists'
+            });
+          } catch (logError) {
+            console.warn("Error logging validation error (non-critical):", logError);
+          }
           
           if (workflowCheckError.code === 'PGRST116') {
             throw new Error("ليس لديك صلاحية للوصول إلى مسار العمل");
@@ -69,24 +77,32 @@ export const useWorkflowCreation = ({
           console.log("Using existing workflow:", existingWorkflow.name, existingWorkflow.id);
           
           // Log success - existing workflow found
-          await supabase.rpc('log_workflow_operation', {
-            p_operation_type: 'existing_workflow_found',
-            p_workflow_id: currentWorkflowId,
-            p_response_data: { workflow_name: existingWorkflow.name },
-            p_details: 'Using existing workflow'
-          });
+          try {
+            await supabase.rpc('log_workflow_operation', {
+              p_operation_type: 'existing_workflow_found',
+              p_workflow_id: currentWorkflowId,
+              p_response_data: { workflow_name: existingWorkflow.name },
+              p_details: 'Using existing workflow'
+            });
+          } catch (logError) {
+            console.warn("Error logging existing workflow (non-critical):", logError);
+          }
           
           return currentWorkflowId;
         } else {
           console.error("Workflow ID not found in database:", currentWorkflowId);
           
           // Log not found error
-          await supabase.rpc('log_workflow_operation', {
-            p_operation_type: 'workflow_not_found',
-            p_workflow_id: currentWorkflowId,
-            p_error_message: 'Workflow ID not found in database',
-            p_details: 'The workflow ID exists but not found in database'
-          });
+          try {
+            await supabase.rpc('log_workflow_operation', {
+              p_operation_type: 'workflow_not_found',
+              p_workflow_id: currentWorkflowId,
+              p_error_message: 'Workflow ID not found in database',
+              p_details: 'The workflow ID exists but not found in database'
+            });
+          } catch (logError) {
+            console.warn("Error logging workflow not found (non-critical):", logError);
+          }
           
           throw new Error("مسار العمل غير موجود في قاعدة البيانات");
         }
@@ -108,13 +124,17 @@ export const useWorkflowCreation = ({
         console.error("Invalid request type ID format:", requestTypeId);
         
         // Log the invalid format
-        await supabase.rpc('log_workflow_operation', {
-          p_operation_type: 'request_type_validation_error',
-          p_request_type_id: requestTypeId,
-          p_request_data: null,
-          p_error_message: 'Invalid request type ID format',
-          p_details: 'Request type ID does not match UUID format'
-        });
+        try {
+          await supabase.rpc('log_workflow_operation', {
+            p_operation_type: 'request_type_validation_error',
+            p_request_type_id: requestTypeId,
+            p_request_data: null,
+            p_error_message: 'Invalid request type ID format',
+            p_details: 'Request type ID does not match UUID format'
+          });
+        } catch (logError) {
+          console.warn("Error logging validation error (non-critical):", logError);
+        }
         
         throw new Error("معرف نوع الطلب غير صالح");
       }
@@ -122,12 +142,16 @@ export const useWorkflowCreation = ({
       console.log("Creating new workflow for request type:", requestTypeId);
       
       // Log workflow creation attempt
-      await supabase.rpc('log_workflow_operation', {
-        p_operation_type: 'workflow_creation_attempt',
-        p_request_type_id: requestTypeId,
-        p_request_data: null,
-        p_details: 'Attempting to create a new workflow'
-      });
+      try {
+        await supabase.rpc('log_workflow_operation', {
+          p_operation_type: 'workflow_creation_attempt',
+          p_request_type_id: requestTypeId,
+          p_request_data: null,
+          p_details: 'Attempting to create a new workflow'
+        });
+      } catch (logError) {
+        console.warn("Error logging creation attempt (non-critical):", logError);
+      }
       
       // Check if user is authenticated first
       const { data: { session } } = await supabase.auth.getSession();
@@ -135,12 +159,16 @@ export const useWorkflowCreation = ({
         console.error("User is not authenticated");
         
         // Log authentication error
-        await supabase.rpc('log_workflow_operation', {
-          p_operation_type: 'auth_error',
-          p_request_type_id: requestTypeId,
-          p_error_message: 'User is not authenticated',
-          p_details: 'No session found when creating workflow'
-        });
+        try {
+          await supabase.rpc('log_workflow_operation', {
+            p_operation_type: 'auth_error',
+            p_request_type_id: requestTypeId,
+            p_error_message: 'User is not authenticated',
+            p_details: 'No session found when creating workflow'
+          });
+        } catch (logError) {
+          console.warn("Error logging auth error (non-critical):", logError);
+        }
         
         throw new Error("يجب تسجيل الدخول لإنشاء مسار العمل");
       }
@@ -161,12 +189,16 @@ export const useWorkflowCreation = ({
         console.error("Error checking user roles:", roleError);
         
         // Log role check error
-        await supabase.rpc('log_workflow_operation', {
-          p_operation_type: 'role_check_error',
-          p_request_type_id: requestTypeId,
-          p_error_message: roleError.message,
-          p_details: 'Error checking user roles'
-        });
+        try {
+          await supabase.rpc('log_workflow_operation', {
+            p_operation_type: 'role_check_error',
+            p_request_type_id: requestTypeId,
+            p_error_message: roleError.message,
+            p_details: 'Error checking user roles'
+          });
+        } catch (logError) {
+          console.warn("Error logging role check error (non-critical):", logError);
+        }
         
         throw new Error("خطأ في التحقق من صلاحيات المستخدم");
       }
@@ -188,11 +220,15 @@ export const useWorkflowCreation = ({
         console.warn("User is not an admin, may not have permission to create workflows");
         
         // Log permission warning
-        await supabase.rpc('log_workflow_operation', {
-          p_operation_type: 'permission_warning',
-          p_request_type_id: requestTypeId,
-          p_details: 'User is not an admin but attempting to create workflow'
-        });
+        try {
+          await supabase.rpc('log_workflow_operation', {
+            p_operation_type: 'permission_warning',
+            p_request_type_id: requestTypeId,
+            p_details: 'User is not an admin but attempting to create workflow'
+          });
+        } catch (logError) {
+          console.warn("Error logging permission warning (non-critical):", logError);
+        }
       }
 
       // Create new workflow using RPC function
@@ -216,12 +252,16 @@ export const useWorkflowCreation = ({
         console.error("Error creating workflow:", createError);
         
         // Log workflow creation error
-        await supabase.rpc('log_workflow_operation', {
-          p_operation_type: 'workflow_creation_error',
-          p_request_type_id: requestTypeId,
-          p_error_message: createError.message,
-          p_details: `Error code: ${createError.code}, Details: ${createError.details || 'No details'}`
-        });
+        try {
+          await supabase.rpc('log_workflow_operation', {
+            p_operation_type: 'workflow_creation_error',
+            p_request_type_id: requestTypeId,
+            p_error_message: createError.message,
+            p_details: `Error code: ${createError.code}, Details: ${createError.details || 'No details'}`
+          });
+        } catch (logError) {
+          console.warn("Error logging creation error (non-critical):", logError);
+        }
         
         if (createError.code === 'PGRST116') {
           throw new Error("ليس لديك صلاحية لإنشاء مسار العمل");
@@ -231,12 +271,16 @@ export const useWorkflowCreation = ({
 
       if (!newWorkflow || !newWorkflow.id) {
         // Log workflow creation failure
-        await supabase.rpc('log_workflow_operation', {
-          p_operation_type: 'workflow_creation_error',
-          p_request_type_id: requestTypeId,
-          p_error_message: 'No workflow ID returned',
-          p_details: 'The workflow creation did not return a valid workflow ID'
-        });
+        try {
+          await supabase.rpc('log_workflow_operation', {
+            p_operation_type: 'workflow_creation_error',
+            p_request_type_id: requestTypeId,
+            p_error_message: 'No workflow ID returned',
+            p_details: 'The workflow creation did not return a valid workflow ID'
+          });
+        } catch (logError) {
+          console.warn("Error logging creation failure (non-critical):", logError);
+        }
         
         throw new Error("فشل في إنشاء مسار العمل: لم يتم إرجاع معرف");
       }
@@ -245,13 +289,17 @@ export const useWorkflowCreation = ({
       console.log("Created new workflow with ID:", newWorkflowId);
       
       // Log successful workflow creation
-      await supabase.rpc('log_workflow_operation', {
-        p_operation_type: 'workflow_creation_success',
-        p_request_type_id: requestTypeId,
-        p_workflow_id: newWorkflowId,
-        p_response_data: newWorkflow,
-        p_details: 'Successfully created new workflow'
-      });
+      try {
+        await supabase.rpc('log_workflow_operation', {
+          p_operation_type: 'workflow_creation_success',
+          p_request_type_id: requestTypeId,
+          p_workflow_id: newWorkflowId,
+          p_response_data: newWorkflow,
+          p_details: 'Successfully created new workflow'
+        });
+      } catch (logError) {
+        console.warn("Error logging creation success (non-critical):", logError);
+      }
       
       setWorkflowId(newWorkflowId);
       
@@ -278,13 +326,17 @@ export const useWorkflowCreation = ({
       console.error("Invalid UUID format for updating default workflow:", { requestTypeId, workflowId });
       
       // Log the validation error
-      await supabase.rpc('log_workflow_operation', {
-        p_operation_type: 'default_workflow_validation_error',
-        p_request_type_id: requestTypeId,
-        p_workflow_id: workflowId,
-        p_error_message: 'Invalid UUID format',
-        p_details: 'One or both IDs do not match UUID format'
-      });
+      try {
+        await supabase.rpc('log_workflow_operation', {
+          p_operation_type: 'default_workflow_validation_error',
+          p_request_type_id: requestTypeId,
+          p_workflow_id: workflowId,
+          p_error_message: 'Invalid UUID format',
+          p_details: 'One or both IDs do not match UUID format'
+        });
+      } catch (logError) {
+        console.warn("Error logging validation error (non-critical):", logError);
+      }
       
       return;
     }
@@ -296,13 +348,17 @@ export const useWorkflowCreation = ({
         console.error("User is not authenticated");
         
         // Log authentication error
-        await supabase.rpc('log_workflow_operation', {
-          p_operation_type: 'default_workflow_auth_error',
-          p_request_type_id: requestTypeId,
-          p_workflow_id: workflowId,
-          p_error_message: 'User is not authenticated',
-          p_details: 'No session found when updating default workflow'
-        });
+        try {
+          await supabase.rpc('log_workflow_operation', {
+            p_operation_type: 'default_workflow_auth_error',
+            p_request_type_id: requestTypeId,
+            p_workflow_id: workflowId,
+            p_error_message: 'User is not authenticated',
+            p_details: 'No session found when updating default workflow'
+          });
+        } catch (logError) {
+          console.warn("Error logging auth error (non-critical):", logError);
+        }
         
         return;
       }
@@ -310,12 +366,16 @@ export const useWorkflowCreation = ({
       console.log("Setting default workflow for request type:", requestTypeId, workflowId);
       
       // Log default workflow update attempt
-      await supabase.rpc('log_workflow_operation', {
-        p_operation_type: 'default_workflow_update_attempt',
-        p_request_type_id: requestTypeId,
-        p_workflow_id: workflowId,
-        p_details: 'Attempting to set default workflow'
-      });
+      try {
+        await supabase.rpc('log_workflow_operation', {
+          p_operation_type: 'default_workflow_update_attempt',
+          p_request_type_id: requestTypeId,
+          p_workflow_id: workflowId,
+          p_details: 'Attempting to set default workflow'
+        });
+      } catch (logError) {
+        console.warn("Error logging update attempt (non-critical):", logError);
+      }
       
       const { error: updateError } = await supabase.rpc(
         'set_default_workflow',
@@ -329,37 +389,49 @@ export const useWorkflowCreation = ({
         console.warn("Could not set default workflow for request type:", updateError);
         
         // Log update error
-        await supabase.rpc('log_workflow_operation', {
-          p_operation_type: 'default_workflow_update_error',
-          p_request_type_id: requestTypeId,
-          p_workflow_id: workflowId,
-          p_error_message: updateError.message,
-          p_details: `Error code: ${updateError.code}, Details: ${updateError.details || 'No details'}`
-        });
+        try {
+          await supabase.rpc('log_workflow_operation', {
+            p_operation_type: 'default_workflow_update_error',
+            p_request_type_id: requestTypeId,
+            p_workflow_id: workflowId,
+            p_error_message: updateError.message,
+            p_details: `Error code: ${updateError.code}, Details: ${updateError.details || 'No details'}`
+          });
+        } catch (logError) {
+          console.warn("Error logging update error (non-critical):", logError);
+        }
         
         // Non-fatal error, continue
       } else {
         console.log("Successfully set default workflow for request type");
         
         // Log successful update
-        await supabase.rpc('log_workflow_operation', {
-          p_operation_type: 'default_workflow_update_success',
-          p_request_type_id: requestTypeId,
-          p_workflow_id: workflowId,
-          p_details: 'Successfully set default workflow'
-        });
+        try {
+          await supabase.rpc('log_workflow_operation', {
+            p_operation_type: 'default_workflow_update_success',
+            p_request_type_id: requestTypeId,
+            p_workflow_id: workflowId,
+            p_details: 'Successfully set default workflow'
+          });
+        } catch (logError) {
+          console.warn("Error logging update success (non-critical):", logError);
+        }
       }
     } catch (error) {
       console.error("Error updating default workflow:", error);
       
       // Log unexpected error
-      await supabase.rpc('log_workflow_operation', {
-        p_operation_type: 'default_workflow_unexpected_error',
-        p_request_type_id: requestTypeId,
-        p_workflow_id: workflowId,
-        p_error_message: error.message,
-        p_details: error.stack || 'No stack trace available'
-      });
+      try {
+        await supabase.rpc('log_workflow_operation', {
+          p_operation_type: 'default_workflow_unexpected_error',
+          p_request_type_id: requestTypeId,
+          p_workflow_id: workflowId,
+          p_error_message: error.message,
+          p_details: error.stack || 'No stack trace available'
+        });
+      } catch (logError) {
+        console.warn("Error logging unexpected error (non-critical):", logError);
+      }
     }
   };
 

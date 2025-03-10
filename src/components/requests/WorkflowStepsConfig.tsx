@@ -7,7 +7,7 @@ import { useWorkflowSteps } from "./workflow/useWorkflowSteps";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface WorkflowStepsConfigProps {
@@ -70,8 +70,20 @@ export const WorkflowStepsConfig = ({
       return;
     }
 
+    // تأكد من أن جميع الخطوات تحمل معرّف سير العمل الصحيح
+    const stepsToSave = workflowSteps.map(step => {
+      if (!step.workflow_id || step.workflow_id === 'temp-workflow-id') {
+        return {
+          ...step,
+          workflow_id: currentWorkflowId,
+        };
+      }
+      return step;
+    });
+
     try {
-      await saveWorkflowSteps(workflowSteps);
+      console.log("Saving workflow steps with correct workflow_id:", stepsToSave);
+      await saveWorkflowSteps(stepsToSave);
       toast.success('تم حفظ خطوات سير العمل بنجاح');
       if (onWorkflowSaved) {
         onWorkflowSaved();
@@ -88,7 +100,7 @@ export const WorkflowStepsConfig = ({
         <h3 className="text-lg font-medium">خطوات سير العمل</h3>
         {/* Debug info - workflowId */}
         <div className="text-xs text-gray-400">
-          {currentWorkflowId ? `Workflow ID: ${currentWorkflowId}` : 'No Workflow ID'}
+          {currentWorkflowId ? `معرّف سير العمل: ${currentWorkflowId}` : 'لا يوجد معرّف سير العمل'}
         </div>
       </div>
       <Separator />
@@ -98,6 +110,15 @@ export const WorkflowStepsConfig = ({
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             {error}
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {workflowSteps.length > 0 && currentWorkflowId === 'temp-workflow-id' && (
+        <Alert variant="warning">
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            تعمل حالياً في الوضع المؤقت. سيتم حفظ الخطوات محلياً فقط حتى يتم إنشاء سير العمل.
           </AlertDescription>
         </Alert>
       )}
@@ -133,14 +154,25 @@ export const WorkflowStepsConfig = ({
       {/* Debug info panel */}
       {process.env.NODE_ENV !== 'production' && (
         <div className="mt-8 p-4 border border-gray-200 rounded-md bg-gray-50">
-          <h4 className="text-sm font-medium mb-2">Debug Information:</h4>
+          <h4 className="text-sm font-medium mb-2">معلومات التشخيص:</h4>
           <div className="text-xs font-mono overflow-auto max-h-40">
-            <div>Request Type ID: {requestTypeId || 'None'}</div>
-            <div>Workflow ID: {currentWorkflowId || 'None'}</div>
-            <div>Steps Count: {workflowSteps.length}</div>
-            <div>Editing Step: {editingStepIndex !== null ? editingStepIndex : 'None'}</div>
-            <div>Loading: {isLoading ? 'Yes' : 'No'}</div>
-            <div>Error: {error || 'None'}</div>
+            <div>معرّف نوع الطلب: {requestTypeId || 'غير موجود'}</div>
+            <div>معرّف سير العمل: {currentWorkflowId || 'غير موجود'}</div>
+            <div>عدد الخطوات: {workflowSteps.length}</div>
+            <div>الخطوة التي يتم تحريرها: {editingStepIndex !== null ? editingStepIndex : 'لا يوجد'}</div>
+            <div>جاري التحميل: {isLoading ? 'نعم' : 'لا'}</div>
+            <div>خطأ: {error || 'لا يوجد'}</div>
+            <div className="mt-2">حالة الخطوات:</div>
+            <div className="pl-4">
+              {workflowSteps.map((step, index) => (
+                <div key={index} className="mt-1">
+                  خطوة {index + 1}: {step.step_name} 
+                  <span className="ml-2 text-blue-500">
+                    [معرّف سير العمل: {step.workflow_id || 'غير محدد'}]
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
