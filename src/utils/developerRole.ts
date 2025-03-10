@@ -80,20 +80,13 @@ export const initializeDeveloperRole = async (): Promise<boolean> => {
 
 export const isDeveloper = async (userId: string): Promise<boolean> => {
   try {
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select(`
-        roles (
-          name
-        )
-      `)
-      .eq('user_id', userId)
-      .single();
+    // Using the has_developer_role function we created in the database
+    const { data: { has_developer_role }, error } = await supabase
+      .rpc('has_developer_role', { p_user_id: userId });
 
     if (error) throw error;
     
-    // The correct way to access the nested role name from the joined table
-    return data?.roles?.name === 'developer';
+    return !!has_developer_role;
   } catch (error) {
     console.error('Error checking developer status:', error);
     return false;

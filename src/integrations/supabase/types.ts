@@ -237,6 +237,7 @@ export type Database = {
       }
       certificate_templates: {
         Row: {
+          category: string | null
           created_at: string
           description: string | null
           field_mappings: Json | null
@@ -244,6 +245,7 @@ export type Database = {
           font_family: string | null
           id: string
           is_active: boolean | null
+          is_archived: boolean | null
           language: string | null
           name: string
           orientation: string | null
@@ -252,6 +254,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category?: string | null
           created_at?: string
           description?: string | null
           field_mappings?: Json | null
@@ -259,6 +262,7 @@ export type Database = {
           font_family?: string | null
           id?: string
           is_active?: boolean | null
+          is_archived?: boolean | null
           language?: string | null
           name: string
           orientation?: string | null
@@ -267,6 +271,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category?: string | null
           created_at?: string
           description?: string | null
           field_mappings?: Json | null
@@ -274,6 +279,7 @@ export type Database = {
           font_family?: string | null
           id?: string
           is_active?: boolean | null
+          is_archived?: boolean | null
           language?: string | null
           name?: string
           orientation?: string | null
@@ -3849,6 +3855,39 @@ export type Database = {
           },
         ]
       }
+      user_settings: {
+        Row: {
+          cache_preferences: Json | null
+          created_at: string | null
+          developer_mode: boolean | null
+          id: string
+          language: string | null
+          theme: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cache_preferences?: Json | null
+          created_at?: string | null
+          developer_mode?: boolean | null
+          id?: string
+          language?: string | null
+          theme?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cache_preferences?: Json | null
+          created_at?: string | null
+          developer_mode?: boolean | null
+          id?: string
+          language?: string | null
+          theme?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       whatsapp_settings: {
         Row: {
           account_id: string | null
@@ -4357,6 +4396,12 @@ export type Database = {
           new_password?: string
         }
         Returns: Json
+      }
+      has_developer_role: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: boolean
       }
       insert_request_bypass_rls: {
         Args: {
