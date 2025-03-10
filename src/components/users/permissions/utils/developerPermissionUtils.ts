@@ -29,7 +29,13 @@ export const checkDeveloperPermissions = async (userId: string): Promise<Develop
       .eq('role_id', 'developer');
 
     // تحديد الأذونات المحددة
-    const permissionNames = permissions?.map(p => p.permissions?.name) || [];
+    const permissionNames = permissions?.map(p => {
+      // تأكد من وجود البيانات قبل الوصول إلى الخصائص
+      if (p.permissions && typeof p.permissions === 'object') {
+        return p.permissions.name;
+      }
+      return null;
+    }).filter(Boolean) || [];
     
     return {
       canAccessDeveloperTools: isDeveloper && permissionNames.includes('view_developer_tools'),

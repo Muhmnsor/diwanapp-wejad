@@ -1,49 +1,52 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/refactored-auth';
-import { isDeveloper } from '@/utils/developerRole';
+import { isDeveloper, isDeveloperModeEnabled } from '@/utils/developerRole';
 import { toast } from 'sonner';
-import { DeveloperSettings } from '@/types/developer';
 
 export const useDeveloperSettings = () => {
   const { user } = useAuthStore();
-  const [isDeveloperUser, setIsDeveloperUser] = useState(false);
+  const [hasDeveloperRole, setHasDeveloperRole] = useState(false);
+  const [isDeveloperMode, setIsDeveloperMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkDeveloperStatus = async () => {
-      if (user?.id) {
+      if (!user) {
+        setHasDeveloperRole(false);
+        setIsDeveloperMode(false);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
         setIsLoading(true);
-        const devStatus = await isDeveloper(user.id);
-        setIsDeveloperUser(devStatus);
+        
+        // التحقق مما إذا كان المستخدم لديه دور المطور
+        const hasDevRole = await isDeveloper(user.id);
+        setHasDeveloperRole(hasDevRole);
+        
+        // التحقق مما إذا كان وضع المطور مفعّل
+        if (hasDevRole) {
+          const devModeEnabled = await isDeveloperModeEnabled(user.id);
+          setIsDeveloperMode(devModeEnabled);
+        } else {
+          setIsDeveloperMode(false);
+        }
+      } catch (error) {
+        console.error('Error checking developer settings:', error);
+        toast.error('حدث خطأ أثناء التحقق من إعدادات المطور');
+      } finally {
         setIsLoading(false);
       }
     };
-
+    
     checkDeveloperStatus();
-  }, [user?.id]);
-
-  const updateSettings = async (settings: Partial<DeveloperSettings>) => {
-    try {
-      if (!user?.id) return;
-
-      const { error } = await supabase
-        .from('developer_settings')
-        .update(settings)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-      toast.success('تم تحديث إعدادات المطور بنجاح');
-    } catch (error) {
-      console.error('Error updating developer settings:', error);
-      toast.error('حدث خطأ أثناء تحديث الإعدادات');
-    }
-  };
-
+  }, [user]);
+  
   return {
-    isDeveloperUser,
-    isLoading,
-    updateSettings
+    hasDeveloperRole,
+    isDeveloperMode,
+    isLoading
   };
 };

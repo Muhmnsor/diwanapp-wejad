@@ -121,3 +121,113 @@ export const autoAssignDeveloperRole = async (userId: string): Promise<void> => 
     console.error('Error in autoAssignDeveloperRole:', error);
   }
 };
+
+// إضافة الدالة المفقودة للتحقق مما إذا كان المستخدم لديه دور المطور
+export const isDeveloper = async (userId: string): Promise<boolean> => {
+  if (!userId) return false;
+  
+  try {
+    // التحقق من وجود دور المطور
+    const { data: developerRole } = await supabase
+      .from('roles')
+      .select('id')
+      .eq('name', 'developer')
+      .single();
+      
+    if (!developerRole?.id) {
+      return false;
+    }
+    
+    // التحقق من تعيين المستخدم لدور المطور
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('role_id', developerRole.id)
+      .maybeSingle();
+      
+    if (error) {
+      console.error('Error checking if user is developer:', error);
+      return false;
+    }
+    
+    return !!data;
+  } catch (error) {
+    console.error('Error in isDeveloper:', error);
+    return false;
+  }
+};
+
+// إضافة الدالة المفقودة للتحقق مما إذا كان وضع المطور مفعل للمستخدم
+export const isDeveloperModeEnabled = async (userId: string): Promise<boolean> => {
+  if (!userId) return false;
+  
+  try {
+    // التحقق أولاً مما إذا كان المستخدم لديه دور المطور
+    const hasDevRole = await isDeveloper(userId);
+    
+    if (!hasDevRole) {
+      return false;
+    }
+    
+    // الحصول على إعدادات المطور
+    const { data: settings, error } = await supabase
+      .from('developer_settings')
+      .select('is_enabled')
+      .single();
+      
+    if (error) {
+      console.error('Error checking developer mode settings:', error);
+      return false;
+    }
+    
+    return settings?.is_enabled || false;
+  } catch (error) {
+    console.error('Error in isDeveloperModeEnabled:', error);
+    return false;
+  }
+};
+
+// إضافة الدالة المفقودة لتفعيل/تعطيل وضع المطور
+export const toggleDeveloperMode = async (userId: string, enableMode: boolean): Promise<boolean> => {
+  if (!userId) return false;
+  
+  try {
+    // التحقق أولاً مما إذا كان المستخدم لديه دور المطور
+    const hasDevRole = await isDeveloper(userId);
+    
+    if (!hasDevRole) {
+      toast.error('ليس لديك صلاحية للوصول إلى وضع المطور');
+      return false;
+    }
+    
+    // تحديث إعدادات المطور
+    const { data: settings } = await supabase
+      .from('developer_settings')
+      .select('id')
+      .single();
+      
+    if (!settings?.id) {
+      toast.error('لم يتم العثور على إعدادات المطور');
+      return false;
+    }
+    
+    const { error } = await supabase
+      .from('developer_settings')
+      .update({ is_enabled: enableMode })
+      .eq('id', settings.id);
+      
+    if (error) {
+      console.error('Error toggling developer mode:', error);
+      toast.error('حدث خطأ أثناء تحديث وضع المطور');
+      return false;
+    }
+    
+    toast.success(enableMode ? 'تم تفعيل وضع المطور' : 'تم تعطيل وضع المطور');
+    return true;
+  } catch (error) {
+    console.error('Error in toggleDeveloperMode:', error);
+    toast.error('حدث خطأ أثناء تحديث وضع المطور');
+    return false;
+  }
+};
