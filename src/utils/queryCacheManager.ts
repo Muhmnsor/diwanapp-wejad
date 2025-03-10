@@ -1,4 +1,3 @@
-
 import { QueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,32 +25,24 @@ export const initializeQueryClient = async (userSettings: UserSettings | null): 
       },
     });
     
-    // Configure global error handling with correct syntax for React Query v5
-    queryClient.getQueryCache().subscribe({
-      type: 'all',
-      onError: (error) => {
-        console.error('Query cache error in QueryManager:', error);
+    // Configure global error handling for React Query v5
+    queryClient.getQueryCache().subscribe((event) => {
+      if (event.type === 'error' && event.error instanceof Error) {
+        console.error('Query cache error in QueryManager:', event.error);
         toast.error('حدث خطأ أثناء جلب البيانات');
       }
     });
     
     // Add observer for performance monitoring if in developer mode
     if (isDeveloper) {
-      // Monitor all queries for performance
-      queryClient.getQueryCache().subscribe({
-        type: 'updated',
-        onSuccess: (query) => {
-          const queryTime = query.state.dataUpdatedAt - query.state.fetchTime;
+      queryClient.getQueryCache().subscribe((event) => {
+        if (event.type === 'updated' && event.query.state.status === 'success') {
+          const queryTime = event.query.state.dataUpdatedAt - (event.query.state.fetchMeta?.timestamp || 0);
           
-          if (queryTime && typeof queryTime === 'number') {
-            const queryKeyStr = Array.isArray(query.queryKey) ? query.queryKey.join('.') : String(query.queryKey);
-            
+          if (typeof queryTime === 'number' && queryTime > 500) {
+            const queryKeyStr = Array.isArray(event.query.queryKey) ? event.query.queryKey.join('.') : String(event.query.queryKey);
             console.log(`Query ${queryKeyStr} completed in ${queryTime}ms`);
-            
-            // Log to database if significant query time (>500ms)
-            if (queryTime > 500) {
-              logSlowQuery(queryKeyStr, queryTime);
-            }
+            logSlowQuery(queryKeyStr, queryTime);
           }
         }
       });

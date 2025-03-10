@@ -14,10 +14,9 @@ export const getQueryClient = (userIsDeveloper: boolean = false, cacheDuration: 
   });
   
   // Add global error handler for TanStack Query v5
-  queryClient.getQueryCache().subscribe({
-    type: 'all',
-    onError: (error) => {
-      console.error('Query error:', error);
+  queryClient.getQueryCache().subscribe((event) => {
+    if (event.type === 'error' && event.error instanceof Error) {
+      console.error('Query error:', event.error);
       toast.error('حدث خطأ أثناء جلب البيانات');
     }
   });
