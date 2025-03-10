@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { DeveloperSettings, DeveloperStore } from '@/types/developer';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/store/refactored-auth';
 
 export const useDeveloperStore = create<DeveloperStore>((set, get) => ({
   settings: null,
@@ -18,9 +19,14 @@ export const useDeveloperStore = create<DeveloperStore>((set, get) => ({
         .select('*')
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching developer settings:', error);
+        set({ error: error as Error });
+        return;
+      }
       
       set({ settings: data });
+      console.log('Developer settings fetched successfully:', data);
     } catch (error) {
       console.error('Error fetching developer settings:', error);
       set({ error: error as Error });
@@ -32,7 +38,10 @@ export const useDeveloperStore = create<DeveloperStore>((set, get) => ({
   updateSettings: async (newSettings) => {
     try {
       const { settings } = get();
-      if (!settings?.id) return;
+      if (!settings?.id) {
+        toast.error('لم يتم العثور على إعدادات المطور');
+        return;
+      }
 
       set({ isLoading: true, error: null });
       
@@ -41,7 +50,9 @@ export const useDeveloperStore = create<DeveloperStore>((set, get) => ({
         .update(newSettings)
         .eq('id', settings.id);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
       
       set({ settings: { ...settings, ...newSettings } });
       toast.success('تم تحديث إعدادات المطور بنجاح');

@@ -5,6 +5,7 @@ import { MainRoutes } from "./routes/MainRoutes";
 import { ProtectedRoutes } from "./routes/ProtectedRoutes";
 import { PortfolioRoutes } from "./routes/PortfolioRoutes";
 import { TaskRoutes } from "./routes/TaskRoutes";
+import { DeveloperRoutes } from "./routes/DeveloperRoutes";
 import { DeveloperToolbar } from "./components/developer/DeveloperToolbar";
 import { useEffect, useState } from "react";
 import { isDeveloper } from "./utils/developerRole";
@@ -35,6 +36,7 @@ const AppRoutes = () => {
         {ProtectedRoutes}
         {PortfolioRoutes}
         {TaskRoutes}
+        {DeveloperRoutes}
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

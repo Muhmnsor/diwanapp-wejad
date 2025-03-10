@@ -21,7 +21,7 @@ export const TopHeader = () => {
   } = useAuthStore();
   const [activeTab, setActiveTab] = useState("overview");
   const [displayName, setDisplayName] = useState<string | null>(null);
-  const isEventsPage = location.pathname.includes('/events') || location.pathname === '/' || location.pathname === '/dashboard' || location.pathname.includes('/create-project') || location.pathname.includes('/projects') || location.pathname === '/settings';
+  const isEventsPage = location.pathname.includes('/events') || location.pathname === '/' || location.pathname === '/dashboard' || location.pathname.includes('/create-project') || location.pathname.includes('/projects') || location.pathname === '/settings' || location.pathname.includes('/developer-settings') || location.pathname.includes('/documentation');
   const isEventOrProjectDetails = location.pathname.includes('/events/') || location.pathname.includes('/projects/');
   const isTasksPage = location.pathname.includes('/tasks') || location.pathname.includes('/portfolios') || location.pathname.includes('/portfolio-workspaces') || location.pathname.includes('/general-tasks');
   const isRequestsPage = location.pathname.includes('/requests');

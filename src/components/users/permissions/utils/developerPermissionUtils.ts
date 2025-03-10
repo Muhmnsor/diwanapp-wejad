@@ -1,20 +1,37 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { DeveloperPermissionChecks } from "../types";
+import { DeveloperPermissionChecks } from "@/components/users/permissions/types";
+import { isDeveloper } from "@/utils/developer/roleManagement";
 
-/**
- * فحص ما إذا كان المستخدم لديه أذونات المطور
- */
 export const checkDeveloperPermissions = async (userId: string): Promise<DeveloperPermissionChecks> => {
   try {
+    if (!userId) {
+      return {
+        canAccessDeveloperTools: false,
+        canModifySystemSettings: false,
+        canAccessApiLogs: false
+      };
+    }
+
+    // First check if user has developer role
+    const hasDeveloperRole = await isDeveloper(userId);
+    
+    if (!hasDeveloperRole) {
+      return {
+        canAccessDeveloperTools: false,
+        canModifySystemSettings: false,
+        canAccessApiLogs: false
+      };
+    }
+    
     // Get developer role ID
-    const { data: developerRole } = await supabase
+    const { data: roleData } = await supabase
       .from('roles')
       .select('id')
       .eq('name', 'developer')
       .single();
-    
-    if (!developerRole) {
+      
+    if (!roleData?.id) {
       return {
         canAccessDeveloperTools: false,
         canModifySystemSettings: false,
@@ -22,65 +39,32 @@ export const checkDeveloperPermissions = async (userId: string): Promise<Develop
       };
     }
     
-    // Check if user has developer role
-    const { data: userRole } = await supabase
-      .from('user_roles')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('role_id', developerRole.id)
-      .maybeSingle();
-    
-    const isDeveloper = !!userRole;
-    
-    if (!isDeveloper) {
-      return {
-        canAccessDeveloperTools: false,
-        canModifySystemSettings: false,
-        canAccessApiLogs: false
-      };
-    }
-    
-    // Get permission IDs
+    // Check specific permissions
     const { data: permissions } = await supabase
-      .from('permissions')
-      .select('id, name')
-      .in('name', ['view_developer_tools', 'modify_system_settings', 'access_api_logs']);
-    
-    if (!permissions || permissions.length === 0) {
-      return {
-        canAccessDeveloperTools: false,
-        canModifySystemSettings: false,
-        canAccessApiLogs: false
-      };
-    }
-    
-    // Create a map of permission names to IDs
-    const permissionMap = permissions.reduce((map, permission) => {
-      map[permission.name] = permission.id;
-      return map;
-    }, {} as Record<string, string>);
-    
-    // Check which permissions the developer role has
-    const { data: rolePermissions } = await supabase
       .from('role_permissions')
-      .select('permission_id')
-      .eq('role_id', developerRole.id);
-    
-    if (!rolePermissions) {
+      .select('permission_id, permissions(name)')
+      .eq('role_id', roleData.id);
+      
+    if (!permissions) {
       return {
-        canAccessDeveloperTools: isDeveloper,
-        canModifySystemSettings: isDeveloper,
-        canAccessApiLogs: isDeveloper
+        canAccessDeveloperTools: hasDeveloperRole,
+        canModifySystemSettings: hasDeveloperRole,
+        canAccessApiLogs: hasDeveloperRole
       };
     }
     
-    const rolePermissionIds = rolePermissions.map(rp => rp.permission_id);
-    
+    // Extract permission names from the result
+    const permissionNames = permissions.map(p => 
+      // @ts-ignore - permissions.name is available in the result
+      p.permissions?.name as string
+    );
+
     return {
-      canAccessDeveloperTools: isDeveloper && (rolePermissionIds.includes(permissionMap['view_developer_tools'])),
-      canModifySystemSettings: isDeveloper && (rolePermissionIds.includes(permissionMap['modify_system_settings'])),
-      canAccessApiLogs: isDeveloper && (rolePermissionIds.includes(permissionMap['access_api_logs']))
+      canAccessDeveloperTools: permissionNames.includes('view_developer_tools') || hasDeveloperRole,
+      canModifySystemSettings: permissionNames.includes('modify_system_settings') || hasDeveloperRole,
+      canAccessApiLogs: permissionNames.includes('access_api_logs') || hasDeveloperRole
     };
+    
   } catch (error) {
     console.error('Error checking developer permissions:', error);
     return {
@@ -91,47 +75,52 @@ export const checkDeveloperPermissions = async (userId: string): Promise<Develop
   }
 };
 
-/**
- * إعداد أذونات المطور الافتراضية
- */
-export const setupDefaultDeveloperPermissions = async (developerId: string): Promise<boolean> => {
+export const setupDefaultDeveloperPermissions = async (developerRoleId: string): Promise<void> => {
   try {
-    // Get developer permissions IDs
+    // Get all developer permissions
     const { data: permissions } = await supabase
       .from('permissions')
       .select('id, name')
-      .in('name', ['view_developer_tools', 'modify_system_settings', 'access_api_logs']);
-    
+      .eq('module', 'developer');
+      
     if (!permissions || permissions.length === 0) {
-      console.error('Developer permissions not found');
-      return false;
+      console.log('No developer permissions found to assign');
+      return;
     }
     
-    // Associate permissions with developer role
-    const rolePermissions = permissions.map(permission => ({
-      role_id: developerId,
-      permission_id: permission.id
-    }));
-    
-    // First delete existing role permissions
-    await supabase
+    // Check existing role permissions
+    const { data: existingPermissions } = await supabase
       .from('role_permissions')
-      .delete()
-      .eq('role_id', developerId);
+      .select('permission_id')
+      .eq('role_id', developerRoleId);
+      
+    const existingPermissionIds = existingPermissions?.map(p => p.permission_id) || [];
     
-    // Add new permissions
+    // Filter permissions that need to be added
+    const permissionsToAdd = permissions
+      .filter(p => !existingPermissionIds.includes(p.id))
+      .map(p => ({
+        role_id: developerRoleId,
+        permission_id: p.id
+      }));
+      
+    if (permissionsToAdd.length === 0) {
+      console.log('All developer permissions already assigned to role');
+      return;
+    }
+    
+    // Add role permissions
     const { error } = await supabase
       .from('role_permissions')
-      .insert(rolePermissions);
-    
+      .insert(permissionsToAdd);
+      
     if (error) {
-      console.error('Error setting up developer permissions:', error);
-      return false;
+      console.error('Error setting up default developer permissions:', error);
+    } else {
+      console.log('Default developer permissions set up successfully');
     }
     
-    return true;
   } catch (error) {
     console.error('Error in setupDefaultDeveloperPermissions:', error);
-    return false;
   }
 };

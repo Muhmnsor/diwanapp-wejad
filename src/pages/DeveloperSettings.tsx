@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { AdminHeader } from "@/components/layout/AdminHeader";
+import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useDeveloperStore } from "@/store/developerStore";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -20,7 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { SecondaryHeader } from "@/components/settings/developer/SecondaryHeader";
 
 const DeveloperSettings = () => {
-  const { settings, isLoading, updateSettings, fetchSettings } = useDeveloperStore();
+  const { settings, isLoading, error, fetchSettings, updateSettings } = useDeveloperStore();
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState("general");
   const [permissions, setPermissions] = useState<DeveloperPermissionChecks>({
@@ -32,9 +31,10 @@ const DeveloperSettings = () => {
   
   useEffect(() => {
     if (user?.id) {
+      fetchSettings();
       loadDeveloperPermissions(user.id);
     }
-  }, [user?.id]);
+  }, [user?.id, fetchSettings]);
   
   const loadDeveloperPermissions = async (userId: string) => {
     const permissionChecks = await checkDeveloperPermissions(userId);
@@ -74,7 +74,7 @@ const DeveloperSettings = () => {
   if (!user?.isAdmin) {
     return (
       <div className="min-h-screen flex flex-col" dir="rtl">
-        <AdminHeader />
+        <TopHeader />
         <div className="container mx-auto px-4 py-8 flex-grow flex items-center justify-center">
           <Card className="w-full max-w-md">
             <CardHeader>
@@ -92,7 +92,7 @@ const DeveloperSettings = () => {
   
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
-      <AdminHeader />
+      <TopHeader />
       <SecondaryHeader />
       
       <div className="container mx-auto px-4 py-8 flex-grow">
@@ -474,3 +474,4 @@ const DeveloperSettings = () => {
 };
 
 export default DeveloperSettings;
+
