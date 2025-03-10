@@ -306,7 +306,10 @@ export const useWorkflowSteps = ({
     console.log("Adding/updating step:", currentStep);
     console.log("Updated steps:", updatedSteps);
     
-    saveWorkflowSteps(updatedSteps);
+    // Update local state immediately
+    updateWorkflowSteps(updatedSteps);
+    
+    // Reset form
     setCurrentStep(getInitialStepState(updatedSteps.length + 1));
     setEditingStepIndex(null);
   };

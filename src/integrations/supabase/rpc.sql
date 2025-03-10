@@ -97,8 +97,8 @@ BEGIN
 END;
 $$;
 
--- FIXED: Function to insert workflow steps bypassing RLS
--- Improved to handle array initialization, error reporting, and workflow ID validation
+-- IMPROVED: Function to insert workflow steps bypassing RLS
+-- Fixed to handle multiple steps, error reporting, and properly clean existing steps
 CREATE OR REPLACE FUNCTION public.insert_workflow_steps(steps jsonb[])
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -111,10 +111,11 @@ DECLARE
   step_result jsonb;
   v_error text;
   v_workflow_id uuid;
+  v_workflow_ids uuid[] := '{}';
 BEGIN
   -- Start transaction to ensure all steps are inserted or none
   BEGIN
-    -- First delete existing steps for these workflows to avoid duplicates
+    -- First collect all workflow IDs to delete existing steps
     FOR i IN 1..array_length(steps, 1) LOOP
       step := steps[i];
       v_workflow_id := (step->>'workflow_id')::uuid;
@@ -124,11 +125,17 @@ BEGIN
         RAISE EXCEPTION 'Workflow ID is required for step %', i;
       END IF;
       
-      -- Delete existing steps for this workflow (if not already done)
-      IF i = 1 THEN
-        DELETE FROM workflow_steps WHERE workflow_id = v_workflow_id;
+      -- Add to workflow IDs array if not already there
+      IF NOT (v_workflow_id = ANY(v_workflow_ids)) THEN
+        v_workflow_ids := array_append(v_workflow_ids, v_workflow_id);
       END IF;
     END LOOP;
+    
+    -- Delete existing steps for all collected workflow IDs
+    IF array_length(v_workflow_ids, 1) > 0 THEN
+      DELETE FROM workflow_steps 
+      WHERE workflow_id = ANY(v_workflow_ids);
+    END IF;
     
     -- Process each step
     FOR i IN 1..array_length(steps, 1) LOOP

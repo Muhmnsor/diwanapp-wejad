@@ -156,7 +156,7 @@ export const useRequestTypeForm = ({
       throw new Error('يجب إضافة خطوة واحدة على الأقل لسير العمل');
     }
 
-    // Use the new RPC function to bypass RLS
+    // Use the RPC function to bypass RLS
     const requestTypeData = {
       name: values.name,
       description: values.description || null,
@@ -244,23 +244,22 @@ export const useRequestTypeForm = ({
     console.log("Steps to save:", steps);
 
     try {
-      // No need to delete existing steps first, our updated RPC function handles this
-
-      const stepsToInsert = steps.map((step, index) => ({
+      // Prepare steps with proper workflow ID and format
+      const stepsWithWorkflowId = steps.map((step, index) => ({
+        ...step,
         workflow_id: workflowId,
         step_order: index + 1,
-        step_name: step.step_name,
         step_type: step.step_type || 'decision',
-        approver_id: step.approver_id,
-        instructions: step.instructions,
         is_required: step.is_required === false ? false : true,
         approver_type: step.approver_type || 'user'
       }));
-
-      console.log("Inserting workflow steps:", stepsToInsert);
       
-      // Convert steps to JSON string array for RPC function
-      const jsonSteps = stepsToInsert.map(step => JSON.stringify(step));
+      console.log("Prepared steps with workflow ID:", stepsWithWorkflowId);
+      
+      // Convert steps to JSON objects for RPC function
+      const jsonSteps = stepsWithWorkflowId.map(step => JSON.stringify(step));
+      
+      console.log("JSON steps for RPC:", jsonSteps);
       
       // Use the improved RPC function to bypass RLS
       const { data, error } = await supabase
