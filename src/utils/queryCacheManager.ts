@@ -39,11 +39,11 @@ export const initializeQueryClient = async (userSettings: UserSettings | null): 
     if (isDeveloper) {
       queryClient.getQueryCache().subscribe(event => {
         if (event.type === 'updated' && event.query.state.status === 'success') {
-          const fetchStartTime = event.query.state.fetchMeta?.fetchTime;
-          const fetchEndTime = event.query.state.dataUpdatedAt;
+          const dataUpdatedAt = event.query.state.dataUpdatedAt;
+          const startTime = event.query.state.fetchMeta?.startTime || 0;
           
-          if (fetchStartTime && fetchEndTime) {
-            const queryTime = fetchEndTime - fetchStartTime;
+          if (startTime && dataUpdatedAt) {
+            const queryTime = dataUpdatedAt - startTime;
             
             if (typeof queryTime === 'number' && queryTime > 500) {
               const queryKeyStr = Array.isArray(event.query.queryKey) ? event.query.queryKey.join('.') : String(event.query.queryKey);
