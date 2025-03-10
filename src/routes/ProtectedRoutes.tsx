@@ -14,6 +14,7 @@ import DeveloperSettings from "@/pages/DeveloperSettings";
 import Notifications from "@/pages/Notifications";
 import RequestsManagement from "@/pages/RequestsManagement";
 import React from "react";
+import DeveloperRoute from "@/components/DeveloperRoute";
 
 export const ProtectedRoutes = [
   <Route 
@@ -101,9 +102,9 @@ export const ProtectedRoutes = [
     key="developer-settings"
     path="/developer-settings" 
     element={
-      <ProtectedRoute>
+      <DeveloperRoute>
         <DeveloperSettings />
-      </ProtectedRoute>
+      </DeveloperRoute>
     } 
   />,
   <Route 
@@ -127,4 +128,3 @@ export const ProtectedRoutes = [
     } 
   />
 ];
-

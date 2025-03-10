@@ -5,23 +5,43 @@ import { MainRoutes } from "./routes/MainRoutes";
 import { ProtectedRoutes } from "./routes/ProtectedRoutes";
 import { PortfolioRoutes } from "./routes/PortfolioRoutes";
 import { TaskRoutes } from "./routes/TaskRoutes";
+import { DeveloperToolbar } from "./components/developer/DeveloperToolbar";
+import { useEffect, useState } from "react";
+import { isDeveloper } from "./utils/developerRole";
 
 const AppRoutes = () => {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
+  const [showDevTools, setShowDevTools] = useState(false);
+  
+  useEffect(() => {
+    const checkDeveloperStatus = async () => {
+      if (isAuthenticated && user) {
+        const hasDeveloperRole = await isDeveloper(user.id);
+        setShowDevTools(hasDeveloperRole);
+      } else {
+        setShowDevTools(false);
+      }
+    };
+    
+    checkDeveloperStatus();
+  }, [isAuthenticated, user]);
   
   console.log('AppRoutes - Current auth state:', { isAuthenticated });
 
   return (
-    <Routes>
-      {MainRoutes}
-      {ProtectedRoutes}
-      {PortfolioRoutes}
-      {TaskRoutes}
-      <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <Routes>
+        {MainRoutes}
+        {ProtectedRoutes}
+        {PortfolioRoutes}
+        {TaskRoutes}
+        <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      
+      {showDevTools && <DeveloperToolbar />}
+    </>
   );
 };
 
 export default AppRoutes;
-

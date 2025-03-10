@@ -1,15 +1,52 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { useDeveloperStore } from '@/store/developerStore';
 import { Code, Loader2 } from 'lucide-react';
+import { useAuthStore } from '@/store/refactored-auth';
+import { isDeveloperModeEnabled, toggleDeveloperMode } from '@/utils/developerRole';
 
 export const DeveloperToolbar = () => {
-  const { settings, isLoading, fetchSettings, toggleDevMode } = useDeveloperStore();
+  const { user } = useAuthStore();
+  const [isDevModeEnabled, setIsDevModeEnabled] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchSettings();
-  }, [fetchSettings]);
+    const checkDevMode = async () => {
+      if (!user) {
+        setIsDevModeEnabled(false);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const enabled = await isDeveloperModeEnabled(user.id);
+        setIsDevModeEnabled(enabled);
+      } catch (error) {
+        console.error('Error checking developer mode:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkDevMode();
+  }, [user]);
+
+  const handleToggleDevMode = async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    try {
+      const success = await toggleDeveloperMode(user.id, !isDevModeEnabled);
+      if (success) {
+        setIsDevModeEnabled(!isDevModeEnabled);
+      }
+    } catch (error) {
+      console.error('Error toggling developer mode:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -22,18 +59,18 @@ export const DeveloperToolbar = () => {
     );
   }
 
-  if (!settings) return null;
+  if (!user) return null;
 
   return (
     <div className="fixed bottom-4 left-4 z-50">
       <Button
-        variant={settings.is_enabled ? "default" : "outline"}
+        variant={isDevModeEnabled ? "default" : "outline"}
         size="sm"
-        onClick={toggleDevMode}
+        onClick={handleToggleDevMode}
         className="gap-2"
       >
         <Code className="h-4 w-4" />
-        {settings.is_enabled ? 'وضع المطور مفعل' : 'وضع المطور معطل'}
+        {isDevModeEnabled ? 'وضع المطور مفعل' : 'وضع المطور معطل'}
       </Button>
     </div>
   );
