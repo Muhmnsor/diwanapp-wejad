@@ -1,5 +1,5 @@
 
-import { PermissionGroup } from "@/components/users/permissions/types";
+import { PermissionGroup, PermissionData } from "@/components/users/permissions/types";
 
 export const applicationModules = [
   { id: 'events', name: 'فعاليات', description: 'إدارة الفعاليات والأنشطة' },

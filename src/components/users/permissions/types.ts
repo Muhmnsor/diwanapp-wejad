@@ -12,6 +12,7 @@ export interface PermissionData {
   module: string;
   type?: string;
   is_active?: boolean;
+  isAssigned?: boolean; // Added this property to fix the error
 }
 
 export interface Module {
