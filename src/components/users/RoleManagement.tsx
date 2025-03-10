@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs } from "@/components/ui/tabs";
 import { useRoleManagement } from "./hooks/useRoleManagement";
@@ -24,6 +23,11 @@ export const RoleManagement = () => {
     handleRoleDeleted,
     handleSelectRole
   } = useRoleManagement();
+
+  useEffect(() => {
+    // Initialize developer role
+    initializeDeveloperRole();
+  }, []);
 
   return (
     <Card className="shadow-sm" dir="rtl">
