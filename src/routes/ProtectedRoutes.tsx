@@ -1,0 +1,130 @@
+
+import { Route } from "react-router-dom";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import Settings from "@/pages/Settings";
+import AdminDashboard from "@/pages/AdminDashboard";
+import Documents from "@/pages/Documents";
+import Tasks from "@/pages/Tasks";
+import TasksDashboard from "@/pages/TasksDashboard";
+import Finance from "@/pages/Finance";
+import WebsiteManagement from "@/pages/WebsiteManagement";
+import StoreManagement from "@/pages/StoreManagement";
+import UsersManagement from "@/pages/UsersManagement";
+import DeveloperSettings from "@/pages/DeveloperSettings";
+import Notifications from "@/pages/Notifications";
+import RequestsManagement from "@/pages/RequestsManagement";
+import React from "react";
+
+export const ProtectedRoutes = [
+  <Route 
+    key="settings"
+    path="/settings" 
+    element={
+      <ProtectedRoute>
+        <Settings />
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="admin-dashboard"
+    path="/admin/dashboard" 
+    element={
+      <ProtectedRoute>
+        <AdminDashboard />
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="documents"
+    path="/documents" 
+    element={
+      <ProtectedRoute>
+        <Documents />
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="tasks"
+    path="/tasks" 
+    element={
+      <ProtectedRoute>
+        <Tasks />
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="tasks-dashboard"
+    path="/tasks/dashboard" 
+    element={
+      <ProtectedRoute>
+        <TasksDashboard />
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="finance"
+    path="/finance" 
+    element={
+      <ProtectedRoute>
+        <Finance />
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="website"
+    path="/website" 
+    element={
+      <ProtectedRoute>
+        <WebsiteManagement />
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="store"
+    path="/store" 
+    element={
+      <ProtectedRoute>
+        <StoreManagement />
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="users-management"
+    path="/users-management" 
+    element={
+      <ProtectedRoute>
+        <UsersManagement />
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="developer-settings"
+    path="/developer-settings" 
+    element={
+      <ProtectedRoute>
+        <DeveloperSettings />
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="notifications"
+    path="/notifications" 
+    element={
+      <ProtectedRoute>
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <Notifications />
+        </React.Suspense>
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="requests"
+    path="/requests" 
+    element={
+      <ProtectedRoute>
+        <RequestsManagement />
+      </ProtectedRoute>
+    } 
+  />
+];
+
