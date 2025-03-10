@@ -1,4 +1,3 @@
-
 import { Route } from "react-router-dom";
 import DeveloperSettings from "@/pages/DeveloperSettings";
 import Documentation from "@/pages/Documentation";
@@ -14,6 +13,8 @@ export const DeveloperRoutes = (
         </DeveloperRoute>
       } 
     />
+    {/* Keep documentation route for backwards compatibility, 
+        but it will redirect to developer-settings with tab parameter */}
     <Route 
       path="/admin/documentation" 
       element={

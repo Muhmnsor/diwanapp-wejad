@@ -1,5 +1,6 @@
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useLocation } from "react-router-dom";
+import { TabsContent } from "@/components/ui/tabs";
 import { ComponentsDocumentation } from "./sections/ComponentsDocumentation";
 import { DatabaseDocumentation } from "./sections/DatabaseDocumentation";
 import { UIDocumentation } from "./sections/UIDocumentation";
@@ -7,35 +8,31 @@ import { TechnicalDocumentation } from "./sections/TechnicalDocumentation";
 import { SystemOverview } from "./sections/SystemOverview";
 
 export const DocumentationContainer = () => {
+  const location = useLocation();
+  const urlParams = new URLSearchParams(location.search);
+  const activeTab = urlParams.get('tab') || 'overview';
+  
   return (
-    <Tabs defaultValue="overview" className="space-y-4">
-      <TabsList className="w-full justify-stretch bg-secondary/50">
-        <TabsTrigger value="overview" className="flex-1">نظرة عامة</TabsTrigger>
-        <TabsTrigger value="components" className="flex-1">المكونات الرئيسية</TabsTrigger>
-        <TabsTrigger value="database" className="flex-1">قاعدة البيانات</TabsTrigger>
-        <TabsTrigger value="ui" className="flex-1">واجهة المستخدم</TabsTrigger>
-        <TabsTrigger value="technical" className="flex-1">المعلومات التقنية</TabsTrigger>
-      </TabsList>
-      
-      <TabsContent value="overview">
+    <div className="space-y-4">
+      <TabsContent value="overview" className={activeTab === 'overview' ? 'block' : 'hidden'}>
         <SystemOverview />
       </TabsContent>
       
-      <TabsContent value="components">
+      <TabsContent value="components" className={activeTab === 'components' ? 'block' : 'hidden'}>
         <ComponentsDocumentation />
       </TabsContent>
       
-      <TabsContent value="database">
+      <TabsContent value="database" className={activeTab === 'database' ? 'block' : 'hidden'}>
         <DatabaseDocumentation />
       </TabsContent>
       
-      <TabsContent value="ui">
+      <TabsContent value="ui" className={activeTab === 'ui' ? 'block' : 'hidden'}>
         <UIDocumentation />
       </TabsContent>
       
-      <TabsContent value="technical">
+      <TabsContent value="technical" className={activeTab === 'technical' ? 'block' : 'hidden'}>
         <TechnicalDocumentation />
       </TabsContent>
-    </Tabs>
+    </div>
   );
 };

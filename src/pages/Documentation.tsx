@@ -4,13 +4,17 @@ import { Footer } from "@/components/layout/Footer";
 import { DocumentationContainer } from "@/components/documentation/DocumentationContainer";
 import { useEffect } from "react";
 import { SecondaryHeader } from "@/components/settings/developer/SecondaryHeader";
+import { useNavigate } from "react-router-dom";
 
 const Documentation = () => {
-  // Scroll to top when page loads
+  const navigate = useNavigate();
+  
+  // Redirect to developer settings with the documentation tab
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+    navigate("/admin/developer-settings?tab=overview", { replace: true });
+  }, [navigate]);
 
+  // This is a fallback in case the redirect hasn't happened yet
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
       <TopHeader />

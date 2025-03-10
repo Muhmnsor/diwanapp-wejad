@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useDeveloperStore } from "@/store/developerStore";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { DocumentationSection } from "@/components/settings/developer/documentation/DocumentationSection";
+import { DocumentationContainer } from "@/components/documentation/DocumentationContainer";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -18,11 +17,18 @@ import { checkDeveloperPermissions } from "@/components/users/permissions/utils/
 import { DeveloperPermissionChecks } from "@/components/users/permissions/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SecondaryHeader } from "@/components/settings/developer/SecondaryHeader";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const DeveloperSettings = () => {
   const { settings, isLoading, error, fetchSettings, updateSettings } = useDeveloperStore();
   const { user } = useAuthStore();
-  const [activeTab, setActiveTab] = useState("general");
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const urlParams = new URLSearchParams(location.search);
+  const activeTab = urlParams.get('tab') || 'overview';
+  
+  const [internalActiveTab, setInternalActiveTab] = useState("general");
   const [permissions, setPermissions] = useState<DeveloperPermissionChecks>({
     canAccessDeveloperTools: false,
     canModifySystemSettings: false,
@@ -47,7 +53,6 @@ const DeveloperSettings = () => {
       const hasDeveloper = await isDeveloper(user.id);
       setHasDeveloperAccess(hasDeveloper);
       
-      // If user has developer access, also load permissions
       if (hasDeveloper) {
         loadDeveloperPermissions(user.id);
       }
@@ -97,6 +102,12 @@ const DeveloperSettings = () => {
       setRoleAssigning(false);
     }
   };
+  
+  const handleInternalTabChange = (value: string) => {
+    setInternalActiveTab(value);
+  };
+  
+  const isDocumentationTab = ['overview', 'components', 'database', 'ui', 'technical'].includes(activeTab);
   
   if (checkingAccess) {
     return (
@@ -156,45 +167,50 @@ const DeveloperSettings = () => {
     );
   }
   
-  // Continue with the rest of the component if user has developer access
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
       <TopHeader />
       <SecondaryHeader />
       
       <div className="container mx-auto px-4 py-8 flex-grow">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">إعدادات المطورين</h1>
-            <p className="text-muted-foreground">إدارة إعدادات وأدوات التطوير</p>
+        {!isDocumentationTab && (
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-2xl font-bold">إعدادات المطورين</h1>
+              <p className="text-muted-foreground">إدارة إعدادات وأدوات التطوير</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleRefresh}>
+                <RefreshCw className="h-4 w-4 ml-2" />
+                تحديث
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleRefresh}>
-              <RefreshCw className="h-4 w-4 ml-2" />
-              تحديث
-            </Button>
-          </div>
-        </div>
+        )}
         
-        {isLoading ? (
+        {isDocumentationTab && (
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold mb-2">توثيق النظام</h1>
+            <p className="text-muted-foreground">توثيق شامل للنظام، وظائفه، ومكوناته</p>
+          </div>
+        )}
+        
+        {isDocumentationTab ? (
+          <DocumentationContainer />
+        ) : isLoading ? (
           <div className="flex justify-center p-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : settings ? (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs value={internalActiveTab} onValueChange={handleInternalTabChange} className="w-full">
             <TabsList className="mb-6">
               <TabsTrigger value="general">عام</TabsTrigger>
-              <TabsTrigger value="documentation">التوثيق</TabsTrigger>
               <TabsTrigger value="permissions">الصلاحيات</TabsTrigger>
               <TabsTrigger value="cache">الذاكرة المؤقتة</TabsTrigger>
               <TabsTrigger value="debug">التصحيح</TabsTrigger>
               <TabsTrigger value="performance">الأداء</TabsTrigger>
               <TabsTrigger value="logs">السجلات</TabsTrigger>
             </TabsList>
-            
-            <TabsContent value="documentation">
-              <DocumentationSection />
-            </TabsContent>
             
             <TabsContent value="general" className="space-y-4">
               <Card>
