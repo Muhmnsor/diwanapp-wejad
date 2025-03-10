@@ -8,7 +8,6 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface WorkflowStepsConfigProps {
   requestTypeId: string | null;
@@ -23,12 +22,6 @@ export const WorkflowStepsConfig = ({
   initialSteps = [],
   workflowId = null
 }: WorkflowStepsConfigProps) => {
-  console.log("Rendering WorkflowStepsConfig with:", {
-    requestTypeId,
-    initialSteps: initialSteps?.length,
-    workflowId
-  });
-
   const {
     workflowSteps,
     currentStep,
@@ -51,7 +44,6 @@ export const WorkflowStepsConfig = ({
   // Display error if there's any
   useEffect(() => {
     if (error) {
-      console.error("WorkflowStepsConfig error:", error);
       toast.error(`خطأ في إدارة خطوات سير العمل: ${error}`);
     }
   }, [error]);
@@ -63,25 +55,6 @@ export const WorkflowStepsConfig = ({
       onWorkflowStepsUpdated(workflowSteps);
     }
   }, [workflowSteps, onWorkflowStepsUpdated]);
-
-  const handleAddStepSafely = () => {
-    try {
-      if (!currentStep.step_name) {
-        toast.error('يرجى إدخال اسم الخطوة');
-        return;
-      }
-      
-      if (!currentStep.approver_id) {
-        toast.error('يرجى اختيار المعتمد');
-        return;
-      }
-      
-      handleAddStep();
-    } catch (error) {
-      console.error("Error adding step:", error);
-      toast.error('حدث خطأ أثناء إضافة الخطوة');
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -105,20 +78,11 @@ export const WorkflowStepsConfig = ({
         users={users}
         isLoading={isLoading}
         onStepChange={setCurrentStep}
-        onAddStep={handleAddStepSafely}
+        onAddStep={handleAddStep}
       />
       
-      {workflowSteps.length === 0 && (
-        <Alert className="bg-amber-50 border-amber-200">
-          <AlertCircle className="h-4 w-4 text-amber-500" />
-          <AlertDescription className="text-amber-700">
-            لم يتم إضافة أي خطوات بعد. الرجاء إضافة خطوة واحدة على الأقل لسير العمل.
-          </AlertDescription>
-        </Alert>
-      )}
-      
       <StepsList
-        workflowSteps={workflowSteps || []}
+        workflowSteps={workflowSteps}
         users={users}
         onMoveStep={handleMoveStep}
         onEditStep={handleEditStep}

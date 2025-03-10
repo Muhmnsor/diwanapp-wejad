@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -36,8 +36,6 @@ export const useRequestTypeForm = ({
   const [formError, setFormError] = useState<string | null>(null);
   const isEditing = !!requestType;
 
-  console.log("useRequestTypeForm initialization with requestType:", requestType?.id);
-
   const form = useForm<RequestTypeFormValues>({
     resolver: zodResolver(requestTypeSchema),
     defaultValues: {
@@ -50,42 +48,12 @@ export const useRequestTypeForm = ({
     },
   });
 
-  const resetFieldForm = useCallback(() => {
-    setCurrentField({
-      id: uuidv4(),
-      name: "",
-      label: "",
-      type: "text",
-      required: false,
-      options: [],
-    });
-    setEditingFieldIndex(null);
-  }, []);
-
-  const resetForm = useCallback(() => {
-    console.log("Resetting the form");
-    form.reset({
-      name: "",
-      description: "",
-      is_active: true,
-      form_schema: {
-        fields: [],
-      },
-    });
-    setFormFields([]);
-    setWorkflowSteps([]);
-    setCreatedRequestTypeId(null);
-    setFormError(null);
-    resetFieldForm();
-  }, [form, resetFieldForm]);
-
   useEffect(() => {
     if (requestType) {
-      console.log("Initializing form with requestType:", requestType.id);
       form.reset({
         name: requestType.name,
         description: requestType.description || "",
-        is_active: requestType.is_active !== false, // Default to true if undefined
+        is_active: requestType.is_active,
         form_schema: requestType.form_schema,
       });
       setFormFields(requestType.form_schema.fields || []);
@@ -94,7 +62,6 @@ export const useRequestTypeForm = ({
       const fetchWorkflowSteps = async () => {
         if (requestType.default_workflow_id) {
           try {
-            console.log("Fetching workflow steps for:", requestType.default_workflow_id);
             const { data, error } = await supabase
               .from("workflow_steps")
               .select("*")
@@ -108,88 +75,85 @@ export const useRequestTypeForm = ({
             
             console.log("Fetched existing workflow steps:", data);
             
-            if (data && data.length > 0) {
-              const stepsWithWorkflowId = data.map(step => ({
-                ...step,
-                workflow_id: step.workflow_id || requestType.default_workflow_id
-              }));
-              
-              setWorkflowSteps(stepsWithWorkflowId);
-            } else {
-              console.log("No workflow steps found, setting empty array");
-              setWorkflowSteps([]);
-            }
+            const stepsWithWorkflowId = data ? data.map(step => ({
+              ...step,
+              workflow_id: step.workflow_id || requestType.default_workflow_id
+            })) : [];
+            
+            setWorkflowSteps(stepsWithWorkflowId);
           } catch (error) {
             console.error("Error in fetching workflow steps:", error);
           }
-        } else {
-          console.log("No default workflow ID, setting empty steps array");
-          setWorkflowSteps([]);
         }
       };
       
       fetchWorkflowSteps();
     } else {
-      console.log("No requestType, resetting form");
-      resetForm();
+      form.reset({
+        name: "",
+        description: "",
+        is_active: true,
+        form_schema: {
+          fields: [],
+        },
+      });
+      setFormFields([]);
+      setWorkflowSteps([]);
+      setCreatedRequestTypeId(null);
     }
-  }, [requestType, form, resetForm]);
+  }, [requestType, form]);
 
-  const handleAddField = useCallback(() => {
+  const resetFieldForm = () => {
+    setCurrentField({
+      id: uuidv4(),
+      name: "",
+      label: "",
+      type: "text",
+      required: false,
+      options: [],
+    });
+    setEditingFieldIndex(null);
+  };
+
+  const handleAddField = () => {
     if (!currentField.name || !currentField.label) {
       toast.error('اسم الحقل وعنوانه مطلوبان');
       return;
     }
 
-    try {
-      const formattedName = currentField.name.replace(/\s+/g, "_").toLowerCase();
-      
-      const newField: FormField = {
-        ...currentField,
-        id: currentField.id || uuidv4(),
-        name: formattedName,
-      };
+    const formattedName = currentField.name.replace(/\s+/g, "_").toLowerCase();
+    
+    const newField: FormField = {
+      ...currentField,
+      id: currentField.id || uuidv4(),
+      name: formattedName,
+    };
 
-      const updatedFields = [...formFields];
+    const updatedFields = [...formFields];
 
-      if (editingFieldIndex !== null) {
-        updatedFields[editingFieldIndex] = newField;
-      } else {
-        updatedFields.push(newField);
-      }
-
-      setFormFields(updatedFields);
-      form.setValue("form_schema.fields", updatedFields as any);
-      resetFieldForm();
-    } catch (error) {
-      console.error("Error adding field:", error);
-      toast.error('حدث خطأ أثناء إضافة الحقل');
-      setFormError('حدث خطأ أثناء إضافة الحقل');
+    if (editingFieldIndex !== null) {
+      updatedFields[editingFieldIndex] = newField;
+    } else {
+      updatedFields.push(newField);
     }
-  }, [currentField, editingFieldIndex, formFields, form, resetFieldForm]);
 
-  const handleRemoveField = useCallback((index: number) => {
-    try {
-      const updatedFields = formFields.filter((_, i) => i !== index);
-      setFormFields(updatedFields);
-      form.setValue("form_schema.fields", updatedFields as any);
-    } catch (error) {
-      console.error("Error removing field:", error);
-      toast.error('حدث خطأ أثناء إزالة الحقل');
-    }
-  }, [formFields, form]);
+    setFormFields(updatedFields);
+    form.setValue("form_schema.fields", updatedFields as any);
+    resetFieldForm();
+  };
 
-  const handleEditField = useCallback((index: number) => {
-    try {
-      setCurrentField(formFields[index]);
-      setEditingFieldIndex(index);
-    } catch (error) {
-      console.error("Error editing field:", error);
-      toast.error('حدث خطأ أثناء تعديل الحقل');
-    }
-  }, [formFields]);
+  const handleRemoveField = (index: number) => {
+    const updatedFields = formFields.filter((_, i) => i !== index);
+    setFormFields(updatedFields);
+    form.setValue("form_schema.fields", updatedFields as any);
+  };
 
-  const handleWorkflowStepsUpdated = useCallback((steps: WorkflowStep[]) => {
+  const handleEditField = (index: number) => {
+    setCurrentField(formFields[index]);
+    setEditingFieldIndex(index);
+  };
+
+  const handleWorkflowStepsUpdated = (steps: WorkflowStep[]) => {
     console.log("Workflow steps updated in RequestTypeDialog:", steps);
     
     if (steps.some(step => !step.workflow_id)) {
@@ -204,7 +168,7 @@ export const useRequestTypeForm = ({
     } else {
       setWorkflowSteps(steps);
     }
-  }, [requestType?.default_workflow_id]);
+  };
 
   const saveRequestType = async (values: RequestTypeFormValues) => {
     const formSchemaWithFields: FormSchema = {
@@ -224,8 +188,6 @@ export const useRequestTypeForm = ({
       is_active: values.is_active,
       form_schema: formSchemaWithFields,
     };
-
-    console.log("Saving request type:", isEditing ? "update" : "create", requestTypeData);
 
     if (isEditing && requestType) {
       const { data, error } = await supabase.rpc('upsert_request_type', {
@@ -261,7 +223,6 @@ export const useRequestTypeForm = ({
     };
 
     if (isEditing && requestType?.default_workflow_id) {
-      console.log("Updating existing workflow:", requestType.default_workflow_id);
       const { data, error } = await supabase.rpc('upsert_workflow', {
         workflow_data: { 
           ...workflowData, 
@@ -278,7 +239,6 @@ export const useRequestTypeForm = ({
       console.log("Updated existing workflow:", data);
       return data;
     } else {
-      console.log("Creating new workflow");
       const { data, error } = await supabase.rpc('upsert_workflow', {
         workflow_data: workflowData,
         is_update: false
@@ -407,15 +367,10 @@ export const useRequestTypeForm = ({
         await saveWorkflowSteps(workflowId, updatedSteps);
 
         toast.success(isEditing ? "تم تحديث نوع الطلب بنجاح" : "تم إنشاء نوع الطلب بنجاح");
-        console.log("Successfully saved request type and workflow");
-        
-        setTimeout(() => {
-          onRequestTypeCreated();
-          resetForm();
-          onClose();
-        }, 500);
+        onRequestTypeCreated();
+        onClose();
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error saving request type:", error);
       toast.error(isEditing ? "حدث خطأ أثناء تحديث نوع الطلب" : "حدث خطأ أثناء إنشاء نوع الطلب");
       setFormError(`${error.message || "حدث خطأ غير متوقع أثناء العملية"}`);
@@ -440,7 +395,6 @@ export const useRequestTypeForm = ({
     handleRemoveField,
     handleEditField,
     handleWorkflowStepsUpdated,
-    onSubmit,
-    resetForm
+    onSubmit
   };
 };
