@@ -1,3 +1,4 @@
+
 import { useCallback } from "react";
 import { WorkflowStep } from "../../types";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,17 +75,20 @@ export const useWorkflowOperations = ({
       console.log("Created new workflow with ID:", newWorkflowId);
       setWorkflowId(newWorkflowId);
       
-      setWorkflowSteps(prevSteps => 
-        prevSteps.map(step => ({
+      // Fix: Create a new array with updated workflow_id instead of using a callback
+      const updatedSteps = (prev: WorkflowStep[]) => 
+        prev.map(step => ({
           ...step,
           workflow_id: newWorkflowId
-        }))
-      );
+        }));
+      setWorkflowSteps(updatedSteps([]));
       
-      setCurrentStep(prevStep => ({
-        ...prevStep,
+      // Fix: Create a new step object with updated workflow_id instead of using a callback
+      const updatedStep = (prev: WorkflowStep) => ({
+        ...prev,
         workflow_id: newWorkflowId
-      }));
+      });
+      setCurrentStep(updatedStep(getInitialStepState(1)));
       
       return newWorkflowId;
     } catch (error) {
