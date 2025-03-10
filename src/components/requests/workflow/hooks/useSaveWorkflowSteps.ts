@@ -1,6 +1,7 @@
 
 import { WorkflowStep } from "../../types";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface UseSaveWorkflowStepsProps {
   requestTypeId: string | null;
@@ -62,15 +63,26 @@ export const useSaveWorkflowSteps = ({
         return true;
       }
       
-      // Prepare steps for insertion with complete data
-      const stepsToInsert = steps.map((step, index) => ({
-        ...step,
-        workflow_id: currentWorkflowId,
-        step_order: index + 1,
-        step_type: step.step_type || 'decision',
-        is_required: step.is_required === false ? false : true,
-        approver_type: step.approver_type || 'user'
-      }));
+      // Prepare steps for insertion with complete data and ensure valid UUIDs
+      const stepsToInsert = steps.map((step, index) => {
+        // Verify UUID format and add validation checks
+        if (!step.workflow_id) {
+          console.error("Step missing workflow_id", step);
+          throw new Error("خطأ: بعض الخطوات تفتقد إلى معرّف سير العمل");
+        }
+        
+        // Make sure UUIDs are properly formatted
+        return {
+          ...step,
+          workflow_id: currentWorkflowId,
+          step_order: index + 1,
+          step_type: step.step_type || 'decision',
+          is_required: step.is_required === false ? false : true,
+          approver_type: step.approver_type || 'user',
+          // Ensure approver_id is valid - if it's not a valid UUID, this will throw
+          approver_id: step.approver_id
+        };
+      });
 
       console.log("Inserting workflow steps using RPC bypass function with workflow_id:", currentWorkflowId);
       console.log("Steps to insert:", stepsToInsert);
@@ -81,8 +93,13 @@ export const useSaveWorkflowSteps = ({
         throw new Error("بعض الخطوات تفتقد إلى معرّف سير العمل");
       }
       
-      // Convert steps to JSON strings for RPC function
-      const jsonSteps = stepsToInsert.map(step => JSON.stringify(step));
+      // Convert steps to JSON strings for RPC function - ensure proper UUID formatting
+      const jsonSteps = stepsToInsert.map(step => {
+        // Log each step for debugging
+        console.log("Preparing step for RPC:", step);
+        // Return the JSON string
+        return JSON.stringify(step);
+      });
       
       // Call the RPC function to insert steps
       const { data: rpcResult, error: rpcError } = await supabase

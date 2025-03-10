@@ -14,9 +14,21 @@ export const useWorkflowCreation = ({
 }: UseWorkflowCreationProps) => {
 
   const ensureWorkflowExists = async (requestTypeId: string | null, currentWorkflowId: string | null): Promise<string> => {
+    // Check if we have a valid existing workflow ID
     if (currentWorkflowId && currentWorkflowId !== 'temp-workflow-id') {
-      console.log("Using existing workflow ID:", currentWorkflowId);
-      return currentWorkflowId;
+      try {
+        // Validate UUID format
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(currentWorkflowId)) {
+          console.error("Invalid workflow ID format:", currentWorkflowId);
+          throw new Error("Invalid workflow ID format");
+        }
+        console.log("Using existing workflow ID:", currentWorkflowId);
+        return currentWorkflowId;
+      } catch (error) {
+        console.error("Error validating workflow ID:", error);
+        // Fall through to create a new workflow
+      }
     }
 
     try {
@@ -57,6 +69,13 @@ export const useWorkflowCreation = ({
 
   const updateDefaultWorkflow = async (requestTypeId: string | null, workflowId: string | null) => {
     if (!requestTypeId || !workflowId || workflowId === 'temp-workflow-id') {
+      return;
+    }
+    
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(workflowId) || !uuidRegex.test(requestTypeId)) {
+      console.error("Invalid UUID format for updating default workflow:", { requestTypeId, workflowId });
       return;
     }
     

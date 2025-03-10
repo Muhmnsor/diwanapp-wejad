@@ -1,3 +1,4 @@
+
 -- Function to check if the current user is an admin
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS boolean
@@ -96,8 +97,7 @@ BEGIN
 END;
 $$;
 
--- FINAL FIX: Function to insert workflow steps bypassing RLS
--- Enhanced with strict validation and detailed error reporting
+-- UPDATED FUNCTION: Insert workflow steps bypassing RLS with improved UUID validation and error handling
 CREATE OR REPLACE FUNCTION public.insert_workflow_steps(steps jsonb[])
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -112,6 +112,7 @@ DECLARE
   v_workflow_id uuid;
   v_workflow_ids uuid[] := '{}';
   v_step_count int := 0;
+  v_is_valid_uuid boolean;
 BEGIN
   -- Start transaction to ensure all steps are inserted or none
   BEGIN
@@ -127,12 +128,27 @@ BEGIN
     FOR i IN 1..v_step_count LOOP
       step := steps[i];
       
+      -- Log the raw step data for debugging
+      RAISE NOTICE 'Step % raw data: %', i, step;
+      
       -- Validate workflow ID exists in each step
       IF step->>'workflow_id' IS NULL OR (step->>'workflow_id') = '' THEN
         RAISE EXCEPTION 'Workflow ID is required for step %', i;
       END IF;
       
-      v_workflow_id := (step->>'workflow_id')::uuid;
+      -- Check if workflow_id is a valid UUID
+      BEGIN
+        v_workflow_id := (step->>'workflow_id')::uuid;
+        v_is_valid_uuid := true;
+      EXCEPTION WHEN others THEN
+        RAISE NOTICE 'Invalid UUID format for workflow_id in step %: %', i, step->>'workflow_id';
+        v_is_valid_uuid := false;
+      END;
+      
+      IF NOT v_is_valid_uuid THEN
+        RAISE EXCEPTION 'Invalid UUID format for workflow_id in step %: %', i, step->>'workflow_id';
+      END IF;
+      
       RAISE NOTICE 'Step % has workflow_id: %', i, v_workflow_id;
       
       -- Add to workflow IDs array if not already there
@@ -144,7 +160,7 @@ BEGIN
     
     -- Delete existing steps for all collected workflow IDs
     IF array_length(v_workflow_ids, 1) > 0 THEN
-      RAISE NOTICE 'Deleting existing steps for % workflows', array_length(v_workflow_ids, 1);
+      RAISE NOTICE 'Deleting existing steps for % workflows: %', array_length(v_workflow_ids, 1), v_workflow_ids;
       DELETE FROM workflow_steps 
       WHERE workflow_id = ANY(v_workflow_ids);
     END IF;
@@ -152,7 +168,13 @@ BEGIN
     -- Process each step
     FOR i IN 1..v_step_count LOOP
       step := steps[i];
-      v_workflow_id := (step->>'workflow_id')::uuid;
+      
+      -- Ensure workflow_id is a valid UUID before casting
+      BEGIN
+        v_workflow_id := (step->>'workflow_id')::uuid;
+      EXCEPTION WHEN others THEN
+        RAISE EXCEPTION 'Invalid UUID format for workflow_id in step %: %', i, step->>'workflow_id';
+      END;
       
       -- Validate workflow exists
       IF NOT EXISTS (SELECT 1 FROM request_workflows WHERE id = v_workflow_id) THEN
@@ -168,32 +190,55 @@ BEGIN
         RAISE EXCEPTION 'Approver ID is required for step %', i;
       END IF;
       
+      -- Validate approver_id is a valid UUID
+      DECLARE
+        v_approver_id uuid;
+        v_is_valid_approver_uuid boolean;
+      BEGIN
+        BEGIN
+          v_approver_id := (step->>'approver_id')::uuid;
+          v_is_valid_approver_uuid := true;
+        EXCEPTION WHEN others THEN
+          RAISE NOTICE 'Invalid UUID format for approver_id in step %: %', i, step->>'approver_id';
+          v_is_valid_approver_uuid := false;
+        END;
+        
+        IF NOT v_is_valid_approver_uuid THEN
+          RAISE EXCEPTION 'Invalid UUID format for approver_id in step %: %', i, step->>'approver_id';
+        END IF;
+      END;
+      
       -- Insert the step and capture the result
       RAISE NOTICE 'Inserting step % for workflow %', i, v_workflow_id;
       
-      WITH inserted AS (
-        INSERT INTO workflow_steps (
-          workflow_id,
-          step_order,
-          step_name,
-          step_type,
-          approver_id,
-          instructions,
-          is_required,
-          approver_type
-        ) VALUES (
-          v_workflow_id,
-          COALESCE((step->>'step_order')::int, i),
-          step->>'step_name',
-          COALESCE(step->>'step_type', 'decision'),
-          (step->>'approver_id')::uuid,
-          step->>'instructions',
-          COALESCE((step->>'is_required')::boolean, true),
-          COALESCE(step->>'approver_type', 'user')
+      BEGIN
+        WITH inserted AS (
+          INSERT INTO workflow_steps (
+            workflow_id,
+            step_order,
+            step_name,
+            step_type,
+            approver_id,
+            instructions,
+            is_required,
+            approver_type
+          ) VALUES (
+            v_workflow_id,
+            COALESCE((step->>'step_order')::int, i),
+            step->>'step_name',
+            COALESCE(step->>'step_type', 'decision'),
+            (step->>'approver_id')::uuid,
+            step->>'instructions',
+            COALESCE((step->>'is_required')::boolean, true),
+            COALESCE(step->>'approver_type', 'user')
+          )
+          RETURNING row_to_json(workflow_steps.*)::jsonb
         )
-        RETURNING row_to_json(workflow_steps.*)::jsonb
-      )
-      SELECT i INTO step_result FROM inserted i;
+        SELECT i INTO step_result FROM inserted i;
+      EXCEPTION WHEN others THEN
+        GET STACKED DIAGNOSTICS v_error = MESSAGE_TEXT;
+        RAISE EXCEPTION 'Error inserting step %: %', i, v_error;
+      END;
       
       -- Add to our result array
       IF step_result IS NOT NULL THEN
@@ -229,3 +274,4 @@ BEGIN
   END;
 END;
 $$;
+

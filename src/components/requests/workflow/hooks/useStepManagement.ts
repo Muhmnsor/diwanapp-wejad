@@ -33,6 +33,7 @@ export const useStepManagement = ({
 
     const current_workflow_id = workflowId || 'temp-workflow-id';
     
+    // Ensure workflow_id is consistent
     const stepWithWorkflowId = {
       ...currentStep,
       workflow_id: current_workflow_id
@@ -43,12 +44,20 @@ export const useStepManagement = ({
 
     let updatedSteps: WorkflowStep[];
 
+    // When editing, replace the step at the editing index
     if (editingStepIndex !== null) {
       updatedSteps = [...workflowSteps];
       updatedSteps[editingStepIndex] = stepWithWorkflowId;
     } else {
+      // When adding, append the new step
       updatedSteps = [...workflowSteps, stepWithWorkflowId];
     }
+
+    // Make sure all steps have the same workflow_id
+    updatedSteps = updatedSteps.map(step => ({
+      ...step,
+      workflow_id: current_workflow_id
+    }));
 
     console.log("Adding/updating step with workflow_id:", stepWithWorkflowId);
     console.log("Updated steps:", updatedSteps);
@@ -80,12 +89,13 @@ export const useStepManagement = ({
     editingStepIndex: number | null,
     workflowId: string | null
   ) => {
+    const current_workflow_id = workflowId || 'temp-workflow-id';
     const updatedSteps = workflowSteps
       .filter((_, i) => i !== index)
       .map((step, i) => ({
         ...step,
         step_order: i + 1,
-        workflow_id: step.workflow_id || workflowId || 'temp-workflow-id'
+        workflow_id: step.workflow_id || current_workflow_id
       }));
     
     console.log("Removing step at index:", index);
@@ -99,7 +109,7 @@ export const useStepManagement = ({
           setEditingStepIndex(null);
           setCurrentStep({
             ...getInitialStepState(updatedSteps.length + 1),
-            workflow_id: workflowId || 'temp-workflow-id'
+            workflow_id: current_workflow_id
           });
         }
       })
@@ -110,9 +120,10 @@ export const useStepManagement = ({
 
   const handleEditStep = (index: number, workflowSteps: WorkflowStep[], workflowId: string | null) => {
     console.log("Editing step at index:", index);
+    const current_workflow_id = workflowId || 'temp-workflow-id';
     const stepToEdit = {
       ...workflowSteps[index],
-      workflow_id: workflowSteps[index].workflow_id || workflowId || 'temp-workflow-id'
+      workflow_id: workflowSteps[index].workflow_id || current_workflow_id
     };
     setCurrentStep(stepToEdit);
     setEditingStepIndex(index);
@@ -132,6 +143,7 @@ export const useStepManagement = ({
       return;
     }
 
+    const current_workflow_id = workflowId || 'temp-workflow-id';
     const newIndex = direction === 'up' ? index - 1 : index + 1;
     const updatedSteps = [...workflowSteps];
     
@@ -139,7 +151,7 @@ export const useStepManagement = ({
     
     updatedSteps.forEach((step, i) => {
       step.step_order = i + 1;
-      step.workflow_id = step.workflow_id || workflowId || 'temp-workflow-id';
+      step.workflow_id = step.workflow_id || current_workflow_id;
     });
 
     console.log(`Moving step ${index} ${direction} to ${newIndex}`);
