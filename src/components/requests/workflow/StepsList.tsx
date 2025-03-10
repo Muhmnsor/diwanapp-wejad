@@ -20,10 +20,7 @@ export const StepsList = ({
   onEditStep,
   onRemoveStep,
 }: StepsListProps) => {
-  // Safety check - ensure workflowSteps is an array
-  const safeSteps = Array.isArray(workflowSteps) ? workflowSteps : [];
-  
-  if (safeSteps.length === 0) {
+  if (workflowSteps.length === 0) {
     return (
       <div className="text-center p-4 border rounded-md bg-muted">
         <p className="text-muted-foreground">لم يتم إضافة خطوات لسير العمل بعد</p>
@@ -35,7 +32,7 @@ export const StepsList = ({
     <div className="space-y-4">
       <h4 className="text-sm font-medium">الخطوات المضافة</h4>
       <div className="space-y-2">
-        {safeSteps.map((step, index) => (
+        {workflowSteps.map((step, index) => (
           <div
             key={index}
             className="flex items-center justify-between border rounded-md p-3 bg-card"
@@ -74,7 +71,7 @@ export const StepsList = ({
                 variant="ghost"
                 size="sm"
                 onClick={() => onMoveStep(index, 'down')}
-                disabled={index === safeSteps.length - 1}
+                disabled={index === workflowSteps.length - 1}
               >
                 <ChevronDown className="h-4 w-4" />
               </Button>

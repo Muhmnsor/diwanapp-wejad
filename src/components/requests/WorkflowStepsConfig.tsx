@@ -22,15 +22,6 @@ export const WorkflowStepsConfig = ({
   initialSteps = [],
   workflowId = null
 }: WorkflowStepsConfigProps) => {
-  // Ensure initialSteps is always an array
-  const safeInitialSteps = Array.isArray(initialSteps) ? initialSteps : [];
-  
-  console.log("WorkflowStepsConfig mount with props:", { 
-    requestTypeId, 
-    workflowId,
-    initialStepsCount: safeInitialSteps.length 
-  });
-  
   const {
     workflowSteps,
     currentStep,
@@ -46,14 +37,13 @@ export const WorkflowStepsConfig = ({
   } = useWorkflowSteps({ 
     requestTypeId, 
     onWorkflowStepsUpdated,
-    initialSteps: safeInitialSteps,
+    initialSteps,
     initialWorkflowId: workflowId
   });
 
   // Display error if there's any
   useEffect(() => {
     if (error) {
-      console.error("Workflow Steps Error:", error);
       toast.error(`خطأ في إدارة خطوات سير العمل: ${error}`);
     }
   }, [error]);
@@ -61,13 +51,10 @@ export const WorkflowStepsConfig = ({
   // Update parent component whenever workflow steps change
   useEffect(() => {
     if (Array.isArray(workflowSteps)) {
-      console.log("WorkflowStepsConfig updating parent with steps:", workflowSteps.length);
+      console.log("WorkflowStepsConfig updating parent with steps:", workflowSteps);
       onWorkflowStepsUpdated(workflowSteps);
     }
   }, [workflowSteps, onWorkflowStepsUpdated]);
-
-  // Safely get workflow steps as array
-  const safeWorkflowSteps = Array.isArray(workflowSteps) ? workflowSteps : [];
 
   return (
     <div className="space-y-6">
@@ -95,7 +82,7 @@ export const WorkflowStepsConfig = ({
       />
       
       <StepsList
-        workflowSteps={safeWorkflowSteps}
+        workflowSteps={workflowSteps}
         users={users}
         onMoveStep={handleMoveStep}
         onEditStep={handleEditStep}
