@@ -40,14 +40,18 @@ export const checkDeveloperPermissions = async (userId: string): Promise<Develop
     return {
       canAccessDeveloperTools: isDeveloper && permissionNames.includes('view_developer_tools'),
       canModifySystemSettings: isDeveloper && permissionNames.includes('modify_system_settings'),
-      canAccessApiLogs: isDeveloper && permissionNames.includes('access_api_logs')
+      canAccessApiLogs: isDeveloper && permissionNames.includes('access_api_logs'),
+      canManageDeveloperSettings: isDeveloper && permissionNames.includes('manage_developer_settings'),
+      canViewPerformanceMetrics: isDeveloper && permissionNames.includes('view_performance_metrics')
     };
   } catch (error) {
     console.error('Error checking developer permissions:', error);
     return {
       canAccessDeveloperTools: false,
       canModifySystemSettings: false,
-      canAccessApiLogs: false
+      canAccessApiLogs: false,
+      canManageDeveloperSettings: false,
+      canViewPerformanceMetrics: false
     };
   }
 };
@@ -61,7 +65,13 @@ export const setupDefaultDeveloperPermissions = async (developerId: string): Pro
     const { data: developerPermissions } = await supabase
       .from('permissions')
       .select('id')
-      .in('name', ['view_developer_tools', 'modify_system_settings', 'access_api_logs']);
+      .in('name', [
+        'view_developer_tools',
+        'modify_system_settings',
+        'access_api_logs',
+        'manage_developer_settings',
+        'view_performance_metrics'
+      ]);
       
     if (!developerPermissions?.length) {
       console.error('Developer permissions not found');

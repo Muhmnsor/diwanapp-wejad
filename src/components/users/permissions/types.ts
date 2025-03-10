@@ -18,7 +18,9 @@ export interface Module {
 export type DeveloperPermission = 
   | 'view_developer_tools'
   | 'modify_system_settings'
-  | 'access_api_logs';
+  | 'access_api_logs'
+  | 'manage_developer_settings'
+  | 'view_performance_metrics';
 
 export type UserPermission = 
   | 'create_user'
@@ -57,4 +59,6 @@ export interface DeveloperPermissionChecks {
   canAccessDeveloperTools: boolean;
   canModifySystemSettings: boolean;
   canAccessApiLogs: boolean;
+  canManageDeveloperSettings: boolean;
+  canViewPerformanceMetrics: boolean;
 }
