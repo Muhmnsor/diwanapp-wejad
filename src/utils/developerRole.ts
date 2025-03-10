@@ -103,3 +103,70 @@ export const isDeveloper = async (userId: string): Promise<boolean> => {
     return false;
   }
 };
+
+/**
+ * Initialize developer role for a user
+ * This was missing in the original file
+ */
+export const initializeDeveloperRole = async (userId: string): Promise<boolean> => {
+  if (!userId) return false;
+  
+  try {
+    // Check if developer permissions already exist
+    const { data: existingPermissions } = await supabase
+      .from('developer_permissions')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+    
+    if (!existingPermissions) {
+      // Create default permissions (all false)
+      const { error } = await supabase
+        .from('developer_permissions')
+        .insert({
+          user_id: userId,
+          can_access_developer_tools: false,
+          can_modify_system_settings: false,
+          can_access_api_logs: false,
+          can_manage_developer_settings: false,
+          can_view_performance_metrics: false
+        });
+      
+      if (error) {
+        console.error('Error initializing developer permissions:', error);
+        return false;
+      }
+    }
+    
+    // Create developer settings if they don't exist
+    const { data: existingSettings } = await supabase
+      .from('developer_settings')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+    
+    if (!existingSettings) {
+      const { error } = await supabase
+        .from('developer_settings')
+        .insert({
+          user_id: userId,
+          is_enabled: false,
+          cache_time_minutes: 5,
+          update_interval_seconds: 30,
+          debug_level: 'info',
+          realtime_enabled: false,
+          show_toolbar: false
+        });
+      
+      if (error) {
+        console.error('Error initializing developer settings:', error);
+        return false;
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in initializeDeveloperRole:', error);
+    return false;
+  }
+};

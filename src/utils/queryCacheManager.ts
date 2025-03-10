@@ -1,86 +1,88 @@
 
 import { QueryClient } from '@tanstack/react-query';
-import { useUserSettingsStore } from '@/store/userSettingsStore';
-import { useAuthStore } from '@/store/refactored-auth';
+import { toast } from 'sonner';
+import { UserSettings } from '@/store/userSettingsStore';
+import { DeveloperSettings } from '@/types/developer.d';
+
+// Default cache durations
+const DEFAULT_CACHE_DURATION = 5; // 5 minutes
 
 /**
- * إنشاء مدير للتخزين المؤقت حسب تفضيلات المستخدم
+ * Create a QueryClient with settings customized for the user
  */
-export const createOptimizedQueryClient = (): QueryClient => {
-  const userSettings = useUserSettingsStore.getState().settings;
-  const user = useAuthStore.getState().user;
+export const createUserQueryClient = (
+  userSettings?: UserSettings | null,
+  developerSettings?: DeveloperSettings | null
+): QueryClient => {
+  // Use developer settings cache time if available, otherwise use default
+  const cacheDuration = developerSettings?.cache_time_minutes || DEFAULT_CACHE_DURATION;
   
-  // تحديد مدة التخزين المؤقت بناءً على إعدادات المستخدم
-  const cacheDuration = userSettings?.cache_duration_minutes || 5;
-  const isDeveloper = user?.isDeveloper || false;
+  // Determine if developer mode is enabled
+  const devModeEnabled = developerSettings?.is_enabled || false;
   
-  // إنشاء خيارات مخصصة للتخزين المؤقت
-  const queryClientOptions = {
+  const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
-        // مدة التخزين المؤقت (بالدقائق)
-        staleTime: cacheDuration * 60 * 1000,
-        // مدة الصلاحية (بالدقائق)
-        cacheTime: cacheDuration * 2 * 60 * 1000,
-        // محاولات إعادة الاتصال
-        retry: isDeveloper ? 1 : 3,
-        // تأخير بين محاولات إعادة الاتصال
-        retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
-        // تحديث تلقائي عند استعادة الاتصال
-        refetchOnWindowFocus: !isDeveloper,
-        // تحديث تلقائي عند استعادة الاتصال بالإنترنت
-        refetchOnReconnect: true,
-      },
-      mutations: {
-        // محاولات إعادة الاتصال للتعديلات
-        retry: isDeveloper ? 0 : 2,
+        staleTime: cacheDuration * 60 * 1000, // Convert minutes to milliseconds
+        retry: devModeEnabled ? 0 : 1, // Disable retries in dev mode
+        refetchOnWindowFocus: !devModeEnabled, // Disable auto refetch in dev mode
+        refetchOnMount: !devModeEnabled, // Disable refetch on mount in dev mode
       },
     },
-  };
-
-  return new QueryClient(queryClientOptions);
+  });
+  
+  // Configure error handling based on developer settings
+  configureErrorHandling(queryClient, developerSettings);
+  
+  return queryClient;
 };
 
 /**
- * تهيئة التخزين المؤقت حسب نوع المستخدم
+ * Configure error handling for query and mutation errors
  */
-export const initializeCacheStrategy = (queryClient: QueryClient) => {
-  const userSettings = useUserSettingsStore.getState().settings;
-  const isDeveloper = userSettings?.developer_mode || false;
+const configureErrorHandling = (
+  queryClient: QueryClient,
+  developerSettings?: DeveloperSettings | null
+): void => {
+  // Configure debug level based on developer settings
+  const debugLevel = developerSettings?.debug_level || 'error';
+  const shouldShowToasts = !(developerSettings?.is_enabled || false);
   
-  // تعيين مراقبين للتخزين المؤقت للمطورين
-  if (isDeveloper) {
-    queryClient.getQueryCache().subscribe({
-      onError: error => {
-        console.error('Query Cache Error:', error);
-      },
-      onSuccess: data => {
-        console.log('Query Cache Success:', data);
-      }
+  // Setup query cache subscription for error handling
+  queryClient.getQueryCache().subscribe(() => {
+    const failedQueries = queryClient.getQueryCache().findAll({ 
+      predicate: query => query.state.status === 'error' 
     });
     
-    queryClient.getMutationCache().subscribe({
-      onError: error => {
-        console.error('Mutation Cache Error:', error);
-      },
-      onSuccess: data => {
-        console.log('Mutation Cache Success:', data);
+    if (failedQueries.length > 0) {
+      // Log errors based on debug level
+      if (debugLevel === 'debug' || debugLevel === 'info') {
+        console.error('Query cache errors:', failedQueries);
       }
+      
+      // Show toast notifications if not in developer mode
+      if (shouldShowToasts) {
+        toast.error('حدث خطأ أثناء جلب البيانات');
+      }
+    }
+  });
+  
+  // Setup mutation cache subscription for error handling
+  queryClient.getMutationCache().subscribe(() => {
+    const failedMutations = queryClient.getMutationCache().findAll({
+      predicate: mutation => mutation.state.status === 'error'
     });
-  }
-};
-
-/**
- * تنظيف ذاكرة التخزين المؤقت
- */
-export const clearQueryCache = (queryClient: QueryClient, queryKeys?: string[]) => {
-  if (queryKeys && queryKeys.length > 0) {
-    // مسح التخزين المؤقت لمفاتيح محددة
-    queryKeys.forEach(key => {
-      queryClient.invalidateQueries({ queryKey: [key] });
-    });
-  } else {
-    // مسح كل التخزين المؤقت
-    queryClient.clear();
-  }
+    
+    if (failedMutations.length > 0) {
+      // Log errors based on debug level
+      if (debugLevel === 'debug' || debugLevel === 'info') {
+        console.error('Mutation cache errors:', failedMutations);
+      }
+      
+      // Show toast notifications if not in developer mode
+      if (shouldShowToasts) {
+        toast.error('حدث خطأ أثناء تحديث البيانات');
+      }
+    }
+  });
 };

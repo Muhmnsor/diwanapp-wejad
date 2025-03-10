@@ -1,76 +1,89 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useDeveloperStore } from '@/store/developerStore';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
-type RealtimeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
-
-interface SubscriptionOptions {
-  schema?: string;
+interface UseRealtimeSubscriptionProps {
   table: string;
-  event?: RealtimeEvent;
+  schema?: string;
+  event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
   filter?: string;
+  filterValue?: string;
+  callback: (payload: any) => void;
+  enabled?: boolean;
 }
 
 /**
- * Hook for subscribing to Supabase realtime updates
- * 
- * @param options - Configuration options for the subscription
- * @param callback - Function to call when an event occurs
+ * Hook to subscribe to Supabase realtime changes
  */
-export const useRealtimeSubscription = <T extends Record<string, any>>(
-  options: SubscriptionOptions,
-  callback: (payload: { new: T | null; old: T | null; eventType: string }) => void,
+export const useRealtimeSubscription = ({
+  table,
+  schema = 'public',
+  event = '*',
+  filter,
+  filterValue,
+  callback,
   enabled = true
-) => {
+}: UseRealtimeSubscriptionProps) => {
+  const { settings } = useDeveloperStore();
+  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   
   useEffect(() => {
     if (!enabled) {
-      setIsSubscribed(false);
+      return;
+    }
+    
+    // Check if developer settings disable realtime
+    const realTimeEnabled = settings?.realtime_enabled !== false;
+    
+    if (!realTimeEnabled) {
       return;
     }
     
     try {
-      const { schema = 'public', table, event = '*' } = options;
+      // Create filter object if filter and filterValue are provided
+      const filterOptions = filter && filterValue 
+        ? { [filter]: filterValue } 
+        : undefined;
       
-      // Create channel for realtime subscription
-      const channel = supabase
-        .channel('schema-db-changes')
-        .on('postgres_changes', 
+      // Create channel with unique name for this subscription
+      const realtimeChannel = supabase.channel(`table:${table}:${event}:${Math.random()}`);
+      
+      // Subscribe to postgres changes
+      realtimeChannel
+        .on(
+          'postgres_changes',
           {
-            event,
-            schema,
-            table,
-            ...(options.filter ? { filter: options.filter } : {})
+            event: event,
+            schema: schema,
+            table: table,
+            filter: filterOptions
           },
           (payload) => {
-            callback({
-              new: payload.new as T,
-              old: payload.old as T,
-              eventType: payload.eventType
-            });
+            console.log(`Realtime ${event} on ${table}:`, payload);
+            callback(payload);
           }
         )
         .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            setIsSubscribed(true);
-          } else {
-            setIsSubscribed(false);
-          }
+          console.log(`Realtime subscription status for ${table}:`, status);
+          setIsSubscribed(status === 'SUBSCRIBED');
         });
       
-      // Cleanup function to remove channel on unmount
+      setChannel(realtimeChannel);
+      
+      // Cleanup function to remove the channel on unmount
       return () => {
-        supabase.removeChannel(channel);
-        setIsSubscribed(false);
+        realtimeChannel.unsubscribe();
       };
     } catch (err) {
       console.error('Error setting up realtime subscription:', err);
-      setError(err instanceof Error ? err : new Error('Unknown error in realtime subscription'));
-      setIsSubscribed(false);
+      setError(err instanceof Error ? err : new Error(String(err)));
+      return () => {};
     }
-  }, [options.table, options.event, options.filter, enabled]);
+  }, [table, schema, event, filter, filterValue, callback, enabled, settings?.realtime_enabled]);
   
   return { isSubscribed, error };
 };

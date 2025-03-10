@@ -1,134 +1,156 @@
 
-import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { useUserSettingsStore } from '@/store/userSettingsStore';
-
-// أنواع الأحداث التي يمكن الاستماع إليها
-type RealtimeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
-
-// نوع معالج الحدث
-type RealtimeEventHandler = (payload: any) => void;
-
-// كائن تكوين للاستماع
-interface SubscriptionConfig {
-  schema?: string;
-  table: string;
-  event?: RealtimeEvent;
-  filter?: string;
-}
+import { UserSettings } from '@/store/userSettingsStore';
+import { DeveloperSettings } from '@/types/developer.d';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 /**
- * مدير للاستماع للتغييرات في الوقت الحقيقي
+ * Class to manage realtime subscriptions
  */
 export class RealtimeManager {
-  private static instance: RealtimeManager;
-  private channels: Map<string, RealtimeChannel> = new Map();
-  private enabled: boolean = true;
-
-  // نمط Singleton
-  public static getInstance(): RealtimeManager {
-    if (!RealtimeManager.instance) {
-      RealtimeManager.instance = new RealtimeManager();
+  private channels: RealtimeChannel[] = [];
+  private isEnabled: boolean = true;
+  
+  /**
+   * Configure realtime settings based on user and developer settings
+   */
+  configure(userSettings?: UserSettings | null, devSettings?: DeveloperSettings | null): void {
+    // Enable realtime if developer settings explicitly enable it
+    this.isEnabled = devSettings?.realtime_enabled !== false;
+    
+    // If realtime is disabled, remove all existing channels
+    if (!this.isEnabled) {
+      this.removeAllChannels();
     }
-    return RealtimeManager.instance;
   }
-
+  
   /**
-   * تهيئة مدير التحديثات المباشرة
+   * Subscribe to table changes
    */
-  public initialize(): void {
-    const userSettings = useUserSettingsStore.getState().settings;
-    this.enabled = userSettings?.realtime_updates ?? true;
+  subscribeToTable({
+    table,
+    schema = 'public',
+    event = '*',
+    filter,
+    callback
+  }: {
+    table: string;
+    schema?: string;
+    event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
+    filter?: Record<string, any>;
+    callback: (payload: any) => void;
+  }): RealtimeChannel | null {
+    if (!this.isEnabled) {
+      console.log('Realtime is disabled, not subscribing');
+      return null;
+    }
     
-    // تحديث الحالة عند تغيير الإعدادات
-    useUserSettingsStore.subscribe(
-      state => state.settings?.realtime_updates,
-      enabled => {
-        if (enabled !== undefined && this.enabled !== enabled) {
-          this.enabled = enabled;
-          
-          // إذا تم تعطيل التحديثات، قم بإلغاء جميع الاشتراكات
-          if (!enabled) {
-            this.unsubscribeAll();
-          }
-        }
-      }
-    );
-  }
-
-  /**
-   * الاشتراك في تحديثات جدول
-   */
-  public subscribe(
-    key: string,
-    config: SubscriptionConfig,
-    handler: RealtimeEventHandler
-  ): () => void {
-    // إذا كانت التحديثات المباشرة معطلة، فلا تفعل شيئًا
-    if (!this.enabled) return () => {};
-    
-    // إنشاء قناة جديدة إذا لم تكن موجودة
-    if (!this.channels.has(key)) {
-      const channel = supabase.channel(`realtime:${key}`);
-      this.channels.set(key, channel);
+    try {
+      // Create a unique channel name
+      const channelName = `table:${table}:${event}:${Date.now()}`;
       
-      // الاستماع للتغييرات
+      // Create the channel
+      const channel = supabase.channel(channelName);
+      
+      // Subscribe to postgres changes
       channel
         .on(
           'postgres_changes',
           {
-            event: config.event || '*',
-            schema: config.schema || 'public',
-            table: config.table,
-            filter: config.filter
+            event: event,
+            schema: schema,
+            table: table,
+            filter: filter
           },
-          payload => {
-            console.log(`Realtime event for ${config.table}:`, payload);
-            handler(payload);
+          (payload) => {
+            console.log(`Realtime ${event} on ${table}:`, payload);
+            callback(payload);
           }
         )
-        .subscribe(status => {
-          console.log(`Realtime subscription status for ${key}:`, status);
+        .subscribe((status) => {
+          console.log(`Realtime subscription status for ${table}:`, status);
         });
-    }
-    
-    // إرجاع دالة لإلغاء الاشتراك
-    return () => this.unsubscribe(key);
-  }
-
-  /**
-   * إلغاء الاشتراك في تحديثات جدول
-   */
-  public unsubscribe(key: string): void {
-    const channel = this.channels.get(key);
-    if (channel) {
-      supabase.removeChannel(channel);
-      this.channels.delete(key);
+      
+      // Store the channel
+      this.channels.push(channel);
+      
+      return channel;
+    } catch (error) {
+      console.error('Error subscribing to table:', error);
+      return null;
     }
   }
-
+  
   /**
-   * إلغاء جميع الاشتراكات
+   * Subscribe to user presence
    */
-  public unsubscribeAll(): void {
-    this.channels.forEach((channel, key) => {
-      supabase.removeChannel(channel);
-      this.channels.delete(key);
-    });
-  }
-
-  /**
-   * تبديل حالة التحديثات المباشرة
-   */
-  public toggleRealtime(enabled: boolean): void {
-    this.enabled = enabled;
+  subscribeToPresence({
+    room,
+    events = ['sync', 'join', 'leave'],
+    callback
+  }: {
+    room: string;
+    events?: Array<'sync' | 'join' | 'leave'>;
+    callback: (eventType: string, payload: any) => void;
+  }): RealtimeChannel | null {
+    if (!this.isEnabled) {
+      return null;
+    }
     
-    // إذا تم تعطيل التحديثات، قم بإلغاء جميع الاشتراكات
-    if (!enabled) {
-      this.unsubscribeAll();
+    try {
+      const channel = supabase.channel(room);
+      
+      // Subscribe to presence events
+      events.forEach(event => {
+        channel.on('presence', { event }, (payload) => {
+          callback(event, payload);
+        });
+      });
+      
+      channel.subscribe();
+      
+      // Store the channel
+      this.channels.push(channel);
+      
+      return channel;
+    } catch (error) {
+      console.error('Error subscribing to presence:', error);
+      return null;
+    }
+  }
+  
+  /**
+   * Remove a specific channel
+   */
+  removeChannel(channel: RealtimeChannel): void {
+    try {
+      // Unsubscribe from the channel
+      supabase.removeChannel(channel);
+      
+      // Remove from our list
+      this.channels = this.channels.filter(c => c !== channel);
+    } catch (error) {
+      console.error('Error removing channel:', error);
+    }
+  }
+  
+  /**
+   * Remove all channels
+   */
+  removeAllChannels(): void {
+    try {
+      // Unsubscribe from all channels
+      this.channels.forEach(channel => {
+        supabase.removeChannel(channel);
+      });
+      
+      // Clear the list
+      this.channels = [];
+    } catch (error) {
+      console.error('Error removing all channels:', error);
     }
   }
 }
 
-// إنشاء مرجع سهل الاستخدام
-export const realtimeManager = RealtimeManager.getInstance();
+// Export a singleton instance
+export const realtimeManager = new RealtimeManager();
