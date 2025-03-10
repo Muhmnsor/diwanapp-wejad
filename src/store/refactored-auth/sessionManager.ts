@@ -35,7 +35,7 @@ export const checkUserRole = async (userId: string): Promise<boolean> => {
   return false;
 };
 
-// New function to check if user has admin role
+// Check if user has admin role
 export const checkAdminRole = async (userId: string): Promise<boolean> => {
   const { data: userRoles, error: roleIdsError } = await supabase
     .from('user_roles')

@@ -88,6 +88,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     isAuthenticated, 
     user, 
     userIsAdmin: user?.isAdmin,
+    userRole: user?.role,
     pathname: location.pathname,
     isLoading
   });
@@ -106,12 +107,16 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   // Check for admin-only routes
   const adminOnlyRoutes = ['/settings', '/users-management', '/admin/users-management']; 
-  if (adminOnlyRoutes.some(route => location.pathname === route) && !user?.isAdmin) {
-    console.log('User is not admin, redirecting from:', location.pathname);
-    // Check if user is developer
-    const isDev = user?.role === 'developer';
-    toast.error(isDev ? "هذه الصفحة للمشرفين فقط" : "ليس لديك صلاحية الوصول إلى هذه الصفحة");
-    return <Navigate to="/admin/dashboard" replace />;
+  if (adminOnlyRoutes.some(route => location.pathname === route)) {
+    // Allow access if user is admin OR has developer role
+    const isAdmin = user?.isAdmin;
+    const isDeveloper = user?.role === 'developer';
+    
+    if (!isAdmin && !isDeveloper) {
+      console.log('User is not admin or developer, redirecting from:', location.pathname);
+      toast.error("ليس لديك صلاحية الوصول إلى هذه الصفحة");
+      return <Navigate to="/admin/dashboard" replace />;
+    }
   }
 
   return <>{children}</>;
