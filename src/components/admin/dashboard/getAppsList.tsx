@@ -48,7 +48,7 @@ export const getAppsList = (notificationCounts: NotificationCounts): AppItem[] =
     {
       title: "إدارة الأموال",
       icon: DollarSign,
-      path: "/finance",
+      path: "/finance/dashboard",
       description: "إدارة الميزانية والمصروفات",
       notifications: notificationCounts.finance
     },
@@ -90,7 +90,7 @@ export const getAppsList = (notificationCounts: NotificationCounts): AppItem[] =
     {
       title: "المطورين",
       icon: Code,
-      path: "/developer-settings",
+      path: "/developer/settings",
       description: "إعدادات وأدوات المطورين",
       notifications: 0
     }
