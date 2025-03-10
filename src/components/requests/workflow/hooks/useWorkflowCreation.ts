@@ -37,8 +37,22 @@ export const useWorkflowCreation = ({
         return 'temp-workflow-id';
       }
 
+      // Validate UUID format for requestTypeId
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(requestTypeId)) {
+        console.error("Invalid request type ID format:", requestTypeId);
+        throw new Error("معرف نوع الطلب غير صالح");
+      }
+
       console.log("Creating new workflow for request type:", requestTypeId);
       
+      // Check if user is authenticated first
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error("User is not authenticated");
+        throw new Error("يجب تسجيل الدخول لإنشاء مسار العمل");
+      }
+
       const { data: newWorkflow, error: createError } = await supabase
         .from('request_workflows')
         .insert({
@@ -51,6 +65,9 @@ export const useWorkflowCreation = ({
 
       if (createError) {
         console.error("Error creating workflow:", createError);
+        if (createError.code === 'PGRST116') {
+          throw new Error("ليس لديك صلاحية لإنشاء مسار العمل");
+        }
         throw createError;
       }
 
@@ -79,17 +96,28 @@ export const useWorkflowCreation = ({
       return;
     }
     
-    console.log("Setting default workflow for request type:", requestTypeId, workflowId);
-    const { error: updateError } = await supabase
-      .from('request_types')
-      .update({ default_workflow_id: workflowId })
-      .eq('id', requestTypeId);
+    try {
+      // Check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error("User is not authenticated");
+        return;
+      }
 
-    if (updateError) {
-      console.warn("Could not set default workflow for request type:", updateError);
-      // Non-fatal error, continue
-    } else {
-      console.log("Successfully set default workflow for request type");
+      console.log("Setting default workflow for request type:", requestTypeId, workflowId);
+      const { error: updateError } = await supabase
+        .from('request_types')
+        .update({ default_workflow_id: workflowId })
+        .eq('id', requestTypeId);
+
+      if (updateError) {
+        console.warn("Could not set default workflow for request type:", updateError);
+        // Non-fatal error, continue
+      } else {
+        console.log("Successfully set default workflow for request type");
+      }
+    } catch (error) {
+      console.error("Error updating default workflow:", error);
     }
   };
 

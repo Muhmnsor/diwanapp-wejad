@@ -41,6 +41,13 @@ export const useSaveWorkflowSteps = ({
     setError(null);
 
     try {
+      // Check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError("يجب تسجيل الدخول لحفظ خطوات سير العمل");
+        throw new Error("يجب تسجيل الدخول لحفظ خطوات سير العمل");
+      }
+
       const currentWorkflowId = await ensureWorkflowExists();
       console.log("Working with workflow ID:", currentWorkflowId);
 
@@ -79,7 +86,7 @@ export const useSaveWorkflowSteps = ({
           step_type: step.step_type || 'decision',
           is_required: step.is_required === false ? false : true,
           approver_type: step.approver_type || 'user',
-          // Ensure approver_id is valid - if it's not a valid UUID, this will throw
+          // Ensure approver_id is valid
           approver_id: step.approver_id
         };
       });
@@ -109,6 +116,9 @@ export const useSaveWorkflowSteps = ({
 
       if (rpcError) {
         console.error("Error inserting workflow steps via RPC:", rpcError);
+        if (rpcError.code === 'PGRST116') {
+          throw new Error("ليس لديك صلاحية لإدخال خطوات سير العمل");
+        }
         throw new Error(`فشل في إدخال خطوات سير العمل: ${rpcError.message}`);
       }
 
