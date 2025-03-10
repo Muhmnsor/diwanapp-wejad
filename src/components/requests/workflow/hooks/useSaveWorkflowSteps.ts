@@ -51,7 +51,7 @@ export const useSaveWorkflowSteps = ({
       // Check if user has admin role
       const { data: userRoles, error: roleError } = await supabase
         .from('user_roles')
-        .select('role_id, roles:roles(name)')
+        .select('role_id, roles(name)')
         .eq('user_id', session.user.id);
         
       if (roleError) {
@@ -60,7 +60,7 @@ export const useSaveWorkflowSteps = ({
       }
       
       const isAdmin = userRoles?.some(role => 
-        role.roles?.name === 'admin' || role.roles?.name === 'app_admin'
+        role.roles && (role.roles.name === 'admin' || role.roles.name === 'app_admin')
       );
       
       if (!isAdmin) {
@@ -113,7 +113,9 @@ export const useSaveWorkflowSteps = ({
           approver_id: step.approver_id,
           instructions: step.instructions || null,
           is_required: step.is_required === false ? false : true,
-          approver_type: step.approver_type || 'user'
+          approver_type: step.approver_type || 'user',
+          id: step.id || null,
+          created_at: step.created_at || null
         };
       });
 
@@ -155,7 +157,7 @@ export const useSaveWorkflowSteps = ({
       
       // Update the UI with the inserted steps
       if (rpcResult.data && Array.isArray(rpcResult.data)) {
-        updateWorkflowSteps(rpcResult.data);
+        updateWorkflowSteps(rpcResult.data as WorkflowStep[]);
       } else {
         updateWorkflowSteps(stepsToInsert);
       }

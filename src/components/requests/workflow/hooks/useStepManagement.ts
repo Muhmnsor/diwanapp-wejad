@@ -43,7 +43,7 @@ export const useStepManagement = ({
       // Check if user has admin role
       const { data: userRoles, error: roleError } = await supabase
         .from('user_roles')
-        .select('role_id, roles:roles(name)')
+        .select('role_id, roles(name)')
         .eq('user_id', session.user.id);
         
       if (roleError) {
@@ -53,7 +53,7 @@ export const useStepManagement = ({
       }
       
       const isAdmin = userRoles?.some(role => 
-        role.roles?.name === 'admin' || role.roles?.name === 'app_admin'
+        role.roles && (role.roles.name === 'admin' || role.roles.name === 'app_admin')
       );
       
       if (!isAdmin) {
@@ -136,7 +136,7 @@ export const useStepManagement = ({
       // Check if user has admin role
       const { data: userRoles, error: roleError } = await supabase
         .from('user_roles')
-        .select('role_id, roles:roles(name)')
+        .select('role_id, roles(name)')
         .eq('user_id', session.user.id);
         
       if (roleError) {
@@ -146,7 +146,7 @@ export const useStepManagement = ({
       }
       
       const isAdmin = userRoles?.some(role => 
-        role.roles?.name === 'admin' || role.roles?.name === 'app_admin'
+        role.roles && (role.roles.name === 'admin' || role.roles.name === 'app_admin')
       );
       
       if (!isAdmin) {
@@ -235,7 +235,7 @@ export const useStepManagement = ({
       // Check if user has admin role
       const { data: userRoles, error: roleError } = await supabase
         .from('user_roles')
-        .select('role_id, roles:roles(name)')
+        .select('role_id, roles(name)')
         .eq('user_id', session.user.id);
         
       if (roleError) {
@@ -245,7 +245,7 @@ export const useStepManagement = ({
       }
       
       const isAdmin = userRoles?.some(role => 
-        role.roles?.name === 'admin' || role.roles?.name === 'app_admin'
+        role.roles && (role.roles.name === 'admin' || role.roles.name === 'app_admin')
       );
       
       if (!isAdmin) {
