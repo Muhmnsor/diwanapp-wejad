@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
@@ -782,4 +783,12 @@ const createAsanaTask = async (taskData) => {
                     يمكن مراقبة أداء التطبيق من خلال قسم الأداء.
                     المسار: <code>/admin/developer-settings?tab=performance</code>
                   </p>
-                </Card
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
