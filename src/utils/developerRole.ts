@@ -1,6 +1,6 @@
 
 import { initializeDeveloperRole, autoAssignDeveloperRole } from './developer/initialization';
-import { isDeveloper } from './developer/roleManagement';
+import { isDeveloper, assignDeveloperRole, removeDeveloperRole } from './developer/roleManagement';
 import { isDeveloperModeEnabled, toggleDeveloperMode } from './developer/modeManagement';
 
 // Export everything from the new structure
@@ -8,6 +8,8 @@ export {
   initializeDeveloperRole,
   autoAssignDeveloperRole,
   isDeveloper,
+  assignDeveloperRole,
+  removeDeveloperRole,
   isDeveloperModeEnabled,
   toggleDeveloperMode
 };

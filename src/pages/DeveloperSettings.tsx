@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -12,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Save, RefreshCw, Clock, Gauge, Bug, Database, Activity, Users, Shield } from "lucide-react";
 import { useAuthStore } from "@/store/refactored-auth";
 import { toast } from "sonner";
-import { assignDeveloperRole, removeDeveloperRole } from "@/utils/developerRoleIntegration";
+import { assignDeveloperRole, isDeveloper, removeDeveloperRole } from "@/utils/developer/roleManagement";
 import { checkDeveloperPermissions } from "@/components/users/permissions/utils/developerPermissionUtils";
 import { DeveloperPermissionChecks } from "@/components/users/permissions/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,13 +29,41 @@ const DeveloperSettings = () => {
     canAccessApiLogs: false
   });
   const [roleAssigning, setRoleAssigning] = useState(false);
+  const [hasDeveloperAccess, setHasDeveloperAccess] = useState(false);
+  const [checkingAccess, setCheckingAccess] = useState(true);
   
   useEffect(() => {
     if (user?.id) {
+      checkDeveloperAccess();
       fetchSettings();
-      loadDeveloperPermissions(user.id);
     }
   }, [user?.id, fetchSettings]);
+  
+  const checkDeveloperAccess = async () => {
+    if (!user?.id) return;
+    
+    setCheckingAccess(true);
+    try {
+      const hasDeveloper = await isDeveloper(user.id);
+      setHasDeveloperAccess(hasDeveloper);
+      
+      // If user has developer access, also load permissions
+      if (hasDeveloper) {
+        loadDeveloperPermissions(user.id);
+      }
+      
+      console.log('Developer access check:', { 
+        userId: user.id, 
+        email: user.email,
+        role: user.role,
+        hasDeveloperAccess: hasDeveloper
+      });
+    } catch (error) {
+      console.error('Error checking developer access:', error);
+    } finally {
+      setCheckingAccess(false);
+    }
+  };
   
   const loadDeveloperPermissions = async (userId: string) => {
     const permissionChecks = await checkDeveloperPermissions(userId);
@@ -44,7 +73,7 @@ const DeveloperSettings = () => {
   const handleRefresh = async () => {
     await fetchSettings();
     if (user?.id) {
-      await loadDeveloperPermissions(user.id);
+      await checkDeveloperAccess();
     }
     toast.success("تم تحديث الإعدادات بنجاح");
   };
@@ -54,15 +83,13 @@ const DeveloperSettings = () => {
     
     setRoleAssigning(true);
     try {
-      const hasDeveloperTools = permissions.canAccessDeveloperTools;
-      
-      if (hasDeveloperTools) {
+      if (hasDeveloperAccess) {
         await removeDeveloperRole(user.id);
       } else {
         await assignDeveloperRole(user.id);
       }
       
-      await loadDeveloperPermissions(user.id);
+      await checkDeveloperAccess();
     } catch (error) {
       console.error('Error toggling developer role:', error);
       toast.error("حدث خطأ أثناء تغيير دور المطور");
@@ -71,7 +98,20 @@ const DeveloperSettings = () => {
     }
   };
   
-  if (!user?.isAdmin) {
+  if (checkingAccess) {
+    return (
+      <div className="min-h-screen flex flex-col" dir="rtl">
+        <TopHeader />
+        <div className="container mx-auto px-4 py-8 flex-grow flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="mr-2">جاري التحقق من صلاحياتك...</span>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+  
+  if (!hasDeveloperAccess) {
     return (
       <div className="min-h-screen flex flex-col" dir="rtl">
         <TopHeader />
@@ -83,6 +123,32 @@ const DeveloperSettings = () => {
                 لا تملك صلاحيات للوصول إلى صفحة إعدادات المطورين.
               </CardDescription>
             </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                يتطلب الوصول إلى هذه الصفحة دور المطور. إذا كنت تحتاج للوصول، يرجى التواصل مع مسؤول النظام.
+              </p>
+              
+              {user?.role === 'admin' && (
+                <Button 
+                  className="w-full" 
+                  variant="default" 
+                  onClick={handleToggleDeveloperRole}
+                  disabled={roleAssigning}
+                >
+                  {roleAssigning ? (
+                    <>
+                      <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                      جاري المعالجة...
+                    </>
+                  ) : (
+                    <>
+                      <Shield className="h-4 w-4 ml-2" />
+                      تعيين دور المطور لحسابي
+                    </>
+                  )}
+                </Button>
+              )}
+            </CardContent>
           </Card>
         </div>
         <Footer />
@@ -90,6 +156,7 @@ const DeveloperSettings = () => {
     );
   }
   
+  // Continue with the rest of the component if user has developer access
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
       <TopHeader />
@@ -216,7 +283,7 @@ const DeveloperSettings = () => {
                     </p>
                     <Button
                       className="w-full"
-                      variant={permissions.canAccessDeveloperTools ? "destructive" : "default"}
+                      variant={hasDeveloperAccess ? "destructive" : "default"}
                       onClick={handleToggleDeveloperRole}
                       disabled={roleAssigning}
                     >
@@ -228,7 +295,7 @@ const DeveloperSettings = () => {
                       ) : (
                         <>
                           <Users className="h-4 w-4 ml-2" />
-                          {permissions.canAccessDeveloperTools ? "إزالة دور المطور" : "تعيين دور المطور"}
+                          {hasDeveloperAccess ? "إزالة دور المطور" : "تعيين دور المطور"}
                         </>
                       )}
                     </Button>
@@ -474,4 +541,3 @@ const DeveloperSettings = () => {
 };
 
 export default DeveloperSettings;
-

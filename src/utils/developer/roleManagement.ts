@@ -98,3 +98,39 @@ export const assignDeveloperRole = async (userId: string): Promise<boolean> => {
     return false;
   }
 };
+
+export const removeDeveloperRole = async (userId: string): Promise<boolean> => {
+  try {
+    // Get developer role ID
+    const { data: developerRole } = await supabase
+      .from('roles')
+      .select('id')
+      .eq('name', 'developer')
+      .single();
+      
+    if (!developerRole?.id) {
+      toast.error('دور المطور غير موجود');
+      return false;
+    }
+    
+    // Remove role assignment
+    const { error } = await supabase
+      .from('user_roles')
+      .delete()
+      .eq('user_id', userId)
+      .eq('role_id', developerRole.id);
+      
+    if (error) {
+      console.error('Error removing developer role:', error);
+      toast.error('فشل في إزالة دور المطور');
+      return false;
+    }
+    
+    toast.success('تم إزالة دور المطور بنجاح');
+    return true;
+  } catch (error) {
+    console.error('Error in removeDeveloperRole:', error);
+    toast.error('حدث خطأ أثناء إزالة دور المطور');
+    return false;
+  }
+};

@@ -33,8 +33,7 @@ const DeveloperRoute = ({ children }: DeveloperRouteProps) => {
           userId: user.id, 
           email: user.email,
           role: user.role,
-          hasDeveloperRole: hasDeveloper,
-          hasDeveloperAccess: hasDeveloper
+          hasDeveloperAccess: hasDeveloper 
         });
       } catch (error) {
         console.error('Error checking developer access:', error);
