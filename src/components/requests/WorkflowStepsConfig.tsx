@@ -37,13 +37,14 @@ export const WorkflowStepsConfig = ({
   } = useWorkflowSteps({ 
     requestTypeId, 
     onWorkflowStepsUpdated,
-    initialSteps,
+    initialSteps: Array.isArray(initialSteps) ? initialSteps : [],
     initialWorkflowId: workflowId
   });
 
   // Display error if there's any
   useEffect(() => {
     if (error) {
+      console.error("Workflow Steps Error:", error);
       toast.error(`خطأ في إدارة خطوات سير العمل: ${error}`);
     }
   }, [error]);
@@ -82,7 +83,7 @@ export const WorkflowStepsConfig = ({
       />
       
       <StepsList
-        workflowSteps={workflowSteps}
+        workflowSteps={Array.isArray(workflowSteps) ? workflowSteps : []}
         users={users}
         onMoveStep={handleMoveStep}
         onEditStep={handleEditStep}

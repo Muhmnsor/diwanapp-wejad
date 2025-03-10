@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { RequestType, WorkflowStep, FormField, FormSchema } from "../types";
@@ -50,45 +49,64 @@ export const useRequestTypeForm = ({
 
   useEffect(() => {
     if (requestType) {
-      form.reset({
-        name: requestType.name,
-        description: requestType.description || "",
-        is_active: requestType.is_active,
-        form_schema: requestType.form_schema,
-      });
-      setFormFields(requestType.form_schema.fields || []);
-      setCreatedRequestTypeId(requestType.id);
+      try {
+        console.log("Loading existing request type:", requestType);
+        
+        // Reset form with existing values
+        form.reset({
+          name: requestType.name,
+          description: requestType.description || "",
+          is_active: requestType.is_active !== false, // Default to true if not defined
+          form_schema: requestType.form_schema || { fields: [] },
+        });
 
-      const fetchWorkflowSteps = async () => {
-        if (requestType.default_workflow_id) {
-          try {
-            const { data, error } = await supabase
-              .from("workflow_steps")
-              .select("*")
-              .eq("workflow_id", requestType.default_workflow_id)
-              .order("step_order", { ascending: true });
-            
-            if (error) {
-              console.error("Error fetching workflow steps:", error);
-              return;
+        // Initialize form fields
+        const fields = Array.isArray(requestType.form_schema?.fields) 
+          ? requestType.form_schema.fields 
+          : [];
+          
+        setFormFields(fields);
+        setCreatedRequestTypeId(requestType.id);
+
+        // Fetch existing workflow steps if available
+        const fetchWorkflowSteps = async () => {
+          if (requestType.default_workflow_id) {
+            try {
+              const { data, error } = await supabase
+                .from("workflow_steps")
+                .select("*")
+                .eq("workflow_id", requestType.default_workflow_id)
+                .order("step_order", { ascending: true });
+              
+              if (error) {
+                console.error("Error fetching workflow steps:", error);
+                return;
+              }
+              
+              console.log("Fetched existing workflow steps:", data);
+              
+              // Ensure all steps have workflow_id
+              if (data && Array.isArray(data)) {
+                const stepsWithWorkflowId = data.map(step => ({
+                  ...step,
+                  workflow_id: step.workflow_id || requestType.default_workflow_id || ''
+                }));
+                
+                setWorkflowSteps(stepsWithWorkflowId);
+              }
+            } catch (error) {
+              console.error("Error in fetching workflow steps:", error);
             }
-            
-            console.log("Fetched existing workflow steps:", data);
-            
-            const stepsWithWorkflowId = data ? data.map(step => ({
-              ...step,
-              workflow_id: step.workflow_id || requestType.default_workflow_id
-            })) : [];
-            
-            setWorkflowSteps(stepsWithWorkflowId);
-          } catch (error) {
-            console.error("Error in fetching workflow steps:", error);
           }
-        }
-      };
-      
-      fetchWorkflowSteps();
+        };
+        
+        fetchWorkflowSteps();
+      } catch (error) {
+        console.error("Error initializing form with existing request type:", error);
+        toast.error("خطأ في تحميل بيانات نوع الطلب");
+      }
     } else {
+      // Reset for new request type
       form.reset({
         name: "",
         description: "",
@@ -138,14 +156,27 @@ export const useRequestTypeForm = ({
     }
 
     setFormFields(updatedFields);
-    form.setValue("form_schema.fields", updatedFields as any);
+    
+    // Ensure form schema is updated with the new fields
+    try {
+      form.setValue("form_schema", { fields: updatedFields });
+    } catch (error) {
+      console.error("Error updating form schema:", error);
+    }
+    
     resetFieldForm();
   };
 
   const handleRemoveField = (index: number) => {
     const updatedFields = formFields.filter((_, i) => i !== index);
     setFormFields(updatedFields);
-    form.setValue("form_schema.fields", updatedFields as any);
+    
+    // Update form schema
+    try {
+      form.setValue("form_schema", { fields: updatedFields });
+    } catch (error) {
+      console.error("Error updating form schema after removal:", error);
+    }
   };
 
   const handleEditField = (index: number) => {
@@ -155,6 +186,12 @@ export const useRequestTypeForm = ({
 
   const handleWorkflowStepsUpdated = (steps: WorkflowStep[]) => {
     console.log("Workflow steps updated in RequestTypeDialog:", steps);
+    
+    // Validate workflow steps
+    if (!Array.isArray(steps)) {
+      console.warn("handleWorkflowStepsUpdated received non-array steps:", steps);
+      return;
+    }
     
     if (steps.some(step => !step.workflow_id)) {
       console.warn("Some workflow steps are missing workflow_id");
@@ -255,7 +292,7 @@ export const useRequestTypeForm = ({
   };
 
   const saveWorkflowSteps = async (workflowId: string, steps: WorkflowStep[]) => {
-    if (steps.length === 0) {
+    if (!Array.isArray(steps) || steps.length === 0) {
       console.log("No workflow steps to save");
       setFormError('يجب إضافة خطوة واحدة على الأقل لسير العمل');
       throw new Error('يجب إضافة خطوة واحدة على الأقل لسير العمل');
@@ -327,7 +364,7 @@ export const useRequestTypeForm = ({
       return;
     }
 
-    if (workflowSteps.length === 0) {
+    if (!Array.isArray(workflowSteps) || workflowSteps.length === 0) {
       setFormError("يجب إضافة خطوة واحدة على الأقل لسير العمل");
       return;
     }

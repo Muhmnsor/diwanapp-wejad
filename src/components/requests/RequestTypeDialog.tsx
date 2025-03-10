@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -59,8 +59,23 @@ export const RequestTypeDialog = ({
     onClose
   });
 
+  // Error handler for unhandled exceptions
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error("Unhandled error:", event.error);
+      toast.error("حدث خطأ غير متوقع في النظام");
+      setFormError("حدث خطأ غير متوقع في النظام");
+    };
+
+    window.addEventListener('error', handleError);
+    
+    return () => {
+      window.removeEventListener('error', handleError);
+    };
+  }, [setFormError]);
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()} onClick={e => e.stopPropagation()}>
       <DialogContent className="max-w-4xl rtl max-h-[95vh] overflow-hidden flex flex-col" dir="rtl">
         <DialogHeader>
           <DialogTitle>{isEditing ? "تعديل نوع الطلب" : "إضافة نوع طلب جديد"}</DialogTitle>
