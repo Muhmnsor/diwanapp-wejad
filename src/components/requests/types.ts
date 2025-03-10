@@ -1,3 +1,4 @@
+
 export interface RequestType {
   id: string;
   name: string;
@@ -49,7 +50,7 @@ export interface User {
 
 export interface WorkflowStep {
   id: string | null;
-  workflow_id: string | null;
+  workflow_id: string; // Changed from string | null to string - Required field
   step_order: number;
   step_name: string;
   step_type: 'opinion' | 'decision';

@@ -55,11 +55,21 @@ export const useWorkflowSteps = ({
   useEffect(() => {
     if (initialSteps && initialSteps.length > 0 && !initialized) {
       console.log("Initializing workflow steps from initialSteps:", initialSteps);
-      setWorkflowSteps(initialSteps);
-      setCurrentStep(getInitialStepState(initialSteps.length + 1));
+      
+      // Ensure all steps have workflow_id set
+      const stepsWithWorkflowId = initialSteps.map(step => ({
+        ...step,
+        workflow_id: step.workflow_id || 'temp-workflow-id'
+      }));
+      
+      setWorkflowSteps(stepsWithWorkflowId);
+      setCurrentStep({
+        ...getInitialStepState(initialSteps.length + 1),
+        workflow_id: workflowId || 'temp-workflow-id'
+      });
       setInitialized(true);
     }
-  }, [initialSteps, initialized]);
+  }, [initialSteps, initialized, workflowId]);
 
   // Fetch workflow steps when request type changes
   useEffect(() => {
@@ -67,12 +77,16 @@ export const useWorkflowSteps = ({
       if (!requestTypeId) {
         // For new request types, use initialSteps or empty array
         if (!initialized && initialSteps.length > 0) {
-          setWorkflowSteps(initialSteps);
+          const stepsWithWorkflowId = initialSteps.map(step => ({
+            ...step,
+            workflow_id: step.workflow_id || 'temp-workflow-id'
+          }));
+          setWorkflowSteps(stepsWithWorkflowId);
           setInitialized(true);
         } else if (!initialized) {
           setWorkflowSteps([]);
         }
-        setWorkflowId(null);
+        setWorkflowId('temp-workflow-id');
         return;
       }
 
@@ -89,12 +103,17 @@ export const useWorkflowSteps = ({
 
         if (requestTypeError) throw requestTypeError;
 
-        const workflowId = requestType.default_workflow_id;
-        setWorkflowId(workflowId);
+        const workflow_id = requestType?.default_workflow_id || 'temp-workflow-id';
+        setWorkflowId(workflow_id);
+        console.log("Set workflow ID to:", workflow_id);
 
-        if (!workflowId) {
+        if (!requestType?.default_workflow_id) {
           if (!initialized && initialSteps.length > 0) {
-            setWorkflowSteps(initialSteps);
+            const stepsWithWorkflowId = initialSteps.map(step => ({
+              ...step,
+              workflow_id
+            }));
+            setWorkflowSteps(stepsWithWorkflowId);
           } else if (!initialized) {
             setWorkflowSteps([]);
           }
@@ -107,13 +126,27 @@ export const useWorkflowSteps = ({
         const { data: steps, error: stepsError } = await supabase
           .from('workflow_steps')
           .select('*')
-          .eq('workflow_id', workflowId)
+          .eq('workflow_id', workflow_id)
           .order('step_order', { ascending: true });
 
         if (stepsError) throw stepsError;
         
         console.log("Fetched workflow steps:", steps);
-        setWorkflowSteps(steps || initialSteps);
+        
+        // Ensure all fetched steps have workflow_id set
+        const stepsWithWorkflowId = steps ? steps.map(step => ({
+          ...step,
+          workflow_id: step.workflow_id || workflow_id
+        })) : initialSteps.map(step => ({
+          ...step,
+          workflow_id
+        }));
+        
+        setWorkflowSteps(stepsWithWorkflowId);
+        setCurrentStep({
+          ...getInitialStepState(stepsWithWorkflowId.length + 1),
+          workflow_id
+        });
         setInitialized(true);
       } catch (error) {
         console.error('Error fetching workflow steps:', error);
@@ -122,7 +155,12 @@ export const useWorkflowSteps = ({
         
         // If there's an error, use initialSteps if available
         if (!initialized && initialSteps.length > 0) {
-          setWorkflowSteps(initialSteps);
+          const workflow_id = workflowId || 'temp-workflow-id';
+          const stepsWithWorkflowId = initialSteps.map(step => ({
+            ...step,
+            workflow_id
+          }));
+          setWorkflowSteps(stepsWithWorkflowId);
           setInitialized(true);
         }
       } finally {
@@ -133,11 +171,11 @@ export const useWorkflowSteps = ({
     if (!initialized) {
       fetchWorkflowSteps();
     }
-  }, [requestTypeId, initialSteps, initialized]);
+  }, [requestTypeId, initialSteps, initialized, workflowId]);
 
   // Create or update a workflow for the request type
   const ensureWorkflowExists = async (): Promise<string> => {
-    if (workflowId) {
+    if (workflowId && workflowId !== 'temp-workflow-id') {
       console.log("Using existing workflow ID:", workflowId);
       return workflowId;
     }
@@ -173,9 +211,25 @@ export const useWorkflowSteps = ({
 
       if (updateError) throw updateError;
 
-      setWorkflowId(newWorkflow.id);
-      console.log("Created new workflow:", newWorkflow.id);
-      return newWorkflow.id;
+      const newWorkflowId = newWorkflow.id;
+      setWorkflowId(newWorkflowId);
+      console.log("Created new workflow:", newWorkflowId);
+      
+      // Update all existing steps with the new workflow ID
+      setWorkflowSteps(prevSteps => 
+        prevSteps.map(step => ({
+          ...step,
+          workflow_id: newWorkflowId
+        }))
+      );
+      
+      // Update current step with new workflow ID
+      setCurrentStep(prevStep => ({
+        ...prevStep,
+        workflow_id: newWorkflowId
+      }));
+      
+      return newWorkflowId;
     } catch (error) {
       console.error('Error creating workflow:', error);
       toast.error('فشل في إنشاء مسار العمل');
@@ -187,20 +241,36 @@ export const useWorkflowSteps = ({
   // Save workflow steps to local state first
   const updateWorkflowSteps = useCallback((steps: WorkflowStep[]) => {
     console.log("Updating workflow steps locally:", steps);
-    setWorkflowSteps(steps);
+    
+    // Ensure all steps have workflow_id
+    const currentWorkflowId = workflowId || 'temp-workflow-id';
+    const stepsWithWorkflowId = steps.map(step => ({
+      ...step,
+      workflow_id: step.workflow_id || currentWorkflowId
+    }));
+    
+    setWorkflowSteps(stepsWithWorkflowId);
     
     // Notify parent component about the updated steps
     if (onWorkflowStepsUpdated) {
-      onWorkflowStepsUpdated(steps);
+      onWorkflowStepsUpdated(stepsWithWorkflowId);
     }
-  }, [onWorkflowStepsUpdated]);
+  }, [onWorkflowStepsUpdated, workflowId]);
 
   // Save workflow steps to database 
   const saveWorkflowSteps = async (steps: WorkflowStep[]) => {
     if (!requestTypeId) {
       // For new request types, just update the local state
       console.log("Saving steps locally for new request type:", steps);
-      updateWorkflowSteps(steps);
+      
+      // Ensure all steps have workflow_id
+      const currentWorkflowId = workflowId || 'temp-workflow-id';
+      const stepsWithWorkflowId = steps.map(step => ({
+        ...step,
+        workflow_id: step.workflow_id || currentWorkflowId
+      }));
+      
+      updateWorkflowSteps(stepsWithWorkflowId);
       return;
     }
     
@@ -215,7 +285,13 @@ export const useWorkflowSteps = ({
       // Skip database operations if we have a temporary workflow ID
       if (currentWorkflowId === 'temp-workflow-id') {
         console.log("Using temporary workflow ID, saving steps locally only");
-        updateWorkflowSteps(steps);
+        
+        const stepsWithWorkflowId = steps.map(step => ({
+          ...step,
+          workflow_id: currentWorkflowId
+        }));
+        
+        updateWorkflowSteps(stepsWithWorkflowId);
         setIsLoading(false);
         return;
       }
@@ -232,11 +308,19 @@ export const useWorkflowSteps = ({
         ...step,
         workflow_id: currentWorkflowId,
         step_order: index + 1,
+        step_type: step.step_type || 'decision',
+        is_required: step.is_required === false ? false : true,
         approver_type: step.approver_type || 'user'
       }));
 
       console.log("Inserting workflow steps using RPC bypass function with workflow_id:", currentWorkflowId);
       console.log("Steps to insert:", stepsToInsert);
+      
+      // Validate steps before sending to RPC
+      if (stepsToInsert.some(step => !step.workflow_id)) {
+        console.error("Cannot insert steps with missing workflow_id");
+        throw new Error("بعض الخطوات تفتقد إلى معرّف سير العمل");
+      }
       
       // Convert steps to JSON objects for RPC function
       const jsonSteps = stepsToInsert.map(step => JSON.stringify(step));
@@ -266,8 +350,8 @@ export const useWorkflowSteps = ({
       if (rpcResult.data && Array.isArray(rpcResult.data)) {
         updateWorkflowSteps(rpcResult.data);
       } else {
-        // If no proper data returned, just use our local steps
-        updateWorkflowSteps(steps);
+        // If no proper data returned, just use our local steps with workflow ID
+        updateWorkflowSteps(stepsToInsert);
       }
 
       toast.success('تم حفظ خطوات سير العمل بنجاح');
@@ -292,34 +376,50 @@ export const useWorkflowSteps = ({
       return;
     }
 
+    // Ensure the step has workflow_id set
+    const current_workflow_id = workflowId || 'temp-workflow-id';
+    const stepWithWorkflowId = {
+      ...currentStep,
+      workflow_id: current_workflow_id
+    };
+
+    console.log("Current workflow ID:", current_workflow_id);
+    console.log("Step with workflow ID:", stepWithWorkflowId);
+
     let updatedSteps: WorkflowStep[];
 
     if (editingStepIndex !== null) {
       // Update existing step
       updatedSteps = [...workflowSteps];
-      updatedSteps[editingStepIndex] = { ...currentStep };
+      updatedSteps[editingStepIndex] = stepWithWorkflowId;
     } else {
       // Add new step
-      updatedSteps = [...workflowSteps, { ...currentStep }];
+      updatedSteps = [...workflowSteps, stepWithWorkflowId];
     }
 
-    console.log("Adding/updating step:", currentStep);
+    console.log("Adding/updating step with workflow_id:", stepWithWorkflowId);
     console.log("Updated steps:", updatedSteps);
     
-    // Update local state immediately
-    updateWorkflowSteps(updatedSteps);
+    // Save steps to database
+    saveWorkflowSteps(updatedSteps);
     
     // Reset form
-    setCurrentStep(getInitialStepState(updatedSteps.length + 1));
+    setCurrentStep({
+      ...getInitialStepState(updatedSteps.length + 1),
+      workflow_id: current_workflow_id
+    });
     setEditingStepIndex(null);
   };
 
   // Remove a step
   const handleRemoveStep = (index: number) => {
-    const updatedSteps = workflowSteps.filter((_, i) => i !== index).map((step, i) => ({
-      ...step,
-      step_order: i + 1
-    }));
+    const updatedSteps = workflowSteps
+      .filter((_, i) => i !== index)
+      .map((step, i) => ({
+        ...step,
+        step_order: i + 1,
+        workflow_id: step.workflow_id || workflowId || 'temp-workflow-id'
+      }));
     
     console.log("Removing step at index:", index);
     console.log("Updated steps after removal:", updatedSteps);
@@ -328,14 +428,21 @@ export const useWorkflowSteps = ({
 
     if (editingStepIndex === index) {
       setEditingStepIndex(null);
-      setCurrentStep(getInitialStepState(updatedSteps.length + 1));
+      setCurrentStep({
+        ...getInitialStepState(updatedSteps.length + 1),
+        workflow_id: workflowId || 'temp-workflow-id'
+      });
     }
   };
 
   // Edit a step
   const handleEditStep = (index: number) => {
     console.log("Editing step at index:", index);
-    setCurrentStep({ ...workflowSteps[index] });
+    const stepToEdit = {
+      ...workflowSteps[index],
+      workflow_id: workflowSteps[index].workflow_id || workflowId || 'temp-workflow-id'
+    };
+    setCurrentStep(stepToEdit);
     setEditingStepIndex(index);
   };
 
@@ -354,9 +461,10 @@ export const useWorkflowSteps = ({
     // Swap steps
     [updatedSteps[index], updatedSteps[newIndex]] = [updatedSteps[newIndex], updatedSteps[index]];
     
-    // Update step orders
+    // Update step orders and ensure workflow_id
     updatedSteps.forEach((step, i) => {
       step.step_order = i + 1;
+      step.workflow_id = step.workflow_id || workflowId || 'temp-workflow-id';
     });
 
     console.log(`Moving step ${index} ${direction} to ${newIndex}`);

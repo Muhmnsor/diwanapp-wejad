@@ -71,7 +71,13 @@ export const useRequestTypeForm = ({
             }
             
             console.log("Fetched existing workflow steps:", data);
-            setWorkflowSteps(data || []);
+            
+            const stepsWithWorkflowId = data ? data.map(step => ({
+              ...step,
+              workflow_id: step.workflow_id || requestType.default_workflow_id
+            })) : [];
+            
+            setWorkflowSteps(stepsWithWorkflowId);
           } catch (error) {
             console.error("Error in fetching workflow steps:", error);
           }
@@ -144,19 +150,29 @@ export const useRequestTypeForm = ({
 
   const handleWorkflowStepsUpdated = (steps: WorkflowStep[]) => {
     console.log("Workflow steps updated in RequestTypeDialog:", steps);
-    setWorkflowSteps(steps);
+    
+    if (steps.some(step => !step.workflow_id)) {
+      console.warn("Some workflow steps are missing workflow_id");
+      
+      const fixedSteps = steps.map(step => ({
+        ...step,
+        workflow_id: step.workflow_id || (requestType?.default_workflow_id || 'temp-workflow-id')
+      }));
+      
+      setWorkflowSteps(fixedSteps);
+    } else {
+      setWorkflowSteps(steps);
+    }
   };
 
   const saveRequestType = async (values: RequestTypeFormValues) => {
     values.form_schema = { fields: formFields };
 
-    // Check if we have workflow steps
     if (workflowSteps.length === 0) {
       setFormError('يجب إضافة خطوة واحدة على الأقل لسير العمل');
       throw new Error('يجب إضافة خطوة واحدة على الأقل لسير العمل');
     }
 
-    // Use the RPC function to bypass RLS
     const requestTypeData = {
       name: values.name,
       description: values.description || null,
@@ -165,7 +181,6 @@ export const useRequestTypeForm = ({
     };
 
     if (isEditing && requestType) {
-      // Update using RPC
       const { data, error } = await supabase.rpc('upsert_request_type', {
         request_type_data: { 
           ...requestTypeData, 
@@ -177,7 +192,6 @@ export const useRequestTypeForm = ({
       if (error) throw error;
       return data;
     } else {
-      // Create using RPC
       const { data, error } = await supabase.rpc('upsert_request_type', {
         request_type_data: requestTypeData,
         is_update: false
@@ -200,7 +214,6 @@ export const useRequestTypeForm = ({
     };
 
     if (isEditing && requestType?.default_workflow_id) {
-      // Update existing workflow using RPC
       const { data, error } = await supabase.rpc('upsert_workflow', {
         workflow_data: { 
           ...workflowData, 
@@ -217,7 +230,6 @@ export const useRequestTypeForm = ({
       console.log("Updated existing workflow:", data);
       return data;
     } else {
-      // Create new workflow using RPC
       const { data, error } = await supabase.rpc('upsert_workflow', {
         workflow_data: workflowData,
         is_update: false
@@ -244,7 +256,6 @@ export const useRequestTypeForm = ({
     console.log("Steps to save:", steps);
 
     try {
-      // Prepare steps with proper workflow ID and format
       const stepsWithWorkflowId = steps.map((step, index) => ({
         ...step,
         workflow_id: workflowId,
@@ -256,12 +267,10 @@ export const useRequestTypeForm = ({
       
       console.log("Prepared steps with workflow ID:", stepsWithWorkflowId);
       
-      // Convert steps to JSON objects for RPC function
       const jsonSteps = stepsWithWorkflowId.map(step => JSON.stringify(step));
       
       console.log("JSON steps for RPC:", jsonSteps);
       
-      // Use the improved RPC function to bypass RLS
       const { data, error } = await supabase
         .rpc('insert_workflow_steps', {
           steps: jsonSteps
@@ -272,7 +281,6 @@ export const useRequestTypeForm = ({
         throw new Error(`فشل في إدخال خطوات سير العمل: ${error.message}`);
       }
       
-      // Check the response from the function
       if (!data || !data.success) {
         const errorMessage = data?.message || data?.error || 'حدث خطأ غير معروف';
         console.error("RPC function returned an error:", errorMessage);
@@ -290,7 +298,6 @@ export const useRequestTypeForm = ({
   const updateDefaultWorkflow = async (requestTypeId: string, workflowId: string) => {
     console.log(`Updating request type ${requestTypeId} with default workflow: ${workflowId}`);
     
-    // Use RPC to bypass RLS
     const { data, error } = await supabase.rpc('set_default_workflow', {
       p_request_type_id: requestTypeId,
       p_workflow_id: workflowId
@@ -315,6 +322,11 @@ export const useRequestTypeForm = ({
       setFormError("يجب إضافة خطوة واحدة على الأقل لسير العمل");
       return;
     }
+    
+    if (workflowSteps.some(step => !step.approver_id)) {
+      setFormError("جميع خطوات سير العمل يجب أن تحتوي على معتمد");
+      return;
+    }
 
     setFormError(null);
     console.log("Starting form submission with workflow steps:", workflowSteps);
@@ -323,22 +335,27 @@ export const useRequestTypeForm = ({
     try {
       console.log("Submitting form with workflow steps count:", workflowSteps.length);
       
-      // 1. Save or update the request type
       const requestTypeResult = await saveRequestType(values);
       const requestTypeId = requestTypeResult.id;
       setCreatedRequestTypeId(requestTypeId);
       
       console.log("Request type saved:", requestTypeResult);
       
-      // 2. Create or update workflow
       const workflow = await createWorkflow(requestTypeId);
       
       if (workflow) {
-        // 3. Make sure the request type points to the workflow first
-        await updateDefaultWorkflow(requestTypeId, workflow.id);
+        const workflowId = workflow.id;
         
-        // 4. Then save workflow steps
-        await saveWorkflowSteps(workflow.id, workflowSteps);
+        const updatedSteps = workflowSteps.map(step => ({
+          ...step,
+          workflow_id: workflowId
+        }));
+        
+        console.log("Steps with updated workflow ID:", updatedSteps);
+        
+        await updateDefaultWorkflow(requestTypeId, workflowId);
+        
+        await saveWorkflowSteps(workflowId, updatedSteps);
 
         toast.success(isEditing ? "تم تحديث نوع الطلب بنجاح" : "تم إنشاء نوع الطلب بنجاح");
         onRequestTypeCreated();
