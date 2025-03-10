@@ -47,13 +47,13 @@ export const useDashboardApps = (notificationCounts: any = {}) => {
   useEffect(() => {
     if (permissionsLoading || appsLoading || !appSettings) return;
 
-    // TEMPORARY FIX: Show all apps regardless of permissions until properly configured
-    const filteredApps = appSettings
-      .map(app => {
-        // Get the notification count for this app (if any)
+    // Check if this is the specific user that should see all apps
+    const isSpecificUser = user?.email === 'info@dfy.org.sa';
+    
+    if (isSpecificUser || user?.isAdmin) {
+      // Show all apps for the specific user or admin
+      const allApps = appSettings.map(app => {
         const notifCount = notificationCounts[app.app_key] || 0;
-        
-        // Get the icon component from Lucide
         const IconComponent = (Icons as any)[app.icon] || Icons.AppWindow;
         
         return {
@@ -65,44 +65,41 @@ export const useDashboardApps = (notificationCounts: any = {}) => {
         };
       });
       
-    setVisibleApps(filteredApps);
-    
-    /* Original filtering logic - COMMENTED OUT FOR NOW
-    const filteredApps = appSettings
-      // Filter visible apps and those the user has permission for
-      .filter(app => {
-        // If app is not visible, skip it
-        if (!app.is_visible) return false;
+      setVisibleApps(allApps);
+    } else {
+      // Regular filtering logic for other users
+      const filteredApps = appSettings
+        .filter(app => {
+          // If app is not visible, skip it
+          if (!app.is_visible) return false;
+          
+          // If app doesn't require permission, show it
+          if (!app.requires_permission) return true;
+          
+          // If no permission key specified, show it (fallback)
+          if (!app.permission_key) return true;
+          
+          // Check if user has the required permission
+          return hasPermission(app.permission_key);
+        })
+        .map(app => {
+          // Get the notification count for this app (if any)
+          const notifCount = notificationCounts[app.app_key] || 0;
+          
+          // Get the icon component from Lucide
+          const IconComponent = (Icons as any)[app.icon] || Icons.AppWindow;
+          
+          return {
+            title: app.app_name,
+            icon: IconComponent,
+            path: app.path,
+            description: app.description,
+            notifications: notifCount
+          };
+        });
         
-        // If app doesn't require permission, show it
-        if (!app.requires_permission) return true;
-        
-        // If no permission key specified, show it (fallback)
-        if (!app.permission_key) return true;
-        
-        // Admin users can see all apps
-        if (user?.isAdmin) return true;
-        
-        // Check if user has the required permission
-        return hasPermission(app.permission_key);
-      })
-      // Map to AppItem format for DashboardApps component
-      .map(app => {
-        // Get the notification count for this app (if any)
-        const notifCount = notificationCounts[app.app_key] || 0;
-        
-        // Get the icon component from Lucide
-        const IconComponent = (Icons as any)[app.icon] || Icons.AppWindow;
-        
-        return {
-          title: app.app_name,
-          icon: IconComponent,
-          path: app.path,
-          description: app.description,
-          notifications: notifCount
-        };
-      });
-    */
+      setVisibleApps(filteredApps);
+    }
   }, [appSettings, permissionsLoading, appsLoading, hasPermission, user, notificationCounts]);
 
   return {
