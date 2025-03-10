@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -279,25 +280,26 @@ export const useRequestTypeForm = ({
       // Convert steps to JSON string array for RPC function
       const jsonSteps = stepsToInsert.map(step => JSON.stringify(step));
       
-      // Use the rpc function to bypass RLS
+      // Use the improved RPC function to bypass RLS
       const { data, error } = await supabase
         .rpc('insert_workflow_steps', {
           steps: jsonSteps
         });
 
       if (error) {
-        console.error("Error inserting workflow steps:", error);
-        throw error;
+        console.error("Error calling insert_workflow_steps RPC:", error);
+        throw new Error(`فشل في إدخال خطوات سير العمل: ${error.message}`);
       }
       
-      // Check if the result contains an error
-      if (data && data.error) {
-        console.error("RPC function returned an error:", data.error);
-        throw new Error(data.error);
+      // Check the response from the function
+      if (!data || !data.success) {
+        const errorMessage = data?.message || data?.error || 'حدث خطأ غير معروف';
+        console.error("RPC function returned an error:", errorMessage);
+        throw new Error(`فشل في إدخال خطوات سير العمل: ${errorMessage}`);
       }
       
-      console.log("Inserted workflow steps:", data);
-      return data;
+      console.log("Inserted workflow steps successfully:", data);
+      return data.data;
     } catch (error) {
       console.error("Error in saveWorkflowSteps:", error);
       throw error;

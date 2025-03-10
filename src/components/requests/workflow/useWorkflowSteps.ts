@@ -255,9 +255,10 @@ export const useWorkflowSteps = ({
           throw new Error(`فشل في إدخال خطوات سير العمل: ${rpcError.message}`);
         }
 
-        if (insertResult && insertResult.error) {
-          console.error("Error returned from RPC function:", insertResult.error);
-          throw new Error(`فشل في إدخال خطوات سير العمل: ${insertResult.error}`);
+        if (!insertResult || !insertResult.success) {
+          const errorMessage = insertResult?.message || insertResult?.error || 'حدث خطأ غير معروف';
+          console.error("Error returned from RPC function:", errorMessage);
+          throw new Error(`فشل في إدخال خطوات سير العمل: ${errorMessage}`);
         }
 
         console.log("Successfully inserted workflow steps via RPC:", insertResult);

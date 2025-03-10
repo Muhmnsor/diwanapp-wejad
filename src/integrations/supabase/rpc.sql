@@ -96,3 +96,79 @@ BEGIN
   ORDER BY r.created_at DESC;
 END;
 $$;
+
+-- FIXED: Function to insert workflow steps bypassing RLS
+-- Improved to handle array initialization and error reporting
+CREATE OR REPLACE FUNCTION public.insert_workflow_steps(steps jsonb[])
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  step jsonb;
+  result jsonb;
+  inserted_steps jsonb[] := '{}';
+  step_result jsonb;
+  v_error text;
+BEGIN
+  -- Start transaction to ensure all steps are inserted or none
+  BEGIN
+    -- Process each step
+    FOR i IN 1..array_length(steps, 1) LOOP
+      step := steps[i];
+      
+      -- Insert the step and capture the result
+      WITH inserted AS (
+        INSERT INTO workflow_steps (
+          workflow_id,
+          step_order,
+          step_name,
+          step_type,
+          approver_id,
+          instructions,
+          is_required,
+          approver_type
+        ) VALUES (
+          (step->>'workflow_id')::uuid,
+          (step->>'step_order')::int,
+          step->>'step_name',
+          COALESCE(step->>'step_type', 'decision'),
+          (step->>'approver_id')::uuid,
+          step->>'instructions',
+          COALESCE((step->>'is_required')::boolean, true),
+          COALESCE(step->>'approver_type', 'user')
+        )
+        RETURNING row_to_json(workflow_steps.*)::jsonb
+      )
+      SELECT jsonb_agg(i) INTO step_result FROM inserted i;
+      
+      -- Add to our result array
+      IF step_result IS NOT NULL THEN
+        inserted_steps := inserted_steps || step_result;
+      END IF;
+    END LOOP;
+    
+    -- Create a result object
+    result := jsonb_build_object(
+      'success', true,
+      'message', 'Successfully inserted ' || array_length(steps, 1)::text || ' workflow steps',
+      'data', inserted_steps
+    );
+    
+    RETURN result;
+  
+  EXCEPTION WHEN OTHERS THEN
+    -- Get the error details
+    GET STACKED DIAGNOSTICS v_error = MESSAGE_TEXT;
+    
+    -- Create an error result
+    result := jsonb_build_object(
+      'success', false,
+      'error', v_error,
+      'message', 'Error inserting workflow steps: ' || v_error
+    );
+    
+    RETURN result;
+  END;
+END;
+$$;
