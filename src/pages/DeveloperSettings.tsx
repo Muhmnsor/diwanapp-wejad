@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { assignDeveloperRole, removeDeveloperRole } from "@/utils/developerRoleIntegration";
 import { checkDeveloperPermissions } from "@/components/users/permissions/utils/developerPermissionUtils";
 import { DeveloperPermissionChecks } from "@/components/users/permissions/types";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const DeveloperSettings = () => {
   const { settings, isLoading, updateSettings, fetchSettings } = useDeveloperStore();
