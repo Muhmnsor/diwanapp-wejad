@@ -85,9 +85,15 @@ export const useWorkflowCreation = ({
         throw new Error("خطأ في التحقق من صلاحيات المستخدم");
       }
       
-      const isAdmin = userRoles?.some(role => 
-        role.roles && (role.roles.name === 'admin' || role.roles.name === 'app_admin')
-      );
+      const isAdmin = userRoles?.some(role => {
+        if (role.roles) {
+          const roleName = Array.isArray(role.roles) 
+            ? (role.roles[0]?.name) 
+            : (role.roles as any).name;
+          return roleName === 'admin' || roleName === 'app_admin';
+        }
+        return false;
+      });
       
       if (!isAdmin) {
         console.warn("User is not an admin, may not have permission to create workflows");
