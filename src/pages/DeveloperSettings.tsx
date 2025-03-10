@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -206,7 +205,7 @@ const DeveloperSettings = () => {
                     <Label htmlFor="debug-level">مستوى التصحيح</Label>
                     <Select 
                       value={settings.debug_level} 
-                      onValueChange={(value) => 
+                      onValueChange={(value: "info" | "debug" | "warn" | "error") => 
                         updateSettings({ debug_level: value })
                       }
                     >
@@ -336,3 +335,4 @@ const DeveloperSettings = () => {
 };
 
 export default DeveloperSettings;
+
