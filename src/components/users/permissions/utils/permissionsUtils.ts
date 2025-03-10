@@ -33,6 +33,9 @@ export const groupPermissionsByModule = (permissions: PermissionData[]): Module[
   return modules;
 };
 
+// Alias the function to match the expected import
+export const organizePermissionsByModule = groupPermissionsByModule;
+
 export const toggleModule = (modules: Module[], moduleId: string): Module[] => {
   return modules.map(module => {
     if (module.id === moduleId) {

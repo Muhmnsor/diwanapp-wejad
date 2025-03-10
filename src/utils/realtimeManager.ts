@@ -1,138 +1,133 @@
 
-import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { RealtimeChannel } from '@supabase/supabase-js';
 import { UserSettings } from '@/types/userSettings';
 
-type RealtimeConfig = {
-  table: string;
-  schema?: string;
-  event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
-  filter?: string;
-  callback: (payload: any) => void;
+/**
+ * Initialize realtime subscription based on user settings
+ */
+export const initializeRealtime = (
+  userSettings: UserSettings | null,
+  onEvent: (payload: any) => void
+): { channel: RealtimeChannel | null, cleanup: () => void } => {
+  if (!userSettings?.realtime_updates) {
+    // If realtime updates are disabled, return a no-op cleanup
+    return { channel: null, cleanup: () => {} };
+  }
+  
+  // Use a more unique channel name based on user ID to prevent conflicts
+  const channelName = `realtime_${userSettings.user_id}_main`;
+  let realtimeChannel: RealtimeChannel | null = null;
+  
+  try {
+    // Create and configure channel
+    realtimeChannel = supabase.channel(channelName);
+    
+    // Setup event handlers for different tables
+    setupEventHandlers(realtimeChannel, onEvent);
+    
+    // Subscribe to the channel
+    realtimeChannel.subscribe((status) => {
+      console.log(`Realtime subscription status: ${status}`);
+      
+      if (status === 'CHANNEL_ERROR') {
+        console.error('Failed to subscribe to realtime updates');
+      }
+    });
+    
+    // Return the channel and cleanup function
+    return {
+      channel: realtimeChannel,
+      cleanup: () => {
+        if (realtimeChannel) {
+          supabase.removeChannel(realtimeChannel);
+        }
+      }
+    };
+  } catch (err) {
+    console.error('Error setting up realtime manager:', err);
+    return { channel: null, cleanup: () => {} };
+  }
 };
 
-class RealtimeManager {
-  private channels: Map<string, RealtimeChannel> = new Map();
-  private isEnabled: boolean = true;
-  private userSettings: UserSettings | null = null;
-
-  constructor() {
-    // Initialize with defaults
-    this.isEnabled = true;
-  }
-
-  /**
-   * Update the manager's configuration based on user settings
-   */
-  public updateSettings(settings: UserSettings | null): void {
-    if (!settings) return;
-    
-    this.userSettings = settings;
-    this.isEnabled = settings.realtime_updates;
-    
-    // Re-establish connections if settings changed
-    if (this.isEnabled && this.channels.size > 0) {
-      this.reconnectAll();
-    } else if (!this.isEnabled) {
-      this.disconnectAll();
+// Setup event handlers for different tables
+const setupEventHandlers = (
+  channel: RealtimeChannel,
+  onEvent: (payload: any) => void
+) => {
+  // Listen for task updates
+  channel.on(
+    // Fix the type issue by using string literal with 'as any'
+    'postgres_changes' as any,
+    {
+      event: '*',
+      schema: 'public',
+      table: 'tasks'
+    },
+    (payload) => {
+      onEvent({
+        type: 'task',
+        action: payload.eventType,
+        data: payload.new,
+        old: payload.old
+      });
     }
-  }
-
-  /**
-   * Subscribe to a table's changes
-   */
-  public subscribe(config: RealtimeConfig): () => void {
-    if (!this.isEnabled) {
-      console.warn('Realtime updates are disabled');
-      return () => {};
+  );
+  
+  // Listen for notification updates
+  channel.on(
+    // Fix the type issue by using string literal with 'as any'
+    'postgres_changes' as any,
+    {
+      event: '*',
+      schema: 'public',
+      table: 'notifications'
+    },
+    (payload) => {
+      onEvent({
+        type: 'notification',
+        action: payload.eventType,
+        data: payload.new
+      });
     }
+  );
+  
+  // Add additional tables as needed
+};
 
-    const { table, schema = 'public', event = '*', filter, callback } = config;
-    
-    // Create a unique channel key for this subscription
-    const channelKey = `${schema}:${table}:${event}:${filter || 'all'}`;
-    
-    // Don't create duplicate subscriptions
-    if (this.channels.has(channelKey)) {
-      return () => this.unsubscribe(channelKey);
+// Utility to track user presence in a shared workspace
+export const trackUserPresence = (
+  workspaceId: string, 
+  userId: string,
+  userInfo: { name: string, role: string }
+): { channel: RealtimeChannel | null, cleanup: () => void } => {
+  if (!workspaceId || !userId) {
+    return { channel: null, cleanup: () => {} };
+  }
+  
+  const channelName = `presence_${workspaceId}`;
+  const presenceChannel = supabase.channel(channelName);
+  
+  // Track user presence
+  const userStatus = {
+    user_id: userId,
+    workspace_id: workspaceId,
+    online_at: new Date().toISOString(),
+    user_info: userInfo
+  };
+  
+  presenceChannel.subscribe(async (status) => {
+    if (status === 'SUBSCRIBED') {
+      await presenceChannel.track(userStatus);
     }
-    
-    try {
-      // Create and configure the channel
-      const channel = supabase.channel(`realtime:${channelKey}`);
-      
-      const configuredChannel = channel.on(
-        'postgres_changes',
-        {
-          event: event,
-          schema: schema,
-          table: table,
-          ...(filter ? { filter } : {})
-        },
-        (payload) => {
-          if (callback && this.isEnabled) {
-            callback(payload);
-          }
-        }
-      );
-      
-      // Subscribe and store the channel
-      configuredChannel.subscribe();
-      this.channels.set(channelKey, configuredChannel);
-      
-      // Return unsubscribe function
-      return () => this.unsubscribe(channelKey);
-    } catch (error) {
-      console.error('Error subscribing to realtime updates:', error);
-      return () => {};
+  });
+  
+  return {
+    channel: presenceChannel,
+    cleanup: () => {
+      if (presenceChannel) {
+        supabase.removeChannel(presenceChannel);
+      }
     }
-  }
-
-  /**
-   * Unsubscribe from a specific channel
-   */
-  private unsubscribe(channelKey: string): void {
-    const channel = this.channels.get(channelKey);
-    if (channel) {
-      supabase.removeChannel(channel);
-      this.channels.delete(channelKey);
-    }
-  }
-
-  /**
-   * Disconnect all active channels
-   */
-  public disconnectAll(): void {
-    this.channels.forEach((channel) => {
-      supabase.removeChannel(channel);
-    });
-    this.channels.clear();
-  }
-
-  /**
-   * Reconnect all channels
-   */
-  private reconnectAll(): void {
-    // Implementation would depend on how we track our subscription configs
-    // For now, just log that this would happen
-    console.log('Would reconnect all channels');
-  }
-
-  /**
-   * Enable/disable all realtime updates
-   */
-  public setEnabled(enabled: boolean): void {
-    if (this.isEnabled === enabled) return;
-    
-    this.isEnabled = enabled;
-    
-    if (!enabled) {
-      this.disconnectAll();
-    } else {
-      this.reconnectAll();
-    }
-  }
-}
-
-// Export a singleton instance
-export const realtimeManager = new RealtimeManager();
+  };
+};

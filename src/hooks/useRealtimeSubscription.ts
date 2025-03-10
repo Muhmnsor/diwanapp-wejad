@@ -45,7 +45,8 @@ export function useRealtimeSubscription(config: SubscriptionConfig) {
 
       // Configure the channel
       const configuredChannel = realtimeChannel.on(
-        'postgres_changes',
+        // Fix the channel type - use string literal instead of invalid type
+        'postgres_changes' as any,
         {
           event: event,
           schema: schema,

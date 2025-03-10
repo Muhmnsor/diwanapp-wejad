@@ -7,18 +7,7 @@ import { DeveloperPermissionChecks } from '../types';
  */
 export const checkDeveloperPermissions = async (userId: string): Promise<DeveloperPermissionChecks> => {
   if (!userId) {
-    return {
-      canAccessDeveloperTools: false,
-      canModifySystemSettings: false,
-      canAccessApiLogs: false,
-      canManageDeveloperSettings: false,
-      canViewPerformanceMetrics: false,
-      canDebugQueries: false,
-      canManageRealtime: false,
-      canAccessAdminPanel: false,
-      canExportData: false,
-      canImportData: false
-    };
+    return getDefaultPermissions();
   }
 
   try {
