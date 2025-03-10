@@ -4250,6 +4250,13 @@ export type Database = {
         }
         Returns: string
       }
+      set_default_workflow: {
+        Args: {
+          p_request_type_id: string
+          p_workflow_id: string
+        }
+        Returns: boolean
+      }
       soft_delete_user: {
         Args: {
           user_id: string
@@ -4261,6 +4268,20 @@ export type Database = {
           workspace_id: string
         }
         Returns: undefined
+      }
+      upsert_request_type: {
+        Args: {
+          request_type_data: Json
+          is_update?: boolean
+        }
+        Returns: Json
+      }
+      upsert_workflow: {
+        Args: {
+          workflow_data: Json
+          is_update?: boolean
+        }
+        Returns: Json
       }
     }
     Enums: {
