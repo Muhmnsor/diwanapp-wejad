@@ -73,7 +73,9 @@ export const useStepManagement = ({
       // Create a new step or update existing one
       const newStep: WorkflowStep = {
         ...currentStep,
-        workflow_id: workflowId
+        workflow_id: workflowId,
+        id: currentStep.id || null,
+        created_at: currentStep.created_at || null
       };
 
       let updatedSteps: WorkflowStep[];
@@ -98,6 +100,7 @@ export const useStepManagement = ({
 
       // Reset the current step and editing index
       setCurrentStep({
+        id: null,
         workflow_id: workflowId,
         step_name: '',
         step_type: 'decision',
@@ -105,7 +108,8 @@ export const useStepManagement = ({
         instructions: '',
         is_required: true,
         approver_type: 'user',
-        step_order: updatedSteps.length + 1
+        step_order: updatedSteps.length + 1,
+        created_at: null
       });
       setEditingStepIndex(null);
 
