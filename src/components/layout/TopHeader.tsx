@@ -1,4 +1,3 @@
-
 import { Navigation } from "@/components/Navigation";
 import { UserNav } from "@/components/navigation/UserNav";
 import { useLocation, useSearchParams } from "react-router-dom";
@@ -21,7 +20,13 @@ export const TopHeader = () => {
   } = useAuthStore();
   const [activeTab, setActiveTab] = useState("overview");
   const [displayName, setDisplayName] = useState<string | null>(null);
-  const isEventsPage = location.pathname.includes('/events') || location.pathname === '/' || location.pathname === '/dashboard' || location.pathname.includes('/create-project') || location.pathname.includes('/projects') || location.pathname === '/settings' || location.pathname.includes('/developer-settings') || location.pathname.includes('/documentation');
+
+  const isEventsPage = location.pathname === '/' || 
+                      location.pathname === '/dashboard' || 
+                      location.pathname.includes('/events') || 
+                      location.pathname.includes('/create-project') || 
+                      location.pathname.includes('/projects');
+
   const isEventOrProjectDetails = location.pathname.includes('/events/') || location.pathname.includes('/projects/');
   const isTasksPage = location.pathname.includes('/tasks') || location.pathname.includes('/portfolios') || location.pathname.includes('/portfolio-workspaces') || location.pathname.includes('/general-tasks');
   const isRequestsPage = location.pathname.includes('/requests');
@@ -124,7 +129,7 @@ export const TopHeader = () => {
                   
                   <Link to="/tasks#reports" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "reports" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`} onClick={() => handleTabChange("reports")}>
                     <FileText className="h-4 w-4" />
-                    <span>التقارير</span>
+                    <span>التقار��ر</span>
                   </Link>
                 </div>
               </div>
