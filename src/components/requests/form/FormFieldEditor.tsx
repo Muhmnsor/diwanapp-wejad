@@ -34,9 +34,16 @@ export const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
     if (!currentOption) return;
     
     const options = currentField.options || [];
+    
+    // Create a proper option object
+    const newOption = {
+      label: currentOption,
+      value: currentOption.toLowerCase().replace(/\s+/g, '_')
+    };
+    
     setCurrentField({
       ...currentField,
-      options: [...options, currentOption],
+      options: [...options, newOption],
     });
     setCurrentOption("");
   };
@@ -61,9 +68,15 @@ export const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
             <Input
               placeholder="اسم الحقل (بدون مسافات)"
               value={currentField.name}
-              onChange={(e) =>
-                setCurrentField({ ...currentField, name: e.target.value })
-              }
+              onChange={(e) => {
+                // Format field name: lowercase, replace spaces with underscores
+                const formattedName = e.target.value.toLowerCase().replace(/\s+/g, '_');
+                setCurrentField({ 
+                  ...currentField, 
+                  name: formattedName,
+                  id: formattedName // Also update id to match name
+                });
+              }}
             />
           </div>
           <div className="space-y-2">
@@ -83,9 +96,16 @@ export const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
             <label className="text-sm font-medium">نوع الحقل</label>
             <Select
               value={currentField.type}
-              onValueChange={(value: 'text' | 'textarea' | 'number' | 'date' | 'select' | 'array' | 'file') =>
-                setCurrentField({ ...currentField, type: value })
-              }
+              onValueChange={(value: string) => {
+                // Reset options if changing from select to another type
+                const newField = { 
+                  ...currentField, 
+                  type: value,
+                  // Clear options if not a select field
+                  ...(value !== 'select' ? { options: [] } : {})
+                };
+                setCurrentField(newField);
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="اختر نوع الحقل" />
@@ -128,6 +148,12 @@ export const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
                 placeholder="أدخل خياراً"
                 value={currentOption}
                 onChange={(e) => setCurrentOption(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddOption();
+                  }
+                }}
               />
               <Button
                 type="button"
@@ -143,7 +169,7 @@ export const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
                   key={index}
                   className="flex items-center justify-between bg-muted p-2 rounded-md"
                 >
-                  <span>{option}</span>
+                  <span>{typeof option === 'string' ? option : option.label}</span>
                   <Button
                     type="button"
                     variant="ghost"
@@ -161,7 +187,21 @@ export const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
       <CardFooter>
         <Button
           type="button"
-          onClick={handleAddField}
+          onClick={() => {
+            // Basic validation
+            if (!currentField.name || !currentField.label) {
+              toast.error('اسم الحقل وعنوانه مطلوبان');
+              return;
+            }
+            
+            // If select type, ensure there are options
+            if (currentField.type === 'select' && (!currentField.options || currentField.options.length === 0)) {
+              toast.error('يجب إضافة خيار واحد على الأقل لقائمة الاختيار');
+              return;
+            }
+            
+            handleAddField();
+          }}
           className="mr-auto"
         >
           {editingFieldIndex !== null ? "تحديث الحقل" : "إضافة الحقل"}

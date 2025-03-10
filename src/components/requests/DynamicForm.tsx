@@ -23,8 +23,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Plus, Trash } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface DynamicFormProps {
   schema: FormSchema;
@@ -91,7 +92,14 @@ export const DynamicForm = ({
           
         case "array":
           if (field.subfields) {
-            const subSchemaMap = buildZodSchema(field.subfields);
+            const subSchemaMap: Record<string, any> = {};
+            field.subfields.forEach(subfield => {
+              if (subfield.required) {
+                subSchemaMap[subfield.name] = z.string().min(1, `حقل ${subfield.label} مطلوب`);
+              } else {
+                subSchemaMap[subfield.name] = z.string().optional();
+              }
+            });
             const subSchema = z.object(subSchemaMap);
             fieldSchema = z.array(subSchema);
             
@@ -123,13 +131,13 @@ export const DynamicForm = ({
     return schemaMap;
   };
 
-  const formSchema = z.object(buildZodSchema(schema.fields));
+  const formSchema = z.object(buildZodSchema(schema.fields || []));
   
   // Prepare default values for arrays and complex types
   const prepareDefaultValues = () => {
     const prepared = { ...defaultValues };
     
-    schema.fields.forEach((field) => {
+    (schema.fields || []).forEach((field) => {
       if (field.type === "array" && !prepared[field.name]) {
         prepared[field.name] = [];
       }
@@ -149,7 +157,7 @@ export const DynamicForm = ({
       console.log("Form data before submission:", data);
       
       // Additional validation to ensure all data conforms to expected types
-      const errors = validateFormDataTypes(data, schema.fields);
+      const errors = validateFormDataTypes(data, schema.fields || []);
       
       if (errors.length > 0) {
         setValidationErrors(errors);
@@ -197,20 +205,26 @@ export const DynamicForm = ({
           break;
           
         case "select":
-          if (value && field.options && !field.options.includes(value)) {
-            errors.push(`قيمة غير صالحة لحقل ${field.label}`);
+          if (field.options && value && !field.options.some(opt => 
+              typeof opt === 'string' ? opt === value : 
+              (opt.value === value || opt.label === value)
+            )) {
+            errors.push(`قيمة "${value}" غير صالحة لحقل "${field.label}"`);
           }
           break;
           
         case "array":
-          if (field.required && (!Array.isArray(value) || value.length === 0)) {
-            errors.push(`يجب إضافة عنصر واحد على الأقل في ${field.label}`);
-          } else if (Array.isArray(value) && field.subfields) {
+          if (!Array.isArray(value)) {
+            errors.push(`حقل "${field.label}" يجب أن يكون قائمة`);
+          } else if (field.required && value.length === 0) {
+            errors.push(`حقل "${field.label}" يجب أن يحتوي على عنصر واحد على الأقل`);
+          } else if (field.subfields && Array.isArray(value)) {
+            // Validate each item in the array
             value.forEach((item, index) => {
-              field.subfields!.forEach((subfield) => {
+              field.subfields?.forEach((subfield) => {
                 const subfieldValue = item[subfield.name];
                 if (subfield.required && (subfieldValue === undefined || subfieldValue === null || subfieldValue === '')) {
-                  errors.push(`حقل ${subfield.label} في العنصر ${index + 1} من ${field.label} مطلوب`);
+                  errors.push(`حقل "${subfield.label}" في العنصر ${index + 1} من "${field.label}" مطلوب`);
                 }
               });
             });
@@ -222,337 +236,225 @@ export const DynamicForm = ({
     return errors;
   };
 
-  // Render form fields based on the schema
-  const renderFields = (fields: FormFieldType[], parentPath = "") => {
-    return fields.map((fieldDef) => {
-      const fieldPath = parentPath ? `${parentPath}.${fieldDef.name}` : fieldDef.name;
-      
-      switch (fieldDef.type) {
-        case "text":
-          return (
-            <FormField
-              key={fieldPath}
-              control={form.control}
-              name={fieldPath}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{fieldDef.label} {fieldDef.required && <span className="text-destructive">*</span>}</FormLabel>
+  // Render a single form field based on its type
+  const renderField = (field: FormFieldType) => {
+    switch (field.type) {
+      case "text":
+        return (
+          <FormField
+            key={field.name}
+            control={form.control}
+            name={field.name}
+            render={({ field: formField }) => (
+              <FormItem>
+                <FormLabel>{field.label} {field.required && <span className="text-destructive">*</span>}</FormLabel>
+                <FormControl>
+                  <Input placeholder={field.placeholder || ""} {...formField} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        );
+        
+      case "textarea":
+        return (
+          <FormField
+            key={field.name}
+            control={form.control}
+            name={field.name}
+            render={({ field: formField }) => (
+              <FormItem>
+                <FormLabel>{field.label} {field.required && <span className="text-destructive">*</span>}</FormLabel>
+                <FormControl>
+                  <Textarea placeholder={field.placeholder || ""} {...formField} rows={4} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        );
+        
+      case "number":
+        return (
+          <FormField
+            key={field.name}
+            control={form.control}
+            name={field.name}
+            render={({ field: formField }) => (
+              <FormItem>
+                <FormLabel>{field.label} {field.required && <span className="text-destructive">*</span>}</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    placeholder={field.placeholder || ""} 
+                    {...formField}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      formField.onChange(value === "" ? "" : Number(value));
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        );
+        
+      case "date":
+        return (
+          <FormField
+            key={field.name}
+            control={form.control}
+            name={field.name}
+            render={({ field: formField }) => (
+              <FormItem>
+                <FormLabel>{field.label} {field.required && <span className="text-destructive">*</span>}</FormLabel>
+                <FormControl>
+                  <Input type="date" {...formField} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        );
+        
+      case "select":
+        return (
+          <FormField
+            key={field.name}
+            control={form.control}
+            name={field.name}
+            render={({ field: formField }) => (
+              <FormItem>
+                <FormLabel>{field.label} {field.required && <span className="text-destructive">*</span>}</FormLabel>
+                <Select
+                  onValueChange={formField.onChange}
+                  defaultValue={formField.value}
+                >
                   <FormControl>
-                    <Input {...field} placeholder={`أدخل ${fieldDef.label}`} />
+                    <SelectTrigger>
+                      <SelectValue placeholder={field.placeholder || "اختر..."} />
+                    </SelectTrigger>
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          );
-          
-        case "textarea":
-          return (
-            <FormField
-              key={fieldPath}
-              control={form.control}
-              name={fieldPath}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{fieldDef.label} {fieldDef.required && <span className="text-destructive">*</span>}</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} placeholder={`أدخل ${fieldDef.label}`} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          );
-          
-        case "number":
-          return (
-            <FormField
-              key={fieldPath}
-              control={form.control}
-              name={fieldPath}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{fieldDef.label} {fieldDef.required && <span className="text-destructive">*</span>}</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      {...field} 
-                      onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
-                      placeholder={`أدخل ${fieldDef.label}`} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          );
-          
-        case "date":
-          return (
-            <FormField
-              key={fieldPath}
-              control={form.control}
-              name={fieldPath}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{fieldDef.label} {fieldDef.required && <span className="text-destructive">*</span>}</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          );
-          
-        case "select":
-          return (
-            <FormField
-              key={fieldPath}
-              control={form.control}
-              name={fieldPath}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{fieldDef.label} {fieldDef.required && <span className="text-destructive">*</span>}</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    value={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={`اختر ${fieldDef.label}`} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {fieldDef.options?.map((option: string) => (
-                        <SelectItem key={option} value={option}>
-                          {option}
+                  <SelectContent>
+                    {(field.options || []).map((option) => {
+                      // Handle both string options and {label, value} objects
+                      const value = typeof option === 'string' ? option : option.value;
+                      const label = typeof option === 'string' ? option : option.label;
+                      return (
+                        <SelectItem key={value} value={value}>
+                          {label}
                         </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          );
-          
-        case "array":
-          return (
-            <div key={fieldPath} className="space-y-4">
-              <FormLabel>{fieldDef.label} {fieldDef.required && <span className="text-destructive">*</span>}</FormLabel>
-              {fieldDef.subfields && (
-                <FieldArray
-                  name={fieldPath}
-                  control={form.control}
-                  subfields={fieldDef.subfields}
-                />
-              )}
-            </div>
-          );
-          
-        case "file":
-          return (
-            <FormField
-              key={fieldPath}
-              control={form.control}
-              name={fieldPath}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{fieldDef.label} {fieldDef.required && <span className="text-destructive">*</span>}</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="file" 
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        field.onChange(file);
-                      }} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          );
-          
-        default:
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        );
+        
+      case "array":
+        if (!field.subfields || field.subfields.length === 0) {
           return null;
-      }
-    });
+        }
+        
+        return (
+          <div key={field.name} className="mb-4">
+            <FormLabel>{field.label} {field.required && <span className="text-destructive">*</span>}</FormLabel>
+            <div className="mt-2">
+              {form.watch(field.name)?.length > 0 ? (
+                <div className="space-y-4 mb-4">
+                  {form.watch(field.name)?.map((_, index) => (
+                    <Card key={index} className="relative">
+                      <CardContent className="pt-6">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 left-2 h-8 w-8 text-destructive"
+                          onClick={() => {
+                            const currentItems = form.getValues(field.name) as any[];
+                            const newItems = currentItems.filter((_, i) => i !== index);
+                            form.setValue(field.name, newItems);
+                          }}
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {field.subfields?.map((subfield) => (
+                            <FormField
+                              key={`${field.name}.${index}.${subfield.name}`}
+                              control={form.control}
+                              name={`${field.name}.${index}.${subfield.name}`}
+                              render={({ field: subFormField }) => (
+                                <FormItem>
+                                  <FormLabel>{subfield.label} {subfield.required && <span className="text-destructive">*</span>}</FormLabel>
+                                  <FormControl>
+                                    <Input {...subFormField} placeholder={subfield.placeholder || ""} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  const currentItems = form.getValues(field.name) as any[];
+                  const newItem = field.subfields?.reduce(
+                    (acc, subfield) => ({ ...acc, [subfield.name]: "" }),
+                    {}
+                  );
+                  form.setValue(field.name, [...(currentItems || []), newItem]);
+                }}
+                className="w-full"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                إضافة {field.label}
+              </Button>
+            </div>
+            <FormMessage>{form.formState.errors[field.name]?.message as string}</FormMessage>
+          </div>
+        );
+        
+      default:
+        return null;
+    }
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         {validationErrors.length > 0 && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>خطأ في النموذج</AlertTitle>
             <AlertDescription>
               <ul className="list-disc list-inside">
-                {validationErrors.map((error, index) => (
-                  <li key={index}>{error}</li>
+                {validationErrors.map((err, i) => (
+                  <li key={i}>{err}</li>
                 ))}
               </ul>
             </AlertDescription>
           </Alert>
         )}
         
-        {renderFields(schema.fields)}
+        {(schema.fields || []).map((field) => renderField(field))}
         
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "جاري التقديم..." : "تقديم الطلب"}
+        <Button type="submit" disabled={isSubmitting} className="w-full">
+          {isSubmitting ? "جاري إرسال الطلب..." : "إرسال الطلب"}
         </Button>
       </form>
     </Form>
-  );
-};
-
-// Component for handling array fields
-const FieldArray = ({ 
-  name, 
-  control, 
-  subfields 
-}: { 
-  name: string; 
-  control: any; 
-  subfields: FormFieldType[] 
-}) => {
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name,
-  });
-
-  // Prepare empty item for adding new array items
-  const getEmptyItem = () => {
-    return subfields.reduce((acc, subfield) => {
-      acc[subfield.name] = subfield.type === "number" ? 0 : "";
-      return acc;
-    }, {} as Record<string, any>);
-  };
-
-  return (
-    <div className="space-y-4">
-      {fields.map((item, index) => (
-        <div key={item.id} className="border p-4 rounded-md space-y-4">
-          {subfields.map((subfieldDef) => {
-            const fieldName = `${name}.${index}.${subfieldDef.name}`;
-            
-            switch (subfieldDef.type) {
-              case "text":
-                return (
-                  <FormField
-                    key={fieldName}
-                    control={control}
-                    name={fieldName}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{subfieldDef.label} {subfieldDef.required && <span className="text-destructive">*</span>}</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder={`أدخل ${subfieldDef.label}`} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                );
-                
-              case "number":
-                return (
-                  <FormField
-                    key={fieldName}
-                    control={control}
-                    name={fieldName}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{subfieldDef.label} {subfieldDef.required && <span className="text-destructive">*</span>}</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            {...field} 
-                            onChange={(e) => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
-                            placeholder={`أدخل ${subfieldDef.label}`} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                );
-                
-              case "textarea":
-                return (
-                  <FormField
-                    key={fieldName}
-                    control={control}
-                    name={fieldName}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{subfieldDef.label} {subfieldDef.required && <span className="text-destructive">*</span>}</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} placeholder={`أدخل ${subfieldDef.label}`} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                );
-                
-              case "select":
-                return (
-                  <FormField
-                    key={fieldName}
-                    control={control}
-                    name={fieldName}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{subfieldDef.label} {subfieldDef.required && <span className="text-destructive">*</span>}</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder={`اختر ${subfieldDef.label}`} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {subfieldDef.options?.map((option: string) => (
-                              <SelectItem key={option} value={option}>
-                                {option}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                );
-                
-              default:
-                return null;
-            }
-          })}
-          <Button
-            type="button"
-            variant="destructive"
-            size="sm"
-            onClick={() => remove(index)}
-          >
-            حذف
-          </Button>
-        </div>
-      ))}
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => append(getEmptyItem())}
-      >
-        إضافة عنصر جديد
-      </Button>
-    </div>
   );
 };
