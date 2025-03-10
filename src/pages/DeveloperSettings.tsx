@@ -3,7 +3,7 @@ import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useDeveloperStore } from "@/store/developerStore";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { DocumentationSection } from "@/components/settings/developer/documentation/DocumentationSection";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -113,12 +113,17 @@ const DeveloperSettings = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="mb-6">
               <TabsTrigger value="general">عام</TabsTrigger>
+              <TabsTrigger value="documentation">التوثيق</TabsTrigger>
               <TabsTrigger value="permissions">الصلاحيات</TabsTrigger>
               <TabsTrigger value="cache">الذاكرة المؤقتة</TabsTrigger>
               <TabsTrigger value="debug">التصحيح</TabsTrigger>
               <TabsTrigger value="performance">الأداء</TabsTrigger>
               <TabsTrigger value="logs">السجلات</TabsTrigger>
             </TabsList>
+            
+            <TabsContent value="documentation">
+              <DocumentationSection />
+            </TabsContent>
             
             <TabsContent value="general" className="space-y-4">
               <Card>
