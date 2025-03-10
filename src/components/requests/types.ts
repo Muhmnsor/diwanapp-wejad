@@ -24,6 +24,9 @@ export interface FormField {
   subfields?: FormField[];
 }
 
+// Alias for FormField to match the naming in the refactored components
+export type FormFieldType = FormField;
+
 export interface Request {
   id: string;
   request_type_id: string;
@@ -89,4 +92,14 @@ export interface RequestAttachment {
   file_size: number | null;
   uploaded_by: string;
   created_at: string;
+}
+
+// Interface for RequestTypeForm
+export interface RequestTypeFormValues {
+  name: string;
+  description?: string;
+  is_active: boolean;
+  form_schema: {
+    fields: FormField[];
+  };
 }
