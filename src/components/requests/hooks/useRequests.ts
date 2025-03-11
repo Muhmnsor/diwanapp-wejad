@@ -18,6 +18,8 @@ interface RequestApprovalResponse {
     priority: string;
     created_at: string;
     current_step_id: string;
+    requester_id: string;
+    request_type_id: string;
     request_type: {
       id: string;
       name: string;
@@ -117,7 +119,9 @@ export const useRequests = () => {
           approval_id: item.id,
           step_id: item.step_id,
           step_name: stepData ? stepData.step_name : 'Unknown Step',
-          step_type: stepData ? stepData.step_type : 'decision'
+          step_type: stepData ? stepData.step_type : 'decision',
+          requester_id: requestData.requester_id, // Ensure requester_id is included
+          requester: null // Initialize requester field
         };
       }).filter(Boolean);
       
