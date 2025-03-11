@@ -6,6 +6,27 @@ import { supabase } from '@/integrations/supabase/client';
  */
 
 /**
+ * Checks which workflow steps table is available and returns the name
+ */
+export const getWorkflowStepsTable = async (): Promise<string> => {
+  try {
+    const { data: workflowStepsExists } = await supabase.rpc('check_table_exists', { 
+      table_name: 'workflow_steps' 
+    });
+    
+    if (workflowStepsExists?.[0]?.table_exists) {
+      return 'workflow_steps';
+    } else {
+      return 'request_workflow_steps';
+    }
+  } catch (error) {
+    console.error('Error checking workflow steps table:', error);
+    // Default to workflow_steps if we can't check
+    return 'workflow_steps';
+  }
+};
+
+/**
  * Fetches a request workflow by ID and logs diagnostic information
  */
 export const fetchWorkflowDetails = async (workflowId: string) => {
@@ -14,7 +35,7 @@ export const fetchWorkflowDetails = async (workflowId: string) => {
     
     // Get the workflow
     const { data: workflow, error: workflowError } = await supabase
-      .from('workflows')
+      .from('request_workflows')
       .select('*')
       .eq('id', workflowId)
       .single();
@@ -24,15 +45,19 @@ export const fetchWorkflowDetails = async (workflowId: string) => {
       return null;
     }
     
+    // Determine which table to use for steps
+    const stepsTable = await getWorkflowStepsTable();
+    console.log(`Using ${stepsTable} table for workflow steps`);
+    
     // Get the workflow steps
     const { data: steps, error: stepsError } = await supabase
-      .from('workflow_steps')
+      .from(stepsTable)
       .select('*')
       .eq('workflow_id', workflowId)
       .order('step_order', { ascending: true });
     
     if (stepsError) {
-      console.error('Error fetching workflow steps:', stepsError);
+      console.error(`Error fetching workflow steps from ${stepsTable}:`, stepsError);
       return { workflow, steps: [] };
     }
     
@@ -76,7 +101,7 @@ export const diagnoseRequestWorkflow = async (requestId: string) => {
     // Get the request
     const { data: request, error: requestError } = await supabase
       .from('requests')
-      .select('*, workflow:workflows(*)')
+      .select('*, workflow:request_workflows(*)')
       .eq('id', requestId)
       .single();
     
@@ -97,9 +122,12 @@ export const diagnoseRequestWorkflow = async (requestId: string) => {
       };
     }
     
+    // Determine which table to use for steps
+    const stepsTable = await getWorkflowStepsTable();
+    
     // Get the current step
     const { data: currentStep, error: stepError } = await supabase
-      .from('workflow_steps')
+      .from(stepsTable)
       .select('*')
       .eq('id', request.current_step_id)
       .single();
@@ -107,7 +135,7 @@ export const diagnoseRequestWorkflow = async (requestId: string) => {
     if (stepError) {
       return { 
         request, 
-        issues: ['Current step not found in workflow_steps table']
+        issues: [`Current step not found in ${stepsTable} table`]
       };
     }
     
@@ -137,7 +165,7 @@ export const validateRequestWorkflow = async (requestTypeId: string): Promise<bo
     
     // Verify the workflow exists
     const { data: workflow, error: workflowError } = await supabase
-      .from('workflows')
+      .from('request_workflows')
       .select('id')
       .eq('id', requestType.default_workflow_id)
       .single();
@@ -147,14 +175,17 @@ export const validateRequestWorkflow = async (requestTypeId: string): Promise<bo
       return false;
     }
     
+    // Determine which table to use for steps
+    const stepsTable = await getWorkflowStepsTable();
+    
     // Verify workflow has steps
     const { data: steps, error: stepsError } = await supabase
-      .from('workflow_steps')
+      .from(stepsTable)
       .select('id')
       .eq('workflow_id', workflow.id);
     
     if (stepsError || !steps || steps.length === 0) {
-      console.error('Workflow has no steps:', workflow.id);
+      console.error(`Workflow has no steps in ${stepsTable} table:`, workflow.id);
       return false;
     }
     

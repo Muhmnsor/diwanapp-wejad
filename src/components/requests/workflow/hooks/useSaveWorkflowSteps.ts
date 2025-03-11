@@ -3,6 +3,7 @@ import { WorkflowStep } from "../../types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { isValidUUID } from "./utils/validation";
+import { getWorkflowStepsTable } from "../../utils/workflowHelpers";
 
 interface UseSaveWorkflowStepsProps {
   requestTypeId: string | null;
@@ -104,27 +105,49 @@ export const useSaveWorkflowSteps = ({
 
       console.log("Sending steps to database RPC function");
       
-      // Call the RPC function to insert steps - with detailed logging
-      console.log("Calling RPC function insert_workflow_steps with parameters:", JSON.stringify(stepsToInsert));
-      
-      const { data: rpcResult, error: rpcError } = await supabase
-        .rpc('insert_workflow_steps', {
-          steps: stepsToInsert
-        });
-
-      if (rpcError) {
-        console.error("Error inserting workflow steps:", rpcError);
-        throw new Error(`فشل في حفظ خطوات سير العمل: ${rpcError.message}`);
-      }
-
-      console.log("Steps saved successfully:", rpcResult);
-
-      // Update steps with server data
-      if (rpcResult && rpcResult.data) {
-        updateWorkflowSteps(rpcResult.data);
-      } else {
-        // If we don't have server data, use our local state
-        updateWorkflowSteps(stepsWithCorrectWorkflowId);
+      try {
+        // Check which table to use
+        const stepsTable = await getWorkflowStepsTable();
+        console.log(`Using ${stepsTable} table for saving workflow steps`);
+        
+        // Clear existing steps first
+        const { error: deleteError } = await supabase
+          .from(stepsTable)
+          .delete()
+          .eq('workflow_id', currentWorkflowId);
+        
+        if (deleteError) {
+          console.error(`Error deleting existing workflow steps from ${stepsTable}:`, deleteError);
+          throw new Error(`فشل في حذف خطوات سير العمل الموجودة: ${deleteError.message}`);
+        }
+        
+        // Insert new steps
+        for (const step of stepsToInsert) {
+          const { error: insertError } = await supabase
+            .from(stepsTable)
+            .insert(step);
+          
+          if (insertError) {
+            console.error(`Error inserting workflow step into ${stepsTable}:`, insertError);
+            throw new Error(`فشل في إضافة خطوة سير العمل: ${insertError.message}`);
+          }
+        }
+        
+        // Get the inserted steps
+        const { data: insertedSteps, error: fetchError } = await supabase
+          .from(stepsTable)
+          .select('*')
+          .eq('workflow_id', currentWorkflowId)
+          .order('step_order', { ascending: true });
+        
+        if (fetchError) {
+          console.error(`Error fetching inserted workflow steps from ${stepsTable}:`, fetchError);
+        } else {
+          updateWorkflowSteps(insertedSteps);
+        }
+      } catch (error) {
+        console.error("Error in direct database operations:", error);
+        throw error;
       }
 
       // Update default workflow if needed
