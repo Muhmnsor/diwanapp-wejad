@@ -12,6 +12,8 @@ export const useIncomingRequests = () => {
     
     try {
       console.log("Fetching incoming requests for user:", user.id);
+      console.log("User role:", user.role);
+      console.log("User isAdmin:", user.isAdmin);
       
       // Use request_approvals table with the correct relationship to request_workflow_steps
       const { data: approvals, error } = await supabase
@@ -44,10 +46,12 @@ export const useIncomingRequests = () => {
       
       if (error) {
         console.error("Error fetching approvals:", error);
+        console.error("Error code:", error.code);
+        console.error("Error message:", error.message);
         throw error;
       }
       
-      console.log(`Found ${approvals?.length || 0} pending approvals`);
+      console.log(`Found ${approvals?.length || 0} pending approvals`, approvals);
       
       // Process the data efficiently
       const transformedRequests = (approvals || [])
@@ -107,6 +111,12 @@ export const useIncomingRequests = () => {
       
       console.log(`Processed ${transformedRequests.length} incoming requests`);
       
+      // If we have no results but user is admin, try to fetch approvals that could be assigned by role
+      if (transformedRequests.length === 0 && user.isAdmin) {
+        console.log("User is admin, checking for role-based approvals");
+        // This could be implemented here to check for role-based approvals
+      }
+      
       // Get requester information efficiently by using a Set for unique IDs
       if (transformedRequests.length > 0) {
         const requesterIds = [...new Set(transformedRequests
@@ -114,11 +124,15 @@ export const useIncomingRequests = () => {
           .filter(Boolean))];
           
         if (requesterIds.length > 0) {
-          const { data: users } = await supabase
+          const { data: users, error: usersError } = await supabase
             .from("profiles")
             .select("id, display_name, email")
             .in("id", requesterIds);
             
+          if (usersError) {
+            console.error("Error fetching users:", usersError);
+          }
+          
           const userMap = Object.fromEntries(
             (users || []).map(user => [user.id, user])
           );
