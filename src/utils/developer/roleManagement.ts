@@ -81,3 +81,96 @@ export async function isDeveloper(userId: string): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Assigns the developer role to a user
+ */
+export async function assignDeveloperRole(userId: string): Promise<boolean> {
+  try {
+    // Get developer role ID
+    const { data: developerRole, error: roleError } = await supabase
+      .from('roles')
+      .select('id')
+      .eq('name', 'developer')
+      .single();
+    
+    if (roleError || !developerRole) {
+      console.error('Error finding developer role:', roleError);
+      return false;
+    }
+    
+    // Check if user already has the role
+    const { data: existingRole, error: checkError } = await supabase
+      .from('user_roles')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('role_id', developerRole.id)
+      .maybeSingle();
+    
+    if (checkError) {
+      console.error('Error checking existing role:', checkError);
+      return false;
+    }
+    
+    // If role is not assigned, assign it
+    if (!existingRole) {
+      const { error: assignError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role_id: developerRole.id
+        });
+      
+      if (assignError) {
+        console.error('Error assigning developer role:', assignError);
+        return false;
+      }
+      
+      console.log(`Developer role assigned to user ${userId}`);
+      return true;
+    }
+    
+    console.log(`User ${userId} already has developer role`);
+    return true;
+  } catch (error) {
+    console.error('Error in assignDeveloperRole:', error);
+    return false;
+  }
+}
+
+/**
+ * Removes the developer role from a user
+ */
+export async function removeDeveloperRole(userId: string): Promise<boolean> {
+  try {
+    // Get developer role ID
+    const { data: developerRole, error: roleError } = await supabase
+      .from('roles')
+      .select('id')
+      .eq('name', 'developer')
+      .single();
+    
+    if (roleError || !developerRole) {
+      console.error('Error finding developer role:', roleError);
+      return false;
+    }
+    
+    // Remove the role assignment
+    const { error: removeError } = await supabase
+      .from('user_roles')
+      .delete()
+      .eq('user_id', userId)
+      .eq('role_id', developerRole.id);
+    
+    if (removeError) {
+      console.error('Error removing developer role:', removeError);
+      return false;
+    }
+    
+    console.log(`Developer role removed from user ${userId}`);
+    return true;
+  } catch (error) {
+    console.error('Error in removeDeveloperRole:', error);
+    return false;
+  }
+}

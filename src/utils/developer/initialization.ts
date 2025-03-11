@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { assignDeveloperRole } from "./roleManagement";
+import { isDeveloper } from "./roleManagement";
 
 /**
  * دالة للتحقق من وجود دور المطور وإنشائه إذا لم يكن موجوداً
@@ -81,7 +81,19 @@ export const autoAssignDeveloperRole = async (): Promise<void> => {
     
     // تعيين دور المطور لكل مستخدم إداري
     for (const user of adminUsers) {
-      await assignDeveloperRole(user.id);
+      const { error: assignError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: user.id,
+          role_id: developerRoleId
+        })
+        .single();
+        
+      if (assignError && !assignError.message.includes('duplicate')) {
+        console.error(`Error assigning developer role to user ${user.id}:`, assignError);
+      } else {
+        console.log(`Assigned developer role to admin user ${user.id}`);
+      }
     }
     
     console.log('Completed auto-assignment of developer roles to admin users');
