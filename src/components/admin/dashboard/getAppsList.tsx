@@ -19,16 +19,52 @@ import { User } from "@/store/refactored-auth/types";
 // Define roles for each application
 const APP_ROLE_ACCESS = {
   events: ['admin', 'app_admin', 'event_creator', 'event_manager'],
-  documents: ['admin', 'app_admin', 'document_manager', 'finance_manager'],
-  tasks: ['admin', 'app_admin', 'task_manager', 'project_manager', 'finance_manager'],
-  ideas: ['admin', 'app_admin', 'idea_manager', 'finance_manager'],
-  finance: ['admin', 'app_admin', 'finance_manager'],
+  documents: ['admin', 'app_admin', 'document_manager', 'finance_manager', 'financial_manager'],
+  tasks: ['admin', 'app_admin', 'task_manager', 'project_manager', 'finance_manager', 'financial_manager'],
+  ideas: ['admin', 'app_admin', 'idea_manager', 'finance_manager', 'financial_manager'],
+  finance: ['admin', 'app_admin', 'finance_manager', 'financial_manager'],
   users: ['admin', 'app_admin'],
   website: ['admin', 'app_admin', 'content_manager'],
   store: ['admin', 'app_admin', 'store_manager'],
-  notifications: ['admin', 'app_admin', 'notification_manager'],
-  requests: ['admin', 'app_admin', 'request_manager', 'finance_manager'],
+  notifications: ['admin', 'app_admin', 'notification_manager', 'finance_manager', 'financial_manager'],
+  requests: ['admin', 'app_admin', 'request_manager', 'finance_manager', 'financial_manager'],
   developer: ['admin', 'app_admin', 'developer']
+};
+
+// Role mapping between Arabic and English
+const ROLE_MAPPING = {
+  // Arabic to English
+  'مدير': 'admin',
+  'مدير_التطبيق': 'app_admin',
+  'مدير_الفعاليات': 'event_manager',
+  'منشئ_الفعاليات': 'event_creator',
+  'مدير_المستندات': 'document_manager',
+  'مدير_المهام': 'task_manager',
+  'مدير_المشاريع': 'project_manager',
+  'مدير_الأفكار': 'idea_manager',
+  'مدير_مالي': 'finance_manager',
+  'مدير_المحتوى': 'content_manager',
+  'مدير_المتجر': 'store_manager',
+  'مدير_الإشعارات': 'notification_manager',
+  'مدير_الطلبات': 'request_manager',
+  'مطور': 'developer',
+  
+  // English to English (for direct matching)
+  'admin': 'admin',
+  'app_admin': 'app_admin',
+  'event_manager': 'event_manager',
+  'event_creator': 'event_creator',
+  'document_manager': 'document_manager',
+  'task_manager': 'task_manager',
+  'project_manager': 'project_manager',
+  'idea_manager': 'idea_manager',
+  'finance_manager': 'finance_manager',
+  'financial_manager': 'finance_manager', // Map financial_manager to finance_manager
+  'content_manager': 'content_manager',
+  'store_manager': 'store_manager',
+  'notification_manager': 'notification_manager',
+  'request_manager': 'request_manager',
+  'developer': 'developer'
 };
 
 // Define the list of all available applications
@@ -117,22 +153,33 @@ export const getAppsList = (notificationCounts: NotificationCounts, user?: User 
   // If no user is provided, return an empty array
   if (!user) return [];
   
+  console.log('GetAppsList - User:', { 
+    id: user.id, 
+    email: user.email, 
+    role: user.role,
+    isAdmin: user.isAdmin
+  });
+  
   // If user is admin, return all apps with notifications
   if (user.isAdmin) {
+    console.log('User is admin, showing all apps');
     return ALL_APPS.map(app => ({
       ...app,
       notifications: getNotificationCount(app.path, notificationCounts)
     }));
   }
   
-  // Filter apps based on user role
-  const userRole = user.role?.toLowerCase() || '';
+  // Get user role and normalize it
+  const userRole = user.role || '';
+  console.log('User role before mapping:', userRole);
   
   // For non-admin users, filter apps based on role
   const filteredApps = ALL_APPS.filter(app => {
     const appKey = getAppKeyFromPath(app.path);
     return appKey ? hasAccessToApp(userRole, appKey) : false;
   });
+  
+  console.log('Filtered apps for role', userRole, ':', filteredApps.length);
   
   // Add notification counts to filtered apps
   return filteredApps.map(app => ({
@@ -160,24 +207,23 @@ const getAppKeyFromPath = (path: string): string | null => {
 
 // Helper function to check if user role has access to app
 const hasAccessToApp = (userRole: string, appKey: string): boolean => {
-  // Normalize role for comparison (finance_manager or finance manager => finance_manager)
-  const normalizedRole = userRole.replace(/\s+/g, '_').toLowerCase();
+  // Normalize role for comparison: replace spaces with underscores and convert to lowercase
+  const normalizedRole = userRole.trim().replace(/\s+/g, '_').toLowerCase();
+  console.log('Normalized role:', normalizedRole);
+  
+  // Map the normalized role to a standard English role name if a mapping exists
+  const mappedRole = ROLE_MAPPING[normalizedRole as keyof typeof ROLE_MAPPING] || normalizedRole;
+  console.log('Mapped role:', mappedRole);
   
   // Get allowed roles for the app
   const allowedRoles = APP_ROLE_ACCESS[appKey as keyof typeof APP_ROLE_ACCESS] || [];
+  console.log('Allowed roles for', appKey, ':', allowedRoles);
   
-  // Check if user role is in allowed roles
-  return allowedRoles.some(role => {
-    // Check exact match
-    if (normalizedRole === role.toLowerCase()) return true;
-    
-    // Check equivalent roles (e.g., financial_manager and finance_manager)
-    if (normalizedRole === 'finance_manager' && role.toLowerCase() === 'financial_manager') return true;
-    if (normalizedRole === 'financial_manager' && role.toLowerCase() === 'finance_manager') return true;
-    
-    // Add additional role equivalence checks as needed
-    return false;
-  });
+  // Check if mapped role is in allowed roles
+  const hasAccess = allowedRoles.includes(mappedRole);
+  console.log('Has access:', hasAccess);
+  
+  return hasAccess;
 };
 
 // Helper function to get notification count for an app
