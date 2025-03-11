@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { RequestApproval, RequestWithApproval } from "../types/approvals";
+import { RequestWithApproval } from "../types/approvals";
 import { useAuthStore } from "@/store/refactored-auth";
 
 export const useIncomingRequests = () => {
@@ -13,80 +13,66 @@ export const useIncomingRequests = () => {
     try {
       console.log("Fetching incoming requests for user:", user.id);
       
+      // Get requests where the current user is the approver for the current step
       const { data, error } = await supabase
-        .from("request_approvals")
+        .from("requests")
         .select(`
           id,
-          request_id,
-          step_id,
+          title,
           status,
-          request:requests(
+          priority,
+          created_at,
+          current_step_id,
+          requester_id,
+          request_type_id,
+          request_type:request_types(id, name),
+          current_step:request_workflow_steps!inner(
             id,
-            title,
-            status,
-            priority,
-            created_at,
-            current_step_id,
-            requester_id,
-            request_type_id,
-            request_type:request_types(id, name)
-          ),
-          step:request_workflow_steps(id, step_name, step_type, approver_id)
+            step_name,
+            step_type,
+            approver_id,
+            approver_type
+          )
         `)
-        .eq("approver_id", user.id)
-        .eq("status", "pending");
+        .eq("status", "pending")
+        .eq("current_step.approver_id", user.id)
+        .order("created_at", { ascending: false });
       
       if (error) {
         console.error("Error fetching incoming requests:", error);
-        console.error("Error code:", error.code);
-        console.error("Error message:", error.message);
         return [];
       }
       
-      if (!data) {
-        console.log("No data returned from incoming requests query");
+      if (!data || data.length === 0) {
+        console.log("No incoming requests found for user:", user.id);
         return [];
       }
       
-      console.log("Raw response data for incoming requests:", JSON.stringify(data, null, 2));
+      console.log(`Found ${data.length} incoming requests`, data);
       
-      // Map the response to a more usable format
-      const requests = data.map((item: RequestApproval) => {
-        const requestData = item.request && item.request.length > 0 
-          ? item.request[0] 
-          : null;
-          
-        const stepData = item.step && item.step.length > 0 
-          ? item.step[0] 
-          : null;
-          
-        if (!requestData) {
-          console.warn(`Skipping approval ${item.id} due to missing request data`);
-          return null;
-        }
-        
-        let requestType = null;
-        if (requestData && requestData.request_type) {
-          if (Array.isArray(requestData.request_type) && requestData.request_type.length > 0) {
-            requestType = requestData.request_type[0];
-          }
-        }
-        
+      // Transform the data into the expected format
+      const transformedRequests = data.map(request => {
         return {
-          ...requestData,
-          request_type: requestType,
-          approval_id: item.id,
-          step_id: item.step_id,
-          step_name: stepData ? stepData.step_name : 'Unknown Step',
-          step_type: stepData ? stepData.step_type : 'decision',
-          requester_id: requestData.requester_id,
-          requester: null // Initialize requester field
+          id: request.id,
+          title: request.title,
+          status: request.status,
+          priority: request.priority,
+          created_at: request.created_at,
+          current_step_id: request.current_step_id,
+          requester_id: request.requester_id,
+          request_type_id: request.request_type_id,
+          request_type: request.request_type,
+          step_id: request.current_step?.id,
+          step_name: request.current_step?.step_name,
+          step_type: request.current_step?.step_type,
+          approval_id: null, // We'll fetch this separately if needed
+          requester: null // Will be populated below
         };
-      }).filter(Boolean) as RequestWithApproval[];
+      });
       
       // Add requester information
-      if (requests.length > 0) {
-        const requesterIds = requests
+      if (transformedRequests.length > 0) {
+        const requesterIds = transformedRequests
           .map(req => req.requester_id)
           .filter(Boolean);
           
@@ -100,7 +86,7 @@ export const useIncomingRequests = () => {
             (users || []).map(user => [user.id, user])
           );
           
-          requests.forEach(req => {
+          transformedRequests.forEach(req => {
             if (req.requester_id && userMap[req.requester_id]) {
               req.requester = userMap[req.requester_id];
             }
@@ -108,8 +94,7 @@ export const useIncomingRequests = () => {
         }
       }
       
-      console.log(`Fetched ${requests.length} incoming requests after processing`);
-      return requests;
+      return transformedRequests as RequestWithApproval[];
     } catch (error) {
       console.error("Error in fetchIncomingRequests:", error);
       return [];
