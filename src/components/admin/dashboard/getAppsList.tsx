@@ -1,4 +1,3 @@
-
 import { 
   Database, 
   ListChecks, 
@@ -19,49 +18,49 @@ import { User } from "@/store/refactored-auth/types";
 // Define roles for each application with comprehensive role access
 const APP_ROLE_ACCESS = {
   events: [
-    'admin', 'app_admin', 
+    'admin', 'app_admin', 'developer',
     'event_manager', 'event_creator', 'event_coordinator',
     'event_executor', 'event_media', 'event_planner'
   ],
   documents: [
-    'admin', 'app_admin', 
+    'admin', 'app_admin', 'developer',
     'document_manager', 'finance_manager', 'financial_manager',
     'document_reviewer', 'document_creator'
   ],
   tasks: [
-    'admin', 'app_admin', 
+    'admin', 'app_admin', 'developer',
     'task_manager', 'project_manager', 'finance_manager', 
     'financial_manager', 'task_creator', 'team_leader'
   ],
   ideas: [
-    'admin', 'app_admin', 
+    'admin', 'app_admin', 'developer',
     'idea_manager', 'finance_manager', 'financial_manager',
     'idea_reviewer', 'idea_creator', 'innovation_manager'
   ],
   finance: [
-    'admin', 'app_admin', 
+    'admin', 'app_admin', 'developer',
     'finance_manager', 'financial_manager', 'accountant',
     'budget_manager', 'resource_manager'
   ],
   users: [
-    'admin', 'app_admin', 
+    'admin', 'app_admin', 'developer',
     'hr_manager', 'user_manager'
   ],
   website: [
-    'admin', 'app_admin', 
+    'admin', 'app_admin', 'developer',
     'content_manager', 'media_manager', 'web_editor'
   ],
   store: [
-    'admin', 'app_admin', 
+    'admin', 'app_admin', 'developer',
     'store_manager', 'inventory_manager', 'sales_manager'
   ],
   notifications: [
-    'admin', 'app_admin', 
+    'admin', 'app_admin', 'developer',
     'notification_manager', 'finance_manager', 'financial_manager',
     'communication_manager'
   ],
   requests: [
-    'admin', 'app_admin', 
+    'admin', 'app_admin', 'developer',
     'request_manager', 'finance_manager', 'financial_manager',
     'approval_manager'
   ],
