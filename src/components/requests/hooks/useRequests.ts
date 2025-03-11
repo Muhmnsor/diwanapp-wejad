@@ -38,9 +38,13 @@ export const useRequests = () => {
     if (!user) throw new Error("User not authenticated");
     
     try {
-      console.log("Fetching incoming requests for user:", user.id);
+      console.log("=== بدء جلب الطلبات الواردة ===");
+      console.log("معلومات المستخدم:", user.id, user.email);
+      console.log("نوع المستخدم:", user.role || "غير محدد");
+      console.log("هل المستخدم مدير:", user.isAdmin ? "نعم" : "لا");
       
-      const { data, error } = await supabase
+      // First attempt: Fetch direct approvals
+      const { data: directApprovals, error: directError } = await supabase
         .from("request_approvals")
         .select(`
           id,
@@ -59,24 +63,118 @@ export const useRequests = () => {
           step:request_workflow_steps(id, step_name, step_type, approver_id)
         `)
         .eq("approver_id", user.id)
-        .eq("status", "pending")
-        .order("created_at", { ascending: false });
+        .eq("status", "pending");
       
-      if (error) {
-        console.error("Error fetching incoming requests:", error);
-        console.error("Error code:", error.code);
-        console.error("Error message:", error.message);
+      if (directError) {
+        console.error("خطأ في جلب الطلبات المباشرة:", directError);
+        console.error("رمز الخطأ:", directError.code);
+        console.error("رسالة الخطأ:", directError.message);
+        
+        if (directError.code === "PGRST116") {
+          console.error("خطأ تكرار في الاستعلام. هذا قد يشير إلى مشكلة في سياسة RLS");
+        }
+      }
+      
+      console.log("عدد الطلبات المباشرة:", directApprovals?.length || 0);
+      
+      // Get user's roles for role-based approvals
+      console.log("جلب أدوار المستخدم لفحص الطلبات المرتبطة بالأدوار");
+      const { data: userRoles, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("role_id")
+        .eq("user_id", user.id);
+      
+      if (rolesError) {
+        console.error("خطأ في جلب أدوار المستخدم:", rolesError);
+      }
+      
+      let roleIds: string[] = [];
+      if (userRoles && userRoles.length > 0) {
+        roleIds = userRoles.map(ur => ur.role_id);
+        console.log("أدوار المستخدم:", roleIds);
+      } else {
+        console.log("المستخدم ليس لديه أدوار مخصصة");
+      }
+      
+      // Second attempt: Fetch role-based approvals if user has roles
+      let roleBased: any[] = [];
+      if (roleIds.length > 0) {
+        console.log("جلب الطلبات المرتبطة بأدوار المستخدم");
+        
+        // Get step IDs for approvals where approver_type='role' and approver_id is in user's roles
+        const { data: roleSteps, error: roleStepsError } = await supabase
+          .from("request_workflow_steps")
+          .select("id")
+          .eq("approver_type", "role")
+          .in("approver_id", roleIds);
+        
+        if (roleStepsError) {
+          console.error("خطأ في جلب خطوات الأدوار:", roleStepsError);
+        } else if (roleSteps && roleSteps.length > 0) {
+          console.log("خطوات سير العمل المرتبطة بالأدوار:", roleSteps.length);
+          
+          const stepIds = roleSteps.map(step => step.id);
+          
+          // Get pending approvals for these steps
+          const { data: roleApprovals, error: roleApprovalsError } = await supabase
+            .from("request_approvals")
+            .select(`
+              id,
+              request_id,
+              step_id,
+              status,
+              request:requests(
+                id,
+                title,
+                status,
+                priority,
+                created_at,
+                current_step_id,
+                request_type:request_types(id, name)
+              ),
+              step:request_workflow_steps(id, step_name, step_type, approver_id)
+            `)
+            .in("step_id", stepIds)
+            .eq("status", "pending");
+          
+          if (roleApprovalsError) {
+            console.error("خطأ في جلب الطلبات المرتبطة بالأ��وار:", roleApprovalsError);
+          } else {
+            console.log("عدد الطلبات المرتبطة بالأدوار:", roleApprovals?.length || 0);
+            roleBased = roleApprovals || [];
+          }
+        } else {
+          console.log("لم يتم العثور على خطوات مرتبطة بأدوار المستخدم");
+        }
+      }
+      
+      // Combine direct and role-based approvals
+      const allApprovals = [...(directApprovals || []), ...roleBased];
+      console.log("إجمالي الطلبات الواردة:", allApprovals.length);
+      
+      // Debug details about the approvals
+      if (allApprovals.length > 0) {
+        console.log("تفاصيل أول طلب وارد:", JSON.stringify(allApprovals[0], null, 2));
+      }
+      
+      // Check for RLS policy issues
+      const { data: testRLS, error: rlsError } = await supabase
+        .from("request_approvals")
+        .select("id")
+        .limit(1);
+      
+      if (rlsError) {
+        console.error("اختبار سياسة RLS: فشل الوصول إلى جدول request_approvals:", rlsError);
+      } else {
+        console.log("اختبار سياسة RLS: يمكن الوصول إلى جدول request_approvals");
+      }
+      
+      if (!allApprovals || allApprovals.length === 0) {
+        console.log("لم يتم العثور على طلبات واردة للمستخدم");
         return [];
       }
       
-      if (!data) {
-        console.log("No data returned from incoming requests query");
-        return [];
-      }
-      
-      console.log("Raw response data structure:", JSON.stringify(data, null, 2));
-      
-      const requests = data.map((item: RequestApprovalResponse) => {
+      const requests = allApprovals.map((item: RequestApprovalResponse) => {
         const requestData = item.request && item.request.length > 0 
           ? item.request[0] 
           : null;
@@ -86,7 +184,7 @@ export const useRequests = () => {
           : null;
           
         if (!requestData) {
-          console.warn(`Skipping approval ${item.id} due to missing request data`);
+          console.warn(`تخطي الموافقة ${item.id} بسبب نقص بيانات الطلب`);
           return null;
         }
         
@@ -107,10 +205,11 @@ export const useRequests = () => {
         };
       }).filter(Boolean);
       
-      console.log(`Fetched ${requests.length} incoming requests`);
+      console.log(`تم جلب ${requests.length} طلب وارد بنجاح`);
+      console.log("=== انتهاء جلب الطلبات الواردة ===");
       return requests;
     } catch (error) {
-      console.error("Error in fetchIncomingRequests:", error);
+      console.error("خطأ غير متوقع في fetchIncomingRequests:", error);
       return [];
     }
   };

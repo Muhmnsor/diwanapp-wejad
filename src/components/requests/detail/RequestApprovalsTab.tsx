@@ -9,11 +9,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { InfoIcon } from "lucide-react";
 
 interface RequestApproval {
   id: string;
-  step?: { step_name?: string };
-  approver?: { display_name?: string; email?: string };
+  step?: { 
+    step_name?: string;
+    approver_type?: string; 
+  };
+  approver?: { 
+    display_name?: string; 
+    email?: string;
+    id?: string;
+  };
   status: string;
   comments?: string;
   approved_at?: string;
@@ -37,6 +46,7 @@ export const RequestApprovalsTab = ({ approvals }: RequestApprovalsTabProps) => 
       <TableHeader>
         <TableRow>
           <TableHead>الخطوة</TableHead>
+          <TableHead>نوع المعتمد</TableHead>
           <TableHead>المسؤول</TableHead>
           <TableHead>الحالة</TableHead>
           <TableHead>التعليقات</TableHead>
@@ -47,11 +57,33 @@ export const RequestApprovalsTab = ({ approvals }: RequestApprovalsTabProps) => 
         {approvals.map((approval) => (
           <TableRow key={approval.id}>
             <TableCell>{approval.step?.step_name || "خطوة غير معروفة"}</TableCell>
-            <TableCell>{approval.approver?.display_name || approval.approver?.email || "غير معروف"}</TableCell>
+            <TableCell>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger className="flex items-center">
+                    {approval.step?.approver_type === 'user' ? "مستخدم" : 
+                     approval.step?.approver_type === 'role' ? "دور وظيفي" : 
+                     "غير معروف"}
+                    <InfoIcon className="h-4 w-4 mr-1 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{approval.step?.approver_type === 'user' ? 
+                         "موافقة مستخدم محدد" : 
+                         "موافقة مستندة إلى الدور الوظيفي"}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </TableCell>
+            <TableCell>
+              {approval.approver?.display_name || approval.approver?.email || 
+               (approval.step?.approver_type === 'role' ? "أي مستخدم بالدور المحدد" : "غير معروف")}
+            </TableCell>
             <TableCell>
               {approval.status === "approved" ? 
                 <Badge variant="success">تمت الموافقة</Badge> : 
-                <Badge variant="destructive">مرفوض</Badge>}
+                approval.status === "rejected" ?
+                <Badge variant="destructive">مرفوض</Badge> :
+                <Badge variant="outline">معلق</Badge>}
             </TableCell>
             <TableCell>{approval.comments || "-"}</TableCell>
             <TableCell>

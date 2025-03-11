@@ -4596,15 +4596,38 @@ export type Database = {
             }
             Returns: boolean
           }
-      is_admin_user: {
+      is_admin_user:
+        | {
+            Args: Record<PropertyKey, never>
+            Returns: boolean
+          }
+        | {
+            Args: {
+              user_id: string
+            }
+            Returns: boolean
+          }
+      is_approver_for_request: {
         Args: {
-          user_id: string
+          request_id: string
+        }
+        Returns: boolean
+      }
+      is_approver_for_step: {
+        Args: {
+          step_id: string
         }
         Returns: boolean
       }
       is_developer: {
         Args: {
           user_id: string
+        }
+        Returns: boolean
+      }
+      is_request_accessible: {
+        Args: {
+          request_id: string
         }
         Returns: boolean
       }
@@ -4627,6 +4650,12 @@ export type Database = {
             Returns: boolean
           }
       is_request_creator: {
+        Args: {
+          request_id: string
+        }
+        Returns: boolean
+      }
+      is_request_requester: {
         Args: {
           request_id: string
         }
