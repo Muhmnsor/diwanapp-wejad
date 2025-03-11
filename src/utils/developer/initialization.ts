@@ -1,149 +1,91 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { assignDeveloperRole } from "./roleManagement";
 
-// Initialize developer role by making sure it exists
-export const initializeDeveloperRole = async (): Promise<boolean> => {
+/**
+ * دالة للتحقق من وجود دور المطور وإنشائه إذا لم يكن موجوداً
+ */
+export const initializeDeveloperRole = async (): Promise<string | null> => {
   try {
-    // Check if developer role exists
-    const { data: existingRole, error: roleError } = await supabase
-      .from('roles')
-      .select('id')
-      .eq('name', 'developer')
-      .maybeSingle();
-      
-    if (roleError) {
-      console.error('Error checking for developer role:', roleError);
-      return false;
-    }
-    
-    // If role doesn't exist, create it
-    if (!existingRole) {
-      const { data: newRole, error: createError } = await supabase
-        .from('roles')
-        .insert({
-          name: 'developer',
-          description: 'مطور النظام مع صلاحيات خاصة'
-        })
-        .select()
-        .single();
-        
-      if (createError) {
-        console.error('Error creating developer role:', createError);
-        return false;
-      }
-      
-      console.log('Developer role created successfully');
-      
-      // Assign default developer permissions to the new role
-      const { data: permissions, error: permissionsError } = await supabase
-        .from('permissions')
-        .select('id')
-        .eq('module', 'developer');
-        
-      if (permissionsError) {
-        console.error('Error fetching developer permissions:', permissionsError);
-        return true; // Still return true as role was created
-      }
-      
-      if (permissions && permissions.length > 0) {
-        const rolePermissions = permissions.map(p => ({
-          role_id: newRole.id,
-          permission_id: p.id
-        }));
-        
-        const { error: insertError } = await supabase
-          .from('role_permissions')
-          .insert(rolePermissions);
-          
-        if (insertError) {
-          console.error('Error assigning default permissions to developer role:', insertError);
-        } else {
-          console.log('Default permissions assigned to developer role');
-        }
-      }
-      
-      return true;
-    }
-    
-    return true; // Role already exists
-  } catch (error) {
-    console.error('Error in initializeDeveloperRole:', error);
-    return false;
-  }
-};
-
-// Auto assign the developer role to the first admin user if no developers exist
-export const autoAssignDeveloperRole = async (): Promise<boolean> => {
-  try {
-    // Check if there are any users with developer role
-    const { data: developerUsers, error: checkError } = await supabase
-      .from('user_roles')
-      .select('user_id')
-      .eq('role_id', (await supabase
-        .from('roles')
-        .select('id')
-        .eq('name', 'developer')
-        .single()).data?.id);
-        
-    if (checkError) {
-      console.error('Error checking for existing developers:', checkError);
-      return false;
-    }
-    
-    // If there are already users with developer role, do nothing
-    if (developerUsers && developerUsers.length > 0) {
-      return true;
-    }
-    
-    // Get the first admin user
-    const { data: adminProfiles, error: adminError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('is_admin', true)
-      .limit(1);
-      
-    if (adminError) {
-      console.error('Error fetching admin profiles:', adminError);
-      return false;
-    }
-    
-    if (!adminProfiles || adminProfiles.length === 0) {
-      console.log('No admin users found for auto-assignment of developer role');
-      return false;
-    }
-    
-    const adminId = adminProfiles[0].id;
-    
-    // Get developer role ID
-    const { data: developerRole, error: roleError } = await supabase
+    // التحقق من وجود دور المطور
+    const { data: existingRole, error: fetchError } = await supabase
       .from('roles')
       .select('id')
       .eq('name', 'developer')
       .single();
-      
-    if (roleError) {
-      console.error('Error fetching developer role:', roleError);
-      return false;
+
+    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = not found
+      console.error('Error checking developer role:', fetchError);
+      return null;
     }
-    
-    // Assign role to admin
-    const { error: assignError } = await supabase
-      .from('user_roles')
+
+    // إذا كان الدور موجوداً، نعيد معرّفه
+    if (existingRole?.id) {
+      console.log('Developer role already exists:', existingRole.id);
+      return existingRole.id;
+    }
+
+    // إنشاء دور المطور إذا لم يكن موجوداً
+    const { data: newRole, error: insertError } = await supabase
+      .from('roles')
       .insert({
-        user_id: adminId,
-        role_id: developerRole.id
-      });
-      
-    if (assignError) {
-      console.error('Error auto-assigning developer role:', assignError);
-      return false;
+        name: 'developer',
+        description: 'Developer role with access to development tools and settings'
+      })
+      .select('id')
+      .single();
+
+    if (insertError) {
+      console.error('Error creating developer role:', insertError);
+      return null;
+    }
+
+    console.log('Created new developer role:', newRole?.id);
+    return newRole?.id || null;
+  } catch (error) {
+    console.error('Unexpected error in initializeDeveloperRole:', error);
+    return null;
+  }
+};
+
+/**
+ * التعيين التلقائي لدور المطور للمستخدمين الإداريين
+ */
+export const autoAssignDeveloperRole = async (): Promise<void> => {
+  try {
+    // الحصول على معرّف دور المطور أو إنشائه
+    const developerRoleId = await initializeDeveloperRole();
+    
+    if (!developerRoleId) {
+      console.error('Failed to initialize developer role');
+      return;
     }
     
-    console.log('Successfully auto-assigned developer role to admin user');
-    return true;
+    // العثور على المستخدمين الإداريين
+    const { data: adminUsers, error: adminError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('is_admin', true);
+      
+    if (adminError) {
+      console.error('Error fetching admin users:', adminError);
+      return;
+    }
+    
+    if (!adminUsers || adminUsers.length === 0) {
+      console.log('No admin users found for developer role assignment');
+      return;
+    }
+    
+    console.log(`Found ${adminUsers.length} admin users to assign developer role`);
+    
+    // تعيين دور المطور لكل مستخدم إداري
+    for (const user of adminUsers) {
+      await assignDeveloperRole(user.id);
+    }
+    
+    console.log('Completed auto-assignment of developer roles to admin users');
   } catch (error) {
     console.error('Error in autoAssignDeveloperRole:', error);
-    return false;
   }
 };
