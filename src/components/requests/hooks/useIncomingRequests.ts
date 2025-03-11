@@ -15,8 +15,8 @@ export const useIncomingRequests = () => {
       console.log("User role:", user.role);
       console.log("User isAdmin:", user.isAdmin);
       
-      // Use request_approvals table with the correct relationship to request_workflow_steps
-      const { data: approvals, error } = await supabase
+      // First, check for direct user approvals
+      const { data: directApprovals, error: directError } = await supabase
         .from("request_approvals")
         .select(`
           id,
@@ -44,17 +44,86 @@ export const useIncomingRequests = () => {
         .eq("status", "pending")
         .order("created_at", { ascending: false });
       
-      if (error) {
-        console.error("Error fetching approvals:", error);
-        console.error("Error code:", error.code);
-        console.error("Error message:", error.message);
-        throw error;
+      if (directError) {
+        console.error("Error fetching direct approvals:", directError);
+        console.error("Error code:", directError.code);
+        console.error("Error message:", directError.message);
       }
       
-      console.log(`Found ${approvals?.length || 0} pending approvals`, approvals);
+      console.log(`Found ${directApprovals?.length || 0} direct pending approvals`, directApprovals);
+      
+      // Check if user has any roles
+      let roleApprovals = [];
+      if (user.role) {
+        console.log("Checking for role-based approvals with role:", user.role);
+        
+        // Get the role ID based on role name
+        const { data: roleData } = await supabase
+          .from("roles")
+          .select("id")
+          .eq("name", user.role)
+          .single();
+          
+        if (roleData?.id) {
+          console.log("Found role ID:", roleData.id);
+          
+          // Get workflow steps where this role is the approver
+          const { data: roleSteps } = await supabase
+            .from("request_workflow_steps")
+            .select("id")
+            .eq("approver_type", "role")
+            .eq("approver_id", roleData.id);
+            
+          if (roleSteps && roleSteps.length > 0) {
+            console.log("Found role steps:", roleSteps);
+            
+            // Get approvals for these steps
+            const stepIds = roleSteps.map(step => step.id);
+            
+            const { data: roleBasedApprovals, error: roleError } = await supabase
+              .from("request_approvals")
+              .select(`
+                id,
+                request_id,
+                status,
+                step_id,
+                request:requests(
+                  id,
+                  title,
+                  status,
+                  priority,
+                  created_at,
+                  current_step_id,
+                  requester_id,
+                  request_type_id,
+                  request_type:request_types(id, name)
+                ),
+                step:request_workflow_steps(
+                  id,
+                  step_name,
+                  step_type
+                )
+              `)
+              .in("step_id", stepIds)
+              .eq("status", "pending")
+              .order("created_at", { ascending: false });
+              
+            if (roleError) {
+              console.error("Error fetching role approvals:", roleError);
+            } else {
+              console.log(`Found ${roleBasedApprovals?.length || 0} role-based approvals`);
+              roleApprovals = roleBasedApprovals || [];
+            }
+          }
+        }
+      }
+      
+      // Combine direct and role-based approvals
+      const allApprovals = [...(directApprovals || []), ...roleApprovals];
+      console.log(`Combined ${allApprovals.length} total approvals`);
       
       // Process the data efficiently
-      const transformedRequests = (approvals || [])
+      const transformedRequests = (allApprovals || [])
         .filter(approval => approval.request) // Filter out any null requests
         .map(approval => {
           // Handle request - could be an object or array
@@ -110,12 +179,6 @@ export const useIncomingRequests = () => {
         .filter(Boolean); // Remove any null entries
       
       console.log(`Processed ${transformedRequests.length} incoming requests`);
-      
-      // If we have no results but user is admin, try to fetch approvals that could be assigned by role
-      if (transformedRequests.length === 0 && user.isAdmin) {
-        console.log("User is admin, checking for role-based approvals");
-        // This could be implemented here to check for role-based approvals
-      }
       
       // Get requester information efficiently by using a Set for unique IDs
       if (transformedRequests.length > 0) {
