@@ -16,6 +16,7 @@ export const PermissionItem = ({
   // Handle the click event to toggle permission
   const handleToggle = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // Prevent event bubbling
     onToggle(permission.id);
   };
 
@@ -25,6 +26,8 @@ export const PermissionItem = ({
       onClick={handleToggle}
       data-permission-id={permission.id}
       data-testid={`permission-item-${permission.id}`}
+      role="button"
+      aria-pressed={isChecked}
     >
       <div
         className={`w-5 h-5 mt-0.5 border rounded flex items-center justify-center mr-2 ${

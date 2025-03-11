@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Role } from "../types";
@@ -95,17 +95,17 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
   }, [rolePermissions]);
 
   // Handle permission toggle
-  const handlePermissionToggle = (permissionId: string) => {
+  const handlePermissionToggle = useCallback((permissionId: string) => {
     console.log('Toggling permission:', permissionId, 'Current state:', selectedPermissions.includes(permissionId));
     setSelectedPermissions(prev => 
       prev.includes(permissionId)
         ? prev.filter(id => id !== permissionId)
         : [...prev, permissionId]
     );
-  };
+  }, [selectedPermissions]);
 
   // Handle module toggle (select/deselect all permissions in a module)
-  const handleModuleToggle = (moduleName: string) => {
+  const handleModuleToggle = useCallback((moduleName: string) => {
     const modulePermissions = modules.find(m => m.name === moduleName)?.permissions || [];
     const modulePermissionIds = modulePermissions.map(p => p.id);
     
@@ -124,16 +124,16 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
       });
       setSelectedPermissions(newSelected);
     }
-  };
+  }, [modules, selectedPermissions]);
 
   // Toggle module open/closed state
-  const toggleModuleOpen = (moduleName: string) => {
+  const toggleModuleOpen = useCallback((moduleName: string) => {
     setModules(prev => prev.map(module => 
       module.name === moduleName
         ? { ...module, isOpen: !module.isOpen }
         : module
     ));
-  };
+  }, []);
 
   // Filter modules based on search query
   const filteredModules = modules.map(module => ({
@@ -144,54 +144,32 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
     )
   })).filter(module => module.permissions.length > 0);
 
-  // Save role permissions with transaction
+  // Save role permissions using our RPC function
   const handleSave = async () => {
     if (!role.id) return;
     
     setIsSaving(true);
     
     try {
-      // Start a transaction
-      const { error: transactionError } = await supabase.rpc('begin_transaction');
-      if (transactionError) throw transactionError;
+      console.log('Saving permissions for role:', role.id);
+      console.log('Selected permissions:', selectedPermissions);
       
-      try {
-        // Delete existing role permissions
-        const { error: deleteError } = await supabase
-          .from('role_permissions')
-          .delete()
-          .eq('role_id', role.id);
-        
-        if (deleteError) throw deleteError;
-        
-        // Insert new role permissions
-        if (selectedPermissions.length > 0) {
-          const rolePerm = selectedPermissions.map(permId => ({
-            role_id: role.id,
-            permission_id: permId
-          }));
-          
-          const { error: insertError } = await supabase
-            .from('role_permissions')
-            .insert(rolePerm);
-          
-          if (insertError) throw insertError;
+      // Call our RPC function to update permissions in a transaction
+      const { data, error } = await supabase.rpc(
+        'update_role_permissions', 
+        { 
+          p_role_id: role.id,
+          p_permission_ids: selectedPermissions
         }
-        
-        // Commit the transaction
-        const { error: commitError } = await supabase.rpc('commit_transaction');
-        if (commitError) throw commitError;
-        
-        toast.success('تم حفظ صلاحيات الدور بنجاح');
-        console.log('Saved permissions:', selectedPermissions.length);
-        
-        // Refetch to confirm saved state
-        await refetchRolePermissions();
-      } catch (error) {
-        // Rollback the transaction on error
-        await supabase.rpc('rollback_transaction');
-        throw error;
-      }
+      );
+      
+      if (error) throw error;
+      
+      console.log('Save result:', data);
+      toast.success('تم حفظ صلاحيات الدور بنجاح');
+      
+      // Refetch to confirm saved state
+      await refetchRolePermissions();
     } catch (error) {
       console.error('Error saving role permissions:', error);
       toast.error('حدث خطأ أثناء حفظ صلاحيات الدور');

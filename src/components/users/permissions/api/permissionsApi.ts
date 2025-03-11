@@ -39,44 +39,25 @@ export const fetchRolePermissions = async (roleId: string): Promise<string[]> =>
   }
 };
 
-// حفظ أذونات الدور
+// حفظ أذونات الدور باستخدام دالة RPC المخصصة
 export const saveRolePermissions = async (roleId: string, permissionIds: string[]): Promise<boolean> => {
   try {
-    // First, delete all existing role permissions
-    const { error: deleteError } = await supabase
-      .from('role_permissions')
-      .delete()
-      .eq('role_id', roleId);
-      
-    if (deleteError) {
-      console.error('Error deleting existing role permissions:', deleteError);
-      throw deleteError;
-    }
+    const { data, error } = await supabase.rpc(
+      'update_role_permissions', 
+      { 
+        p_role_id: roleId,
+        p_permission_ids: permissionIds
+      }
+    );
     
-    // If there are no permissions to add, we're done
-    if (permissionIds.length === 0) {
-      return true;
-    }
-    
-    // Prepare the data for insertion
-    const rolePermissions = permissionIds.map(permissionId => ({
-      role_id: roleId,
-      permission_id: permissionId
-    }));
-    
-    // Insert the new role permissions
-    const { error: insertError } = await supabase
-      .from('role_permissions')
-      .insert(rolePermissions);
-      
-    if (insertError) {
-      console.error('Error inserting role permissions:', insertError);
-      throw insertError;
+    if (error) {
+      console.error('Error saving role permissions through RPC:', error);
+      throw error;
     }
     
     return true;
   } catch (error) {
-    console.error('Error saving role permissions:', error);
+    console.error('Error in saveRolePermissions:', error);
     throw error;
   }
 };
