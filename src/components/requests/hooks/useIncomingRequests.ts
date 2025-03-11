@@ -31,6 +31,11 @@ export const useIncomingRequests = () => {
             requester_id,
             request_type_id,
             request_type:request_types(id, name)
+          ),
+          step:request_workflow_steps(
+            id,
+            step_name,
+            step_type
           )
         `)
         .eq("approver_id", user.id)
@@ -39,6 +44,8 @@ export const useIncomingRequests = () => {
       
       if (approvalsError) {
         console.error("Error fetching incoming requests via approvals:", approvalsError);
+        console.error("Error code:", approvalsError.code);
+        console.error("Error message:", approvalsError.message);
         return [];
       }
       
@@ -46,6 +53,7 @@ export const useIncomingRequests = () => {
       const transformedRequests = (approvals || [])
         .filter(approval => approval.request) // Filter out any null requests
         .map(approval => {
+          // Handle request - could be an object or array
           const request = Array.isArray(approval.request) 
             ? approval.request[0] 
             : approval.request;
@@ -64,6 +72,19 @@ export const useIncomingRequests = () => {
               requestType = request.request_type;
             }
           }
+
+          // Extract step data - could be an object or array
+          let stepName = null;
+          let stepType = null;
+          if (approval.step) {
+            if (Array.isArray(approval.step) && approval.step.length > 0) {
+              stepName = approval.step[0].step_name;
+              stepType = approval.step[0].step_type;
+            } else if (typeof approval.step === 'object') {
+              stepName = approval.step.step_name;
+              stepType = approval.step.step_type;
+            }
+          }
           
           return {
             id: request.id,
@@ -76,6 +97,8 @@ export const useIncomingRequests = () => {
             request_type_id: request.request_type_id,
             request_type: requestType,
             step_id: approval.step_id,
+            step_name: stepName,
+            step_type: stepType,
             approval_id: approval.id,
             requester: null // Will be populated below
           };
@@ -103,32 +126,6 @@ export const useIncomingRequests = () => {
           transformedRequests.forEach(req => {
             if (req.requester_id && userMap[req.requester_id]) {
               req.requester = userMap[req.requester_id];
-            }
-          });
-        }
-      }
-      
-      // Fetch steps information if needed
-      if (transformedRequests.length > 0) {
-        const stepIds = transformedRequests
-          .map(req => req.step_id)
-          .filter(Boolean);
-          
-        if (stepIds.length > 0) {
-          const { data: steps } = await supabase
-            .from("request_workflow_steps")
-            .select("id, step_name, step_type")
-            .in("id", stepIds);
-            
-          const stepsMap = Object.fromEntries(
-            (steps || []).map(step => [step.id, step])
-          );
-          
-          transformedRequests.forEach(req => {
-            if (req.step_id && stepsMap[req.step_id]) {
-              // Add step information directly to request object
-              req.step_name = stepsMap[req.step_id].step_name;
-              req.step_type = stepsMap[req.step_id].step_type;
             }
           });
         }

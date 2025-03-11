@@ -12,8 +12,8 @@ import { Badge } from "@/components/ui/badge";
 
 interface RequestApproval {
   id: string;
-  step?: { step_name?: string };
-  approver?: { display_name?: string; email?: string };
+  step?: { step_name?: string } | null;
+  approver?: { display_name?: string; email?: string } | null;
   status: string;
   comments?: string;
   approved_at?: string;
@@ -51,7 +51,9 @@ export const RequestApprovalsTab = ({ approvals }: RequestApprovalsTabProps) => 
             <TableCell>
               {approval.status === "approved" ? 
                 <Badge variant="success">تمت الموافقة</Badge> : 
-                <Badge variant="destructive">مرفوض</Badge>}
+                approval.status === "rejected" ?
+                <Badge variant="destructive">مرفوض</Badge> :
+                <Badge variant="outline">قيد الانتظار</Badge>}
             </TableCell>
             <TableCell>{approval.comments || "-"}</TableCell>
             <TableCell>
