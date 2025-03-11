@@ -1,26 +1,15 @@
 
-// Re-export all developer-related functionality
+// Export directly from the modules to avoid duplicate export issues
 export * from './modeManagement';
-// Export roleManagement functions (except the duplicated one)
-export {
+export { 
   isDeveloper,
   assignDeveloperRole,
   removeDeveloperRole
 } from './roleManagement';
-// Export initialization functionality
-export {
-  initializeDeveloperRole,
-  autoAssignDeveloperRole
-} from './initialization';
 
-// Initialize developer features on application start
-export const initializeDeveloperFeatures = async (): Promise<void> => {
-  try {
-    // Initialize developer role and make sure it exists
-    await initializeDeveloperRole();
-    
-    console.log('Developer features initialized successfully');
-  } catch (error) {
-    console.error('Failed to initialize developer features:', error);
-  }
-};
+// Re-export from initialization but avoid duplicating initializeDeveloperRole
+export { autoAssignDeveloperRole } from './initialization';
+
+// Re-export initializeDeveloperRole with an explicit choice of which implementation to use
+// We're choosing to export the implementation from roleManagement.ts as the canonical one
+export { initializeDeveloperRole } from './roleManagement';

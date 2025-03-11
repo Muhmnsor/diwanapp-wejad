@@ -1,8 +1,7 @@
 
-import { useEffect, useState } from "react";
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
-import { DashboardApps, AppItem } from "@/components/admin/dashboard/DashboardApps";
+import { DashboardApps } from "@/components/admin/dashboard/DashboardApps";
 import { DashboardNotifications } from "@/components/admin/dashboard/DashboardNotifications";
 import { DashboardHeader } from "@/components/admin/dashboard/DashboardHeader";
 import { useNotificationCounts } from "@/hooks/dashboard/useNotificationCounts";
@@ -10,45 +9,20 @@ import { useUserName } from "@/hooks/dashboard/useUserName";
 import { getAppsList } from "@/components/admin/dashboard/getAppsList";
 import { DeveloperToolbar } from "@/components/developer/DeveloperToolbar";
 import { useAuthStore } from "@/store/refactored-auth";
-import { initializeDeveloperRole } from "@/utils/developerRole";
-import { filterAppsByPermission } from "@/utils/permissions/appPermissions";
+import { useEffect } from "react";
+import { initializeDeveloperRole } from "@/utils/developer/roleManagement";
 
 const AdminDashboard = () => {
   const { data: userName, isLoading: isLoadingUser } = useUserName();
   const { data: notificationCounts } = useNotificationCounts();
   const { user } = useAuthStore();
   
-  const [filteredApps, setFilteredApps] = useState<AppItem[]>([]);
-  const [isLoadingApps, setIsLoadingApps] = useState(true);
-  
+  const apps = getAppsList(notificationCounts);
+
   useEffect(() => {
     // Initialize developer role
     initializeDeveloperRole();
   }, []);
-
-  useEffect(() => {
-    const loadApps = async () => {
-      setIsLoadingApps(true);
-      try {
-        // Get all apps
-        const allApps = getAppsList(notificationCounts);
-        
-        // If user exists, filter apps based on permissions
-        if (user?.id) {
-          const permittedApps = await filterAppsByPermission(user.id, allApps);
-          setFilteredApps(permittedApps);
-        } else {
-          setFilteredApps([]);
-        }
-      } catch (error) {
-        console.error("Error loading apps:", error);
-      } finally {
-        setIsLoadingApps(false);
-      }
-    };
-    
-    loadApps();
-  }, [user?.id, notificationCounts]);
 
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
@@ -60,7 +34,7 @@ const AdminDashboard = () => {
           isLoading={isLoadingUser} 
         />
         
-        <DashboardApps apps={filteredApps} isLoading={isLoadingApps} />
+        <DashboardApps apps={apps} />
 
         <DashboardNotifications 
           notificationCount={notificationCounts.notifications} 
