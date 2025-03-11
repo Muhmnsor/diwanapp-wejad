@@ -1,65 +1,45 @@
 
-import { Navigate, useLocation } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { useAuthStore } from "@/store/refactored-auth";
-import { useEffect, useState } from "react";
 import { isDeveloper } from "@/utils/developer/roleManagement";
-import { toast } from "sonner";
 
 interface DeveloperRouteProps {
   children: React.ReactNode;
 }
 
-const DeveloperRoute = ({ children }: DeveloperRouteProps) => {
-  const { user, isAuthenticated } = useAuthStore();
-  const location = useLocation();
+const DeveloperRoute: React.FC<DeveloperRouteProps> = ({ children }) => {
+  const { user } = useAuthStore();
+  const [hasDeveloperRole, setHasDeveloperRole] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasDeveloperAccess, setHasDeveloperAccess] = useState(false);
-  
-  useEffect(() => {
-    const checkDeveloperAccess = async () => {
-      setIsLoading(true);
 
-      if (!isAuthenticated || !user) {
-        setHasDeveloperAccess(false);
+  useEffect(() => {
+    const checkDeveloperRole = async () => {
+      if (!user) {
+        setHasDeveloperRole(false);
         setIsLoading(false);
         return;
       }
 
       try {
-        const hasDeveloper = await isDeveloper(user.id);
-        setHasDeveloperAccess(hasDeveloper);
-        
-        console.log('Developer access check:', { 
-          userId: user.id, 
-          email: user.email,
-          role: user.role,
-          hasDeveloperAccess: hasDeveloper 
-        });
+        const hasDeveloperAccess = await isDeveloper(user.id);
+        setHasDeveloperRole(hasDeveloperAccess);
       } catch (error) {
-        console.error('Error checking developer access:', error);
-        setHasDeveloperAccess(false);
+        console.error("Error checking developer role:", error);
+        setHasDeveloperRole(false);
       } finally {
         setIsLoading(false);
       }
     };
 
-    checkDeveloperAccess();
-  }, [isAuthenticated, user]);
+    checkDeveloperRole();
+  }, [user]);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <div className="text-center p-8">جاري التحميل...</div>;
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  if (!hasDeveloperAccess) {
-    toast.error("ليس لديك صلاحية الوصول إلى إعدادات المطور");
+  if (!user || !hasDeveloperRole) {
     return <Navigate to="/admin/dashboard" replace />;
   }
 

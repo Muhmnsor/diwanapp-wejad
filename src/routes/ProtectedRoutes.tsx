@@ -14,7 +14,7 @@ import Notifications from "@/pages/Notifications";
 import RequestsManagement from "@/pages/RequestsManagement";
 import React from "react";
 import DeveloperRoute from "@/components/DeveloperRoute";
-import AppPermissionsManager from "@/pages/AppPermissionsManager";
+import DeveloperSettings from "@/pages/DeveloperSettings";
 
 export const ProtectedRoutes = [
   <Route 
@@ -108,15 +108,6 @@ export const ProtectedRoutes = [
     } 
   />,
   <Route 
-    key="app-permissions"
-    path="/admin/app-permissions" 
-    element={
-      <ProtectedRoute>
-        <AppPermissionsManager />
-      </ProtectedRoute>
-    } 
-  />,
-  <Route 
     key="notifications"
     path="/notifications" 
     element={
@@ -134,6 +125,15 @@ export const ProtectedRoutes = [
       <ProtectedRoute>
         <RequestsManagement />
       </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="developer-settings"
+    path="/admin/developer-settings" 
+    element={
+      <DeveloperRoute>
+        <DeveloperSettings />
+      </DeveloperRoute>
     } 
   />
 ];
