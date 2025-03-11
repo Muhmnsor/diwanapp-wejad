@@ -65,7 +65,7 @@ export const useIncomingRequests = () => {
               id: request.request_type[0].id,
               name: request.request_type[0].name
             };
-          } else if (typeof request.request_type === 'object') {
+          } else if (typeof request.request_type === 'object' && request.request_type !== null) {
             requestType = {
               id: request.request_type.id,
               name: request.request_type.name
@@ -83,7 +83,7 @@ export const useIncomingRequests = () => {
             stepId = request.current_step[0].id;
             stepName = request.current_step[0].step_name;
             stepType = request.current_step[0].step_type;
-          } else if (typeof request.current_step === 'object') {
+          } else if (typeof request.current_step === 'object' && request.current_step !== null) {
             stepId = request.current_step.id;
             stepName = request.current_step.step_name;
             stepType = request.current_step.step_type;
