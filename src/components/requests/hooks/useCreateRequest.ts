@@ -153,14 +153,16 @@ export const useCreateRequest = () => {
         
         console.log("Creating request with processed payload:", requestPayload);
         
-        // Use the RPC function to bypass RLS
-        const { data: insertResult, error: insertError } = await supabase.rpc('insert_request_bypass_rls', {
-          request_data: requestPayload
-        });
+        // Insert the request directly
+        const { data: insertResult, error: insertError } = await supabase
+          .from("requests")
+          .insert(requestPayload)
+          .select()
+          .single();
         
         if (insertError) {
-          console.error("Error using bypass method:", insertError);
-          throw new Error(`فشل إنشاء الطلب: يبدو أن هناك مشكلة في صلاحيات الوصول. يرجى التواصل مع مسؤول النظام`);
+          console.error("Error creating request:", insertError);
+          throw new Error(`فشل إنشاء الطلب: ${insertError.message}`);
         }
         
         if (!insertResult) {

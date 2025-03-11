@@ -13,8 +13,10 @@ export const useIncomingRequests = () => {
     try {
       console.log("Fetching incoming requests for user:", user.id);
       
-      // Get requests where the current user is the approver for the current step
-      const { data, error } = await supabase
+      // This query fetches requests where:
+      // 1. Either the user is directly the approver in the current step
+      // 2. Or the user has a role that is assigned as an approver in the current step
+      const { data: directApprover, error: directError } = await supabase
         .from("requests")
         .select(`
           id,
@@ -26,7 +28,7 @@ export const useIncomingRequests = () => {
           requester_id,
           request_type_id,
           request_type:request_types(id, name),
-          current_step:request_workflow_steps!inner(
+          current_step:request_workflow_steps(
             id,
             step_name,
             step_type,
@@ -36,22 +38,73 @@ export const useIncomingRequests = () => {
         `)
         .eq("status", "pending")
         .eq("current_step.approver_id", user.id)
+        .eq("current_step.approver_type", "user")
         .order("created_at", { ascending: false });
       
-      if (error) {
-        console.error("Error fetching incoming requests:", error);
-        return [];
+      if (directError) {
+        console.error("Error fetching direct approver requests:", directError);
       }
       
-      if (!data || data.length === 0) {
+      // Get role-based approvals 
+      // First get the user's roles
+      const { data: userRoles, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("role_id")
+        .eq("user_id", user.id);
+      
+      if (rolesError) {
+        console.error("Error fetching user roles:", rolesError);
+      }
+      
+      let roleBasedRequests = [];
+      if (userRoles && userRoles.length > 0) {
+        const roleIds = userRoles.map(ur => ur.role_id);
+        
+        // Then fetch requests where the approver_id is one of the user's roles
+        const { data: roleApprover, error: roleError } = await supabase
+          .from("requests")
+          .select(`
+            id,
+            title,
+            status,
+            priority,
+            created_at,
+            current_step_id,
+            requester_id,
+            request_type_id,
+            request_type:request_types(id, name),
+            current_step:request_workflow_steps(
+              id,
+              step_name,
+              step_type,
+              approver_id,
+              approver_type
+            )
+          `)
+          .eq("status", "pending")
+          .eq("current_step.approver_type", "role")
+          .in("current_step.approver_id", roleIds)
+          .order("created_at", { ascending: false });
+        
+        if (roleError) {
+          console.error("Error fetching role-based approver requests:", roleError);
+        } else if (roleApprover) {
+          roleBasedRequests = roleApprover;
+        }
+      }
+      
+      // Combine both types of requests
+      const allRequests = [...(directApprover || []), ...roleBasedRequests];
+      
+      if (!allRequests || allRequests.length === 0) {
         console.log("No incoming requests found for user:", user.id);
         return [];
       }
       
-      console.log(`Found ${data.length} incoming requests`, data);
+      console.log(`Found ${allRequests.length} incoming requests`, allRequests);
       
       // Transform the data into the expected format
-      const transformedRequests = data.map(request => {
+      const transformedRequests = allRequests.map(request => {
         // Log raw data to debug
         console.log("Processing request:", request.id);
         console.log("Request type data:", JSON.stringify(request.request_type));
@@ -134,6 +187,20 @@ export const useIncomingRequests = () => {
               req.requester = userMap[req.requester_id];
             }
           });
+        }
+      }
+      
+      // For debugging: let's also check for approval records
+      for (const request of transformedRequests) {
+        const { data: approvals } = await supabase
+          .from("request_approvals")
+          .select("id, status")
+          .eq("request_id", request.id)
+          .eq("approver_id", user.id);
+          
+        if (approvals && approvals.length > 0) {
+          console.log(`Found approval record for request ${request.id}:`, approvals[0]);
+          request.approval_id = approvals[0].id;
         }
       }
       
