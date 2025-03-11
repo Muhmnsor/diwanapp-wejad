@@ -16,7 +16,7 @@ export const debugRoleMapping = (roleName: string) => {
   }
   
   // Try direct mapping
-  const directMapping = ROLE_MAPPING[roleName];
+  const directMapping = ROLE_MAPPING[roleName as keyof typeof ROLE_MAPPING];
   if (directMapping) {
     return {
       exists: true,
@@ -27,7 +27,7 @@ export const debugRoleMapping = (roleName: string) => {
   
   // Try with underscores
   const withUnderscores = roleName.trim().replace(/\s+/g, '_').toLowerCase();
-  const underscoreMapping = ROLE_MAPPING[withUnderscores];
+  const underscoreMapping = ROLE_MAPPING[withUnderscores as keyof typeof ROLE_MAPPING];
   if (underscoreMapping) {
     return {
       exists: true,

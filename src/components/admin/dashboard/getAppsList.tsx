@@ -1,4 +1,3 @@
-
 import { 
   Database, 
   ListChecks, 
@@ -93,7 +92,7 @@ export const ROLE_MAPPING = {
   'منشئ_الأفكار': 'idea_creator',
   'مدير_الابتكار': 'innovation_manager',
   'مدير_مالي': 'finance_manager',
-  'المدير_المالي': 'financial_manager', // Changed to avoid duplicate property
+  'المدير_المالي': 'financial_manager',
   'محاسب': 'accountant',
   'مدير_الميزانية': 'budget_manager',
   'مدير_الموارد': 'resource_manager',
@@ -132,23 +131,6 @@ export const ROLE_MAPPING = {
   'منشئ الأفكار': 'idea_creator',
   'مدير الابتكار': 'innovation_manager',
   'مدير مالي': 'finance_manager',
-  'المدير المالي': 'financial_manager', // Changed to avoid duplicate property
-  'محاسب': 'accountant',
-  'مدير الميزانية': 'budget_manager',
-  'مدير الموارد': 'resource_manager',
-  'مدير الموارد البشرية': 'hr_manager',
-  'مدير المستخدمين': 'user_manager',
-  'مدير المحتوى': 'content_manager',
-  'مدير الإعلام': 'media_manager',
-  'محرر موقع': 'web_editor',
-  'مدير المتجر': 'store_manager',
-  'مدير المخزون': 'inventory_manager',
-  'مدير المبيعات': 'sales_manager',
-  'مدير الإشعارات': 'notification_manager',
-  'مدير الاتصالات': 'communication_manager',
-  'مدير الطلبات': 'request_manager',
-  'مدير الموافقات': 'approval_manager',
-  'مطور': 'developer',
   
   // English to English (for direct matching)
   'admin': 'admin',
@@ -171,7 +153,7 @@ export const ROLE_MAPPING = {
   'idea_creator': 'idea_creator',
   'innovation_manager': 'innovation_manager',
   'finance_manager': 'finance_manager',
-  'financial_manager': 'financial_manager', // Keep separate from finance_manager
+  'financial_manager': 'financial_manager',
   'accountant': 'accountant',
   'budget_manager': 'budget_manager',
   'resource_manager': 'resource_manager',
