@@ -13,105 +13,76 @@ export const useIncomingRequests = () => {
     try {
       console.log("Fetching incoming requests for user:", user.id);
       
-      // Get requests where the current user is the approver for the current step
-      const { data, error } = await supabase
-        .from("requests")
+      // Query pending approvals where current user is an approver
+      const { data: approvals, error: approvalsError } = await supabase
+        .from("request_approvals")
         .select(`
           id,
-          title,
+          request_id,
           status,
-          priority,
-          created_at,
-          current_step_id,
-          requester_id,
-          request_type_id,
-          request_type:request_types(id, name),
-          current_step:request_workflow_steps!inner(
+          step_id,
+          request:requests(
             id,
-            step_name,
-            step_type,
-            approver_id,
-            approver_type
+            title,
+            status,
+            priority,
+            created_at,
+            current_step_id,
+            requester_id,
+            request_type_id,
+            request_type:request_types(id, name)
           )
         `)
+        .eq("approver_id", user.id)
         .eq("status", "pending")
-        .eq("current_step.approver_id", user.id)
         .order("created_at", { ascending: false });
       
-      if (error) {
-        console.error("Error fetching incoming requests:", error);
+      if (approvalsError) {
+        console.error("Error fetching incoming requests via approvals:", approvalsError);
         return [];
       }
       
-      if (!data || data.length === 0) {
-        console.log("No incoming requests found for user:", user.id);
-        return [];
-      }
-      
-      console.log(`Found ${data.length} incoming requests`, data);
-      
-      // Transform the data into the expected format
-      const transformedRequests = data.map(request => {
-        // Check the actual structure of request_type and current_step
-        console.log("Request type structure:", request.request_type);
-        console.log("Current step structure:", request.current_step);
-        
-        // Safely extract request_type properties
-        let requestType = null;
-        if (request.request_type) {
-          // Handle both array and object cases
-          if (Array.isArray(request.request_type) && request.request_type.length > 0) {
-            requestType = {
-              id: request.request_type[0]?.id,
-              name: request.request_type[0]?.name
-            };
-          } else if (typeof request.request_type === 'object' && request.request_type !== null) {
-            // Access object properties directly, not as an array
-            const requestTypeObj = request.request_type as any;
-            requestType = {
-              id: requestTypeObj.id,
-              name: requestTypeObj.name
-            };
+      // Process the data
+      const transformedRequests = (approvals || [])
+        .filter(approval => approval.request) // Filter out any null requests
+        .map(approval => {
+          const request = Array.isArray(approval.request) 
+            ? approval.request[0] 
+            : approval.request;
+          
+          if (!request) return null;
+          
+          // Extract and normalize request_type data
+          let requestType = null;
+          if (request.request_type) {
+            if (Array.isArray(request.request_type) && request.request_type.length > 0) {
+              requestType = {
+                id: request.request_type[0].id,
+                name: request.request_type[0].name
+              };
+            } else if (typeof request.request_type === 'object') {
+              requestType = request.request_type;
+            }
           }
-        }
-        
-        // Safely extract current_step properties
-        let stepId = null;
-        let stepName = null;
-        let stepType = null;
-        
-        if (request.current_step) {
-          if (Array.isArray(request.current_step) && request.current_step.length > 0) {
-            const stepObj = request.current_step[0];
-            stepId = stepObj?.id;
-            stepName = stepObj?.step_name;
-            stepType = stepObj?.step_type;
-          } else if (typeof request.current_step === 'object' && request.current_step !== null) {
-            // Access object properties directly, not as an array
-            const stepObj = request.current_step as any;
-            stepId = stepObj.id;
-            stepName = stepObj.step_name;
-            stepType = stepObj.step_type;
-          }
-        }
-        
-        return {
-          id: request.id,
-          title: request.title,
-          status: request.status,
-          priority: request.priority,
-          created_at: request.created_at,
-          current_step_id: request.current_step_id,
-          requester_id: request.requester_id,
-          request_type_id: request.request_type_id,
-          request_type: requestType,
-          step_id: stepId,
-          step_name: stepName,
-          step_type: stepType,
-          approval_id: null, // We'll fetch this separately if needed
-          requester: null // Will be populated below
-        };
-      });
+          
+          return {
+            id: request.id,
+            title: request.title,
+            status: request.status,
+            priority: request.priority,
+            created_at: request.created_at,
+            current_step_id: request.current_step_id,
+            requester_id: request.requester_id,
+            request_type_id: request.request_type_id,
+            request_type: requestType,
+            step_id: approval.step_id,
+            approval_id: approval.id,
+            requester: null // Will be populated below
+          };
+        })
+        .filter(Boolean); // Remove any null entries
+      
+      console.log(`Found ${transformedRequests.length} incoming requests via approvals`);
       
       // Add requester information
       if (transformedRequests.length > 0) {
@@ -132,6 +103,31 @@ export const useIncomingRequests = () => {
           transformedRequests.forEach(req => {
             if (req.requester_id && userMap[req.requester_id]) {
               req.requester = userMap[req.requester_id];
+            }
+          });
+        }
+      }
+      
+      // Fetch steps information if needed
+      if (transformedRequests.length > 0) {
+        const stepIds = transformedRequests
+          .map(req => req.step_id)
+          .filter(Boolean);
+          
+        if (stepIds.length > 0) {
+          const { data: steps } = await supabase
+            .from("request_workflow_steps")
+            .select("id, step_name, step_type")
+            .in("id", stepIds);
+            
+          const stepsMap = Object.fromEntries(
+            (steps || []).map(step => [step.id, step])
+          );
+          
+          transformedRequests.forEach(req => {
+            if (req.step_id && stepsMap[req.step_id]) {
+              req.step_name = stepsMap[req.step_id].step_name;
+              req.step_type = stepsMap[req.step_id].step_type;
             }
           });
         }

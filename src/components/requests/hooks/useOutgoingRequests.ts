@@ -49,7 +49,8 @@ export const useOutgoingRequests = () => {
         .from("requests")
         .select(`
           *,
-          request_type:request_types(name)
+          request_type:request_types(id, name),
+          current_step:request_workflow_steps(id, step_name, step_type)
         `)
         .eq("requester_id", user.id)
         .order("created_at", { ascending: false });
@@ -62,7 +63,42 @@ export const useOutgoingRequests = () => {
       }
       
       console.log(`Fetched ${data?.length || 0} outgoing requests via direct query`);
-      return data || [];
+      
+      // Transform data to ensure consistent structure
+      return (data || []).map(request => {
+        // Handle request_type - could be an object or array
+        let requestType = null;
+        if (request.request_type) {
+          if (Array.isArray(request.request_type) && request.request_type.length > 0) {
+            requestType = {
+              id: request.request_type[0].id,
+              name: request.request_type[0].name
+            };
+          } else if (typeof request.request_type === 'object') {
+            requestType = request.request_type;
+          }
+        }
+        
+        // Handle current_step - could be an object or array
+        let currentStep = null;
+        if (request.current_step) {
+          if (Array.isArray(request.current_step) && request.current_step.length > 0) {
+            currentStep = {
+              id: request.current_step[0].id,
+              step_name: request.current_step[0].step_name,
+              step_type: request.current_step[0].step_type
+            };
+          } else if (typeof request.current_step === 'object') {
+            currentStep = request.current_step;
+          }
+        }
+        
+        return {
+          ...request,
+          request_type: requestType,
+          current_step: currentStep
+        };
+      });
     } catch (error) {
       console.error("Error in fetchOutgoingRequests:", error);
       return [];
