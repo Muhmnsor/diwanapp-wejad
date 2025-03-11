@@ -87,12 +87,14 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
   // Set selected permissions when role permissions are loaded
   useEffect(() => {
     if (rolePermissions) {
+      console.log('Setting selected permissions:', rolePermissions);
       setSelectedPermissions(rolePermissions);
     }
   }, [rolePermissions]);
 
   // Handle permission toggle
   const handlePermissionToggle = (permissionId: string) => {
+    console.log('Toggling permission:', permissionId, 'Current state:', selectedPermissions.includes(permissionId));
     setSelectedPermissions(prev => 
       prev.includes(permissionId)
         ? prev.filter(id => id !== permissionId)

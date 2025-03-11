@@ -17,6 +17,7 @@ export const PermissionItem = ({
     <div
       className="flex items-start p-2 hover:bg-muted/20 rounded cursor-pointer"
       onClick={() => onToggle(permission.id)}
+      data-permission-id={permission.id}
     >
       <div
         className={`w-5 h-5 mt-0.5 border rounded flex items-center justify-center mr-2 ${
