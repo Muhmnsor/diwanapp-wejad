@@ -31,6 +31,14 @@ interface DashboardAppsProps {
 export const DashboardApps = ({ apps }: DashboardAppsProps) => {
   const navigate = useNavigate();
 
+  if (!apps || apps.length === 0) {
+    return (
+      <Card className="p-8 text-center">
+        <p className="text-lg text-gray-500">لا توجد تطبيقات متاحة حاليًا</p>
+      </Card>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" style={{ direction: 'rtl' }}>
       {[...apps].reverse().map((app, index) => {

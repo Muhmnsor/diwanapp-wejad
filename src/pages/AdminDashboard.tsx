@@ -15,7 +15,8 @@ const AdminDashboard = () => {
   const { data: notificationCounts } = useNotificationCounts();
   const { user } = useAuthStore();
   
-  const apps = getAppsList(notificationCounts);
+  // Get filtered apps list based on user role
+  const apps = getAppsList(notificationCounts, user);
 
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
