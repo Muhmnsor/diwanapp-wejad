@@ -56,7 +56,7 @@ export const useRequests = () => {
             current_step_id,
             request_type:request_types(id, name)
           ),
-          step:request_workflow_steps(id, step_name, step_type, approver_id)
+          step:workflow_steps(id, step_name, step_type, approver_id)
         `)
         .eq("approver_id", user.id)
         .eq("status", "pending")
