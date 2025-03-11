@@ -70,36 +70,29 @@ export const WorkflowStepsConfig = ({
       return;
     }
 
-    // الوظيفة المحسّنة: تأكد من أن جميع الخطوات تحمل معرّف سير العمل الصحيح
-    const stepsToSave = workflowSteps.map(step => {
-      // سجل كل خطوة وحالة معرّف سير العمل الخاص بها للتصحيح
-      console.log(`Preparing step "${step.step_name}" with workflow_id:`, step.workflow_id);
-      
-      // Always update to current workflow ID regardless of previous value
-      if (currentWorkflowId && currentWorkflowId !== 'temp-workflow-id') {
-        console.log(`Updating step "${step.step_name}" workflow_id to:`, currentWorkflowId);
-        return {
-          ...step,
-          workflow_id: currentWorkflowId,
-        };
-      }
-      return step;
-    });
-
     try {
-      console.log("Saving workflow steps with correct workflow_id:", stepsToSave);
-      console.log("Current workflow ID:", currentWorkflowId);
+      console.log("Saving workflow steps to database, current workflow ID:", currentWorkflowId);
+      
+      // Force all steps to have the correct workflow ID
+      const stepsToSave = workflowSteps.map(step => ({
+        ...step,
+        workflow_id: currentWorkflowId !== 'temp-workflow-id' ? currentWorkflowId : step.workflow_id
+      }));
       
       await saveWorkflowSteps(stepsToSave);
+      
       toast.success('تم حفظ خطوات سير العمل بنجاح');
       if (onWorkflowSaved) {
         onWorkflowSaved();
       }
     } catch (error) {
       console.error('Error saving workflow steps:', error);
-      toast.error(error.message || 'فشل في حفظ خطوات سير العمل');
+      toast.error(error instanceof Error ? error.message : 'فشل في حفظ خطوات سير العمل');
     }
   };
+
+  // Add a message to prompt users to save when in standalone mode and steps exist
+  const showSavePrompt = standalone && workflowSteps.length > 0 && !isLoading;
 
   return (
     <div className="space-y-6">
@@ -125,7 +118,16 @@ export const WorkflowStepsConfig = ({
         <Alert variant="warning">
           <Info className="h-4 w-4" />
           <AlertDescription>
-            تعمل حالياً في الوضع المؤقت. سيتم حفظ الخطوات محلياً فقط حتى يتم إنشاء سير العمل.
+            تعمل حالياً في الوضع المؤقت. يجب حفظ الخطوات لإنشاء سير العمل في قاعدة البيانات.
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {showSavePrompt && (
+        <Alert variant="info">
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            لديك خطوات غير محفوظة. لا تنس الضغط على زر "حفظ خطوات سير العمل" في الأسفل عند الانتهاء.
           </AlertDescription>
         </Alert>
       )}

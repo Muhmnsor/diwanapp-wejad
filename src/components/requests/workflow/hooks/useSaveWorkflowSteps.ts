@@ -24,50 +24,43 @@ export const useSaveWorkflowSteps = ({
   updateDefaultWorkflow
 }: UseSaveWorkflowStepsProps) => {
   const saveWorkflowSteps = async (steps: WorkflowStep[]): Promise<boolean | undefined> => {
-    if (!requestTypeId) {
-      console.log("Saving steps locally for new request type:", steps);
-      
-      const currentWorkflowId = workflowId || 'temp-workflow-id';
-      const stepsWithWorkflowId = steps.map(step => ({
-        ...step,
-        workflow_id: step.workflow_id || currentWorkflowId
-      }));
-      
-      updateWorkflowSteps(stepsWithWorkflowId);
-      return true;
+    // First check for session
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast.error("يجب تسجيل الدخول لحفظ خطوات سير العمل");
+      setError("يجب تسجيل الدخول لحفظ خطوات سير العمل");
+      return false;
     }
     
     setIsLoading(true);
     setError(null);
 
     try {
-      // Check if user is authenticated
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setError("يجب تسجيل الدخول لحفظ خطوات سير العمل");
-        throw new Error("يجب تسجيل الدخول لحفظ خطوات سير العمل");
-      }
-
-      // Get the actual workflow ID first
+      // Get the actual workflow ID first (this is critical)
+      console.log("Calling ensureWorkflowExists to get valid workflow ID");
       const currentWorkflowId = await ensureWorkflowExists();
-      console.log("Working with workflow ID:", currentWorkflowId);
+      console.log("Received workflow ID:", currentWorkflowId);
 
       if (currentWorkflowId === 'temp-workflow-id') {
-        console.log("Using temporary workflow ID, saving steps locally only");
-        
-        const stepsWithWorkflowId = steps.map(step => ({
-          ...step,
-          workflow_id: currentWorkflowId
-        }));
-        
-        updateWorkflowSteps(stepsWithWorkflowId);
-        setIsLoading(false);
-        return true;
+        if (!requestTypeId) {
+          console.log("No request type ID and using temporary workflow ID, saving steps locally only");
+          
+          const stepsWithWorkflowId = steps.map(step => ({
+            ...step,
+            workflow_id: currentWorkflowId
+          }));
+          
+          updateWorkflowSteps(stepsWithWorkflowId);
+          return true;
+        } else {
+          console.error("Failed to create workflow even though we have a request type ID");
+          toast.error("فشل في إنشاء سير العمل. يرجى المحاولة مرة أخرى.");
+          return false;
+        }
       }
 
       if (steps.length === 0) {
         updateWorkflowSteps([]);
-        setIsLoading(false);
         return true;
       }
       
@@ -76,6 +69,10 @@ export const useSaveWorkflowSteps = ({
         ...step,
         workflow_id: currentWorkflowId
       }));
+      
+      // Log for debugging
+      console.log("Preparing steps with workflow ID:", currentWorkflowId);
+      console.log("Steps to insert:", stepsWithCorrectWorkflowId);
       
       // Prepare steps for insertion with complete data and ensure valid UUIDs
       const stepsToInsert = stepsWithCorrectWorkflowId.map((step, index) => {
@@ -105,20 +102,7 @@ export const useSaveWorkflowSteps = ({
         };
       });
 
-      console.log("Inserting workflow steps using RPC function with workflow_id:", currentWorkflowId);
-      
-      // Log the operation attempt
-      try {
-        await supabase.rpc('log_workflow_operation', {
-          p_operation_type: 'insert_steps_attempt',
-          p_workflow_id: currentWorkflowId,
-          p_request_type_id: requestTypeId,
-          p_request_data: { steps: stepsToInsert },
-          p_details: `محاولة حفظ ${stepsToInsert.length} خطوة لسير العمل`
-        });
-      } catch (logError) {
-        console.warn("Error logging operation (non-critical):", logError);
-      }
+      console.log("Sending steps to database RPC function");
       
       // Call the RPC function to insert steps
       const { data: rpcResult, error: rpcError } = await supabase
@@ -128,37 +112,10 @@ export const useSaveWorkflowSteps = ({
 
       if (rpcError) {
         console.error("Error inserting workflow steps:", rpcError);
-        
-        // Log the error
-        try {
-          await supabase.rpc('log_workflow_operation', {
-            p_operation_type: 'insert_steps_error',
-            p_workflow_id: currentWorkflowId,
-            p_request_type_id: requestTypeId,
-            p_error_message: rpcError.message,
-            p_details: `فشل في حفظ ${stepsToInsert.length} خطوة لسير العمل`
-          });
-        } catch (logError) {
-          console.warn("Error logging operation failure (non-critical):", logError);
-        }
-        
         throw new Error(`فشل في حفظ خطوات سير العمل: ${rpcError.message}`);
       }
 
       console.log("Steps saved successfully:", rpcResult);
-
-      // Log the success
-      try {
-        await supabase.rpc('log_workflow_operation', {
-          p_operation_type: 'insert_steps_success',
-          p_workflow_id: currentWorkflowId,
-          p_request_type_id: requestTypeId,
-          p_response_data: rpcResult,
-          p_details: `تم حفظ ${stepsToInsert.length} خطوة لسير العمل بنجاح`
-        });
-      } catch (logError) {
-        console.warn("Error logging operation success (non-critical):", logError);
-      }
 
       // Update steps with server data
       if (rpcResult && rpcResult.data) {
@@ -169,7 +126,9 @@ export const useSaveWorkflowSteps = ({
       }
 
       // Update default workflow if needed
-      await updateDefaultWorkflow(requestTypeId, currentWorkflowId);
+      if (requestTypeId) {
+        await updateDefaultWorkflow(requestTypeId, currentWorkflowId);
+      }
 
       toast.success("تم حفظ خطوات سير العمل بنجاح");
       return true;

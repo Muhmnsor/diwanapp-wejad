@@ -1,3 +1,4 @@
+
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,7 +22,7 @@ export const useEnsureWorkflowExists = ({
   // Function to ensure a workflow exists before saving steps
   const ensureWorkflowExists = useCallback(async (): Promise<string> => {
     // If we already have a valid workflow ID, return it
-    if (workflowId && workflowId !== 'temp-workflow-id') {
+    if (workflowId && workflowId !== 'temp-workflow-id' && isValidUUID(workflowId)) {
       console.log("Using existing workflow ID:", workflowId);
       return workflowId;
     }
@@ -34,6 +35,8 @@ export const useEnsureWorkflowExists = ({
     
     try {
       setIsLoading(true);
+      
+      console.log("Ensuring workflow exists for request type:", requestTypeId);
       
       // First, check if there's already a workflow for this request type
       const { data: existingWorkflows, error: workflowsError } = await supabase
@@ -92,10 +95,11 @@ export const useEnsureWorkflowExists = ({
         }
         
         newWorkflowId = newWorkflow.id;
-        console.log("Created new workflow:", newWorkflowId);
+        console.log("Created new workflow with ID:", newWorkflowId);
       }
       
       // Update the state with the new workflow ID
+      console.log("Setting workflow ID in state:", newWorkflowId);
       setWorkflowId(newWorkflowId);
       
       return newWorkflowId;

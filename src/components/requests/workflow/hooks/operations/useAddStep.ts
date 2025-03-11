@@ -3,6 +3,7 @@ import { WorkflowStep } from "../../../types";
 import { toast } from "sonner";
 import { checkUserPermissions } from "../utils/permissionUtils";
 import { getInitialStepState } from "../../utils";
+import { isValidUUID } from "../utils/validation";
 
 export const useAddStep = (
   saveWorkflowSteps: (steps: WorkflowStep[]) => Promise<boolean | undefined>,
@@ -32,21 +33,40 @@ export const useAddStep = (
       const { session, isAdmin } = await checkUserPermissions();
       if (!session) return;
 
-      // Determine the correct workflow ID
-      const workflowId = currentWorkflowId && currentWorkflowId !== 'temp-workflow-id' 
-        ? currentWorkflowId 
-        : currentStep.workflow_id && currentStep.workflow_id !== 'temp-workflow-id'
-          ? currentStep.workflow_id
-          : 'temp-workflow-id';
+      // Ensure current step has a valid workflow ID
+      console.log("Current step workflow_id:", currentStep.workflow_id);
+      console.log("Current workflow ID:", currentWorkflowId);
       
-      console.log("Adding step with workflow ID:", workflowId);
+      // Determine the correct workflow ID to use
+      let workflowId = 'temp-workflow-id';
+      
+      // First try to use the provided workflow ID
+      if (currentWorkflowId && currentWorkflowId !== 'temp-workflow-id' && isValidUUID(currentWorkflowId)) {
+        workflowId = currentWorkflowId;
+        console.log(`Using current workflow ID: ${workflowId}`);
+      } 
+      // Then try the current step's workflow ID
+      else if (currentStep.workflow_id && 
+              currentStep.workflow_id !== 'temp-workflow-id' && 
+              isValidUUID(currentStep.workflow_id)) {
+        workflowId = currentStep.workflow_id;
+        console.log(`Using step's workflow ID: ${workflowId}`);
+      }
+      // Then try the first step's workflow ID
+      else if (workflowSteps.length > 0 && 
+              workflowSteps[0].workflow_id && 
+              workflowSteps[0].workflow_id !== 'temp-workflow-id' &&
+              isValidUUID(workflowSteps[0].workflow_id)) {
+        workflowId = workflowSteps[0].workflow_id;
+        console.log(`Using workflow ID from existing steps: ${workflowId}`);
+      } else {
+        console.log(`Using temporary workflow ID: ${workflowId}`);
+      }
       
       // Create a new step or update existing one
       const newStep: WorkflowStep = {
         ...currentStep,
-        workflow_id: workflowId,
-        id: currentStep.id || null,
-        created_at: currentStep.created_at || null
+        workflow_id: workflowId
       };
 
       let updatedSteps: WorkflowStep[];
