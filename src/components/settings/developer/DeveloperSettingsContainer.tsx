@@ -194,10 +194,10 @@ const DeveloperSettingsContainer = () => {
           </div>
         ) : settings ? (
           <DeveloperSettingsTabs 
-            activeTab={activeTab} 
+            developerId={user?.id}
             settings={settings} 
-            permissions={permissions}
-            onRefresh={handleRefresh}
+            developerPermissions={permissions}
+            onRefreshPermissions={handleRefresh}
             hasDeveloperAccess={hasDeveloperAccess}
             onToggleDeveloperRole={handleToggleDeveloperRole}
             roleAssigning={roleAssigning}

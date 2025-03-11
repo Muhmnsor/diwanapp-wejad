@@ -17,7 +17,7 @@ import { NotificationCounts } from "@/hooks/dashboard/useNotificationCounts";
 import { User } from "@/store/refactored-auth/types";
 
 // Define roles for each application with comprehensive role access
-const APP_ROLE_ACCESS = {
+export const APP_ROLE_ACCESS = {
   events: [
     'admin', 'app_admin', 'developer',
     'event_manager', 'event_creator', 'event_coordinator',
@@ -71,7 +71,7 @@ const APP_ROLE_ACCESS = {
 };
 
 // Comprehensive role mapping between Arabic and English
-const ROLE_MAPPING = {
+export const ROLE_MAPPING = {
   // Arabic to English - Common database roles
   'مدير': 'admin',
   'مدير_التطبيق': 'app_admin',
@@ -93,7 +93,7 @@ const ROLE_MAPPING = {
   'منشئ_الأفكار': 'idea_creator',
   'مدير_الابتكار': 'innovation_manager',
   'مدير_مالي': 'finance_manager',
-  'المدير_المالي': 'finance_manager', // Added for consistency
+  'المدير_المالي': 'financial_manager', // Changed to avoid duplicate property
   'محاسب': 'accountant',
   'مدير_الميزانية': 'budget_manager',
   'مدير_الموارد': 'resource_manager',
@@ -132,7 +132,7 @@ const ROLE_MAPPING = {
   'منشئ الأفكار': 'idea_creator',
   'مدير الابتكار': 'innovation_manager',
   'مدير مالي': 'finance_manager',
-  'المدير المالي': 'finance_manager',
+  'المدير المالي': 'financial_manager', // Changed to avoid duplicate property
   'محاسب': 'accountant',
   'مدير الميزانية': 'budget_manager',
   'مدير الموارد': 'resource_manager',
@@ -171,7 +171,7 @@ const ROLE_MAPPING = {
   'idea_creator': 'idea_creator',
   'innovation_manager': 'innovation_manager',
   'finance_manager': 'finance_manager',
-  'financial_manager': 'finance_manager', // Map financial_manager to finance_manager
+  'financial_manager': 'financial_manager', // Keep separate from finance_manager
   'accountant': 'accountant',
   'budget_manager': 'budget_manager',
   'resource_manager': 'resource_manager',

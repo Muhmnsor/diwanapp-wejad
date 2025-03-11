@@ -1,5 +1,5 @@
 
-import { ROLE_MAPPING } from "@/components/admin/dashboard/getAppsList"; // Import directly from the file
+import { ROLE_MAPPING, APP_ROLE_ACCESS } from "@/components/admin/dashboard/getAppsList";
 
 /**
  * Check if a role exists in the role mapping and get its standardized English equivalent
@@ -16,7 +16,7 @@ export const debugRoleMapping = (roleName: string) => {
   }
   
   // Try direct mapping
-  const directMapping = (ROLE_MAPPING as Record<string, string>)[roleName];
+  const directMapping = ROLE_MAPPING[roleName];
   if (directMapping) {
     return {
       exists: true,
@@ -27,7 +27,7 @@ export const debugRoleMapping = (roleName: string) => {
   
   // Try with underscores
   const withUnderscores = roleName.trim().replace(/\s+/g, '_').toLowerCase();
-  const underscoreMapping = (ROLE_MAPPING as Record<string, string>)[withUnderscores];
+  const underscoreMapping = ROLE_MAPPING[withUnderscores];
   if (underscoreMapping) {
     return {
       exists: true,
@@ -61,9 +61,6 @@ export const debugRoleMapping = (roleName: string) => {
  */
 export const debugAppRoles = (appKey: string) => {
   try {
-    // Dynamically import the APP_ROLE_ACCESS object
-    const APP_ROLE_ACCESS = require('@/components/admin/dashboard/getAppsList').APP_ROLE_ACCESS;
-    
     const allowedRoles = APP_ROLE_ACCESS[appKey as keyof typeof APP_ROLE_ACCESS] || [];
     
     // Create a reverse mapping (English to Arabic)

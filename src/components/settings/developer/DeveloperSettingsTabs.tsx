@@ -8,9 +8,12 @@ import { CacheTab } from "./tabs/CacheTab";
 import { PerformanceTab } from "./tabs/PerformanceTab";
 import { RoleMappingDebugTab } from "./tabs/RoleMappingDebugTab";
 import { DocumentationSection } from "./documentation/DocumentationSection";
+import { DeveloperSettings } from "@/types/developer";
+import { DeveloperPermissionChecks } from "@/components/users/permissions/types";
 
 interface DeveloperSettingsTabsProps {
   developerId?: string;
+  settings: DeveloperSettings;
   developerPermissions: {
     canAccessDeveloperTools: boolean;
     canModifySystemSettings: boolean;
@@ -24,6 +27,7 @@ interface DeveloperSettingsTabsProps {
 
 export const DeveloperSettingsTabs = ({
   developerId,
+  settings,
   developerPermissions,
   hasDeveloperAccess,
   onToggleDeveloperRole,
@@ -44,7 +48,7 @@ export const DeveloperSettingsTabs = ({
       </TabsList>
       
       <TabsContent value="general">
-        <GeneralSettingsTab developerId={developerId} />
+        <GeneralSettingsTab settings={settings} />
       </TabsContent>
       
       <TabsContent value="permissions">
@@ -58,7 +62,7 @@ export const DeveloperSettingsTabs = ({
       </TabsContent>
       
       <TabsContent value="debug">
-        <DebugTab />
+        <DebugTab settings={settings} />
       </TabsContent>
       
       <TabsContent value="roles">
@@ -70,7 +74,7 @@ export const DeveloperSettingsTabs = ({
       </TabsContent>
       
       <TabsContent value="cache">
-        <CacheTab />
+        <CacheTab settings={settings} />
       </TabsContent>
       
       <TabsContent value="performance">
