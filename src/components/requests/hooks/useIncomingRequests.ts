@@ -126,6 +126,7 @@ export const useIncomingRequests = () => {
           
           transformedRequests.forEach(req => {
             if (req.step_id && stepsMap[req.step_id]) {
+              // Add step information directly to request object
               req.step_name = stepsMap[req.step_id].step_name;
               req.step_type = stepsMap[req.step_id].step_type;
             }
@@ -133,7 +134,6 @@ export const useIncomingRequests = () => {
         }
       }
       
-      // Cast the result to ensure TypeScript compatibility
       return transformedRequests as RequestWithApproval[];
     } catch (error) {
       console.error("Error in fetchIncomingRequests:", error);

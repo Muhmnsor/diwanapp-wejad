@@ -40,8 +40,8 @@ export interface RequestWithApproval {
     name: string;
   } | null;
   step_id: string | null;
-  step_name: string | null;
-  step_type: string | null;
+  step_name?: string | null;
+  step_type?: string | null;
   approval_id: string | null;
   requester: {
     id: string;
