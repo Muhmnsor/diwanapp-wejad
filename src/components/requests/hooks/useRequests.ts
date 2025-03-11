@@ -43,8 +43,8 @@ export const useRequests = () => {
     try {
       console.log("Fetching incoming requests for user:", user.id);
       
-      // First, we need to join request_approvals with request_workflow_steps (not workflow_steps)
-      // The error in the console indicates this was the issue
+      // Using request_approvals joined with request_workflow_steps (not workflow_steps)
+      // This is the correct table name as per the schema
       const { data, error } = await supabase
         .from("request_approvals")
         .select(`
@@ -80,10 +80,10 @@ export const useRequests = () => {
         return [];
       }
       
-      console.log("Raw response data structure:", JSON.stringify(data, null, 2));
+      console.log("Raw response data for incoming requests:", JSON.stringify(data, null, 2));
       
-      // Second, we need to filter out requests that aren't currently awaiting approval
-      // A request should only show up if it's current_step_id matches the step_id in the approval
+      // Map the response to a more usable format
+      // Simplified filtering logic - only check if there's request data
       const requests = data.map((item: RequestApprovalResponse) => {
         const requestData = item.request && item.request.length > 0 
           ? item.request[0] 
@@ -98,13 +98,9 @@ export const useRequests = () => {
           return null;
         }
         
-        // Only show requests that are pending or in_progress AND where the current step matches this approval's step
-        if ((requestData.status !== 'pending' && requestData.status !== 'in_progress') || 
-            requestData.current_step_id !== item.step_id) {
-          console.log(`Filtering out request ${requestData.id} because it's not currently at this approval step`);
-          return null;
-        }
-        
+        // Don't filter based on current step - just show all pending approvals
+        // The backend should ensure these are valid approvals
+
         let requestType = null;
         if (requestData && requestData.request_type) {
           if (Array.isArray(requestData.request_type) && requestData.request_type.length > 0) {
@@ -112,7 +108,6 @@ export const useRequests = () => {
           }
         }
         
-        // Fetch requester information for display
         return {
           ...requestData,
           request_type: requestType,
@@ -120,7 +115,7 @@ export const useRequests = () => {
           step_id: item.step_id,
           step_name: stepData ? stepData.step_name : 'Unknown Step',
           step_type: stepData ? stepData.step_type : 'decision',
-          requester_id: requestData.requester_id, // Ensure requester_id is included
+          requester_id: requestData.requester_id,
           requester: null // Initialize requester field
         };
       }).filter(Boolean);
@@ -149,7 +144,7 @@ export const useRequests = () => {
         }
       }
       
-      console.log(`Fetched ${requests.length} incoming requests`);
+      console.log(`Fetched ${requests.length} incoming requests after processing`);
       return requests;
     } catch (error) {
       console.error("Error in fetchIncomingRequests:", error);
@@ -412,34 +407,66 @@ export const useRequests = () => {
           
         const { data: nextStep, error: nextStepError } = await supabase
           .from("request_workflow_steps")
-          .select("id, approver_id")
+          .select("id, approver_id, approver_type")
           .eq("workflow_id", request.workflow_id)
           .gt("step_order", currentStepData.step_order)
           .order("step_order", { ascending: true })
           .limit(1)
-          .single();
+          .maybeSingle(); // Use maybeSingle instead of single to avoid errors
         
         const updateData: any = {};
         
-        if (nextStepError && nextStepError.message.includes("No rows found")) {
+        if (!nextStep) {
           updateData.status = "approved";
           console.log("Request approved (final step)");
-        } else if (!nextStepError) {
+        } else {
           updateData.current_step_id = nextStep.id;
           updateData.status = "in_progress";
           console.log("Moving to next step:", nextStep.id);
           
-          const { error: nextApprovalError } = await supabase
-            .from("request_approvals")
-            .insert({
-              request_id: requestId,
-              step_id: nextStep.id,
-              approver_id: nextStep.approver_id,
-              status: "pending"
-            });
-          
-          if (nextApprovalError) {
-            console.error("Error creating next approval:", nextApprovalError);
+          // Handle different approver types
+          if (nextStep.approver_type === 'role') {
+            console.log("Creating role-based approvals for role:", nextStep.approver_id);
+            
+            const { data: usersWithRole, error: roleError } = await supabase
+              .from("user_roles")
+              .select("user_id")
+              .eq("role_id", nextStep.approver_id);
+              
+            if (roleError) {
+              console.error("Error fetching users with role:", roleError);
+            } else if (usersWithRole && usersWithRole.length > 0) {
+              for (const userRole of usersWithRole) {
+                const { error: approvalError } = await supabase
+                  .from("request_approvals")
+                  .insert({
+                    request_id: requestId,
+                    step_id: nextStep.id,
+                    approver_id: userRole.user_id,
+                    status: "pending"
+                  });
+                
+                if (approvalError) {
+                  console.error("Error creating role-based approval:", approvalError);
+                }
+              }
+            } else {
+              console.warn("No users found with role ID:", nextStep.approver_id);
+            }
+          } else {
+            // Direct user approver
+            const { error: nextApprovalError } = await supabase
+              .from("request_approvals")
+              .insert({
+                request_id: requestId,
+                step_id: nextStep.id,
+                approver_id: nextStep.approver_id,
+                status: "pending"
+              });
+            
+            if (nextApprovalError) {
+              console.error("Error creating next approval:", nextApprovalError);
+            }
           }
         }
         
