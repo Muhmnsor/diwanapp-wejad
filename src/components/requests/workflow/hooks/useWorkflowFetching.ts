@@ -80,7 +80,7 @@ export const useWorkflowFetching = ({
           setWorkflowId(fetchedWorkflowId);
           
           const { data: steps, error: stepsError } = await supabase
-            .from('workflow_steps')
+            .from('request_workflow_steps') // Updated table name
             .select('*')
             .eq('workflow_id', fetchedWorkflowId)
             .order('step_order', { ascending: true });

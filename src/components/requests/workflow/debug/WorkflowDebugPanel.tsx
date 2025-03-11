@@ -55,7 +55,7 @@ export const WorkflowDebugPanel = () => {
     queryKey: ["workflowLogs", operationType, limit],
     queryFn: async () => {
       let query = supabase
-        .from("workflow_operations_view")
+        .from("request_workflow_operations_view") // Updated to new view name
         .select("*")
         .order("created_at", { ascending: false })
         .limit(limit);

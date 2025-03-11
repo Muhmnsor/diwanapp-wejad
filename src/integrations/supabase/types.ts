@@ -2814,7 +2814,7 @@ export type Database = {
             foreignKeyName: "request_approvals_step_id_fkey"
             columns: ["step_id"]
             isOneToOne: false
-            referencedRelation: "workflow_steps"
+            referencedRelation: "request_workflow_steps"
             referencedColumns: ["id"]
           },
         ]
@@ -2906,6 +2906,117 @@ export type Database = {
         }
         Relationships: []
       }
+      request_workflow_operation_logs: {
+        Row: {
+          created_at: string
+          details: string | null
+          error_message: string | null
+          id: string
+          operation_type: string
+          request_data: Json | null
+          request_type_id: string | null
+          response_data: Json | null
+          step_id: string | null
+          user_id: string | null
+          workflow_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          error_message?: string | null
+          id?: string
+          operation_type: string
+          request_data?: Json | null
+          request_type_id?: string | null
+          response_data?: Json | null
+          step_id?: string | null
+          user_id?: string | null
+          workflow_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          error_message?: string | null
+          id?: string
+          operation_type?: string
+          request_data?: Json | null
+          request_type_id?: string | null
+          response_data?: Json | null
+          step_id?: string | null
+          user_id?: string | null
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_operation_logs_request_type_id_fkey"
+            columns: ["request_type_id"]
+            isOneToOne: false
+            referencedRelation: "request_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_operation_logs_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "request_workflow_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_operation_logs_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "request_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      request_workflow_steps: {
+        Row: {
+          approver_id: string | null
+          approver_type: string
+          created_at: string | null
+          id: string
+          instructions: string | null
+          is_required: boolean | null
+          step_name: string
+          step_order: number
+          step_type: string
+          workflow_id: string | null
+        }
+        Insert: {
+          approver_id?: string | null
+          approver_type: string
+          created_at?: string | null
+          id?: string
+          instructions?: string | null
+          is_required?: boolean | null
+          step_name: string
+          step_order: number
+          step_type?: string
+          workflow_id?: string | null
+        }
+        Update: {
+          approver_id?: string | null
+          approver_type?: string
+          created_at?: string | null
+          id?: string
+          instructions?: string | null
+          is_required?: boolean | null
+          step_name?: string
+          step_order?: number
+          step_type?: string
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_steps_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "request_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       request_workflows: {
         Row: {
           created_at: string | null
@@ -2992,7 +3103,7 @@ export type Database = {
             foreignKeyName: "requests_current_step_id_fkey"
             columns: ["current_step_id"]
             isOneToOne: false
-            referencedRelation: "workflow_steps"
+            referencedRelation: "request_workflow_steps"
             referencedColumns: ["id"]
           },
           {
@@ -4111,117 +4222,6 @@ export type Database = {
         }
         Relationships: []
       }
-      workflow_operation_logs: {
-        Row: {
-          created_at: string
-          details: string | null
-          error_message: string | null
-          id: string
-          operation_type: string
-          request_data: Json | null
-          request_type_id: string | null
-          response_data: Json | null
-          step_id: string | null
-          user_id: string | null
-          workflow_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          details?: string | null
-          error_message?: string | null
-          id?: string
-          operation_type: string
-          request_data?: Json | null
-          request_type_id?: string | null
-          response_data?: Json | null
-          step_id?: string | null
-          user_id?: string | null
-          workflow_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          details?: string | null
-          error_message?: string | null
-          id?: string
-          operation_type?: string
-          request_data?: Json | null
-          request_type_id?: string | null
-          response_data?: Json | null
-          step_id?: string | null
-          user_id?: string | null
-          workflow_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "workflow_operation_logs_request_type_id_fkey"
-            columns: ["request_type_id"]
-            isOneToOne: false
-            referencedRelation: "request_types"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "workflow_operation_logs_step_id_fkey"
-            columns: ["step_id"]
-            isOneToOne: false
-            referencedRelation: "workflow_steps"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "workflow_operation_logs_workflow_id_fkey"
-            columns: ["workflow_id"]
-            isOneToOne: false
-            referencedRelation: "request_workflows"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      workflow_steps: {
-        Row: {
-          approver_id: string | null
-          approver_type: string
-          created_at: string | null
-          id: string
-          instructions: string | null
-          is_required: boolean | null
-          step_name: string
-          step_order: number
-          step_type: string
-          workflow_id: string | null
-        }
-        Insert: {
-          approver_id?: string | null
-          approver_type: string
-          created_at?: string | null
-          id?: string
-          instructions?: string | null
-          is_required?: boolean | null
-          step_name: string
-          step_order: number
-          step_type?: string
-          workflow_id?: string | null
-        }
-        Update: {
-          approver_id?: string | null
-          approver_type?: string
-          created_at?: string | null
-          id?: string
-          instructions?: string | null
-          is_required?: boolean | null
-          step_name?: string
-          step_order?: number
-          step_type?: string
-          workflow_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "workflow_steps_workflow_id_fkey"
-            columns: ["workflow_id"]
-            isOneToOne: false
-            referencedRelation: "request_workflows"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       workspace_members: {
         Row: {
           id: string
@@ -4364,29 +4364,7 @@ export type Database = {
           },
         ]
       }
-      resource_obligations_view: {
-        Row: {
-          amount: number | null
-          created_at: string | null
-          description: string | null
-          id: string | null
-          resource_date: string | null
-          resource_id: string | null
-          resource_net_amount: number | null
-          resource_source: string | null
-          resource_total_amount: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "resource_obligations_resource_id_fkey"
-            columns: ["resource_id"]
-            isOneToOne: false
-            referencedRelation: "financial_resources"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      workflow_operations_view: {
+      request_workflow_operations_view: {
         Row: {
           created_at: string | null
           details: string | null
@@ -4416,7 +4394,7 @@ export type Database = {
             foreignKeyName: "workflow_operation_logs_step_id_fkey"
             columns: ["step_id"]
             isOneToOne: false
-            referencedRelation: "workflow_steps"
+            referencedRelation: "request_workflow_steps"
             referencedColumns: ["id"]
           },
           {
@@ -4424,6 +4402,28 @@ export type Database = {
             columns: ["workflow_id"]
             isOneToOne: false
             referencedRelation: "request_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resource_obligations_view: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          resource_date: string | null
+          resource_id: string | null
+          resource_net_amount: number | null
+          resource_source: string | null
+          resource_total_amount: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_obligations_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "financial_resources"
             referencedColumns: ["id"]
           },
         ]
