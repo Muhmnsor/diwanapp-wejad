@@ -9,8 +9,6 @@ import { useUserName } from "@/hooks/dashboard/useUserName";
 import { getAppsList } from "@/components/admin/dashboard/getAppsList";
 import { DeveloperToolbar } from "@/components/developer/DeveloperToolbar";
 import { useAuthStore } from "@/store/refactored-auth";
-import { useEffect } from "react";
-import { initializeDeveloperRole } from "@/utils/developer/roleManagement";
 
 const AdminDashboard = () => {
   const { data: userName, isLoading: isLoadingUser } = useUserName();
@@ -18,11 +16,6 @@ const AdminDashboard = () => {
   const { user } = useAuthStore();
   
   const apps = getAppsList(notificationCounts);
-
-  useEffect(() => {
-    // Initialize developer role
-    initializeDeveloperRole();
-  }, []);
 
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">

@@ -3,6 +3,7 @@ import { ChevronDown, ChevronLeft, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Module } from "../types";
+import { cn } from "@/lib/utils";
 
 interface ModuleHeaderProps {
   module: Module;

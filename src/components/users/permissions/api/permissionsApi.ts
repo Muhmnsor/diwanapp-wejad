@@ -2,9 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { PermissionData } from "../types";
 
-/**
- * Fetch all available permissions
- */
+// جلب جميع الأذونات
 export const fetchPermissions = async (): Promise<PermissionData[]> => {
   try {
     const { data, error } = await supabase
@@ -13,21 +11,16 @@ export const fetchPermissions = async (): Promise<PermissionData[]> => {
       .order('module', { ascending: true })
       .order('name', { ascending: true });
       
-    if (error) {
-      console.error('Error fetching permissions:', error);
-      throw error;
-    }
+    if (error) throw error;
     
     return data || [];
   } catch (error) {
-    console.error('Error in fetchPermissions:', error);
+    console.error('Error fetching permissions:', error);
     return [];
   }
 };
 
-/**
- * Fetch permissions for a specific role
- */
+// جلب أذونات دور محدد
 export const fetchRolePermissions = async (roleId: string): Promise<string[]> => {
   try {
     if (!roleId) return [];
@@ -37,58 +30,44 @@ export const fetchRolePermissions = async (roleId: string): Promise<string[]> =>
       .select('permission_id')
       .eq('role_id', roleId);
       
-    if (error) {
-      console.error('Error fetching role permissions:', error);
-      throw error;
-    }
+    if (error) throw error;
     
     return data?.map(item => item.permission_id) || [];
   } catch (error) {
-    console.error('Error in fetchRolePermissions:', error);
+    console.error('Error fetching role permissions:', error);
     return [];
   }
 };
 
-/**
- * Save role permissions with proper transaction handling
- */
+// حفظ أذونات الدور
 export const saveRolePermissions = async (roleId: string, permissionIds: string[]): Promise<boolean> => {
-  try {
-    // First delete existing permissions
-    const { error: deleteError } = await supabase
-      .from('role_permissions')
-      .delete()
-      .eq('role_id', roleId);
-      
-    if (deleteError) {
-      console.error('Error deleting existing role permissions:', deleteError);
-      throw deleteError;
-    }
+  const { error: deleteError } = await supabase
+    .from('role_permissions')
+    .delete()
+    .eq('role_id', roleId);
     
-    // If no permissions to add, we're done
-    if (permissionIds.length === 0) {
-      return true;
-    }
-    
-    // Create the role permissions objects
-    const rolePermissions = permissionIds.map(permissionId => ({
-      role_id: roleId,
-      permission_id: permissionId
-    }));
-    
-    // Insert new permissions
-    const { error: insertError } = await supabase
-      .from('role_permissions')
-      .insert(rolePermissions);
-      
-    if (insertError) {
-      console.error('Error inserting role permissions:', insertError);
-      throw insertError;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error in saveRolePermissions:', error);
-    throw error;
+  if (deleteError) {
+    console.error('Error deleting existing role permissions:', deleteError);
+    throw deleteError;
   }
+  
+  if (permissionIds.length === 0) {
+    return true; // لا توجد أذونات للإضافة
+  }
+  
+  const rolePermissions = permissionIds.map(permissionId => ({
+    role_id: roleId,
+    permission_id: permissionId
+  }));
+  
+  const { error: insertError } = await supabase
+    .from('role_permissions')
+    .insert(rolePermissions);
+    
+  if (insertError) {
+    console.error('Error inserting role permissions:', insertError);
+    throw insertError;
+  }
+  
+  return true;
 };

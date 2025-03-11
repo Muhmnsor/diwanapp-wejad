@@ -1,6 +1,6 @@
 
-import { PermissionItem } from "../PermissionItem";
 import { PermissionData } from "../types";
+import { PermissionItem } from "../PermissionItem";
 
 interface ModulePermissionsContentProps {
   permissions: PermissionData[];
@@ -14,7 +14,7 @@ export const ModulePermissionsContent = ({
   onPermissionToggle,
 }: ModulePermissionsContentProps) => {
   return (
-    <div className="bg-background p-4 space-y-3">
+    <div className="p-4 space-y-2 bg-card">
       {permissions.map((permission) => (
         <PermissionItem
           key={permission.id}

@@ -44,7 +44,7 @@ export const RoleDeleteDialog = ({ role, isOpen, onClose, onDelete }: RoleDelete
 
       // حذف تسجيلات الصلاحيات المرتبطة بالدور
       const { error: permissionsError } = await supabase
-        .from('role_permissions')
+        .from('app_permissions')
         .delete()
         .eq('role_id', role.id);
 
