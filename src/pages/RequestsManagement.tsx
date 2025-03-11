@@ -13,9 +13,10 @@ import { RequestDetail } from "@/components/requests/RequestDetail";
 import { useRequests } from "@/components/requests/hooks/useRequests";
 import { RequestType } from "@/components/requests/types";
 import { useAuthStore } from "@/store/refactored-auth";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const RequestsManagement = () => {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "incoming";
   const [selectedRequestType, setSelectedRequestType] = useState<RequestType | null>(null);
@@ -28,25 +29,33 @@ const RequestsManagement = () => {
     incomingLoading, 
     outgoingLoading,
     refetchOutgoingRequests,
+    refetchIncomingRequests,
     createRequest 
   } = useRequests();
 
-  // Update the URL parameter when tab changes from external source
+  // Handle tab change from URL
   useEffect(() => {
-    // Just handle the case where there is no tab parameter
-    if (!searchParams.has("tab") && activeTab !== "incoming") {
+    const tabFromUrl = searchParams.get("tab");
+    if (tabFromUrl && tabFromUrl !== activeTab) {
+      // Update the local state to match URL
+      setSearchParams(searchParams);
+    } else if (!tabFromUrl) {
+      // Add the default tab to URL if missing
       searchParams.set("tab", activeTab);
       setSearchParams(searchParams);
     }
-  }, [activeTab, searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, activeTab]);
 
-  // Refresh outgoing requests when switching to that tab
+  // Refresh data when switching tabs
   useEffect(() => {
     if (activeTab === "outgoing") {
       console.log("Refreshing outgoing requests due to tab change");
       refetchOutgoingRequests();
+    } else if (activeTab === "incoming") {
+      console.log("Refreshing incoming requests due to tab change");
+      refetchIncomingRequests();
     }
-  }, [activeTab, refetchOutgoingRequests]);
+  }, [activeTab, refetchOutgoingRequests, refetchIncomingRequests]);
 
   const handleNewRequest = () => {
     setShowNewRequestDialog(false);
@@ -74,98 +83,29 @@ const RequestsManagement = () => {
 
   const handleCloseDetailView = () => {
     setSelectedRequestId(null);
-  };
-
-  // Render content based on the active tab
-  const renderContent = () => {
-    if (selectedRequestId) {
-      return (
-        <RequestDetail
-          requestId={selectedRequestId}
-          onClose={handleCloseDetailView}
-        />
-      );
-    }
-
-    switch (activeTab) {
-      case "incoming":
-        return (
-          <div>
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold">الطلبات الواردة</h2>
-            </div>
-            <RequestsTable
-              requests={incomingRequests || []}
-              isLoading={incomingLoading}
-              type="incoming"
-              onViewRequest={handleViewRequest}
-              onApproveRequest={(request) => handleViewRequest(request)}
-              onRejectRequest={(request) => handleViewRequest(request)}
-            />
-          </div>
-        );
-        
-      case "outgoing":
-        return (
-          <div>
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold">الطلبات الصادرة</h2>
-            </div>
-            <RequestsTable
-              requests={outgoingRequests || []}
-              isLoading={outgoingLoading}
-              type="outgoing"
-              onViewRequest={handleViewRequest}
-            />
-          </div>
-        );
-        
-      case "approvals":
-        return <AdminWorkflows />;
-        
-      case "forms":
-        return (
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-4">تقديم طلب جديد</h2>
-            <p className="mb-6 text-muted-foreground">
-              اختر نوع الطلب الذي ترغب في تقديمه من القائمة أدناه
-            </p>
-            <RequestTypesList onSelectType={handleSelectRequestType} />
-          </div>
-        );
-        
-      default:
-        return (
-          <div>
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold">الطلبات الواردة</h2>
-            </div>
-            <RequestsTable
-              requests={incomingRequests || []}
-              isLoading={incomingLoading}
-              type="incoming"
-              onViewRequest={handleViewRequest}
-              onApproveRequest={(request) => handleViewRequest(request)}
-              onRejectRequest={(request) => handleViewRequest(request)}
-            />
-          </div>
-        );
+    // Refresh appropriate list after closing detail view
+    if (activeTab === "incoming") {
+      refetchIncomingRequests();
+    } else if (activeTab === "outgoing") {
+      refetchOutgoingRequests();
     }
   };
 
-  return (
-    <div className="min-h-screen flex flex-col" dir="rtl">
-      <TopHeader />
-      
-      <div className="container mx-auto px-4 py-8 flex-grow">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">إدارة الطلبات</h1>
-          <p className="text-gray-600 mt-2">إدارة ومتابعة الطلبات والاستمارات والاعتمادات الواردة</p>
-        </div>
-        
-        {isAuthenticated ? (
-          renderContent()
-        ) : (
+  const handleTabChange = (value: string) => {
+    searchParams.set("tab", value);
+    setSearchParams(searchParams);
+  };
+
+  // Render content based on authentication status
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex flex-col" dir="rtl">
+        <TopHeader />
+        <div className="container mx-auto px-4 py-8 flex-grow">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold">إدارة الطلبات</h1>
+            <p className="text-gray-600 mt-2">إدارة ومتابعة الطلبات والاستمارات والاعتمادات الواردة</p>
+          </div>
           <Card className="w-full">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-2xl font-bold">نظام إدارة الطلبات والاعتمادات</CardTitle>
@@ -181,7 +121,98 @@ const RequestsManagement = () => {
               </div>
             </CardContent>
           </Card>
-        )}
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // If user is viewing a specific request
+  if (selectedRequestId) {
+    return (
+      <div className="min-h-screen flex flex-col" dir="rtl">
+        <TopHeader />
+        <div className="container mx-auto px-4 py-8 flex-grow">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold">إدارة الطلبات</h1>
+            <p className="text-gray-600 mt-2">إدارة ومتابعة الطلبات والاستمارات والاعتمادات الواردة</p>
+          </div>
+          <RequestDetail
+            requestId={selectedRequestId}
+            onClose={handleCloseDetailView}
+          />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col" dir="rtl">
+      <TopHeader />
+      
+      <div className="container mx-auto px-4 py-8 flex-grow">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold">إدارة الطلبات</h1>
+          <p className="text-gray-600 mt-2">إدارة ومتابعة الطلبات والاستمارات والاعتمادات الواردة</p>
+        </div>
+        
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-8">
+          <TabsList className="mb-6">
+            <TabsTrigger value="incoming">الطلبات الواردة</TabsTrigger>
+            <TabsTrigger value="outgoing">الطلبات الصادرة</TabsTrigger>
+            <TabsTrigger value="forms">تقديم طلب</TabsTrigger>
+            {user?.isAdmin && (
+              <TabsTrigger value="approvals">مسارات سير العمل</TabsTrigger>
+            )}
+          </TabsList>
+          
+          <TabsContent value="incoming">
+            <div>
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold">الطلبات الواردة</h2>
+              </div>
+              <RequestsTable
+                requests={incomingRequests || []}
+                isLoading={incomingLoading}
+                type="incoming"
+                onViewRequest={handleViewRequest}
+                onApproveRequest={(request) => handleViewRequest(request)}
+                onRejectRequest={(request) => handleViewRequest(request)}
+              />
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="outgoing">
+            <div>
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold">الطلبات الصادرة</h2>
+              </div>
+              <RequestsTable
+                requests={outgoingRequests || []}
+                isLoading={outgoingLoading}
+                type="outgoing"
+                onViewRequest={handleViewRequest}
+              />
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="forms">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold mb-4">تقديم طلب جديد</h2>
+              <p className="mb-6 text-muted-foreground">
+                اختر نوع الطلب الذي ترغب في تقديمه من القائمة أدناه
+              </p>
+              <RequestTypesList onSelectType={handleSelectRequestType} />
+            </div>
+          </TabsContent>
+          
+          {user?.isAdmin && (
+            <TabsContent value="approvals">
+              <AdminWorkflows />
+            </TabsContent>
+          )}
+        </Tabs>
       </div>
 
       {selectedRequestType && (
