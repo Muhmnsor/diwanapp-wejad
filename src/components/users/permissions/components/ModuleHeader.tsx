@@ -1,9 +1,6 @@
 
-import { ChevronDown, ChevronLeft, Minus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { ModuleHeaderProps } from "../types";
-import { cn } from "@/lib/utils";
 import { getModuleDisplayName } from "../utils/moduleMapping";
 
 export const ModuleHeader = ({
@@ -15,44 +12,37 @@ export const ModuleHeader = ({
   onToggleOpen,
   isOpen,
 }: ModuleHeaderProps) => {
-  const displayName = moduleDisplayName || getModuleDisplayName(moduleName);
-
   return (
-    <div className="bg-muted p-3 flex items-center justify-between">
-      <div className="flex items-center space-x-2 rtl:space-x-reverse">
-        <div className="relative">
-          <Checkbox
-            id={`module-${moduleName}`}
-            checked={areAllSelected || areSomeSelected}
-            onCheckedChange={() => onModuleToggle(moduleName)}
-            aria-label={`تحديد كل صلاحيات ${displayName}`}
-          />
+    <div
+      className="flex items-center justify-between p-3 bg-muted/40 hover:bg-muted/60 cursor-pointer"
+      onClick={onToggleOpen}
+    >
+      <div className="flex items-center">
+        <div
+          className={`w-5 h-5 border rounded flex items-center justify-center mr-2 cursor-pointer ${
+            areAllSelected || areSomeSelected
+              ? "bg-primary border-primary text-primary-foreground"
+              : "border-input"
+          }`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onModuleToggle();
+          }}
+        >
+          {areAllSelected && <Check className="h-3.5 w-3.5" />}
           {areSomeSelected && !areAllSelected && (
-            <Minus 
-              className="h-2.5 w-2.5 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white"
-              aria-hidden="true"
-            />
+            <div className="w-2 h-2 bg-primary rounded-sm"></div>
           )}
         </div>
-        <label
-          htmlFor={`module-${moduleName}`}
-          className="text-sm font-medium select-none cursor-pointer"
-        >
-          {displayName}
-        </label>
+        <span className="font-medium">{moduleDisplayName}</span>
       </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => onToggleOpen(moduleName)}
-        aria-label={isOpen ? "طي الوحدة" : "توسيع الوحدة"}
-      >
+      <div>
         {isOpen ? (
-          <ChevronDown className="h-4 w-4" />
+          <ChevronUp className="h-5 w-5" />
         ) : (
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronDown className="h-5 w-5" />
         )}
-      </Button>
+      </div>
     </div>
   );
 };

@@ -1,7 +1,6 @@
 
-import { Checkbox } from "@/components/ui/checkbox";
+import { Check } from "lucide-react";
 import { PermissionData } from "./types";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PermissionItemProps {
   permission: PermissionData;
@@ -15,27 +14,23 @@ export const PermissionItem = ({
   onToggle,
 }: PermissionItemProps) => {
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="flex items-center space-x-2 rtl:space-x-reverse hover:bg-muted/20 p-2 rounded-md">
-            <Checkbox
-              id={`permission-${permission.id}`}
-              checked={isChecked}
-              onCheckedChange={() => onToggle(permission.id)}
-            />
-            <label
-              htmlFor={`permission-${permission.id}`}
-              className="text-sm leading-none cursor-pointer select-none"
-            >
-              {permission.description}
-            </label>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent side="bottom" className="bg-secondary text-secondary-foreground">
-          <p>{permission.name}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <div
+      className="flex items-start p-2 hover:bg-muted/20 rounded cursor-pointer"
+      onClick={() => onToggle(permission.id)}
+    >
+      <div
+        className={`w-5 h-5 mt-0.5 border rounded flex items-center justify-center mr-2 ${
+          isChecked
+            ? "bg-primary border-primary text-primary-foreground"
+            : "border-input"
+        }`}
+      >
+        {isChecked && <Check className="h-3.5 w-3.5" />}
+      </div>
+      <div>
+        <div className="font-medium text-sm">{permission.description}</div>
+        <div className="text-xs text-muted-foreground">{permission.name}</div>
+      </div>
+    </div>
   );
 };
