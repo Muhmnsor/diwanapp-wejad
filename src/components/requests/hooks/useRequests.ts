@@ -85,11 +85,11 @@ export const useRequests = () => {
         // Check if nested objects exist and extract first item if they're arrays
         const requestData = Array.isArray(item.request) && item.request.length > 0 
           ? item.request[0] 
-          : null;
+          : item.request;
           
         const stepData = Array.isArray(item.step) && item.step.length > 0 
           ? item.step[0] 
-          : null;
+          : item.step;
           
         if (!requestData) {
           console.warn(`Skipping approval ${item.id} due to missing request data`);
