@@ -62,13 +62,15 @@ export const useIncomingRequests = () => {
           // Handle both array and object cases
           if (Array.isArray(request.request_type) && request.request_type.length > 0) {
             requestType = {
-              id: request.request_type[0].id,
-              name: request.request_type[0].name
+              id: request.request_type[0]?.id,
+              name: request.request_type[0]?.name
             };
           } else if (typeof request.request_type === 'object' && request.request_type !== null) {
+            // Access object properties directly, not as an array
+            const requestTypeObj = request.request_type as any;
             requestType = {
-              id: request.request_type.id,
-              name: request.request_type.name
+              id: requestTypeObj.id,
+              name: requestTypeObj.name
             };
           }
         }
@@ -80,13 +82,16 @@ export const useIncomingRequests = () => {
         
         if (request.current_step) {
           if (Array.isArray(request.current_step) && request.current_step.length > 0) {
-            stepId = request.current_step[0].id;
-            stepName = request.current_step[0].step_name;
-            stepType = request.current_step[0].step_type;
+            const stepObj = request.current_step[0];
+            stepId = stepObj?.id;
+            stepName = stepObj?.step_name;
+            stepType = stepObj?.step_type;
           } else if (typeof request.current_step === 'object' && request.current_step !== null) {
-            stepId = request.current_step.id;
-            stepName = request.current_step.step_name;
-            stepType = request.current_step.step_type;
+            // Access object properties directly, not as an array
+            const stepObj = request.current_step as any;
+            stepId = stepObj.id;
+            stepName = stepObj.step_name;
+            stepType = stepObj.step_type;
           }
         }
         
