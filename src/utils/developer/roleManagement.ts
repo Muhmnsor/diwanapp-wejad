@@ -13,9 +13,11 @@ export const isDeveloper = async (userId: string): Promise<boolean> => {
       .eq('user_id', userId);
       
     // Check if user has admin role
-    const isAdmin = userRoles?.some(role => 
-      role.roles?.name === 'admin' || role.roles?.name === 'app_admin'
-    );
+    const isAdmin = userRoles?.some(role => {
+      const roleName = role.roles && typeof role.roles === 'object' ? 
+        (role.roles as any).name : null;
+      return roleName === 'admin' || roleName === 'app_admin';
+    });
     
     if (isAdmin) {
       console.log('User is admin, granting developer access automatically');

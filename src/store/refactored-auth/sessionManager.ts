@@ -24,7 +24,7 @@ export const checkUserRole = async (userId: string): Promise<boolean> => {
     if (userRole.roles) {
       const roleName = typeof userRole.roles === 'object' && userRole.roles !== null ? 
         // Handle both array and object response formats
-        (Array.isArray(userRole.roles) ? userRole.roles[0]?.name : userRole.roles.name) : 
+        (Array.isArray(userRole.roles) ? userRole.roles[0]?.name : (userRole.roles as any).name) : 
         null;
         
       if (roleName === 'developer') {
@@ -58,7 +58,7 @@ export const checkAdminRole = async (userId: string): Promise<boolean> => {
     if (userRole.roles) {
       const roleName = typeof userRole.roles === 'object' && userRole.roles !== null ? 
         // Handle both array and object response formats
-        (Array.isArray(userRole.roles) ? userRole.roles[0]?.name : userRole.roles.name) : 
+        (Array.isArray(userRole.roles) ? userRole.roles[0]?.name : (userRole.roles as any).name) : 
         null;
         
       if (roleName === 'admin' || roleName === 'app_admin') {
