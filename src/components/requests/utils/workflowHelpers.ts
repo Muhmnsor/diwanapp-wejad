@@ -6,27 +6,6 @@ import { supabase } from '@/integrations/supabase/client';
  */
 
 /**
- * Checks which workflow steps table is available and returns the name
- */
-export const getWorkflowStepsTable = async (): Promise<string> => {
-  try {
-    const { data: workflowStepsExists } = await supabase.rpc('check_table_exists', { 
-      table_name: 'workflow_steps' 
-    });
-    
-    if (workflowStepsExists?.[0]?.table_exists) {
-      return 'workflow_steps';
-    } else {
-      return 'request_workflow_steps';
-    }
-  } catch (error) {
-    console.error('Error checking workflow steps table:', error);
-    // Default to workflow_steps if we can't check
-    return 'workflow_steps';
-  }
-};
-
-/**
  * Fetches a request workflow by ID and logs diagnostic information
  */
 export const fetchWorkflowDetails = async (workflowId: string) => {
@@ -35,7 +14,7 @@ export const fetchWorkflowDetails = async (workflowId: string) => {
     
     // Get the workflow
     const { data: workflow, error: workflowError } = await supabase
-      .from('request_workflows')
+      .from('workflows')
       .select('*')
       .eq('id', workflowId)
       .single();
@@ -45,19 +24,15 @@ export const fetchWorkflowDetails = async (workflowId: string) => {
       return null;
     }
     
-    // Determine which table to use for steps
-    const stepsTable = await getWorkflowStepsTable();
-    console.log(`Using ${stepsTable} table for workflow steps`);
-    
     // Get the workflow steps
     const { data: steps, error: stepsError } = await supabase
-      .from(stepsTable)
+      .from('workflow_steps')
       .select('*')
       .eq('workflow_id', workflowId)
       .order('step_order', { ascending: true });
     
     if (stepsError) {
-      console.error(`Error fetching workflow steps from ${stepsTable}:`, stepsError);
+      console.error('Error fetching workflow steps:', stepsError);
       return { workflow, steps: [] };
     }
     
@@ -101,7 +76,7 @@ export const diagnoseRequestWorkflow = async (requestId: string) => {
     // Get the request
     const { data: request, error: requestError } = await supabase
       .from('requests')
-      .select('*, workflow:request_workflows(*)')
+      .select('*, workflow:workflows(*)')
       .eq('id', requestId)
       .single();
     
@@ -122,12 +97,9 @@ export const diagnoseRequestWorkflow = async (requestId: string) => {
       };
     }
     
-    // Determine which table to use for steps
-    const stepsTable = await getWorkflowStepsTable();
-    
     // Get the current step
     const { data: currentStep, error: stepError } = await supabase
-      .from(stepsTable)
+      .from('workflow_steps')
       .select('*')
       .eq('id', request.current_step_id)
       .single();
@@ -135,7 +107,7 @@ export const diagnoseRequestWorkflow = async (requestId: string) => {
     if (stepError) {
       return { 
         request, 
-        issues: [`Current step not found in ${stepsTable} table`]
+        issues: ['Current step not found in workflow_steps table']
       };
     }
     
@@ -146,3 +118,49 @@ export const diagnoseRequestWorkflow = async (requestId: string) => {
   }
 };
 
+/**
+ * A utility to check if a request is properly associated with a workflow
+ */
+export const validateRequestWorkflow = async (requestTypeId: string): Promise<boolean> => {
+  try {
+    // Check if the request type has a default workflow
+    const { data: requestType, error: typeError } = await supabase
+      .from('request_types')
+      .select('default_workflow_id')
+      .eq('id', requestTypeId)
+      .single();
+    
+    if (typeError || !requestType.default_workflow_id) {
+      console.error('Request type has no default workflow:', requestTypeId);
+      return false;
+    }
+    
+    // Verify the workflow exists
+    const { data: workflow, error: workflowError } = await supabase
+      .from('workflows')
+      .select('id')
+      .eq('id', requestType.default_workflow_id)
+      .single();
+    
+    if (workflowError || !workflow) {
+      console.error('Default workflow not found:', requestType.default_workflow_id);
+      return false;
+    }
+    
+    // Verify workflow has steps
+    const { data: steps, error: stepsError } = await supabase
+      .from('workflow_steps')
+      .select('id')
+      .eq('workflow_id', workflow.id);
+    
+    if (stepsError || !steps || steps.length === 0) {
+      console.error('Workflow has no steps:', workflow.id);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Exception in validateRequestWorkflow:', error);
+    return false;
+  }
+};

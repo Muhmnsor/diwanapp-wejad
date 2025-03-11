@@ -3103,7 +3103,7 @@ export type Database = {
             foreignKeyName: "requests_current_step_id_fkey"
             columns: ["current_step_id"]
             isOneToOne: false
-            referencedRelation: "workflow_steps"
+            referencedRelation: "request_workflow_steps"
             referencedColumns: ["id"]
           },
           {
@@ -4219,33 +4219,6 @@ export type Database = {
           target_type?: string | null
           template_type?: string | null
           updated_at?: string
-        }
-        Relationships: []
-      }
-      workflow_step_migration_logs: {
-        Row: {
-          id: string
-          migrated_at: string | null
-          new_step_id: string | null
-          old_step_id: string | null
-          step_name: string | null
-          workflow_id: string | null
-        }
-        Insert: {
-          id?: string
-          migrated_at?: string | null
-          new_step_id?: string | null
-          old_step_id?: string | null
-          step_name?: string | null
-          workflow_id?: string | null
-        }
-        Update: {
-          id?: string
-          migrated_at?: string | null
-          new_step_id?: string | null
-          old_step_id?: string | null
-          step_name?: string | null
-          workflow_id?: string | null
         }
         Relationships: []
       }

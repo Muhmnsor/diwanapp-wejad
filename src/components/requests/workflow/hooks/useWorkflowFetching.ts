@@ -3,7 +3,6 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { WorkflowStep } from "../../types";
 import { getInitialStepState } from "../utils";
-import { getWorkflowStepsTable } from "../../utils/workflowHelpers";
 
 interface UseWorkflowFetchingProps {
   requestTypeId: string | null;
@@ -80,19 +79,14 @@ export const useWorkflowFetching = ({
         if (fetchedWorkflowId) {
           setWorkflowId(fetchedWorkflowId);
           
-          // Determine which table to use for steps
-          const stepsTable = await getWorkflowStepsTable();
-          console.log(`Using ${stepsTable} table for workflow steps`);
-          
-          // Get the workflow steps
           const { data: steps, error: stepsError } = await supabase
-            .from(stepsTable)
+            .from('request_workflow_steps') // Updated table name
             .select('*')
             .eq('workflow_id', fetchedWorkflowId)
             .order('step_order', { ascending: true });
           
           if (stepsError) {
-            console.error(`Error fetching workflow steps from ${stepsTable}:`, stepsError);
+            console.error("Error fetching workflow steps:", stepsError);
             throw new Error("فشل في العثور على خطوات سير العمل");
           }
           
