@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,25 +21,9 @@ interface RequestApprovalResponse {
     request_type: {
       id: string;
       name: string;
-    };
-  } | {
-    id: string;
-    title: string;
-    status: string;
-    priority: string;
-    created_at: string;
-    current_step_id: string;
-    request_type: {
-      id: string;
-      name: string;
     }[];
-  };
+  }[];
   step: {
-    id: string;
-    step_name: string;
-    step_type: string;
-    approver_id: string;
-  } | {
     id: string;
     step_name: string;
     step_type: string;
@@ -98,19 +81,15 @@ export const useRequests = () => {
       
       // Transform the data to handle the nested array structure from Supabase
       const requests = data.map((item: RequestApprovalResponse) => {
-        // Type guard to check if nested objects are arrays or single objects
-        const isRequestArray = Array.isArray(item.request);
-        const isStepArray = Array.isArray(item.step);
-        
-        // Extract request data safely
-        const requestData = isRequestArray && item.request.length > 0 
+        // Always use the first item from request array if available
+        const requestData = item.request && item.request.length > 0 
           ? item.request[0] 
-          : (isRequestArray ? null : item.request);
+          : null;
           
-        // Extract step data safely
-        const stepData = isStepArray && item.step.length > 0 
+        // Always use the first item from step array if available
+        const stepData = item.step && item.step.length > 0 
           ? item.step[0] 
-          : (isStepArray ? null : item.step);
+          : null;
           
         if (!requestData) {
           console.warn(`Skipping approval ${item.id} due to missing request data`);
@@ -119,12 +98,9 @@ export const useRequests = () => {
         
         // Handle nested request_type with type safety
         let requestType = null;
-        if (requestData) {
-          const reqType = requestData.request_type;
-          if (Array.isArray(reqType) && reqType.length > 0) {
-            requestType = reqType[0];
-          } else if (reqType && typeof reqType === 'object') {
-            requestType = reqType;
+        if (requestData && requestData.request_type) {
+          if (Array.isArray(requestData.request_type) && requestData.request_type.length > 0) {
+            requestType = requestData.request_type[0];
           }
         }
         
@@ -134,8 +110,8 @@ export const useRequests = () => {
           request_type: requestType,
           approval_id: item.id,
           step_id: item.step_id,
-          step_name: stepData && 'step_name' in stepData ? stepData.step_name : 'Unknown Step',
-          step_type: stepData && 'step_type' in stepData ? stepData.step_type : 'decision'
+          step_name: stepData ? stepData.step_name : 'Unknown Step',
+          step_type: stepData ? stepData.step_type : 'decision'
         };
       }).filter(Boolean); // Remove any null items
       
