@@ -71,69 +71,60 @@ export const useRequestDetail = (requestId: string) => {
     refetchOnWindowFocus: false
   });
 
-  // Simplified function to check if the current user is an approver for the current step
+  // Significantly simplified function to check if the current user is an approver
   const isCurrentApprover = () => {
-    if (!data || !user) return false;
-    
-    console.log("التحقق من صلاحية المستخدم للموافقة على الطلب:", requestId);
-    console.log("معرف المستخدم:", user.id);
-    
-    // Admin users are always treated as approvers
-    if (user.isAdmin) {
-      console.log("المستخدم مدير، لديه دائمًا صلاحية الاعتماد");
-      return true;
+    if (!data || !user) {
+      console.log("لا تتوفر بيانات كافية للتحقق من صلاحية المعتمد");
+      return false;
     }
     
-    // Check if the request doesn't have a current step
+    console.log("التحقق من صلاحية الموافقة للمستخدم:", user.id);
+    
+    // Admin users always have approval rights
+    if (user.isAdmin) {
+      console.log("المستخدم مدير، لديه صلاحية الاعتماد");
+      return true;
+    }
+
+    // If the request has no current step, it cannot be approved
     if (!data.current_step || !data.current_step.id) {
       console.log("لا توجد خطوة حالية للطلب");
       return false;
     }
     
-    // Approvals must exist
-    if (!data.approvals || !Array.isArray(data.approvals)) {
-      console.log("لا توجد سجلات موافقة للطلب");
+    // Direct approach: check if user is the requester (can't approve their own request)
+    if (data.request?.requester_id === user.id) {
+      console.log("المستخدم هو مقدم الطلب، لا يمكنه الموافقة عليه");
       return false;
     }
-
-    // Check for direct approvals where this user is the specific approver
-    const isPendingDirectApprover = data.approvals.some(
+    
+    // Check if user has a direct approval record for the current step
+    const hasDirectApproval = data.approvals?.some(
       (approval: any) => 
         approval.approver?.id === user.id && 
         approval.status === "pending" &&
         approval.step?.id === data.current_step.id
     );
     
-    if (isPendingDirectApprover) {
-      console.log("المستخدم هو معتمد مباشر لهذا الطلب");
+    if (hasDirectApproval) {
+      console.log("المستخدم له سجل موافقة مباشر للخطوة الحالية");
       return true;
     }
     
-    // If the user has a role, check for role-based approvals
-    if (user.role) {
-      console.log("المستخدم له دور:", user.role);
-      
-      // Admin or app_admin roles always have approval rights
-      if (user.role === 'admin' || user.role === 'app_admin') {
-        console.log("المستخدم لديه دور إداري يمنحه صلاحية الموافقة");
-        return true;
-      }
-      
-      // Look for any role-based approvals that match the current step
-      const isPendingRoleApprover = data.approvals.some(
-        (approval: any) => 
-          approval.assignment_type === 'role' &&
-          approval.status === "pending" &&
-          approval.step?.id === data.current_step.id
-      );
-      
-      if (isPendingRoleApprover) {
-        console.log("يوجد موافقة معلقة معتمدة على الدور الوظيفي");
-        return true;
-      }
+    // Check if user has a role-based approval record
+    const hasRoleApproval = user.role && data.approvals?.some(
+      (approval: any) => 
+        approval.assignment_type === 'role' &&
+        approval.status === "pending" &&
+        approval.step?.id === data.current_step.id
+    );
+    
+    if (hasRoleApproval) {
+      console.log("المستخدم له صلاحية موافقة معتمدة على الدور الوظيفي");
+      return true;
     }
     
-    console.log("المستخدم ليس له صلاحية للموافقة على هذا الطلب");
+    console.log("المستخدم ليس له صلاحية الموافقة على الطلب");
     return false;
   };
 
