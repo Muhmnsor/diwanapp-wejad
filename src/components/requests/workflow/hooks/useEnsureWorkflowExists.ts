@@ -52,6 +52,8 @@ export const useEnsureWorkflowExists = ({
         throw new Error("فشل في التحقق من مسارات سير العمل الموجودة");
       }
       
+      console.log("Existing workflows:", existingWorkflows);
+      
       let newWorkflowId: string;
       
       // If an active workflow exists, use it
@@ -74,6 +76,8 @@ export const useEnsureWorkflowExists = ({
           throw new Error("فشل في العثور على نوع الطلب");
         }
         
+        console.log("Request type data:", requestType);
+        
         // Create the workflow
         const workflowName = `سير عمل ${requestType.name}`;
         
@@ -93,6 +97,8 @@ export const useEnsureWorkflowExists = ({
           console.error("Error creating workflow:", createError);
           throw new Error("فشل في إنشاء سير عمل جديد");
         }
+        
+        console.log("Created new workflow:", newWorkflow);
         
         newWorkflowId = newWorkflow.id;
         console.log("Created new workflow with ID:", newWorkflowId);

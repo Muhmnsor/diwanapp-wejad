@@ -33,9 +33,10 @@ export const useAddStep = (
       const { session, isAdmin } = await checkUserPermissions();
       if (!session) return;
 
-      // Ensure current step has a valid workflow ID
+      // Log the current state for debugging
       console.log("Current step workflow_id:", currentStep.workflow_id);
       console.log("Current workflow ID:", currentWorkflowId);
+      console.log("Current workflowSteps:", workflowSteps);
       
       // Determine the correct workflow ID to use
       let workflowId = 'temp-workflow-id';
@@ -92,7 +93,8 @@ export const useAddStep = (
       console.log("Steps to save:", updatedSteps);
 
       // Save the updated steps
-      await saveWorkflowSteps(updatedSteps);
+      const saveResult = await saveWorkflowSteps(updatedSteps);
+      console.log("Save result:", saveResult);
 
       // Reset the current step and editing index
       setCurrentStep(getInitialStepState(updatedSteps.length + 1, workflowId));

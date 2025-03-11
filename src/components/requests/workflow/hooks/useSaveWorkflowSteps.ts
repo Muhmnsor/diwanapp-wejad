@@ -104,7 +104,9 @@ export const useSaveWorkflowSteps = ({
 
       console.log("Sending steps to database RPC function");
       
-      // Call the RPC function to insert steps
+      // Call the RPC function to insert steps - with detailed logging
+      console.log("Calling RPC function insert_workflow_steps with parameters:", JSON.stringify(stepsToInsert));
+      
       const { data: rpcResult, error: rpcError } = await supabase
         .rpc('insert_workflow_steps', {
           steps: stepsToInsert
