@@ -28,8 +28,6 @@ const RequestsManagement = () => {
     outgoingRequests, 
     incomingLoading, 
     outgoingLoading,
-    refetchOutgoingRequests,
-    refetchIncomingRequests,
     createRequest 
   } = useRequests();
 
@@ -46,17 +44,6 @@ const RequestsManagement = () => {
     }
   }, [searchParams, setSearchParams, activeTab]);
 
-  // Refresh data when switching tabs
-  useEffect(() => {
-    if (activeTab === "outgoing") {
-      console.log("Refreshing outgoing requests due to tab change");
-      refetchOutgoingRequests();
-    } else if (activeTab === "incoming") {
-      console.log("Refreshing incoming requests due to tab change");
-      refetchIncomingRequests();
-    }
-  }, [activeTab, refetchOutgoingRequests, refetchIncomingRequests]);
-
   const handleNewRequest = () => {
     setShowNewRequestDialog(false);
     setSelectedRequestType(null);
@@ -71,8 +58,18 @@ const RequestsManagement = () => {
     createRequest.mutate(formData, {
       onSuccess: () => {
         handleNewRequest();
-        // Force refresh outgoing requests
-        setTimeout(() => refetchOutgoingRequests(), 500);
+        // Since we don't have refetch methods, we can use the browser's navigation to force a refresh
+        setTimeout(() => {
+          const currentTab = searchParams.get("tab") || "incoming";
+          searchParams.set("tab", currentTab === "outgoing" ? "outgoing-refresh" : "outgoing");
+          setSearchParams(searchParams);
+          
+          // Then navigate back to the original tab
+          setTimeout(() => {
+            searchParams.set("tab", currentTab);
+            setSearchParams(searchParams);
+          }, 100);
+        }, 500);
       }
     });
   };
@@ -83,15 +80,26 @@ const RequestsManagement = () => {
 
   const handleCloseDetailView = () => {
     setSelectedRequestId(null);
-    // Refresh appropriate list after closing detail view
-    if (activeTab === "incoming") {
-      refetchIncomingRequests();
-    } else if (activeTab === "outgoing") {
-      refetchOutgoingRequests();
-    }
+    // Since we don't have refetch methods, refresh by temporarily switching tabs
+    const currentTab = searchParams.get("tab") || "incoming";
+    
+    // Switch to a temporary tab to force refresh
+    searchParams.set("tab", currentTab === "incoming" ? "incoming-refresh" : "incoming");
+    setSearchParams(searchParams);
+    
+    // Then switch back to the original tab
+    setTimeout(() => {
+      searchParams.set("tab", currentTab);
+      setSearchParams(searchParams);
+    }, 100);
   };
 
   const handleTabChange = (value: string) => {
+    // Clean up temporary refresh tabs if they exist
+    if (value.endsWith("-refresh")) {
+      value = value.replace("-refresh", "");
+    }
+    
     searchParams.set("tab", value);
     setSearchParams(searchParams);
   };
@@ -183,6 +191,12 @@ const RequestsManagement = () => {
             </div>
           </TabsContent>
           
+          <TabsContent value="incoming-refresh">
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+            </div>
+          </TabsContent>
+          
           <TabsContent value="outgoing">
             <div>
               <div className="mb-6">
@@ -194,6 +208,12 @@ const RequestsManagement = () => {
                 type="outgoing"
                 onViewRequest={handleViewRequest}
               />
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="outgoing-refresh">
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
             </div>
           </TabsContent>
           
