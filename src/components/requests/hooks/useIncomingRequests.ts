@@ -52,6 +52,7 @@ export const useIncomingRequests = () => {
       
       // Transform the data into the expected format
       const transformedRequests = data.map(request => {
+        // Properly extract current_step properties from the object, not the array
         return {
           id: request.id,
           title: request.title,
@@ -61,7 +62,12 @@ export const useIncomingRequests = () => {
           current_step_id: request.current_step_id,
           requester_id: request.requester_id,
           request_type_id: request.request_type_id,
-          request_type: request.request_type,
+          // Fix the request_type property to be an object, not an array
+          request_type: request.request_type ? {
+            id: request.request_type.id,
+            name: request.request_type.name
+          } : null,
+          // Extract properties from the current_step object
           step_id: request.current_step?.id,
           step_name: request.current_step?.step_name,
           step_type: request.current_step?.step_type,
@@ -94,6 +100,7 @@ export const useIncomingRequests = () => {
         }
       }
       
+      // Cast the result to ensure TypeScript compatibility
       return transformedRequests as RequestWithApproval[];
     } catch (error) {
       console.error("Error in fetchIncomingRequests:", error);
