@@ -96,19 +96,24 @@ export const useRequests = () => {
           return null;
         }
         
-        // Extract request_type from nested array if needed
-        const requestType = Array.isArray(requestData.request_type) && requestData.request_type.length > 0
-          ? requestData.request_type[0]
-          : requestData.request_type;
+        // Handle nested request_type
+        let requestType = null;
+        if (requestData) {
+          if (Array.isArray(requestData.request_type) && requestData.request_type.length > 0) {
+            requestType = requestData.request_type[0];
+          } else {
+            requestType = requestData.request_type;
+          }
+        }
         
-        // Return the transformed data
+        // Return the transformed data with proper type checking
         return {
           ...requestData,
           request_type: requestType,
           approval_id: item.id,
           step_id: item.step_id,
-          step_name: stepData?.step_name || 'Unknown Step',
-          step_type: stepData?.step_type || 'decision'
+          step_name: stepData ? stepData.step_name : 'Unknown Step',
+          step_type: stepData ? stepData.step_type : 'decision'
         };
       }).filter(Boolean); // Remove any null items
       
