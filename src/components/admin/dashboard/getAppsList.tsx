@@ -1,4 +1,3 @@
-
 import { 
   Database, 
   ListChecks, 
@@ -8,90 +7,83 @@ import {
   ShoppingCart, 
   Users, 
   Bell,
+  BellRing,
   Clock,
   Inbox,
   Code
 } from "lucide-react";
-import { AppItem } from "./DashboardApps";
-import { NotificationCounts } from "@/hooks/dashboard/useNotificationCounts";
+import { AppItem } from "@/components/admin/dashboard/DashboardApps";
 
-export const getAppsList = (notificationCounts: NotificationCounts): AppItem[] => {
+export const getAppsList = (notificationCounts: any): AppItem[] => {
   return [
     {
-      title: "إدارة الفعاليات",
+      title: "إدارة المستخدمين",
+      icon: Users,
+      path: "/admin/users-management",
+      description: "إدارة المستخدمين والأدوار",
+      notifications: notificationCounts.userManagement || 0
+    },
+    {
+      title: "إدارة المهام",
       icon: ListChecks,
-      path: "/",
-      description: "إدارة وتنظيم الفعاليات والأنشطة",
-      notifications: 0
+      path: "/tasks/dashboard",
+      description: "متابعة وإدارة المهام",
+      notifications: notificationCounts.taskManagement || 0
     },
     {
       title: "إدارة المستندات",
       icon: Database,
       path: "/documents",
-      description: "إدارة وتنظيم المستندات والملفات",
-      notifications: 0
-    },
-    {
-      title: "إدارة المهام",
-      icon: Clock,
-      path: "/tasks",
-      description: "إدارة وتتبع المهام والمشاريع",
-      notifications: notificationCounts.tasks
+      description: "إدارة المستندات الرسمية",
+      notifications: notificationCounts.documents || 0
     },
     {
       title: "إدارة الأفكار",
       icon: Lightbulb,
       path: "/ideas",
-      description: "إدارة وتنظيم الأفكار والمقترحات",
-      notifications: notificationCounts.ideas
+      description: "إدارة وتقييم الأفكار",
+      notifications: notificationCounts.ideas || 0
     },
     {
-      title: "إدارة الأموال",
+      title: "الإدارة المالية",
       icon: DollarSign,
       path: "/finance",
-      description: "إدارة الميزانية والمصروفات",
-      notifications: notificationCounts.finance
+      description: "إدارة الموارد المالية",
+      notifications: notificationCounts.finance || 0
     },
     {
-      title: "إدارة المستخدمين",
-      icon: Users,
-      path: "/admin/users-management",
-      description: "إدارة حسابات المستخدمين والصلاحيات",
-      notifications: 0
-    },
-    {
-      title: "الموقع الإلكتروني",
+      title: "إدارة الموقع",
       icon: Globe,
       path: "/website",
-      description: "إدارة وتحديث محتوى الموقع الإلكتروني",
-      notifications: 0
+      description: "إدارة محتوى الموقع",
+      notifications: notificationCounts.website || 0
     },
     {
-      title: "المتجر الإلكتروني",
+      title: "إدارة المتجر",
       icon: ShoppingCart,
       path: "/store",
-      description: "إدارة المنتجات والطلبات في المتجر الإلكتروني",
-      notifications: 0
+      description: "إدارة المتجر الإلكتروني",
+      notifications: notificationCounts.store || 0
     },
     {
-      title: "الإشعارات",
+      title: "إدارة الإشعارات",
       icon: Bell,
       path: "/notifications",
-      description: "عرض وإدارة إشعارات النظام",
-      notifications: notificationCounts.notifications
+      description: "إدارة إشعارات النظام",
+      notifications: notificationCounts.notifications || 0
     },
     {
       title: "إدارة الطلبات",
       icon: Inbox,
       path: "/requests",
-      description: "إدارة ومتابعة الطلبات والاستمارات والاعتمادات",
-      notifications: 0
+      description: "إدارة الطلبات الواردة",
+      notifications: notificationCounts.requests || 0
     },
     {
-      title: "المطورين",
+      title: "إعدادات المطور",
       icon: Code,
-      path: "/admin/developer-settings",
-      description: "إعدادات وأدوات المطورين",
+      path: "/developer/settings",
+      description: "إعدادات وأدوات التطوير",
       notifications: 0
     }
   ];
