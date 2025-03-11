@@ -19,54 +19,54 @@ import { User } from "@/store/refactored-auth/types";
 // Define roles for each application with comprehensive role access
 const APP_ROLE_ACCESS = {
   events: [
-    'admin', 'app_admin', 'developer',
+    'admin', 'app_admin', 
     'event_manager', 'event_creator', 'event_coordinator',
     'event_executor', 'event_media', 'event_planner'
   ],
   documents: [
-    'admin', 'app_admin', 'developer',
+    'admin', 'app_admin', 
     'document_manager', 'finance_manager', 'financial_manager',
     'document_reviewer', 'document_creator'
   ],
   tasks: [
-    'admin', 'app_admin', 'developer',
+    'admin', 'app_admin', 
     'task_manager', 'project_manager', 'finance_manager', 
     'financial_manager', 'task_creator', 'team_leader'
   ],
   ideas: [
-    'admin', 'app_admin', 'developer',
+    'admin', 'app_admin', 
     'idea_manager', 'finance_manager', 'financial_manager',
     'idea_reviewer', 'idea_creator', 'innovation_manager'
   ],
   finance: [
-    'admin', 'app_admin', 'developer',
+    'admin', 'app_admin', 
     'finance_manager', 'financial_manager', 'accountant',
     'budget_manager', 'resource_manager'
   ],
   users: [
-    'admin', 'app_admin', 'developer',
+    'admin', 'app_admin', 
     'hr_manager', 'user_manager'
   ],
   website: [
-    'admin', 'app_admin', 'developer',
+    'admin', 'app_admin', 
     'content_manager', 'media_manager', 'web_editor'
   ],
   store: [
-    'admin', 'app_admin', 'developer',
+    'admin', 'app_admin', 
     'store_manager', 'inventory_manager', 'sales_manager'
   ],
   notifications: [
-    'admin', 'app_admin', 'developer',
+    'admin', 'app_admin', 
     'notification_manager', 'finance_manager', 'financial_manager',
     'communication_manager'
   ],
   requests: [
-    'admin', 'app_admin', 'developer',
+    'admin', 'app_admin', 
     'request_manager', 'finance_manager', 'financial_manager',
     'approval_manager'
   ],
   developer: [
-    'admin', 'app_admin', 'developer'
+    'admin', 'app_admin'
   ]
 };
 
@@ -259,6 +259,7 @@ export const getAppsList = (notificationCounts: NotificationCounts, user?: User 
   // For non-admin users, filter apps based on role
   const filteredApps = ALL_APPS.filter(app => {
     const appKey = getAppKeyFromPath(app.path);
+    // Only show apps the user has access to based on their role
     return appKey ? hasAccessToApp(userRole, appKey) : false;
   });
   
@@ -303,7 +304,7 @@ const hasAccessToApp = (userRole: string, appKey: string): boolean => {
       return false;
     }
     
-    console.log('Mapped role:', mappedRole);
+    console.log('Mapped role:', mappedRole, 'Checking access to app:', appKey);
     
     // Get allowed roles for the app
     const allowedRoles = APP_ROLE_ACCESS[appKey as keyof typeof APP_ROLE_ACCESS] || [];
@@ -311,7 +312,7 @@ const hasAccessToApp = (userRole: string, appKey: string): boolean => {
     
     // Check if mapped role is in allowed roles
     const hasAccess = allowedRoles.includes(mappedRole);
-    console.log('Has access:', hasAccess);
+    console.log('Has access to', appKey, ':', hasAccess);
     
     return hasAccess;
   } catch (error) {
