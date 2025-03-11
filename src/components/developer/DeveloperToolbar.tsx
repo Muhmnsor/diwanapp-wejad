@@ -20,7 +20,7 @@ export const DeveloperToolbar = () => {
       }
 
       try {
-        const enabled = await isDeveloperModeEnabled(user.id);
+        const enabled = await isDeveloperModeEnabled();
         setIsDevModeEnabled(enabled);
       } catch (error) {
         console.error('Error checking developer mode:', error);
@@ -37,7 +37,7 @@ export const DeveloperToolbar = () => {
     
     setIsLoading(true);
     try {
-      const success = await toggleDeveloperMode(user.id, !isDevModeEnabled);
+      const success = await toggleDeveloperMode();
       if (success) {
         setIsDevModeEnabled(!isDevModeEnabled);
       }
