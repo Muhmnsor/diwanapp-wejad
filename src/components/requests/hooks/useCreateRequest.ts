@@ -113,12 +113,14 @@ export const useCreateRequest = () => {
         
         if (workflowId) {
           try {
+            // Get the first step in the workflow
             const { data: firstStep, error: stepError } = await supabase
               .from("request_workflow_steps")
               .select("id, approver_id, approver_type")
               .eq("workflow_id", workflowId)
-              .eq("step_order", 1)
-              .maybeSingle();
+              .order("step_order", { ascending: true })
+              .limit(1)
+              .single();
             
             if (stepError) {
               console.error("Error fetching first step:", stepError);
@@ -136,20 +138,22 @@ export const useCreateRequest = () => {
           }
         }
         
+        // Ensure the request status is set to 'pending'
         const requestPayload = {
           requester_id: user.id,
           workflow_id: workflowId,
-          current_step_id: currentStepId,
+          current_step_id: currentStepId, // Set the current step to the first step of workflow
           title: requestData.title,
           form_data: requestData.form_data,
           request_type_id: requestData.request_type_id,
           priority: requestData.priority || 'medium',
-          status: requestData.status || 'pending',
+          status: 'pending', // Always create with pending status
           due_date: requestData.due_date || null
         };
         
         console.log("Creating request with processed payload:", requestPayload);
         
+        // Use the RPC function to bypass RLS
         const { data: insertResult, error: insertError } = await supabase.rpc('insert_request_bypass_rls', {
           request_data: requestPayload
         });
@@ -164,12 +168,16 @@ export const useCreateRequest = () => {
         }
         
         console.log("Request created successfully:", insertResult);
-        console.log("=== تم إنشاء الطلب بنجاح ===");
         
+        // If we found a current step ID, create the approval record for it
         if (currentStepId) {
           await createApprovalRecord(insertResult.id, currentStepId);
+          console.log("Created approval record for step:", currentStepId);
+        } else {
+          console.log("No current step found, skipping approval record creation");
         }
         
+        console.log("=== تم إنشاء الطلب بنجاح ===");
         return insertResult;
       } catch (error) {
         console.error("Error in createRequest:", error);
