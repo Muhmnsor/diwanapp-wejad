@@ -9,10 +9,10 @@ import { RequestTypesList } from "@/components/requests/RequestTypesList";
 import { RequestsTable } from "@/components/requests/RequestsTable";
 import { AdminWorkflows } from "@/components/requests/AdminWorkflows";
 import { NewRequestDialog } from "@/components/requests/NewRequestDialog";
+import { RequestDetail } from "@/components/requests/RequestDetail";
 import { useRequests } from "@/components/requests/hooks/useRequests";
 import { RequestType } from "@/components/requests/types";
 import { useAuthStore } from "@/store/refactored-auth";
-import { IncomingRequestsPage } from "@/features/requests/components/incoming/IncomingRequestsPage";
 
 const RequestsManagement = () => {
   const { isAuthenticated } = useAuthStore();
@@ -20,9 +20,12 @@ const RequestsManagement = () => {
   const activeTab = searchParams.get("tab") || "incoming";
   const [selectedRequestType, setSelectedRequestType] = useState<RequestType | null>(null);
   const [showNewRequestDialog, setShowNewRequestDialog] = useState<boolean>(false);
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   
   const { 
+    incomingRequests, 
     outgoingRequests, 
+    incomingLoading, 
     outgoingLoading,
     refetchOutgoingRequests,
     createRequest 
@@ -65,11 +68,42 @@ const RequestsManagement = () => {
     });
   };
 
+  const handleViewRequest = (request: any) => {
+    setSelectedRequestId(request.id);
+  };
+
+  const handleCloseDetailView = () => {
+    setSelectedRequestId(null);
+  };
+
   // Render content based on the active tab
   const renderContent = () => {
+    if (selectedRequestId) {
+      return (
+        <RequestDetail
+          requestId={selectedRequestId}
+          onClose={handleCloseDetailView}
+        />
+      );
+    }
+
     switch (activeTab) {
       case "incoming":
-        return <IncomingRequestsPage />;
+        return (
+          <div>
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold">الطلبات الواردة</h2>
+            </div>
+            <RequestsTable
+              requests={incomingRequests || []}
+              isLoading={incomingLoading}
+              type="incoming"
+              onViewRequest={handleViewRequest}
+              onApproveRequest={(request) => handleViewRequest(request)}
+              onRejectRequest={(request) => handleViewRequest(request)}
+            />
+          </div>
+        );
         
       case "outgoing":
         return (
@@ -81,7 +115,7 @@ const RequestsManagement = () => {
               requests={outgoingRequests || []}
               isLoading={outgoingLoading}
               type="outgoing"
-              onViewRequest={() => {}}
+              onViewRequest={handleViewRequest}
             />
           </div>
         );
@@ -101,7 +135,21 @@ const RequestsManagement = () => {
         );
         
       default:
-        return <IncomingRequestsPage />;
+        return (
+          <div>
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold">الطلبات الواردة</h2>
+            </div>
+            <RequestsTable
+              requests={incomingRequests || []}
+              isLoading={incomingLoading}
+              type="incoming"
+              onViewRequest={handleViewRequest}
+              onApproveRequest={(request) => handleViewRequest(request)}
+              onRejectRequest={(request) => handleViewRequest(request)}
+            />
+          </div>
+        );
     }
   };
 

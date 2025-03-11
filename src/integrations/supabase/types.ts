@@ -4443,28 +4443,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      check_if_request_accessible: {
-        Args: {
-          request_id: string
-        }
-        Returns: boolean
-      }
-      check_if_user_is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      check_if_user_is_request_approver: {
-        Args: {
-          request_id: string
-        }
-        Returns: boolean
-      }
-      check_if_user_is_step_approver: {
-        Args: {
-          step_id: string
-        }
-        Returns: boolean
-      }
       check_table_exists: {
         Args: {
           table_name: string
