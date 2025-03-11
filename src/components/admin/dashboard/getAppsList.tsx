@@ -1,3 +1,4 @@
+
 import { 
   Database, 
   ListChecks, 
@@ -71,7 +72,7 @@ const APP_ROLE_ACCESS = {
 
 // Comprehensive role mapping between Arabic and English
 const ROLE_MAPPING = {
-  // Arabic to English
+  // Arabic to English - Common database roles
   'مدير': 'admin',
   'مدير_التطبيق': 'app_admin',
   'مدير_الفعاليات': 'event_manager',
@@ -92,6 +93,7 @@ const ROLE_MAPPING = {
   'منشئ_الأفكار': 'idea_creator',
   'مدير_الابتكار': 'innovation_manager',
   'مدير_مالي': 'finance_manager',
+  'المدير_المالي': 'finance_manager', // Added for consistency
   'محاسب': 'accountant',
   'مدير_الميزانية': 'budget_manager',
   'مدير_الموارد': 'resource_manager',
@@ -107,6 +109,45 @@ const ROLE_MAPPING = {
   'مدير_الاتصالات': 'communication_manager',
   'مدير_الطلبات': 'request_manager',
   'مدير_الموافقات': 'approval_manager',
+  'مطور': 'developer',
+  
+  // Variations of Arabic role names (with spaces, different formats)
+  'المدير': 'admin',
+  'مدير التطبيق': 'app_admin',
+  'مدير الفعاليات': 'event_manager',
+  'منشئ الفعاليات': 'event_creator',
+  'منسق الفعاليات': 'event_coordinator',
+  'منفذ الفعاليات': 'event_executor',
+  'إعلامي الفعاليات': 'event_media',
+  'مخطط الفعاليات': 'event_planner',
+  'مدير المستندات': 'document_manager',
+  'مراجع المستندات': 'document_reviewer',
+  'منشئ المستندات': 'document_creator',
+  'مدير المهام': 'task_manager',
+  'مدير المشاريع': 'project_manager',
+  'منشئ المهام': 'task_creator',
+  'قائد فريق': 'team_leader',
+  'مدير الأفكار': 'idea_manager',
+  'مراجع الأفكار': 'idea_reviewer',
+  'منشئ الأفكار': 'idea_creator',
+  'مدير الابتكار': 'innovation_manager',
+  'مدير مالي': 'finance_manager',
+  'المدير المالي': 'finance_manager',
+  'محاسب': 'accountant',
+  'مدير الميزانية': 'budget_manager',
+  'مدير الموارد': 'resource_manager',
+  'مدير الموارد البشرية': 'hr_manager',
+  'مدير المستخدمين': 'user_manager',
+  'مدير المحتوى': 'content_manager',
+  'مدير الإعلام': 'media_manager',
+  'محرر موقع': 'web_editor',
+  'مدير المتجر': 'store_manager',
+  'مدير المخزون': 'inventory_manager',
+  'مدير المبيعات': 'sales_manager',
+  'مدير الإشعارات': 'notification_manager',
+  'مدير الاتصالات': 'communication_manager',
+  'مدير الطلبات': 'request_manager',
+  'مدير الموافقات': 'approval_manager',
   'مطور': 'developer',
   
   // English to English (for direct matching)
@@ -291,19 +332,34 @@ const getAppKeyFromPath = (path: string): string | null => {
 // Helper function to check if user role has access to app
 const hasAccessToApp = (userRole: string, appKey: string): boolean => {
   try {
-    // Normalize role for comparison: replace spaces with underscores and convert to lowercase
-    const normalizedRole = userRole.trim().replace(/\s+/g, '_').toLowerCase();
-    console.log('Normalized role:', normalizedRole);
+    // Normalize role for comparison: handle both with and without spaces
+    // Try different normalization approaches to maximize matching success
     
-    // Map the normalized role to a standard English role name if a mapping exists
-    const mappedRole = ROLE_MAPPING[normalizedRole as keyof typeof ROLE_MAPPING];
+    // 1. Direct match first (if it's already in our standardized format)
+    let mappedRole = ROLE_MAPPING[userRole as keyof typeof ROLE_MAPPING];
+    
+    // 2. Try with spaces replaced by underscores
+    if (!mappedRole) {
+      const normalizedWithUnderscores = userRole.trim().replace(/\s+/g, '_').toLowerCase();
+      console.log('Trying with underscores:', normalizedWithUnderscores);
+      mappedRole = ROLE_MAPPING[normalizedWithUnderscores as keyof typeof ROLE_MAPPING];
+    }
+    
+    // 3. Try without any normalization (for roles already in English)
+    if (!mappedRole) {
+      console.log('Trying direct match for possible English role name:', userRole);
+      // If the role itself is a valid English role, use it directly
+      if (Object.values(ROLE_MAPPING).includes(userRole)) {
+        mappedRole = userRole;
+      }
+    }
     
     if (!mappedRole) {
-      console.warn('No role mapping found for:', normalizedRole);
+      console.warn('No role mapping found for:', userRole, 'This role is not recognized in the system.');
       return false;
     }
     
-    console.log('Mapped role:', mappedRole, 'Checking access to app:', appKey);
+    console.log('Successfully mapped role:', userRole, '→', mappedRole, 'Checking access to app:', appKey);
     
     // Get allowed roles for the app
     const allowedRoles = APP_ROLE_ACCESS[appKey as keyof typeof APP_ROLE_ACCESS] || [];
@@ -312,6 +368,10 @@ const hasAccessToApp = (userRole: string, appKey: string): boolean => {
     // Check if mapped role is in allowed roles
     const hasAccess = allowedRoles.includes(mappedRole);
     console.log('Has access to', appKey, ':', hasAccess);
+    
+    if (!hasAccess) {
+      console.warn(`User with role "${userRole}" (mapped to "${mappedRole}") does not have access to app "${appKey}"`);
+    }
     
     return hasAccess;
   } catch (error) {

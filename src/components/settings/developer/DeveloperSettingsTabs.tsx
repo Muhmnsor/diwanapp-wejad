@@ -1,63 +1,84 @@
 
-import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { DeveloperSettings } from "@/types/developer";
-import { DeveloperPermissionChecks } from "@/components/users/permissions/types";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GeneralSettingsTab } from "./tabs/GeneralSettingsTab";
-import { PermissionsTab } from "./tabs/PermissionsTab";
-import { CacheTab } from "./tabs/CacheTab";
 import { DebugTab } from "./tabs/DebugTab";
-import { PerformanceTab } from "./tabs/PerformanceTab";
+import { PermissionsTab } from "./tabs/PermissionsTab";
 import { LogsTab } from "./tabs/LogsTab";
+import { CacheTab } from "./tabs/CacheTab";
+import { PerformanceTab } from "./tabs/PerformanceTab";
+import { RoleMappingDebugTab } from "./tabs/RoleMappingDebugTab";
+import { DocumentationSection } from "./documentation/DocumentationSection";
 
 interface DeveloperSettingsTabsProps {
-  activeTab: string;
-  settings: DeveloperSettings;
-  permissions: DeveloperPermissionChecks;
-  onRefresh: () => Promise<void>;
+  developerId?: string;
+  developerPermissions: {
+    canAccessDeveloperTools: boolean;
+    canModifySystemSettings: boolean;
+    canAccessApiLogs: boolean;
+  };
   hasDeveloperAccess: boolean;
   onToggleDeveloperRole: () => Promise<void>;
   roleAssigning: boolean;
+  onRefreshPermissions: () => Promise<void>;
 }
 
 export const DeveloperSettingsTabs = ({
-  activeTab,
-  settings,
-  permissions,
-  onRefresh,
+  developerId,
+  developerPermissions,
   hasDeveloperAccess,
   onToggleDeveloperRole,
-  roleAssigning
+  roleAssigning,
+  onRefreshPermissions
 }: DeveloperSettingsTabsProps) => {
   return (
-    <Tabs value={activeTab} className="w-full">
+    <Tabs defaultValue="general" className="w-full" dir="rtl">
+      <TabsList className="mb-6 grid grid-cols-4 md:grid-cols-7 lg:grid-cols-8">
+        <TabsTrigger value="general">عام</TabsTrigger>
+        <TabsTrigger value="permissions">الصلاحيات</TabsTrigger>
+        <TabsTrigger value="debug">التشخيص</TabsTrigger>
+        <TabsTrigger value="roles">الأدوار</TabsTrigger>
+        <TabsTrigger value="logs">السجلات</TabsTrigger>
+        <TabsTrigger value="cache">التخزين المؤقت</TabsTrigger>
+        <TabsTrigger value="performance">الأداء</TabsTrigger>
+        <TabsTrigger value="docs">التوثيق</TabsTrigger>
+      </TabsList>
+      
       <TabsContent value="general">
-        <GeneralSettingsTab settings={settings} />
+        <GeneralSettingsTab developerId={developerId} />
       </TabsContent>
       
       <TabsContent value="permissions">
         <PermissionsTab 
-          permissions={permissions}
+          permissions={developerPermissions}
           hasDeveloperAccess={hasDeveloperAccess}
           onToggleDeveloperRole={onToggleDeveloperRole}
           roleAssigning={roleAssigning}
-          onRefresh={onRefresh}
+          onRefresh={onRefreshPermissions}
         />
       </TabsContent>
       
-      <TabsContent value="cache">
-        <CacheTab settings={settings} />
+      <TabsContent value="debug">
+        <DebugTab />
       </TabsContent>
       
-      <TabsContent value="debug">
-        <DebugTab settings={settings} />
+      <TabsContent value="roles">
+        <RoleMappingDebugTab />
+      </TabsContent>
+      
+      <TabsContent value="logs">
+        <LogsTab />
+      </TabsContent>
+      
+      <TabsContent value="cache">
+        <CacheTab />
       </TabsContent>
       
       <TabsContent value="performance">
         <PerformanceTab />
       </TabsContent>
       
-      <TabsContent value="logs">
-        <LogsTab />
+      <TabsContent value="docs">
+        <DocumentationSection />
       </TabsContent>
     </Tabs>
   );
