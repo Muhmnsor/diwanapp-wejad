@@ -1,7 +1,5 @@
 
-import { useState } from "react";
 import { WorkflowStep } from "../../../types";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { checkUserPermissions } from "../utils/permissionUtils";
 import { getInitialStepState } from "../../utils";
@@ -43,19 +41,6 @@ export const useAddStep = (
       
       console.log("Adding step with workflow ID:", workflowId);
       
-      // Log validation info
-      if (workflowId === 'temp-workflow-id') {
-        console.log("WARNING: Using temporary workflow ID. Steps will only be saved locally.");
-      } else {
-        // Validate UUID format
-        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        if (!uuidRegex.test(workflowId)) {
-          console.error("Invalid workflow ID format:", workflowId);
-          toast.error("خطأ في تنسيق معرف سير العمل");
-          return;
-        }
-      }
-      
       // Create a new step or update existing one
       const newStep: WorkflowStep = {
         ...currentStep,
@@ -96,7 +81,7 @@ export const useAddStep = (
       toast.success(editingStepIndex !== null ? "تم تحديث الخطوة بنجاح" : "تمت إضافة الخطوة بنجاح");
     } catch (error) {
       console.error("Error adding/updating step:", error);
-      toast.error(error.message || "حدث خطأ أثناء حفظ الخطوة");
+      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء حفظ الخطوة");
     }
   };
 

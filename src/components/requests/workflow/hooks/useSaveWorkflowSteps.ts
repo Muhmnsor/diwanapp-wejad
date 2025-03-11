@@ -2,6 +2,7 @@
 import { WorkflowStep } from "../../types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { isValidUUID } from "./utils/validation";
 
 interface UseSaveWorkflowStepsProps {
   requestTypeId: string | null;
@@ -22,7 +23,6 @@ export const useSaveWorkflowSteps = ({
   ensureWorkflowExists,
   updateDefaultWorkflow
 }: UseSaveWorkflowStepsProps) => {
-
   const saveWorkflowSteps = async (steps: WorkflowStep[]): Promise<boolean | undefined> => {
     if (!requestTypeId) {
       console.log("Saving steps locally for new request type:", steps);
@@ -48,41 +48,7 @@ export const useSaveWorkflowSteps = ({
         throw new Error("يجب تسجيل الدخول لحفظ خطوات سير العمل");
       }
 
-      // Debug log: Check authentication
-      console.log("User authenticated with ID:", session.user.id);
-
-      // Check if user has admin role
-      const { data: userRoles, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role_id, roles(name)')
-        .eq('user_id', session.user.id);
-        
-      if (roleError) {
-        console.error("Error checking user roles:", roleError);
-        throw new Error("خطأ في التحقق من صلاحيات المستخدم");
-      }
-      
-      // Debug log: User roles
-      console.log("User roles:", userRoles);
-      
-      const isAdmin = userRoles?.some(role => {
-        if (role.roles) {
-          const roleName = Array.isArray(role.roles) 
-            ? (role.roles[0]?.name) 
-            : (role.roles as any).name;
-          return roleName === 'admin' || roleName === 'app_admin';
-        }
-        return false;
-      });
-      
-      // Debug log: Admin status
-      console.log("Is user admin?", isAdmin);
-      
-      if (!isAdmin) {
-        console.warn("User might not have permission to save workflow steps");
-      }
-
-      // Get the actual workflow ID first - critical change
+      // Get the actual workflow ID first
       const currentWorkflowId = await ensureWorkflowExists();
       console.log("Working with workflow ID:", currentWorkflowId);
 
@@ -105,29 +71,21 @@ export const useSaveWorkflowSteps = ({
         return true;
       }
       
-      // Debug log: Workflow steps before processing
-      console.log("Original steps before processing:", steps);
-      
-      // CRITICAL FIX: Ensure all steps have the correct workflowId
-      // This needs to happen BEFORE preparing steps for insertion
+      // Ensure all steps have the correct workflowId
       const stepsWithCorrectWorkflowId = steps.map(step => ({
         ...step,
         workflow_id: currentWorkflowId
       }));
       
-      console.log("Steps with corrected workflow_id:", stepsWithCorrectWorkflowId);
-      
       // Prepare steps for insertion with complete data and ensure valid UUIDs
       const stepsToInsert = stepsWithCorrectWorkflowId.map((step, index) => {
         // Verify workflow_id format
-        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        
-        if (!currentWorkflowId || (currentWorkflowId === 'temp-workflow-id' || !uuidRegex.test(currentWorkflowId))) {
+        if (!isValidUUID(currentWorkflowId)) {
           console.error("Invalid workflow_id detected:", currentWorkflowId);
           throw new Error(`خطأ: معرّف سير العمل غير صالح (${currentWorkflowId})`);
         }
         
-        if (!step.approver_id || !uuidRegex.test(step.approver_id)) {
+        if (!step.approver_id || !isValidUUID(step.approver_id)) {
           console.error("Step missing valid approver_id", step);
           throw new Error("خطأ: بعض الخطوات تفتقد إلى معرّف صحيح للمعتمد");
         }
@@ -148,9 +106,8 @@ export const useSaveWorkflowSteps = ({
       });
 
       console.log("Inserting workflow steps using RPC function with workflow_id:", currentWorkflowId);
-      console.log("Steps to insert:", stepsToInsert);
       
-      // تسجيل محاولة حفظ الخطوات
+      // Log the operation attempt
       try {
         await supabase.rpc('log_workflow_operation', {
           p_operation_type: 'insert_steps_attempt',
@@ -163,131 +120,69 @@ export const useSaveWorkflowSteps = ({
         console.warn("Error logging operation (non-critical):", logError);
       }
       
-      // FIXED: Don't stringify the steps data here, send it as a proper JSON array
+      // Call the RPC function to insert steps
       const { data: rpcResult, error: rpcError } = await supabase
         .rpc('insert_workflow_steps', {
           steps: stepsToInsert
         });
 
-      // Debug log: RPC call result
-      console.log("RPC call completed. Result:", rpcResult, "Error:", rpcError);
-
       if (rpcError) {
-        console.error("Error inserting workflow steps via RPC:", rpcError);
+        console.error("Error inserting workflow steps:", rpcError);
         
-        // Debug log: Detailed error
-        console.error("RPC error details:", {
-          code: rpcError.code,
-          message: rpcError.message,
-          details: rpcError.details,
-          hint: rpcError.hint
-        });
-        
-        // تسجيل خطأ حفظ الخطوات
+        // Log the error
         try {
           await supabase.rpc('log_workflow_operation', {
             p_operation_type: 'insert_steps_error',
             p_workflow_id: currentWorkflowId,
             p_request_type_id: requestTypeId,
             p_error_message: rpcError.message,
-            p_details: `Error code: ${rpcError.code}, Message: ${rpcError.message}, Details: ${rpcError.details || 'No details'}`
+            p_details: `فشل في حفظ ${stepsToInsert.length} خطوة لسير العمل`
           });
         } catch (logError) {
-          console.warn("Error logging operation error (non-critical):", logError);
+          console.warn("Error logging operation failure (non-critical):", logError);
         }
         
-        if (rpcError.code === 'PGRST116') {
-          throw new Error("ليس لديك صلاحية لإدخال خطوات سير العمل");
-        }
-        throw new Error(`فشل في إدخال خطوات سير العمل: ${rpcError.message}`);
+        throw new Error(`فشل في حفظ خطوات سير العمل: ${rpcError.message}`);
       }
 
-      console.log("RPC function result:", rpcResult);
+      console.log("Steps saved successfully:", rpcResult);
 
-      // Check if the RPC function returned an error
-      if (!rpcResult || !rpcResult.success) {
-        const errorMessage = rpcResult?.error || rpcResult?.message || 'حدث خطأ غير معروف';
-        console.error("Error returned from RPC function:", errorMessage);
-        
-        // Debug log: Error details
-        console.error("RPC result error details:", rpcResult);
-        
-        // تسجيل خطأ نتيجة حفظ الخطوات
-        try {
-          await supabase.rpc('log_workflow_operation', {
-            p_operation_type: 'insert_steps_result_error',
-            p_request_type_id: requestTypeId,
-            p_workflow_id: currentWorkflowId,
-            p_error_message: errorMessage,
-            p_response_data: rpcResult,
-            p_details: 'Error returned in successful RPC response'
-          });
-        } catch (logError) {
-          console.warn("Error logging operation result error (non-critical):", logError);
-        }
-        
-        throw new Error(`فشل في إدخال خطوات سير العمل: ${errorMessage}`);
-      }
-
-      console.log("Successfully inserted workflow steps via RPC:", rpcResult);
-      
-      // تسجيل نجاح حفظ الخطوات
+      // Log the success
       try {
         await supabase.rpc('log_workflow_operation', {
           p_operation_type: 'insert_steps_success',
           p_workflow_id: currentWorkflowId,
           p_request_type_id: requestTypeId,
           p_response_data: rpcResult,
-          p_details: `تم حفظ ${stepsToInsert.length} خطوة بنجاح`
+          p_details: `تم حفظ ${stepsToInsert.length} خطوة لسير العمل بنجاح`
         });
       } catch (logError) {
         console.warn("Error logging operation success (non-critical):", logError);
       }
-      
-      // Update the UI with the inserted steps
-      if (rpcResult.data && Array.isArray(rpcResult.data)) {
-        updateWorkflowSteps(rpcResult.data as WorkflowStep[]);
+
+      // Update steps with server data
+      if (rpcResult && rpcResult.data) {
+        updateWorkflowSteps(rpcResult.data);
       } else {
-        updateWorkflowSteps(stepsToInsert as WorkflowStep[]);
+        // If we don't have server data, use our local state
+        updateWorkflowSteps(stepsWithCorrectWorkflowId);
       }
 
-      // Update default workflow for request type
-      console.log("Updating default workflow for request type:", requestTypeId, currentWorkflowId);
+      // Update default workflow if needed
       await updateDefaultWorkflow(requestTypeId, currentWorkflowId);
-      console.log("Default workflow updated successfully");
 
+      toast.success("تم حفظ خطوات سير العمل بنجاح");
       return true;
     } catch (error) {
-      console.error('Error saving workflow steps:', error);
+      console.error("Error in saveWorkflowSteps:", error);
+      setError(error instanceof Error ? error.message : "حدث خطأ أثناء حفظ خطوات سير العمل");
       
-      // Debug log: Detailed error capture
-      console.error("Error details:", {
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      });
-      
-      // تسجيل استثناء غير متوقع
-      try {
-        await supabase.rpc('log_workflow_operation', {
-          p_operation_type: 'unexpected_error',
-          p_workflow_id: workflowId,
-          p_request_type_id: requestTypeId,
-          p_error_message: error.message,
-          p_details: error.stack || 'No stack trace available'
-        });
-      } catch (logError) {
-        console.warn("Error logging unexpected error (non-critical):", logError);
-      }
-      
-      setError(error.message || 'فشل في حفظ خطوات سير العمل');
-      throw error;
+      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء حفظ خطوات سير العمل");
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
-
-  return {
-    saveWorkflowSteps
-  };
+  
+  return { saveWorkflowSteps };
 };

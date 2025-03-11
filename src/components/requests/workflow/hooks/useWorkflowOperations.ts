@@ -1,19 +1,23 @@
 
 import { useCallback } from "react";
 import { WorkflowStep } from "../../types";
-import { useWorkflowCreation } from "./useWorkflowCreation";
+import { useAddStep } from "./operations/useAddStep";
+import { useRemoveStep } from "./operations/useRemoveStep";
+import { useEditStep } from "./operations/useEditStep";
+import { useMoveStep } from "./operations/useMoveStep";
 import { useSaveWorkflowSteps } from "./useSaveWorkflowSteps";
-import { useStepManagement } from "./useStepManagement";
+import { useEnsureWorkflowExists } from "./useEnsureWorkflowExists";
+import { useUpdateDefaultWorkflow } from "./useUpdateDefaultWorkflow";
 
 interface UseWorkflowOperationsProps {
   requestTypeId: string | null;
   workflowId: string | null;
-  setWorkflowId: (id: string | null) => void;
+  setWorkflowId: (id: string) => void;
   setWorkflowSteps: (steps: WorkflowStep[]) => void;
   setCurrentStep: (step: WorkflowStep) => void;
   setEditingStepIndex: (index: number | null) => void;
-  setIsLoading: (value: boolean) => void;
-  setError: (value: string | null) => void;
+  setIsLoading: (isLoading: boolean) => void;
+  setError: (error: string | null) => void;
   onWorkflowStepsUpdated?: (steps: WorkflowStep[]) => void;
 }
 
@@ -28,81 +32,56 @@ export const useWorkflowOperations = ({
   setError,
   onWorkflowStepsUpdated
 }: UseWorkflowOperationsProps) => {
-  
-  // Hook for updating workflow steps in the UI
+  // Function to update workflow steps and notify parent component if needed
   const updateWorkflowSteps = useCallback((steps: WorkflowStep[]) => {
-    console.log("Updating workflow steps locally:", steps);
-    
-    const currentWorkflowId = workflowId || 'temp-workflow-id';
-    const stepsWithWorkflowId = steps.map(step => ({
-      ...step,
-      workflow_id: step.workflow_id || currentWorkflowId
-    }));
-    
-    setWorkflowSteps(stepsWithWorkflowId);
-    
+    setWorkflowSteps(steps);
     if (onWorkflowStepsUpdated) {
-      onWorkflowStepsUpdated(stepsWithWorkflowId);
+      onWorkflowStepsUpdated(steps);
     }
-  }, [onWorkflowStepsUpdated, workflowId, setWorkflowSteps]);
+  }, [setWorkflowSteps, onWorkflowStepsUpdated]);
 
-  // Hook for workflow creation and management
-  const { 
-    ensureWorkflowExists, 
-    updateDefaultWorkflow 
-  } = useWorkflowCreation({
+  // Ensure a workflow exists for saving steps
+  const { ensureWorkflowExists } = useEnsureWorkflowExists({
+    requestTypeId,
+    workflowId,
     setWorkflowId,
+    setIsLoading,
     setError
   });
 
-  // Hook for saving workflow steps
-  const { 
-    saveWorkflowSteps 
-  } = useSaveWorkflowSteps({
+  // Update the default workflow for a request type
+  const { updateDefaultWorkflow } = useUpdateDefaultWorkflow({
+    setIsLoading,
+    setError
+  });
+
+  // Save workflow steps to the database
+  const { saveWorkflowSteps } = useSaveWorkflowSteps({
     requestTypeId,
     workflowId,
     setIsLoading,
     setError,
     updateWorkflowSteps,
-    ensureWorkflowExists: () => ensureWorkflowExists(requestTypeId, workflowId),
+    ensureWorkflowExists,
     updateDefaultWorkflow
   });
 
-  // Hook for step management operations
-  const { 
-    handleAddStep: stepAddHandler,
-    handleRemoveStep: stepRemoveHandler,
-    handleEditStep: stepEditHandler,
-    handleMoveStep: stepMoveHandler
-  } = useStepManagement({
-    saveWorkflowSteps,
-    setCurrentStep,
-    setEditingStepIndex
-  });
-
-  // Wrapper functions that provide the current context
-  const handleAddStep = (currentStep: WorkflowStep, workflowSteps: WorkflowStep[], editingStepIndex: number | null) => {
-    stepAddHandler(currentStep, workflowSteps, editingStepIndex, workflowId);
-  };
-
-  const handleRemoveStep = (index: number, workflowSteps: WorkflowStep[], editingStepIndex: number | null) => {
-    stepRemoveHandler(index, workflowSteps, editingStepIndex, workflowId);
-  };
-
-  const handleEditStep = (index: number, workflowSteps: WorkflowStep[]) => {
-    stepEditHandler(index, workflowSteps, workflowId);
-  };
-
-  const handleMoveStep = (index: number, direction: 'up' | 'down', workflowSteps: WorkflowStep[], editingStepIndex: number | null) => {
-    stepMoveHandler(index, direction, workflowSteps, editingStepIndex, workflowId);
-  };
+  // Step operations
+  const { handleAddStep } = useAddStep(saveWorkflowSteps, setCurrentStep, setEditingStepIndex);
+  const { handleRemoveStep } = useRemoveStep(saveWorkflowSteps, setCurrentStep, setEditingStepIndex);
+  const { handleEditStep } = useEditStep(setCurrentStep, setEditingStepIndex);
+  const { handleMoveStep } = useMoveStep(saveWorkflowSteps, setEditingStepIndex);
 
   return {
     updateWorkflowSteps,
     saveWorkflowSteps,
-    handleAddStep,
-    handleRemoveStep,
-    handleEditStep,
-    handleMoveStep
+    handleAddStep: (currentStep: WorkflowStep, workflowSteps: WorkflowStep[], editingStepIndex: number | null) => 
+      handleAddStep(currentStep, workflowSteps, editingStepIndex, workflowId),
+    handleRemoveStep: (index: number, workflowSteps: WorkflowStep[], editingStepIndex: number | null) => 
+      handleRemoveStep(index, workflowSteps, editingStepIndex, workflowId),
+    handleEditStep: (index: number, workflowSteps: WorkflowStep[]) => 
+      handleEditStep(index, workflowSteps, workflowId),
+    handleMoveStep: (index: number, direction: 'up' | 'down', workflowSteps: WorkflowStep[], editingStepIndex: number | null) => 
+      handleMoveStep(index, direction, workflowSteps, editingStepIndex, workflowId)
   };
 };

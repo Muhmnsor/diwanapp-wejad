@@ -1,21 +1,20 @@
 
 import { useEffect } from "react";
-import { WorkflowStep } from "../../types";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { WorkflowStep } from "../../types";
 import { getInitialStepState } from "../utils";
 
 interface UseWorkflowFetchingProps {
   requestTypeId: string | null;
-  workflowId: string | null;
+  workflowId: string;
   initialSteps: WorkflowStep[];
   initialized: boolean;
-  setWorkflowId: (id: string | null) => void;
+  setWorkflowId: (id: string) => void;
   setWorkflowSteps: (steps: WorkflowStep[]) => void;
   setCurrentStep: (step: WorkflowStep) => void;
   setInitialized: (value: boolean) => void;
   setIsLoading: (value: boolean) => void;
-  setError: (value: string | null) => void;
+  setError: (error: string | null) => void;
 }
 
 export const useWorkflowFetching = ({
@@ -30,144 +29,97 @@ export const useWorkflowFetching = ({
   setIsLoading,
   setError
 }: UseWorkflowFetchingProps) => {
+  // Fetch workflow and its steps from the database
   useEffect(() => {
-    const fetchWorkflowSteps = async () => {
-      if (!requestTypeId && !workflowId) {
-        if (!initialized && initialSteps.length > 0) {
-          const workflowIdToUse = initialSteps[0]?.workflow_id || 'temp-workflow-id';
-          
-          console.log("No request type ID, using workflowId:", workflowIdToUse);
-          
-          const stepsWithWorkflowId = initialSteps.map(step => ({
-            ...step,
-            workflow_id: step.workflow_id || workflowIdToUse
-          }));
-          
-          setWorkflowSteps(stepsWithWorkflowId);
-          setWorkflowId(workflowIdToUse);
-          setInitialized(true);
-        } else if (!initialized) {
-          setWorkflowSteps([]);
-          setWorkflowId('temp-workflow-id');
-          setInitialized(true);
-        }
-        return;
-      }
-
-      if (initialized) return;
-
-      setIsLoading(true);
-      setError(null);
-
+    // Don't fetch if there are initial steps, we're already initialized,
+    // or there's no request type to fetch for
+    if (initialSteps.length > 0 || initialized || !requestTypeId) {
+      return;
+    }
+    
+    const fetchWorkflow = async () => {
       try {
-        if (workflowId && workflowId !== 'temp-workflow-id') {
-          console.log("Using existing workflow ID for fetching steps:", workflowId);
-          
-          const { data: steps, error: stepsError } = await supabase
-            .from('workflow_steps')
-            .select('*')
-            .eq('workflow_id', workflowId)
-            .order('step_order', { ascending: true });
-
-          if (stepsError) throw stepsError;
-          
-          console.log("Fetched workflow steps:", steps);
-          
-          const stepsWithWorkflowId = steps ? steps.map(step => ({
-            ...step,
-            workflow_id: workflowId
-          })) : [];
-          
-          setWorkflowSteps(stepsWithWorkflowId);
-          setCurrentStep({
-            ...getInitialStepState(stepsWithWorkflowId.length + 1),
-            workflow_id: workflowId
-          });
-          setInitialized(true);
-          return;
-        }
-
+        setIsLoading(true);
+        
+        // First, check if the request type has a default workflow
         const { data: requestType, error: requestTypeError } = await supabase
           .from('request_types')
           .select('default_workflow_id')
           .eq('id', requestTypeId)
           .single();
-
-        if (requestTypeError) throw requestTypeError;
-
-        const workflow_id = requestType?.default_workflow_id || 'temp-workflow-id';
-        console.log("Got workflow ID from request type:", workflow_id);
-        setWorkflowId(workflow_id);
-
-        if (!requestType?.default_workflow_id) {
-          if (!initialized && initialSteps.length > 0) {
-            const stepsWithWorkflowId = initialSteps.map(step => ({
-              ...step,
-              workflow_id
-            }));
-            setWorkflowSteps(stepsWithWorkflowId);
-          } else {
-            setWorkflowSteps([]);
-          }
-          setCurrentStep({
-            ...getInitialStepState(1),
-            workflow_id
-          });
-          setInitialized(true);
-          return;
+        
+        if (requestTypeError) {
+          console.error("Error fetching request type:", requestTypeError);
+          throw new Error("فشل في العثور على نوع الطلب");
         }
-
-        const { data: steps, error: stepsError } = await supabase
-          .from('workflow_steps')
-          .select('*')
-          .eq('workflow_id', workflow_id)
-          .order('step_order', { ascending: true });
-
-        if (stepsError) throw stepsError;
         
-        console.log("Fetched workflow steps:", steps);
+        let fetchedWorkflowId = requestType.default_workflow_id;
         
-        const stepsWithWorkflowId = steps ? steps.map(step => ({
-          ...step,
-          workflow_id
-        })) : [];
+        // If no default workflow, check if there's any workflow for this request type
+        if (!fetchedWorkflowId) {
+          const { data: workflows, error: workflowsError } = await supabase
+            .from('request_workflows')
+            .select('id')
+            .eq('request_type_id', requestTypeId)
+            .eq('is_active', true)
+            .order('created_at', { ascending: false })
+            .limit(1);
+          
+          if (workflowsError) {
+            console.error("Error fetching workflows:", workflowsError);
+            throw new Error("فشل في العثور على مسارات سير العمل");
+          }
+          
+          if (workflows && workflows.length > 0) {
+            fetchedWorkflowId = workflows[0].id;
+          }
+        }
         
-        setWorkflowSteps(stepsWithWorkflowId);
-        setCurrentStep({
-          ...getInitialStepState(stepsWithWorkflowId.length + 1),
-          workflow_id
-        });
+        // If we have a workflow ID, fetch its steps
+        if (fetchedWorkflowId) {
+          setWorkflowId(fetchedWorkflowId);
+          
+          const { data: steps, error: stepsError } = await supabase
+            .from('workflow_steps')
+            .select('*')
+            .eq('workflow_id', fetchedWorkflowId)
+            .order('step_order', { ascending: true });
+          
+          if (stepsError) {
+            console.error("Error fetching workflow steps:", stepsError);
+            throw new Error("فشل في العثور على خطوات سير العمل");
+          }
+          
+          if (steps && steps.length > 0) {
+            setWorkflowSteps(steps);
+            setCurrentStep(getInitialStepState(steps.length + 1, fetchedWorkflowId));
+          } else {
+            setCurrentStep(getInitialStepState(1, fetchedWorkflowId));
+          }
+        } else {
+          // No workflow found, use temporary ID
+          console.log("No workflow found for request type, using temporary ID");
+          setCurrentStep(getInitialStepState(1, 'temp-workflow-id'));
+        }
+        
         setInitialized(true);
       } catch (error) {
-        console.error('Error fetching workflow steps:', error);
-        toast.error('فشل في جلب خطوات سير العمل');
-        setError('فشل في جلب خطوات سير العمل');
-        
-        if (!initialized && initialSteps.length > 0) {
-          const workflow_id = workflowId || 'temp-workflow-id';
-          const stepsWithWorkflowId = initialSteps.map(step => ({
-            ...step,
-            workflow_id
-          }));
-          setWorkflowSteps(stepsWithWorkflowId);
-          setInitialized(true);
-        }
+        console.error("Error in fetchWorkflow:", error);
+        setError(error instanceof Error ? error.message : "حدث خطأ أثناء تحميل خطوات سير العمل");
       } finally {
         setIsLoading(false);
       }
     };
-
-    if (!initialized) {
-      fetchWorkflowSteps();
-    }
+    
+    fetchWorkflow();
   }, [
-    requestTypeId, 
-    workflowId, 
-    initialSteps, 
-    initialized, 
-    setWorkflowId, 
-    setWorkflowSteps, 
-    setCurrentStep, 
+    requestTypeId,
+    initialSteps,
+    initialized,
+    workflowId,
+    setWorkflowId,
+    setWorkflowSteps,
+    setCurrentStep,
     setInitialized,
     setIsLoading,
     setError
