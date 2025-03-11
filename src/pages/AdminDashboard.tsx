@@ -10,7 +10,7 @@ import { useUserName } from "@/hooks/dashboard/useUserName";
 import { getAppsList } from "@/components/admin/dashboard/getAppsList";
 import { DeveloperToolbar } from "@/components/developer/DeveloperToolbar";
 import { useAuthStore } from "@/store/refactored-auth";
-import { initializeDeveloperRole } from "@/utils/developer/roleManagement";
+import { initializeDeveloperRole } from "@/utils/developerRole";
 import { filterAppsByPermission } from "@/utils/permissions/appPermissions";
 
 const AdminDashboard = () => {

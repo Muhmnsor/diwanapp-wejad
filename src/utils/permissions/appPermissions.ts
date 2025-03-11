@@ -11,6 +11,7 @@ export const hasAppPermission = async (userId: string, appName: string): Promise
       .from('user_roles')
       .select(`
         roles (
+          id,
           name
         )
       `)
@@ -38,6 +39,18 @@ export const hasAppPermission = async (userId: string, appName: string): Promise
     }
     
     // Otherwise check specific permissions
+    const roleIds = userRoles?.map(ur => {
+      if (Array.isArray(ur.roles)) {
+        return ur.roles[0]?.id;
+      } else {
+        return (ur.roles as any).id;
+      }
+    }).filter(Boolean) || [];
+    
+    if (roleIds.length === 0) {
+      return false;
+    }
+    
     const { data: permissions, error: permError } = await supabase
       .from('role_permissions')
       .select(`
@@ -46,7 +59,7 @@ export const hasAppPermission = async (userId: string, appName: string): Promise
           module
         )
       `)
-      .in('role_id', userRoles?.map(ur => ur.roles.id) || []);
+      .in('role_id', roleIds);
       
     if (permError) {
       console.error('Error checking permissions:', permError);
@@ -98,6 +111,7 @@ export const filterAppsByPermission = async (userId: string, apps: AppItem[]): P
       .from('user_roles')
       .select(`
         roles (
+          id,
           name
         )
       `)
@@ -141,19 +155,19 @@ export const filterAppsByPermission = async (userId: string, apps: AppItem[]): P
     const { data: permissionData, error: permError } = await supabase
       .from('permissions')
       .select('module')
-      .in('id', function(b) {
-        b.select('permission_id')
+      .filter('id', 'in', (
+        supabase
           .from('role_permissions')
-          .in('role_id', roleIds);
-      })
-      .distinct();
+          .select('permission_id')
+          .in('role_id', roleIds)
+      ));
       
     if (permError) {
       console.error('Error fetching permission modules:', permError);
       return [];
     }
     
-    const allowedModules = new Set(permissionData?.map(p => p.module));
+    const allowedModules = new Set(permissionData?.map(p => p.module) || []);
     
     // Map app titles to their permission modules
     const appModuleMap: Record<string, string> = {
