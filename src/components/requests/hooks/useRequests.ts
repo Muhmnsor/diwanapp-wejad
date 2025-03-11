@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,6 +41,8 @@ export const useRequests = () => {
     try {
       console.log("Fetching incoming requests for user:", user.id);
       
+      // First, we need to join request_approvals with request_workflow_steps (not workflow_steps)
+      // The error in the console indicates this was the issue
       const { data, error } = await supabase
         .from("request_approvals")
         .select(`
@@ -54,13 +57,14 @@ export const useRequests = () => {
             priority,
             created_at,
             current_step_id,
+            requester_id,
+            request_type_id,
             request_type:request_types(id, name)
           ),
-          step:workflow_steps(id, step_name, step_type, approver_id)
+          step:request_workflow_steps(id, step_name, step_type, approver_id)
         `)
         .eq("approver_id", user.id)
-        .eq("status", "pending")
-        .order("created_at", { ascending: false });
+        .eq("status", "pending");
       
       if (error) {
         console.error("Error fetching incoming requests:", error);
@@ -76,6 +80,8 @@ export const useRequests = () => {
       
       console.log("Raw response data structure:", JSON.stringify(data, null, 2));
       
+      // Second, we need to filter out requests that aren't currently awaiting approval
+      // A request should only show up if it's current_step_id matches the step_id in the approval
       const requests = data.map((item: RequestApprovalResponse) => {
         const requestData = item.request && item.request.length > 0 
           ? item.request[0] 
@@ -90,6 +96,13 @@ export const useRequests = () => {
           return null;
         }
         
+        // Only show requests that are pending or in_progress AND where the current step matches this approval's step
+        if ((requestData.status !== 'pending' && requestData.status !== 'in_progress') || 
+            requestData.current_step_id !== item.step_id) {
+          console.log(`Filtering out request ${requestData.id} because it's not currently at this approval step`);
+          return null;
+        }
+        
         let requestType = null;
         if (requestData && requestData.request_type) {
           if (Array.isArray(requestData.request_type) && requestData.request_type.length > 0) {
@@ -97,6 +110,7 @@ export const useRequests = () => {
           }
         }
         
+        // Fetch requester information for display
         return {
           ...requestData,
           request_type: requestType,
@@ -106,6 +120,30 @@ export const useRequests = () => {
           step_type: stepData ? stepData.step_type : 'decision'
         };
       }).filter(Boolean);
+      
+      // Add requester information
+      if (requests.length > 0) {
+        const requesterIds = requests
+          .map(req => req.requester_id)
+          .filter(Boolean);
+          
+        if (requesterIds.length > 0) {
+          const { data: users } = await supabase
+            .from("profiles")
+            .select("id, display_name, email")
+            .in("id", requesterIds);
+            
+          const userMap = Object.fromEntries(
+            (users || []).map(user => [user.id, user])
+          );
+          
+          requests.forEach(req => {
+            if (req.requester_id && userMap[req.requester_id]) {
+              req.requester = userMap[req.requester_id];
+            }
+          });
+        }
+      }
       
       console.log(`Fetched ${requests.length} incoming requests`);
       return requests;

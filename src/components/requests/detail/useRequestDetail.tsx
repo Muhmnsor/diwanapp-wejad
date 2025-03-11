@@ -57,14 +57,14 @@ export const useRequestDetail = (requestId: string) => {
     if (!currentStep || !currentStep.id) return false;
     
     // Check if user is approver for current step
-    const approvers = data.approvals?.filter(
+    const approvals = data.approvals?.filter(
       (approval: any) => 
         approval.step?.id === currentStep.id && 
         approval.approver?.id === user.id &&
         approval.status === "pending"
     );
     
-    return approvers && approvers.length > 0;
+    return approvals && approvals.length > 0;
   };
 
   const handleApproveClick = () => {
