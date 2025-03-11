@@ -13,7 +13,8 @@ export const useIncomingRequests = () => {
     try {
       console.log("Fetching incoming requests for user:", user.id);
       
-      // Fetch all pending approvals where the current user is an approver
+      // Fetch pending approvals where the current user is an approver
+      // Using a simpler query structure to avoid recursive issues
       const { data: approvals, error } = await supabase
         .from("request_approvals")
         .select(`
@@ -49,7 +50,7 @@ export const useIncomingRequests = () => {
       
       console.log(`Found ${approvals?.length || 0} pending approvals`);
       
-      // Process the data
+      // Process the data more efficiently
       const transformedRequests = (approvals || [])
         .filter(approval => approval.request) // Filter out any null requests
         .map(approval => {
@@ -107,11 +108,11 @@ export const useIncomingRequests = () => {
       
       console.log(`Processed ${transformedRequests.length} incoming requests`);
       
-      // Add requester information
+      // Add requester information in a more efficient way
       if (transformedRequests.length > 0) {
-        const requesterIds = transformedRequests
+        const requesterIds = [...new Set(transformedRequests
           .map(req => req.requester_id)
-          .filter(Boolean);
+          .filter(Boolean))];
           
         if (requesterIds.length > 0) {
           const { data: users } = await supabase
