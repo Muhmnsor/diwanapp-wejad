@@ -81,8 +81,8 @@ export const useIncomingRequests = () => {
               stepName = approval.step[0].step_name;
               stepType = approval.step[0].step_type;
             } else if (typeof approval.step === 'object') {
-              stepName = approval.step.step_name;
-              stepType = approval.step.step_type;
+              stepName = (approval.step as any).step_name;
+              stepType = (approval.step as any).step_type;
             }
           }
           
