@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import {
   Table,
@@ -63,7 +63,7 @@ export const IncomingRequestsList = ({
   };
 
   // Update filtered requests when original requests change
-  React.useEffect(() => {
+  useEffect(() => {
     setFilteredRequests(requests);
   }, [requests]);
 
