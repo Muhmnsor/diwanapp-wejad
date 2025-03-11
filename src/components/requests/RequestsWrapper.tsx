@@ -40,7 +40,7 @@ export const RequestsWrapper = ({ children }: RequestsWrapperProps) => {
     <>
       {children}
       {/* Hidden debugger component that adds logging */}
-      {process.env.NODE_ENV !== "production" && <RequestDebugger />}
+      {process.env.NODE_ENV !== "production" && <RequestDebugger enableRepair={true} />}
     </>
   );
 };

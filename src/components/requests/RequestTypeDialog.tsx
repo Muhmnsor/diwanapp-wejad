@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Info } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Form } from "@/components/ui/form";
@@ -21,6 +21,7 @@ import { FormFieldEditor } from "./form/FormFieldEditor";
 import { FormFieldsList } from "./form/FormFieldsList";
 import { RequestTypeForm } from "./form/RequestTypeForm";
 import { useRequestTypeForm } from "./form/useRequestTypeForm";
+import { WorkflowConfigDialog } from "./workflow/WorkflowConfigDialog";
 
 interface RequestTypeDialogProps {
   isOpen: boolean;
@@ -55,6 +56,93 @@ export const RequestTypeDialog = ({
     onRequestTypeCreated,
     onClose
   });
+  
+  const [showWorkflowDialog, setShowWorkflowDialog] = useState(false);
+  const [needsWorkflow, setNeedsWorkflow] = useState(false);
+  const [newRequestTypeData, setNewRequestTypeData] = useState<any>(null);
+
+  // Check if a workflow configuration prompt should be shown
+  useEffect(() => {
+    if (createdRequestTypeId && !requestType?.default_workflow_id) {
+      setNeedsWorkflow(true);
+      setNewRequestTypeData({
+        id: createdRequestTypeId,
+        name: form.getValues('name')
+      });
+    }
+  }, [createdRequestTypeId, form, requestType]);
+
+  // Handle workflow dialog close
+  const handleWorkflowDialogClose = () => {
+    setShowWorkflowDialog(false);
+    // Only trigger the final close if not showing the prompt anymore
+    if (!needsWorkflow) {
+      onClose();
+    }
+  };
+
+  // Handle workflow saved
+  const handleWorkflowSaved = () => {
+    setNeedsWorkflow(false);
+    setShowWorkflowDialog(false);
+    toast.success("تم حفظ إعدادات مسار سير العمل بنجاح");
+    onRequestTypeCreated();
+    onClose();
+  };
+
+  // Handle skip workflow setup
+  const handleSkipWorkflow = () => {
+    toast.info("لم يتم إعداد مسار سير العمل. يمكنك إعداده لاحقاً من خلال قائمة مسارات سير العمل.");
+    setNeedsWorkflow(false);
+    onRequestTypeCreated();
+    onClose();
+  };
+
+  // Show workflow setup prompt if needed
+  if (needsWorkflow) {
+    return (
+      <Dialog open={true} onOpenChange={() => setNeedsWorkflow(false)}>
+        <DialogContent className="max-w-lg rtl" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>إعداد مسار سير العمل</DialogTitle>
+            <DialogDescription>
+              لإكمال إعداد نوع الطلب، يجب تكوين مسار سير العمل الخاص به
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Alert className="my-4">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              مسار سير العمل يحدد خطوات الموافقة التي يمر بها الطلب والأشخاص المسؤولين عن كل خطوة.
+              بدون مسار سير العمل، لن يمكن استخدام نوع الطلب بشكل صحيح.
+            </AlertDescription>
+          </Alert>
+          
+          <DialogFooter className="mt-4 flex-row-reverse sm:justify-start gap-2">
+            <Button onClick={() => setShowWorkflowDialog(true)}>
+              إعداد مسار سير العمل الآن
+            </Button>
+            <Button variant="outline" onClick={handleSkipWorkflow}>
+              تخطي (إعداد لاحقاً)
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Show workflow configuration dialog if requested
+  if (showWorkflowDialog && newRequestTypeData) {
+    return (
+      <WorkflowConfigDialog
+        isOpen={showWorkflowDialog}
+        onClose={handleWorkflowDialogClose}
+        requestTypeId={newRequestTypeData.id}
+        requestTypeName={newRequestTypeData.name}
+        onWorkflowSaved={handleWorkflowSaved}
+      />
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>

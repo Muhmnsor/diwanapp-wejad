@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { validateWorkflow, validateRequestType } from './workflowValidator';
 
 /**
  * Utility functions to help with workflow operations
@@ -14,7 +15,7 @@ export const fetchWorkflowDetails = async (workflowId: string) => {
     
     // Get the workflow
     const { data: workflow, error: workflowError } = await supabase
-      .from('workflows')
+      .from('request_workflows')
       .select('*')
       .eq('id', workflowId)
       .single();
@@ -73,45 +74,15 @@ export const diagnoseRequestWorkflow = async (requestId: string) => {
   try {
     console.log(`Diagnosing workflow for request ID: ${requestId}`);
     
-    // Get the request
-    const { data: request, error: requestError } = await supabase
-      .from('requests')
-      .select('*, workflow:workflows(*)')
-      .eq('id', requestId)
-      .single();
+    // Use the new validation function which handles edge cases better
+    const validationResult = await validateAndRepairRequest(requestId);
     
-    if (requestError) {
-      console.error('Error fetching request:', requestError);
-      return { request: null, issues: ['Request not found'] };
-    }
-    
-    if (!request.workflow_id) {
-      return { request, issues: ['Request has no workflow assigned'] };
-    }
-    
-    // Check current step
-    if (!request.current_step_id) {
-      return { 
-        request, 
-        issues: ['Request has no current step assigned']
-      };
-    }
-    
-    // Get the current step
-    const { data: currentStep, error: stepError } = await supabase
-      .from('workflow_steps')
-      .select('*')
-      .eq('id', request.current_step_id)
-      .single();
-    
-    if (stepError) {
-      return { 
-        request, 
-        issues: ['Current step not found in workflow_steps table']
-      };
-    }
-    
-    return { request, currentStep, issues: [] };
+    return {
+      request: validationResult.request,
+      currentStep: validationResult.currentStep,
+      issues: validationResult.valid ? [] : [validationResult.error],
+      validationResult
+    };
   } catch (error) {
     console.error('Exception in diagnoseRequestWorkflow:', error);
     return { request: null, issues: ['Exception during diagnosis'] };
@@ -123,44 +94,14 @@ export const diagnoseRequestWorkflow = async (requestId: string) => {
  */
 export const validateRequestWorkflow = async (requestTypeId: string): Promise<boolean> => {
   try {
-    // Check if the request type has a default workflow
-    const { data: requestType, error: typeError } = await supabase
-      .from('request_types')
-      .select('default_workflow_id')
-      .eq('id', requestTypeId)
-      .single();
-    
-    if (typeError || !requestType.default_workflow_id) {
-      console.error('Request type has no default workflow:', requestTypeId);
-      return false;
-    }
-    
-    // Verify the workflow exists
-    const { data: workflow, error: workflowError } = await supabase
-      .from('workflows')
-      .select('id')
-      .eq('id', requestType.default_workflow_id)
-      .single();
-    
-    if (workflowError || !workflow) {
-      console.error('Default workflow not found:', requestType.default_workflow_id);
-      return false;
-    }
-    
-    // Verify workflow has steps
-    const { data: steps, error: stepsError } = await supabase
-      .from('workflow_steps')
-      .select('id')
-      .eq('workflow_id', workflow.id);
-    
-    if (stepsError || !steps || steps.length === 0) {
-      console.error('Workflow has no steps:', workflow.id);
-      return false;
-    }
-    
-    return true;
+    // Use the enhanced validation function
+    const validationResult = await validateRequestType(requestTypeId);
+    return validationResult.valid;
   } catch (error) {
     console.error('Exception in validateRequestWorkflow:', error);
     return false;
   }
 };
+
+// Expose additional validation functions from workflowValidator
+export { validateWorkflow, validateRequestType, validateAndRepairRequest, repairWorkflow } from './workflowValidator';
