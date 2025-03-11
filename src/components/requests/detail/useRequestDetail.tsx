@@ -10,7 +10,7 @@ export const useRequestDetail = (requestId: string) => {
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["request-details", requestId],
     queryFn: async () => {
       console.log("=== بدء جلب تفاصيل الطلب ===");
@@ -71,12 +71,18 @@ export const useRequestDetail = (requestId: string) => {
     refetchOnWindowFocus: false
   });
 
-  // Check if the current user is the approver for the current step
+  // Enhanced function to check if the current user is an approver for the current step
   const isCurrentApprover = () => {
     if (!data || !user) return false;
     
     console.log("التحقق من كون المستخدم هو المعتمد الحالي للطلب");
     console.log("معرف المستخدم:", user.id);
+    
+    // Admin users are always treated as approvers
+    if (user.isAdmin) {
+      console.log("المستخدم مدير، لديه دائمًا صلاحية الاعتماد");
+      return true;
+    }
     
     const currentStep = data.current_step;
     if (!currentStep || !currentStep.id) {
@@ -103,18 +109,25 @@ export const useRequestDetail = (requestId: string) => {
     if (currentStep.approver_type === 'role' && user.role) {
       console.log("التحقق من الموافقة المستندة إلى الأدوار");
       
-      // Check if user has the required role
-      const hasRole = data.approvals?.some(
+      // Check if there are any pending role-based approvals for this step
+      const pendingRoleApprovals = data.approvals?.filter(
         (approval: any) => 
           approval.step?.id === currentStep.id && 
-          approval.status === "pending"
+          approval.status === "pending" &&
+          approval.assignment_type === 'role'
       );
       
-      if (hasRole) {
-        console.log("المستخدم لديه الدور المطلوب للموافقة");
-        return true;
-      } else {
-        console.log("المستخدم ليس لديه الدور المطلوب للموافقة");
+      // If there are pending role approvals and the user has a role, check if they match
+      if (pendingRoleApprovals && pendingRoleApprovals.length > 0) {
+        // Check if user's role matches any required role (implementation depends on how roles are stored)
+        const hasRequiredRole = user.isAdmin || user.role === 'admin' || user.role === 'app_admin';
+        
+        if (hasRequiredRole) {
+          console.log("المستخدم لديه الدور المطلوب للموافقة");
+          return true;
+        } else {
+          console.log("المستخدم ليس لديه الدور المطلوب للموافقة");
+        }
       }
     }
     
@@ -134,6 +147,7 @@ export const useRequestDetail = (requestId: string) => {
     data,
     isLoading,
     error,
+    refetch,
     isApproveDialogOpen,
     setIsApproveDialogOpen,
     isRejectDialogOpen,
