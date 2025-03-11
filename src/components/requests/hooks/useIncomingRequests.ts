@@ -52,21 +52,21 @@ export const useIncomingRequests = () => {
       
       // Transform the data into the expected format
       const transformedRequests = data.map(request => {
-        // Check the actual structure of request_type and current_step
-        console.log("Request type structure:", request.request_type);
-        console.log("Current step structure:", request.current_step);
+        // Log raw data to debug
+        console.log("Processing request:", request.id);
+        console.log("Request type data:", JSON.stringify(request.request_type));
+        console.log("Current step data:", JSON.stringify(request.current_step));
         
         // Safely extract request_type properties
         let requestType = null;
         if (request.request_type) {
-          // Handle both array and object cases
           if (Array.isArray(request.request_type) && request.request_type.length > 0) {
             requestType = {
               id: request.request_type[0]?.id,
               name: request.request_type[0]?.name
             };
           } else if (typeof request.request_type === 'object' && request.request_type !== null) {
-            // Access object properties directly, not as an array
+            // Handle direct object access
             const requestTypeObj = request.request_type as any;
             requestType = {
               id: requestTypeObj.id,
@@ -87,7 +87,7 @@ export const useIncomingRequests = () => {
             stepName = stepObj?.step_name;
             stepType = stepObj?.step_type;
           } else if (typeof request.current_step === 'object' && request.current_step !== null) {
-            // Access object properties directly, not as an array
+            // Handle direct object access
             const stepObj = request.current_step as any;
             stepId = stepObj.id;
             stepName = stepObj.step_name;
