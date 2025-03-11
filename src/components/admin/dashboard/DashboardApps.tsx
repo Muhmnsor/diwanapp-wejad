@@ -12,7 +12,8 @@ import {
   Bell,
   BellRing,
   Clock,
-  Inbox
+  Inbox,
+  Loader2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -26,10 +27,33 @@ export interface AppItem {
 
 interface DashboardAppsProps {
   apps: AppItem[];
+  isLoading?: boolean;
 }
 
-export const DashboardApps = ({ apps }: DashboardAppsProps) => {
+export const DashboardApps = ({ apps, isLoading = false }: DashboardAppsProps) => {
   const navigate = useNavigate();
+  
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 className="w-12 h-12 text-primary animate-spin" />
+          <p className="text-muted-foreground">جاري تحميل التطبيقات...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (apps.length === 0) {
+    return (
+      <div className="flex justify-center items-center p-8 bg-muted/20 rounded-lg mt-6 mb-10">
+        <div className="text-center">
+          <h3 className="font-medium text-lg">لا توجد تطبيقات متاحة</h3>
+          <p className="text-muted-foreground mt-2">ليس لديك صلاحية الوصول لأي تطبيقات</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" style={{ direction: 'rtl' }}>
