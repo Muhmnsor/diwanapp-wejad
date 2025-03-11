@@ -68,10 +68,18 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   const currentStep = data.current_step;
   const approvals = data.approvals || [];
   const attachments = data.attachments || [];
+  const requester = data.requester;
+
+  // Add requester info to the request object for easier access
+  const enhancedRequest = {
+    ...request,
+    requester: requester
+  };
 
   // Debug info for workflow data
   console.log("Request workflow data:", workflow);
   console.log("Current step data:", currentStep);
+  console.log("Requester data:", requester);
 
   return (
     <>
@@ -90,7 +98,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <RequestDetailsCard 
-              request={request}
+              request={enhancedRequest}
               requestType={requestType}
               approvals={approvals}
               attachments={attachments}

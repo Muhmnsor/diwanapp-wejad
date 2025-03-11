@@ -35,6 +35,10 @@ export const useRequestDetail = (requestId: string) => {
           console.warn("Current step data is missing or incomplete:", data.current_step);
         }
         
+        if (!data.requester || !data.requester.display_name) {
+          console.warn("Requester data is missing or incomplete:", data.requester);
+        }
+        
         return data;
       } catch (err) {
         console.error("Exception in request details fetch:", err);
