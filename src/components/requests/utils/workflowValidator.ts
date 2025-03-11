@@ -549,21 +549,41 @@ export const repairWorkflow = async (workflowId: string) => {
     // If there are steps but they have issues, repair them
     const stepsWithIssues = validation.steps.filter(step => !step.approver_id);
     if (stepsWithIssues.length > 0) {
-      // Get an admin user to use as approver
+      // Get admin role first
+      const { data: adminRole, error: roleError } = await supabase
+        .from('roles')
+        .select('id')
+        .eq('name', 'admin')
+        .single();
+      
+      if (roleError || !adminRole) {
+        return {
+          success: false,
+          repaired: false,
+          error: 'Cannot repair: failed to find admin role'
+        };
+      }
+
+      // Get user with admin role
+      const { data: adminUserRole, error: userRoleError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role_id', adminRole.id)
+        .single();
+      
+      if (userRoleError || !adminUserRole) {
+        return {
+          success: false,
+          repaired: false,
+          error: 'Cannot repair: no users found with admin role'
+        };
+      }
+
+      // Get admin user profile
       const { data: adminUser, error: userError } = await supabase
         .from('profiles')
         .select('id')
-        .in('id', (
-          await supabase
-            .from('user_roles')
-            .select('user_id')
-            .in('role_id', (
-              await supabase
-                .from('roles')
-                .select('id')
-                .eq('name', 'admin')
-            ).data?.[0]?.id || ''
-        ).data?.[0]?.user_id || '')
+        .eq('id', adminUserRole.user_id)
         .single();
       
       if (userError || !adminUser) {
@@ -617,4 +637,3 @@ export const repairWorkflow = async (workflowId: string) => {
     };
   }
 };
-
