@@ -23,13 +23,29 @@ interface RequestApprovalResponse {
       id: string;
       name: string;
     };
+  } | {
+    id: string;
+    title: string;
+    status: string;
+    priority: string;
+    created_at: string;
+    current_step_id: string;
+    request_type: {
+      id: string;
+      name: string;
+    }[];
   };
   step: {
     id: string;
     step_name: string;
     step_type: string;
     approver_id: string;
-  };
+  } | {
+    id: string;
+    step_name: string;
+    step_type: string;
+    approver_id: string;
+  }[];
 }
 
 export const useRequests = () => {
@@ -81,28 +97,34 @@ export const useRequests = () => {
       console.log("Raw response data structure:", JSON.stringify(data, null, 2));
       
       // Transform the data to handle the nested array structure from Supabase
-      const requests = data.map(item => {
-        // Check if nested objects exist and extract first item if they're arrays
-        const requestData = Array.isArray(item.request) && item.request.length > 0 
+      const requests = data.map((item: RequestApprovalResponse) => {
+        // Type guard to check if nested objects are arrays or single objects
+        const isRequestArray = Array.isArray(item.request);
+        const isStepArray = Array.isArray(item.step);
+        
+        // Extract request data safely
+        const requestData = isRequestArray && item.request.length > 0 
           ? item.request[0] 
-          : item.request;
+          : (isRequestArray ? null : item.request);
           
-        const stepData = Array.isArray(item.step) && item.step.length > 0 
+        // Extract step data safely
+        const stepData = isStepArray && item.step.length > 0 
           ? item.step[0] 
-          : item.step;
+          : (isStepArray ? null : item.step);
           
         if (!requestData) {
           console.warn(`Skipping approval ${item.id} due to missing request data`);
           return null;
         }
         
-        // Handle nested request_type
+        // Handle nested request_type with type safety
         let requestType = null;
         if (requestData) {
-          if (Array.isArray(requestData.request_type) && requestData.request_type.length > 0) {
-            requestType = requestData.request_type[0];
-          } else {
-            requestType = requestData.request_type;
+          const reqType = requestData.request_type;
+          if (Array.isArray(reqType) && reqType.length > 0) {
+            requestType = reqType[0];
+          } else if (reqType && typeof reqType === 'object') {
+            requestType = reqType;
           }
         }
         
@@ -112,8 +134,8 @@ export const useRequests = () => {
           request_type: requestType,
           approval_id: item.id,
           step_id: item.step_id,
-          step_name: stepData ? stepData.step_name : 'Unknown Step',
-          step_type: stepData ? stepData.step_type : 'decision'
+          step_name: stepData && 'step_name' in stepData ? stepData.step_name : 'Unknown Step',
+          step_type: stepData && 'step_type' in stepData ? stepData.step_type : 'decision'
         };
       }).filter(Boolean); // Remove any null items
       
