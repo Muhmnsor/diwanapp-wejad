@@ -46,15 +46,15 @@ export const useOutgoingRequests = () => {
         // Handle request_type normalization
         let requestType = null;
         if (request.request_type) {
-          if (Array.isArray(request.request_type) && request.request_type.length > 0) {
+          // The request_type can be an object or an array with a single object
+          const requestTypeData = Array.isArray(request.request_type) 
+            ? request.request_type[0] 
+            : request.request_type;
+            
+          if (requestTypeData) {
             requestType = {
-              id: request.request_type[0].id,
-              name: request.request_type[0].name
-            };
-          } else if (typeof request.request_type === 'object' && request.request_type !== null) {
-            requestType = {
-              id: request.request_type.id,
-              name: request.request_type.name
+              id: requestTypeData.id,
+              name: requestTypeData.name
             };
           }
         }
@@ -65,14 +65,15 @@ export const useOutgoingRequests = () => {
         let stepType = null;
         
         if (request.current_step) {
-          if (Array.isArray(request.current_step) && request.current_step.length > 0) {
-            stepId = request.current_step[0].id;
-            stepName = request.current_step[0].step_name;
-            stepType = request.current_step[0].step_type;
-          } else if (typeof request.current_step === 'object' && request.current_step !== null) {
-            stepId = request.current_step.id;
-            stepName = request.current_step.step_name;
-            stepType = request.current_step.step_type;
+          // The current_step can be an object or an array with a single object
+          const stepData = Array.isArray(request.current_step)
+            ? request.current_step[0]
+            : request.current_step;
+            
+          if (stepData) {
+            stepId = stepData.id;
+            stepName = stepData.step_name;
+            stepType = stepData.step_type;
           }
         }
         

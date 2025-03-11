@@ -56,17 +56,28 @@ export const useIncomingRequests = () => {
         .filter(approval => approval.request && Array.isArray(approval.request) && approval.request.length > 0)
         .map(approval => {
           const request = approval.request[0];
-          const step = approval.step && Array.isArray(approval.step) && approval.step.length > 0 
-            ? approval.step[0] 
-            : null;
           
-          // Extract request_type
+          // Handle the step data properly - it can be an array or an object
+          let step = null;
+          if (approval.step) {
+            step = Array.isArray(approval.step) && approval.step.length > 0 
+              ? approval.step[0] 
+              : approval.step;
+          }
+          
+          // Extract request_type - it can be an array or an object
           let requestType = null;
-          if (request.request_type && Array.isArray(request.request_type) && request.request_type.length > 0) {
-            requestType = {
-              id: request.request_type[0].id,
-              name: request.request_type[0].name
-            };
+          if (request.request_type) {
+            const requestTypeData = Array.isArray(request.request_type) && request.request_type.length > 0 
+              ? request.request_type[0] 
+              : request.request_type;
+              
+            if (requestTypeData) {
+              requestType = {
+                id: requestTypeData.id,
+                name: requestTypeData.name
+              };
+            }
           }
           
           return {
