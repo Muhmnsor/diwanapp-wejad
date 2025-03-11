@@ -1,4 +1,3 @@
-
 import { 
   Database, 
   ListChecks, 
@@ -18,16 +17,16 @@ import { User } from "@/store/refactored-auth/types";
 
 // Define roles for each application
 const APP_ROLE_ACCESS = {
-  events: ['admin', 'app_admin', 'event_creator', 'event_manager'],
-  documents: ['admin', 'app_admin', 'document_manager', 'finance_manager', 'financial_manager'],
-  tasks: ['admin', 'app_admin', 'task_manager', 'project_manager', 'finance_manager', 'financial_manager'],
-  ideas: ['admin', 'app_admin', 'idea_manager', 'finance_manager', 'financial_manager'],
-  finance: ['admin', 'app_admin', 'finance_manager', 'financial_manager'],
-  users: ['admin', 'app_admin'],
-  website: ['admin', 'app_admin', 'content_manager'],
-  store: ['admin', 'app_admin', 'store_manager'],
-  notifications: ['admin', 'app_admin', 'notification_manager', 'finance_manager', 'financial_manager'],
-  requests: ['admin', 'app_admin', 'request_manager', 'finance_manager', 'financial_manager'],
+  events: ['admin', 'app_admin', 'event_creator', 'event_manager', 'developer'],
+  documents: ['admin', 'app_admin', 'document_manager', 'finance_manager', 'financial_manager', 'developer'],
+  tasks: ['admin', 'app_admin', 'task_manager', 'project_manager', 'finance_manager', 'financial_manager', 'developer'],
+  ideas: ['admin', 'app_admin', 'idea_manager', 'finance_manager', 'financial_manager', 'developer'],
+  finance: ['admin', 'app_admin', 'finance_manager', 'financial_manager', 'developer'],
+  users: ['admin', 'app_admin', 'developer'],
+  website: ['admin', 'app_admin', 'content_manager', 'developer'],
+  store: ['admin', 'app_admin', 'store_manager', 'developer'],
+  notifications: ['admin', 'app_admin', 'notification_manager', 'finance_manager', 'financial_manager', 'developer'],
+  requests: ['admin', 'app_admin', 'request_manager', 'finance_manager', 'financial_manager', 'developer'],
   developer: ['admin', 'app_admin', 'developer']
 };
 
