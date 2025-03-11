@@ -32,6 +32,7 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
           .order('module');
 
         if (error) throw error;
+        console.log("Fetched permissions:", data?.length);
         return data as PermissionData[];
       } catch (error) {
         console.error('Error fetching permissions:', error);
@@ -52,6 +53,7 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
           .eq('role_id', role.id);
 
         if (error) throw error;
+        console.log("Fetched role permissions:", data?.length);
         return data.map(item => item.permission_id);
       } catch (error) {
         console.error('Error fetching role permissions:', error);
@@ -142,36 +144,54 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
     )
   })).filter(module => module.permissions.length > 0);
 
-  // Save role permissions
+  // Save role permissions with transaction
   const handleSave = async () => {
     if (!role.id) return;
     
     setIsSaving(true);
+    
     try {
-      // Delete existing role permissions
-      const { error: deleteError } = await supabase
-        .from('role_permissions')
-        .delete()
-        .eq('role_id', role.id);
+      // Start a transaction
+      const { error: transactionError } = await supabase.rpc('begin_transaction');
+      if (transactionError) throw transactionError;
       
-      if (deleteError) throw deleteError;
-      
-      // Insert new role permissions
-      if (selectedPermissions.length > 0) {
-        const rolePerm = selectedPermissions.map(permId => ({
-          role_id: role.id,
-          permission_id: permId
-        }));
-        
-        const { error: insertError } = await supabase
+      try {
+        // Delete existing role permissions
+        const { error: deleteError } = await supabase
           .from('role_permissions')
-          .insert(rolePerm);
+          .delete()
+          .eq('role_id', role.id);
         
-        if (insertError) throw insertError;
+        if (deleteError) throw deleteError;
+        
+        // Insert new role permissions
+        if (selectedPermissions.length > 0) {
+          const rolePerm = selectedPermissions.map(permId => ({
+            role_id: role.id,
+            permission_id: permId
+          }));
+          
+          const { error: insertError } = await supabase
+            .from('role_permissions')
+            .insert(rolePerm);
+          
+          if (insertError) throw insertError;
+        }
+        
+        // Commit the transaction
+        const { error: commitError } = await supabase.rpc('commit_transaction');
+        if (commitError) throw commitError;
+        
+        toast.success('تم حفظ صلاحيات الدور بنجاح');
+        console.log('Saved permissions:', selectedPermissions.length);
+        
+        // Refetch to confirm saved state
+        await refetchRolePermissions();
+      } catch (error) {
+        // Rollback the transaction on error
+        await supabase.rpc('rollback_transaction');
+        throw error;
       }
-      
-      toast.success('تم حفظ صلاحيات الدور بنجاح');
-      refetchRolePermissions();
     } catch (error) {
       console.error('Error saving role permissions:', error);
       toast.error('حدث خطأ أثناء حفظ صلاحيات الدور');
@@ -261,7 +281,7 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
           ) : (
             <>
               <Save className="ml-2 h-4 w-4" />
-              حفظ الصلاحيات
+              حفظ الصلاحيات ({selectedPermissions.length})
             </>
           )}
         </Button>

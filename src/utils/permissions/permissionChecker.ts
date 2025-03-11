@@ -1,128 +1,76 @@
 
-import { useAuthStore } from "@/store/refactored-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
-export const usePermissionCheck = (permissionName: string) => {
-  const { user } = useAuthStore();
-  const [hasPermission, setHasPermission] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    const checkPermission = async () => {
-      if (!user?.id) {
-        setHasPermission(false);
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        // Use the Supabase function to check if the user has this permission
-        const { data, error } = await supabase.rpc('has_permission', {
-          p_user_id: user.id,
-          p_permission_name: permissionName
-        });
-
-        if (error) {
-          console.error('Error checking permission:', error);
-          setHasPermission(false);
-        } else {
-          setHasPermission(!!data);
-        }
-      } catch (error) {
-        console.error('Permission check error:', error);
-        setHasPermission(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkPermission();
-  }, [user?.id, permissionName]);
-
-  return { hasPermission, isLoading };
-};
-
-export const withPermission = <P extends object>(
-  Component: React.ComponentType<P>,
-  requiredPermission: string,
-  FallbackComponent?: React.ComponentType<P>
-) => {
-  const WithPermissionCheck = (props: P) => {
-    const { hasPermission, isLoading } = usePermissionCheck(requiredPermission);
-
-    if (isLoading) {
-      return <div className="flex justify-center py-4">جاري التحقق من الصلاحيات...</div>;
-    }
-
-    if (!hasPermission) {
-      if (FallbackComponent) {
-        return <FallbackComponent {...props} />;
-      }
-      return (
-        <div className="p-4 text-center">
-          <p className="text-destructive">ليس لديك صلاحية للوصول إلى هذه الميزة</p>
-        </div>
-      );
-    }
-
-    return <Component {...props} />;
-  };
-
-  return WithPermissionCheck;
-};
-
-// Utility to check if user has any of the given permissions
-export const checkAnyPermission = async (userId: string, permissionNames: string[]): Promise<boolean> => {
-  if (!userId || permissionNames.length === 0) return false;
-  
+/**
+ * Check if a user has a specific permission
+ * @param userId The user ID to check
+ * @param permissionName The permission name to check for
+ * @returns Promise<boolean> True if the user has the permission, false otherwise
+ */
+export async function hasPermission(userId: string, permissionName: string): Promise<boolean> {
   try {
-    // Fetch all user permissions
-    const { data, error } = await supabase.rpc('get_user_permissions', {
-      p_user_id: userId
-    });
-    
-    if (error) {
-      console.error('Error fetching user permissions:', error);
+    if (!userId || !permissionName) {
+      console.error("Missing userId or permissionName in hasPermission check");
       return false;
     }
-    
-    // Check if user has any of the required permissions
-    return permissionNames.some(permission => data.includes(permission));
+
+    // Use the has_permission Postgres function
+    const { data, error } = await supabase.rpc('has_permission', {
+      p_user_id: userId,
+      p_permission_name: permissionName
+    });
+
+    if (error) {
+      console.error("Error checking permission:", error);
+      return false;
+    }
+
+    return !!data;
   } catch (error) {
-    console.error('Permission check error:', error);
+    console.error("Exception in hasPermission:", error);
     return false;
   }
-};
+}
 
-// Check for multiple permissions at once
-export const checkPermissions = async (userId: string, permissionNames: string[]): Promise<{[key: string]: boolean}> => {
-  const result: {[key: string]: boolean} = {};
-  
-  if (!userId || permissionNames.length === 0) {
-    return permissionNames.reduce((acc, perm) => ({...acc, [perm]: false}), {});
-  }
-  
+/**
+ * Get all permissions for a user
+ * @param userId The user ID to get permissions for
+ * @returns Promise<string[]> Array of permission names
+ */
+export async function getUserPermissions(userId: string): Promise<string[]> {
   try {
-    // Fetch all user permissions
+    if (!userId) {
+      console.error("Missing userId in getUserPermissions");
+      return [];
+    }
+
+    // Use the get_user_permissions Postgres function
     const { data, error } = await supabase.rpc('get_user_permissions', {
       p_user_id: userId
     });
-    
+
     if (error) {
-      console.error('Error fetching user permissions:', error);
-      return permissionNames.reduce((acc, perm) => ({...acc, [perm]: false}), {});
+      console.error("Error fetching user permissions:", error);
+      return [];
     }
-    
-    // Check each permission
-    for (const permission of permissionNames) {
-      result[permission] = data.includes(permission);
-    }
-    
-    return result;
+
+    return data || [];
   } catch (error) {
-    console.error('Permissions check error:', error);
-    return permissionNames.reduce((acc, perm) => ({...acc, [perm]: false}), {});
+    console.error("Exception in getUserPermissions:", error);
+    return [];
   }
-};
+}
+
+/**
+ * Higher-order component that provides permission check capability to a component
+ * @param WrappedComponent The component to wrap
+ * @returns A new component with permission checking capabilities
+ */
+export function withPermissionCheck<P extends object>(
+  WrappedComponent: React.ComponentType<P>
+): React.FC<P> {
+  return (props: P) => {
+    return <WrappedComponent {...props} />;
+  };
+}

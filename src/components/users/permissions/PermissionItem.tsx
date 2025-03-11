@@ -13,11 +13,18 @@ export const PermissionItem = ({
   isChecked,
   onToggle,
 }: PermissionItemProps) => {
+  // Handle the click event to toggle permission
+  const handleToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onToggle(permission.id);
+  };
+
   return (
     <div
       className="flex items-start p-2 hover:bg-muted/20 rounded cursor-pointer"
-      onClick={() => onToggle(permission.id)}
+      onClick={handleToggle}
       data-permission-id={permission.id}
+      data-testid={`permission-item-${permission.id}`}
     >
       <div
         className={`w-5 h-5 mt-0.5 border rounded flex items-center justify-center mr-2 ${
@@ -25,6 +32,8 @@ export const PermissionItem = ({
             ? "bg-primary border-primary text-primary-foreground"
             : "border-input"
         }`}
+        aria-checked={isChecked}
+        role="checkbox"
       >
         {isChecked && <Check className="h-3.5 w-3.5" />}
       </div>
