@@ -2,33 +2,30 @@
 import { ChevronDown, ChevronLeft, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Module } from "../types";
+import { ModuleHeaderProps } from "../types";
 import { cn } from "@/lib/utils";
-
-interface ModuleHeaderProps {
-  module: Module;
-  areAllSelected: boolean;
-  areSomeSelected: boolean;
-  onModuleToggle: (module: Module) => void;
-  onToggleOpen: () => void;
-}
+import { getModuleDisplayName } from "../utils/moduleMapping";
 
 export const ModuleHeader = ({
-  module,
+  moduleName,
+  moduleDisplayName,
   areAllSelected,
   areSomeSelected,
   onModuleToggle,
   onToggleOpen,
+  isOpen,
 }: ModuleHeaderProps) => {
+  const displayName = moduleDisplayName || getModuleDisplayName(moduleName);
+
   return (
     <div className="bg-muted p-3 flex items-center justify-between">
       <div className="flex items-center space-x-2 rtl:space-x-reverse">
         <div className="relative">
           <Checkbox
-            id={`module-${module.name}`}
+            id={`module-${moduleName}`}
             checked={areAllSelected || areSomeSelected}
-            onCheckedChange={() => onModuleToggle(module)}
-            aria-label={`تحديد كل صلاحيات ${module.name}`}
+            onCheckedChange={() => onModuleToggle(moduleName)}
+            aria-label={`تحديد كل صلاحيات ${displayName}`}
           />
           {areSomeSelected && !areAllSelected && (
             <Minus 
@@ -38,19 +35,19 @@ export const ModuleHeader = ({
           )}
         </div>
         <label
-          htmlFor={`module-${module.name}`}
+          htmlFor={`module-${moduleName}`}
           className="text-sm font-medium select-none cursor-pointer"
         >
-          {module.name}
+          {displayName}
         </label>
       </div>
       <Button
         variant="ghost"
         size="icon"
-        onClick={onToggleOpen}
-        aria-label={module.isOpen ? "طي الوحدة" : "توسيع الوحدة"}
+        onClick={() => onToggleOpen(moduleName)}
+        aria-label={isOpen ? "طي الوحدة" : "توسيع الوحدة"}
       >
-        {module.isOpen ? (
+        {isOpen ? (
           <ChevronDown className="h-4 w-4" />
         ) : (
           <ChevronLeft className="h-4 w-4" />

@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Loader2, Search, ChevronUp, ChevronDown, CheckCircle, XCircle } from "lucide-react";
 import { ModuleCollapsible } from "./ModuleCollapsible";
 import { Role } from "../types";
 import { usePermissions } from "./usePermissions";
@@ -15,9 +16,14 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
     selectedPermissions,
     isLoading,
     isSubmitting,
+    searchQuery,
+    handleSearch,
     handlePermissionToggle,
     handleModuleToggle,
     toggleModuleOpen,
+    toggleAllModules,
+    selectAllPermissions,
+    deselectAllPermissions,
     handleSave
   } = usePermissions(role);
 
@@ -47,6 +53,56 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
         </Button>
       </div>
 
+      <div className="mb-4">
+        <div className="relative">
+          <Search className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="بحث عن صلاحية..."
+            className="pr-8"
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2 mb-4">
+        <Button 
+          size="sm" 
+          variant="outline" 
+          onClick={() => toggleAllModules(true)}
+        >
+          <ChevronDown className="h-4 w-4 ml-1" />
+          توسيع الكل
+        </Button>
+        
+        <Button 
+          size="sm" 
+          variant="outline" 
+          onClick={() => toggleAllModules(false)}
+        >
+          <ChevronUp className="h-4 w-4 ml-1" />
+          طي الكل
+        </Button>
+        
+        <Button 
+          size="sm" 
+          variant="outline" 
+          onClick={selectAllPermissions}
+        >
+          <CheckCircle className="h-4 w-4 ml-1" />
+          تحديد الكل
+        </Button>
+        
+        <Button 
+          size="sm" 
+          variant="outline" 
+          onClick={deselectAllPermissions}
+        >
+          <XCircle className="h-4 w-4 ml-1" />
+          إلغاء تحديد الكل
+        </Button>
+      </div>
+
       <div className="space-y-2">
         {modules.map((module) => (
           <ModuleCollapsible
@@ -62,7 +118,10 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
 
       {modules.length === 0 && (
         <div className="text-center p-8 border rounded-md bg-muted">
-          لا توجد صلاحيات متاحة لهذا الدور
+          {searchQuery ? 
+            'لا توجد نتائج للبحث' : 
+            'لا توجد صلاحيات متاحة لهذا الدور'
+          }
         </div>
       )}
     </div>

@@ -2,12 +2,13 @@
 import { Module } from "./types";
 import { ModuleHeader } from "./components/ModuleHeader";
 import { ModulePermissionsContent } from "./components/ModulePermissionsContent";
+import { getModuleDisplayName } from "./utils/moduleMapping";
 
 export interface ModuleCollapsibleProps {
   module: Module;
   selectedPermissions: string[];
   onPermissionToggle: (permissionId: string) => void;
-  onModuleToggle: (module: Module) => void;
+  onModuleToggle: (moduleName: string) => void;
   toggleOpen: (moduleName: string) => void;
 }
 
@@ -27,18 +28,18 @@ export const ModuleCollapsible = ({
       selectedPermissions.includes(permission.id)
     ) && !areAllSelected;
 
-  const handleToggleOpen = () => {
-    toggleOpen(module.name);
-  };
+  const moduleDisplayName = getModuleDisplayName(module.name);
 
   return (
-    <div className="border rounded-md overflow-hidden">
+    <div className="border rounded-md overflow-hidden mb-4">
       <ModuleHeader
-        module={module}
+        moduleName={module.name}
+        moduleDisplayName={moduleDisplayName}
         areAllSelected={areAllSelected}
         areSomeSelected={areSomeSelected}
-        onModuleToggle={onModuleToggle}
-        onToggleOpen={handleToggleOpen}
+        onModuleToggle={() => onModuleToggle(module.name)}
+        onToggleOpen={() => toggleOpen(module.name)}
+        isOpen={module.isOpen}
       />
       
       {module.isOpen && (

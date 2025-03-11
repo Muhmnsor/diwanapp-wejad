@@ -41,33 +41,85 @@ export const fetchRolePermissions = async (roleId: string): Promise<string[]> =>
 
 // حفظ أذونات الدور
 export const saveRolePermissions = async (roleId: string, permissionIds: string[]): Promise<boolean> => {
-  const { error: deleteError } = await supabase
-    .from('role_permissions')
-    .delete()
-    .eq('role_id', roleId);
+  try {
+    // First, delete all existing role permissions
+    const { error: deleteError } = await supabase
+      .from('role_permissions')
+      .delete()
+      .eq('role_id', roleId);
+      
+    if (deleteError) {
+      console.error('Error deleting existing role permissions:', deleteError);
+      throw deleteError;
+    }
     
-  if (deleteError) {
-    console.error('Error deleting existing role permissions:', deleteError);
-    throw deleteError;
-  }
-  
-  if (permissionIds.length === 0) {
-    return true; // لا توجد أذونات للإضافة
-  }
-  
-  const rolePermissions = permissionIds.map(permissionId => ({
-    role_id: roleId,
-    permission_id: permissionId
-  }));
-  
-  const { error: insertError } = await supabase
-    .from('role_permissions')
-    .insert(rolePermissions);
+    // If there are no permissions to add, we're done
+    if (permissionIds.length === 0) {
+      return true;
+    }
     
-  if (insertError) {
-    console.error('Error inserting role permissions:', insertError);
-    throw insertError;
+    // Prepare the data for insertion
+    const rolePermissions = permissionIds.map(permissionId => ({
+      role_id: roleId,
+      permission_id: permissionId
+    }));
+    
+    // Insert the new role permissions
+    const { error: insertError } = await supabase
+      .from('role_permissions')
+      .insert(rolePermissions);
+      
+    if (insertError) {
+      console.error('Error inserting role permissions:', insertError);
+      throw insertError;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error saving role permissions:', error);
+    throw error;
   }
-  
-  return true;
+};
+
+// Check if user has a specific permission
+export const hasUserPermission = async (userId: string, permissionName: string): Promise<boolean> => {
+  try {
+    if (!userId || !permissionName) return false;
+
+    const { data, error } = await supabase
+      .rpc('has_permission', { 
+        p_user_id: userId, 
+        p_permission_name: permissionName 
+      });
+
+    if (error) {
+      console.error('Error checking user permission:', error);
+      return false;
+    }
+
+    return data || false;
+  } catch (error) {
+    console.error('Error in hasUserPermission:', error);
+    return false;
+  }
+};
+
+// Get all permissions for a user
+export const getUserPermissions = async (userId: string): Promise<string[]> => {
+  try {
+    if (!userId) return [];
+
+    const { data, error } = await supabase
+      .rpc('get_user_permissions', { p_user_id: userId });
+
+    if (error) {
+      console.error('Error fetching user permissions:', error);
+      return [];
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Error in getUserPermissions:', error);
+    return [];
+  }
 };
