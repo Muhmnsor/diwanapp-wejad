@@ -1,51 +1,61 @@
 
-import { ChevronDown, ChevronRight, Check, Minus } from "lucide-react";
-import { ModuleHeaderProps } from "../types";
+import { ChevronDown, ChevronLeft, Minus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Module } from "../types";
+import { cn } from "@/lib/utils";
+
+interface ModuleHeaderProps {
+  module: Module;
+  areAllSelected: boolean;
+  areSomeSelected: boolean;
+  onModuleToggle: (module: Module) => void;
+  onToggleOpen: () => void;
+}
 
 export const ModuleHeader = ({
-  moduleName,
-  moduleDisplayName,
+  module,
   areAllSelected,
   areSomeSelected,
   onModuleToggle,
   onToggleOpen,
-  isOpen,
 }: ModuleHeaderProps) => {
   return (
-    <div 
-      className={`flex items-center justify-between p-3 cursor-pointer ${
-        isOpen ? "bg-primary/10" : "bg-muted/50"
-      }`}
-    >
-      <div className="flex items-center" onClick={() => onToggleOpen(moduleName)}>
-        {isOpen ? (
-          <ChevronDown className="h-4 w-4 mr-2" />
-        ) : (
-          <ChevronRight className="h-4 w-4 mr-2" />
-        )}
-        <span className="font-medium">{moduleDisplayName || moduleName}</span>
+    <div className="bg-muted p-3 flex items-center justify-between">
+      <div className="flex items-center space-x-2 rtl:space-x-reverse">
+        <div className="relative">
+          <Checkbox
+            id={`module-${module.name}`}
+            checked={areAllSelected || areSomeSelected}
+            onCheckedChange={() => onModuleToggle(module)}
+            aria-label={`تحديد كل صلاحيات ${module.name}`}
+          />
+          {areSomeSelected && !areAllSelected && (
+            <Minus 
+              className="h-2.5 w-2.5 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white"
+              aria-hidden="true"
+            />
+          )}
+        </div>
+        <label
+          htmlFor={`module-${module.name}`}
+          className="text-sm font-medium select-none cursor-pointer"
+        >
+          {module.name}
+        </label>
       </div>
-      
-      <div 
-        className={`flex items-center justify-center w-6 h-6 rounded border ${
-          areAllSelected
-            ? "bg-primary border-primary text-primary-foreground"
-            : areSomeSelected
-            ? "bg-primary/20 border-primary text-primary"
-            : "border-input"
-        }`}
-        onClick={(e) => {
-          e.stopPropagation();
-          onModuleToggle(moduleName);
-        }}
-        data-testid={`module-toggle-${moduleName}`}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onToggleOpen}
+        aria-label={module.isOpen ? "طي الوحدة" : "توسيع الوحدة"}
       >
-        {areAllSelected ? (
-          <Check className="h-4 w-4" />
-        ) : areSomeSelected ? (
-          <Minus className="h-4 w-4" />
-        ) : null}
-      </div>
+        {module.isOpen ? (
+          <ChevronDown className="h-4 w-4" />
+        ) : (
+          <ChevronLeft className="h-4 w-4" />
+        )}
+      </Button>
     </div>
   );
 };

@@ -14,7 +14,7 @@ export const ModulePermissionsContent = ({
   onPermissionToggle,
 }: ModulePermissionsContentProps) => {
   return (
-    <div className="p-4 space-y-3 bg-card grid grid-cols-1 md:grid-cols-2 gap-3">
+    <div className="p-4 space-y-2 bg-card">
       {permissions.map((permission) => (
         <PermissionItem
           key={permission.id}

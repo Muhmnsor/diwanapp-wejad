@@ -7,7 +7,6 @@ import { TabsNavigation } from "./roles/TabsNavigation";
 import { RoleDialogs } from "./roles/RoleDialogs";
 import { useEffect } from "react";
 import { initializeDeveloperRole } from "@/utils/developerRole";
-import { initializeDefaultPermissions, initializeAdminRole } from "@/utils/permissions/initializePermissions";
 
 export const RoleManagement = () => {
   const {
@@ -31,12 +30,6 @@ export const RoleManagement = () => {
   useEffect(() => {
     // Initialize developer role
     initializeDeveloperRole();
-    
-    // Initialize permissions
-    initializeDefaultPermissions().then(() => {
-      // After permissions are initialized, set up the admin role
-      initializeAdminRole();
-    });
   }, []);
 
   return (

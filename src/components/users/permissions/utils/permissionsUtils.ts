@@ -1,6 +1,5 @@
 
 import { Module, PermissionData } from "../types";
-import { getModuleDisplayName } from "./moduleMapping";
 
 /**
  * تنظيم الأذونات حسب الوحدة
@@ -24,11 +23,7 @@ export const organizePermissionsByModule = (permissions: PermissionData[]): Modu
   }));
   
   // ترتيب الوحدات أبجديًا
-  return modules.sort((a, b) => {
-    const displayNameA = getModuleDisplayName(a.name);
-    const displayNameB = getModuleDisplayName(b.name);
-    return displayNameA.localeCompare(displayNameB);
-  });
+  return modules.sort((a, b) => a.name.localeCompare(b.name));
 };
 
 /**

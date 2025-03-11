@@ -1,5 +1,5 @@
 
-import { Check } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { PermissionData } from "./types";
 
 interface PermissionItemProps {
@@ -13,37 +13,19 @@ export const PermissionItem = ({
   isChecked,
   onToggle,
 }: PermissionItemProps) => {
-  // Handle the click event to toggle permission
-  const handleToggle = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation(); // Prevent event bubbling
-    onToggle(permission.id);
-  };
-
   return (
-    <div
-      className="flex items-start p-2 hover:bg-muted/20 rounded cursor-pointer"
-      onClick={handleToggle}
-      data-permission-id={permission.id}
-      data-testid={`permission-item-${permission.id}`}
-      role="button"
-      aria-pressed={isChecked}
-    >
-      <div
-        className={`w-5 h-5 mt-0.5 border rounded flex items-center justify-center mr-2 ${
-          isChecked
-            ? "bg-primary border-primary text-primary-foreground"
-            : "border-input"
-        }`}
-        aria-checked={isChecked}
-        role="checkbox"
+    <div className="flex items-center space-x-2 rtl:space-x-reverse">
+      <Checkbox
+        id={`permission-${permission.id}`}
+        checked={isChecked}
+        onCheckedChange={() => onToggle(permission.id)}
+      />
+      <label
+        htmlFor={`permission-${permission.id}`}
+        className="text-sm leading-none cursor-pointer select-none"
       >
-        {isChecked && <Check className="h-3.5 w-3.5" />}
-      </div>
-      <div>
-        <div className="font-medium text-sm">{permission.description}</div>
-        <div className="text-xs text-muted-foreground">{permission.name}</div>
-      </div>
+        {permission.name.toString()}
+      </label>
     </div>
   );
 };

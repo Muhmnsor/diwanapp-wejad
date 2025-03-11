@@ -1,14 +1,13 @@
 
 import { Module } from "./types";
 import { ModuleHeader } from "./components/ModuleHeader";
-import { PermissionItem } from "./PermissionItem";
-import { getModuleDisplayName } from "./utils/moduleMapping";
+import { ModulePermissionsContent } from "./components/ModulePermissionsContent";
 
-interface ModuleCollapsibleProps {
+export interface ModuleCollapsibleProps {
   module: Module;
   selectedPermissions: string[];
   onPermissionToggle: (permissionId: string) => void;
-  onModuleToggle: (moduleName: string) => void;
+  onModuleToggle: (module: Module) => void;
   toggleOpen: (moduleName: string) => void;
 }
 
@@ -19,42 +18,35 @@ export const ModuleCollapsible = ({
   onModuleToggle,
   toggleOpen,
 }: ModuleCollapsibleProps) => {
-  const moduleDisplayName = getModuleDisplayName(module.name);
-  
-  // Calculate if all or some permissions in this module are selected
-  const modulePermissionIds = module.permissions.map(p => p.id);
-  const moduleSelectedCount = modulePermissionIds.filter(id => 
-    selectedPermissions.includes(id)
-  ).length;
-  
-  const areAllSelected = moduleSelectedCount === modulePermissionIds.length && modulePermissionIds.length > 0;
-  const areSomeSelected = moduleSelectedCount > 0 && !areAllSelected;
+  const areAllSelected = module.permissions.every((permission) =>
+    selectedPermissions.includes(permission.id)
+  );
+
+  const areSomeSelected =
+    module.permissions.some((permission) =>
+      selectedPermissions.includes(permission.id)
+    ) && !areAllSelected;
+
+  const handleToggleOpen = () => {
+    toggleOpen(module.name);
+  };
 
   return (
-    <div className="border rounded-md overflow-hidden mb-4">
+    <div className="border rounded-md overflow-hidden">
       <ModuleHeader
-        moduleName={module.name}
-        moduleDisplayName={moduleDisplayName}
+        module={module}
         areAllSelected={areAllSelected}
         areSomeSelected={areSomeSelected}
-        onModuleToggle={() => onModuleToggle(module.name)}
-        onToggleOpen={() => toggleOpen(module.name)}
-        isOpen={module.isOpen}
+        onModuleToggle={onModuleToggle}
+        onToggleOpen={handleToggleOpen}
       />
       
       {module.isOpen && (
-        <div className="p-2 bg-background">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {module.permissions.map((permission) => (
-              <PermissionItem
-                key={permission.id}
-                permission={permission}
-                isChecked={selectedPermissions.includes(permission.id)}
-                onToggle={onPermissionToggle}
-              />
-            ))}
-          </div>
-        </div>
+        <ModulePermissionsContent
+          permissions={module.permissions}
+          selectedPermissions={selectedPermissions}
+          onPermissionToggle={onPermissionToggle}
+        />
       )}
     </div>
   );
