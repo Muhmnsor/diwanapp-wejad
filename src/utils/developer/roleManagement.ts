@@ -6,14 +6,18 @@ export const isDeveloper = async (userId: string): Promise<boolean> => {
   if (!userId) return false;
   
   try {
-    // First check if user is an admin (admins should always have developer access)
-    const { data: userProfile } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', userId)
-      .single();
+    // Check for admin status through user_roles, not in profiles table
+    const { data: userRoles } = await supabase
+      .from('user_roles')
+      .select('roles:role_id(name)')
+      .eq('user_id', userId);
       
-    if (userProfile?.is_admin) {
+    // Check if user has admin role
+    const isAdmin = userRoles?.some(role => 
+      role.roles?.name === 'admin' || role.roles?.name === 'app_admin'
+    );
+    
+    if (isAdmin) {
       console.log('User is admin, granting developer access automatically');
       return true;
     }
@@ -30,7 +34,7 @@ export const isDeveloper = async (userId: string): Promise<boolean> => {
       return false;
     }
     
-    // Check if user has developer role - FIXED: don't try to access 'id' column
+    // Check if user has developer role
     const { data, error } = await supabase
       .from('user_roles')
       .select('role_id')

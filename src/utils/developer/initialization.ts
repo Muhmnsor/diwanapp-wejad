@@ -61,11 +61,11 @@ export const autoAssignDeveloperRole = async (): Promise<void> => {
       return;
     }
     
-    // العثور على المستخدمين الإداريين
+    // العثور على المستخدمين الإداريين من خلال user_roles
     const { data: adminUsers, error: adminError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('is_admin', true);
+      .from('user_roles')
+      .select('user_id, roles:role_id(name)')
+      .eq('roles.name', 'admin');
       
     if (adminError) {
       console.error('Error fetching admin users:', adminError);
@@ -77,11 +77,12 @@ export const autoAssignDeveloperRole = async (): Promise<void> => {
       return;
     }
     
-    console.log(`Found ${adminUsers.length} admin users to assign developer role`);
+    const adminUserIds = adminUsers.map(user => user.user_id);
+    console.log(`Found ${adminUserIds.length} admin users to assign developer role`);
     
     // تعيين دور المطور لكل مستخدم إداري
-    for (const user of adminUsers) {
-      await assignDeveloperRole(user.id);
+    for (const userId of adminUserIds) {
+      await assignDeveloperRole(userId);
     }
     
     console.log('Completed auto-assignment of developer roles to admin users');

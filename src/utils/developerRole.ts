@@ -1,4 +1,5 @@
 
+// Export individual functions from separate modules
 import { initializeDeveloperRole, autoAssignDeveloperRole } from './developer/initialization';
 import { isDeveloper, assignDeveloperRole, removeDeveloperRole } from './developer/roleManagement';
 import { isDeveloperModeEnabled, toggleDeveloperMode } from './developer/modeManagement';
@@ -14,12 +15,11 @@ export {
   toggleDeveloperMode
 };
 
-// Initialize developer features on application start
+// Initialize developer features on application start - this is now decoupled from the imports
 export const initializeDeveloperFeatures = async (): Promise<void> => {
   try {
-    // Initialize developer role and make sure it exists
+    // Get the already-imported function (no circular dependency)
     await initializeDeveloperRole();
-    
     console.log('Developer features initialized successfully');
   } catch (error) {
     console.error('Failed to initialize developer features:', error);

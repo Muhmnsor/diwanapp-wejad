@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { User } from './types';
 
 export const checkUserRole = async (userId: string): Promise<boolean> => {
-  // FIXED: don't try to access role_id column directly
+  // Check for developer role
   const { data: userRoles, error: roleIdsError } = await supabase
     .from('user_roles')
     .select('role_id, roles(name)')
@@ -22,9 +22,10 @@ export const checkUserRole = async (userId: string): Promise<boolean> => {
   // Check if any role is a developer role
   for (const userRole of userRoles) {
     if (userRole.roles) {
-      const roleName = Array.isArray(userRole.roles) ? 
-        (userRole.roles[0]?.name) : 
-        (userRole.roles as any).name;
+      const roleName = typeof userRole.roles === 'object' && userRole.roles !== null ? 
+        // Handle both array and object response formats
+        (Array.isArray(userRole.roles) ? userRole.roles[0]?.name : userRole.roles.name) : 
+        null;
         
       if (roleName === 'developer') {
         return true;
@@ -55,9 +56,10 @@ export const checkAdminRole = async (userId: string): Promise<boolean> => {
   // Check if any role is an admin role
   for (const userRole of userRoles) {
     if (userRole.roles) {
-      const roleName = Array.isArray(userRole.roles) ? 
-        (userRole.roles[0]?.name) : 
-        (userRole.roles as any).name;
+      const roleName = typeof userRole.roles === 'object' && userRole.roles !== null ? 
+        // Handle both array and object response formats
+        (Array.isArray(userRole.roles) ? userRole.roles[0]?.name : userRole.roles.name) : 
+        null;
         
       if (roleName === 'admin' || roleName === 'app_admin') {
         return true;
@@ -73,9 +75,7 @@ export const getUserRole = async (userId: string): Promise<string | null> => {
     const { data: userRoles, error } = await supabase
       .from('user_roles')
       .select(`
-        roles (
-          name
-        )
+        roles(name)
       `)
       .eq('user_id', userId);
     
