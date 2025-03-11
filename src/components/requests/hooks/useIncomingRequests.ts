@@ -52,7 +52,44 @@ export const useIncomingRequests = () => {
       
       // Transform the data into the expected format
       const transformedRequests = data.map(request => {
-        // Properly extract current_step properties from the object, not the array
+        // Check the actual structure of request_type and current_step
+        console.log("Request type structure:", request.request_type);
+        console.log("Current step structure:", request.current_step);
+        
+        // Safely extract request_type properties
+        let requestType = null;
+        if (request.request_type) {
+          // Handle both array and object cases
+          if (Array.isArray(request.request_type) && request.request_type.length > 0) {
+            requestType = {
+              id: request.request_type[0].id,
+              name: request.request_type[0].name
+            };
+          } else if (typeof request.request_type === 'object') {
+            requestType = {
+              id: request.request_type.id,
+              name: request.request_type.name
+            };
+          }
+        }
+        
+        // Safely extract current_step properties
+        let stepId = null;
+        let stepName = null;
+        let stepType = null;
+        
+        if (request.current_step) {
+          if (Array.isArray(request.current_step) && request.current_step.length > 0) {
+            stepId = request.current_step[0].id;
+            stepName = request.current_step[0].step_name;
+            stepType = request.current_step[0].step_type;
+          } else if (typeof request.current_step === 'object') {
+            stepId = request.current_step.id;
+            stepName = request.current_step.step_name;
+            stepType = request.current_step.step_type;
+          }
+        }
+        
         return {
           id: request.id,
           title: request.title,
@@ -62,15 +99,10 @@ export const useIncomingRequests = () => {
           current_step_id: request.current_step_id,
           requester_id: request.requester_id,
           request_type_id: request.request_type_id,
-          // Fix the request_type property to be an object, not an array
-          request_type: request.request_type ? {
-            id: request.request_type.id,
-            name: request.request_type.name
-          } : null,
-          // Extract properties from the current_step object
-          step_id: request.current_step?.id,
-          step_name: request.current_step?.step_name,
-          step_type: request.current_step?.step_type,
+          request_type: requestType,
+          step_id: stepId,
+          step_name: stepName,
+          step_type: stepType,
           approval_id: null, // We'll fetch this separately if needed
           requester: null // Will be populated below
         };
