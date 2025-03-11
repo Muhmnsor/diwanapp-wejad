@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -450,20 +449,40 @@ export const repairWorkflow = async (workflowId: string) => {
     // If there are no steps, create a default step
     if (!validation.steps || validation.steps.length === 0) {
       // Get all admin users to use as possible approvers
+      const rolesQuery = await supabase
+        .from('roles')
+        .select('id')
+        .in('name', ['admin', 'app_admin']);
+        
+      if (!rolesQuery.data) {
+        return {
+          success: false,
+          repaired: false,
+          error: 'Cannot repair: failed to fetch admin roles'
+        };
+      }
+      
+      const roleIds = rolesQuery.data.map(r => r.id);
+      
+      const userRolesQuery = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .in('role_id', roleIds);
+        
+      if (!userRolesQuery.data) {
+        return {
+          success: false,
+          repaired: false,
+          error: 'Cannot repair: failed to fetch users with admin roles'
+        };
+      }
+      
+      const userIds = userRolesQuery.data.map(ur => ur.user_id);
+      
       const { data: adminUsers, error: usersError } = await supabase
         .from('profiles')
         .select('id, display_name, email')
-        .in('id', (
-          await supabase
-            .from('user_roles')
-            .select('user_id')
-            .in('role_id', (
-              await supabase
-                .from('roles')
-                .select('id')
-                .in('name', ['admin', 'app_admin'])
-            ).data?.map(r => r.id) || []
-        ).data?.map(ur => ur.user_id) || []);
+        .in('id', userIds);
       
       if (usersError || !adminUsers || adminUsers.length === 0) {
         return {
@@ -598,3 +617,4 @@ export const repairWorkflow = async (workflowId: string) => {
     };
   }
 };
+
