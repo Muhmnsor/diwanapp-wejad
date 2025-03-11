@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { WorkflowStep } from "./types";
 import { StepForm } from "./workflow/StepForm";
@@ -124,7 +123,7 @@ export const WorkflowStepsConfig = ({
       )}
       
       {showSavePrompt && (
-        <Alert variant="info">
+        <Alert variant="default">
           <Info className="h-4 w-4" />
           <AlertDescription>
             لديك خطوات غير محفوظة. لا تنس الضغط على زر "حفظ خطوات سير العمل" في الأسفل عند الانتهاء.
