@@ -13,8 +13,7 @@ export const useIncomingRequests = () => {
     try {
       console.log("Fetching incoming requests for user:", user.id);
       
-      // Fetch pending approvals where the current user is an approver
-      // Using a simpler query structure to avoid recursive issues
+      // Use request_approvals table with the correct relationship to request_workflow_steps
       const { data: approvals, error } = await supabase
         .from("request_approvals")
         .select(`
@@ -50,7 +49,7 @@ export const useIncomingRequests = () => {
       
       console.log(`Found ${approvals?.length || 0} pending approvals`);
       
-      // Process the data more efficiently
+      // Process the data efficiently
       const transformedRequests = (approvals || [])
         .filter(approval => approval.request) // Filter out any null requests
         .map(approval => {
@@ -108,7 +107,7 @@ export const useIncomingRequests = () => {
       
       console.log(`Processed ${transformedRequests.length} incoming requests`);
       
-      // Add requester information in a more efficient way
+      // Get requester information efficiently by using a Set for unique IDs
       if (transformedRequests.length > 0) {
         const requesterIds = [...new Set(transformedRequests
           .map(req => req.requester_id)
