@@ -36,12 +36,12 @@ export interface RequestApproval {
     id: string;
     step_name: string;
     step_type: string;
-    approver_id: string;
+    approver_id?: string;
   } | {
     id: string;
     step_name: string;
     step_type: string;
-    approver_id: string;
+    approver_id?: string;
   }[];
 }
 
@@ -59,8 +59,8 @@ export interface RequestWithApproval {
     name: string;
   } | null;
   step_id: string | null;
-  step_name?: string | null;
-  step_type?: string | null;
+  step_name: string | null;
+  step_type: string | null;
   approval_id: string | null;
   requester: {
     id: string;
