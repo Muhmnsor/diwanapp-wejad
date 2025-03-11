@@ -4222,6 +4222,45 @@ export type Database = {
         }
         Relationships: []
       }
+      workflow_steps: {
+        Row: {
+          approver_id: string | null
+          approver_type: string
+          created_at: string | null
+          id: string
+          instructions: string | null
+          is_required: boolean | null
+          step_name: string
+          step_order: number
+          step_type: string
+          workflow_id: string
+        }
+        Insert: {
+          approver_id?: string | null
+          approver_type?: string
+          created_at?: string | null
+          id?: string
+          instructions?: string | null
+          is_required?: boolean | null
+          step_name: string
+          step_order: number
+          step_type?: string
+          workflow_id: string
+        }
+        Update: {
+          approver_id?: string | null
+          approver_type?: string
+          created_at?: string | null
+          id?: string
+          instructions?: string | null
+          is_required?: boolean | null
+          step_name?: string
+          step_order?: number
+          step_type?: string
+          workflow_id?: string
+        }
+        Relationships: []
+      }
       workspace_members: {
         Row: {
           id: string

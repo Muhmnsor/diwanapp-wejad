@@ -14,6 +14,7 @@ import { useRequests } from "@/components/requests/hooks/useRequests";
 import { RequestType } from "@/components/requests/types";
 import { useAuthStore } from "@/store/refactored-auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 
 const RequestsManagement = () => {
   const { isAuthenticated, user } = useAuthStore();
@@ -55,10 +56,20 @@ const RequestsManagement = () => {
   };
 
   const handleCreateRequest = (formData: any) => {
+    console.log("Submitting request:", formData);
+    
+    // Add enhanced logging to debug workflow issues
+    if (formData.workflow_id) {
+      console.log("Request has workflow_id:", formData.workflow_id);
+    }
+    
     createRequest.mutate(formData, {
-      onSuccess: () => {
+      onSuccess: (data) => {
+        console.log("Request created successfully:", data);
+        toast.success("تم إنشاء الطلب بنجاح");
         handleNewRequest();
-        // Since we don't have refetch methods, we can use the browser's navigation to force a refresh
+        
+        // Use URL-based refresh strategy
         setTimeout(() => {
           const currentTab = searchParams.get("tab") || "incoming";
           searchParams.set("tab", currentTab === "outgoing" ? "outgoing-refresh" : "outgoing");
@@ -70,6 +81,10 @@ const RequestsManagement = () => {
             setSearchParams(searchParams);
           }, 100);
         }, 500);
+      },
+      onError: (error) => {
+        console.error("Error creating request:", error);
+        toast.error(`حدث خطأ أثناء إنشاء الطلب: ${error.message || "خطأ غير معروف"}`);
       }
     });
   };
