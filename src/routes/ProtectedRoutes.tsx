@@ -1,4 +1,3 @@
-
 import { Route } from "react-router-dom";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Settings from "@/pages/Settings";
@@ -14,7 +13,6 @@ import Notifications from "@/pages/Notifications";
 import RequestsManagement from "@/pages/RequestsManagement";
 import React from "react";
 import DeveloperRoute from "@/components/DeveloperRoute";
-import DeveloperSettings from "@/pages/DeveloperSettings";
 
 export const ProtectedRoutes = [
   <Route 
@@ -125,15 +123,6 @@ export const ProtectedRoutes = [
       <ProtectedRoute>
         <RequestsManagement />
       </ProtectedRoute>
-    } 
-  />,
-  <Route 
-    key="developer-settings"
-    path="/admin/developer-settings" 
-    element={
-      <DeveloperRoute>
-        <DeveloperSettings />
-      </DeveloperRoute>
     } 
   />
 ];

@@ -15,7 +15,7 @@ const AdminDashboard = () => {
   const { data: notificationCounts } = useNotificationCounts();
   const { user } = useAuthStore();
   
-  const apps = getAppsList(notificationCounts, user?.id);
+  const apps = getAppsList(notificationCounts);
 
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
