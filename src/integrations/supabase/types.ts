@@ -95,42 +95,6 @@ export type Database = {
           },
         ]
       }
-      app_settings: {
-        Row: {
-          app_name: string
-          created_at: string
-          description: string | null
-          display_name: string
-          icon: string | null
-          id: string
-          is_visible: boolean | null
-          path: string | null
-          updated_at: string
-        }
-        Insert: {
-          app_name: string
-          created_at?: string
-          description?: string | null
-          display_name: string
-          icon?: string | null
-          id?: string
-          is_visible?: boolean | null
-          path?: string | null
-          updated_at?: string
-        }
-        Update: {
-          app_name?: string
-          created_at?: string
-          description?: string | null
-          display_name?: string
-          icon?: string | null
-          id?: string
-          is_visible?: boolean | null
-          path?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       attendance_records: {
         Row: {
           activity_id: string | null

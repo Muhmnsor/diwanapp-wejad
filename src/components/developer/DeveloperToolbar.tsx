@@ -5,35 +5,23 @@ import { useDeveloperStore } from '@/store/developerStore';
 import { Code, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/store/refactored-auth';
 import { isDeveloperModeEnabled, toggleDeveloperMode } from '@/utils/developer/modeManagement';
-import { isDeveloper } from '@/utils/developer/roleManagement';
 
 export const DeveloperToolbar = () => {
   const { user } = useAuthStore();
   const [isDevModeEnabled, setIsDevModeEnabled] = useState(false);
-  const [isDeveloperUser, setIsDeveloperUser] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkDevMode = async () => {
       if (!user) {
         setIsDevModeEnabled(false);
-        setIsDeveloperUser(false);
         setIsLoading(false);
         return;
       }
 
       try {
-        // Check if user has developer role first
-        const hasDeveloperRole = await isDeveloper(user.id);
-        setIsDeveloperUser(hasDeveloperRole);
-        
-        if (hasDeveloperRole) {
-          // If user has developer role, check if dev mode is enabled
-          const enabled = await isDeveloperModeEnabled(user.id);
-          setIsDevModeEnabled(enabled);
-        } else {
-          setIsDevModeEnabled(false);
-        }
+        const enabled = await isDeveloperModeEnabled(user.id);
+        setIsDevModeEnabled(enabled);
       } catch (error) {
         console.error('Error checking developer mode:', error);
       } finally {
@@ -71,8 +59,7 @@ export const DeveloperToolbar = () => {
     );
   }
 
-  // Only show toolbar if user is a developer
-  if (!isDeveloperUser) return null;
+  if (!user) return null;
 
   return (
     <div className="fixed bottom-4 left-4 z-50">
