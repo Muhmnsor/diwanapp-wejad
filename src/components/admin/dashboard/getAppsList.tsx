@@ -1,3 +1,4 @@
+
 import { 
   Database, 
   ListChecks, 
@@ -65,7 +66,7 @@ export const APP_ROLE_ACCESS = {
     'approval_manager'
   ],
   developer: [
-    'admin', 'app_admin'
+    'admin', 'app_admin', 'developer'  // Added developer role here
   ]
 };
 
