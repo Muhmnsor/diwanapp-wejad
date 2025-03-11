@@ -1,10 +1,13 @@
 
+import { Loader2 } from "lucide-react";
 import { RequestDetailsCard } from "./detail/RequestDetailsCard";
 import { RequestWorkflowCard } from "./detail/RequestWorkflowCard";
 import { RequestActionButtons } from "./detail/RequestActionButtons";
 import { RequestApproveDialog } from "./detail/RequestApproveDialog";
 import { RequestRejectDialog } from "./detail/RequestRejectDialog";
 import { useRequestDetail } from "./detail/useRequestDetail";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface RequestDetailProps {
   requestId: string;
@@ -26,16 +29,37 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   } = useRequestDetail(requestId);
 
   if (isLoading) {
-    return <div>جاري التحميل...</div>;
+    return (
+      <div className="flex justify-center items-center h-48">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="mr-2">جاري تحميل تفاصيل الطلب...</span>
+      </div>
+    );
   }
 
   if (error) {
     console.error("Error loading request details:", error);
-    return <div>حدث خطأ أثناء تحميل تفاصيل الطلب: {error.message}</div>;
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>خطأ</AlertTitle>
+        <AlertDescription>
+          حدث خطأ أثناء تحميل تفاصيل الطلب: {error.message}
+        </AlertDescription>
+      </Alert>
+    );
   }
 
   if (!data || !data.request) {
-    return <div>لم يتم العثور على الطلب</div>;
+    return (
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>لم يتم العثور على الطلب</AlertTitle>
+        <AlertDescription>
+          لم يتم العثور على تفاصيل الطلب. قد يكون الطلب محذوفاً أو ليس لديك صلاحية الوصول إليه.
+        </AlertDescription>
+      </Alert>
+    );
   }
 
   const request = data.request;
@@ -44,6 +68,10 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   const currentStep = data.current_step;
   const approvals = data.approvals || [];
   const attachments = data.attachments || [];
+
+  // Debug info for workflow data
+  console.log("Request workflow data:", workflow);
+  console.log("Current step data:", currentStep);
 
   return (
     <>
