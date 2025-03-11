@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { validateWorkflow, validateRequestType } from './workflowValidator';
+import { validateWorkflow, validateRequestType, validateAndRepairRequest, repairWorkflow } from './workflowValidator';
 
 /**
  * Utility functions to help with workflow operations
@@ -105,3 +105,4 @@ export const validateRequestWorkflow = async (requestTypeId: string): Promise<bo
 
 // Expose additional validation functions from workflowValidator
 export { validateWorkflow, validateRequestType, validateAndRepairRequest, repairWorkflow } from './workflowValidator';
+
