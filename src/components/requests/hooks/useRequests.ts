@@ -5,7 +5,6 @@ import { Request, RequestType } from "../types";
 import { useAuthStore } from "@/store/refactored-auth";
 import { toast } from "sonner";
 
-// Updated interface to match what Supabase actually returns
 interface RequestApprovalResponse {
   id: string;
   request_id: string;
@@ -41,8 +40,6 @@ export const useRequests = () => {
     try {
       console.log("Fetching incoming requests for user:", user.id);
       
-      // This approach is more comprehensive - it checks request_approvals table
-      // to find all requests where the current user is the approver and the status is pending
       const { data, error } = await supabase
         .from("request_approvals")
         .select(`
@@ -59,7 +56,7 @@ export const useRequests = () => {
             current_step_id,
             request_type:request_types(id, name)
           ),
-          step:workflow_steps(id, step_name, step_type, approver_id)
+          step:request_workflow_steps(id, step_name, step_type, approver_id)
         `)
         .eq("approver_id", user.id)
         .eq("status", "pending")
@@ -79,14 +76,11 @@ export const useRequests = () => {
       
       console.log("Raw response data structure:", JSON.stringify(data, null, 2));
       
-      // Transform the data to handle the nested array structure from Supabase
       const requests = data.map((item: RequestApprovalResponse) => {
-        // Always use the first item from request array if available
         const requestData = item.request && item.request.length > 0 
           ? item.request[0] 
           : null;
           
-        // Always use the first item from step array if available
         const stepData = item.step && item.step.length > 0 
           ? item.step[0] 
           : null;
@@ -96,7 +90,6 @@ export const useRequests = () => {
           return null;
         }
         
-        // Handle nested request_type with type safety
         let requestType = null;
         if (requestData && requestData.request_type) {
           if (Array.isArray(requestData.request_type) && requestData.request_type.length > 0) {
@@ -104,7 +97,6 @@ export const useRequests = () => {
           }
         }
         
-        // Return the transformed data with proper type checking
         return {
           ...requestData,
           request_type: requestType,
@@ -113,7 +105,7 @@ export const useRequests = () => {
           step_name: stepData ? stepData.step_name : 'Unknown Step',
           step_type: stepData ? stepData.step_type : 'decision'
         };
-      }).filter(Boolean); // Remove any null items
+      }).filter(Boolean);
       
       console.log(`Fetched ${requests.length} incoming requests`);
       return requests;
@@ -129,7 +121,6 @@ export const useRequests = () => {
     try {
       console.log("Fetching outgoing requests for user:", user.id);
       
-      // First try using RPC function (which has SECURITY DEFINER privilege)
       try {
         const { data: rpcData, error: rpcError } = await supabase
           .rpc('get_user_outgoing_requests', {
@@ -139,7 +130,6 @@ export const useRequests = () => {
         if (!rpcError && rpcData) {
           console.log(`Fetched ${rpcData.length} outgoing requests via RPC`);
           
-          // Join with request types for the name
           const requestTypeIds = rpcData.map(req => req.request_type_id);
           const { data: requestTypes } = await supabase
             .from("request_types")
@@ -150,7 +140,6 @@ export const useRequests = () => {
             (requestTypes || []).map(type => [type.id, type])
           );
           
-          // Add request_type property to each request
           const enrichedData = rpcData.map(req => ({
             ...req,
             request_type: typeMap[req.request_type_id] || { name: "Unknown" }
@@ -159,13 +148,11 @@ export const useRequests = () => {
           return enrichedData;
         }
         
-        // If RPC fails, log the error but continue to fallback
         console.error("RPC method failed:", rpcError);
       } catch (rpcErr) {
         console.error("Error using RPC method:", rpcErr);
       }
       
-      // Fallback to direct query (which will use RLS)
       console.log("Falling back to direct query for outgoing requests");
       const { data, error } = await supabase
         .from("requests")
@@ -218,7 +205,6 @@ export const useRequests = () => {
         console.log("=== بدء إنشاء طلب جديد ===");
         console.log("Creating request with provided data:", requestData);
         
-        // Fetch the request type to get form schema and workflow
         const { data: requestType, error: typeError } = await supabase
           .from("request_types")
           .select("default_workflow_id, form_schema")
@@ -234,7 +220,6 @@ export const useRequests = () => {
           throw new Error("Request type not found");
         }
         
-        // Validate form data against the schema
         const formSchema = requestType.form_schema;
         const validationResult = validateFormData(requestData.form_data, formSchema);
         
@@ -248,13 +233,12 @@ export const useRequests = () => {
         
         if (workflowId) {
           try {
-            // Get first step of workflow
             const { data: firstStep, error: stepError } = await supabase
-              .from("workflow_steps")
-              .select("id, approver_id")
+              .from("request_workflow_steps")
+              .select("id, approver_id, approver_type")
               .eq("workflow_id", workflowId)
               .eq("step_order", 1)
-              .maybeSingle(); // Use maybeSingle instead of single to handle case when no step is found
+              .maybeSingle();
             
             if (stepError) {
               console.error("Error fetching first step:", stepError);
@@ -269,11 +253,9 @@ export const useRequests = () => {
             }
           } catch (stepErr) {
             console.error("Error in workflow step retrieval:", stepErr);
-            // Continue without a workflow step
           }
         }
         
-        // Prepare request data with clearer structure
         const requestPayload = {
           requester_id: user.id,
           workflow_id: workflowId,
@@ -288,8 +270,6 @@ export const useRequests = () => {
         
         console.log("Creating request with processed payload:", requestPayload);
         
-        // Always use the RPC bypass function to ensure we avoid RLS issues
-        console.log("Using bypass RPC function to create request");
         const { data: insertResult, error: insertError } = await supabase.rpc('insert_request_bypass_rls', {
           request_data: requestPayload
         });
@@ -306,7 +286,6 @@ export const useRequests = () => {
         console.log("Request created successfully:", insertResult);
         console.log("=== تم إنشاء الطلب بنجاح ===");
         
-        // If there's a current step, create approval record
         if (currentStepId) {
           await createApprovalRecord(insertResult.id, currentStepId);
         }
@@ -334,7 +313,6 @@ export const useRequests = () => {
       try {
         console.log("Approving request:", { requestId, stepId, comments });
         
-        // Find the approval record for this user
         const { data: approvalData, error: approvalFindError } = await supabase
           .from("request_approvals")
           .select("id")
@@ -351,7 +329,6 @@ export const useRequests = () => {
         
         const approvalId = approvalData.id;
         
-        // Update the approval record
         const { error: approvalUpdateError } = await supabase
           .from("request_approvals")
           .update({
@@ -366,7 +343,6 @@ export const useRequests = () => {
           throw new Error(`Failed to update approval record: ${approvalUpdateError.message}`);
         }
         
-        // Get request info
         const { data: request, error: requestError } = await supabase
           .from("requests")
           .select(`
@@ -381,9 +357,8 @@ export const useRequests = () => {
           throw new Error(`Failed to fetch request: ${requestError.message}`);
         }
         
-        // Try to find next step
         const { data: currentStepData, error: currentStepError } = await supabase
-          .from("workflow_steps")
+          .from("request_workflow_steps")
           .select("step_order")
           .eq("id", stepId)
           .single();
@@ -394,7 +369,7 @@ export const useRequests = () => {
         }
           
         const { data: nextStep, error: nextStepError } = await supabase
-          .from("workflow_steps")
+          .from("request_workflow_steps")
           .select("id, approver_id")
           .eq("workflow_id", request.workflow_id)
           .gt("step_order", currentStepData.step_order)
@@ -402,20 +377,16 @@ export const useRequests = () => {
           .limit(1)
           .single();
         
-        // Update request based on whether there's a next step
         const updateData: any = {};
         
         if (nextStepError && nextStepError.message.includes("No rows found")) {
-          // No next step, request is completed
           updateData.status = "approved";
           console.log("Request approved (final step)");
         } else if (!nextStepError) {
-          // Move to next step
           updateData.current_step_id = nextStep.id;
           updateData.status = "in_progress";
           console.log("Moving to next step:", nextStep.id);
           
-          // Create approval record for next step
           const { error: nextApprovalError } = await supabase
             .from("request_approvals")
             .insert({
@@ -427,11 +398,9 @@ export const useRequests = () => {
           
           if (nextApprovalError) {
             console.error("Error creating next approval:", nextApprovalError);
-            // Continue despite error
           }
         }
         
-        // Update request
         const { error: updateError } = await supabase
           .from("requests")
           .update(updateData)
@@ -472,7 +441,6 @@ export const useRequests = () => {
       try {
         console.log("Rejecting request:", { requestId, stepId, comments });
         
-        // Find the approval record for this user
         const { data: approvalData, error: approvalFindError } = await supabase
           .from("request_approvals")
           .select("id")
@@ -489,7 +457,6 @@ export const useRequests = () => {
         
         const approvalId = approvalData.id;
         
-        // Update the approval record
         const { error: approvalUpdateError } = await supabase
           .from("request_approvals")
           .update({
@@ -504,7 +471,6 @@ export const useRequests = () => {
           throw new Error(`Failed to update approval record: ${approvalUpdateError.message}`);
         }
         
-        // Update request status
         const { error: updateError } = await supabase
           .from("requests")
           .update({ status: "rejected" })
@@ -541,7 +507,7 @@ export const useRequests = () => {
   const createApprovalRecord = async (requestId: string, stepId: string) => {
     try {
       const { data: step, error: fetchStepError } = await supabase
-        .from("workflow_steps")
+        .from("request_workflow_steps")
         .select("approver_id, approver_type")
         .eq("id", stepId)
         .single();
@@ -552,11 +518,9 @@ export const useRequests = () => {
       }
       
       if (step && step.approver_id) {
-        // For role-based approvers, we need to find all users with that role
         if (step.approver_type === 'role') {
           console.log("Creating approval records for role-based approver:", step.approver_id);
           
-          // Get all users with this role
           const { data: usersWithRole, error: roleError } = await supabase
             .from("user_roles")
             .select("user_id")
@@ -567,7 +531,6 @@ export const useRequests = () => {
             return;
           }
           
-          // Create an approval record for each user with this role
           for (const userRole of usersWithRole || []) {
             const { error: approvalError } = await supabase
               .from("request_approvals")
@@ -583,7 +546,6 @@ export const useRequests = () => {
             }
           }
         } else {
-          // Standard user-based approver
           const { error: approvalError } = await supabase
             .from("request_approvals")
             .insert({
@@ -612,23 +574,19 @@ export const useRequests = () => {
       return { valid: true, errors: [] };
     }
     
-    // Check that all required fields are present and have valid values
     fields.forEach((field: any) => {
       const fieldName = field.name;
       const fieldValue = formData[fieldName];
       
-      // Check if required field exists
       if (field.required && (fieldValue === undefined || fieldValue === null || fieldValue === '')) {
         errors.push(`حقل "${field.label}" مطلوب`);
         return;
       }
       
-      // Skip validation for empty optional fields
       if (fieldValue === undefined || fieldValue === null || fieldValue === '') {
         return;
       }
       
-      // Type-specific validations
       switch (field.type) {
         case 'number':
           if (isNaN(Number(fieldValue))) {
@@ -654,7 +612,6 @@ export const useRequests = () => {
           } else if (field.required && fieldValue.length === 0) {
             errors.push(`حقل "${field.label}" يجب أن يحتوي على عنصر واحد على الأقل`);
           } else if (field.subfields) {
-            // Validate each item in the array
             fieldValue.forEach((item, index) => {
               field.subfields.forEach((subfield: any) => {
                 const subfieldValue = item[subfield.name];
