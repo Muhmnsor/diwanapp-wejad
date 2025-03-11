@@ -13,8 +13,8 @@ export const useIncomingRequests = () => {
     try {
       console.log("Fetching incoming requests for user:", user.id);
       
-      // First, get all pending approvals where current user is a direct approver
-      const { data: directApprovals, error: directError } = await supabase
+      // Fetch all pending approvals where the current user is an approver
+      const { data: approvals, error } = await supabase
         .from("request_approvals")
         .select(`
           id,
@@ -42,15 +42,15 @@ export const useIncomingRequests = () => {
         .eq("status", "pending")
         .order("created_at", { ascending: false });
       
-      if (directError) {
-        console.error("Error fetching direct approvals:", directError);
-        throw directError;
+      if (error) {
+        console.error("Error fetching approvals:", error);
+        throw error;
       }
       
-      console.log(`Found ${directApprovals?.length || 0} direct approvals`);
+      console.log(`Found ${approvals?.length || 0} pending approvals`);
       
       // Process the data
-      const transformedRequests = (directApprovals || [])
+      const transformedRequests = (approvals || [])
         .filter(approval => approval.request) // Filter out any null requests
         .map(approval => {
           // Handle request - could be an object or array
