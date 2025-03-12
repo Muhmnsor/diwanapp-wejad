@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
@@ -13,8 +13,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
 
 interface RequestRejectDialogProps {
   requestId: string;
@@ -25,75 +23,7 @@ interface RequestRejectDialogProps {
 
 export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }: RequestRejectDialogProps) => {
   const [comments, setComments] = useState("");
-  const [selfRejection, setSelfRejection] = useState(false);
   const queryClient = useQueryClient();
-  
-  // Collect browser metadata for logging
-  const collectMetadata = () => {
-    return {
-      userAgent: navigator.userAgent,
-      language: navigator.language,
-      platform: navigator.platform,
-      screenSize: {
-        width: window.screen.width,
-        height: window.screen.height
-      },
-      timestamp: new Date().toISOString(),
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
-    };
-  };
-  
-  // Check if this is a self-rejection situation
-  useEffect(() => {
-    if (isOpen && requestId) {
-      // Fetch the request to check if requester is the same as current user
-      supabase
-        .from('requests')
-        .select('requester_id')
-        .eq('id', requestId)
-        .single()
-        .then(({ data, error }) => {
-          if (error) {
-            console.error("Error checking requester:", error);
-            return;
-          }
-          
-          // Get current user
-          supabase.auth.getUser().then(({ data: userData, error: userError }) => {
-            if (userError) {
-              console.error("Error getting current user:", userError);
-              return;
-            }
-            
-            const isSelfRejection = data.requester_id === userData.user?.id;
-            setSelfRejection(isSelfRejection);
-            
-            // Log for debugging
-            if (isSelfRejection) {
-              console.log("Self-rejection detected: user is rejecting their own request");
-            }
-          });
-        });
-    }
-  }, [isOpen, requestId]);
-  
-  // Log view action when dialog opens
-  useEffect(() => {
-    if (isOpen && requestId) {
-      try {
-        supabase.rpc('log_request_view', {
-          p_request_id: requestId,
-          p_metadata: collectMetadata()
-        }).then(({ error }) => {
-          if (error) {
-            console.error("Error logging request view:", error);
-          }
-        });
-      } catch (error) {
-        console.error("Failed to log request view:", error);
-      }
-    }
-  }, [isOpen, requestId]);
   
   const rejectMutation = useMutation({
     mutationFn: async () => {
@@ -107,17 +37,13 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
       
       console.log(`Rejecting request: ${requestId}, step: ${stepId}, comments: "${comments}"`);
 
-      // Collect metadata for detailed logging
-      const metadata = collectMetadata();
-
       // Use the RPC function that handles everything in a single transaction
       const { data, error } = await supabase.rpc(
         'reject_request', 
         { 
           p_request_id: requestId,
           p_step_id: stepId,
-          p_comments: comments.trim(),
-          p_metadata: metadata
+          p_comments: comments.trim()
         }
       );
         
@@ -148,11 +74,6 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['requests'] });
       queryClient.invalidateQueries({ queryKey: ['request-details', requestId] });
-      
-      // Show performance info in debug mode
-      if (process.env.NODE_ENV === 'development' && result.execution_time_ms) {
-        console.log(`Request rejection completed in ${result.execution_time_ms}ms`);
-      }
     },
     onError: (error) => {
       console.error("Error rejecting request:", error);
@@ -177,16 +98,6 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
             يرجى توضيح سبب رفض هذا الطلب
           </DialogDescription>
         </DialogHeader>
-        
-        {selfRejection && (
-          <Alert variant="warning" className="my-2">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              تنبيه: أنت تقوم برفض طلب قمت بإنشائه. هذا مسموح به في حالات الآراء فقط.
-            </AlertDescription>
-          </Alert>
-        )}
-        
         <div className="py-4">
           <label htmlFor="comments" className="block text-sm font-medium mb-2 text-destructive">
             سبب الرفض (مطلوب) *
