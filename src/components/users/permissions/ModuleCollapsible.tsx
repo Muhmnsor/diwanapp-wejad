@@ -5,25 +5,13 @@ import { Switch } from "@/components/ui/switch";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-
-interface Permission {
-  id: string;
-  name: string;
-  description: string;
-  display_name?: string;
-}
-
-interface Category {
-  name: string;
-  displayName: string;
-  permissions: Permission[];
-}
+import { PermissionData, Category } from "./types";
 
 interface Module {
   name: string;
-  description: string;
   displayName?: string;
-  permissions: Permission[];
+  description?: string;
+  permissions: PermissionData[];
   categories?: Category[];
   isOpen?: boolean;
   isAllSelected?: boolean;
@@ -46,7 +34,7 @@ export const ModuleCollapsible = ({
   toggleOpen,
   isReadOnly = false
 }: ModuleCollapsibleProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(module.isOpen || false);
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
@@ -69,7 +57,7 @@ export const ModuleCollapsible = ({
   };
   
   // Function to render an individual permission
-  const renderPermission = (permission: Permission) => (
+  const renderPermission = (permission: PermissionData) => (
     <div key={permission.id} className="flex items-start space-x-3 space-x-reverse p-2">
       <Checkbox 
         id={permission.id}

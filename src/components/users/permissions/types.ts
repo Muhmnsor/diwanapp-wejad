@@ -17,8 +17,10 @@ export interface PermissionData {
 export interface Module {
   name: string;
   displayName?: string;
+  description?: string;
   permissions: PermissionData[];
-  isOpen: boolean;
+  isOpen?: boolean;
+  isAllSelected?: boolean;
   categories?: Category[];
 }
 
