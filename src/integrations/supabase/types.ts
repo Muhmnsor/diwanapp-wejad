@@ -4763,6 +4763,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      update_request_after_approval: {
+        Args: {
+          p_request_id: string
+          p_step_id: string
+        }
+        Returns: Json
+      }
       update_workspace_members_count: {
         Args: {
           workspace_id: string
