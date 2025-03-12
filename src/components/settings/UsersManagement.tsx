@@ -4,7 +4,6 @@ import { UsersTable } from "@/components/users/UsersTable";
 import { UsersHeader } from "@/components/users/UsersHeader";
 import { RoleManagement } from "@/components/users/RoleManagement";
 import { useUsersData } from "@/components/users/hooks/useUsersData";
-import { SecondaryHeader } from "@/components/users/SecondaryHeader";
 import { PermissionsManagement } from "@/components/users/permissions/PermissionsManagement";
 
 export const UsersManagement = () => {
@@ -21,8 +20,6 @@ export const UsersManagement = () => {
 
   return (
     <div className="space-y-6 w-full" dir="rtl">
-      <SecondaryHeader />
-      
       {activeTab === 'users' && (
         <div className="space-y-4 w-full">
           <UsersHeader roles={roles} users={users} onUserCreated={refetchUsers} />

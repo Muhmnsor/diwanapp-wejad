@@ -16,7 +16,7 @@ export const SecondaryHeader = () => {
   };
   
   return (
-    <div className="w-full bg-white border-b py-3 mb-6">
+    <div className="w-full bg-white border-b py-3">
       <div className="container mx-auto">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="flex justify-center border-b rounded-none bg-white h-12">
