@@ -13,6 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface RequestRejectDialogProps {
   requestId: string;
@@ -23,6 +25,7 @@ interface RequestRejectDialogProps {
 
 export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }: RequestRejectDialogProps) => {
   const [comments, setComments] = useState("");
+  const [selfRejection, setSelfRejection] = useState(false);
   const queryClient = useQueryClient();
   
   // Collect browser metadata for logging
@@ -39,6 +42,40 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
     };
   };
+  
+  // Check if this is a self-rejection situation
+  useEffect(() => {
+    if (isOpen && requestId) {
+      // Fetch the request to check if requester is the same as current user
+      supabase
+        .from('requests')
+        .select('requester_id')
+        .eq('id', requestId)
+        .single()
+        .then(({ data, error }) => {
+          if (error) {
+            console.error("Error checking requester:", error);
+            return;
+          }
+          
+          // Get current user
+          supabase.auth.getUser().then(({ data: userData, error: userError }) => {
+            if (userError) {
+              console.error("Error getting current user:", userError);
+              return;
+            }
+            
+            const isSelfRejection = data.requester_id === userData.user?.id;
+            setSelfRejection(isSelfRejection);
+            
+            // Log for debugging
+            if (isSelfRejection) {
+              console.log("Self-rejection detected: user is rejecting their own request");
+            }
+          });
+        });
+    }
+  }, [isOpen, requestId]);
   
   // Log view action when dialog opens
   useEffect(() => {
@@ -140,6 +177,16 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
             يرجى توضيح سبب رفض هذا الطلب
           </DialogDescription>
         </DialogHeader>
+        
+        {selfRejection && (
+          <Alert variant="warning" className="my-2">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              تنبيه: أنت تقوم برفض طلب قمت بإنشائه. هذا مسموح به في حالات الآراء فقط.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <div className="py-4">
           <label htmlFor="comments" className="block text-sm font-medium mb-2 text-destructive">
             سبب الرفض (مطلوب) *
