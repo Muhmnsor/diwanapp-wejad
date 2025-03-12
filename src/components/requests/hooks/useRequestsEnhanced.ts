@@ -71,11 +71,18 @@ export const useRequestsEnhanced = () => {
   
   // Mutation for approving requests
   const approveRequest = useMutation({
-    mutationFn: async ({ requestId, comments }: { requestId: string, comments?: string }) => {
+    mutationFn: async ({ requestId, stepId, comments }: { requestId: string, stepId?: string, comments?: string }) => {
+      console.log(`Approving request: ${requestId}, step: ${stepId}, comments: ${comments}`);
+      
+      if (!stepId) {
+        throw new Error("لا يمكن الموافقة على هذا الطلب لأنه لا يوجد خطوة حالية");
+      }
+      
       const { data, error } = await supabase
         .from('request_approvals')
         .insert({
           request_id: requestId,
+          step_id: stepId,
           approver_id: (await supabase.auth.getSession()).data.session?.user.id,
           status: 'approved',
           comments: comments || null
@@ -93,11 +100,22 @@ export const useRequestsEnhanced = () => {
   
   // Mutation for rejecting requests
   const rejectRequest = useMutation({
-    mutationFn: async ({ requestId, comments }: { requestId: string, comments: string }) => {
+    mutationFn: async ({ requestId, stepId, comments }: { requestId: string, stepId?: string, comments: string }) => {
+      console.log(`Rejecting request: ${requestId}, step: ${stepId}, comments: ${comments}`);
+      
+      if (!stepId) {
+        throw new Error("لا يمكن رفض هذا الطلب لأنه لا يوجد خطوة حالية");
+      }
+      
+      if (!comments || comments.trim() === '') {
+        throw new Error("يجب إدخال سبب الرفض");
+      }
+      
       const { data, error } = await supabase
         .from('request_approvals')
         .insert({
           request_id: requestId,
+          step_id: stepId,
           approver_id: (await supabase.auth.getSession()).data.session?.user.id,
           status: 'rejected',
           comments: comments

@@ -1,12 +1,13 @@
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/store/refactored-auth";
 import { toast } from "sonner";
 
 export const useRequestDetail = (requestId: string) => {
   const { user } = useAuthStore();
+  const queryClient = useQueryClient();
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
 
@@ -87,35 +88,28 @@ export const useRequestDetail = (requestId: string) => {
     console.log("معلومات الخطوة الحالية:", currentStep);
     
     // Check for direct approval
-    const directApprovals = data.approvals?.filter(
-      (approval: any) => 
-        approval.step?.id === currentStep.id && 
-        approval.approver?.id === user.id &&
-        approval.status === "pending"
-    );
-    
-    if (directApprovals && directApprovals.length > 0) {
-      console.log("المستخدم هو معتمد مباشر للخطوة الحالية");
+    if (currentStep.approver_id === user.id) {
+      console.log("المستخدم هو المعتمد المباشر للخطوة الحالية");
       return true;
     }
     
-    // Check for role-based approval
-    if (currentStep.approver_type === 'role' && user.role) {
-      console.log("التحقق من الموافقة المستندة إلى الأدوار");
-      
-      // Check if user has the required role
-      const hasRole = data.approvals?.some(
-        (approval: any) => 
-          approval.step?.id === currentStep.id && 
-          approval.status === "pending"
-      );
-      
-      if (hasRole) {
-        console.log("المستخدم لديه الدور المطلوب للموافقة");
-        return true;
-      } else {
-        console.log("المستخدم ليس لديه الدور المطلوب للموافقة");
-      }
+    // Check for role-based approval or admin override
+    if (user.isAdmin) {
+      console.log("المستخدم مدير ويمكنه الموافقة على الطلب");
+      return true;
+    }
+    
+    // Check for pending approvals assigned to this user
+    const pendingApprovals = data.approvals?.filter(
+      (approval: any) => 
+        approval.step_id === currentStep.id && 
+        approval.approver_id === user.id &&
+        approval.status === "pending"
+    );
+    
+    if (pendingApprovals && pendingApprovals.length > 0) {
+      console.log("المستخدم لديه موافقات معلقة للخطوة الحالية");
+      return true;
     }
     
     console.log("المستخدم ليس هو المعتمد للخطوة الحالية");
@@ -123,10 +117,18 @@ export const useRequestDetail = (requestId: string) => {
   };
 
   const handleApproveClick = () => {
+    if (!isCurrentApprover()) {
+      toast.error("ليس لديك الصلاحية للموافقة على هذا الطلب");
+      return;
+    }
     setIsApproveDialogOpen(true);
   };
 
   const handleRejectClick = () => {
+    if (!isCurrentApprover()) {
+      toast.error("ليس لديك الصلاحية لرفض هذا الطلب");
+      return;
+    }
     setIsRejectDialogOpen(true);
   };
 
@@ -141,6 +143,7 @@ export const useRequestDetail = (requestId: string) => {
     handleApproveClick,
     handleRejectClick,
     isCurrentApprover,
-    user
+    user,
+    queryClient
   };
 };

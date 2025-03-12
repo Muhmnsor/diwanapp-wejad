@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRequests } from "../hooks/useRequests";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RequestApproveDialogProps {
   requestId: string;
@@ -23,23 +24,51 @@ interface RequestApproveDialogProps {
 
 export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }: RequestApproveDialogProps) => {
   const [comments, setComments] = useState("");
-  const { approveRequest } = useRequests();
+  const queryClient = useQueryClient();
+  
+  const approveMutation = useMutation({
+    mutationFn: async () => {
+      if (!stepId) {
+        throw new Error("لا يمكن الموافقة على هذا الطلب لأنه لا يوجد خطوة حالية");
+      }
+      
+      const { data: session } = await supabase.auth.getSession();
+      const userId = session.session?.user.id;
+      
+      if (!userId) {
+        throw new Error("يجب تسجيل الدخول للموافقة على الطلب");
+      }
+      
+      const { data, error } = await supabase
+        .from('request_approvals')
+        .insert({
+          request_id: requestId,
+          step_id: stepId,
+          approver_id: userId,
+          status: 'approved',
+          comments: comments || null
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("تمت الموافقة على الطلب بنجاح");
+      onOpenChange(false);
+      setComments("");
+      queryClient.invalidateQueries({ queryKey: ['requests'] });
+      queryClient.invalidateQueries({ queryKey: ['request-details', requestId] });
+    },
+    onError: (error) => {
+      console.error("Error approving request:", error);
+      toast.error(`حدث خطأ أثناء الموافقة على الطلب: ${error.message}`);
+    }
+  });
 
   const handleApprove = () => {
-    if (!stepId) {
-      toast.error("لا يمكن الموافقة على هذا الطلب لأنه لا يوجد خطوة حالية");
-      return;
-    }
-    
-    approveRequest.mutate(
-      { requestId, stepId, comments },
-      {
-        onSuccess: () => {
-          onOpenChange(false);
-          setComments("");
-        }
-      }
-    );
+    approveMutation.mutate();
   };
 
   return (
@@ -67,8 +96,8 @@ export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             إلغاء
           </Button>
-          <Button onClick={handleApprove} disabled={approveRequest.isPending} className="bg-green-600 hover:bg-green-700">
-            {approveRequest.isPending ? "جاري المعالجة..." : "موافقة"}
+          <Button onClick={handleApprove} disabled={approveMutation.isPending} className="bg-green-600 hover:bg-green-700">
+            {approveMutation.isPending ? "جاري المعالجة..." : "موافقة"}
           </Button>
         </DialogFooter>
       </DialogContent>

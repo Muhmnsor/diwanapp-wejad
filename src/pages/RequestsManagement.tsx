@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import { useRequestsEnhanced } from "@/components/requests/hooks/useRequestsEnhanced";
 import { RequestsWrapper } from "@/components/requests/RequestsWrapper";
 import { validateRequestWorkflow } from "@/components/requests/utils/workflowHelpers";
+import { RequestApproveDialog } from "@/components/requests/detail/RequestApproveDialog";
+import { RequestRejectDialog } from "@/components/requests/detail/RequestRejectDialog";
 
 const RequestsManagement = () => {
   const { isAuthenticated, user } = useAuthStore();
@@ -24,6 +26,9 @@ const RequestsManagement = () => {
   const [selectedRequestType, setSelectedRequestType] = useState<RequestType | null>(null);
   const [showNewRequestDialog, setShowNewRequestDialog] = useState<boolean>(false);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const [requestToAction, setRequestToAction] = useState<any>(null);
   
   const { 
     incomingRequests, 
@@ -31,6 +36,8 @@ const RequestsManagement = () => {
     incomingLoading, 
     outgoingLoading,
     createRequest,
+    approveRequest,
+    rejectRequest,
     isRefreshing
   } = useRequestsEnhanced();
 
@@ -92,6 +99,80 @@ const RequestsManagement = () => {
     setSelectedRequestId(request.id);
   };
 
+  const handleApproveRequest = (request: any) => {
+    setRequestToAction(request);
+    setIsApproveDialogOpen(true);
+  };
+
+  const handleRejectRequest = (request: any) => {
+    setRequestToAction(request);
+    setIsRejectDialogOpen(true);
+  };
+
+  const handleApproveConfirm = (comments: string) => {
+    if (!requestToAction) return;
+    
+    approveRequest.mutate(
+      { 
+        requestId: requestToAction.id, 
+        stepId: requestToAction.current_step_id,
+        comments 
+      }, 
+      {
+        onSuccess: () => {
+          toast.success("تم الموافقة على الطلب بنجاح");
+          setIsApproveDialogOpen(false);
+          setRequestToAction(null);
+          
+          // Refresh the incoming requests list
+          const currentTab = searchParams.get("tab") || "incoming";
+          searchParams.set("tab", currentTab === "incoming" ? "incoming-refresh" : "incoming");
+          setSearchParams(searchParams);
+          
+          setTimeout(() => {
+            searchParams.set("tab", currentTab);
+            setSearchParams(searchParams);
+          }, 100);
+        },
+        onError: (error) => {
+          toast.error(`حدث خطأ أثناء الموافقة على الطلب: ${error.message || "خطأ غير معروف"}`);
+        }
+      }
+    );
+  };
+
+  const handleRejectConfirm = (comments: string) => {
+    if (!requestToAction) return;
+    
+    rejectRequest.mutate(
+      { 
+        requestId: requestToAction.id,
+        stepId: requestToAction.current_step_id,
+        comments 
+      }, 
+      {
+        onSuccess: () => {
+          toast.success("تم رفض الطلب بنجاح");
+          setIsRejectDialogOpen(false);
+          setRequestToAction(null);
+          
+          // Refresh the incoming requests list
+          const currentTab = searchParams.get("tab") || "incoming";
+          searchParams.set("tab", currentTab === "incoming" ? "incoming-refresh" : "incoming");
+          setSearchParams(searchParams);
+          
+          setTimeout(() => {
+            searchParams.set("tab", currentTab);
+            setSearchParams(searchParams);
+          }, 100);
+        },
+        onError: (error) => {
+          toast.error(`حدث خطأ أثناء رفض الطلب: ${error.message || "خطأ غير معروف"}`);
+        }
+      }
+    );
+  };
+
   const handleCloseDetailView = () => {
     setSelectedRequestId(null);
     const currentTab = searchParams.get("tab") || "incoming";
@@ -119,8 +200,8 @@ const RequestsManagement = () => {
               isLoading={incomingLoading}
               type="incoming"
               onViewRequest={handleViewRequest}
-              onApproveRequest={(request) => handleViewRequest(request)}
-              onRejectRequest={(request) => handleViewRequest(request)}
+              onApproveRequest={handleApproveRequest}
+              onRejectRequest={handleRejectRequest}
             />
           </div>
         );
@@ -224,6 +305,20 @@ const RequestsManagement = () => {
               isSubmitting={createRequest.isPending}
             />
           )}
+
+          <RequestApproveDialog
+            requestId={requestToAction?.id || ""}
+            stepId={requestToAction?.current_step_id}
+            isOpen={isApproveDialogOpen}
+            onOpenChange={setIsApproveDialogOpen}
+          />
+
+          <RequestRejectDialog
+            requestId={requestToAction?.id || ""}
+            stepId={requestToAction?.current_step_id}
+            isOpen={isRejectDialogOpen}
+            onOpenChange={setIsRejectDialogOpen}
+          />
 
           <Footer />
         </div>
