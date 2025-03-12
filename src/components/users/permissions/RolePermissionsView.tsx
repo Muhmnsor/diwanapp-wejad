@@ -4,6 +4,9 @@ import { Loader2 } from "lucide-react";
 import { ModuleCollapsible } from "./ModuleCollapsible";
 import { Role } from "../types";
 import { usePermissions } from "./usePermissions";
+import { AppPermissionsManager } from "./AppPermissionsManager";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface RolePermissionsViewProps {
   role: Role;
@@ -47,24 +50,35 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
         </Button>
       </div>
 
-      <div className="space-y-2">
-        {modules.map((module) => (
-          <ModuleCollapsible
-            key={module.name}
-            module={module}
-            selectedPermissions={selectedPermissions}
-            onPermissionToggle={handlePermissionToggle}
-            onModuleToggle={handleModuleToggle}
-            toggleOpen={toggleModuleOpen}
-          />
-        ))}
-      </div>
+      <Tabs defaultValue="permissions" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="permissions">الصلاحيات التفصيلية</TabsTrigger>
+          <TabsTrigger value="apps">وصول التطبيقات</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="permissions" className="space-y-2">
+          {modules.map((module) => (
+            <ModuleCollapsible
+              key={module.name}
+              module={module}
+              selectedPermissions={selectedPermissions}
+              onPermissionToggle={handlePermissionToggle}
+              onModuleToggle={handleModuleToggle}
+              toggleOpen={toggleModuleOpen}
+            />
+          ))}
 
-      {modules.length === 0 && (
-        <div className="text-center p-8 border rounded-md bg-muted">
-          لا توجد صلاحيات متاحة لهذا الدور
-        </div>
-      )}
+          {modules.length === 0 && (
+            <div className="text-center p-8 border rounded-md bg-muted">
+              لا توجد صلاحيات متاحة لهذا الدور
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="apps">
+          <AppPermissionsManager role={role} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

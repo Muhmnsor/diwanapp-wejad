@@ -15,8 +15,10 @@ import {
 import { AppItem } from "./DashboardApps";
 import { NotificationCounts } from "@/hooks/dashboard/useNotificationCounts";
 import { User } from "@/store/refactored-auth/types";
+import { supabase } from "@/integrations/supabase/client";
 
-// Define roles for each application with comprehensive role access
+// For backwards compatibility until migration is complete
+// Eventually this will be removed once all permissions are managed through the UI
 export const APP_ROLE_ACCESS = {
   events: [
     'admin', 'app_admin', 'developer',
@@ -68,7 +70,7 @@ export const APP_ROLE_ACCESS = {
     'approval_manager'
   ],
   developer: [
-    'admin', 'app_admin', 'developer'  // Added developer role here
+    'admin', 'app_admin', 'developer'
   ]
 };
 
@@ -256,8 +258,63 @@ const ALL_APPS: AppItem[] = [
   }
 ];
 
+// Cache for role permissions to avoid redundant database calls
+let rolePermissionsCache: Record<string, string[]> = {};
+let cacheExpiry = 0;
+const CACHE_DURATION = 60000; // 1 minute
+
+/**
+ * Check if a role has access to an app through database permissions
+ */
+const checkDbAppAccess = async (role: string, appKey: string): Promise<boolean> => {
+  try {
+    // Check if we have a valid cache
+    const now = Date.now();
+    if (now > cacheExpiry) {
+      // Cache expired, clear it
+      rolePermissionsCache = {};
+      cacheExpiry = now + CACHE_DURATION;
+    }
+
+    // Check if role is in cache
+    if (!rolePermissionsCache[role]) {
+      // Get role ID first
+      const { data: roleData, error: roleError } = await supabase
+        .from('roles')
+        .select('id')
+        .eq('name', role)
+        .single();
+
+      if (roleError || !roleData) {
+        console.error('Error fetching role:', roleError);
+        return false;
+      }
+
+      // Get app permissions for this role
+      const { data: permissions, error: permError } = await supabase
+        .from('app_permissions')
+        .select('app_name')
+        .eq('role_id', roleData.id);
+
+      if (permError) {
+        console.error('Error fetching app permissions:', permError);
+        return false;
+      }
+
+      // Store in cache
+      rolePermissionsCache[role] = permissions.map(p => p.app_name);
+    }
+
+    // Check if the app is in the permissions
+    return rolePermissionsCache[role].includes(appKey);
+  } catch (error) {
+    console.error('Error in checkDbAppAccess:', error);
+    return false;
+  }
+};
+
 // Get applications list based on user role
-export const getAppsList = (notificationCounts: NotificationCounts, user?: User | null): AppItem[] => {
+export const getAppsList = async (notificationCounts: NotificationCounts, user?: User | null): Promise<AppItem[]> => {
   // If no user is provided, return an empty array
   if (!user) return [];
   
@@ -271,22 +328,37 @@ export const getAppsList = (notificationCounts: NotificationCounts, user?: User 
   // Get user role and normalize it
   const userRole = user.role || '';
   console.log('User role before mapping:', userRole);
+
+  // Map the role to its English equivalent if needed
+  let mappedRole = ROLE_MAPPING[userRole as keyof typeof ROLE_MAPPING] || userRole;
   
-  // *** IMPORTANT CHANGE: Always filter apps based on roles and permissions ***
-  // This now applies to all users, including admins
-  const filteredApps = ALL_APPS.filter(app => {
+  // *** IMPORTANT CHANGE: Try DB permissions first, then fall back to hardcoded ***
+  let filteredApps: AppItem[] = [];
+  
+  // Process each app to check permissions
+  for (const app of ALL_APPS) {
     const appKey = getAppKeyFromPath(app.path);
-    // Only show apps the user has access to based on their role
-    return appKey ? hasAccessToApp(userRole, appKey) : false;
-  });
+    if (!appKey) continue;
+    
+    // First check database permissions
+    let hasAccess = await checkDbAppAccess(mappedRole, appKey);
+    
+    // If no database permission, fall back to hardcoded permissions
+    if (!hasAccess) {
+      const allowedRoles = APP_ROLE_ACCESS[appKey as keyof typeof APP_ROLE_ACCESS] || [];
+      hasAccess = allowedRoles.includes(mappedRole);
+    }
+    
+    if (hasAccess) {
+      filteredApps.push({
+        ...app,
+        notifications: getNotificationCount(app.path, notificationCounts)
+      });
+    }
+  }
   
-  console.log('Filtered apps for role', userRole, ':', filteredApps.length);
-  
-  // Add notification counts to filtered apps
-  return filteredApps.map(app => ({
-    ...app,
-    notifications: getNotificationCount(app.path, notificationCounts)
-  }));
+  console.log('Filtered apps for role', mappedRole, ':', filteredApps.length);
+  return filteredApps;
 };
 
 // Helper function to get app key from path
