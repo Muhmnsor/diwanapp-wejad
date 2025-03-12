@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { ModuleCollapsible } from "./ModuleCollapsible";
 import { Role } from "../types";
 import { usePermissions } from "./usePermissions";
@@ -11,6 +11,7 @@ import { NoPermissionsMessage } from "./NoPermissionsMessage";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/refactored-auth";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface RolePermissionsViewProps {
   role: Role;
@@ -29,6 +30,7 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
     selectedPermissions,
     isLoading,
     isSubmitting,
+    error,
     handlePermissionToggle,
     handleModuleToggle,
     toggleModuleOpen,
@@ -43,6 +45,11 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
     toast.success("تم تحديث الصلاحيات، يرجى حفظ التغييرات");
   };
 
+  const handleRefreshPermissions = () => {
+    setRefreshKey(prev => prev + 1);
+    toast.info("جاري تحديث الصلاحيات...");
+  };
+
   // Listen for role changes and refresh permissions
   useEffect(() => {
     setRefreshKey(prev => prev + 1);
@@ -53,6 +60,25 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
       <div className="flex justify-center items-center p-8">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <span className="mr-2">جاري تحميل الصلاحيات...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4 ml-2" />
+          <AlertDescription>
+            {error}
+          </AlertDescription>
+        </Alert>
+        <div className="flex justify-center">
+          <Button variant="outline" onClick={handleRefreshPermissions}>
+            <RefreshCw className="ml-2 h-4 w-4" />
+            إعادة المحاولة
+          </Button>
+        </div>
       </div>
     );
   }

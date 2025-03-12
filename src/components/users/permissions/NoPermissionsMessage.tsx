@@ -1,11 +1,12 @@
 
-import { Role } from "../types";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Info } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertCircle, Plus } from "lucide-react";
+import { Role } from "../types";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { MODULE_TRANSLATIONS } from "./types";
 
 interface NoPermissionsMessageProps {
   role: Role;
@@ -13,78 +14,124 @@ interface NoPermissionsMessageProps {
 }
 
 export const NoPermissionsMessage = ({ role, onPermissionsAdded }: NoPermissionsMessageProps) => {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isAddingPermissions, setIsAddingPermissions] = useState(false);
 
-  const handleAddDefaultPermissions = async () => {
-    setIsLoading(true);
+  const addDefaultPermissions = async () => {
+    setIsAddingPermissions(true);
     try {
-      // Get basic permissions (for now we're adding read access to all modules)
-      const { data: permissions, error: permissionsError } = await supabase
+      // Get all available permissions
+      const { data: allPermissions, error: permissionsError } = await supabase
         .from('permissions')
-        .select('id, module')
-        .or('name.ilike.%read%,name.ilike.%view%,name.ilike.%access%')
-        .limit(50);
-      
-      if (permissionsError) throw permissionsError;
-      
-      if (!permissions || permissions.length === 0) {
-        toast.error("لم يتم العثور على أي صلاحيات أساسية");
-        return;
+        .select('id, name, module');
+
+      if (permissionsError) {
+        throw permissionsError;
       }
 
-      // Insert basic permissions for this role
-      const { error: insertError } = await supabase
-        .from('role_permissions')
-        .insert(
-          permissions.map(permission => ({
+      // Group permissions by module for better organization
+      const permissionsByModule: Record<string, { id: string; name: string; }[]> = {};
+      
+      allPermissions.forEach(permission => {
+        // Use Arabic module names consistently
+        const moduleName = permission.module;
+        
+        if (!permissionsByModule[moduleName]) {
+          permissionsByModule[moduleName] = [];
+        }
+        permissionsByModule[moduleName].push(permission);
+      });
+
+      // Add basic read permissions for each module and full permissions for users module
+      const permissionsToAdd = [];
+      
+      // For the users module (المستخدمين), add all permissions
+      const userModuleKey = 'المستخدمين';
+      if (permissionsByModule[userModuleKey]) {
+        permissionsByModule[userModuleKey].forEach(permission => {
+          permissionsToAdd.push({
             role_id: role.id,
             permission_id: permission.id
-          }))
-        );
+          });
+        });
+      }
       
-      if (insertError) throw insertError;
+      // For other modules, add only read permissions
+      Object.entries(permissionsByModule).forEach(([moduleName, modulePermissions]) => {
+        if (moduleName !== userModuleKey) {
+          // Find permissions with 'view' or 'read' in their name
+          const readPermissions = modulePermissions.filter(
+            p => p.name.includes('view') || p.name.includes('read')
+          );
+          
+          readPermissions.forEach(permission => {
+            permissionsToAdd.push({
+              role_id: role.id,
+              permission_id: permission.id
+            });
+          });
+        }
+      });
 
-      // Add basic app permissions
+      // Add the permissions
+      if (permissionsToAdd.length > 0) {
+        const { error: insertError } = await supabase
+          .from('role_permissions')
+          .insert(permissionsToAdd);
+
+        if (insertError) throw insertError;
+      }
+
+      // Add basic app permissions for all major apps
       const appPermissions = [
-        { role_id: role.id, app_name: 'events' },
-        { role_id: role.id, app_name: 'documents' },
-        { role_id: role.id, app_name: 'tasks' }
+        { role_id: role.id, app_name: 'users' }, // المستخدمين
+        { role_id: role.id, app_name: 'events' }, // الفعاليات
+        { role_id: role.id, app_name: 'tasks' }, // المهام
+        { role_id: role.id, app_name: 'documents' }, // المستندات
       ];
 
       const { error: appError } = await supabase
         .from('app_permissions')
         .insert(appPermissions);
-      
-      if (appError) {
-        console.error("Error adding app permissions:", appError);
-        // Continue even if app permissions fail
-      }
 
-      toast.success("تم إضافة الصلاحيات الأساسية بنجاح");
+      if (appError) throw appError;
+
+      toast.success("تم إضافة الصلاحيات الافتراضية بنجاح");
       onPermissionsAdded();
     } catch (error) {
       console.error("Error adding default permissions:", error);
-      toast.error("حدث خطأ أثناء إضافة الصلاحيات الأساسية");
+      toast.error("حدث خطأ أثناء إضافة الصلاحيات الافتراضية");
     } finally {
-      setIsLoading(false);
+      setIsAddingPermissions(false);
     }
   };
 
   return (
-    <Card className="bg-muted/30">
-      <CardContent className="pt-6 space-y-4 text-center">
-        <Info className="h-10 w-10 text-muted-foreground mx-auto" />
-        <h3 className="text-lg font-medium">لا توجد صلاحيات معينة لهذا الدور</h3>
-        <p className="text-muted-foreground">
-          دون تعيين الصلاحيات، لن يتمكن المستخدمون من الوصول إلى التطبيقات أو أداء أي مهام. 
-          يمكنك إضافة الصلاحيات يدويًا أو إضافة مجموعة الصلاحيات الأساسية تلقائيًا.
-        </p>
+    <Card className="border-dashed bg-muted/30">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <AlertCircle className="h-5 w-5 text-muted-foreground" />
+          لا توجد صلاحيات محددة
+        </CardTitle>
+        <CardDescription>
+          لم يتم تحديد أي صلاحيات لهذا الدور بعد. يمكنك إضافة الصلاحيات الافتراضية أو تحديد الصلاحيات يدويًا.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
         <Button 
-          onClick={handleAddDefaultPermissions} 
-          disabled={isLoading} 
-          className="mt-2"
+          onClick={addDefaultPermissions}
+          disabled={isAddingPermissions}
+          className="w-full"
         >
-          {isLoading ? "جاري الإضافة..." : "إضافة الصلاحيات الأساسية"}
+          {isAddingPermissions ? (
+            <>
+              جاري إضافة الصلاحيات...
+            </>
+          ) : (
+            <>
+              <Plus className="mr-2 h-4 w-4" />
+              إضافة الصلاحيات الافتراضية
+            </>
+          )}
         </Button>
       </CardContent>
     </Card>

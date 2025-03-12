@@ -1,38 +1,24 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Role } from "../types";
 import { toast } from "sonner";
+import { Module, Category, MODULE_TRANSLATIONS, PERMISSION_CATEGORIES, PermissionData } from "./types";
 
-// Types for permissions system
-interface Permission {
-  id: string;
-  name: string;
-  description: string;
-  module: string;
-}
-
-interface Module {
-  name: string;
-  description: string;
-  permissions: Permission[];
-  isOpen?: boolean;
-  isAllSelected?: boolean;
-}
-
-// Map modules to their corresponding app permissions
+// Map modules to their corresponding app permissions with Arabic module names as keys
+// This ensures consistent mapping between detailed permissions and app permissions
 const MODULE_TO_APP_MAP: Record<string, string[]> = {
-  "events": ["events"],
-  "documents": ["documents"],
-  "tasks": ["tasks"],
-  "ideas": ["ideas"],
-  "finance": ["finance"],
-  "users": ["users"],
-  "website": ["website"],
-  "store": ["store"],
-  "notifications": ["notifications"],
-  "requests": ["requests"],
-  "developer": ["developer"]
+  "الفعاليات": ["events"],
+  "المستندات": ["documents"],
+  "المهام": ["tasks"],
+  "الأفكار": ["ideas"],
+  "المالية": ["finance"],
+  "المستخدمين": ["users"],
+  "الموقع الإلكتروني": ["website"],
+  "المتجر الإلكتروني": ["store"],
+  "الإشعارات": ["notifications"],
+  "الطلبات": ["requests"],
+  "أدوات المطور": ["developer"]
 };
 
 export const usePermissions = (role: Role) => {
@@ -40,10 +26,66 @@ export const usePermissions = (role: Role) => {
   const [selectedPermissions, setSelectedPermissions] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Group permissions by module and category
+  const organizePermissionsByModule = (permissions: PermissionData[], selectedMap: Record<string, boolean>) => {
+    // First, group all permissions by their module
+    const permissionsByModule: Record<string, PermissionData[]> = {};
+    permissions.forEach(permission => {
+      // Standardize module name (prefer Arabic names)
+      const moduleName = permission.module;
+      
+      if (!permissionsByModule[moduleName]) {
+        permissionsByModule[moduleName] = [];
+      }
+      permissionsByModule[moduleName].push(permission);
+    });
+
+    // Create module objects with organized permissions
+    const modulesArray: Module[] = Object.entries(permissionsByModule).map(([moduleName, modulePermissions]) => {
+      // Group permissions by category within each module
+      const permissionsByCategory: Record<string, PermissionData[]> = {};
+      
+      modulePermissions.forEach(permission => {
+        const category = permission.category || 'general';
+        if (!permissionsByCategory[category]) {
+          permissionsByCategory[category] = [];
+        }
+        permissionsByCategory[category].push(permission);
+      });
+
+      // Create category objects for this module
+      const categories: Category[] = Object.entries(permissionsByCategory).map(([categoryName, categoryPermissions]) => ({
+        name: categoryName,
+        displayName: PERMISSION_CATEGORIES[categoryName] || categoryName,
+        permissions: categoryPermissions
+      }));
+
+      // Check if all permissions in the module are selected
+      const isAllSelected = modulePermissions.every(
+        (permission) => selectedMap[permission.id]
+      );
+
+      // Create the module object
+      return {
+        name: moduleName,
+        displayName: MODULE_TRANSLATIONS[moduleName] || moduleName,
+        description: `${moduleName} Module`,
+        permissions: modulePermissions,
+        categories: categories,
+        isOpen: false,
+        isAllSelected
+      };
+    });
+
+    return modulesArray;
+  };
 
   useEffect(() => {
     const fetchPermissions = async () => {
       setIsLoading(true);
+      setError(null);
       try {
         // Fetch all permissions
         const { data: allPermissions, error: permissionsError } = await supabase
@@ -68,33 +110,12 @@ export const usePermissions = (role: Role) => {
         });
         setSelectedPermissions(selectedMap);
 
-        // Group permissions by module
-        const modulesMap: Record<string, Module> = {};
-        allPermissions.forEach((permission) => {
-          if (!modulesMap[permission.module]) {
-            modulesMap[permission.module] = {
-              name: permission.module,
-              description: `${permission.module} Module`,
-              permissions: [],
-              isOpen: false,
-            };
-          }
-          modulesMap[permission.module].permissions.push(permission);
-        });
-
-        // Convert map to array
-        const modulesArray = Object.values(modulesMap);
-
-        // Calculate isAllSelected for each module
-        modulesArray.forEach((module) => {
-          module.isAllSelected = module.permissions.every(
-            (permission) => selectedMap[permission.id]
-          );
-        });
-
+        // Organize permissions by module and category
+        const modulesArray = organizePermissionsByModule(allPermissions, selectedMap);
         setModules(modulesArray);
       } catch (error) {
         console.error("Error fetching permissions:", error);
+        setError("حدث خطأ أثناء تحميل الصلاحيات");
         toast.error("حدث خطأ أثناء تحميل الصلاحيات");
       } finally {
         setIsLoading(false);
@@ -184,13 +205,17 @@ export const usePermissions = (role: Role) => {
         
         if (hasSelectedPermissions) {
           // Get corresponding app names for this module
-          const appNames = MODULE_TO_APP_MAP[module.name] || [];
+          const moduleKey = module.name;
+          const appNames = MODULE_TO_APP_MAP[moduleKey] || [];
           appNames.forEach(appName => appPermissionsToSet.add(appName));
         }
       });
 
       // Permissions to add
       const appsToAdd = [...appPermissionsToSet].filter(app => !currentAppNames.has(app));
+      
+      // Permissions to remove
+      const appsToRemove = [...currentAppNames].filter(app => !appPermissionsToSet.has(app));
       
       // Add missing app permissions
       if (appsToAdd.length > 0) {
@@ -208,6 +233,19 @@ export const usePermissions = (role: Role) => {
           // Continue with other operations even if this fails
         } else {
           console.log(`Added app permissions: ${appsToAdd.join(', ')}`);
+        }
+      }
+      
+      // Remove app permissions that are no longer needed
+      for (const appName of appsToRemove) {
+        const { error: removeError } = await supabase
+          .from('app_permissions')
+          .delete()
+          .eq('role_id', roleId)
+          .eq('app_name', appName);
+          
+        if (removeError) {
+          console.error(`Error removing app permission ${appName}:`, removeError);
         }
       }
       
@@ -285,6 +323,7 @@ export const usePermissions = (role: Role) => {
     selectedPermissions,
     isLoading,
     isSubmitting,
+    error,
     handlePermissionToggle,
     handleModuleToggle,
     toggleModuleOpen,

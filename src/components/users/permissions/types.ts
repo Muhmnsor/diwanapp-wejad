@@ -39,18 +39,8 @@ export interface PermissionGroup {
   }
 }
 
-// Module translation mapping to standardize module names
+// Module translation mapping to standardize module names (Arabic values are canonical)
 export const MODULE_TRANSLATIONS: Record<string, string> = {
-  // Arabic to English
-  'الفعاليات': 'events',
-  'المستخدمين': 'users',
-  'المهام': 'tasks',
-  'المستندات': 'documents',
-  'الأفكار': 'ideas',
-  'الإعدادات': 'settings',
-  'الإشعارات': 'notifications',
-  'أدوات_المطور': 'developer',
-  
   // English to Arabic (for display)
   'events': 'الفعاليات',
   'users': 'المستخدمين',
@@ -60,7 +50,24 @@ export const MODULE_TRANSLATIONS: Record<string, string> = {
   'settings': 'الإعدادات',
   'notifications': 'الإشعارات',
   'developer': 'أدوات المطور',
-  'requests': 'الطلبات'
+  'requests': 'الطلبات',
+  'finance': 'المالية',
+  'website': 'الموقع الإلكتروني',
+  'store': 'المتجر الإلكتروني',
+  
+  // Arabic to English (for technical mapping)
+  'الفعاليات': 'events',
+  'المستخدمين': 'users',
+  'المهام': 'tasks',
+  'المستندات': 'documents',
+  'الأفكار': 'ideas',
+  'الإعدادات': 'settings',
+  'الإشعارات': 'notifications',
+  'أدوات المطور': 'developer',
+  'الطلبات': 'requests',
+  'المالية': 'finance',
+  'الموقع الإلكتروني': 'website',
+  'المتجر الإلكتروني': 'store'
 };
 
 // Standardized permission categories with translations
@@ -72,5 +79,12 @@ export const PERMISSION_CATEGORIES: Record<string, string> = {
   'delete': 'حذف',
   'admin': 'إدارة',
   'workflow': 'سير العمل',
-  'general': 'عام'
+  'general': 'عام',
+  'reports': 'التقارير',
+  'settings': 'الإعدادات',
+  'users': 'المستخدمين',
+  'participants': 'المشاركين',
+  'approvals': 'الموافقات',
+  'comments': 'التعليقات',
+  'attachments': 'المرفقات'
 };
