@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
@@ -25,6 +25,39 @@ export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }
   const [comments, setComments] = useState("");
   const queryClient = useQueryClient();
   
+  // Collect browser metadata for logging
+  const collectMetadata = () => {
+    return {
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+      platform: navigator.platform,
+      screenSize: {
+        width: window.screen.width,
+        height: window.screen.height
+      },
+      timestamp: new Date().toISOString(),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    };
+  };
+  
+  // Log view action when dialog opens
+  useEffect(() => {
+    if (isOpen && requestId) {
+      try {
+        supabase.rpc('log_request_view', {
+          p_request_id: requestId,
+          p_metadata: collectMetadata()
+        }).then(({ error }) => {
+          if (error) {
+            console.error("Error logging request view:", error);
+          }
+        });
+      } catch (error) {
+        console.error("Failed to log request view:", error);
+      }
+    }
+  }, [isOpen, requestId]);
+  
   const approveMutation = useMutation({
     mutationFn: async () => {
       if (!stepId) {
@@ -33,13 +66,17 @@ export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }
       
       console.log(`Approving request: ${requestId}, step: ${stepId}, comments: "${comments}"`);
       
-      // Use the RPC function to handle approval in a single transaction
+      // Collect metadata for detailed logging
+      const metadata = collectMetadata();
+      
+      // Use the RPC function to handle approval in a single transaction with logging
       const { data, error } = await supabase.rpc(
         'approve_request', 
         { 
           p_request_id: requestId,
           p_step_id: stepId,
-          p_comments: comments || null
+          p_comments: comments || null,
+          p_metadata: metadata
         }
       );
         
@@ -70,6 +107,11 @@ export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['requests'] });
       queryClient.invalidateQueries({ queryKey: ['request-details', requestId] });
+      
+      // Show performance info in debug mode
+      if (process.env.NODE_ENV === 'development' && result.execution_time_ms) {
+        console.log(`Request approval completed in ${result.execution_time_ms}ms`);
+      }
     },
     onError: (error) => {
       console.error("Error approving request:", error);

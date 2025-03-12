@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/store/refactored-auth";
@@ -10,6 +10,42 @@ export const useRequestDetail = (requestId: string) => {
   const queryClient = useQueryClient();
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+
+  // Collect browser metadata for logging
+  const collectMetadata = () => {
+    if (typeof window === 'undefined') return {};
+    
+    return {
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+      platform: navigator.platform,
+      screenSize: {
+        width: window.screen.width,
+        height: window.screen.height
+      },
+      timestamp: new Date().toISOString(),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      viewContext: "request_detail_page"
+    };
+  };
+
+  // Log request viewing when the component loads
+  useEffect(() => {
+    if (requestId) {
+      try {
+        supabase.rpc('log_request_view', {
+          p_request_id: requestId,
+          p_metadata: collectMetadata()
+        }).then(({ error }) => {
+          if (error) {
+            console.error("Error logging request view:", error);
+          }
+        });
+      } catch (error) {
+        console.error("Failed to log request view:", error);
+      }
+    }
+  }, [requestId]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["request-details", requestId],
