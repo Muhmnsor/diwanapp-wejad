@@ -102,7 +102,10 @@ export const RequestRejectDialog = ({
       toast.success(successMessage);
       onOpenChange(false);
       setComments("");
+      
+      // Invalidate all relevant queries to ensure UI is updated
       queryClient.invalidateQueries({ queryKey: ['requests'] });
+      queryClient.invalidateQueries({ queryKey: ['requests', 'incoming'] });
       queryClient.invalidateQueries({ queryKey: ['request-details', requestId] });
     },
     onError: (error) => {

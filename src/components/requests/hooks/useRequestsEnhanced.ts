@@ -71,24 +71,20 @@ export const useRequestsEnhanced = () => {
   
   // Mutation for approving requests
   const approveRequest = useMutation({
-    mutationFn: async ({ requestId, stepId, comments }: { requestId: string, stepId?: string, comments?: string }) => {
+    mutationFn: async ({ requestId, stepId, comments, metadata }: { requestId: string, stepId?: string, comments?: string, metadata?: any }) => {
       console.log(`Approving request: ${requestId}, step: ${stepId}, comments: ${comments}`);
       
       if (!stepId) {
         throw new Error("لا يمكن الموافقة على هذا الطلب لأنه لا يوجد خطوة حالية");
       }
       
-      const { data, error } = await supabase
-        .from('request_approvals')
-        .insert({
-          request_id: requestId,
-          step_id: stepId,
-          approver_id: (await supabase.auth.getSession()).data.session?.user.id,
-          status: 'approved',
-          comments: comments || null
-        })
-        .select()
-        .single();
+      // Use the RPC function 
+      const { data, error } = await supabase.rpc('approve_request', {
+        p_request_id: requestId,
+        p_step_id: stepId,
+        p_comments: comments || null,
+        p_metadata: metadata || {}
+      });
       
       if (error) throw error;
       return data;
@@ -100,7 +96,7 @@ export const useRequestsEnhanced = () => {
   
   // Mutation for rejecting requests
   const rejectRequest = useMutation({
-    mutationFn: async ({ requestId, stepId, comments }: { requestId: string, stepId?: string, comments: string }) => {
+    mutationFn: async ({ requestId, stepId, comments, metadata }: { requestId: string, stepId?: string, comments: string, metadata?: any }) => {
       console.log(`Rejecting request: ${requestId}, step: ${stepId}, comments: ${comments}`);
       
       if (!stepId) {
@@ -111,17 +107,13 @@ export const useRequestsEnhanced = () => {
         throw new Error("يجب إدخال سبب الرفض");
       }
       
-      const { data, error } = await supabase
-        .from('request_approvals')
-        .insert({
-          request_id: requestId,
-          step_id: stepId,
-          approver_id: (await supabase.auth.getSession()).data.session?.user.id,
-          status: 'rejected',
-          comments: comments
-        })
-        .select()
-        .single();
+      // Use the RPC function
+      const { data, error } = await supabase.rpc('reject_request', {
+        p_request_id: requestId,
+        p_step_id: stepId,
+        p_comments: comments,
+        p_metadata: metadata || {}
+      });
       
       if (error) throw error;
       return data;
@@ -136,7 +128,8 @@ export const useRequestsEnhanced = () => {
     try {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['requests', 'incoming'] }),
-        queryClient.invalidateQueries({ queryKey: ['requests', 'outgoing'] })
+        queryClient.invalidateQueries({ queryKey: ['requests', 'outgoing'] }),
+        queryClient.invalidateQueries({ queryKey: ['request-details'] })
       ]);
     } catch (error) {
       console.error('Error refreshing requests:', error);

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -36,18 +35,23 @@ const RequestsManagement = () => {
     incomingLoading, 
     outgoingLoading,
     createRequest,
-    isRefreshing
+    isRefreshing,
+    refreshRequests
   } = useRequestsEnhanced();
 
   useEffect(() => {
     const tabFromUrl = searchParams.get("tab");
     if (tabFromUrl && tabFromUrl !== activeTab) {
       setSearchParams(searchParams);
+      
+      if (tabFromUrl === "incoming" || tabFromUrl === "outgoing") {
+        refreshRequests();
+      }
     } else if (!tabFromUrl) {
       searchParams.set("tab", activeTab);
       setSearchParams(searchParams);
     }
-  }, [searchParams, setSearchParams, activeTab]);
+  }, [searchParams, setSearchParams, activeTab, refreshRequests]);
 
   const handleNewRequest = () => {
     setShowNewRequestDialog(false);
@@ -109,15 +113,12 @@ const RequestsManagement = () => {
 
   const handleCloseDetailView = () => {
     setSelectedRequestId(null);
+    
+    refreshRequests();
+    
     const currentTab = searchParams.get("tab") || "incoming";
-    
-    searchParams.set("tab", currentTab === "incoming" ? "incoming-refresh" : "incoming");
+    searchParams.set("tab", currentTab);
     setSearchParams(searchParams);
-    
-    setTimeout(() => {
-      searchParams.set("tab", currentTab);
-      setSearchParams(searchParams);
-    }, 100);
   };
 
   const renderContent = () => {
@@ -248,7 +249,12 @@ const RequestsManagement = () => {
                 stepType={requestToAction?.step_type || "decision"}
                 requesterId={requestToAction?.requester_id}
                 isOpen={isApproveDialogOpen}
-                onOpenChange={setIsApproveDialogOpen}
+                onOpenChange={(open) => {
+                  setIsApproveDialogOpen(open);
+                  if (!open) {
+                    refreshRequests();
+                  }
+                }}
               />
 
               <RequestRejectDialog
@@ -257,7 +263,12 @@ const RequestsManagement = () => {
                 stepType={requestToAction?.step_type || "decision"}
                 requesterId={requestToAction?.requester_id}
                 isOpen={isRejectDialogOpen}
-                onOpenChange={setIsRejectDialogOpen}
+                onOpenChange={(open) => {
+                  setIsRejectDialogOpen(open);
+                  if (!open) {
+                    refreshRequests();
+                  }
+                }}
               />
             </>
           )}
