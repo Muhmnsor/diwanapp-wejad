@@ -8,7 +8,8 @@ import { AppPermissionsManager } from "./AppPermissionsManager";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NoPermissionsMessage } from "./NoPermissionsMessage";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 interface RolePermissionsViewProps {
   role: Role;
@@ -16,6 +17,7 @@ interface RolePermissionsViewProps {
 
 export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
   const [refreshKey, setRefreshKey] = useState(0);
+  const [activeTab, setActiveTab] = useState("permissions");
   
   const {
     modules,
@@ -31,7 +33,15 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
   // Force a refresh of permissions data
   const handlePermissionsAdded = () => {
     setRefreshKey(prev => prev + 1);
+    // Switch to the permissions tab after adding default permissions
+    setActiveTab("permissions");
+    toast.success("تم تحديث الصلاحيات، يرجى حفظ التغييرات");
   };
+
+  // Listen for role changes and refresh permissions
+  useEffect(() => {
+    setRefreshKey(prev => prev + 1);
+  }, [role.id]);
 
   if (isLoading) {
     return (
@@ -59,7 +69,7 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
         </Button>
       </div>
 
-      <Tabs defaultValue="permissions" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="permissions">الصلاحيات التفصيلية</TabsTrigger>
           <TabsTrigger value="apps">وصول التطبيقات</TabsTrigger>
@@ -83,7 +93,7 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
         </TabsContent>
         
         <TabsContent value="apps">
-          <AppPermissionsManager role={role} key={`app-permissions-${refreshKey}`} />
+          <AppPermissionsManager role={role} key={`app-permissions-${refreshKey}`} onPermissionsChange={() => setRefreshKey(prev => prev + 1)} />
         </TabsContent>
       </Tabs>
     </div>

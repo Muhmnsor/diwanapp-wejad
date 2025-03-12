@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Role } from "../types";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Info } from "lucide-react";
@@ -77,49 +77,57 @@ const AVAILABLE_APPS: AppInfo[] = [
 
 interface AppPermissionsManagerProps {
   role: Role;
+  onPermissionsChange?: () => void;
 }
 
-export const AppPermissionsManager = ({ role }: AppPermissionsManagerProps) => {
+export const AppPermissionsManager = ({ role, onPermissionsChange }: AppPermissionsManagerProps) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSaving, setIsSaving] = useState<string | null>(null);
   const [appPermissions, setAppPermissions] = useState<Record<string, boolean>>({});
   const [hasSavedChanges, setHasSavedChanges] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch current app permissions for the role
-  useEffect(() => {
-    const fetchAppPermissions = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('app_permissions')
-          .select('app_name')
-          .eq('role_id', role.id);
+  const fetchAppPermissions = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase
+        .from('app_permissions')
+        .select('app_name')
+        .eq('role_id', role.id);
 
-        if (error) throw error;
-
-        // Convert to a map of app_name -> true
-        const permissionsMap: Record<string, boolean> = {};
-        AVAILABLE_APPS.forEach(app => {
-          permissionsMap[app.key] = false;
-        });
-
-        data.forEach(perm => {
-          permissionsMap[perm.app_name] = true;
-        });
-
-        setAppPermissions(permissionsMap);
-      } catch (error) {
+      if (error) {
         console.error('Error fetching app permissions:', error);
+        setError(`حدث خطأ أثناء تحميل صلاحيات التطبيقات: ${error.message}`);
         toast.error('حدث خطأ أثناء تحميل صلاحيات التطبيقات');
-      } finally {
-        setIsLoading(false);
+        return;
       }
-    };
 
+      // Convert to a map of app_name -> true
+      const permissionsMap: Record<string, boolean> = {};
+      AVAILABLE_APPS.forEach(app => {
+        permissionsMap[app.key] = false;
+      });
+
+      data.forEach(perm => {
+        permissionsMap[perm.app_name] = true;
+      });
+
+      setAppPermissions(permissionsMap);
+    } catch (error) {
+      console.error('Exception when fetching app permissions:', error);
+      setError('حدث خطأ غير متوقع أثناء تحميل صلاحيات التطبيقات');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [role.id]);
+
+  useEffect(() => {
     if (role?.id) {
       fetchAppPermissions();
     }
-  }, [role]);
+  }, [role, fetchAppPermissions]);
 
   // Toggle app permission
   const handleToggleAppPermission = async (appKey: string, enabled: boolean) => {
@@ -129,7 +137,7 @@ export const AppPermissionsManager = ({ role }: AppPermissionsManagerProps) => {
       [appKey]: enabled
     }));
 
-    setIsSaving(true);
+    setIsSaving(appKey);
     try {
       if (enabled) {
         // Add permission
@@ -140,7 +148,10 @@ export const AppPermissionsManager = ({ role }: AppPermissionsManagerProps) => {
             app_name: appKey
           });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error adding app permission:', error);
+          throw new Error(error.message);
+        }
       } else {
         // Remove permission
         const { error } = await supabase
@@ -149,12 +160,18 @@ export const AppPermissionsManager = ({ role }: AppPermissionsManagerProps) => {
           .eq('role_id', role.id)
           .eq('app_name', appKey);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error removing app permission:', error);
+          throw new Error(error.message);
+        }
       }
       toast.success(`تم ${enabled ? 'منح' : 'إلغاء'} الوصول إلى ${AVAILABLE_APPS.find(app => app.key === appKey)?.name}`);
       setHasSavedChanges(true);
+      if (onPermissionsChange) {
+        onPermissionsChange();
+      }
     } catch (error) {
-      console.error('Error updating app permission:', error);
+      console.error('Exception updating app permission:', error);
       toast.error('حدث خطأ أثناء تحديث صلاحيات التطبيق');
       
       // Revert local state on error
@@ -163,8 +180,12 @@ export const AppPermissionsManager = ({ role }: AppPermissionsManagerProps) => {
         [appKey]: !enabled
       }));
     } finally {
-      setIsSaving(false);
+      setIsSaving(null);
     }
+  };
+
+  const retryFetch = () => {
+    fetchAppPermissions();
   };
 
   if (isLoading) {
@@ -173,6 +194,20 @@ export const AppPermissionsManager = ({ role }: AppPermissionsManagerProps) => {
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <span className="mr-2">جاري تحميل صلاحيات التطبيقات...</span>
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="w-full">
+        <CardContent className="pt-6">
+          <Alert className="mb-4 bg-red-50">
+            <Info className="h-4 w-4 ml-2 text-red-500" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+          <Button onClick={retryFetch} className="mt-4">إعادة المحاولة</Button>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -215,8 +250,11 @@ export const AppPermissionsManager = ({ role }: AppPermissionsManagerProps) => {
                 id={`app-${app.key}`}
                 checked={appPermissions[app.key] || false}
                 onCheckedChange={(checked) => handleToggleAppPermission(app.key, checked)}
-                disabled={isSaving}
+                disabled={isSaving === app.key}
               />
+              {isSaving === app.key && (
+                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+              )}
             </div>
           ))}
         </div>
