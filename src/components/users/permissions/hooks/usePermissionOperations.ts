@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Module, PermissionData } from "../types";
+import { PermissionData } from "../types";
 
 export const usePermissionOperations = (initialPermissions: string[] = []) => {
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>(initialPermissions);
@@ -17,9 +17,9 @@ export const usePermissionOperations = (initialPermissions: string[] = []) => {
   };
 
   // Toggle all permissions in a module
-  const handleModuleToggle = (module: Module) => {
-    const modulePermissionIds = module.permissions.map(p => p.id);
-    const areAllSelected = module.permissions.every(permission => 
+  const handleModuleToggle = (modulePermissions: PermissionData[]) => {
+    const modulePermissionIds = modulePermissions.map(p => p.id);
+    const areAllSelected = modulePermissions.every(permission => 
       selectedPermissions.includes(permission.id)
     );
     
