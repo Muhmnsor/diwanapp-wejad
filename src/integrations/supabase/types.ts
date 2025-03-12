@@ -4792,6 +4792,12 @@ export type Database = {
         }
         Returns: Json[]
       }
+      get_user_opinion_requests: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: Json[]
+      }
       get_user_outgoing_requests: {
         Args: {
           p_user_id: string

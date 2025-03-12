@@ -89,8 +89,20 @@ export const useRequestsEnhanced = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Check if this was an opinion submission
+      const isOpinion = data?.step_type === 'opinion';
+      
+      // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['requests'] });
+      
+      // For opinions, immediately remove from the incoming list
+      if (isOpinion) {
+        queryClient.invalidateQueries({ queryKey: ['requests', 'incoming'] });
+      }
+      
+      // Also invalidate any request details that might be showing
+      queryClient.invalidateQueries({ queryKey: ['request-details'] });
     }
   });
   
@@ -118,8 +130,20 @@ export const useRequestsEnhanced = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Check if this was an opinion submission
+      const isOpinion = data?.step_type === 'opinion';
+      
+      // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['requests'] });
+      
+      // For opinions, immediately remove from the incoming list
+      if (isOpinion) {
+        queryClient.invalidateQueries({ queryKey: ['requests', 'incoming'] });
+      }
+      
+      // Also invalidate any request details that might be showing
+      queryClient.invalidateQueries({ queryKey: ['request-details'] });
     }
   });
   

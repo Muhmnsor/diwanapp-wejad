@@ -103,6 +103,12 @@ export const RequestApproveDialog = ({
       queryClient.invalidateQueries({ queryKey: ['requests'] });
       queryClient.invalidateQueries({ queryKey: ['requests', 'incoming'] });
       queryClient.invalidateQueries({ queryKey: ['request-details', requestId] });
+      
+      // For opinion steps, make sure the request is immediately removed from the incoming list
+      if (stepType === 'opinion') {
+        // Force refetch rather than just invalidate
+        queryClient.invalidateQueries({ queryKey: ['requests', 'incoming'] });
+      }
     },
     onError: (error) => {
       console.error("Error approving request:", error);
