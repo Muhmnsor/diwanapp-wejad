@@ -1,129 +1,79 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 /**
- * Initializes the developer role by ensuring it exists and has all permissions
+ * وظيفة للتحقق من وجود دور المطور وإنشاءه إذا لم يكن موجوداً
  */
 export const initializeDeveloperRole = async () => {
   try {
-    // Check if developer role exists
-    const { data: roleData, error: roleError } = await supabase
+    // التحقق من وجود دور المطور
+    const { data: developerRole, error } = await supabase
       .from('roles')
       .select('id')
       .eq('name', 'developer')
-      .single();
-
-    if (roleError && roleError.code !== 'PGRST116') {
-      console.error('Error checking developer role:', roleError);
+      .maybeSingle();
+      
+    if (error) {
+      console.error("Error checking for developer role:", error);
       return;
     }
-
-    let developerRoleId;
-
-    // If developer role doesn't exist, create it
-    if (!roleData) {
-      const { data: newRole, error: createError } = await supabase
+    
+    // إذا كان دور المطور غير موجود، قم بإنشائه
+    if (!developerRole) {
+      const { error: createError } = await supabase
         .from('roles')
         .insert({
           name: 'developer',
-          description: 'مطور النظام مع كامل الصلاحيات'
-        })
-        .select('id')
-        .single();
-
+          description: 'دور مخصص للمطورين مع صلاحيات كاملة للنظام'
+        });
+        
       if (createError) {
-        console.error('Error creating developer role:', createError);
+        console.error("Error creating developer role:", createError);
         return;
       }
-
-      developerRoleId = newRole.id;
-    } else {
-      developerRoleId = roleData.id;
-    }
-
-    // Get all permissions
-    const { data: allPermissions, error: permissionsError } = await supabase
-      .from('permissions')
-      .select('id');
-
-    if (permissionsError) {
-      console.error('Error fetching permissions:', permissionsError);
-      return;
-    }
-
-    // Get existing role permissions
-    const { data: existingRolePermissions, error: existingError } = await supabase
-      .from('role_permissions')
-      .select('permission_id')
-      .eq('role_id', developerRoleId);
-
-    if (existingError) {
-      console.error('Error fetching existing role permissions:', existingError);
-      return;
-    }
-
-    // Find permissions that need to be added
-    const existingPermissionIds = existingRolePermissions.map(p => p.permission_id);
-    const permissionsToAdd = allPermissions
-      .filter(p => !existingPermissionIds.includes(p.id))
-      .map(p => ({
-        role_id: developerRoleId,
+      
+      console.log("Developer role created successfully");
+      
+      // الحصول على معرف دور المطور الجديد
+      const { data: newRole, error: getError } = await supabase
+        .from('roles')
+        .select('id')
+        .eq('name', 'developer')
+        .single();
+        
+      if (getError || !newRole) {
+        console.error("Error getting new developer role ID:", getError);
+        return;
+      }
+      
+      // إضافة جميع الصلاحيات لدور المطور
+      const { data: permissions, error: permissionsError } = await supabase
+        .from('permissions')
+        .select('id');
+        
+      if (permissionsError) {
+        console.error("Error getting permissions:", permissionsError);
+        return;
+      }
+      
+      const rolePermissions = permissions.map(p => ({
+        role_id: newRole.id,
         permission_id: p.id
       }));
-
-    // Add missing permissions
-    if (permissionsToAdd.length > 0) {
+      
       const { error: insertError } = await supabase
         .from('role_permissions')
-        .insert(permissionsToAdd);
-
+        .insert(rolePermissions);
+        
       if (insertError) {
-        console.error('Error adding permissions to developer role:', insertError);
-      } else {
-        console.log(`Added ${permissionsToAdd.length} permissions to developer role`);
+        console.error("Error assigning permissions to developer role:", insertError);
+        return;
       }
+      
+      console.log("Developer role permissions assigned successfully");
     }
-
-    // Add all app permissions to developer role
-    const appNames = [
-      'events', 'documents', 'tasks', 'ideas', 'finance', 
-      'users', 'website', 'store', 'notifications', 'requests', 'developer'
-    ];
-
-    // Get existing app permissions
-    const { data: existingAppPerms, error: existingAppError } = await supabase
-      .from('app_permissions')
-      .select('app_name')
-      .eq('role_id', developerRoleId);
-
-    if (existingAppError) {
-      console.error('Error fetching existing app permissions:', existingAppError);
-      return;
-    }
-
-    // Find app permissions that need to be added
-    const existingAppNames = existingAppPerms.map(p => p.app_name);
-    const appPermsToAdd = appNames
-      .filter(name => !existingAppNames.includes(name))
-      .map(name => ({
-        role_id: developerRoleId,
-        app_name: name
-      }));
-
-    // Add missing app permissions
-    if (appPermsToAdd.length > 0) {
-      const { error: insertAppError } = await supabase
-        .from('app_permissions')
-        .insert(appPermsToAdd);
-
-      if (insertAppError) {
-        console.error('Error adding app permissions to developer role:', insertAppError);
-      } else {
-        console.log(`Added ${appPermsToAdd.length} app permissions to developer role`);
-      }
-    }
-
   } catch (error) {
-    console.error('Error initializing developer role:', error);
+    console.error("Error in initializeDeveloperRole:", error);
   }
 };

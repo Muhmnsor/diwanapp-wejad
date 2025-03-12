@@ -1,21 +1,11 @@
 
 import { useState } from "react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Module, Category, PERMISSION_CATEGORIES } from "./types";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { ChevronDown, ChevronUp } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { PermissionData, Category } from "./types";
-
-interface Module {
-  name: string;
-  displayName?: string;
-  description?: string;
-  permissions: PermissionData[];
-  categories?: Category[];
-  isOpen?: boolean;
-  isAllSelected?: boolean;
-}
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface ModuleCollapsibleProps {
   module: Module;
@@ -32,87 +22,158 @@ export const ModuleCollapsible = ({
   onPermissionToggle,
   onModuleToggle,
   toggleOpen,
-  isReadOnly = false
+  isReadOnly = false,
 }: ModuleCollapsibleProps) => {
-  const [isOpen, setIsOpen] = useState(module.isOpen || false);
+  const [hover, setHover] = useState(false);
 
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-    toggleOpen(module.name);
+  // تحديد ما إذا كانت كل الصلاحيات في الفئة محددة
+  const isCategoryAllSelected = (category: Category) => {
+    return category.permissions.every((permission) => 
+      selectedPermissions[permission.id]
+    );
   };
 
-  // Organize permissions by categories if available
-  const hasCategories = module.categories && module.categories.length > 0;
-  
-  // Function to render permissions grouped by category
-  const renderCategorizedPermissions = () => {
-    return module.categories?.map((category) => (
-      <div key={category.name} className="mb-4">
-        <h4 className="font-medium text-sm mb-2">{category.displayName}</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {category.permissions.map((permission) => renderPermission(permission))}
-        </div>
-      </div>
-    ));
+  // تحديد ما إذا كانت بعض الصلاحيات في الفئة محددة (وليس كلها)
+  const isCategoryPartiallySelected = (category: Category) => {
+    const selected = category.permissions.some((permission) => 
+      selectedPermissions[permission.id]
+    );
+    return selected && !isCategoryAllSelected(category);
   };
-  
-  // Function to render an individual permission
-  const renderPermission = (permission: PermissionData) => (
-    <div key={permission.id} className="flex items-start space-x-3 space-x-reverse p-2">
-      <Checkbox 
-        id={permission.id}
-        checked={selectedPermissions[permission.id] || false}
-        onCheckedChange={() => onPermissionToggle(permission.id)}
-        disabled={isReadOnly}
-        className="mt-1"
-      />
-      <div className="space-y-1">
-        <Label 
-          htmlFor={permission.id}
-          className="font-medium cursor-pointer"
-        >
-          {permission.display_name || permission.name}
-        </Label>
-        {permission.description && (
-          <p className="text-sm text-muted-foreground">{permission.description}</p>
-        )}
-      </div>
-    </div>
-  );
+
+  // تبديل حالة جميع الصلاحيات في فئة معينة
+  const handleCategoryToggle = (category: Category) => {
+    if (isReadOnly) return;
+    
+    const isAllSelected = isCategoryAllSelected(category);
+    category.permissions.forEach((permission) => {
+      if (selectedPermissions[permission.id] === isAllSelected) {
+        onPermissionToggle(permission.id);
+      }
+    });
+  };
 
   return (
-    <Collapsible
-      open={isOpen}
-      onOpenChange={handleOpenChange}
-      className="bg-card border rounded-md mb-2"
+    <Card
+      className={`mb-2 overflow-hidden border transition-colors ${
+        hover ? "border-primary/50" : ""
+      } ${module.isOpen ? "border-primary/50" : ""}`}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
     >
-      <div className="p-4 flex items-center justify-between">
-        <CollapsibleTrigger asChild>
-          <div className="flex items-center cursor-pointer space-x-2 space-x-reverse">
-            {isOpen ? <ChevronUp className="w-4 h-4 ml-2" /> : <ChevronDown className="w-4 h-4 ml-2" />}
-            <h3 className="font-medium">{module.displayName || module.name}</h3>
+      <div
+        className={`flex items-center justify-between p-4 cursor-pointer ${
+          module.isOpen ? "bg-muted/50" : ""
+        }`}
+        onClick={() => toggleOpen(module.name)}
+      >
+        <div className="flex flex-col">
+          <div className="flex items-center space-x-2 rtl:space-x-reverse">
+            <h3 className="text-lg font-semibold">{module.displayName || module.name}</h3>
           </div>
-        </CollapsibleTrigger>
+          {module.description && (
+            <p className="text-sm text-muted-foreground">{module.description}</p>
+          )}
+        </div>
+
         <div className="flex items-center">
-          <Switch 
-            checked={module.isAllSelected}
-            onCheckedChange={() => onModuleToggle(module.name)}
-            disabled={isReadOnly}
-          />
-          <span className="mr-2 text-sm">
-            {module.isAllSelected ? "إلغاء الكل" : "تحديد الكل"}
-          </span>
+          {!isReadOnly && (
+            <div className="flex items-center space-x-2 rtl:space-x-reverse ml-4 mr-4">
+              <Switch
+                checked={module.isAllSelected}
+                onCheckedChange={() => onModuleToggle(module.name)}
+                disabled={isReadOnly}
+              />
+              <span className="text-sm">
+                {module.isAllSelected ? "تحديد الكل" : "تحديد الكل"}
+              </span>
+            </div>
+          )}
+          {module.isOpen ? (
+            <ChevronUp className="h-5 w-5" />
+          ) : (
+            <ChevronDown className="h-5 w-5" />
+          )}
         </div>
       </div>
-      <CollapsibleContent className="p-4 pt-0 border-t">
-        {hasCategories ? (
-          renderCategorizedPermissions()
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {module.permissions.map((permission) => renderPermission(permission))}
-          </div>
-        )}
-      </CollapsibleContent>
-    </Collapsible>
+
+      {module.isOpen && (
+        <CardContent className="p-4 pt-0">
+          <Separator className="my-4" />
+          
+          {module.categories && module.categories.length > 0 ? (
+            <div className="space-y-6">
+              {module.categories.map((category) => (
+                <div key={category.name} className="space-y-2">
+                  <div 
+                    className="flex items-center cursor-pointer" 
+                    onClick={() => handleCategoryToggle(category)}
+                  >
+                    {!isReadOnly && (
+                      <Checkbox 
+                        className="ml-2"
+                        checked={isCategoryAllSelected(category)}
+                        disabled={isReadOnly}
+                        // Handle indeterminate state
+                        ref={(input) => {
+                          if (input) {
+                            input.indeterminate = isCategoryPartiallySelected(category);
+                          }
+                        }}
+                      />
+                    )}
+                    <h4 className="font-medium text-sm">{category.displayName}</h4>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pr-6">
+                    {category.permissions.map((permission) => (
+                      <div
+                        key={permission.id}
+                        className="flex items-center justify-between py-1 px-2 rounded-md hover:bg-muted"
+                      >
+                        <span className="text-sm">
+                          {permission.display_name || permission.name}
+                        </span>
+                        <Switch
+                          checked={selectedPermissions[permission.id] || false}
+                          onCheckedChange={() => {
+                            if (!isReadOnly) {
+                              onPermissionToggle(permission.id);
+                            }
+                          }}
+                          disabled={isReadOnly}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {module.permissions.map((permission) => (
+                <div
+                  key={permission.id}
+                  className="flex items-center justify-between py-1 px-2 rounded-md hover:bg-muted"
+                >
+                  <span className="text-sm">
+                    {permission.display_name || permission.name}
+                  </span>
+                  <Switch
+                    checked={selectedPermissions[permission.id] || false}
+                    onCheckedChange={() => {
+                      if (!isReadOnly) {
+                        onPermissionToggle(permission.id);
+                      }
+                    }}
+                    disabled={isReadOnly}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      )}
+    </Card>
   );
 };

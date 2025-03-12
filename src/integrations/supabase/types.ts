@@ -1700,25 +1700,61 @@ export type Database = {
       }
       permissions: {
         Row: {
+          category: string | null
           created_at: string
           description: string | null
+          display_name: string | null
           id: string
           module: string
           name: string
         }
         Insert: {
+          category?: string | null
           created_at?: string
           description?: string | null
+          display_name?: string | null
           id?: string
           module: string
           name: string
         }
         Update: {
+          category?: string | null
           created_at?: string
           description?: string | null
+          display_name?: string | null
           id?: string
           module?: string
           name?: string
+        }
+        Relationships: []
+      }
+      permissions_backup: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          display_name: string | null
+          id: string | null
+          module: string | null
+          name: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_name?: string | null
+          id?: string | null
+          module?: string | null
+          name?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_name?: string | null
+          id?: string | null
+          module?: string | null
+          name?: string | null
         }
         Relationships: []
       }
@@ -3322,6 +3358,27 @@ export type Database = {
           },
         ]
       }
+      role_permissions_backup: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          permission_id: string | null
+          role_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          permission_id?: string | null
+          role_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          permission_id?: string | null
+          role_id?: string | null
+        }
+        Relationships: []
+      }
       roles: {
         Row: {
           description: string | null
@@ -4780,6 +4837,12 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      get_app_keys_for_module: {
+        Args: {
+          module_name: string
+        }
+        Returns: string[]
+      }
       get_request_details: {
         Args: {
           p_request_id: string
@@ -4989,6 +5052,10 @@ export type Database = {
           user_id: string
         }
         Returns: boolean
+      }
+      sync_role_app_permissions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       update_request_after_approval: {
         Args: {
