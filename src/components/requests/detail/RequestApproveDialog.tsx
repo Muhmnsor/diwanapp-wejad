@@ -38,10 +38,10 @@ export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }
         throw new Error("يجب تسجيل الدخول للموافقة على الطلب");
       }
       
-      console.log(`Approving request: ${requestId}, step: ${stepId}, by user: ${userId}`);
+      console.log(`Approving request: ${requestId}, step: ${stepId}, by user: ${userId}, comments: "${comments}"`);
       
       try {
-        // Step 1: Add the approval record
+        // Step 1: Add the approval record - explicitly set comments to empty string if null
         const { data: approvalData, error: approvalError } = await supabase
           .from('request_approvals')
           .insert({
@@ -49,14 +49,17 @@ export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }
             step_id: stepId,
             approver_id: userId,
             status: 'approved',
-            comments: comments || null
+            comments: comments || "" // Ensure comments is never null
           })
           .select()
           .single();
           
-        if (approvalError) throw approvalError;
+        if (approvalError) {
+          console.error("Error creating approval record:", approvalError);
+          throw approvalError;
+        }
         
-        console.log("Approval record created:", approvalData);
+        console.log("Approval record created successfully:", approvalData);
         
         // Step 2: Update the request status if needed
         const { data: requestData, error: requestError } = await supabase
@@ -67,6 +70,7 @@ export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }
           
         if (requestError) {
           console.error("Error updating request status:", requestError);
+          throw requestError;
         } else {
           console.log("Request status update result:", requestData);
         }

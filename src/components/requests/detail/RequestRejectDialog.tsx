@@ -42,10 +42,10 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
         throw new Error("يجب تسجيل الدخول لرفض الطلب");
       }
       
-      console.log(`Rejecting request: ${requestId}, step: ${stepId}, by user: ${userId}`);
+      console.log(`Rejecting request: ${requestId}, step: ${stepId}, by user: ${userId}, comments: "${comments}"`);
 
       try {
-        // Add the rejection record
+        // Step 1: Add the rejection record - Ensure comments is not null
         const { data: rejectionData, error: rejectionError } = await supabase
           .from('request_approvals')
           .insert({
@@ -53,16 +53,19 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
             step_id: stepId,
             approver_id: userId,
             status: 'rejected',
-            comments: comments
+            comments: comments.trim() // Ensure comments is never null and trim whitespace
           })
           .select()
           .single();
           
-        if (rejectionError) throw rejectionError;
+        if (rejectionError) {
+          console.error("Error creating rejection record:", rejectionError);
+          throw rejectionError;
+        }
         
-        console.log("Rejection record created:", rejectionData);
+        console.log("Rejection record created successfully:", rejectionData);
         
-        // Update the request status
+        // Step 2: Update the request status using RPC
         const { data: requestData, error: requestError } = await supabase
           .rpc('update_request_after_rejection', { 
             p_request_id: requestId,
@@ -71,6 +74,7 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
           
         if (requestError) {
           console.error("Error updating request status after rejection:", requestError);
+          throw requestError;
         } else {
           console.log("Request status update result:", requestData);
         }
@@ -120,6 +124,9 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
             className={!comments.trim() ? "border-destructive" : ""}
             required
           />
+          {!comments.trim() && (
+            <p className="text-sm text-destructive mt-1">يجب إدخال سبب الرفض</p>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
