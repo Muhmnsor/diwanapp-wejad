@@ -33,15 +33,13 @@ export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }
       
       console.log(`Approving request: ${requestId}, step: ${stepId}, comments: "${comments}"`);
       
-      // Use the RPC function to handle approval in a single transaction
-      const { data, error } = await supabase.rpc(
-        'approve_request', 
-        { 
+      // Use the new RPC function that handles everything in a single transaction
+      const { data, error } = await supabase
+        .rpc('approve_request', { 
           p_request_id: requestId,
           p_step_id: stepId,
           p_comments: comments || null
-        }
-      );
+        });
         
       if (error) {
         console.error("Error approving request:", error);
@@ -58,16 +56,9 @@ export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }
         return;
       }
       
-      // Handle different messages based on step type
-      const message = result.step_type === 'opinion' 
-        ? "تم تسجيل رأيك بنجاح" 
-        : "تمت الموافقة على الطلب بنجاح";
-      
-      toast.success(message);
+      toast.success("تمت الموافقة على الطلب بنجاح");
       onOpenChange(false);
       setComments("");
-      
-      // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['requests'] });
       queryClient.invalidateQueries({ queryKey: ['request-details', requestId] });
     },

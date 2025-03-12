@@ -37,15 +37,13 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
       
       console.log(`Rejecting request: ${requestId}, step: ${stepId}, comments: "${comments}"`);
 
-      // Use the RPC function that handles everything in a single transaction
-      const { data, error } = await supabase.rpc(
-        'reject_request', 
-        { 
+      // Use the new RPC function that handles everything in a single transaction
+      const { data, error } = await supabase
+        .rpc('reject_request', { 
           p_request_id: requestId,
           p_step_id: stepId,
           p_comments: comments.trim()
-        }
-      );
+        });
         
       if (error) {
         console.error("Error rejecting request:", error);
@@ -62,16 +60,9 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
         return;
       }
       
-      // Handle different messages based on step type
-      const message = result.step_type === 'opinion' 
-        ? "تم تسجيل رأيك بنجاح" 
-        : "تم رفض الطلب بنجاح";
-        
-      toast.success(message);
+      toast.success("تم رفض الطلب بنجاح");
       onOpenChange(false);
       setComments("");
-      
-      // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['requests'] });
       queryClient.invalidateQueries({ queryKey: ['request-details', requestId] });
     },
