@@ -1,6 +1,7 @@
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { PermissionData } from "./types";
+import { cn } from "@/lib/utils";
 
 interface PermissionItemProps {
   permission: PermissionData;
@@ -19,6 +20,9 @@ export const PermissionItem = ({
         id={`permission-${permission.id}`}
         checked={isChecked}
         onCheckedChange={() => onToggle(permission.id)}
+        className={cn(
+          "data-[state=indeterminate]:bg-primary/50 data-[state=indeterminate]:text-primary-foreground"
+        )}
       />
       <label
         htmlFor={`permission-${permission.id}`}

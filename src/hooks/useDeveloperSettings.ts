@@ -1,7 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/refactored-auth';
-import { isDeveloper, isDeveloperModeEnabled } from '@/utils/developerRole';
+import { isDeveloper } from '@/utils/developer/roleManagement';
+import { isDeveloperModeEnabled } from '@/utils/developer/modeManagement';
 import { toast } from 'sonner';
 
 export const useDeveloperSettings = () => {
