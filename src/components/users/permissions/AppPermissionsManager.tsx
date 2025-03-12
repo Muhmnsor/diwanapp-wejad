@@ -92,7 +92,7 @@ export const AppPermissionsManager = ({ role, onPermissionsChange }: AppPermissi
   
   // Check if current user is admin or developer
   const isAdminOrDeveloper = user?.isAdmin || user?.role === 'developer';
-
+  
   // Fetch current app permissions for the role
   const fetchAppPermissions = useCallback(async () => {
     setIsLoading(true);
