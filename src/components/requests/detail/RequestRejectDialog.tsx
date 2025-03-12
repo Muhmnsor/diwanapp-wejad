@@ -37,13 +37,15 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
       
       console.log(`Rejecting request: ${requestId}, step: ${stepId}, comments: "${comments}"`);
 
-      // Use the new RPC function that handles everything in a single transaction
-      const { data, error } = await supabase
-        .rpc('reject_request', { 
+      // Use the RPC function that handles everything in a single transaction
+      const { data, error } = await supabase.rpc(
+        'reject_request', 
+        { 
           p_request_id: requestId,
           p_step_id: stepId,
           p_comments: comments.trim()
-        });
+        }
+      );
         
       if (error) {
         console.error("Error rejecting request:", error);

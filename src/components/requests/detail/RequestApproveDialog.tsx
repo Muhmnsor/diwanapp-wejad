@@ -33,13 +33,15 @@ export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }
       
       console.log(`Approving request: ${requestId}, step: ${stepId}, comments: "${comments}"`);
       
-      // Use the new RPC function that handles everything in a single transaction
-      const { data, error } = await supabase
-        .rpc('approve_request', { 
+      // Use the RPC function to handle approval in a single transaction
+      const { data, error } = await supabase.rpc(
+        'approve_request', 
+        { 
           p_request_id: requestId,
           p_step_id: stepId,
           p_comments: comments || null
-        });
+        }
+      );
         
       if (error) {
         console.error("Error approving request:", error);
