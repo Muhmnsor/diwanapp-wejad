@@ -136,7 +136,7 @@ export const RequestApproveDialog = ({
         )}
         
         {stepType === 'opinion' && (
-          <Alert variant="info" className="my-2">
+          <Alert variant="default" className="my-2 bg-blue-50 text-blue-700 border-blue-200">
             <InfoIcon className="h-4 w-4" />
             <AlertTitle>معلومة</AlertTitle>
             <AlertDescription>
