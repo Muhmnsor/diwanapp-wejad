@@ -69,6 +69,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   const approvals = data.approvals || [];
   const attachments = data.attachments || [];
   const requester = data.requester;
+  const stepType = currentStep?.step_type || "decision";
 
   // Add requester info to the request object for easier access
   const enhancedRequest = {
@@ -89,6 +90,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
           <RequestActionButtons 
             status={request.status}
             isCurrentApprover={isCurrentApprover()}
+            stepType={stepType}
             onApprove={handleApproveClick}
             onReject={handleRejectClick}
             onClose={onClose}
@@ -117,6 +119,8 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
       <RequestApproveDialog
         requestId={requestId}
         stepId={request.current_step_id}
+        stepType={stepType}
+        requesterId={request.requester_id}
         isOpen={isApproveDialogOpen}
         onOpenChange={setIsApproveDialogOpen}
       />
@@ -124,6 +128,8 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
       <RequestRejectDialog
         requestId={requestId}
         stepId={request.current_step_id}
+        stepType={stepType}
+        requesterId={request.requester_id}
         isOpen={isRejectDialogOpen}
         onOpenChange={setIsRejectDialogOpen}
       />

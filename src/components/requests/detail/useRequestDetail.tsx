@@ -72,7 +72,8 @@ export const useRequestDetail = (requestId: string) => {
     refetchOnWindowFocus: false
   });
 
-  // Check if the current user is the approver for the current step
+  // Updated logic: any authenticated user can participate in opinion steps,
+  // but decision steps still require proper authorization
   const isCurrentApprover = () => {
     if (!data || !user) return false;
     
@@ -91,12 +92,25 @@ export const useRequestDetail = (requestId: string) => {
     const stepType = currentStep.step_type || 'decision';
     console.log("نوع الخطوة:", stepType);
     
-    // For opinion steps, always allow action
+    // For opinion steps, always allow any authenticated user to participate
     if (stepType === 'opinion') {
-      console.log("هذه خطوة رأي ويمكن للمستخدم إبداء رأيه");
+      console.log("هذه خطوة رأي ويمكن لأي مستخدم إبداء رأيه");
+      // Check if the user has already submitted their opinion
+      const hasAlreadySubmitted = data.approvals?.some(
+        (approval: any) => 
+          approval.step_id === currentStep.id && 
+          approval.approver_id === user.id
+      );
+      
+      if (hasAlreadySubmitted) {
+        console.log("المستخدم قام بالفعل بإبداء رأيه على هذه الخطوة");
+        return false;
+      }
+      
       return true;
     }
     
+    // For decision steps, maintain the regular authorization checks
     // Check for direct approval
     if (currentStep.approver_id === user.id) {
       console.log("المستخدم هو المعتمد المباشر للخطوة الحالية");
