@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -60,7 +59,10 @@ export const useRequestsEnhanced = () => {
         request_data: validatedData
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating request:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {

@@ -115,3 +115,135 @@ BEGIN
   ORDER BY r.created_at DESC;
 END;
 $$;
+
+-- UPDATED FUNCTION: Insert request with special handling for developers
+CREATE OR REPLACE FUNCTION public.insert_request_bypass_rls(request_data jsonb)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $$
+DECLARE
+  new_request_id uuid;
+  result jsonb;
+  v_workflow_id uuid;
+  v_current_step_id uuid;
+  v_first_step_id uuid;
+  v_approver_id uuid;
+  v_approver_type text;
+  v_user_id uuid;
+  v_is_developer boolean;
+BEGIN
+  -- Get current user ID
+  v_user_id := auth.uid();
+  
+  -- Check if user has developer role
+  SELECT EXISTS (
+    SELECT 1 
+    FROM user_roles ur
+    JOIN roles r ON r.id = ur.role_id
+    WHERE ur.user_id = v_user_id
+    AND r.name = 'developer'
+  ) INTO v_is_developer;
+
+  -- Extract workflow_id for potential step lookup
+  v_workflow_id := (request_data->>'workflow_id')::uuid;
+  v_current_step_id := (request_data->>'current_step_id')::uuid;
+  
+  -- If workflow exists but no current step is set, find the first step
+  IF v_workflow_id IS NOT NULL AND v_current_step_id IS NULL THEN
+    -- Get the first step from workflow_steps
+    SELECT id, approver_id, approver_type 
+    INTO v_first_step_id, v_approver_id, v_approver_type
+    FROM workflow_steps
+    WHERE workflow_id = v_workflow_id
+    ORDER BY step_order ASC
+    LIMIT 1;
+    
+    -- Use the first step as current_step_id if found
+    IF v_first_step_id IS NOT NULL THEN
+      v_current_step_id := v_first_step_id;
+    END IF;
+  END IF;
+  
+  -- Create the request with the determined current step
+  INSERT INTO public.requests (
+    requester_id,
+    workflow_id,
+    current_step_id,
+    title,
+    form_data,
+    request_type_id,
+    priority,
+    status,
+    due_date
+  ) VALUES (
+    COALESCE((request_data->>'requester_id')::uuid, v_user_id),
+    v_workflow_id,
+    v_current_step_id,
+    request_data->>'title',
+    (request_data->>'form_data')::jsonb,
+    (request_data->>'request_type_id')::uuid,
+    COALESCE(request_data->>'priority', 'medium'),
+    COALESCE(request_data->>'status', 'pending'),
+    CASE WHEN request_data->>'due_date' IS NOT NULL 
+         THEN (request_data->>'due_date')::timestamp with time zone 
+         ELSE NULL END
+  )
+  RETURNING id INTO new_request_id;
+  
+  -- Create approval record if we have a current step with an approver
+  IF v_current_step_id IS NOT NULL AND v_approver_id IS NOT NULL THEN
+    -- If approver type is role, create approval records for all users with that role
+    IF v_approver_type = 'role' THEN
+      INSERT INTO public.request_approvals (
+        request_id, 
+        step_id, 
+        approver_id, 
+        status
+      )
+      SELECT 
+        new_request_id,
+        v_current_step_id,
+        user_id,
+        'pending'
+      FROM user_roles
+      WHERE role_id = v_approver_id;
+    ELSE
+      -- Create single approval record for the direct approver
+      INSERT INTO public.request_approvals (
+        request_id,
+        step_id,
+        approver_id,
+        status
+      ) VALUES (
+        new_request_id,
+        v_current_step_id,
+        v_approver_id,
+        'pending'
+      );
+    END IF;
+  END IF;
+  
+  -- Get the newly created record
+  SELECT row_to_json(r)::jsonb INTO result
+  FROM public.requests r
+  WHERE r.id = new_request_id;
+  
+  -- Log operation for debugging
+  BEGIN
+    PERFORM log_workflow_operation(
+      'create_request', 
+      (request_data->>'request_type_id')::uuid, 
+      v_workflow_id,
+      v_current_step_id,
+      request_data,
+      result
+    );
+  EXCEPTION WHEN OTHERS THEN
+    -- Just log to notice but don't fail the whole transaction
+    RAISE NOTICE 'Failed to log workflow operation: %', SQLERRM;
+  END;
+  
+  RETURN result;
+END;
+$$;
