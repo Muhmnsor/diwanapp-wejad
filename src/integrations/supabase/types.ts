@@ -2771,6 +2771,63 @@ export type Database = {
           },
         ]
       }
+      request_approval_logs: {
+        Row: {
+          action_type: string
+          comments: string | null
+          created_at: string
+          error_message: string | null
+          execution_time_ms: number | null
+          id: string
+          metadata: Json | null
+          request_id: string
+          status: string | null
+          step_id: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          comments?: string | null
+          created_at?: string
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          metadata?: Json | null
+          request_id: string
+          status?: string | null
+          step_id?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          comments?: string | null
+          created_at?: string
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          metadata?: Json | null
+          request_id?: string
+          status?: string | null
+          step_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_approval_logs_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "request_approval_logs_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       request_approvals: {
         Row: {
           approved_at: string | null
@@ -4494,6 +4551,42 @@ export type Database = {
           },
         ]
       }
+      vw_request_approval_logs: {
+        Row: {
+          action_type: string | null
+          comments: string | null
+          created_at: string | null
+          error_message: string | null
+          execution_time_ms: number | null
+          id: string | null
+          metadata: Json | null
+          request_id: string | null
+          request_title: string | null
+          request_type_name: string | null
+          status: string | null
+          step_id: string | null
+          step_name: string | null
+          user_display_name: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_approval_logs_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "request_approval_logs_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       anonymize_user_data: {
@@ -4502,6 +4595,24 @@ export type Database = {
         }
         Returns: undefined
       }
+      approve_request:
+        | {
+            Args: {
+              p_request_id: string
+              p_step_id: string
+              p_comments?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_request_id: string
+              p_step_id: string
+              p_comments?: string
+              p_metadata?: Json
+            }
+            Returns: Json
+          }
       assign_user_role: {
         Args: {
           p_user_id: string
@@ -4729,6 +4840,26 @@ export type Database = {
         }
         Returns: boolean
       }
+      log_request_approval_action: {
+        Args: {
+          p_request_id: string
+          p_step_id: string
+          p_action_type: string
+          p_status?: string
+          p_comments?: string
+          p_metadata?: Json
+          p_execution_time_ms?: number
+          p_error_message?: string
+        }
+        Returns: string
+      }
+      log_request_view: {
+        Args: {
+          p_request_id: string
+          p_metadata?: Json
+        }
+        Returns: string
+      }
       log_user_activity: {
         Args: {
           user_id: string
@@ -4750,6 +4881,24 @@ export type Database = {
         }
         Returns: string
       }
+      reject_request:
+        | {
+            Args: {
+              p_request_id: string
+              p_step_id: string
+              p_comments: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_request_id: string
+              p_step_id: string
+              p_comments: string
+              p_metadata?: Json
+            }
+            Returns: Json
+          }
       set_default_workflow: {
         Args: {
           p_request_type_id: string

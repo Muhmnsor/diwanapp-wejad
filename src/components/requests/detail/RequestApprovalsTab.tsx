@@ -17,6 +17,7 @@ interface RequestApproval {
   step?: { 
     step_name?: string;
     approver_type?: string; 
+    step_type?: string;
   };
   approver?: { 
     display_name?: string; 
@@ -46,6 +47,7 @@ export const RequestApprovalsTab = ({ approvals }: RequestApprovalsTabProps) => 
       <TableHeader>
         <TableRow>
           <TableHead>الخطوة</TableHead>
+          <TableHead>نوع الخطوة</TableHead>
           <TableHead>نوع المعتمد</TableHead>
           <TableHead>المسؤول</TableHead>
           <TableHead>الحالة</TableHead>
@@ -57,6 +59,23 @@ export const RequestApprovalsTab = ({ approvals }: RequestApprovalsTabProps) => 
         {approvals.map((approval) => (
           <TableRow key={approval.id}>
             <TableCell>{approval.step?.step_name || "خطوة غير معروفة"}</TableCell>
+            <TableCell>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger className="flex items-center">
+                    {approval.step?.step_type === 'opinion' ? 
+                      <Badge variant="secondary">رأي</Badge> : 
+                      <Badge>قرار</Badge>}
+                    <InfoIcon className="h-4 w-4 mr-1 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{approval.step?.step_type === 'opinion' ? 
+                         "خطوة لإبداء الرأي فقط" : 
+                         "خطوة قرار تؤثر على سير الطلب"}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </TableCell>
             <TableCell>
               <TooltipProvider>
                 <Tooltip>

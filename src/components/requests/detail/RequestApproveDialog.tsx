@@ -13,17 +13,33 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, InfoIcon } from "lucide-react";
+import { useAuthStore } from "@/store/refactored-auth";
 
 interface RequestApproveDialogProps {
   requestId: string;
   stepId?: string;
+  stepType?: string;
+  requesterId?: string;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }: RequestApproveDialogProps) => {
+export const RequestApproveDialog = ({ 
+  requestId, 
+  stepId, 
+  stepType = "decision", 
+  requesterId,
+  isOpen, 
+  onOpenChange 
+}: RequestApproveDialogProps) => {
   const [comments, setComments] = useState("");
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  
+  // Check if this is a self-approval (user is approving their own request)
+  const isSelfApproval = user?.id === requesterId;
   
   const approveMutation = useMutation({
     mutationFn: async () => {
@@ -31,14 +47,33 @@ export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }
         throw new Error("لا يمكن الموافقة على هذا الطلب لأنه لا يوجد خطوة حالية");
       }
       
-      console.log(`Approving request: ${requestId}, step: ${stepId}, comments: "${comments}"`);
+      // Self-approval warning for non-opinion steps
+      if (isSelfApproval && stepType !== 'opinion') {
+        throw new Error("لا يمكن الموافقة على طلبك الخاص إلا في حالة خطوات الرأي فقط");
+      }
       
-      // Use the new RPC function that handles everything in a single transaction
+      console.log(`Approving request: ${requestId}, step: ${stepId}, type: ${stepType}, comments: "${comments}"`);
+      
+      // Add more metadata to help with debugging
+      const metadata = {
+        isSelfApproval,
+        stepType,
+        userId: user?.id,
+        userRole: user?.role,
+        userIsAdmin: user?.isAdmin,
+        clientInfo: {
+          timestamp: new Date().toISOString(),
+          browser: navigator.userAgent
+        }
+      };
+      
+      // Use the RPC function that handles everything in a single transaction
       const { data, error } = await supabase
         .rpc('approve_request', { 
           p_request_id: requestId,
           p_step_id: stepId,
-          p_comments: comments || null
+          p_comments: comments || null,
+          p_metadata: metadata
         });
         
       if (error) {
@@ -56,7 +91,11 @@ export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }
         return;
       }
       
-      toast.success("تمت الموافقة على الطلب بنجاح");
+      const successMessage = stepType === 'opinion' 
+        ? "تم تسجيل رأيك بنجاح" 
+        : "تمت الموافقة على الطلب بنجاح";
+      
+      toast.success(successMessage);
       onOpenChange(false);
       setComments("");
       queryClient.invalidateQueries({ queryKey: ['requests'] });
@@ -76,18 +115,43 @@ export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>الموافقة على الطلب</DialogTitle>
+          <DialogTitle>
+            {stepType === 'opinion' ? 'إبداء الرأي على الطلب' : 'الموافقة على الطلب'}
+          </DialogTitle>
           <DialogDescription>
-            هل أنت متأكد من رغبتك في الموافقة على هذا الطلب؟
+            {stepType === 'opinion' 
+              ? 'الرجاء إبداء رأيك حول هذا الطلب' 
+              : 'هل أنت متأكد من رغبتك في الموافقة على هذا الطلب؟'}
           </DialogDescription>
         </DialogHeader>
+        
+        {isSelfApproval && stepType !== 'opinion' && (
+          <Alert variant="destructive" className="my-2">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>تنبيه</AlertTitle>
+            <AlertDescription>
+              لا يمكن الموافقة على طلبك الخاص إلا في حالة خطوات الرأي فقط.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {stepType === 'opinion' && (
+          <Alert variant="info" className="my-2">
+            <InfoIcon className="h-4 w-4" />
+            <AlertTitle>معلومة</AlertTitle>
+            <AlertDescription>
+              هذه خطوة لإبداء الرأي فقط ولن تؤثر على سير الطلب.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <div className="py-4">
           <label htmlFor="comments" className="block text-sm font-medium mb-2">
-            التعليقات (اختياري)
+            {stepType === 'opinion' ? 'رأيك (اختياري)' : 'التعليقات (اختياري)'}
           </label>
           <Textarea
             id="comments"
-            placeholder="أضف تعليقًا..."
+            placeholder={stepType === 'opinion' ? 'أضف رأيك هنا...' : 'أضف تعليقًا...'}
             value={comments}
             onChange={(e) => setComments(e.target.value)}
             rows={4}
@@ -97,8 +161,12 @@ export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             إلغاء
           </Button>
-          <Button onClick={handleApprove} disabled={approveMutation.isPending} className="bg-green-600 hover:bg-green-700">
-            {approveMutation.isPending ? "جاري المعالجة..." : "موافقة"}
+          <Button 
+            onClick={handleApprove} 
+            disabled={approveMutation.isPending || (isSelfApproval && stepType !== 'opinion')} 
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {approveMutation.isPending ? "جاري المعالجة..." : stepType === 'opinion' ? 'إرسال الرأي' : 'موافقة'}
           </Button>
         </DialogFooter>
       </DialogContent>

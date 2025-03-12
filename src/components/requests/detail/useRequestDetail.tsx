@@ -87,6 +87,16 @@ export const useRequestDetail = (requestId: string) => {
     
     console.log("معلومات الخطوة الحالية:", currentStep);
     
+    // Get step type
+    const stepType = currentStep.step_type || 'decision';
+    console.log("نوع الخطوة:", stepType);
+    
+    // For opinion steps, always allow action
+    if (stepType === 'opinion') {
+      console.log("هذه خطوة رأي ويمكن للمستخدم إبداء رأيه");
+      return true;
+    }
+    
     // Check for direct approval
     if (currentStep.approver_id === user.id) {
       console.log("المستخدم هو المعتمد المباشر للخطوة الحالية");
@@ -117,7 +127,7 @@ export const useRequestDetail = (requestId: string) => {
   };
 
   const handleApproveClick = () => {
-    if (!isCurrentApprover()) {
+    if (!isCurrentApprover() && data?.current_step?.step_type !== 'opinion') {
       toast.error("ليس لديك الصلاحية للموافقة على هذا الطلب");
       return;
     }
@@ -125,7 +135,7 @@ export const useRequestDetail = (requestId: string) => {
   };
 
   const handleRejectClick = () => {
-    if (!isCurrentApprover()) {
+    if (!isCurrentApprover() && data?.current_step?.step_type !== 'opinion') {
       toast.error("ليس لديك الصلاحية لرفض هذا الطلب");
       return;
     }

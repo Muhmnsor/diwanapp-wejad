@@ -36,8 +36,6 @@ const RequestsManagement = () => {
     incomingLoading, 
     outgoingLoading,
     createRequest,
-    approveRequest,
-    rejectRequest,
     isRefreshing
   } = useRequestsEnhanced();
 
@@ -107,70 +105,6 @@ const RequestsManagement = () => {
   const handleRejectRequest = (request: any) => {
     setRequestToAction(request);
     setIsRejectDialogOpen(true);
-  };
-
-  const handleApproveConfirm = (comments: string) => {
-    if (!requestToAction) return;
-    
-    approveRequest.mutate(
-      { 
-        requestId: requestToAction.id, 
-        stepId: requestToAction.current_step_id,
-        comments 
-      }, 
-      {
-        onSuccess: () => {
-          toast.success("تم الموافقة على الطلب بنجاح");
-          setIsApproveDialogOpen(false);
-          setRequestToAction(null);
-          
-          // Refresh the incoming requests list
-          const currentTab = searchParams.get("tab") || "incoming";
-          searchParams.set("tab", currentTab === "incoming" ? "incoming-refresh" : "incoming");
-          setSearchParams(searchParams);
-          
-          setTimeout(() => {
-            searchParams.set("tab", currentTab);
-            setSearchParams(searchParams);
-          }, 100);
-        },
-        onError: (error) => {
-          toast.error(`حدث خطأ أثناء الموافقة على الطلب: ${error.message || "خطأ غير معروف"}`);
-        }
-      }
-    );
-  };
-
-  const handleRejectConfirm = (comments: string) => {
-    if (!requestToAction) return;
-    
-    rejectRequest.mutate(
-      { 
-        requestId: requestToAction.id,
-        stepId: requestToAction.current_step_id,
-        comments 
-      }, 
-      {
-        onSuccess: () => {
-          toast.success("تم رفض الطلب بنجاح");
-          setIsRejectDialogOpen(false);
-          setRequestToAction(null);
-          
-          // Refresh the incoming requests list
-          const currentTab = searchParams.get("tab") || "incoming";
-          searchParams.set("tab", currentTab === "incoming" ? "incoming-refresh" : "incoming");
-          setSearchParams(searchParams);
-          
-          setTimeout(() => {
-            searchParams.set("tab", currentTab);
-            setSearchParams(searchParams);
-          }, 100);
-        },
-        onError: (error) => {
-          toast.error(`حدث خطأ أثناء رفض الطلب: ${error.message || "خطأ غير معروف"}`);
-        }
-      }
-    );
   };
 
   const handleCloseDetailView = () => {
@@ -306,19 +240,27 @@ const RequestsManagement = () => {
             />
           )}
 
-          <RequestApproveDialog
-            requestId={requestToAction?.id || ""}
-            stepId={requestToAction?.current_step_id}
-            isOpen={isApproveDialogOpen}
-            onOpenChange={setIsApproveDialogOpen}
-          />
+          {requestToAction && (
+            <>
+              <RequestApproveDialog
+                requestId={requestToAction?.id || ""}
+                stepId={requestToAction?.current_step_id}
+                stepType={requestToAction?.step_type || "decision"}
+                requesterId={requestToAction?.requester_id}
+                isOpen={isApproveDialogOpen}
+                onOpenChange={setIsApproveDialogOpen}
+              />
 
-          <RequestRejectDialog
-            requestId={requestToAction?.id || ""}
-            stepId={requestToAction?.current_step_id}
-            isOpen={isRejectDialogOpen}
-            onOpenChange={setIsRejectDialogOpen}
-          />
+              <RequestRejectDialog
+                requestId={requestToAction?.id || ""}
+                stepId={requestToAction?.current_step_id}
+                stepType={requestToAction?.step_type || "decision"}
+                requesterId={requestToAction?.requester_id}
+                isOpen={isRejectDialogOpen}
+                onOpenChange={setIsRejectDialogOpen}
+              />
+            </>
+          )}
 
           <Footer />
         </div>
