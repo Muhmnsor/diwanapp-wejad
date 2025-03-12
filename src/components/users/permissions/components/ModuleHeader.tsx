@@ -1,9 +1,8 @@
 
-import { ChevronDown, ChevronLeft, Minus } from "lucide-react";
+import { Module } from "../types";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Module } from "../types";
-import { cn } from "@/lib/utils";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface ModuleHeaderProps {
   module: Module;
@@ -21,40 +20,35 @@ export const ModuleHeader = ({
   onToggleOpen,
 }: ModuleHeaderProps) => {
   return (
-    <div className="bg-muted p-3 flex items-center justify-between">
-      <div className="flex items-center space-x-2 rtl:space-x-reverse">
-        <div className="relative">
-          <Checkbox
-            id={`module-${module.name}`}
-            checked={areAllSelected || areSomeSelected}
-            onCheckedChange={() => onModuleToggle(module)}
-            aria-label={`تحديد كل صلاحيات ${module.name}`}
-          />
-          {areSomeSelected && !areAllSelected && (
-            <Minus 
-              className="h-2.5 w-2.5 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white"
-              aria-hidden="true"
-            />
+    <div className="flex items-center justify-between p-3 bg-background hover:bg-muted/30 cursor-pointer">
+      <div className="flex items-center space-x-4 rtl:space-x-reverse">
+        <Checkbox
+          id={`module-${module.name}`}
+          checked={areAllSelected}
+          indeterminate={areSomeSelected}
+          onCheckedChange={() => onModuleToggle(module)}
+          onClick={(e) => e.stopPropagation()}
+        />
+        <div className="font-medium" onClick={() => onModuleToggle(module)}>
+          {module.displayName || module.name}
+          
+          {module.permissions.length > 0 && (
+            <span className="text-sm text-muted-foreground mr-2">
+              ({module.permissions.length})
+            </span>
           )}
         </div>
-        <label
-          htmlFor={`module-${module.name}`}
-          className="text-sm font-medium select-none cursor-pointer"
-        >
-          {module.name}
-        </label>
       </div>
+      
       <Button
         variant="ghost"
-        size="icon"
-        onClick={onToggleOpen}
-        aria-label={module.isOpen ? "طي الوحدة" : "توسيع الوحدة"}
+        size="sm"
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleOpen();
+        }}
       >
-        {module.isOpen ? (
-          <ChevronDown className="h-4 w-4" />
-        ) : (
-          <ChevronLeft className="h-4 w-4" />
-        )}
+        {module.isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
       </Button>
     </div>
   );

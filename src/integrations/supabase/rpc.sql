@@ -1,4 +1,3 @@
-
 -- UPDATED FUNCTION: Insert request with special handling for developers
 CREATE OR REPLACE FUNCTION public.insert_request_bypass_rls(request_data jsonb)
  RETURNS jsonb
@@ -246,4 +245,78 @@ BEGIN
 END;
 $$;
 
--- Keep other existing functions the same
+-- NEW FUNCTION: Check specific permission for a user based on the granular permission system
+CREATE OR REPLACE FUNCTION public.check_user_permission(
+  p_user_id UUID,
+  p_app_name TEXT,
+  p_permission_name TEXT
+) RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_has_permission BOOLEAN := FALSE;
+  v_is_admin BOOLEAN := FALSE;
+  v_has_direct_permission BOOLEAN := FALSE;
+BEGIN
+  -- First check if user is admin/app_admin (they have all permissions)
+  SELECT EXISTS (
+    SELECT 1 
+    FROM user_roles ur
+    JOIN roles r ON r.id = ur.role_id
+    WHERE ur.user_id = p_user_id
+    AND (r.name = 'admin' OR r.name = 'app_admin' OR r.name = 'developer')
+  ) INTO v_is_admin;
+  
+  IF v_is_admin THEN
+    RETURN TRUE;
+  END IF;
+  
+  -- Check for specific permissions via role_permissions
+  SELECT EXISTS (
+    SELECT 1
+    FROM user_roles ur
+    JOIN role_permissions rp ON ur.role_id = rp.role_id
+    JOIN permissions p ON rp.permission_id = p.id
+    WHERE ur.user_id = p_user_id
+    AND p.module = p_app_name
+    AND p.name = p_permission_name
+  ) INTO v_has_direct_permission;
+  
+  RETURN v_has_direct_permission;
+END;
+$$;
+
+-- NEW FUNCTION: Get all permissions for a user (useful for client-side permission checks)
+CREATE OR REPLACE FUNCTION public.get_user_permissions(p_user_id UUID)
+RETURNS TABLE (
+  app TEXT,
+  permission TEXT
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Check if user is admin/app_admin (they have all permissions)
+  IF EXISTS (
+    SELECT 1 
+    FROM user_roles ur
+    JOIN roles r ON r.id = ur.role_id
+    WHERE ur.user_id = p_user_id
+    AND (r.name = 'admin' OR r.name = 'app_admin' OR r.name = 'developer')
+  ) THEN
+    -- Return all permissions for admins
+    RETURN QUERY
+    SELECT DISTINCT module, name
+    FROM permissions;
+  ELSE
+    -- Return only permissions assigned to the user's roles
+    RETURN QUERY
+    SELECT DISTINCT p.module, p.name
+    FROM user_roles ur
+    JOIN role_permissions rp ON ur.role_id = rp.role_id
+    JOIN permissions p ON rp.permission_id = p.id
+    WHERE ur.user_id = p_user_id;
+  END IF;
+END;
+$$;

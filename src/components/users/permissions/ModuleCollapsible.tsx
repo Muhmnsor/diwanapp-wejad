@@ -43,7 +43,7 @@ export const ModuleCollapsible = ({
       
       {module.isOpen && (
         <ModulePermissionsContent
-          permissions={module.permissions}
+          module={module}
           selectedPermissions={selectedPermissions}
           onPermissionToggle={onPermissionToggle}
         />

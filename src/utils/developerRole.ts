@@ -1,27 +1,47 @@
 
-// Export individual functions from separate modules
-import { initializeDeveloperRole, autoAssignDeveloperRole } from './developer/initialization';
-import { isDeveloper, assignDeveloperRole, removeDeveloperRole } from './developer/roleManagement';
-import { isDeveloperModeEnabled, toggleDeveloperMode } from './developer/modeManagement';
+import { supabase } from "@/integrations/supabase/client";
+import { initializePermissionsSystem } from "./permissions/permissionsSeeder";
 
-// Export everything from the new structure
-export {
-  initializeDeveloperRole,
-  autoAssignDeveloperRole,
-  isDeveloper,
-  assignDeveloperRole,
-  removeDeveloperRole,
-  isDeveloperModeEnabled,
-  toggleDeveloperMode
-};
-
-// Initialize developer features on application start - this is now decoupled from the imports
-export const initializeDeveloperFeatures = async (): Promise<void> => {
+/**
+ * Initialize developer role and permissions system
+ */
+export const initializeDeveloperRole = async () => {
   try {
-    // Get the already-imported function (no circular dependency)
-    await initializeDeveloperRole();
-    console.log('Developer features initialized successfully');
+    // Check if developer role exists
+    const { data: existingRole, error: roleError } = await supabase
+      .from('roles')
+      .select('id, name')
+      .eq('name', 'developer')
+      .maybeSingle();
+      
+    if (roleError) {
+      console.error('Error checking for developer role:', roleError);
+      return;
+    }
+    
+    // If developer role doesn't exist, create it
+    if (!existingRole) {
+      console.log('Developer role does not exist, creating...');
+      
+      const { error: createError } = await supabase
+        .from('roles')
+        .insert({
+          name: 'developer',
+          description: 'دور المطور مع صلاحيات للوصول إلى أدوات التطوير والإعدادات المتقدمة'
+        });
+        
+      if (createError) {
+        console.error('Error creating developer role:', createError);
+        return;
+      }
+      
+      console.log('Developer role created successfully');
+    }
+    
+    // Initialize permissions system
+    await initializePermissionsSystem();
+    
   } catch (error) {
-    console.error('Failed to initialize developer features:', error);
+    console.error('Error in initializeDeveloperRole:', error);
   }
 };
