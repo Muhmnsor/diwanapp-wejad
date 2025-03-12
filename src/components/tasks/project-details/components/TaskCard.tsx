@@ -1,9 +1,10 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, User, Edit, Trash, Clock, CheckCircle2 } from "lucide-react";
 import { Task } from "../types/task";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/utils/formatters";
 import { useState } from "react";
 
 interface TaskCardProps {
