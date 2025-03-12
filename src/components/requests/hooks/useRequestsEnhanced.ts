@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -61,8 +62,17 @@ export const useRequestsEnhanced = () => {
       
       if (error) {
         console.error('Error creating request:', error);
-        throw error;
+        
+        // Provide more specific error message for common issues
+        if (error.message.includes('permission denied')) {
+          throw new Error('ليس لديك صلاحية إنشاء الطلب، يرجى التحقق من دورك في النظام');
+        } else if (error.message.includes('violates foreign key constraint')) {
+          throw new Error('بيانات الطلب غير صحيحة، يرجى التحقق من ارتباط نوع الطلب والمسار');
+        } else {
+          throw error;
+        }
       }
+      
       return data;
     },
     onSuccess: () => {
