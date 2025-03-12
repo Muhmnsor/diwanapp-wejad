@@ -8,6 +8,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/store/refactored-auth";
 
 // Define app information interface
 interface AppInfo {
@@ -86,6 +88,10 @@ export const AppPermissionsManager = ({ role, onPermissionsChange }: AppPermissi
   const [appPermissions, setAppPermissions] = useState<Record<string, boolean>>({});
   const [hasSavedChanges, setHasSavedChanges] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuthStore();
+  
+  // Check if current user is admin or developer
+  const isAdminOrDeveloper = user?.isAdmin || user?.role === 'developer';
 
   // Fetch current app permissions for the role
   const fetchAppPermissions = useCallback(async () => {
@@ -131,6 +137,11 @@ export const AppPermissionsManager = ({ role, onPermissionsChange }: AppPermissi
 
   // Toggle app permission
   const handleToggleAppPermission = async (appKey: string, enabled: boolean) => {
+    if (!isAdminOrDeveloper) {
+      toast.error('ليس لديك صلاحية لتعديل صلاحيات التطبيقات');
+      return;
+    }
+
     // Update local state immediately for better UX
     setAppPermissions(prev => ({
       ...prev,
@@ -170,9 +181,9 @@ export const AppPermissionsManager = ({ role, onPermissionsChange }: AppPermissi
       if (onPermissionsChange) {
         onPermissionsChange();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Exception updating app permission:', error);
-      toast.error('حدث خطأ أثناء تحديث صلاحيات التطبيق');
+      toast.error(`حدث خطأ أثناء تحديث صلاحيات التطبيق: ${error.message}`);
       
       // Revert local state on error
       setAppPermissions(prev => ({
@@ -239,6 +250,15 @@ export const AppPermissionsManager = ({ role, onPermissionsChange }: AppPermissi
           </Alert>
         )}
 
+        {!isAdminOrDeveloper && (
+          <Alert className="mb-4 bg-blue-50">
+            <Info className="h-4 w-4 ml-2" />
+            <AlertDescription>
+              أنت في وضع العرض فقط. فقط المشرفون والمطورون يمكنهم تعديل صلاحيات التطبيقات.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="space-y-4">
           {AVAILABLE_APPS.map((app) => (
             <div key={app.key} className="flex items-center justify-between border-b pb-3">
@@ -246,15 +266,17 @@ export const AppPermissionsManager = ({ role, onPermissionsChange }: AppPermissi
                 <Label htmlFor={`app-${app.key}`} className="text-base font-medium">{app.name}</Label>
                 <p className="text-sm text-muted-foreground">{app.description}</p>
               </div>
-              <Switch 
-                id={`app-${app.key}`}
-                checked={appPermissions[app.key] || false}
-                onCheckedChange={(checked) => handleToggleAppPermission(app.key, checked)}
-                disabled={isSaving === app.key}
-              />
-              {isSaving === app.key && (
-                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-              )}
+              <div className="flex items-center">
+                <Switch 
+                  id={`app-${app.key}`}
+                  checked={appPermissions[app.key] || false}
+                  onCheckedChange={(checked) => handleToggleAppPermission(app.key, checked)}
+                  disabled={isSaving === app.key || !isAdminOrDeveloper}
+                />
+                {isSaving === app.key && (
+                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                )}
+              </div>
             </div>
           ))}
         </div>

@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NoPermissionsMessage } from "./NoPermissionsMessage";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store/refactored-auth";
 
 interface RolePermissionsViewProps {
   role: Role;
@@ -18,6 +19,10 @@ interface RolePermissionsViewProps {
 export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [activeTab, setActiveTab] = useState("permissions");
+  const { user } = useAuthStore();
+  
+  // Check if current user is admin or developer
+  const isAdminOrDeveloper = user?.isAdmin || user?.role === 'developer';
   
   const {
     modules,
@@ -56,18 +61,26 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">صلاحيات الدور: {role.name}</h2>
-        <Button 
-          onClick={handleSave} 
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-              جاري الحفظ...
-            </>
-          ) : 'حفظ الصلاحيات'}
-        </Button>
+        {isAdminOrDeveloper && (
+          <Button 
+            onClick={handleSave} 
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                جاري الحفظ...
+              </>
+            ) : 'حفظ الصلاحيات'}
+          </Button>
+        )}
       </div>
+
+      {!isAdminOrDeveloper && (
+        <div className="p-3 bg-blue-50 rounded-md mb-4 text-sm">
+          أنت في وضع العرض فقط. فقط المشرفون والمطورون يمكنهم تعديل صلاحيات الأدوار.
+        </div>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
@@ -87,6 +100,7 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
                 onPermissionToggle={handlePermissionToggle}
                 onModuleToggle={handleModuleToggle}
                 toggleOpen={toggleModuleOpen}
+                isReadOnly={!isAdminOrDeveloper}
               />
             ))
           )}

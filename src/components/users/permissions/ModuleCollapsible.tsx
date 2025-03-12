@@ -1,8 +1,10 @@
 
+import { useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 interface Permission {
   id: string;
@@ -24,6 +26,7 @@ interface ModuleCollapsibleProps {
   onPermissionToggle: (permissionId: string) => void;
   onModuleToggle: (moduleName: string) => void;
   toggleOpen: (moduleName: string) => void;
+  isReadOnly?: boolean;
 }
 
 export const ModuleCollapsible = ({
@@ -31,70 +34,66 @@ export const ModuleCollapsible = ({
   selectedPermissions,
   onPermissionToggle,
   onModuleToggle,
-  toggleOpen
+  toggleOpen,
+  isReadOnly = false
 }: ModuleCollapsibleProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    toggleOpen(module.name);
+  };
+
   return (
     <Collapsible
-      open={module.isOpen}
-      onOpenChange={() => toggleOpen(module.name)}
-      className="w-full"
+      open={isOpen}
+      onOpenChange={handleOpenChange}
+      className="bg-card border rounded-md mb-2"
     >
-      <Card className="w-full border">
-        <CardHeader className="py-2 px-4">
-          <CollapsibleTrigger className="flex w-full justify-between items-center">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id={`module-${module.name}`}
-                checked={module.isAllSelected}
-                onCheckedChange={() => onModuleToggle(module.name)}
-                onClick={(e) => e.stopPropagation()}
+      <div className="p-4 flex items-center justify-between">
+        <CollapsibleTrigger asChild>
+          <div className="flex items-center cursor-pointer space-x-2 space-x-reverse">
+            {isOpen ? <ChevronUp className="w-4 h-4 ml-2" /> : <ChevronDown className="w-4 h-4 ml-2" />}
+            <h3 className="font-medium">{module.name}</h3>
+          </div>
+        </CollapsibleTrigger>
+        <div className="flex items-center">
+          <Switch 
+            checked={module.isAllSelected}
+            onCheckedChange={() => onModuleToggle(module.name)}
+            disabled={isReadOnly}
+          />
+          <span className="mr-2 text-sm">
+            {module.isAllSelected ? "تحديد الكل" : "تحديد الكل"}
+          </span>
+        </div>
+      </div>
+      <CollapsibleContent className="p-4 pt-0 border-t">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {module.permissions.map((permission) => (
+            <div key={permission.id} className="flex items-start space-x-3 space-x-reverse p-2">
+              <Checkbox 
+                id={permission.id}
+                checked={selectedPermissions[permission.id] || false}
+                onCheckedChange={() => onPermissionToggle(permission.id)}
+                disabled={isReadOnly}
+                className="mt-1"
               />
-              <label
-                htmlFor={`module-${module.name}`}
-                className="text-base font-medium cursor-pointer flex-1"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onModuleToggle(module.name);
-                }}
-              >
-                {module.name}
-              </label>
+              <div className="space-y-1">
+                <Label 
+                  htmlFor={permission.id}
+                  className="font-medium cursor-pointer"
+                >
+                  {permission.name}
+                </Label>
+                {permission.description && (
+                  <p className="text-sm text-muted-foreground">{permission.description}</p>
+                )}
+              </div>
             </div>
-            {module.isOpen ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </CollapsibleTrigger>
-        </CardHeader>
-
-        <CollapsibleContent>
-          <CardContent className="pt-0 px-4 pb-3">
-            <div className="space-y-2">
-              {module.permissions.map((permission) => (
-                <div key={permission.id} className="flex items-start gap-2 pr-6">
-                  <Checkbox
-                    id={`permission-${permission.id}`}
-                    checked={selectedPermissions[permission.id] || false}
-                    onCheckedChange={() => onPermissionToggle(permission.id)}
-                  />
-                  <div className="grid gap-1">
-                    <label
-                      htmlFor={`permission-${permission.id}`}
-                      className="text-sm font-medium leading-none cursor-pointer"
-                    >
-                      {permission.name}
-                    </label>
-                    <p className="text-xs text-muted-foreground">
-                      {permission.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </CollapsibleContent>
-      </Card>
+          ))}
+        </div>
+      </CollapsibleContent>
     </Collapsible>
   );
 };
