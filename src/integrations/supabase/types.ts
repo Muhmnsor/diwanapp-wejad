@@ -2871,10 +2871,43 @@ export type Database = {
             foreignKeyName: "request_approvals_step_id_fkey"
             columns: ["step_id"]
             isOneToOne: false
-            referencedRelation: "request_workflow_steps"
+            referencedRelation: "workflow_steps"
             referencedColumns: ["id"]
           },
         ]
+      }
+      request_approvals_backup: {
+        Row: {
+          approved_at: string | null
+          approver_id: string | null
+          comments: string | null
+          created_at: string | null
+          id: string | null
+          request_id: string | null
+          status: string | null
+          step_id: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approver_id?: string | null
+          comments?: string | null
+          created_at?: string | null
+          id?: string | null
+          request_id?: string | null
+          status?: string | null
+          step_id?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approver_id?: string | null
+          comments?: string | null
+          created_at?: string | null
+          id?: string | null
+          request_id?: string | null
+          status?: string | null
+          step_id?: string | null
+        }
+        Relationships: []
       }
       request_attachments: {
         Row: {
@@ -4342,6 +4375,45 @@ export type Database = {
           step_order?: number
           step_type?: string
           workflow_id?: string
+        }
+        Relationships: []
+      }
+      workflow_steps_backup: {
+        Row: {
+          approver_id: string | null
+          approver_type: string | null
+          created_at: string | null
+          id: string | null
+          instructions: string | null
+          is_required: boolean | null
+          step_name: string | null
+          step_order: number | null
+          step_type: string | null
+          workflow_id: string | null
+        }
+        Insert: {
+          approver_id?: string | null
+          approver_type?: string | null
+          created_at?: string | null
+          id?: string | null
+          instructions?: string | null
+          is_required?: boolean | null
+          step_name?: string | null
+          step_order?: number | null
+          step_type?: string | null
+          workflow_id?: string | null
+        }
+        Update: {
+          approver_id?: string | null
+          approver_type?: string | null
+          created_at?: string | null
+          id?: string | null
+          instructions?: string | null
+          is_required?: boolean | null
+          step_name?: string | null
+          step_order?: number | null
+          step_type?: string | null
+          workflow_id?: string | null
         }
         Relationships: []
       }
