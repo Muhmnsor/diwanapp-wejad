@@ -62,9 +62,16 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
         return;
       }
       
-      toast.success("تم رفض الطلب بنجاح");
+      // Handle different messages based on step type
+      const message = result.step_type === 'opinion' 
+        ? "تم تسجيل رأيك بنجاح" 
+        : "تم رفض الطلب بنجاح";
+        
+      toast.success(message);
       onOpenChange(false);
       setComments("");
+      
+      // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['requests'] });
       queryClient.invalidateQueries({ queryKey: ['request-details', requestId] });
     },

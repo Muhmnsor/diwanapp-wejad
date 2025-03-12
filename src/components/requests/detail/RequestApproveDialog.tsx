@@ -58,9 +58,16 @@ export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }
         return;
       }
       
-      toast.success("تمت الموافقة على الطلب بنجاح");
+      // Handle different messages based on step type
+      const message = result.step_type === 'opinion' 
+        ? "تم تسجيل رأيك بنجاح" 
+        : "تمت الموافقة على الطلب بنجاح";
+      
+      toast.success(message);
       onOpenChange(false);
       setComments("");
+      
+      // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['requests'] });
       queryClient.invalidateQueries({ queryKey: ['request-details', requestId] });
     },
