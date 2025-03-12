@@ -1,19 +1,28 @@
 
-import React, { useState, useMemo } from "react";
-import { Module, PermissionData } from "./types";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Button } from "@/components/ui/button";
-import { ChevronRight } from "lucide-react";
-import { PermissionItem } from "./PermissionItem";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { IndeterminateCheckbox } from "./IndeterminateCheckbox";
-import { cn } from "@/lib/utils";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ChevronDown, ChevronUp } from "lucide-react";
+
+interface Permission {
+  id: string;
+  name: string;
+  description: string;
+}
+
+interface Module {
+  name: string;
+  description: string;
+  permissions: Permission[];
+  isOpen?: boolean;
+  isAllSelected?: boolean;
+}
 
 interface ModuleCollapsibleProps {
   module: Module;
-  selectedPermissions: string[];
+  selectedPermissions: Record<string, boolean>;
   onPermissionToggle: (permissionId: string) => void;
-  onModuleToggle: (modulePermissions: PermissionData[]) => void;
+  onModuleToggle: (moduleName: string) => void;
   toggleOpen: (moduleName: string) => void;
 }
 
@@ -22,75 +31,70 @@ export const ModuleCollapsible = ({
   selectedPermissions,
   onPermissionToggle,
   onModuleToggle,
-  toggleOpen,
+  toggleOpen
 }: ModuleCollapsibleProps) => {
-  const modulePermissionsIds = useMemo(
-    () => module.permissions.map((permission) => permission.id),
-    [module.permissions]
-  );
-
-  const selectedModulePermissionsCount = useMemo(
-    () => modulePermissionsIds.filter((id) => selectedPermissions.includes(id)).length,
-    [modulePermissionsIds, selectedPermissions]
-  );
-
-  const isModuleChecked = selectedModulePermissionsCount === modulePermissionsIds.length && modulePermissionsIds.length > 0;
-  const isModuleIndeterminate = selectedModulePermissionsCount > 0 && selectedModulePermissionsCount < modulePermissionsIds.length;
-
-  const handleModuleToggle = () => {
-    onModuleToggle(module.permissions);
-  };
-
-  const getModuleDisplayName = () => {
-    if (module.displayName) return module.displayName;
-    // If no display name is provided, capitalize first letter of module name
-    return module.name.charAt(0).toUpperCase() + module.name.slice(1);
-  };
-
   return (
-    <Card className="overflow-hidden">
-      <Collapsible open={module.isOpen} onOpenChange={() => toggleOpen(module.name)}>
-        <CardHeader className="p-3 bg-muted/30">
-          <div className="flex items-center justify-between">
+    <Collapsible
+      open={module.isOpen}
+      onOpenChange={() => toggleOpen(module.name)}
+      className="w-full"
+    >
+      <Card className="w-full border">
+        <CardHeader className="py-2 px-4">
+          <CollapsibleTrigger className="flex w-full justify-between items-center">
             <div className="flex items-center gap-2">
-              <IndeterminateCheckbox
-                checked={isModuleChecked}
-                indeterminate={isModuleIndeterminate}
-                onCheckedChange={handleModuleToggle}
-                className={cn(
-                  "data-[state=indeterminate]:bg-primary/50 data-[state=indeterminate]:text-primary-foreground"
-                )}
+              <Checkbox
+                id={`module-${module.name}`}
+                checked={module.isAllSelected}
+                onCheckedChange={() => onModuleToggle(module.name)}
+                onClick={(e) => e.stopPropagation()}
               />
-              <CardTitle className="text-base">{getModuleDisplayName()}</CardTitle>
+              <label
+                htmlFor={`module-${module.name}`}
+                className="text-base font-medium cursor-pointer flex-1"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onModuleToggle(module.name);
+                }}
+              >
+                {module.name}
+              </label>
             </div>
-            
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="sm" className="p-1 h-7 w-7">
-                <ChevronRight className={`h-4 w-4 transition-transform ${module.isOpen ? "rotate-90" : ""}`} />
-              </Button>
-            </CollapsibleTrigger>
-          </div>
-        </CardHeader>
-        
-        <CollapsibleContent>
-          <CardContent className="p-3 pt-0 grid gap-1.5">
-            {module.permissions.length > 0 ? (
-              module.permissions.map((permission) => (
-                <PermissionItem
-                  key={permission.id}
-                  permission={permission}
-                  isChecked={selectedPermissions.includes(permission.id)}
-                  onToggle={onPermissionToggle}
-                />
-              ))
+            {module.isOpen ? (
+              <ChevronUp className="h-4 w-4" />
             ) : (
-              <div className="text-sm text-muted-foreground p-1">
-                لا توجد صلاحيات محددة في هذه المجموعة
-              </div>
+              <ChevronDown className="h-4 w-4" />
             )}
+          </CollapsibleTrigger>
+        </CardHeader>
+
+        <CollapsibleContent>
+          <CardContent className="pt-0 px-4 pb-3">
+            <div className="space-y-2">
+              {module.permissions.map((permission) => (
+                <div key={permission.id} className="flex items-start gap-2 pr-6">
+                  <Checkbox
+                    id={`permission-${permission.id}`}
+                    checked={selectedPermissions[permission.id] || false}
+                    onCheckedChange={() => onPermissionToggle(permission.id)}
+                  />
+                  <div className="grid gap-1">
+                    <label
+                      htmlFor={`permission-${permission.id}`}
+                      className="text-sm font-medium leading-none cursor-pointer"
+                    >
+                      {permission.name}
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      {permission.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </CollapsibleContent>
-      </Collapsible>
-    </Card>
+      </Card>
+    </Collapsible>
   );
 };

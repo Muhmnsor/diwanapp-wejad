@@ -1,57 +1,91 @@
 
-import React, { useState, useEffect } from "react";
-import { Switch } from "@/components/ui/switch";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
 import { Role } from "../types";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
-// Define app information type
+// Define app information interface
 interface AppInfo {
+  name: string;
   key: string;
-  displayName: string;
   description: string;
 }
 
-// List of all apps with their info
-const APPS: AppInfo[] = [
-  { key: 'events', displayName: 'إدارة الفعاليات', description: 'إدارة وتنظيم الفعاليات والأنشطة' },
-  { key: 'documents', displayName: 'إدارة المستندات', description: 'إدارة وتنظيم المستندات والملفات' },
-  { key: 'tasks', displayName: 'إدارة المهام', description: 'إدارة وتتبع المهام والمشاريع' },
-  { key: 'ideas', displayName: 'إدارة الأفكار', description: 'إدارة وتنظيم الأفكار والمقترحات' },
-  { key: 'finance', displayName: 'إدارة الأموال', description: 'إدارة الميزانية والمصروفات' },
-  { key: 'users', displayName: 'إدارة المستخدمين', description: 'إدارة حسابات المستخدمين والصلاحيات' },
-  { key: 'website', displayName: 'الموقع الإلكتروني', description: 'إدارة وتحديث محتوى الموقع الإلكتروني' },
-  { key: 'store', displayName: 'المتجر الإلكتروني', description: 'إدارة المنتجات والطلبات في المتجر الإلكتروني' },
-  { key: 'notifications', displayName: 'الإشعارات', description: 'عرض وإدارة إشعارات النظام' },
-  { key: 'requests', displayName: 'إدارة الطلبات', description: 'إدارة ومتابعة الطلبات والاستمارات والاعتمادات' },
-  { key: 'developer', displayName: 'المطورين', description: 'إعدادات وأدوات المطورين' },
+// List of available apps
+const AVAILABLE_APPS: AppInfo[] = [
+  {
+    name: "إدارة الفعاليات",
+    key: "events",
+    description: "إدارة وتنظيم الفعاليات والأنشطة"
+  },
+  {
+    name: "إدارة المستندات",
+    key: "documents",
+    description: "إدارة وتنظيم المستندات والملفات"
+  },
+  {
+    name: "إدارة المهام",
+    key: "tasks",
+    description: "إدارة وتتبع المهام والمشاريع"
+  },
+  {
+    name: "إدارة الأفكار",
+    key: "ideas",
+    description: "إدارة وتنظيم الأفكار والمقترحات"
+  },
+  {
+    name: "إدارة الأموال",
+    key: "finance",
+    description: "إدارة الميزانية والمصروفات"
+  },
+  {
+    name: "إدارة المستخدمين",
+    key: "users",
+    description: "إدارة حسابات المستخدمين والصلاحيات"
+  },
+  {
+    name: "الموقع الإلكتروني",
+    key: "website",
+    description: "إدارة وتحديث محتوى الموقع الإلكتروني"
+  },
+  {
+    name: "المتجر الإلكتروني",
+    key: "store",
+    description: "إدارة المنتجات والطلبات في المتجر الإلكتروني"
+  },
+  {
+    name: "الإشعارات",
+    key: "notifications",
+    description: "عرض وإدارة إشعارات النظام"
+  },
+  {
+    name: "إدارة الطلبات",
+    key: "requests",
+    description: "إدارة ومتابعة الطلبات والاستمارات والاعتمادات"
+  },
+  {
+    name: "المطورين",
+    key: "developer",
+    description: "إعدادات وأدوات المطورين"
+  }
 ];
 
 interface AppPermissionsManagerProps {
   role: Role;
-  onChange?: (apps: string[]) => void;
 }
 
-export const AppPermissionsManager: React.FC<AppPermissionsManagerProps> = ({ role, onChange }) => {
-  const [enabledApps, setEnabledApps] = useState<string[]>([]);
+export const AppPermissionsManager = ({ role }: AppPermissionsManagerProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [appPermissions, setAppPermissions] = useState<Record<string, boolean>>({});
 
-  // Load app permissions for this role
+  // Fetch current app permissions for the role
   useEffect(() => {
-    const loadAppPermissions = async () => {
-      if (!role?.id) {
-        setIsLoading(false);
-        return;
-      }
-
+    const fetchAppPermissions = async () => {
       setIsLoading(true);
       try {
         const { data, error } = await supabase
@@ -61,64 +95,70 @@ export const AppPermissionsManager: React.FC<AppPermissionsManagerProps> = ({ ro
 
         if (error) throw error;
 
-        // Set enabled apps from data
-        setEnabledApps(data.map(item => item.app_name));
+        // Convert to a map of app_name -> true
+        const permissionsMap: Record<string, boolean> = {};
+        AVAILABLE_APPS.forEach(app => {
+          permissionsMap[app.key] = false;
+        });
+
+        data.forEach(perm => {
+          permissionsMap[perm.app_name] = true;
+        });
+
+        setAppPermissions(permissionsMap);
       } catch (error) {
-        console.error('Error loading app permissions:', error);
+        console.error('Error fetching app permissions:', error);
+        toast.error('حدث خطأ أثناء تحميل صلاحيات التطبيقات');
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadAppPermissions();
-  }, [role?.id]);
+    if (role?.id) {
+      fetchAppPermissions();
+    }
+  }, [role]);
 
-  // Handle toggling app permission
-  const handleToggleApp = async (appKey: string) => {
+  // Toggle app permission
+  const handleToggleAppPermission = async (appKey: string, enabled: boolean) => {
+    // Update local state immediately for better UX
+    setAppPermissions(prev => ({
+      ...prev,
+      [appKey]: enabled
+    }));
+
     setIsSaving(true);
-    
     try {
-      // Update local state first for immediate feedback
-      const newEnabledApps = enabledApps.includes(appKey)
-        ? enabledApps.filter(app => app !== appKey)
-        : [...enabledApps, appKey];
-        
-      setEnabledApps(newEnabledApps);
-      
-      // If removing access, delete the permission record
-      if (enabledApps.includes(appKey)) {
-        await supabase
-          .from('app_permissions')
-          .delete()
-          .eq('role_id', role.id)
-          .eq('app_name', appKey);
-      } 
-      // If adding access, insert a new permission record
-      else {
-        await supabase
+      if (enabled) {
+        // Add permission
+        const { error } = await supabase
           .from('app_permissions')
           .insert({
             role_id: role.id,
             app_name: appKey
           });
+
+        if (error) throw error;
+      } else {
+        // Remove permission
+        const { error } = await supabase
+          .from('app_permissions')
+          .delete()
+          .eq('role_id', role.id)
+          .eq('app_name', appKey);
+
+        if (error) throw error;
       }
-      
-      // Notify parent of change if callback exists
-      if (onChange) {
-        onChange(newEnabledApps);
-      }
+      toast.success(`تم ${enabled ? 'منح' : 'إلغاء'} الوصول إلى ${AVAILABLE_APPS.find(app => app.key === appKey)?.name}`);
     } catch (error) {
-      console.error('Error toggling app permission:', error);
+      console.error('Error updating app permission:', error);
+      toast.error('حدث خطأ أثناء تحديث صلاحيات التطبيق');
       
       // Revert local state on error
-      const { data } = await supabase
-        .from('app_permissions')
-        .select('app_name')
-        .eq('role_id', role.id);
-        
-      if (data) {
-        setEnabledApps(data.map(item => item.app_name));
-      }
+      setAppPermissions(prev => ({
+        ...prev,
+        [appKey]: !enabled
+      }));
     } finally {
       setIsSaving(false);
     }
@@ -134,34 +174,27 @@ export const AppPermissionsManager: React.FC<AppPermissionsManagerProps> = ({ ro
   }
 
   return (
-    <Card className="mt-6">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold">صلاحيات الوصول للتطبيقات</CardTitle>
-        <CardDescription>
-          تحديد التطبيقات التي يمكن لهذا الدور الوصول إليها
-        </CardDescription>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>صلاحيات الوصول للتطبيقات</CardTitle>
+        <CardDescription>تحديد التطبيقات التي يمكن للمستخدمين ذوي هذا الدور الوصول إليها</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {APPS.map((app) => (
-            <div key={app.key} className="flex items-center justify-between p-2 border rounded hover:bg-muted/20">
+          {AVAILABLE_APPS.map((app) => (
+            <div key={app.key} className="flex items-center justify-between border-b pb-3">
               <div>
-                <h3 className="font-medium">{app.displayName}</h3>
+                <Label htmlFor={`app-${app.key}`} className="text-base font-medium">{app.name}</Label>
                 <p className="text-sm text-muted-foreground">{app.description}</p>
               </div>
-              <Switch
-                checked={enabledApps.includes(app.key)}
-                onCheckedChange={() => handleToggleApp(app.key)}
+              <Switch 
+                id={`app-${app.key}`}
+                checked={appPermissions[app.key] || false}
+                onCheckedChange={(checked) => handleToggleAppPermission(app.key, checked)}
                 disabled={isSaving}
               />
             </div>
           ))}
-
-          {APPS.length === 0 && (
-            <div className="text-center p-4 border rounded bg-muted/10">
-              لا توجد تطبيقات متاحة للتكوين
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>
