@@ -1,4 +1,3 @@
-
 import { Navigation } from "@/components/Navigation";
 import { UserNav } from "@/components/navigation/UserNav";
 import { useLocation, useSearchParams } from "react-router-dom";
@@ -130,13 +129,37 @@ export const TopHeader = () => {
                   
                   <Link to="/tasks#reports" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "reports" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`} onClick={() => handleTabChange("reports")}>
                     <FileText className="h-4 w-4" />
-                    <span>التقارير</span>
+                    <span>التقار��ر</span>
                   </Link>
                 </div>
               </div>
             </div>}
 
-          {/* Removed the requests page navigation bar as it's redundant with the tabbed navigation in RequestsManagement */}
+          {isRequestsPage && <div className="w-full bg-white border-t py-3">
+              <div className="flex justify-center">
+                <div className="flex gap-6 items-center">
+                  <Link to="/requests" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "incoming" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}>
+                    <Inbox className="h-4 w-4" />
+                    <span>الطلبات الواردة</span>
+                  </Link>
+                  
+                  <Link to="/requests?tab=outgoing" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "outgoing" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}>
+                    <FileText className="h-4 w-4" />
+                    <span>الطلبات الصادرة</span>
+                  </Link>
+
+                  <Link to="/requests?tab=approvals" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "approvals" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}>
+                    <ClipboardList className="h-4 w-4" />
+                    <span>الاعتمادات</span>
+                  </Link>
+
+                  <Link to="/requests?tab=forms" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "forms" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}>
+                    <FolderKanban className="h-4 w-4" />
+                    <span>النماذج والاستمارات</span>
+                  </Link>
+                </div>
+              </div>
+            </div>}
         </div>
       </div>
     </div>;

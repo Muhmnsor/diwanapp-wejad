@@ -31,21 +31,16 @@ export const RequestsWrapper = ({ children }: RequestsWrapperProps) => {
     
     window.addEventListener("error", handleWorkflowError);
     
-    // Add a data attribute to the document body to indicate we're in the requests module
-    document.body.setAttribute('data-module', 'requests');
-    
     return () => {
       window.removeEventListener("error", handleWorkflowError);
-      // Remove the data attribute when unmounting
-      document.body.removeAttribute('data-module');
     };
   }, []);
 
   return (
-    <div data-requests-module="true">
+    <>
       {children}
       {/* Hidden debugger component that adds logging */}
       {process.env.NODE_ENV !== "production" && <RequestDebugger enableRepair={true} />}
-    </div>
+    </>
   );
 };
