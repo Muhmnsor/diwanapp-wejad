@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Role } from "./types";
+import { useAuthStore } from "@/store/refactored-auth";
 
 interface RoleDialogProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ export const RoleDialog = ({ isOpen, onClose, role, onSave }: RoleDialogProps) =
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuthStore();
 
   useEffect(() => {
     if (role) {
@@ -46,8 +48,15 @@ export const RoleDialog = ({ isOpen, onClose, role, onSave }: RoleDialogProps) =
       return;
     }
 
+    if (!user) {
+      toast.error("يجب تسجيل الدخول لإضافة أو تعديل الأدوار");
+      return;
+    }
+
     setIsLoading(true);
     try {
+      console.log("Saving role with name:", name);
+      
       if (role) {
         // تحديث دور موجود
         const { error } = await supabase
@@ -55,27 +64,47 @@ export const RoleDialog = ({ isOpen, onClose, role, onSave }: RoleDialogProps) =
           .update({ name, description })
           .eq('id', role.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error updating role:", error);
+          throw error;
+        }
       } else {
         // إضافة دور جديد
         const { error } = await supabase
           .from('roles')
           .insert([{ name, description }]);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error inserting role:", error);
+          throw error;
+        }
       }
 
       // تسجيل نشاط المستخدم
-      await supabase.rpc('log_user_activity', {
-        user_id: (await supabase.auth.getUser()).data.user?.id,
-        activity_type: role ? 'role_update' : 'role_create',
-        details: role ? `تم تحديث الدور: ${name}` : `تم إنشاء دور جديد: ${name}`
-      });
+      try {
+        await supabase.rpc('log_user_activity', {
+          user_id: user.id,
+          activity_type: role ? 'role_update' : 'role_create',
+          details: role ? `تم تحديث الدور: ${name}` : `تم إنشاء دور جديد: ${name}`
+        });
+      } catch (activityError) {
+        console.error("Error logging activity:", activityError);
+        // Non-critical, continue even if activity logging fails
+      }
 
+      toast.success(role ? "تم تحديث الدور بنجاح" : "تم إضافة الدور بنجاح");
       onSave();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving role:", error);
-      toast.error("حدث خطأ أثناء حفظ الدور");
+      
+      // Display more helpful error messages
+      if (error.code === "42501") {
+        toast.error("ليست لديك صلاحية لإضافة أو تعديل الأدوار");
+      } else if (error.code === "23505") {
+        toast.error("يوجد دور بهذا الاسم بالفعل");
+      } else {
+        toast.error(`حدث خطأ أثناء حفظ الدور: ${error.message || error}`);
+      }
     } finally {
       setIsLoading(false);
     }
