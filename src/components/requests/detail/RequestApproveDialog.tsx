@@ -40,8 +40,30 @@ export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }
       
       console.log(`Approving request: ${requestId}, step: ${stepId}, by user: ${userId}, comments: "${comments}"`);
       
+      // First, check if user has already approved this step
+      const { data: existingApproval, error: checkError } = await supabase
+        .from('request_approvals')
+        .select('id, status')
+        .eq('request_id', requestId)
+        .eq('step_id', stepId)
+        .eq('approver_id', userId)
+        .maybeSingle();
+        
+      if (checkError) {
+        console.error("Error checking existing approval:", checkError);
+      }
+      
+      if (existingApproval) {
+        console.log("User has already processed this request step:", existingApproval);
+        return { 
+          success: false, 
+          message: `لقد قمت بالفعل بـ ${existingApproval.status === 'approved' ? 'الموافقة على' : 'رفض'} هذا الطلب` 
+        };
+      }
+      
+      // Create a single transaction for both operations
       try {
-        // Step 1: Add the approval record - explicitly set comments to empty string if null
+        // Step 1: Add the approval record
         const { data: approvalData, error: approvalError } = await supabase
           .from('request_approvals')
           .insert({
@@ -49,7 +71,7 @@ export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }
             step_id: stepId,
             approver_id: userId,
             status: 'approved',
-            comments: comments || "" // Ensure comments is never null
+            comments: comments.trim() || "" // Ensure comments is never null and trim whitespace
           })
           .select()
           .single();
@@ -61,7 +83,8 @@ export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }
         
         console.log("Approval record created successfully:", approvalData);
         
-        // Step 2: Update the request status if needed
+        // Step 2: Update the request status through RPC function
+        // This approach avoids direct table updates that might trigger RLS policies
         const { data: requestData, error: requestError } = await supabase
           .rpc('update_request_after_approval', { 
             p_request_id: requestId,
@@ -75,13 +98,19 @@ export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }
           console.log("Request status update result:", requestData);
         }
         
-        return approvalData;
+        return { success: true, data: approvalData };
       } catch (error) {
         console.error("Error in approval process:", error);
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      if (result && !result.success) {
+        toast.warning(result.message);
+        onOpenChange(false);
+        return;
+      }
+      
       toast.success("تمت الموافقة على الطلب بنجاح");
       onOpenChange(false);
       setComments("");

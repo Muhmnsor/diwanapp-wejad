@@ -44,8 +44,29 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
       
       console.log(`Rejecting request: ${requestId}, step: ${stepId}, by user: ${userId}, comments: "${comments}"`);
 
+      // First, check if user has already processed this step
+      const { data: existingApproval, error: checkError } = await supabase
+        .from('request_approvals')
+        .select('id, status')
+        .eq('request_id', requestId)
+        .eq('step_id', stepId)
+        .eq('approver_id', userId)
+        .maybeSingle();
+        
+      if (checkError) {
+        console.error("Error checking existing approval:", checkError);
+      }
+      
+      if (existingApproval) {
+        console.log("User has already processed this request step:", existingApproval);
+        return { 
+          success: false, 
+          message: `لقد قمت بالفعل بـ ${existingApproval.status === 'approved' ? 'الموافقة على' : 'رفض'} هذا الطلب` 
+        };
+      }
+
       try {
-        // Step 1: Add the rejection record - Ensure comments is not null
+        // Step 1: Add the rejection record
         const { data: rejectionData, error: rejectionError } = await supabase
           .from('request_approvals')
           .insert({
@@ -53,7 +74,7 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
             step_id: stepId,
             approver_id: userId,
             status: 'rejected',
-            comments: comments.trim() // Ensure comments is never null and trim whitespace
+            comments: comments.trim() // Ensure comments is not null and trim whitespace
           })
           .select()
           .single();
@@ -79,13 +100,19 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
           console.log("Request status update result:", requestData);
         }
         
-        return rejectionData;
+        return { success: true, data: rejectionData };
       } catch (error) {
         console.error("Error in rejection process:", error);
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      if (result && !result.success) {
+        toast.warning(result.message);
+        onOpenChange(false);
+        return;
+      }
+      
       toast.success("تم رفض الطلب بنجاح");
       onOpenChange(false);
       setComments("");
@@ -99,6 +126,10 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
   });
 
   const handleReject = () => {
+    if (!comments.trim()) {
+      toast.error("يجب إدخال سبب الرفض");
+      return;
+    }
     rejectMutation.mutate();
   };
 
