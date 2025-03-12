@@ -31,78 +31,23 @@ export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }
         throw new Error("لا يمكن الموافقة على هذا الطلب لأنه لا يوجد خطوة حالية");
       }
       
-      const { data: session } = await supabase.auth.getSession();
-      const userId = session.session?.user.id;
+      console.log(`Approving request: ${requestId}, step: ${stepId}, comments: "${comments}"`);
       
-      if (!userId) {
-        throw new Error("يجب تسجيل الدخول للموافقة على الطلب");
-      }
-      
-      console.log(`Approving request: ${requestId}, step: ${stepId}, by user: ${userId}, comments: "${comments}"`);
-      
-      // First, check if user has already approved this step
-      const { data: existingApproval, error: checkError } = await supabase
-        .from('request_approvals')
-        .select('id, status')
-        .eq('request_id', requestId)
-        .eq('step_id', stepId)
-        .eq('approver_id', userId)
-        .maybeSingle();
+      // Use the new RPC function that handles everything in a single transaction
+      const { data, error } = await supabase
+        .rpc('approve_request', { 
+          p_request_id: requestId,
+          p_step_id: stepId,
+          p_comments: comments || null
+        });
         
-      if (checkError) {
-        console.error("Error checking existing approval:", checkError);
-      }
-      
-      if (existingApproval) {
-        console.log("User has already processed this request step:", existingApproval);
-        return { 
-          success: false, 
-          message: `لقد قمت بالفعل بـ ${existingApproval.status === 'approved' ? 'الموافقة على' : 'رفض'} هذا الطلب` 
-        };
-      }
-      
-      // Create a single transaction for both operations
-      try {
-        // Step 1: Add the approval record
-        const { data: approvalData, error: approvalError } = await supabase
-          .from('request_approvals')
-          .insert({
-            request_id: requestId,
-            step_id: stepId,
-            approver_id: userId,
-            status: 'approved',
-            comments: comments.trim() || "" // Ensure comments is never null and trim whitespace
-          })
-          .select()
-          .single();
-          
-        if (approvalError) {
-          console.error("Error creating approval record:", approvalError);
-          throw approvalError;
-        }
-        
-        console.log("Approval record created successfully:", approvalData);
-        
-        // Step 2: Update the request status through RPC function
-        // This approach avoids direct table updates that might trigger RLS policies
-        const { data: requestData, error: requestError } = await supabase
-          .rpc('update_request_after_approval', { 
-            p_request_id: requestId,
-            p_step_id: stepId
-          });
-          
-        if (requestError) {
-          console.error("Error updating request status:", requestError);
-          throw requestError;
-        } else {
-          console.log("Request status update result:", requestData);
-        }
-        
-        return { success: true, data: approvalData };
-      } catch (error) {
-        console.error("Error in approval process:", error);
+      if (error) {
+        console.error("Error approving request:", error);
         throw error;
       }
+      
+      console.log("Approval result:", data);
+      return data;
     },
     onSuccess: (result) => {
       if (result && !result.success) {
