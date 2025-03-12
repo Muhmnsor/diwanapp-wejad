@@ -1,4 +1,3 @@
-
 import { 
   Database, 
   ListChecks, 
@@ -228,7 +227,7 @@ const ALL_APPS: AppItem[] = [
     title: "المتجر الإلكتروني",
     icon: ShoppingCart,
     path: "/store",
-    description: "إدارة المنتجات والطلبات في المتجر الإلكتروني",
+    description: "إدارة المن��جات والطلبات في المتجر الإلكتروني",
     notifications: 0
   },
   {
@@ -266,20 +265,12 @@ export const getAppsList = (notificationCounts: NotificationCounts, user?: User 
     isAdmin: user.isAdmin
   });
   
-  // If user is admin, return all apps with notifications
-  if (user.isAdmin) {
-    console.log('User is admin, showing all apps');
-    return ALL_APPS.map(app => ({
-      ...app,
-      notifications: getNotificationCount(app.path, notificationCounts)
-    }));
-  }
-  
   // Get user role and normalize it
   const userRole = user.role || '';
   console.log('User role before mapping:', userRole);
   
-  // For non-admin users, filter apps based on role
+  // *** IMPORTANT CHANGE: Always filter apps based on roles and permissions ***
+  // This now applies to all users, including admins
   const filteredApps = ALL_APPS.filter(app => {
     const appKey = getAppKeyFromPath(app.path);
     // Only show apps the user has access to based on their role
