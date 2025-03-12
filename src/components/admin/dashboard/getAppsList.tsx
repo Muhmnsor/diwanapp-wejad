@@ -36,12 +36,14 @@ export const APP_ROLE_ACCESS = {
   ideas: [
     'admin', 'app_admin', 'developer',
     'idea_manager', 'finance_manager', 'financial_manager',
-    'idea_reviewer', 'idea_creator', 'innovation_manager'
+    'idea_reviewer', 'idea_creator', 'innovation_manager',
+    'event_media' // Added event_media to ideas access
   ],
   finance: [
     'admin', 'app_admin', 'developer',
     'finance_manager', 'financial_manager', 'accountant',
-    'budget_manager', 'resource_manager'
+    'budget_manager', 'resource_manager',
+    'event_media' // Added event_media to finance access
   ],
   users: [
     'admin', 'app_admin', 'developer',
