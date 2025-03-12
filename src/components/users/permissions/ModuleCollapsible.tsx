@@ -114,10 +114,12 @@ export const ModuleCollapsible = ({
                         className="ml-2"
                         checked={isCategoryAllSelected(category)}
                         disabled={isReadOnly}
-                        // Handle indeterminate state
+                        // Handle indeterminate state for checkboxes, not buttons
                         ref={(input) => {
                           if (input) {
-                            input.indeterminate = isCategoryPartiallySelected(category);
+                            // Use type assertion to help TypeScript recognize this is a checkbox input
+                            const checkboxElement = input as unknown as HTMLInputElement;
+                            checkboxElement.indeterminate = isCategoryPartiallySelected(category);
                           }
                         }}
                       />
