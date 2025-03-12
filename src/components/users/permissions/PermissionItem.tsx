@@ -24,7 +24,7 @@ export const PermissionItem = ({
         htmlFor={`permission-${permission.id}`}
         className="text-sm leading-none cursor-pointer select-none"
       >
-        {permission.name.toString()}
+        {permission.description || permission.display_name || permission.name}
       </label>
     </div>
   );

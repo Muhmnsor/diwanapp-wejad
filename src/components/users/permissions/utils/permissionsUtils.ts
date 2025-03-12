@@ -1,5 +1,5 @@
 
-import { Module, PermissionData, Category, PermissionGroup } from "../types";
+import { Module, PermissionData, Category, PermissionGroup, MODULE_TRANSLATIONS, PERMISSION_CATEGORIES } from "../types";
 
 /**
  * تنظيم الأذونات حسب الوحدة
@@ -100,6 +100,11 @@ export const organizePermissionsForUI = (permissions: PermissionData[]): Permiss
  * Format a module name for display
  */
 export const formatModuleName = (name: string): string => {
+  // Check if we have a translation for this module
+  if (MODULE_TRANSLATIONS[name]) {
+    return MODULE_TRANSLATIONS[name];
+  }
+  
   return name
     .split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -110,24 +115,15 @@ export const formatModuleName = (name: string): string => {
  * Format a category name for display
  */
 export const formatCategoryName = (name: string): string => {
-  // Map of known category names to their Arabic display names
-  const categoryDisplayNames: Record<string, string> = {
-    'general': 'عام',
-    'access': 'الوصول',
-    'create': 'إنشاء',
-    'read': 'عرض',
-    'update': 'تحديث',
-    'delete': 'حذف',
-    'admin': 'إدارة',
-    'workflow': 'سير العمل',
-    'reports': 'التقارير',
-    'settings': 'الإعدادات'
-  };
+  // Check if we have a translation for this category
+  if (PERMISSION_CATEGORIES[name]) {
+    return PERMISSION_CATEGORIES[name];
+  }
   
-  return categoryDisplayNames[name] || 
-    name.split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+  return name
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 };
 
 /**
@@ -146,4 +142,23 @@ export const formatPermissionName = (name: string): string => {
     .split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+};
+
+/**
+ * Standardize permission name to consistent format
+ */
+export const standardizePermissionName = (name: string, module: string): string => {
+  // Remove module prefix if it exists
+  const cleanName = name.startsWith(`${module}_`) ? name.substring(module.length + 1) : name;
+  
+  // Create standardized name in format: module_action
+  return `${module}_${cleanName}`;
+};
+
+/**
+ * Normalize module name to English
+ */
+export const normalizeModuleName = (moduleName: string): string => {
+  // Check if we have a mapping for this Arabic module name
+  return MODULE_TRANSLATIONS[moduleName] || moduleName;
 };

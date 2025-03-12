@@ -1,11 +1,8 @@
-
 import { useState, useCallback } from "react";
-import { Module } from "../types";
 
 export const usePermissionOperations = () => {
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
 
-  // تبديل إذن معين
   const handlePermissionToggle = useCallback((permissionId: string) => {
     setSelectedPermissions(prev => {
       if (prev.includes(permissionId)) {
@@ -16,36 +13,35 @@ export const usePermissionOperations = () => {
     });
   }, []);
 
-  // تبديل كل أذونات الوحدة
-  const handleModuleToggle = useCallback((module: Module) => {
-    const modulePermissionIds = module.permissions.map(p => p.id);
-    const allSelected = modulePermissionIds.every(id => selectedPermissions.includes(id));
+  const handleModuleToggle = useCallback((module: any) => {
+    const modulePermissionIds = module.permissions.map((p: any) => p.id);
     
-    if (allSelected) {
-      // إزالة كل أذونات الوحدة
-      setSelectedPermissions(prev => 
-        prev.filter(id => !modulePermissionIds.includes(id))
-      );
-    } else {
-      // إضافة كل أذونات الوحدة غير المحددة
-      const missingPermissions = modulePermissionIds.filter(
-        id => !selectedPermissions.includes(id)
-      );
-      setSelectedPermissions(prev => [...prev, ...missingPermissions]);
-    }
-  }, [selectedPermissions]);
-
-  // تبديل حالة فتح/إغلاق وحدة
-  const toggleModuleOpen = useCallback((moduleName: string) => {
-    console.log(`تبديل حالة الوحدة: ${moduleName}`);
-    // تم نقل المنطق إلى المكون الرئيسي
+    setSelectedPermissions(prev => {
+      // Check if all permissions in this module are already selected
+      const allSelected = modulePermissionIds.every(id => prev.includes(id));
+      
+      if (allSelected) {
+        // If all are selected, remove them all
+        return prev.filter(id => !modulePermissionIds.includes(id));
+      } else {
+        // Otherwise, add all missing permissions
+        const newSelectedPermissions = [...prev];
+        
+        modulePermissionIds.forEach(id => {
+          if (!newSelectedPermissions.includes(id)) {
+            newSelectedPermissions.push(id);
+          }
+        });
+        
+        return newSelectedPermissions;
+      }
+    });
   }, []);
 
   return {
     selectedPermissions,
     setSelectedPermissions,
     handlePermissionToggle,
-    handleModuleToggle,
-    toggleModuleOpen
+    handleModuleToggle
   };
 };
