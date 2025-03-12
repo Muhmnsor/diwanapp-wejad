@@ -7,12 +7,16 @@ import { usePermissions } from "./usePermissions";
 import { AppPermissionsManager } from "./AppPermissionsManager";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { NoPermissionsMessage } from "./NoPermissionsMessage";
+import { useState } from "react";
 
 interface RolePermissionsViewProps {
   role: Role;
 }
 
 export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
+  const [refreshKey, setRefreshKey] = useState(0);
+  
   const {
     modules,
     selectedPermissions,
@@ -23,6 +27,11 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
     toggleModuleOpen,
     handleSave
   } = usePermissions(role);
+
+  // Force a refresh of permissions data
+  const handlePermissionsAdded = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   if (isLoading) {
     return (
@@ -57,26 +66,24 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
         </TabsList>
         
         <TabsContent value="permissions" className="space-y-2">
-          {modules.map((module) => (
-            <ModuleCollapsible
-              key={module.name}
-              module={module}
-              selectedPermissions={selectedPermissions}
-              onPermissionToggle={handlePermissionToggle}
-              onModuleToggle={handleModuleToggle}
-              toggleOpen={toggleModuleOpen}
-            />
-          ))}
-
-          {modules.length === 0 && (
-            <div className="text-center p-8 border rounded-md bg-muted">
-              لا توجد صلاحيات متاحة لهذا الدور
-            </div>
+          {modules.length === 0 ? (
+            <NoPermissionsMessage role={role} onPermissionsAdded={handlePermissionsAdded} />
+          ) : (
+            modules.map((module) => (
+              <ModuleCollapsible
+                key={module.name}
+                module={module}
+                selectedPermissions={selectedPermissions}
+                onPermissionToggle={handlePermissionToggle}
+                onModuleToggle={handleModuleToggle}
+                toggleOpen={toggleModuleOpen}
+              />
+            ))
           )}
         </TabsContent>
         
         <TabsContent value="apps">
-          <AppPermissionsManager role={role} />
+          <AppPermissionsManager role={role} key={`app-permissions-${refreshKey}`} />
         </TabsContent>
       </Tabs>
     </div>

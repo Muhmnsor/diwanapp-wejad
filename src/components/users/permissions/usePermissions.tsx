@@ -20,6 +20,21 @@ interface Module {
   isAllSelected?: boolean;
 }
 
+// Map modules to their corresponding app permissions
+const MODULE_TO_APP_MAP: Record<string, string[]> = {
+  "events": ["events"],
+  "documents": ["documents"],
+  "tasks": ["tasks"],
+  "ideas": ["ideas"],
+  "finance": ["finance"],
+  "users": ["users"],
+  "website": ["website"],
+  "store": ["store"],
+  "notifications": ["notifications"],
+  "requests": ["requests"],
+  "developer": ["developer"]
+};
+
 export const usePermissions = (role: Role) => {
   const [modules, setModules] = useState<Module[]>([]);
   const [selectedPermissions, setSelectedPermissions] = useState<Record<string, boolean>>({});
@@ -146,6 +161,63 @@ export const usePermissions = (role: Role) => {
     );
   };
 
+  // Function to sync detailed permissions with app permissions
+  const syncAppPermissions = async (roleId: string, modulePermissions: Module[]) => {
+    try {
+      // First, get current app permissions
+      const { data: currentAppPerms, error: fetchError } = await supabase
+        .from('app_permissions')
+        .select('app_name')
+        .eq('role_id', roleId);
+
+      if (fetchError) throw fetchError;
+
+      const currentAppNames = new Set(currentAppPerms?.map(p => p.app_name) || []);
+      const appPermissionsToSet = new Set<string>();
+      
+      // For each module with at least one permission selected, add the corresponding app
+      modulePermissions.forEach(module => {
+        // Check if any permission is selected in this module
+        const hasSelectedPermissions = module.permissions.some(
+          permission => selectedPermissions[permission.id]
+        );
+        
+        if (hasSelectedPermissions) {
+          // Get corresponding app names for this module
+          const appNames = MODULE_TO_APP_MAP[module.name] || [];
+          appNames.forEach(appName => appPermissionsToSet.add(appName));
+        }
+      });
+
+      // Permissions to add
+      const appsToAdd = [...appPermissionsToSet].filter(app => !currentAppNames.has(app));
+      
+      // Add missing app permissions
+      if (appsToAdd.length > 0) {
+        const { error: addError } = await supabase
+          .from('app_permissions')
+          .insert(
+            appsToAdd.map(appName => ({
+              role_id: roleId,
+              app_name: appName
+            }))
+          );
+
+        if (addError) {
+          console.error("Error adding app permissions:", addError);
+          // Continue with other operations even if this fails
+        } else {
+          console.log(`Added app permissions: ${appsToAdd.join(', ')}`);
+        }
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error syncing app permissions:", error);
+      return false;
+    }
+  };
+
   const handleSave = async () => {
     setIsSubmitting(true);
     try {
@@ -195,6 +267,9 @@ export const usePermissions = (role: Role) => {
 
         if (removeError) throw removeError;
       }
+
+      // Sync app permissions based on the selected detailed permissions
+      await syncAppPermissions(role.id, modules);
 
       toast.success("تم حفظ الصلاحيات بنجاح");
     } catch (error) {

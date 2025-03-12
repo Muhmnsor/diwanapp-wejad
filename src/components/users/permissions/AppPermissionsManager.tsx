@@ -2,11 +2,12 @@
 import { useState, useEffect } from "react";
 import { Role } from "../types";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Loader2, Info } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Define app information interface
 interface AppInfo {
@@ -82,6 +83,7 @@ export const AppPermissionsManager = ({ role }: AppPermissionsManagerProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [appPermissions, setAppPermissions] = useState<Record<string, boolean>>({});
+  const [hasSavedChanges, setHasSavedChanges] = useState(false);
 
   // Fetch current app permissions for the role
   useEffect(() => {
@@ -150,6 +152,7 @@ export const AppPermissionsManager = ({ role }: AppPermissionsManagerProps) => {
         if (error) throw error;
       }
       toast.success(`تم ${enabled ? 'منح' : 'إلغاء'} الوصول إلى ${AVAILABLE_APPS.find(app => app.key === appKey)?.name}`);
+      setHasSavedChanges(true);
     } catch (error) {
       console.error('Error updating app permission:', error);
       toast.error('حدث خطأ أثناء تحديث صلاحيات التطبيق');
@@ -173,6 +176,9 @@ export const AppPermissionsManager = ({ role }: AppPermissionsManagerProps) => {
     );
   }
 
+  // Check if any app permissions are enabled
+  const hasAnyAppPermissions = Object.values(appPermissions).some(enabled => enabled);
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -180,6 +186,24 @@ export const AppPermissionsManager = ({ role }: AppPermissionsManagerProps) => {
         <CardDescription>تحديد التطبيقات التي يمكن للمستخدمين ذوي هذا الدور الوصول إليها</CardDescription>
       </CardHeader>
       <CardContent>
+        {!hasAnyAppPermissions && (
+          <Alert className="mb-4 bg-amber-50">
+            <Info className="h-4 w-4 ml-2" />
+            <AlertDescription>
+              لم يتم تمكين أي تطبيقات لهذا الدور. المستخدمون بهذا الدور لن يروا أي تطبيقات في لوحة التحكم.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {hasSavedChanges && (
+          <Alert className="mb-4 bg-green-50">
+            <Info className="h-4 w-4 ml-2" />
+            <AlertDescription>
+              تم حفظ التغييرات بنجاح. سيتم تحديث التطبيقات المرئية للمستخدمين ذوي هذا الدور.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="space-y-4">
           {AVAILABLE_APPS.map((app) => (
             <div key={app.key} className="flex items-center justify-between border-b pb-3">
