@@ -42,20 +42,44 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
         throw new Error("يجب تسجيل الدخول لرفض الطلب");
       }
       
-      const { data, error } = await supabase
-        .from('request_approvals')
-        .insert({
-          request_id: requestId,
-          step_id: stepId,
-          approver_id: userId,
-          status: 'rejected',
-          comments: comments
-        })
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
+      console.log(`Rejecting request: ${requestId}, step: ${stepId}, by user: ${userId}`);
+
+      try {
+        // Add the rejection record
+        const { data: rejectionData, error: rejectionError } = await supabase
+          .from('request_approvals')
+          .insert({
+            request_id: requestId,
+            step_id: stepId,
+            approver_id: userId,
+            status: 'rejected',
+            comments: comments
+          })
+          .select()
+          .single();
+          
+        if (rejectionError) throw rejectionError;
+        
+        console.log("Rejection record created:", rejectionData);
+        
+        // Update the request status
+        const { data: requestData, error: requestError } = await supabase
+          .rpc('update_request_after_rejection', { 
+            p_request_id: requestId,
+            p_step_id: stepId
+          });
+          
+        if (requestError) {
+          console.error("Error updating request status after rejection:", requestError);
+        } else {
+          console.log("Request status update result:", requestData);
+        }
+        
+        return rejectionData;
+      } catch (error) {
+        console.error("Error in rejection process:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast.success("تم رفض الطلب بنجاح");

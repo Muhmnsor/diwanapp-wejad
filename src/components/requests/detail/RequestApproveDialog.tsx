@@ -12,7 +12,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useRequests } from "../hooks/useRequests";
 import { supabase } from "@/integrations/supabase/client";
 
 interface RequestApproveDialogProps {
@@ -39,20 +38,44 @@ export const RequestApproveDialog = ({ requestId, stepId, isOpen, onOpenChange }
         throw new Error("يجب تسجيل الدخول للموافقة على الطلب");
       }
       
-      const { data, error } = await supabase
-        .from('request_approvals')
-        .insert({
-          request_id: requestId,
-          step_id: stepId,
-          approver_id: userId,
-          status: 'approved',
-          comments: comments || null
-        })
-        .select()
-        .single();
+      console.log(`Approving request: ${requestId}, step: ${stepId}, by user: ${userId}`);
       
-      if (error) throw error;
-      return data;
+      try {
+        // Step 1: Add the approval record
+        const { data: approvalData, error: approvalError } = await supabase
+          .from('request_approvals')
+          .insert({
+            request_id: requestId,
+            step_id: stepId,
+            approver_id: userId,
+            status: 'approved',
+            comments: comments || null
+          })
+          .select()
+          .single();
+          
+        if (approvalError) throw approvalError;
+        
+        console.log("Approval record created:", approvalData);
+        
+        // Step 2: Update the request status if needed
+        const { data: requestData, error: requestError } = await supabase
+          .rpc('update_request_after_approval', { 
+            p_request_id: requestId,
+            p_step_id: stepId
+          });
+          
+        if (requestError) {
+          console.error("Error updating request status:", requestError);
+        } else {
+          console.log("Request status update result:", requestData);
+        }
+        
+        return approvalData;
+      } catch (error) {
+        console.error("Error in approval process:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast.success("تمت الموافقة على الطلب بنجاح");
