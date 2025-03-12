@@ -4502,6 +4502,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      approve_request: {
+        Args: {
+          p_request_id: string
+          p_step_id: string
+          p_comments?: string
+        }
+        Returns: Json
+      }
       assign_user_role: {
         Args: {
           p_user_id: string
@@ -4749,6 +4757,14 @@ export type Database = {
           p_details?: string
         }
         Returns: string
+      }
+      reject_request: {
+        Args: {
+          p_request_id: string
+          p_step_id: string
+          p_comments: string
+        }
+        Returns: Json
       }
       set_default_workflow: {
         Args: {
