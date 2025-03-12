@@ -40,3 +40,33 @@ export const getStepTypeBadgeClass = (stepType: string): string => {
       return 'bg-gray-50 text-gray-700 border-gray-200';
   }
 };
+
+/**
+ * Returns a formatted approver name from a step and users list
+ */
+export const getApproverName = (step: any, users: any[]): string => {
+  if (!step.approver_id || !users || users.length === 0) {
+    return 'غير محدد';
+  }
+
+  const approver = users.find(user => user.id === step.approver_id);
+  return approver ? (approver.display_name || approver.email || 'مستخدم') : 'غير محدد';
+};
+
+/**
+ * Returns an initial step state object for a new workflow step
+ */
+export const getInitialStepState = (stepOrder: number, workflowId: string | null): any => {
+  return {
+    step_name: '',
+    step_type: 'approval',
+    step_order: stepOrder,
+    workflow_id: workflowId || 'temp-workflow-id',
+    approver_id: null,
+    is_required: true,
+    instructions: '',
+    timeout_days: 3,
+    reminder_days: 1,
+    custom_properties: {}
+  };
+};
