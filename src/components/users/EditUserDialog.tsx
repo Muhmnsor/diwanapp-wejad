@@ -2,18 +2,12 @@
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { User, Role } from "./types";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { User } from "./types";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 
 interface EditUserDialogProps {
   open: boolean;
@@ -22,116 +16,126 @@ interface EditUserDialogProps {
   onUserEdited: () => void;
 }
 
-const formSchema = z.object({
-  displayName: z.string().optional(),
-  roleId: z.string().optional(),
-  isActive: z.boolean().default(true),
-});
-
 export const EditUserDialog = ({ open, onOpenChange, user, onUserEdited }: EditUserDialogProps) => {
+  const [displayName, setDisplayName] = useState("");
+  const [password, setPassword] = useState("");
+  const [isActive, setIsActive] = useState(true);
+  const [roles, setRoles] = useState<{ id: string; name: string }[]>([]);
+  const [selectedRole, setSelectedRole] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [roles, setRoles] = useState<Role[]>([]);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      displayName: user?.displayName || "",
-      roleId: user?.roleId || "",
-      isActive: user?.isActive !== false,
-    },
-  });
-
-  // Load roles for dropdown
   useEffect(() => {
-    const fetchRoles = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('roles')
-          .select('*')
-          .order('name');
-        
-        if (error) throw error;
-        setRoles(data || []);
-      } catch (err: any) {
-        console.error("Error fetching roles:", err);
-        setError("Failed to load roles");
-      }
-    };
-
+    // Fetch roles when dialog opens
     if (open) {
       fetchRoles();
     }
   }, [open]);
 
-  // Reset form when user changes
   useEffect(() => {
+    // Reset form when user changes
     if (user) {
-      form.reset({
-        displayName: user.displayName || "",
-        roleId: user.roleId || "",
-        isActive: user.isActive !== false,
-      });
+      setDisplayName(user.displayName || "");
+      setPassword("");
+      setIsActive(user.isActive !== false);
+      
+      // Fetch the user's current role
+      if (user.id) {
+        fetchUserRole(user.id);
+      }
     }
-  }, [user, form]);
+  }, [user]);
+
+  const fetchRoles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('roles')
+        .select('id, name');
+      
+      if (error) throw error;
+      
+      setRoles(data || []);
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+      toast.error("حدث خطأ أثناء جلب الأدوار");
+    }
+  };
+
+  const fetchUserRole = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role_id')
+        .eq('user_id', userId)
+        .single();
+      
+      if (error) throw error;
+      
+      if (data) {
+        setSelectedRole(data.role_id);
+      }
+    } catch (error) {
+      console.error("Error fetching user role:", error);
+    }
+  };
 
   const handleClose = () => {
-    setError(null);
-    form.reset();
+    setPassword("");
     onOpenChange(false);
   };
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const handleUpdateUser = async () => {
     if (!user) return;
-    
+
     setIsSubmitting(true);
-    setError(null);
-    
     try {
-      // Update profile information
+      // Update password if provided
+      if (password) {
+        const { error: authError } = await supabase.auth.admin.updateUserById(
+          user.id,
+          { password }
+        );
+
+        if (authError) throw authError;
+      }
+
+      // Update profile
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ 
-          display_name: values.displayName,
-          is_active: values.isActive
+          display_name: displayName,
+          is_active: isActive 
         })
         .eq('id', user.id);
 
       if (profileError) throw profileError;
 
-      // If role is selected, update or create user role
-      if (values.roleId) {
-        // Check if user already has a role
-        const { data: existingRoles } = await supabase
+      // Update role if changed
+      if (selectedRole) {
+        // First delete existing roles
+        const { error: deleteRoleError } = await supabase
           .from('user_roles')
-          .select('id')
+          .delete()
           .eq('user_id', user.id);
         
-        if (existingRoles && existingRoles.length > 0) {
-          // Update existing role
-          const { error: roleUpdateError } = await supabase
-            .from('user_roles')
-            .update({ role_id: values.roleId })
-            .eq('user_id', user.id);
-          
-          if (roleUpdateError) throw roleUpdateError;
-        } else {
-          // Create new role assignment
-          const { error: roleInsertError } = await supabase
-            .from('user_roles')
-            .insert({ user_id: user.id, role_id: values.roleId });
-          
-          if (roleInsertError) throw roleInsertError;
-        }
+        if (deleteRoleError) throw deleteRoleError;
+
+        // Add new role
+        const { error: addRoleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: user.id,
+            role_id: selectedRole
+          });
+        
+        if (addRoleError) throw addRoleError;
       }
 
-      toast.success("تم تحديث المستخدم بنجاح");
+      toast.success("تم تحديث بيانات المستخدم بنجاح");
       handleClose();
       onUserEdited();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error updating user:", error);
-      setError(`حدث خطأ أثناء تحديث المستخدم: ${error.message || error}`);
-      toast.error("حدث خطأ أثناء تحديث المستخدم");
+      toast.error("حدث خطأ أثناء تحديث بيانات المستخدم");
     } finally {
       setIsSubmitting(false);
     }
@@ -143,101 +147,79 @@ export const EditUserDialog = ({ open, onOpenChange, user, onUserEdited }: EditU
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="text-right">تعديل المستخدم</DialogTitle>
+          <DialogTitle className="text-right">تعديل بيانات المستخدم</DialogTitle>
         </DialogHeader>
-        
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription className="text-right">{error}</AlertDescription>
-          </Alert>
-        )}
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 text-right">
-            <FormField
-              control={form.control}
-              name="displayName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>اسم العرض</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="اسم العرض" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+        <div className="space-y-4 py-4 text-right">
+          <div className="space-y-2">
+            <Label>البريد الإلكتروني</Label>
+            <Input value={user.username} disabled dir="ltr" className="text-right" />
+          </div>
+          <div className="space-y-2">
+            <Label>الاسم الشخصي</Label>
+            <Input
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="أدخل الاسم الشخصي"
+              dir="rtl"
+              className="text-right"
             />
-            
-            <FormField
-              control={form.control}
-              name="roleId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>الدور</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر دوراً" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="">لا دور</SelectItem>
-                      {roles.map((role) => (
-                        <SelectItem key={role.id} value={role.id}>
-                          {role.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+          </div>
+          <div className="space-y-2">
+            <Label>كلمة المرور الجديدة</Label>
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="اترك فارغًا إذا لم ترغب في التغيير"
+              dir="ltr"
+              className="text-right"
             />
-
-            <FormField
-              control={form.control}
-              name="isActive"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                  <div className="space-y-0.5">
-                    <FormLabel>حساب نشط</FormLabel>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            
-            <DialogFooter className="flex sm:justify-start gap-2 mt-4">
-              <Button 
-                type="submit" 
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    جارِ الحفظ...
-                  </>
-                ) : "حفظ التغييرات"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleClose}
-                disabled={isSubmitting}
-              >
-                إلغاء
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+          </div>
+          <div className="space-y-2">
+            <Label>الدور</Label>
+            {roles && roles.length > 0 ? (
+              <Select value={selectedRole} onValueChange={setSelectedRole} dir="rtl">
+                <SelectTrigger className="w-full text-right">
+                  <SelectValue placeholder="اختر الدور" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((role) => (
+                    <SelectItem key={role.id} value={role.id}>
+                      {role.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="text-sm text-muted-foreground">لا توجد أدوار متاحة</div>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label>الحالة</Label>
+            <Select value={isActive ? "active" : "inactive"} onValueChange={(value) => setIsActive(value === "active")} dir="rtl">
+              <SelectTrigger className="w-full text-right">
+                <SelectValue placeholder="اختر الحالة" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">نشط</SelectItem>
+                <SelectItem value="inactive">غير نشط</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter className="flex flex-row-reverse sm:justify-start gap-2">
+          <Button onClick={handleUpdateUser} disabled={isSubmitting}>
+            {isSubmitting ? "جارِ الحفظ..." : "حفظ التغييرات"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleClose}
+            disabled={isSubmitting}
+          >
+            إلغاء
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Trash2, Edit2, Loader2 } from "lucide-react";
+import { Trash2, Edit2 } from "lucide-react";
 import { User } from "./types";
 import { DeleteUserDialog } from "./DeleteUserDialog";
 import { EditUserDialog } from "./EditUserDialog";
@@ -16,17 +16,13 @@ interface UsersTableProps {
   onUserDeleted: () => void;
   canDeleteUsers?: boolean;
   canEditUsers?: boolean;
-  isLoading?: boolean;
-  error?: string | null;
 }
 
 export const UsersTable = ({ 
   users, 
   onUserDeleted, 
   canDeleteUsers = false,
-  canEditUsers = false,
-  isLoading = false,
-  error = null
+  canEditUsers = false 
 }: UsersTableProps) => {
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
@@ -35,37 +31,6 @@ export const UsersTable = ({
   // Double-check permissions directly in component
   const hasDeletePermission = canDeleteUsers || hasPermission('users_delete');
   const hasEditPermission = canEditUsers || hasPermission('users_edit');
-
-  if (isLoading) {
-    return (
-      <div className="rounded-md border p-8">
-        <div className="flex flex-col items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-          <p className="text-muted-foreground">جاري تحميل بيانات المستخدمين...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="rounded-md border p-8">
-        <div className="text-center text-red-500">
-          <p>{error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!users.length) {
-    return (
-      <div className="rounded-md border p-8">
-        <div className="text-center text-muted-foreground">
-          <p>لا يوجد مستخدمين</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="rounded-md border">

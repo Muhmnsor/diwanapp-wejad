@@ -8,11 +8,9 @@ export const useUsersData = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     setIsLoading(true);
-    setError(null);
     try {
       // Fetch profiles
       const { data: profiles, error: profilesError } = await supabase
@@ -28,10 +26,8 @@ export const useUsersData = () => {
       const { data: userRoles, error: userRolesError } = await supabase
         .from('user_roles')
         .select(`
-          id,
           user_id,
-          role_id,
-          roles(id, name, description)
+          roles:role_id(id, name, description)
         `);
       
       if (userRolesError) throw userRolesError;
@@ -42,27 +38,14 @@ export const useUsersData = () => {
       // Map users with their roles
       const mappedUsers = profiles.map((profile: any) => {
         // Find role data for this user
-        const userRoleData = userRoles ? userRoles.find((ur: any) => ur.user_id === profile.id) : null;
+        const userRoleData = userRoles.find((ur: UserRoleData) => ur.user_id === profile.id);
         
         // Default role name
         let roleName = 'No Role';
-        let roleId = null;
         
         // Handle role data safely with proper type checking
         if (userRoleData && userRoleData.roles) {
-          // If roles is an array, take the first one's name
-          if (Array.isArray(userRoleData.roles)) {
-            const roleObj = userRoleData.roles[0];
-            roleName = roleObj?.name ? roleObj.name : 'No Role';
-            roleId = roleObj?.id || null;
-          } 
-          // If roles is a single object, use its name property
-          else if (typeof userRoleData.roles === 'object' && userRoleData.roles !== null) {
-            // Cast to any to avoid TypeScript errors since we've verified it's an object
-            const roleObject = userRoleData.roles as any;
-            roleName = roleObject.name || 'No Role';
-            roleId = roleObject.id || null;
-          }
+          roleName = userRoleData.roles.name || 'No Role';
         }
         
         return {
@@ -70,16 +53,14 @@ export const useUsersData = () => {
           username: profile.username || profile.email,
           displayName: profile.display_name,
           role: roleName,
-          roleId: roleId,
           lastLogin: profile.last_login,
           isActive: profile.is_active
         };
       });
       
       setUsers(mappedUsers);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching users:", error);
-      setError(error.message || "حدث خطأ أثناء جلب بيانات المستخدمين");
       toast.error("حدث خطأ أثناء جلب بيانات المستخدمين");
     } finally {
       setIsLoading(false);
@@ -90,14 +71,12 @@ export const useUsersData = () => {
     try {
       const { data, error } = await supabase
         .from('roles')
-        .select('*')
-        .order('name');
+        .select('*');
       
       if (error) throw error;
       
-      console.log("Roles fetched:", data);
-      setRoles(data || []);
-    } catch (error: any) {
+      setRoles(data);
+    } catch (error) {
       console.error("Error fetching roles:", error);
       toast.error("حدث خطأ أثناء جلب الأدوار");
     }
@@ -112,5 +91,5 @@ export const useUsersData = () => {
     fetchRoles();
   }, []);
 
-  return { users, roles, isLoading, error, refetchUsers };
+  return { users, roles, isLoading, refetchUsers };
 };

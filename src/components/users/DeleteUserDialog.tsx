@@ -5,8 +5,6 @@ import { Button } from "@/components/ui/button";
 import { User } from "./types";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DeleteUserDialogProps {
   open: boolean;
@@ -17,10 +15,8 @@ interface DeleteUserDialogProps {
 
 export const DeleteUserDialog = ({ open, onOpenChange, user, onUserDeleted }: DeleteUserDialogProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleClose = () => {
-    setError(null);
     onOpenChange(false);
   };
 
@@ -28,8 +24,6 @@ export const DeleteUserDialog = ({ open, onOpenChange, user, onUserDeleted }: De
     if (!user) return;
 
     setIsDeleting(true);
-    setError(null);
-    
     try {
       // Delete user roles
       const { error: rolesError } = await supabase
@@ -56,9 +50,8 @@ export const DeleteUserDialog = ({ open, onOpenChange, user, onUserDeleted }: De
       toast.success("تم تعطيل المستخدم بنجاح");
       handleClose();
       onUserDeleted();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error deleting user:", error);
-      setError(`حدث خطأ أثناء تعطيل المستخدم: ${error.message || error}`);
       toast.error("حدث خطأ أثناء تعطيل المستخدم");
     } finally {
       setIsDeleting(false);
@@ -73,13 +66,6 @@ export const DeleteUserDialog = ({ open, onOpenChange, user, onUserDeleted }: De
         <DialogHeader>
           <DialogTitle className="text-right">تعطيل المستخدم</DialogTitle>
         </DialogHeader>
-        
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription className="text-right">{error}</AlertDescription>
-          </Alert>
-        )}
-        
         <div className="py-4 text-right">
           <p className="mb-4">
             هل أنت متأكد من رغبتك في تعطيل المستخدم <strong>{user.username}</strong>؟
@@ -94,12 +80,7 @@ export const DeleteUserDialog = ({ open, onOpenChange, user, onUserDeleted }: De
             onClick={handleDeleteUser} 
             disabled={isDeleting}
           >
-            {isDeleting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                جارِ التعطيل...
-              </>
-            ) : "تعطيل المستخدم"}
+            {isDeleting ? "جارِ التعطيل..." : "تعطيل المستخدم"}
           </Button>
           <Button
             type="button"
