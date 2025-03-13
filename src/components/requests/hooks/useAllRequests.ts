@@ -63,13 +63,40 @@ export const useAllRequests = () => {
         throw rpcError;
       }
       
-      if (rpcData) {
+      if (rpcData && Array.isArray(rpcData)) {
         console.log("Fetched requests via RPC:", rpcData.length || 0, "requests");
-        setRequests(rpcData);
-        setFilteredRequests(rpcData);
+        
+        // Transform the data to ensure it matches our Request type
+        const transformedData: Request[] = rpcData.map(item => {
+          // Parse the JSON if it's a string
+          const request = typeof item === 'string' ? JSON.parse(item) : item;
+          
+          return {
+            id: request.id || '',
+            title: request.title || '',
+            form_data: request.form_data || {},
+            status: request.status || 'pending',
+            priority: request.priority || 'medium',
+            requester_id: request.requester_id || '',
+            request_type_id: request.request_type_id || '',
+            workflow_id: request.workflow_id || '',
+            current_step_id: request.current_step_id || null,
+            due_date: request.due_date || null,
+            created_at: request.created_at || new Date().toISOString(),
+            updated_at: request.updated_at || new Date().toISOString(),
+            request_type: request.request_type || null,
+            workflow: request.workflow || null,
+            requester: request.requester || null,
+            current_step: request.current_step || null
+          };
+        });
+        
+        console.log("Transformed data:", transformedData);
+        setRequests(transformedData);
+        setFilteredRequests(transformedData);
       } else {
         // Fallback to direct query if RPC returns no data
-        console.log("RPC returned no data, trying direct query...");
+        console.log("RPC returned no data or invalid format, trying direct query...");
         
         const { data: directData, error: directError } = await supabase
           .from("requests")
