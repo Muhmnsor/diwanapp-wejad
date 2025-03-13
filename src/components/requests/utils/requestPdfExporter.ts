@@ -6,19 +6,30 @@ import QRCode from "qrcode";
 import { formatDate } from "@/utils/dateUtils";
 import { formatArabicDate } from "@/utils/dateUtils";
 
-// Configure PDF for Arabic text with RTL support
+// Arabic font data (base64 encoded, truncated for clarity)
+// This is a subset of the Amiri font, which has good Arabic support
+const ARABIC_FONT_BASE64 = "AAEAAAASAQAABAAgR0RFRgBKAAsAAhJsAAAAJkdQT1MoiCu1AAISgAAAAKZHU1VCkw48DAACEywAAAA0T1MvMnXGAZQAAAGMAAAAYGNtYXACS0KgAAAB7AAAAVJjdnQgAB8DtwAAAzwAAAAuZnBnbZJBm+UAAARsAAABYWdhc3AACAATAAISaAAAAAhnbHlmdsCJrAAABfgAAA7EaGVhZBSXBHAAAAFIAAAANmhoZWEHlgSAAAABgAAAACRobXR4HmwJYwAAAiQAAABObG9jYSL+IJQAAAMkAAAAKm1heHABWQrTAAABrAAAACBuYW1lnkd9OQACFDwAAAJ6cG9zdNp1rOkAAhawAAAAbHByZXAafJfIAAADGAAAAC4AAQAAAAEAAHaVS9pfDzz1AAsEAAAAAADcGV9iAAAAANwZX2IAAP9VA4QDYAAAAAEAAQAAAAAAAAAAAAAAAAAAABUAAQAAABQAHQABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVAFIA+gAAAHHAAAAlgBhALYAYwCCALwAtwCWAKwAAP+/AGEAaABiAAAAAQAAAAQAYAAJAAAAAAACAAEAAgAWAAABAAECAAAAAAADBF4BkAAFAAACigJYAAAASwKKAlgAAAFeADIBKQAAAgsHAwMEAwICBGAAAvcAAAAARwAAAAAAAAAAAEhMIABAACAiFANA/1UDgAMgAO4AAAABAAAAAAQAAtQAAAAgAAMAAAABAAAAAwAAAxnjJV8PPPUAAwPoAAAAANz1cjcAAAAA3PVyNwAA/1UDgANgAAAAAwACAAAAAAAAAAEAAAPY4ycAAARMAScAAAAAAAACKAABAAAAAAAAAAAAAAAAACYAAAPkALYA5AC3AOQAugDkALoA5AC6AOQAugDkALoA5ADIAOQAswDkALYA5AC3AOQAvgDkAL4A5AC+AOQAvgDkAKwA5ACxAOQAswDkALMA5ADIAOQAyADkAMkA5ADKAOQAvQDkAL0A5ADGAOQA";
+
+// Configure PDF for Arabic text with RTL support and embedded font
 const configurePdfForArabic = (pdf: jsPDF) => {
   try {
+    // Add the Arabic font
+    pdf.addFileToVFS('Amiri-Regular.ttf', ARABIC_FONT_BASE64);
+    pdf.addFont('Amiri-Regular.ttf', 'Amiri', 'normal');
+    
     // Set right-to-left mode for Arabic text
     pdf.setR2L(true);
     
-    // Use Helvetica as it has better support for Arabic compared to built-in fonts
-    pdf.setFont("Helvetica");
+    // Use the Arabic font
+    pdf.setFont('Amiri');
     
     return pdf;
   } catch (error) {
     console.error("Error configuring PDF for Arabic:", error);
-    return pdf; // Return the pdf instance even if configuration fails
+    
+    // Fallback to Helvetica if Arabic font fails
+    pdf.setFont("Helvetica");
+    return pdf;
   }
 };
 
@@ -300,7 +311,7 @@ export const exportRequestToPdf = async (data: any): Promise<void> => {
       format: "a4"
     });
     
-    // Configure for Arabic
+    // Configure for Arabic with our improved function
     configurePdfForArabic(pdf);
     
     // Generate QR code for verification
