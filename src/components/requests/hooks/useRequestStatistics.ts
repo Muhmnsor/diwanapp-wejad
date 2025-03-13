@@ -4,6 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { RequestStatistics } from "@/components/users/types";
 import { toast } from "sonner";
 
+// Define specific type for the request types response
+interface RequestTypeResponse {
+  request_type_id: string;
+  request_types: {
+    id: string;
+    name: string;
+  } | null;
+}
+
 export const useRequestStatistics = () => {
   const [statistics, setStatistics] = useState<RequestStatistics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -97,11 +106,12 @@ export const useRequestStatistics = () => {
       const typeCount: Record<string, { typeId: string, typeName: string, count: number }> = {};
       
       if (requestsByTypeData) {
-        requestsByTypeData.forEach(request => {
+        requestsByTypeData.forEach((request: RequestTypeResponse) => {
           const typeId = request.request_type_id;
-          // Get name from the nested request_types object with proper type checking
-          const typeObj = request.request_types as { id: string, name: string } | null;
-          const typeName = typeObj?.name || 'غير محدد';
+          
+          // This is the corrected part to access the nested request_types object
+          // Since request_types is returned as an object not as an array
+          const typeName = request.request_types?.name || 'غير محدد';
           
           if (!typeCount[typeId]) {
             typeCount[typeId] = { typeId, typeName, count: 0 };
