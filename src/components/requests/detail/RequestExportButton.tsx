@@ -35,10 +35,8 @@ export const RequestExportButton = ({
     }
   };
   
-  // Disable export for pending requests or if explicitly disabled
-  const canExport = isEnabled && 
-    status && 
-    ['completed', 'approved', 'executed', 'implementation_complete'].includes(status);
+  // Show export for all statuses except draft
+  const canExport = isEnabled && status && status !== 'draft';
   
   if (!canExport) return null;
   

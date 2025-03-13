@@ -17,11 +17,10 @@ export const RequestImplementationTab = ({
   const implementationData = null;
   const isLoading = false;
   
-  // Only show for approved/completed requests (or new implementation statuses)
+  // Show for all statuses except draft
   const showImplementationTab = 
-    isImplementationEnabled && 
-    request?.status && 
-    ['approved', 'completed', 'in_execution', 'executed', 'implementation_complete'].includes(request.status);
+    isImplementationEnabled || 
+    (request?.status && request.status !== 'draft');
   
   if (!showImplementationTab) {
     return (
