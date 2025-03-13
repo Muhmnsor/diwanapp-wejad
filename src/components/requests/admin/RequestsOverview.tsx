@@ -13,10 +13,12 @@ import {
   Pie,
   Cell
 } from "recharts";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export const RequestsOverview = () => {
-  const { statistics, isLoading } = useRequestStatistics();
+  const { statistics, isLoading, error, refreshStatistics } = useRequestStatistics();
 
   if (isLoading) {
     return (
@@ -27,10 +29,40 @@ export const RequestsOverview = () => {
     );
   }
 
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mb-6">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>خطأ في تحميل الإحصائيات</AlertTitle>
+        <AlertDescription>
+          {error}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-2" 
+            onClick={refreshStatistics}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            إعادة المحاولة
+          </Button>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   if (!statistics) {
     return (
       <div className="text-center p-8">
         <p>لا توجد إحصائيات متاحة</p>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mt-2" 
+          onClick={refreshStatistics}
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          تحديث
+        </Button>
       </div>
     );
   }
@@ -103,26 +135,32 @@ export const RequestsOverview = () => {
             <CardTitle>توزيع الطلبات حسب الحالة</CardTitle>
           </CardHeader>
           <CardContent className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={statusChartData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={true}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                  nameKey="name"
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                >
-                  {statusChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => [`${value} طلب`, 'العدد']} />
-              </PieChart>
-            </ResponsiveContainer>
+            {statusChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={statusChartData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={true}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                    nameKey="name"
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {statusChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => [`${value} طلب`, 'العدد']} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex h-full justify-center items-center text-muted-foreground">
+                لا توجد بيانات كافية لعرض المخطط
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -131,14 +169,20 @@ export const RequestsOverview = () => {
             <CardTitle>توزيع الطلبات حسب النوع</CardTitle>
           </CardHeader>
           <CardContent className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={typeChartData} layout="vertical">
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={100} tick={{ fill: 'black' }} />
-                <Tooltip formatter={(value) => [`${value} طلب`, 'العدد']} />
-                <Bar dataKey="count" fill="#8884d8" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {typeChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={typeChartData} layout="vertical">
+                  <XAxis type="number" />
+                  <YAxis dataKey="name" type="category" width={100} tick={{ fill: 'black' }} />
+                  <Tooltip formatter={(value) => [`${value} طلب`, 'العدد']} />
+                  <Bar dataKey="count" fill="#8884d8" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex h-full justify-center items-center text-muted-foreground">
+                لا توجد بيانات كافية لعرض المخطط
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

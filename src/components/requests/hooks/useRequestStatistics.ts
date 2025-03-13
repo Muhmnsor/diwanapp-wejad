@@ -14,6 +14,33 @@ export const useRequestStatistics = () => {
     setError(null);
     
     try {
+      console.log("Fetching request statistics...");
+      
+      // Try to get statistics via RPC function first (more efficient)
+      const { data: rpcData, error: rpcError } = await supabase
+        .rpc('get_request_statistics');
+      
+      if (rpcError) {
+        console.error("Error with RPC function:", rpcError);
+        // Fall back to individual queries if RPC fails
+        await fetchStatisticsWithIndividualQueries();
+      } else if (rpcData) {
+        console.log("Fetched statistics via RPC:", rpcData);
+        setStatistics(rpcData as RequestStatistics);
+      } else {
+        throw new Error("No data returned from statistics query");
+      }
+    } catch (err: any) {
+      console.error("Error fetching request statistics:", err);
+      // Try the fallback method
+      await fetchStatisticsWithIndividualQueries();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchStatisticsWithIndividualQueries = async () => {
+    try {
       // Get total requests count
       const { count: totalRequests, error: totalError } = await supabase
         .from('requests')
@@ -70,8 +97,8 @@ export const useRequestStatistics = () => {
       const typeCount: Record<string, { id: string, name: string, count: number }> = {};
       requestsByType?.forEach(request => {
         const typeId = request.request_type_id;
-        // Fix: access name through request_types array's first element
-        const typeName = request.request_types?.[0]?.name || 'غير محدد';
+        // Get name from the nested request_types object
+        const typeName = request.request_types?.name || 'غير محدد';
         
         if (!typeCount[typeId]) {
           typeCount[typeId] = { id: typeId, name: typeName, count: 0 };
@@ -125,13 +152,12 @@ export const useRequestStatistics = () => {
         }))
       };
       
+      console.log("Fetched statistics with individual queries:", statsData);
       setStatistics(statsData);
     } catch (err: any) {
-      console.error("Error fetching request statistics:", err);
+      console.error("Error in fallback statistics method:", err);
       setError(err.message || "حدث خطأ أثناء جلب إحصائيات الطلبات");
       toast.error("فشل في تحميل إحصائيات الطلبات");
-    } finally {
-      setIsLoading(false);
     }
   };
 
