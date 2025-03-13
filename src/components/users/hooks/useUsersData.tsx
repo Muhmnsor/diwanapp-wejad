@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Role, UserRoleData } from "../types";
@@ -19,10 +18,13 @@ export const useUsersData = () => {
       
       if (profilesError) throw profilesError;
 
-      // Fetch user roles
+      // Fetch user roles - modify the query to return a properly structured result
       const { data: userRoles, error: userRolesError } = await supabase
         .from('user_roles')
-        .select('user_id, roles(id, name)');
+        .select(`
+          user_id,
+          roles:role_id(id, name, description)
+        `);
       
       if (userRolesError) throw userRolesError;
       
@@ -36,14 +38,7 @@ export const useUsersData = () => {
         
         // Handle role data safely
         if (userRoleData && userRoleData.roles) {
-          // Handle case where roles might be returned as an array or object
-          if (Array.isArray(userRoleData.roles)) {
-            // It's an array of roles, get the first one's name
-            roleName = userRoleData.roles.length > 0 && userRoleData.roles[0] ? userRoleData.roles[0].name || 'No Role' : 'No Role';
-          } else if (typeof userRoleData.roles === 'object') {
-            // It's a single role object
-            roleName = userRoleData.roles.name || 'No Role';
-          }
+          roleName = userRoleData.roles.name || 'No Role';
         }
         
         return {
