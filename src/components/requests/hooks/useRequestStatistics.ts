@@ -81,31 +81,35 @@ export const useRequestStatistics = () => {
       if (inProgressError) throw inProgressError;
       
       // Get requests by type
-      const { data: requestsByType, error: typeError } = await supabase
+      const { data: requestsByTypeData, error: typeError } = await supabase
         .from('requests')
         .select(`
           request_type_id,
           request_types (
+            id,
             name
           )
-        `)
-        .order('request_type_id');
+        `);
       
       if (typeError) throw typeError;
       
       // Process request by type data
-      const typeCount: Record<string, { id: string, name: string, count: number }> = {};
-      requestsByType?.forEach(request => {
-        const typeId = request.request_type_id;
-        // Get name from the nested request_types object
-        const typeName = request.request_types?.name || 'غير محدد';
-        
-        if (!typeCount[typeId]) {
-          typeCount[typeId] = { id: typeId, name: typeName, count: 0 };
-        }
-        
-        typeCount[typeId].count++;
-      });
+      const typeCount: Record<string, { typeId: string, typeName: string, count: number }> = {};
+      
+      if (requestsByTypeData) {
+        requestsByTypeData.forEach(request => {
+          const typeId = request.request_type_id;
+          // Get name from the nested request_types object with proper type checking
+          const typeObj = request.request_types as { id: string, name: string } | null;
+          const typeName = typeObj?.name || 'غير محدد';
+          
+          if (!typeCount[typeId]) {
+            typeCount[typeId] = { typeId, typeName, count: 0 };
+          }
+          
+          typeCount[typeId].count++;
+        });
+      }
       
       // Get requests by status for chart
       const { data: statusData, error: statusError } = await supabase
@@ -121,18 +125,20 @@ export const useRequestStatistics = () => {
         'in_progress': 0
       };
       
-      statusData?.forEach(request => {
-        const status = request.status || 'غير محدد';
-        if (status === 'pending') {
-          statusCounts['pending']++;
-        } else if (status === 'completed') {
-          statusCounts['completed']++;
-        } else if (status === 'rejected') {
-          statusCounts['rejected']++;
-        } else {
-          statusCounts['in_progress']++;
-        }
-      });
+      if (statusData) {
+        statusData.forEach(request => {
+          const status = request.status || 'غير محدد';
+          if (status === 'pending') {
+            statusCounts['pending']++;
+          } else if (status === 'completed') {
+            statusCounts['completed']++;
+          } else if (status === 'rejected') {
+            statusCounts['rejected']++;
+          } else {
+            statusCounts['in_progress']++;
+          }
+        });
+      }
       
       // Format statistics
       const statsData: RequestStatistics = {
@@ -141,11 +147,7 @@ export const useRequestStatistics = () => {
         approvedRequests: completedRequests || 0,
         rejectedRequests: rejectedRequests || 0,
         inProgressRequests: inProgressRequests || 0,
-        requestsByType: Object.values(typeCount).map(item => ({
-          typeId: item.id,
-          typeName: item.name,
-          count: item.count
-        })),
+        requestsByType: Object.values(typeCount),
         requestsByStatus: Object.entries(statusCounts).map(([status, count]) => ({
           status,
           count
