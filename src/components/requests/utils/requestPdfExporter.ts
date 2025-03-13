@@ -8,11 +8,19 @@ import { base64Amiri } from "./arabicFontBase64";
 
 // Add Arabic font configuration
 const configurePdfForArabic = (pdf: jsPDF) => {
-  // Add the Amiri font to the PDF
-  pdf.addFileToVFS('Amiri-Regular.ttf', base64Amiri);
-  pdf.addFont('Amiri-Regular.ttf', 'Amiri', 'normal');
-  pdf.setFont('Amiri');
-  pdf.setR2L(true); // Enable right-to-left for Arabic text
+  try {
+    // Try to add the Amiri font to the PDF
+    pdf.addFileToVFS('Amiri-Regular.ttf', base64Amiri);
+    pdf.addFont('Amiri-Regular.ttf', 'Amiri', 'normal');
+    pdf.setFont('Amiri');
+  } catch (error) {
+    console.error("Failed to load Amiri font, falling back to default font:", error);
+    // Fallback to default font if Amiri fails to load
+    pdf.setFont("Helvetica");
+  }
+  
+  // Enable right-to-left for Arabic text regardless of font
+  pdf.setR2L(true);
   return pdf;
 };
 
