@@ -52,7 +52,9 @@ export const useUsersData = () => {
           } 
           // If roles is a single object, use its name property
           else if (typeof userRoleData.roles === 'object' && userRoleData.roles !== null) {
-            roleName = userRoleData.roles.name || 'No Role';
+            // Cast to any to avoid TypeScript errors since we've verified it's an object
+            const roleObject = userRoleData.roles as any;
+            roleName = roleObject.name || 'No Role';
           }
         }
         

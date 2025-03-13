@@ -21,7 +21,11 @@ export interface UserRoleData {
     id: string;
     name: string;
     description?: string;
-  }[];
+  }[] | {
+    id: string;
+    name: string;
+    description?: string;
+  };
 }
 
 export interface UserActivity {
