@@ -21,3 +21,12 @@ export interface UserRoleData {
   role_id: string;
   roles: Role;
 }
+
+// Adding the missing UserActivity interface
+export interface UserActivity {
+  id: string;
+  userId: string;
+  timestamp: string;
+  activityType: string;
+  details?: string;
+}
