@@ -14,6 +14,8 @@ export const useRequestStatistics = () => {
     setError(null);
     
     try {
+      console.log("Fetching request statistics for admin dashboard");
+      
       // Get total requests count
       const { count: totalRequests, error: totalError } = await supabase
         .from('requests')
@@ -62,7 +64,7 @@ export const useRequestStatistics = () => {
       const typeCount: Record<string, { id: string, name: string, count: number }> = {};
       requestsByType?.forEach(request => {
         const typeId = request.request_type_id;
-        // Fix: properly access the name property from request_types
+        // Properly access the name property from request_types
         const typeName = request.request_types?.name || 'غير محدد';
         
         if (!typeCount[typeId]) {
@@ -87,6 +89,15 @@ export const useRequestStatistics = () => {
           statusCounts[status] = 0;
         }
         statusCounts[status]++;
+      });
+      
+      console.log("Statistics data prepared:", {
+        totalRequests,
+        pendingRequests,
+        approvedRequests,
+        rejectedRequests,
+        typeCountsSize: Object.keys(typeCount).length,
+        statusCountsSize: Object.keys(statusCounts).length
       });
       
       // Format statistics

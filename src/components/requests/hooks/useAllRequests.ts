@@ -14,6 +14,8 @@ export const useAllRequests = () => {
     setError(null);
 
     try {
+      console.log("Fetching all requests for admin view");
+      
       const { data, error: fetchError } = await supabase
         .from("requests")
         .select(`
@@ -26,6 +28,7 @@ export const useAllRequests = () => {
 
       if (fetchError) throw fetchError;
 
+      console.log("Admin view requests data:", data);
       setRequests(data || []);
     } catch (error: any) {
       console.error("Error fetching all requests:", error);
