@@ -31,7 +31,7 @@ export const useUsersData = () => {
           id,
           user_id,
           role_id,
-          roles:role_id(id, name, description)
+          roles(id, name, description)
         `);
       
       if (userRolesError) throw userRolesError;
@@ -46,19 +46,22 @@ export const useUsersData = () => {
         
         // Default role name
         let roleName = 'No Role';
+        let roleId = null;
         
         // Handle role data safely with proper type checking
         if (userRoleData && userRoleData.roles) {
           // If roles is an array, take the first one's name
           if (Array.isArray(userRoleData.roles)) {
-            roleName = userRoleData.roles.length > 0 && userRoleData.roles[0]?.name ? 
-                      userRoleData.roles[0].name : 'No Role';
+            const roleObj = userRoleData.roles[0];
+            roleName = roleObj?.name ? roleObj.name : 'No Role';
+            roleId = roleObj?.id || null;
           } 
           // If roles is a single object, use its name property
           else if (typeof userRoleData.roles === 'object' && userRoleData.roles !== null) {
             // Cast to any to avoid TypeScript errors since we've verified it's an object
             const roleObject = userRoleData.roles as any;
             roleName = roleObject.name || 'No Role';
+            roleId = roleObject.id || null;
           }
         }
         
@@ -67,6 +70,7 @@ export const useUsersData = () => {
           username: profile.username || profile.email,
           displayName: profile.display_name,
           role: roleName,
+          roleId: roleId,
           lastLogin: profile.last_login,
           isActive: profile.is_active
         };

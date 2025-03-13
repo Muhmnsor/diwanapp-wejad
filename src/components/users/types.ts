@@ -4,6 +4,7 @@ export interface User {
   username: string;
   displayName?: string;
   role: string;
+  roleId?: string | null; // Adding roleId to support editing
   lastLogin?: string;
   isActive?: boolean;
 }
@@ -14,28 +15,9 @@ export interface Role {
   description?: string;
 }
 
-// Update UserRoleData interface to match the actual structure returned by Supabase
 export interface UserRoleData {
-  user_id: string;
-  roles: {
-    id: string;
-    name: string;
-    description?: string;
-  }[] | {
-    id: string;
-    name: string;
-    description?: string;
-  };
-}
-
-export interface UserActivity {
   id: string;
-  userId: string;
-  activityType: string;
-  details?: string;
-  timestamp: string;
-  user?: {
-    username: string;
-    displayName?: string;
-  };
+  user_id: string;
+  role_id: string;
+  roles: Role;
 }

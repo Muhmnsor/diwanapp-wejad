@@ -2,14 +2,18 @@
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { User, Role } from "./types";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 interface EditUserDialogProps {
   open: boolean;
@@ -18,156 +22,116 @@ interface EditUserDialogProps {
   onUserEdited: () => void;
 }
 
-export const EditUserDialog = ({ open, onOpenChange, user, onUserEdited }: EditUserDialogProps) => {
-  const [displayName, setDisplayName] = useState("");
-  const [password, setPassword] = useState("");
-  const [isActive, setIsActive] = useState(true);
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [selectedRole, setSelectedRole] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const formSchema = z.object({
+  displayName: z.string().optional(),
+  roleId: z.string().optional(),
+  isActive: z.boolean().default(true),
+});
 
+export const EditUserDialog = ({ open, onOpenChange, user, onUserEdited }: EditUserDialogProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [roles, setRoles] = useState<Role[]>([]);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      displayName: user?.displayName || "",
+      roleId: user?.roleId || "",
+      isActive: user?.isActive !== false,
+    },
+  });
+
+  // Load roles for dropdown
   useEffect(() => {
-    // Reset error state when dialog opens or closes
-    setError(null);
-    
-    // Fetch roles when dialog opens
+    const fetchRoles = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('roles')
+          .select('*')
+          .order('name');
+        
+        if (error) throw error;
+        setRoles(data || []);
+      } catch (err: any) {
+        console.error("Error fetching roles:", err);
+        setError("Failed to load roles");
+      }
+    };
+
     if (open) {
       fetchRoles();
     }
   }, [open]);
 
+  // Reset form when user changes
   useEffect(() => {
-    // Reset form when user changes
     if (user) {
-      setDisplayName(user.displayName || "");
-      setPassword("");
-      setIsActive(user.isActive !== false);
-      setSelectedRole(""); // Reset initially, will be set by fetchUserRole if successful
-      
-      // Fetch the user's current role if user ID exists
-      if (user.id) {
-        fetchUserRole(user.id);
-      }
+      form.reset({
+        displayName: user.displayName || "",
+        roleId: user.roleId || "",
+        isActive: user.isActive !== false,
+      });
     }
-  }, [user]);
-
-  const fetchRoles = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('roles')
-        .select('id, name, description');
-      
-      if (error) throw error;
-      
-      console.log("Fetched roles:", data);
-      setRoles(data || []);
-    } catch (error: any) {
-      console.error("Error fetching roles:", error);
-      setError("حدث خطأ أثناء جلب الأدوار: " + error.message);
-      toast.error("حدث خطأ أثناء جلب الأدوار");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchUserRole = async (userId: string) => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role_id')
-        .eq('user_id', userId)
-        .maybeSingle();
-      
-      console.log("User role fetched:", data);
-      
-      if (error && error.code !== 'PGRST116') { // PGRST116 is the error for no rows returned
-        throw error;
-      }
-      
-      if (data && data.role_id) {
-        setSelectedRole(data.role_id);
-      }
-    } catch (error: any) {
-      console.error("Error fetching user role:", error);
-      // Don't show a toast for this error as it's not critical
-      setError("حدث خطأ أثناء جلب دور المستخدم: " + error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [user, form]);
 
   const handleClose = () => {
-    setPassword("");
     setError(null);
+    form.reset();
     onOpenChange(false);
   };
 
-  const handleUpdateUser = async () => {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!user) return;
-
+    
     setIsSubmitting(true);
     setError(null);
     
     try {
-      console.log("Updating user with id:", user.id);
-      console.log("Current form state:", { displayName, isActive, selectedRole });
-      
-      // Update password if provided
-      if (password) {
-        console.log("Updating password...");
-        const { error: authError } = await supabase.auth.admin.updateUserById(
-          user.id,
-          { password }
-        );
-
-        if (authError) throw authError;
-      }
-
-      // Update profile
-      console.log("Updating profile...");
+      // Update profile information
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ 
-          display_name: displayName,
-          is_active: isActive 
+          display_name: values.displayName,
+          is_active: values.isActive
         })
         .eq('id', user.id);
 
       if (profileError) throw profileError;
 
-      // Update role if provided
-      if (selectedRole) {
-        console.log("Updating role to:", selectedRole);
-        // First delete existing roles
-        const { error: deleteRoleError } = await supabase
+      // If role is selected, update or create user role
+      if (values.roleId) {
+        // Check if user already has a role
+        const { data: existingRoles } = await supabase
           .from('user_roles')
-          .delete()
+          .select('id')
           .eq('user_id', user.id);
         
-        if (deleteRoleError) throw deleteRoleError;
-
-        // Add new role
-        const { error: addRoleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: user.id,
-            role_id: selectedRole
-          });
-        
-        if (addRoleError) throw addRoleError;
+        if (existingRoles && existingRoles.length > 0) {
+          // Update existing role
+          const { error: roleUpdateError } = await supabase
+            .from('user_roles')
+            .update({ role_id: values.roleId })
+            .eq('user_id', user.id);
+          
+          if (roleUpdateError) throw roleUpdateError;
+        } else {
+          // Create new role assignment
+          const { error: roleInsertError } = await supabase
+            .from('user_roles')
+            .insert({ user_id: user.id, role_id: values.roleId });
+          
+          if (roleInsertError) throw roleInsertError;
+        }
       }
 
-      toast.success("تم تحديث بيانات المستخدم بنجاح");
+      toast.success("تم تحديث المستخدم بنجاح");
       handleClose();
       onUserEdited();
     } catch (error: any) {
       console.error("Error updating user:", error);
-      setError(`حدث خطأ أثناء تحديث بيانات المستخدم: ${error.message || error}`);
-      toast.error("حدث خطأ أثناء تحديث بيانات المستخدم");
+      setError(`حدث خطأ أثناء تحديث المستخدم: ${error.message || error}`);
+      toast.error("حدث خطأ أثناء تحديث المستخدم");
     } finally {
       setIsSubmitting(false);
     }
@@ -179,99 +143,101 @@ export const EditUserDialog = ({ open, onOpenChange, user, onUserEdited }: EditU
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="text-right">تعديل بيانات المستخدم</DialogTitle>
+          <DialogTitle className="text-right">تعديل المستخدم</DialogTitle>
         </DialogHeader>
+        
         {error && (
           <Alert variant="destructive">
             <AlertDescription className="text-right">{error}</AlertDescription>
           </Alert>
         )}
-        {isLoading ? (
-          <div className="py-8 text-center flex flex-col items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-            <p>جارِ التحميل...</p>
-          </div>
-        ) : (
-          <div className="space-y-4 py-4 text-right">
-            <div className="space-y-2">
-              <Label>البريد الإلكتروني</Label>
-              <Input value={user.username} disabled dir="ltr" className="text-right" />
-            </div>
-            <div className="space-y-2">
-              <Label>الاسم الشخصي</Label>
-              <Input
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="أدخل الاسم الشخصي"
-                dir="rtl"
-                className="text-right"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>كلمة المرور الجديدة</Label>
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="اترك فارغًا إذا لم ترغب في التغيير"
-                dir="ltr"
-                className="text-right"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>الدور</Label>
-              {roles && roles.length > 0 ? (
-                <Select value={selectedRole} onValueChange={setSelectedRole} dir="rtl">
-                  <SelectTrigger className="w-full text-right">
-                    <SelectValue placeholder="اختر الدور" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roles.map((role) => (
-                      <SelectItem key={role.id} value={role.id}>
-                        {role.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <div className="text-sm text-muted-foreground">لا توجد أدوار متاحة</div>
+        
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 text-right">
+            <FormField
+              control={form.control}
+              name="displayName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>اسم العرض</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="اسم العرض" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </div>
-            <div className="space-y-2">
-              <Label>الحالة</Label>
-              <Select value={isActive ? "active" : "inactive"} onValueChange={(value) => setIsActive(value === "active")} dir="rtl">
-                <SelectTrigger className="w-full text-right">
-                  <SelectValue placeholder="اختر الحالة" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">نشط</SelectItem>
-                  <SelectItem value="inactive">غير نشط</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        )}
-        <DialogFooter className="flex flex-row-reverse sm:justify-start gap-2">
-          <Button 
-            onClick={handleUpdateUser} 
-            disabled={isSubmitting || isLoading}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                جارِ الحفظ...
-              </>
-            ) : "حفظ التغييرات"}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleClose}
-            disabled={isSubmitting || isLoading}
-          >
-            إلغاء
-          </Button>
-        </DialogFooter>
+            />
+            
+            <FormField
+              control={form.control}
+              name="roleId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>الدور</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="اختر دوراً" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="">لا دور</SelectItem>
+                      {roles.map((role) => (
+                        <SelectItem key={role.id} value={role.id}>
+                          {role.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="isActive"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                  <div className="space-y-0.5">
+                    <FormLabel>حساب نشط</FormLabel>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            
+            <DialogFooter className="flex sm:justify-start gap-2 mt-4">
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    جارِ الحفظ...
+                  </>
+                ) : "حفظ التغييرات"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={isSubmitting}
+              >
+                إلغاء
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
