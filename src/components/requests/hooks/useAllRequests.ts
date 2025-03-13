@@ -116,48 +116,26 @@ export const useAllRequests = () => {
         setRequests(transformedData);
         setFilteredRequests(transformedData);
       } else {
-        // Fallback to direct query if RPC returns no data
-        console.log("RPC returned no data or invalid format, trying direct query...");
+        // Handle case when no data returned or is not in expected format
+        console.warn("RPC returned no data or data is not in expected format");
         
-        const { data: directData, error: directError } = await supabase
-          .from("requests")
-          .select(`
-            *,
-            request_type: request_types (*),
-            workflow: request_workflows (*),
-            requester: profiles (*),
-            current_step: workflow_steps (*)
-          `)
-          .order("created_at", { ascending: false });
-          
-        if (directError) {
-          console.error("Error with direct query:", directError);
-          throw directError;
-        }
+        // No need for fallback query - simply set empty arrays if no data
+        // This prevents unnecessary queries and is more efficient
+        setRequests([]);
+        setFilteredRequests([]);
         
-        console.log("Fetched requests via direct query:", directData?.length || 0, "requests");
-        
-        if (directData) {
-          // Map the data to ensure proper structure
-          const formattedData = directData.map(request => ({
-            ...request,
-            request_type: request.request_type?.[0] || null,
-            workflow: request.workflow?.[0] || null,
-            requester: request.requester?.[0] || null,
-            current_step: request.current_step?.[0] || null
-          }));
-          
-          setRequests(formattedData);
-          setFilteredRequests(formattedData);
-        } else {
-          // Set empty arrays if no data returned
-          setRequests([]);
-          setFilteredRequests([]);
-        }
+        // Show appropriate message to user via toast notification
+        toast.warning("لم يتم العثور على أي طلبات أو ليس لديك صلاحية لرؤيتها");
       }
     } catch (error: any) {
       console.error("Error fetching all requests:", error);
-      setError(error.message || "حدث خطأ أثناء جلب بيانات الطلبات");
+      
+      // Set a user-friendly error message
+      const errorMessage = error.message?.includes('permission denied') 
+        ? "ليس لديك صلاحية للوصول إلى قائمة الطلبات"
+        : "حدث خطأ أثناء جلب بيانات الطلبات";
+      
+      setError(errorMessage);
       
       // Only show toast on first attempt to avoid spam
       if (retryCount === 0) {

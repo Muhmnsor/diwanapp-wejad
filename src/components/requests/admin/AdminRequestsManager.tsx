@@ -2,13 +2,13 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RequestsOverview } from "./RequestsOverview";
-import { AllRequestsTable } from "./AllRequestsTable";
 import { useAllRequests } from "../hooks/useAllRequests";
 import { useAuthStore } from "@/store/refactored-auth";
 import { RequestDetail } from "../RequestDetail";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EnhancedRequestsTable } from "../tables/EnhancedRequestsTable";
 
 export const AdminRequestsManager = () => {
   const { user } = useAuthStore();
@@ -95,7 +95,7 @@ export const AdminRequestsManager = () => {
         </TabsContent>
         
         <TabsContent value="all-requests">
-          <AllRequestsTable 
+          <EnhancedRequestsTable 
             requests={requests}
             isLoading={isLoading}
             onViewRequest={handleViewRequest}
