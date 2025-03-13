@@ -34,7 +34,7 @@ export const useUsersData = () => {
         let roleName = 'No Role';
         if (userRole && userRole.roles) {
           // Handle case where roles might be an object or array
-          if (typeof userRole.roles === 'object') {
+          if (typeof userRole.roles === 'object' && userRole.roles !== null) {
             roleName = userRole.roles.name || 'No Role';
           }
         }

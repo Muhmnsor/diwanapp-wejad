@@ -41,14 +41,11 @@ export const DeleteUserDialog = ({ open, onOpenChange, user, onUserDeleted }: De
 
       if (profileError) throw profileError;
 
-      // Soft delete the user in auth (or disable)
-      // Use updateUser instead of admin.updateUserById to update user status
-      const { error: authError } = await supabase.auth.admin.updateUserById(
-        user.id,
-        { disabled: true } // Use disabled property instead of banned
-      );
+      // Use RPC function to soft delete the user instead of direct admin API call
+      const { error: softDeleteError } = await supabase
+        .rpc('soft_delete_user', { user_id: user.id });
 
-      if (authError) throw authError;
+      if (softDeleteError) throw softDeleteError;
 
       toast.success("تم تعطيل المستخدم بنجاح");
       handleClose();
