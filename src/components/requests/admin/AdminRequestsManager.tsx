@@ -1,33 +1,18 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RequestsOverview } from "./RequestsOverview";
 import { AllRequestsTable } from "./AllRequestsTable";
 import { useAllRequests } from "../hooks/useAllRequests";
 import { useAuthStore } from "@/store/refactored-auth";
 import { RequestDetail } from "../RequestDetail";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 export const AdminRequestsManager = () => {
   const { user } = useAuthStore();
   const isAdmin = user?.isAdmin || user?.role === 'developer' || user?.role === 'admin';
   
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
-  const { 
-    requests, 
-    isLoading, 
-    error,
-    refreshRequests, 
-    filterByStatus, 
-    statusFilter 
-  } = useAllRequests();
-  
-  // Auto-refresh on mount to ensure we have the latest data
-  useEffect(() => {
-    refreshRequests();
-  }, []);
+  const { requests, isLoading, refreshRequests } = useAllRequests();
   
   const handleViewRequest = (request: any) => {
     setSelectedRequestId(request.id);
@@ -60,34 +45,12 @@ export const AdminRequestsManager = () => {
     );
   }
   
-  // Show error state if there's an error
-  if (error) {
-    return (
-      <Alert variant="destructive" className="mb-6">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>خطأ في تحميل البيانات</AlertTitle>
-        <AlertDescription>
-          {error}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="mt-2" 
-            onClick={refreshRequests}
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            إعادة المحاولة
-          </Button>
-        </AlertDescription>
-      </Alert>
-    );
-  }
-  
   return (
     <div className="space-y-4">
-      <Tabs defaultValue="all-requests" className="w-full">
+      <Tabs defaultValue="overview" className="w-full">
         <TabsList className="mb-6">
-          <TabsTrigger value="all-requests">جميع الطلبات</TabsTrigger>
           <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
+          <TabsTrigger value="all-requests">جميع الطلبات</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview">
@@ -100,8 +63,6 @@ export const AdminRequestsManager = () => {
             isLoading={isLoading}
             onViewRequest={handleViewRequest}
             onRefresh={refreshRequests}
-            filterByStatus={filterByStatus}
-            statusFilter={statusFilter}
           />
         </TabsContent>
       </Tabs>
