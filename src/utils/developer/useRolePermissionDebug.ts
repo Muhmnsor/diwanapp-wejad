@@ -52,14 +52,29 @@ export const useRolePermissionDebug = () => {
 
         if (userRolesError) throw userRolesError;
 
-        // Extract role information
+        // Extract role information - fixing the type issue here
         const roles: RoleInfo[] = userRolesData
-          ?.map((ur) => ({
-            id: ur.roles.id,
-            name: ur.roles.name,
-            description: ur.roles.description,
-          }))
-          .filter(Boolean) || [];
+          ?.map((ur) => {
+            // Make sure roles exists and is an object, not an array
+            if (!ur.roles || typeof ur.roles !== 'object') {
+              console.log('No roles data found for entry:', ur);
+              return null;
+            }
+            
+            // Cast to the expected structure and extract properties
+            const roleData = ur.roles as unknown as {
+              id: string;
+              name: string;
+              description: string | null;
+            };
+            
+            return {
+              id: roleData.id,
+              name: roleData.name,
+              description: roleData.description
+            };
+          })
+          .filter((role): role is RoleInfo => role !== null) || [];
 
         // Check if user has admin or developer role
         const isAdmin = roles.some(
