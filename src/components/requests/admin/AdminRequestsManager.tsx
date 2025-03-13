@@ -1,11 +1,14 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RequestsOverview } from "./RequestsOverview";
 import { AllRequestsTable } from "./AllRequestsTable";
 import { useAllRequests } from "../hooks/useAllRequests";
 import { useAuthStore } from "@/store/refactored-auth";
 import { RequestDetail } from "../RequestDetail";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export const AdminRequestsManager = () => {
   const { user } = useAuthStore();
@@ -15,10 +18,16 @@ export const AdminRequestsManager = () => {
   const { 
     requests, 
     isLoading, 
+    error,
     refreshRequests, 
     filterByStatus, 
     statusFilter 
   } = useAllRequests();
+  
+  // Auto-refresh on mount to ensure we have the latest data
+  useEffect(() => {
+    refreshRequests();
+  }, []);
   
   const handleViewRequest = (request: any) => {
     setSelectedRequestId(request.id);
@@ -48,6 +57,28 @@ export const AdminRequestsManager = () => {
         requestId={selectedRequestId}
         onClose={handleCloseDetailView}
       />
+    );
+  }
+  
+  // Show error state if there's an error
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mb-6">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>خطأ في تحميل البيانات</AlertTitle>
+        <AlertDescription>
+          {error}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-2" 
+            onClick={refreshRequests}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            إعادة المحاولة
+          </Button>
+        </AlertDescription>
+      </Alert>
     );
   }
   

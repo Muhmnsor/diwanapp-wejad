@@ -45,12 +45,14 @@ export const useAllRequests = () => {
   const [error, setError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   const fetchAllRequests = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
+      // Use simplified direct query instead of RPC function to avoid potential issues
       const { data, error: fetchError } = await supabase
         .from("requests")
         .select(`
@@ -70,7 +72,17 @@ export const useAllRequests = () => {
     } catch (error: any) {
       console.error("Error fetching all requests:", error);
       setError(error.message || "حدث خطأ أثناء جلب بيانات الطلبات");
-      toast.error("فشل في تحميل قائمة الطلبات");
+      
+      // Only show toast on first attempt to avoid spam
+      if (retryCount === 0) {
+        toast.error("فشل في تحميل قائمة الطلبات");
+      }
+      
+      // If we've tried less than 3 times, attempt again
+      if (retryCount < 3) {
+        setRetryCount(prev => prev + 1);
+        setTimeout(() => setRefreshTrigger(prev => prev + 1), 2000); // Retry after 2 seconds
+      }
     } finally {
       setIsLoading(false);
     }
@@ -99,7 +111,10 @@ export const useAllRequests = () => {
   }, [requests, statusFilter]);
 
   // Refresh function
-  const refreshRequests = () => setRefreshTrigger(prev => prev + 1);
+  const refreshRequests = () => {
+    setRetryCount(0); // Reset retry count on manual refresh
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   useEffect(() => {
     fetchAllRequests();
