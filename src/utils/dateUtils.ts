@@ -45,6 +45,35 @@ export const formatDate = (dateString: string): string => {
   }
 };
 
+/**
+ * تنسيق التاريخ للعرض بالعربية للتقارير والوثائق
+ */
+export const formatArabicDate = (dateString: string): string => {
+  if (!dateString) return '';
+  
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return dateString;
+    }
+    
+    // أسماء الأشهر بالعربية
+    const arabicMonths = [
+      'يناير', 'فبراير', 'مارس', 'إبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+    ];
+    
+    const day = date.getDate();
+    const month = arabicMonths[date.getMonth()];
+    const year = date.getFullYear();
+    
+    return `${day} ${month} ${year}`;
+  } catch (error) {
+    console.error('Error formatting Arabic date:', error);
+    return dateString;
+  }
+};
+
 // دالة إضافية للتحقق من صحة التاريخ
 export const isValidDate = (dateString: string): boolean => {
   if (!dateString) return false;

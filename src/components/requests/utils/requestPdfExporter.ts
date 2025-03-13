@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import QRCode from "qrcode";
 import { formatDate } from "@/utils/dateUtils";
+import { formatArabicDate } from "@/utils/dateUtils";
 
 // Configure PDF for Arabic text with RTL support
 const configurePdfForArabic = (pdf: jsPDF) => {
@@ -13,9 +14,6 @@ const configurePdfForArabic = (pdf: jsPDF) => {
     
     // Use Helvetica as it has better support for Arabic compared to built-in fonts
     pdf.setFont("Helvetica");
-    
-    // Set text baseline for better Arabic text alignment
-    pdf.setTextBaseline("middle");
     
     return pdf;
   } catch (error) {
@@ -59,10 +57,10 @@ const addRequestHeader = (
   startY += 7;
   pdf.text(`الحالة: ${getStatusTranslation(request.status)}`, pageWidth - 15, startY, { align: "right" });
   startY += 7;
-  pdf.text(`تاريخ الإنشاء: ${formatDate(request.created_at)}`, pageWidth - 15, startY, { align: "right" });
+  pdf.text(`تاريخ الإنشاء: ${formatArabicDate(request.created_at)}`, pageWidth - 15, startY, { align: "right" });
   if (request.updated_at) {
     startY += 7;
-    pdf.text(`تاريخ آخر تحديث: ${formatDate(request.updated_at)}`, pageWidth - 15, startY, { align: "right" });
+    pdf.text(`تاريخ آخر تحديث: ${formatArabicDate(request.updated_at)}`, pageWidth - 15, startY, { align: "right" });
   }
   
   // Draw separator line
@@ -169,7 +167,7 @@ const addApprovalsSection = (
       const stepName = approval.step?.step_name || "خطوة غير معروفة";
       const approverName = approval.approver?.display_name || approval.approver?.email || "-";
       const status = getApprovalStatusTranslation(approval.status);
-      const date = approval.approved_at ? formatDate(approval.approved_at) : "-";
+      const date = approval.approved_at ? formatArabicDate(approval.approved_at) : "-";
       
       // Add row data (adjusted for RTL)
       pdf.text(date, 40, startY, { align: "center" });
@@ -245,7 +243,7 @@ const addFooter = (pdf: jsPDF): void => {
   const pageHeight = pdf.internal.pageSize.getHeight();
   
   const now = new Date();
-  const timestamp = `تم إنشاء هذا المستند بتاريخ ${formatDate(now.toISOString())}`;
+  const timestamp = `تم إنشاء هذا المستند بتاريخ ${formatArabicDate(now.toISOString())}`;
   
   for (let i = 1; i <= pageCount; i++) {
     pdf.setPage(i);
