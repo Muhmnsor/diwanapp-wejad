@@ -4889,6 +4889,10 @@ export type Database = {
         }
         Returns: Json
       }
+      get_request_statistics: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_user_incoming_requests: {
         Args: {
           p_user_id: string

@@ -10,7 +10,7 @@ interface RequestTypeResponse {
   request_types: {
     id: string;
     name: string;
-  }[] | null; // Changed to array or null to match actual Supabase response
+  }[] | null; // Array or null to match actual Supabase response
 }
 
 export const useRequestStatistics = () => {
