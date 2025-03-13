@@ -58,17 +58,13 @@ export const AllRequestsTable = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   
-  console.log("AllRequestsTable - requests:", requests?.length);
-  
   const filteredRequests = requests.filter(request => {
     const searchTerm = filterText.toLowerCase();
     return (
       request.title?.toLowerCase().includes(searchTerm) ||
       request.request_type?.name?.toLowerCase().includes(searchTerm) ||
       request.status?.toLowerCase().includes(searchTerm) ||
-      request.priority?.toLowerCase().includes(searchTerm) ||
-      request.requester?.display_name?.toLowerCase().includes(searchTerm) ||
-      request.requester?.email?.toLowerCase().includes(searchTerm)
+      request.priority?.toLowerCase().includes(searchTerm)
     );
   });
   

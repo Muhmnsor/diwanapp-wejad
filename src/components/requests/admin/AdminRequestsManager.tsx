@@ -6,15 +6,13 @@ import { AllRequestsTable } from "./AllRequestsTable";
 import { useAllRequests } from "../hooks/useAllRequests";
 import { useAuthStore } from "@/store/refactored-auth";
 import { RequestDetail } from "../RequestDetail";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Loader2 } from "lucide-react";
 
 export const AdminRequestsManager = () => {
   const { user } = useAuthStore();
   const isAdmin = user?.isAdmin || user?.role === 'developer' || user?.role === 'admin';
   
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
-  const { requests, isLoading, error, refreshRequests } = useAllRequests();
+  const { requests, isLoading, refreshRequests } = useAllRequests();
   
   const handleViewRequest = (request: any) => {
     setSelectedRequestId(request.id);
@@ -28,24 +26,12 @@ export const AdminRequestsManager = () => {
   // Only show admin content to admins
   if (!isAdmin) {
     return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>غير مصرح</AlertTitle>
-        <AlertDescription>
+      <div className="p-6 bg-red-50 rounded-lg">
+        <h2 className="text-xl font-semibold text-red-600 mb-2">غير مصرح</h2>
+        <p className="text-red-600">
           ليس لديك صلاحية الوصول إلى هذه الصفحة. يجب أن تكون مشرفًا للوصول إلى لوحة الإدارة.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  // If there's an error loading the data
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>خطأ في تحميل البيانات</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
+        </p>
+      </div>
     );
   }
   
@@ -72,19 +58,12 @@ export const AdminRequestsManager = () => {
         </TabsContent>
         
         <TabsContent value="all-requests">
-          {isLoading ? (
-            <div className="flex items-center justify-center p-8">
-              <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
-              <span>جاري تحميل الطلبات...</span>
-            </div>
-          ) : (
-            <AllRequestsTable 
-              requests={requests}
-              isLoading={isLoading}
-              onViewRequest={handleViewRequest}
-              onRefresh={refreshRequests}
-            />
-          )}
+          <AllRequestsTable 
+            requests={requests}
+            isLoading={isLoading}
+            onViewRequest={handleViewRequest}
+            onRefresh={refreshRequests}
+          />
         </TabsContent>
       </Tabs>
     </div>
