@@ -1,4 +1,3 @@
-
 import { jsPDF } from "jspdf";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
@@ -15,9 +14,6 @@ const configurePdfForArabic = (pdf: jsPDF) => {
     // Use a standard font
     pdf.setFont("Helvetica");
     
-    // Set text baseline for better positioning
-    pdf.setTextBaseline("middle");
-    
     return pdf;
   } catch (error) {
     console.error("Error configuring PDF for Arabic:", error);
@@ -29,9 +25,11 @@ const configurePdfForArabic = (pdf: jsPDF) => {
 const processArabicText = (text: string): string => {
   if (!text) return "";
   
-  // Reverse the text to handle RTL issues in jsPDF
-  // This works because jsPDF's setR2L doesn't fully handle bidirectional text
-  return text.split(' ').reverse().join(' ');
+  // For PDF with setR2L(true), we need to reverse characters in each word
+  // but keep the word order for proper RTL rendering
+  return text.split(' ')
+    .map(word => word.split('').reverse().join(''))
+    .join(' ');
 };
 
 // Generate QR code for verification
@@ -56,23 +54,23 @@ const addRequestHeader = (
   
   // Add title
   pdf.setFontSize(18);
-  pdf.text(processArabicText("تفاصيل الطلب"), pageWidth / 2, startY, { align: "center" });
+  pdf.text(processArabicText("تفاصيل الطلب"), pageWidth / 2, startY, { align: "center", baseline: "middle" });
   
   // Add request info
   pdf.setFontSize(12);
   startY += 10;
-  pdf.text(processArabicText(`رقم الطلب: ${request.id.substring(0, 8)}`), pageWidth - 15, startY, { align: "right" });
+  pdf.text(processArabicText(`رقم الطلب: ${request.id.substring(0, 8)}`), pageWidth - 15, startY, { align: "right", baseline: "middle" });
   startY += 7;
-  pdf.text(processArabicText(`عنوان الطلب: ${request.title}`), pageWidth - 15, startY, { align: "right" });
+  pdf.text(processArabicText(`عنوان الطلب: ${request.title}`), pageWidth - 15, startY, { align: "right", baseline: "middle" });
   startY += 7;
-  pdf.text(processArabicText(`نوع الطلب: ${requestType?.name || "غير محدد"}`), pageWidth - 15, startY, { align: "right" });
+  pdf.text(processArabicText(`نوع الطلب: ${requestType?.name || "غير محدد"}`), pageWidth - 15, startY, { align: "right", baseline: "middle" });
   startY += 7;
-  pdf.text(processArabicText(`الحالة: ${getStatusTranslation(request.status)}`), pageWidth - 15, startY, { align: "right" });
+  pdf.text(processArabicText(`الحالة: ${getStatusTranslation(request.status)}`), pageWidth - 15, startY, { align: "right", baseline: "middle" });
   startY += 7;
-  pdf.text(processArabicText(`تاريخ الإنشاء: ${formatArabicDate(request.created_at)}`), pageWidth - 15, startY, { align: "right" });
+  pdf.text(processArabicText(`تاريخ الإنشاء: ${formatArabicDate(request.created_at)}`), pageWidth - 15, startY, { align: "right", baseline: "middle" });
   if (request.updated_at) {
     startY += 7;
-    pdf.text(processArabicText(`تاريخ آخر تحديث: ${formatArabicDate(request.updated_at)}`), pageWidth - 15, startY, { align: "right" });
+    pdf.text(processArabicText(`تاريخ آخر تحديث: ${formatArabicDate(request.updated_at)}`), pageWidth - 15, startY, { align: "right", baseline: "middle" });
   }
   
   // Draw separator line
@@ -93,7 +91,7 @@ const addFormDataSection = (
   
   // Section header
   pdf.setFontSize(14);
-  pdf.text(processArabicText("بيانات الطلب"), pageWidth - 15, startY, { align: "right" });
+  pdf.text(processArabicText("بيانات الطلب"), pageWidth - 15, startY, { align: "right", baseline: "middle" });
   startY += 10;
   
   // Form data
@@ -109,11 +107,11 @@ const addFormDataSection = (
       
       const displayValue = value !== null && value !== undefined ? String(value) : "-";
       const textLine = processArabicText(`${key}: ${displayValue}`);
-      pdf.text(textLine, pageWidth - 15, startY, { align: "right" });
+      pdf.text(textLine, pageWidth - 15, startY, { align: "right", baseline: "middle" });
       startY += 7;
     });
   } else {
-    pdf.text(processArabicText("لا توجد بيانات إضافية للطلب"), pageWidth - 15, startY, { align: "right" });
+    pdf.text(processArabicText("لا توجد بيانات إضافية للطلب"), pageWidth - 15, startY, { align: "right", baseline: "middle" });
     startY += 7;
   }
   
@@ -135,7 +133,7 @@ const addApprovalsSection = (
   
   // Section header
   pdf.setFontSize(14);
-  pdf.text(processArabicText("سجل الموافقات"), pageWidth - 15, startY, { align: "right" });
+  pdf.text(processArabicText("سجل الموافقات"), pageWidth - 15, startY, { align: "right", baseline: "middle" });
   startY += 10;
   
   if (approvals && approvals.length > 0) {
@@ -144,10 +142,10 @@ const addApprovalsSection = (
     const headerY = startY;
     
     // Draw header texts (reversed for RTL)
-    pdf.text(processArabicText("التاريخ"), 40, headerY, { align: "center" });
-    pdf.text(processArabicText("الحالة"), 85, headerY, { align: "center" });
-    pdf.text(processArabicText("المسؤول"), 150, headerY, { align: "center" });
-    pdf.text(processArabicText("الخطوة"), pageWidth - 20, headerY, { align: "right" });
+    pdf.text(processArabicText("التاريخ"), 40, headerY, { align: "center", baseline: "middle" });
+    pdf.text(processArabicText("الحالة"), 85, headerY, { align: "center", baseline: "middle" });
+    pdf.text(processArabicText("المسؤول"), 150, headerY, { align: "center", baseline: "middle" });
+    pdf.text(processArabicText("الخطوة"), pageWidth - 20, headerY, { align: "right", baseline: "middle" });
     
     // Draw header separator
     startY += 5;
@@ -165,10 +163,10 @@ const addApprovalsSection = (
         
         // Re-add table headers on new page
         pdf.setFontSize(10);
-        pdf.text(processArabicText("التاريخ"), 40, startY, { align: "center" });
-        pdf.text(processArabicText("الحالة"), 85, startY, { align: "center" });
-        pdf.text(processArabicText("المسؤول"), 150, startY, { align: "center" });
-        pdf.text(processArabicText("الخطوة"), pageWidth - 20, startY, { align: "right" });
+        pdf.text(processArabicText("التاريخ"), 40, startY, { align: "center", baseline: "middle" });
+        pdf.text(processArabicText("الحالة"), 85, startY, { align: "center", baseline: "middle" });
+        pdf.text(processArabicText("المسؤول"), 150, startY, { align: "center", baseline: "middle" });
+        pdf.text(processArabicText("الخطوة"), pageWidth - 20, startY, { align: "right", baseline: "middle" });
         
         startY += 5;
         pdf.setLineWidth(0.3);
@@ -183,16 +181,16 @@ const addApprovalsSection = (
       const date = approval.approved_at ? formatArabicDate(approval.approved_at) : "-";
       
       // Add row data (adjusted for RTL)
-      pdf.text(processArabicText(date), 40, startY, { align: "center" });
-      pdf.text(processArabicText(status), 85, startY, { align: "center" });
-      pdf.text(processArabicText(approverName), 150, startY, { align: "center" });
-      pdf.text(processArabicText(stepName), pageWidth - 20, startY, { align: "right" });
+      pdf.text(processArabicText(date), 40, startY, { align: "center", baseline: "middle" });
+      pdf.text(processArabicText(status), 85, startY, { align: "center", baseline: "middle" });
+      pdf.text(processArabicText(approverName), 150, startY, { align: "center", baseline: "middle" });
+      pdf.text(processArabicText(stepName), pageWidth - 20, startY, { align: "right", baseline: "middle" });
       
       startY += 7;
       
       // Add comment if available
       if (approval.comments) {
-        pdf.text(processArabicText(`ملاحظات: ${approval.comments}`), pageWidth - 20, startY, { align: "right" });
+        pdf.text(processArabicText(`ملاحظات: ${approval.comments}`), pageWidth - 20, startY, { align: "right", baseline: "middle" });
         startY += 7;
       }
       
@@ -205,7 +203,7 @@ const addApprovalsSection = (
     });
   } else {
     pdf.setFontSize(11);
-    pdf.text(processArabicText("لا توجد موافقات مسجلة لهذا الطلب"), pageWidth - 15, startY, { align: "right" });
+    pdf.text(processArabicText("لا توجد موافقات مسجلة لهذا الطلب"), pageWidth - 15, startY, { align: "right", baseline: "middle" });
     startY += 7;
   }
   
@@ -235,7 +233,7 @@ const addVerificationQR = async (
   
   // Section header
   pdf.setFontSize(14);
-  pdf.text(processArabicText("التحقق من الطلب"), pageWidth / 2, startY, { align: "center" });
+  pdf.text(processArabicText("التحقق من الطلب"), pageWidth / 2, startY, { align: "center", baseline: "middle" });
   startY += 10;
   
   // Add QR code
@@ -244,7 +242,7 @@ const addVerificationQR = async (
   
   // Add verification instructions
   pdf.setFontSize(10);
-  pdf.text(processArabicText("يمكن التحقق من صحة هذا الطلب عن طريق مسح رمز QR أعلاه"), pageWidth / 2, startY, { align: "center" });
+  pdf.text(processArabicText("يمكن التحقق من صحة هذا الطلب عن طريق مسح رمز QR أعلاه"), pageWidth / 2, startY, { align: "center", baseline: "middle" });
   
   return startY + 10;
 };
@@ -263,10 +261,10 @@ const addFooter = (pdf: jsPDF): void => {
     
     // Add timestamp at bottom left (displayed on right due to RTL)
     pdf.setFontSize(8);
-    pdf.text(timestamp, 15, pageHeight - 10);
+    pdf.text(timestamp, 15, pageHeight - 10, { baseline: "middle" });
     
     // Add page number at bottom right (displayed on left due to RTL)
-    pdf.text(processArabicText(`صفحة ${i} من ${pageCount}`), pageWidth - 15, pageHeight - 10, { align: "right" });
+    pdf.text(processArabicText(`صفحة ${i} من ${pageCount}`), pageWidth - 15, pageHeight - 10, { align: "right", baseline: "middle" });
   }
 };
 
