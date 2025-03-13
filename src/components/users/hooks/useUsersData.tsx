@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Role, UserRoleData } from "../types";
@@ -18,7 +19,10 @@ export const useUsersData = () => {
       
       if (profilesError) throw profilesError;
 
-      // Fetch user roles - modify the query to return a properly structured result
+      // Log the structure of profiles to understand the data
+      console.log("Profiles fetched:", profiles);
+
+      // Fetch user roles with proper join structure
       const { data: userRoles, error: userRolesError } = await supabase
         .from('user_roles')
         .select(`
@@ -28,15 +32,18 @@ export const useUsersData = () => {
       
       if (userRolesError) throw userRolesError;
       
+      // Log the structure of user roles to debug
+      console.log("User roles fetched:", userRoles);
+      
       // Map users with their roles
       const mappedUsers = profiles.map((profile: any) => {
         // Find role data for this user
-        const userRoleData = userRoles.find((ur: any) => ur.user_id === profile.id);
+        const userRoleData = userRoles.find((ur: UserRoleData) => ur.user_id === profile.id);
         
         // Default role name
         let roleName = 'No Role';
         
-        // Handle role data safely
+        // Handle role data safely with proper type checking
         if (userRoleData && userRoleData.roles) {
           roleName = userRoleData.roles.name || 'No Role';
         }
