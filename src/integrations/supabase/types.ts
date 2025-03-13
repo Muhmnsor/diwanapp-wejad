@@ -4779,6 +4779,14 @@ export type Database = {
           table_exists: boolean
         }[]
       }
+      check_user_permission: {
+        Args: {
+          p_user_id: string
+          p_app_name: string
+          p_permission_name: string
+        }
+        Returns: boolean
+      }
       delete_draft_project: {
         Args: {
           p_project_id: string
@@ -4866,6 +4874,15 @@ export type Database = {
           p_user_id: string
         }
         Returns: Json[]
+      }
+      get_user_permissions: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: {
+          app: string
+          permission: string
+        }[]
       }
       get_user_role: {
         Args: {

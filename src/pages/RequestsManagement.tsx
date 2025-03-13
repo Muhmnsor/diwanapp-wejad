@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -17,6 +18,7 @@ import { RequestsWrapper } from "@/components/requests/RequestsWrapper";
 import { validateRequestWorkflow } from "@/components/requests/utils/workflowHelpers";
 import { RequestApproveDialog } from "@/components/requests/detail/RequestApproveDialog";
 import { RequestRejectDialog } from "@/components/requests/detail/RequestRejectDialog";
+import { AdminRequestsManager } from "@/components/requests/admin/AdminRequestsManager";
 
 const RequestsManagement = () => {
   const { isAuthenticated, user } = useAuthStore();
@@ -28,6 +30,9 @@ const RequestsManagement = () => {
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [requestToAction, setRequestToAction] = useState<any>(null);
+  
+  // Check if user is admin or developer
+  const isAdmin = user?.isAdmin || user?.role === 'developer' || user?.role === 'admin';
   
   const { 
     incomingRequests, 
@@ -166,10 +171,31 @@ const RequestsManagement = () => {
           </div>
         );
       case "approvals":
-        if (user?.isAdmin) {
+        // Only show to admins
+        if (isAdmin) {
           return <AdminWorkflows />;
         }
-        return null;
+        return (
+          <div className="p-6 bg-yellow-50 rounded-lg">
+            <h2 className="text-xl font-semibold text-yellow-600 mb-2">غير مصرح</h2>
+            <p className="text-yellow-600">
+              ليس لديك صلاحية الوصول إلى إدارة سير العمل. هذه الميزة متاحة فقط للمشرفين.
+            </p>
+          </div>
+        );
+      case "admin-view":
+        // Only show to admins
+        if (isAdmin) {
+          return <AdminRequestsManager />;
+        }
+        return (
+          <div className="p-6 bg-red-50 rounded-lg">
+            <h2 className="text-xl font-semibold text-red-600 mb-2">غير مصرح</h2>
+            <p className="text-red-600">
+              ليس لديك صلاحية الوصول إلى لوحة الإدارة. هذه الميزة متاحة فقط للمشرفين.
+            </p>
+          </div>
+        );
       default:
         return null;
     }

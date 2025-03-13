@@ -32,3 +32,24 @@ export interface Permission {
   app_name: string;
   role_id: string;
 }
+
+export interface RequestStatistics {
+  totalRequests: number;
+  pendingRequests: number;
+  approvedRequests: number;
+  rejectedRequests: number;
+  averageApprovalTime?: number;
+  requestsByType?: {
+    typeId: string;
+    typeName: string;
+    count: number;
+  }[];
+  requestsByStatus?: {
+    status: string;
+    count: number;
+  }[];
+  requestsByMonth?: {
+    month: string;
+    count: number;
+  }[];
+}

@@ -6,7 +6,7 @@ import { Logo } from "./header/Logo";
 import { HomeButton } from "./header/HomeButton";
 import { AdminActions } from "./header/AdminActions";
 import { Button } from "@/components/ui/button";
-import { Calendar, FolderKanban, LayoutDashboard, FileText, User, ClipboardList, Repeat, Inbox } from "lucide-react";
+import { Calendar, FolderKanban, LayoutDashboard, FileText, User, ClipboardList, Repeat, Inbox, BarChart4 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -129,7 +129,7 @@ export const TopHeader = () => {
                   
                   <Link to="/tasks#reports" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "reports" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`} onClick={() => handleTabChange("reports")}>
                     <FileText className="h-4 w-4" />
-                    <span>التقار��ر</span>
+                    <span>التقارير</span>
                   </Link>
                 </div>
               </div>
@@ -148,10 +148,19 @@ export const TopHeader = () => {
                     <span>الطلبات الصادرة</span>
                   </Link>
 
-                  <Link to="/requests?tab=approvals" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "approvals" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}>
-                    <ClipboardList className="h-4 w-4" />
-                    <span>الاعتمادات</span>
-                  </Link>
+                  {(user?.isAdmin || user?.role === 'developer' || user?.role === 'admin') && (
+                    <>
+                      <Link to="/requests?tab=approvals" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "approvals" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}>
+                        <ClipboardList className="h-4 w-4" />
+                        <span>الاعتمادات</span>
+                      </Link>
+                      
+                      <Link to="/requests?tab=admin-view" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "admin-view" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}>
+                        <BarChart4 className="h-4 w-4" />
+                        <span>لوحة الإدارة</span>
+                      </Link>
+                    </>
+                  )}
 
                   <Link to="/requests?tab=forms" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "forms" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}>
                     <FolderKanban className="h-4 w-4" />
