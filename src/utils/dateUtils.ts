@@ -44,3 +44,15 @@ export const formatDate = (dateString: string): string => {
     return dateString;
   }
 };
+
+// دالة إضافية للتحقق من صحة التاريخ
+export const isValidDate = (dateString: string): boolean => {
+  if (!dateString) return false;
+  
+  try {
+    const date = new Date(dateString);
+    return !isNaN(date.getTime());
+  } catch (error) {
+    return false;
+  }
+};

@@ -18,7 +18,7 @@ export const fetchRequestExportData = async (requestId: string): Promise<any> =>
     }
     
     if (!data) {
-      throw new Error("No data returned for the request");
+      throw new Error("لا توجد بيانات للطلب المطلوب");
     }
     
     // Record the export action (optional, only if you want to track exports)
@@ -52,12 +52,16 @@ export const exportRequestWithEnhancedData = async (requestId: string): Promise<
     // Fetch all needed data
     const data = await fetchRequestExportData(requestId);
     
+    if (!data.request) {
+      toast.error("تعذر العثور على بيانات الطلب");
+      return;
+    }
+    
     // Export to PDF
     await exportRequestToPdf(data);
     
   } catch (error: any) {
     console.error("Error exporting request:", error);
     toast.error(`حدث خطأ أثناء تصدير الطلب: ${error.message || "خطأ غير معروف"}`);
-    throw error;
   }
 };

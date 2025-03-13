@@ -5,11 +5,23 @@ import html2canvas from "html2canvas";
 import QRCode from "qrcode";
 import { formatDate } from "@/utils/dateUtils";
 
-// Add Arabic font configuration
+// Configure PDF for Arabic text with RTL support
 const configurePdfForArabic = (pdf: jsPDF) => {
-  pdf.setFont("Helvetica");
-  pdf.setR2L(true); // Enable right-to-left for Arabic text
-  return pdf;
+  try {
+    // Set right-to-left mode for Arabic text
+    pdf.setR2L(true);
+    
+    // Use Helvetica as it has better support for Arabic compared to built-in fonts
+    pdf.setFont("Helvetica");
+    
+    // Set text baseline for better Arabic text alignment
+    pdf.setTextBaseline("middle");
+    
+    return pdf;
+  } catch (error) {
+    console.error("Error configuring PDF for Arabic:", error);
+    return pdf; // Return the pdf instance even if configuration fails
+  }
 };
 
 // Generate QR code for verification
@@ -23,7 +35,7 @@ const generateQRCode = async (requestId: string, baseUrl: string): Promise<strin
   }
 };
 
-// Add request header info to PDF
+// Add request header info to PDF with RTL support
 const addRequestHeader = (
   pdf: jsPDF, 
   request: any, 
@@ -39,18 +51,18 @@ const addRequestHeader = (
   // Add request info
   pdf.setFontSize(12);
   startY += 10;
-  pdf.text(`رقم الطلب: ${request.id.substring(0, 8)}`, 15, startY);
+  pdf.text(`رقم الطلب: ${request.id.substring(0, 8)}`, pageWidth - 15, startY, { align: "right" });
   startY += 7;
-  pdf.text(`عنوان الطلب: ${request.title}`, 15, startY);
+  pdf.text(`عنوان الطلب: ${request.title}`, pageWidth - 15, startY, { align: "right" });
   startY += 7;
-  pdf.text(`نوع الطلب: ${requestType?.name || "غير محدد"}`, 15, startY);
+  pdf.text(`نوع الطلب: ${requestType?.name || "غير محدد"}`, pageWidth - 15, startY, { align: "right" });
   startY += 7;
-  pdf.text(`الحالة: ${getStatusTranslation(request.status)}`, 15, startY);
+  pdf.text(`الحالة: ${getStatusTranslation(request.status)}`, pageWidth - 15, startY, { align: "right" });
   startY += 7;
-  pdf.text(`تاريخ الإنشاء: ${formatDate(request.created_at)}`, 15, startY);
+  pdf.text(`تاريخ الإنشاء: ${formatDate(request.created_at)}`, pageWidth - 15, startY, { align: "right" });
   if (request.updated_at) {
     startY += 7;
-    pdf.text(`تاريخ آخر تحديث: ${formatDate(request.updated_at)}`, 15, startY);
+    pdf.text(`تاريخ آخر تحديث: ${formatDate(request.updated_at)}`, pageWidth - 15, startY, { align: "right" });
   }
   
   // Draw separator line
@@ -61,7 +73,7 @@ const addRequestHeader = (
   return startY + 10;
 };
 
-// Add form data section to PDF
+// Add form data section to PDF with RTL support
 const addFormDataSection = (
   pdf: jsPDF, 
   formData: Record<string, any>,
@@ -71,7 +83,7 @@ const addFormDataSection = (
   
   // Section header
   pdf.setFontSize(14);
-  pdf.text("بيانات الطلب", 15, startY);
+  pdf.text("بيانات الطلب", pageWidth - 15, startY, { align: "right" });
   startY += 10;
   
   // Form data
@@ -85,11 +97,12 @@ const addFormDataSection = (
         startY = 20;
       }
       
-      pdf.text(`${key}: ${value !== null && value !== undefined ? String(value) : "-"}`, 15, startY);
+      const displayValue = value !== null && value !== undefined ? String(value) : "-";
+      pdf.text(`${key}: ${displayValue}`, pageWidth - 15, startY, { align: "right" });
       startY += 7;
     });
   } else {
-    pdf.text("لا توجد بيانات إضافية للطلب", 15, startY);
+    pdf.text("لا توجد بيانات إضافية للطلب", pageWidth - 15, startY, { align: "right" });
     startY += 7;
   }
   
@@ -101,7 +114,7 @@ const addFormDataSection = (
   return startY + 10;
 };
 
-// Add approvals history section to PDF
+// Add approvals history section to PDF with RTL support
 const addApprovalsSection = (
   pdf: jsPDF,
   approvals: any[],
@@ -111,17 +124,19 @@ const addApprovalsSection = (
   
   // Section header
   pdf.setFontSize(14);
-  pdf.text("سجل الموافقات", 15, startY);
+  pdf.text("سجل الموافقات", pageWidth - 15, startY, { align: "right" });
   startY += 10;
   
   if (approvals && approvals.length > 0) {
     // Table headers
     pdf.setFontSize(10);
     const headerY = startY;
-    pdf.text("الخطوة", 15, headerY);
-    pdf.text("المسؤول", 70, headerY);
-    pdf.text("الحالة", 130, headerY);
-    pdf.text("التاريخ", 160, headerY);
+    
+    // Draw header texts (reversed for RTL)
+    pdf.text("التاريخ", 40, headerY, { align: "center" });
+    pdf.text("الحالة", 85, headerY, { align: "center" });
+    pdf.text("المسؤول", 150, headerY, { align: "center" });
+    pdf.text("الخطوة", pageWidth - 20, headerY, { align: "right" });
     
     // Draw header separator
     startY += 5;
@@ -137,12 +152,13 @@ const addApprovalsSection = (
         pdf.addPage();
         startY = 20;
         
-        // Re-add table headers
+        // Re-add table headers on new page
         pdf.setFontSize(10);
-        pdf.text("الخطوة", 15, startY);
-        pdf.text("المسؤول", 70, startY);
-        pdf.text("الحالة", 130, startY);
-        pdf.text("التاريخ", 160, startY);
+        pdf.text("التاريخ", 40, startY, { align: "center" });
+        pdf.text("الحالة", 85, startY, { align: "center" });
+        pdf.text("المسؤول", 150, startY, { align: "center" });
+        pdf.text("الخطوة", pageWidth - 20, startY, { align: "right" });
+        
         startY += 5;
         pdf.setLineWidth(0.3);
         pdf.line(15, startY, pageWidth - 15, startY);
@@ -155,16 +171,17 @@ const addApprovalsSection = (
       const status = getApprovalStatusTranslation(approval.status);
       const date = approval.approved_at ? formatDate(approval.approved_at) : "-";
       
-      pdf.text(stepName, 15, startY);
-      pdf.text(approverName, 70, startY);
-      pdf.text(status, 130, startY);
-      pdf.text(date, 160, startY);
+      // Add row data (adjusted for RTL)
+      pdf.text(date, 40, startY, { align: "center" });
+      pdf.text(status, 85, startY, { align: "center" });
+      pdf.text(approverName, 150, startY, { align: "center" });
+      pdf.text(stepName, pageWidth - 20, startY, { align: "right" });
       
       startY += 7;
       
       // Add comment if available
       if (approval.comments) {
-        pdf.text(`ملاحظات: ${approval.comments}`, 20, startY);
+        pdf.text(`ملاحظات: ${approval.comments}`, pageWidth - 20, startY, { align: "right" });
         startY += 7;
       }
       
@@ -177,7 +194,7 @@ const addApprovalsSection = (
     });
   } else {
     pdf.setFontSize(11);
-    pdf.text("لا توجد موافقات مسجلة لهذا الطلب", 15, startY);
+    pdf.text("لا توجد موافقات مسجلة لهذا الطلب", pageWidth - 15, startY, { align: "right" });
     startY += 7;
   }
   
@@ -233,11 +250,11 @@ const addFooter = (pdf: jsPDF): void => {
   for (let i = 1; i <= pageCount; i++) {
     pdf.setPage(i);
     
-    // Add timestamp at bottom left
+    // Add timestamp at bottom left (displayed on right due to RTL)
     pdf.setFontSize(8);
     pdf.text(timestamp, 15, pageHeight - 10);
     
-    // Add page number at bottom right
+    // Add page number at bottom right (displayed on left due to RTL)
     pdf.text(`صفحة ${i} من ${pageCount}`, pageWidth - 15, pageHeight - 10, { align: "right" });
   }
 };

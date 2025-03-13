@@ -46,7 +46,7 @@ export const RequestExportButton = ({
       size="sm"
       onClick={handleExport}
       disabled={isExporting}
-      className="gap-1"
+      className="gap-1 hover:bg-slate-100"
     >
       <FileDown className="h-4 w-4" />
       {isExporting ? "جاري التصدير..." : "تصدير PDF"}
