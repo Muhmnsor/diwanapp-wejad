@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Role } from "../types";
@@ -35,7 +34,14 @@ export const useUsersData = () => {
         if (userRole && userRole.roles) {
           // Handle case where roles might be an object or array
           if (typeof userRole.roles === 'object' && userRole.roles !== null) {
-            roleName = userRole.roles.name || 'No Role';
+            // Check if it's an array
+            if (Array.isArray(userRole.roles)) {
+              // Use the first role in the array if it exists
+              roleName = userRole.roles[0]?.name || 'No Role';
+            } else {
+              // Otherwise it's an object with a name property
+              roleName = userRole.roles.name || 'No Role';
+            }
           }
         }
         
