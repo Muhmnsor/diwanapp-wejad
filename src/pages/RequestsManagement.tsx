@@ -46,13 +46,17 @@ const RequestsManagement = () => {
 
   useEffect(() => {
     const tabFromUrl = searchParams.get("tab");
+    console.log("Tab from URL:", tabFromUrl);
+    
     if (tabFromUrl && tabFromUrl !== activeTab) {
-      setSearchParams(searchParams);
+      // Updating active tab if different from current
+      console.log("Updating tab to:", tabFromUrl);
       
       if (tabFromUrl === "incoming" || tabFromUrl === "outgoing") {
         refreshRequests();
       }
     } else if (!tabFromUrl) {
+      // Setting default tab if none in URL
       searchParams.set("tab", activeTab);
       setSearchParams(searchParams);
     }
@@ -127,6 +131,8 @@ const RequestsManagement = () => {
   };
 
   const renderContent = () => {
+    console.log("Current active tab:", activeTab);
+    
     switch (activeTab) {
       case "incoming":
       case "incoming-refresh":
@@ -184,6 +190,7 @@ const RequestsManagement = () => {
           </div>
         );
       case "admin-view":
+        console.log("Rendering admin view, isAdmin:", isAdmin);
         // Only show to admins
         if (isAdmin) {
           return <AdminRequestsManager />;

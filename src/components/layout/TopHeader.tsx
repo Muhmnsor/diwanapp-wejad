@@ -138,12 +138,12 @@ export const TopHeader = () => {
           {isRequestsPage && <div className="w-full bg-white border-t py-3">
               <div className="flex justify-center">
                 <div className="flex gap-6 items-center">
-                  <Link to="/requests" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "incoming" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}>
+                  <Link to="/requests" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "incoming" || activeTab === "incoming-refresh" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}>
                     <Inbox className="h-4 w-4" />
                     <span>الطلبات الواردة</span>
                   </Link>
                   
-                  <Link to="/requests?tab=outgoing" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "outgoing" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}>
+                  <Link to="/requests?tab=outgoing" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "outgoing" || activeTab === "outgoing-refresh" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}>
                     <FileText className="h-4 w-4" />
                     <span>الطلبات الصادرة</span>
                   </Link>
