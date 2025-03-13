@@ -10,7 +10,7 @@ interface RequestTypeResponse {
   request_types: {
     id: string;
     name: string;
-  } | null;
+  }[] | null; // Changed to array or null to match actual Supabase response
 }
 
 export const useRequestStatistics = () => {
@@ -109,9 +109,10 @@ export const useRequestStatistics = () => {
         requestsByTypeData.forEach((request: RequestTypeResponse) => {
           const typeId = request.request_type_id;
           
-          // This is the corrected part to access the nested request_types object
-          // Since request_types is returned as an object not as an array
-          const typeName = request.request_types?.name || 'غير محدد';
+          // Access the first item in the request_types array, if it exists
+          const typeName = request.request_types && request.request_types.length > 0 
+            ? request.request_types[0].name 
+            : 'غير محدد';
           
           if (!typeCount[typeId]) {
             typeCount[typeId] = { typeId, typeName, count: 0 };
