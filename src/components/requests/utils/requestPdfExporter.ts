@@ -4,7 +4,47 @@ import QRCode from "qrcode";
 import { formatDate, formatArabicDate } from "@/utils/dateUtils";
 import pdfMake from "pdfmake/build/pdfmake";
 import { getArabicFontDefinition, getArabicDocumentStyles } from "@/utils/pdf/arabicUtils";
-import { Content, TDocumentDefinitions, StyleDictionary } from "pdfmake/interfaces";
+
+// Define types for pdfmake since the direct import is not working
+interface Content {
+  text?: string;
+  style?: string;
+  margin?: number[];
+  alignment?: string;
+  columns?: any[];
+  image?: string;
+  width?: number;
+  height?: number;
+  fontSize?: number;
+  canvas?: any[];
+  table?: {
+    headerRows?: number;
+    widths?: string[] | number[];
+    body: any[][];
+  };
+  layout?: any;
+  colSpan?: number;
+}
+
+interface StyleDictionary {
+  [key: string]: {
+    fontSize?: number;
+    bold?: boolean;
+    alignment?: string;
+    margin?: number[];
+    color?: string;
+  };
+}
+
+interface TDocumentDefinitions {
+  content: Content[];
+  styles?: StyleDictionary;
+  defaultStyle?: any;
+  footer?: Function | any;
+  pageSize?: string;
+  pageOrientation?: string;
+  pageMargins?: number[];
+}
 
 // Register Arabic fonts with pdfMake
 pdfMake.vfs = pdfMake.vfs || {};
