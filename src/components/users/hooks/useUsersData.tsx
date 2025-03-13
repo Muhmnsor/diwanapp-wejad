@@ -39,7 +39,7 @@ export const useUsersData = () => {
           // Handle case where roles might be returned as an array or object
           if (Array.isArray(userRoleData.roles)) {
             // It's an array of roles, get the first one's name
-            roleName = userRoleData.roles.length > 0 ? userRoleData.roles[0].name || 'No Role' : 'No Role';
+            roleName = userRoleData.roles.length > 0 && userRoleData.roles[0] ? userRoleData.roles[0].name || 'No Role' : 'No Role';
           } else if (typeof userRoleData.roles === 'object') {
             // It's a single role object
             roleName = userRoleData.roles.name || 'No Role';

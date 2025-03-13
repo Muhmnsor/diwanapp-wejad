@@ -17,15 +17,7 @@ export interface Role {
 // Update UserRoleData interface to match the joined structure from Supabase
 export interface UserRoleData {
   user_id: string;
-  roles: {
-    id: string;
-    name: string;
-    description?: string;
-  } | {
-    id: string;
-    name: string;
-    description?: string;
-  }[];
+  roles: Role | Role[] | null;
 }
 
 export interface UserActivity {
