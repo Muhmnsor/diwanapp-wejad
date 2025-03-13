@@ -1,8 +1,23 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { RequestStatistics } from "@/components/users/types";
 import { toast } from "sonner";
+
+export interface RequestStatistics {
+  totalRequests: number;
+  pendingRequests: number;
+  approvedRequests: number;
+  rejectedRequests: number;
+  requestsByType: {
+    typeId: string;
+    typeName: string;
+    count: number;
+  }[];
+  requestsByStatus: {
+    status: string;
+    count: number;
+  }[];
+}
 
 export const useRequestStatistics = () => {
   const [statistics, setStatistics] = useState<RequestStatistics | null>(null);
