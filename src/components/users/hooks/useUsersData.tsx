@@ -28,7 +28,7 @@ export const useUsersData = () => {
       
       // Map users with their roles
       const mappedUsers = profiles.map((profile: any) => {
-        // Type assertion for typechecking - the structure matches our UserRoleData type
+        // Find role data for this user
         const userRoleData = userRoles.find((ur: any) => ur.user_id === profile.id);
         
         // Default role name
@@ -36,11 +36,12 @@ export const useUsersData = () => {
         
         // Handle role data safely
         if (userRoleData && userRoleData.roles) {
-          // Check if roles is an array and has at least one item
-          if (Array.isArray(userRoleData.roles) && userRoleData.roles.length > 0) {
-            roleName = userRoleData.roles[0]?.name || 'No Role';
-          } else if (userRoleData.roles && typeof userRoleData.roles === 'object') {
-            // Handle case where it might be a single object
+          // Handle case where roles might be returned as an array or object
+          if (Array.isArray(userRoleData.roles)) {
+            // It's an array of roles, get the first one's name
+            roleName = userRoleData.roles.length > 0 ? userRoleData.roles[0].name || 'No Role' : 'No Role';
+          } else if (typeof userRoleData.roles === 'object') {
+            // It's a single role object
             roleName = userRoleData.roles.name || 'No Role';
           }
         }

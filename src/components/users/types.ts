@@ -14,10 +14,14 @@ export interface Role {
   description?: string;
 }
 
-// Update UserRoleData type to match the joined structure from Supabase
+// Update UserRoleData interface to match the joined structure from Supabase
 export interface UserRoleData {
   user_id: string;
   roles: {
+    id: string;
+    name: string;
+    description?: string;
+  } | {
     id: string;
     name: string;
     description?: string;
