@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import QRCode from "qrcode";
 import { formatDate, formatArabicDate } from "@/utils/dateUtils";
@@ -243,6 +244,51 @@ const createDocumentDefinition = async (data: any): Promise<TDocumentDefinitions
   };
 };
 
+// Enhanced PDF download function with fallback mechanisms
+const downloadPdf = (docDefinition: TDocumentDefinitions, fileName: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    try {
+      // Create the PDF document
+      const pdfDoc = pdfMake.createPdf(docDefinition);
+      
+      // First approach: direct download method
+      pdfDoc.download(fileName, () => {
+        console.log("PDF downloaded successfully using primary method");
+        resolve();
+      }, (error: any) => {
+        console.warn("Primary download failed, trying alternative method:", error);
+        
+        // Second approach: get as blob and use URL.createObjectURL
+        pdfDoc.getBlob((blob: Blob) => {
+          try {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up
+            setTimeout(() => {
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }, 100);
+            
+            console.log("PDF downloaded successfully using fallback method");
+            resolve();
+          } catch (blobError) {
+            console.error("Fallback download failed:", blobError);
+            reject(blobError);
+          }
+        });
+      });
+    } catch (error) {
+      console.error("Error creating PDF:", error);
+      reject(error);
+    }
+  });
+};
+
 // Main export function
 export const exportRequestToPdf = async (data: any): Promise<void> => {
   const { request } = data;
@@ -267,17 +313,11 @@ export const exportRequestToPdf = async (data: any): Promise<void> => {
     // Generate filename
     const fileName = `طلب_${request.title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
     
-    // Download the PDF with extended error handling
-    try {
-      pdfMake.createPdf(docDefinition).download(fileName);
-      toast.success("تم تصدير الطلب بنجاح");
-    } catch (pdfError) {
-      console.error("PDF generation error:", pdfError);
-      toast.error("حدث خطأ أثناء إنشاء ملف PDF");
-      throw pdfError;
-    }
+    // Use enhanced download method
+    await downloadPdf(docDefinition, fileName);
+    toast.success("تم تصدير الطلب بنجاح");
   } catch (error) {
     console.error("Error exporting request to PDF:", error);
-    toast.error("حدث خطأ أثناء تصدير الطلب");
+    toast.error("حدث خطأ أثناء تصدير الطلب: " + (error instanceof Error ? error.message : "خطأ غير معروف"));
   }
 };
