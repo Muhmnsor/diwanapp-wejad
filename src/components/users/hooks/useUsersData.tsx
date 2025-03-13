@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Role, UserRoleData } from "../types";
@@ -27,14 +28,21 @@ export const useUsersData = () => {
       
       // Map users with their roles
       const mappedUsers = profiles.map((profile: any) => {
-        const userRole = userRoles.find((ur: UserRoleData) => ur.user_id === profile.id);
+        // Type assertion for typechecking - the structure matches our UserRoleData type
+        const userRoleData = userRoles.find((ur: any) => ur.user_id === profile.id);
         
         // Default role name
         let roleName = 'No Role';
         
         // Handle role data safely
-        if (userRole && userRole.roles) {
-          roleName = userRole.roles.name || 'No Role';
+        if (userRoleData && userRoleData.roles) {
+          // Check if roles is an array and has at least one item
+          if (Array.isArray(userRoleData.roles) && userRoleData.roles.length > 0) {
+            roleName = userRoleData.roles[0]?.name || 'No Role';
+          } else if (userRoleData.roles && typeof userRoleData.roles === 'object') {
+            // Handle case where it might be a single object
+            roleName = userRoleData.roles.name || 'No Role';
+          }
         }
         
         return {
