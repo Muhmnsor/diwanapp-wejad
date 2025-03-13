@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { User, Role } from "./types";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface EditUserDialogProps {
   open: boolean;
@@ -62,9 +64,9 @@ export const EditUserDialog = ({ open, onOpenChange, user, onUserEdited }: EditU
       
       console.log("Fetched roles:", data);
       setRoles(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching roles:", error);
-      setError("حدث خطأ أثناء جلب الأدوار");
+      setError("حدث خطأ أثناء جلب الأدوار: " + error.message);
       toast.error("حدث خطأ أثناء جلب الأدوار");
     } finally {
       setIsLoading(false);
@@ -78,7 +80,7 @@ export const EditUserDialog = ({ open, onOpenChange, user, onUserEdited }: EditU
         .from('user_roles')
         .select('role_id')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
       
       console.log("User role fetched:", data);
       
@@ -89,10 +91,10 @@ export const EditUserDialog = ({ open, onOpenChange, user, onUserEdited }: EditU
       if (data && data.role_id) {
         setSelectedRole(data.role_id);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching user role:", error);
       // Don't show a toast for this error as it's not critical
-      setError("حدث خطأ أثناء جلب دور المستخدم");
+      setError("حدث خطأ أثناء جلب دور المستخدم: " + error.message);
     } finally {
       setIsLoading(false);
     }
@@ -180,12 +182,15 @@ export const EditUserDialog = ({ open, onOpenChange, user, onUserEdited }: EditU
           <DialogTitle className="text-right">تعديل بيانات المستخدم</DialogTitle>
         </DialogHeader>
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-md mb-4 text-right">
-            {error}
-          </div>
+          <Alert variant="destructive">
+            <AlertDescription className="text-right">{error}</AlertDescription>
+          </Alert>
         )}
         {isLoading ? (
-          <div className="py-8 text-center">جارِ التحميل...</div>
+          <div className="py-8 text-center flex flex-col items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+            <p>جارِ التحميل...</p>
+          </div>
         ) : (
           <div className="space-y-4 py-4 text-right">
             <div className="space-y-2">
@@ -247,8 +252,16 @@ export const EditUserDialog = ({ open, onOpenChange, user, onUserEdited }: EditU
           </div>
         )}
         <DialogFooter className="flex flex-row-reverse sm:justify-start gap-2">
-          <Button onClick={handleUpdateUser} disabled={isSubmitting || isLoading}>
-            {isSubmitting ? "جارِ الحفظ..." : "حفظ التغييرات"}
+          <Button 
+            onClick={handleUpdateUser} 
+            disabled={isSubmitting || isLoading}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                جارِ الحفظ...
+              </>
+            ) : "حفظ التغييرات"}
           </Button>
           <Button
             type="button"

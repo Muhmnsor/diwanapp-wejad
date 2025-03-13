@@ -8,9 +8,11 @@ export const useUsersData = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       // Fetch profiles
       const { data: profiles, error: profilesError } = await supabase
@@ -26,7 +28,9 @@ export const useUsersData = () => {
       const { data: userRoles, error: userRolesError } = await supabase
         .from('user_roles')
         .select(`
+          id,
           user_id,
+          role_id,
           roles:role_id(id, name, description)
         `);
       
@@ -69,8 +73,9 @@ export const useUsersData = () => {
       });
       
       setUsers(mappedUsers);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching users:", error);
+      setError(error.message || "حدث خطأ أثناء جلب بيانات المستخدمين");
       toast.error("حدث خطأ أثناء جلب بيانات المستخدمين");
     } finally {
       setIsLoading(false);
@@ -81,12 +86,14 @@ export const useUsersData = () => {
     try {
       const { data, error } = await supabase
         .from('roles')
-        .select('*');
+        .select('*')
+        .order('name');
       
       if (error) throw error;
       
-      setRoles(data);
-    } catch (error) {
+      console.log("Roles fetched:", data);
+      setRoles(data || []);
+    } catch (error: any) {
       console.error("Error fetching roles:", error);
       toast.error("حدث خطأ أثناء جلب الأدوار");
     }
@@ -101,5 +108,5 @@ export const useUsersData = () => {
     fetchRoles();
   }, []);
 
-  return { users, roles, isLoading, refetchUsers };
+  return { users, roles, isLoading, error, refetchUsers };
 };
