@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   username: string;
@@ -14,7 +13,7 @@ export interface Role {
   description?: string;
 }
 
-// Add UserRoleData type for useUserRoles.tsx
+// Update UserRoleData type to match the joined structure from Supabase
 export interface UserRoleData {
   user_id: string;
   roles: {
@@ -24,7 +23,6 @@ export interface UserRoleData {
   };
 }
 
-// Add UserActivity type for UserActivityList.tsx
 export interface UserActivity {
   id: string;
   userId: string;

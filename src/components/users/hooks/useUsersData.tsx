@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Role } from "../types";
+import { User, Role, UserRoleData } from "../types";
 import { toast } from "sonner";
 
 export const useUsersData = () => {
@@ -27,22 +27,14 @@ export const useUsersData = () => {
       
       // Map users with their roles
       const mappedUsers = profiles.map((profile: any) => {
-        const userRole = userRoles.find((ur: any) => ur.user_id === profile.id);
+        const userRole = userRoles.find((ur: UserRoleData) => ur.user_id === profile.id);
         
-        // Handle the roles object correctly, checking if it exists and has a name property
+        // Default role name
         let roleName = 'No Role';
+        
+        // Handle role data safely
         if (userRole && userRole.roles) {
-          // Handle case where roles might be an object or array
-          if (typeof userRole.roles === 'object' && userRole.roles !== null) {
-            // Check if it's an array
-            if (Array.isArray(userRole.roles)) {
-              // Use the first role in the array if it exists
-              roleName = userRole.roles[0]?.name || 'No Role';
-            } else {
-              // Otherwise it's an object with a name property
-              roleName = userRole.roles.name || 'No Role';
-            }
-          }
+          roleName = userRole.roles.name || 'No Role';
         }
         
         return {
