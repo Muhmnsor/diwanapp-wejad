@@ -17,10 +17,12 @@ import {
 import { RequestStatusBadge } from "./RequestStatusBadge";
 import { RequestPriorityBadge } from "./RequestPriorityBadge";
 import { RequestApprovalsTab } from "./RequestApprovalsTab";
+import { RequestImplementationTab } from "./RequestImplementationTab";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { diagnoseRequestWorkflow } from "../utils/workflowHelpers";
 import { Button } from "@/components/ui/button";
+import { RequestExportButton } from "./RequestExportButton";
 
 interface RequestDetailsCardProps {
   request: any;
@@ -53,6 +55,12 @@ export const RequestDetailsCard = ({
     }
   };
 
+  // Determine if implementation tab should be shown
+  // This will be more advanced in the future once the implementation features are added
+  const isImplementationEnabled = 
+    request?.status && 
+    ['approved', 'completed', 'in_execution', 'executed', 'implementation_complete'].includes(request.status);
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -62,6 +70,7 @@ export const RequestDetailsCard = ({
             <CardDescription>{requestType?.name || "نوع الطلب غير محدد"}</CardDescription>
           </div>
           <div className="flex items-center gap-2">
+            <RequestExportButton requestId={request.id} status={request.status} />
             <RequestStatusBadge status={request.status} />
             <RequestPriorityBadge priority={request.priority} />
           </div>
@@ -124,6 +133,9 @@ export const RequestDetailsCard = ({
           <TabsList className="mb-4">
             <TabsTrigger value="details">تفاصيل الطلب</TabsTrigger>
             <TabsTrigger value="approvals">الموافقات</TabsTrigger>
+            {isImplementationEnabled && (
+              <TabsTrigger value="implementation">التنفيذ</TabsTrigger>
+            )}
             {attachments.length > 0 && (
               <TabsTrigger value="attachments">المرفقات</TabsTrigger>
             )}
@@ -150,6 +162,15 @@ export const RequestDetailsCard = ({
           <TabsContent value="approvals">
             <RequestApprovalsTab approvals={approvals} />
           </TabsContent>
+          
+          {isImplementationEnabled && (
+            <TabsContent value="implementation">
+              <RequestImplementationTab 
+                request={request} 
+                isImplementationEnabled={isImplementationEnabled} 
+              />
+            </TabsContent>
+          )}
           
           {attachments.length > 0 && (
             <TabsContent value="attachments">
