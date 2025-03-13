@@ -1,269 +1,27 @@
 
-import { jsPDF } from "jspdf";
 import { toast } from "sonner";
-import html2canvas from "html2canvas";
 import QRCode from "qrcode";
-import { formatDate } from "@/utils/dateUtils";
 import { formatArabicDate } from "@/utils/dateUtils";
-import FileSaver from 'file-saver';
+import * as pdfMake from "pdfmake/build/pdfmake";
+import * as pdfFonts from "pdfmake/build/vfs_fonts";
+import { TDocumentDefinitions, TTableCell } from "pdfmake/interfaces";
 
-// Configure PDF for Arabic text handling
-const configurePdfForArabic = (pdf: jsPDF) => {
-  try {
-    // Set right-to-left mode
-    pdf.setR2L(true);
-    
-    // Use a standard font that works well with Arabic
-    pdf.setFont("Helvetica");
-    
-    return pdf;
-  } catch (error) {
-    console.error("Error configuring PDF for Arabic:", error);
-    return pdf;
-  }
-};
+// Initialize pdfmake with virtual file system for fonts
+(pdfMake as any).vfs = pdfFonts.pdfMake.vfs;
 
-// Improved Arabic text handling for PDF
-const processArabicText = (text: string): string => {
-  if (!text) return "";
-  
-  // For PDFs with RTL support, we need special handling
-  // No character reversal needed with proper RTL support
-  return text;
-};
-
-// Generate QR code for verification
-const generateQRCode = async (requestId: string, baseUrl: string): Promise<string> => {
-  try {
-    const verificationUrl = `${baseUrl}/requests/verify/${requestId}`;
-    return await QRCode.toDataURL(verificationUrl);
-  } catch (error) {
-    console.error("Error generating QR code:", error);
-    return "";
-  }
-};
-
-// Add request header info to PDF with RTL support
-const addRequestHeader = (
-  pdf: jsPDF, 
-  request: any, 
-  requestType: any, 
-  startY: number
-): number => {
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  
-  // Add title
-  pdf.setFontSize(18);
-  pdf.text("تفاصيل الطلب", pageWidth / 2, startY, { align: "center", baseline: "middle" });
-  
-  // Add request info
-  pdf.setFontSize(12);
-  startY += 10;
-  pdf.text(`رقم الطلب: ${request.id.substring(0, 8)}`, pageWidth - 15, startY, { align: "right", baseline: "middle" });
-  startY += 7;
-  pdf.text(`عنوان الطلب: ${request.title}`, pageWidth - 15, startY, { align: "right", baseline: "middle" });
-  startY += 7;
-  pdf.text(`نوع الطلب: ${requestType?.name || "غير محدد"}`, pageWidth - 15, startY, { align: "right", baseline: "middle" });
-  startY += 7;
-  pdf.text(`الحالة: ${getStatusTranslation(request.status)}`, pageWidth - 15, startY, { align: "right", baseline: "middle" });
-  startY += 7;
-  pdf.text(`تاريخ الإنشاء: ${formatArabicDate(request.created_at)}`, pageWidth - 15, startY, { align: "right", baseline: "middle" });
-  if (request.updated_at) {
-    startY += 7;
-    pdf.text(`تاريخ آخر تحديث: ${formatArabicDate(request.updated_at)}`, pageWidth - 15, startY, { align: "right", baseline: "middle" });
-  }
-  
-  // Draw separator line
-  startY += 10;
-  pdf.setLineWidth(0.5);
-  pdf.line(15, startY, pageWidth - 15, startY);
-  
-  return startY + 10;
-};
-
-// Add form data section to PDF with RTL support
-const addFormDataSection = (
-  pdf: jsPDF, 
-  formData: Record<string, any>,
-  startY: number
-): number => {
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  
-  // Section header
-  pdf.setFontSize(14);
-  pdf.text("بيانات الطلب", pageWidth - 15, startY, { align: "right", baseline: "middle" });
-  startY += 10;
-  
-  // Form data
-  pdf.setFontSize(11);
-  
-  if (formData && Object.keys(formData).length > 0) {
-    Object.entries(formData).forEach(([key, value]) => {
-      // Check page break if needed
-      if (startY > pdf.internal.pageSize.getHeight() - 20) {
-        pdf.addPage();
-        startY = 20;
-      }
-      
-      const displayValue = value !== null && value !== undefined ? String(value) : "-";
-      pdf.text(`${key}: ${displayValue}`, pageWidth - 15, startY, { align: "right", baseline: "middle" });
-      startY += 7;
-    });
-  } else {
-    pdf.text("لا توجد بيانات إضافية للطلب", pageWidth - 15, startY, { align: "right", baseline: "middle" });
-    startY += 7;
-  }
-  
-  // Draw separator line
-  startY += 5;
-  pdf.setLineWidth(0.5);
-  pdf.line(15, startY, pageWidth - 15, startY);
-  
-  return startY + 10;
-};
-
-// Add approvals history section to PDF with RTL support
-const addApprovalsSection = (
-  pdf: jsPDF,
-  approvals: any[],
-  startY: number
-): number => {
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  
-  // Section header
-  pdf.setFontSize(14);
-  pdf.text("سجل الموافقات", pageWidth - 15, startY, { align: "right", baseline: "middle" });
-  startY += 10;
-  
-  if (approvals && approvals.length > 0) {
-    // Table headers
-    pdf.setFontSize(10);
-    const headerY = startY;
-    
-    // Draw header texts (for RTL)
-    pdf.text("التاريخ", 40, headerY, { align: "center", baseline: "middle" });
-    pdf.text("الحالة", 85, headerY, { align: "center", baseline: "middle" });
-    pdf.text("المسؤول", 150, headerY, { align: "center", baseline: "middle" });
-    pdf.text("الخطوة", pageWidth - 20, headerY, { align: "right", baseline: "middle" });
-    
-    // Draw header separator
-    startY += 5;
-    pdf.setLineWidth(0.3);
-    pdf.line(15, startY, pageWidth - 15, startY);
-    startY += 5;
-    
-    // Table rows
-    pdf.setFontSize(9);
-    approvals.forEach((approval, index) => {
-      // Check page break if needed
-      if (startY > pdf.internal.pageSize.getHeight() - 20) {
-        pdf.addPage();
-        startY = 20;
-        
-        // Re-add table headers on new page
-        pdf.setFontSize(10);
-        pdf.text("التاريخ", 40, startY, { align: "center", baseline: "middle" });
-        pdf.text("الحالة", 85, startY, { align: "center", baseline: "middle" });
-        pdf.text("المسؤول", 150, startY, { align: "center", baseline: "middle" });
-        pdf.text("الخطوة", pageWidth - 20, startY, { align: "right", baseline: "middle" });
-        
-        startY += 5;
-        pdf.setLineWidth(0.3);
-        pdf.line(15, startY, pageWidth - 15, startY);
-        startY += 5;
-        pdf.setFontSize(9);
-      }
-      
-      const stepName = approval.step?.step_name || "خطوة غير معروفة";
-      const approverName = approval.approver?.display_name || approval.approver?.email || "-";
-      const status = getApprovalStatusTranslation(approval.status);
-      const date = approval.approved_at ? formatArabicDate(approval.approved_at) : "-";
-      
-      // Add row data (for RTL)
-      pdf.text(date, 40, startY, { align: "center", baseline: "middle" });
-      pdf.text(status, 85, startY, { align: "center", baseline: "middle" });
-      pdf.text(approverName, 150, startY, { align: "center", baseline: "middle" });
-      pdf.text(stepName, pageWidth - 20, startY, { align: "right", baseline: "middle" });
-      
-      startY += 7;
-      
-      // Add comment if available
-      if (approval.comments) {
-        pdf.text(`ملاحظات: ${approval.comments}`, pageWidth - 20, startY, { align: "right", baseline: "middle" });
-        startY += 7;
-      }
-      
-      // Add row separator if not last row
-      if (index < approvals.length - 1) {
-        pdf.setLineWidth(0.1);
-        pdf.line(15, startY, pageWidth - 15, startY);
-        startY += 3;
-      }
-    });
-  } else {
-    pdf.setFontSize(11);
-    pdf.text("لا توجد موافقات مسجلة لهذا الطلب", pageWidth - 15, startY, { align: "right", baseline: "middle" });
-    startY += 7;
-  }
-  
-  // Draw section end separator
-  startY += 5;
-  pdf.setLineWidth(0.5);
-  pdf.line(15, startY, pageWidth - 15, startY);
-  
-  return startY + 10;
-};
-
-// Add QR code and verification instructions
-const addVerificationQR = async (
-  pdf: jsPDF,
-  qrCodeData: string,
-  startY: number
-): Promise<number> => {
-  if (!qrCodeData) return startY;
-  
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  
-  // Check if need to add a new page
-  if (startY > pdf.internal.pageSize.getHeight() - 70) {
-    pdf.addPage();
-    startY = 20;
-  }
-  
-  // Section header
-  pdf.setFontSize(14);
-  pdf.text("التحقق من الطلب", pageWidth / 2, startY, { align: "center", baseline: "middle" });
-  startY += 10;
-  
-  // Add QR code
-  pdf.addImage(qrCodeData, "PNG", pageWidth / 2 - 30, startY, 60, 60);
-  startY += 65;
-  
-  // Add verification instructions
-  pdf.setFontSize(10);
-  pdf.text("يمكن التحقق من صحة هذا الطلب عن طريق مسح رمز QR أعلاه", pageWidth / 2, startY, { align: "center", baseline: "middle" });
-  
-  return startY + 10;
-};
-
-// Add footer with timestamp and page numbers
-const addFooter = (pdf: jsPDF): void => {
-  const pageCount = pdf.getNumberOfPages();
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
-  
-  const now = new Date();
-  const timestamp = `تم إنشاء هذا المستند بتاريخ ${formatArabicDate(now.toISOString())}`;
-  
-  for (let i = 1; i <= pageCount; i++) {
-    pdf.setPage(i);
-    
-    // Add timestamp at bottom left (displayed on right due to RTL)
-    pdf.setFontSize(8);
-    pdf.text(timestamp, 15, pageHeight - 10, { baseline: "middle" });
-    
-    // Add page number at bottom right (displayed on left due to RTL)
-    pdf.text(`صفحة ${i} من ${pageCount}`, pageWidth - 15, pageHeight - 10, { align: "right", baseline: "middle" });
+// Register custom fonts for Arabic support
+const fonts = {
+  Roboto: {
+    normal: 'Roboto-Regular.ttf',
+    bold: 'Roboto-Medium.ttf',
+    italics: 'Roboto-Italic.ttf',
+    bolditalics: 'Roboto-MediumItalic.ttf'
+  },
+  Amiri: {
+    normal: 'https://cdn.jsdelivr.net/npm/amiri-font@0.4.0/amiri-regular.ttf',
+    bold: 'https://cdn.jsdelivr.net/npm/amiri-font@0.4.0/amiri-bold.ttf',
+    italics: 'https://cdn.jsdelivr.net/npm/amiri-font@0.4.0/amiri-slanted.ttf',
+    bolditalics: 'https://cdn.jsdelivr.net/npm/amiri-font@0.4.0/amiri-boldslanted.ttf'
   }
 };
 
@@ -291,24 +49,97 @@ const getApprovalStatusTranslation = (status: string): string => {
   }
 };
 
-// Explicitly force a download of the PDF
-const forcePdfDownload = (pdfOutput: jsPDF, fileName: string): boolean => {
+// Generate QR code for verification
+const generateQRCode = async (requestId: string, baseUrl: string): Promise<string> => {
   try {
-    // First, try to use the FileSaver library (more reliable)
-    const pdfBlob = pdfOutput.output('blob');
-    FileSaver.saveAs(pdfBlob, fileName);
-    return true;
+    const verificationUrl = `${baseUrl}/requests/verify/${requestId}`;
+    return await QRCode.toDataURL(verificationUrl);
   } catch (error) {
-    console.error("FileSaver download failed, trying fallback method:", error);
-    try {
-      // Fallback to standard jsPDF save
-      pdfOutput.save(fileName);
-      return true;
-    } catch (innerError) {
-      console.error("All PDF download methods failed:", innerError);
-      return false;
-    }
+    console.error("Error generating QR code:", error);
+    return "";
   }
+};
+
+// Helper to create the form data content for the PDF
+const createFormDataContent = (formData: Record<string, any>) => {
+  if (!formData || Object.keys(formData).length === 0) {
+    return [{ text: "لا توجد بيانات إضافية للطلب", alignment: 'right' }];
+  }
+
+  const content: any[] = [];
+  
+  Object.entries(formData).forEach(([key, value]) => {
+    const displayValue = value !== null && value !== undefined ? String(value) : "-";
+    content.push({
+      text: `${key}: ${displayValue}`,
+      alignment: 'right',
+      margin: [0, 5, 0, 0]
+    });
+  });
+  
+  return content;
+};
+
+// Helper to create a table for approvals
+const createApprovalsTable = (approvals: any[]) => {
+  if (!approvals || approvals.length === 0) {
+    return [{ text: "لا توجد موافقات مسجلة لهذا الطلب", alignment: 'right' }];
+  }
+
+  // Create table headers
+  const tableBody: TTableCell[][] = [
+    [
+      { text: 'الخطوة', style: 'tableHeader', alignment: 'right' },
+      { text: 'المسؤول', style: 'tableHeader', alignment: 'center' },
+      { text: 'الحالة', style: 'tableHeader', alignment: 'center' },
+      { text: 'التاريخ', style: 'tableHeader', alignment: 'center' }
+    ]
+  ];
+
+  // Add rows for each approval
+  approvals.forEach(approval => {
+    const stepName = approval.step?.step_name || "خطوة غير معروفة";
+    const approverName = approval.approver?.display_name || approval.approver?.email || "-";
+    const status = getApprovalStatusTranslation(approval.status);
+    const date = approval.approved_at ? formatArabicDate(approval.approved_at) : "-";
+    
+    const row: TTableCell[] = [
+      { text: stepName, alignment: 'right' },
+      { text: approverName, alignment: 'center' },
+      { text: status, alignment: 'center' },
+      { text: date, alignment: 'center' }
+    ];
+    
+    tableBody.push(row);
+    
+    // Add a row for comments if available
+    if (approval.comments) {
+      tableBody.push([
+        { 
+          text: `ملاحظات: ${approval.comments}`, 
+          alignment: 'right',
+          colSpan: 4,
+          style: 'commentCell'
+        },
+        {}, {}, {}
+      ]);
+    }
+  });
+
+  return [
+    {
+      table: {
+        headerRows: 1,
+        widths: ['*', '*', 'auto', 'auto'],
+        body: tableBody
+      },
+      layout: {
+        fillColor: function(rowIndex: number) {
+          return rowIndex === 0 ? '#f0f0f0' : null;
+        }
+      }
+    }
+  ];
 };
 
 // Main export function
@@ -328,52 +159,181 @@ export const exportRequestToPdf = async (data: any): Promise<void> => {
       approvalsCount: approvals.length
     });
     
-    // Initialize PDF with RTL support
-    const pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4"
-    });
-    
-    // Configure for Arabic
-    configurePdfForArabic(pdf);
-    
     // Generate QR code for verification
     const baseUrl = window.location.origin;
     const qrCodeData = await generateQRCode(request.id, baseUrl);
     
-    // Start Y position for content
-    let startY = 20;
+    // Create a timestamp
+    const timestamp = `تم إنشاء هذا المستند بتاريخ ${formatArabicDate(new Date().toISOString())}`;
     
-    // Add request header information
-    startY = addRequestHeader(pdf, request, requestType, startY);
+    // Define the document
+    const docDefinition: TDocumentDefinitions = {
+      pageSize: 'A4',
+      pageOrientation: 'portrait',
+      pageMargins: [40, 60, 40, 60],
+      
+      // RTL (Right-to-Left) for Arabic
+      rightToLeft: true,
+      
+      // Default font settings
+      defaultStyle: {
+        font: 'Amiri',
+        fontSize: 10,
+        lineHeight: 1.5
+      },
+      
+      // Document content
+      content: [
+        // Title
+        {
+          text: 'تفاصيل الطلب',
+          style: 'header',
+          alignment: 'center',
+          margin: [0, 0, 0, 10]
+        },
+        
+        // Request basic info
+        {
+          text: `رقم الطلب: ${request.id.substring(0, 8)}`,
+          alignment: 'right',
+          margin: [0, 5, 0, 0]
+        },
+        {
+          text: `عنوان الطلب: ${request.title}`,
+          alignment: 'right',
+          margin: [0, 5, 0, 0]
+        },
+        {
+          text: `نوع الطلب: ${requestType?.name || "غير محدد"}`,
+          alignment: 'right',
+          margin: [0, 5, 0, 0]
+        },
+        {
+          text: `الحالة: ${getStatusTranslation(request.status)}`,
+          alignment: 'right',
+          margin: [0, 5, 0, 0]
+        },
+        {
+          text: `تاريخ الإنشاء: ${formatArabicDate(request.created_at)}`,
+          alignment: 'right',
+          margin: [0, 5, 0, 0]
+        },
+        request.updated_at ? {
+          text: `تاريخ آخر تحديث: ${formatArabicDate(request.updated_at)}`,
+          alignment: 'right',
+          margin: [0, 5, 0, 10]
+        } : {},
+        
+        // Separator
+        {
+          canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1, lineColor: '#CCCCCC' }],
+          margin: [0, 10, 0, 10]
+        },
+        
+        // Form data section
+        {
+          text: 'بيانات الطلب',
+          style: 'subheader',
+          alignment: 'right',
+          margin: [0, 10, 0, 10]
+        },
+        ...createFormDataContent(request.form_data),
+        
+        // Separator
+        {
+          canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1, lineColor: '#CCCCCC' }],
+          margin: [0, 10, 0, 10]
+        },
+        
+        // Approvals section
+        {
+          text: 'سجل الموافقات',
+          style: 'subheader',
+          alignment: 'right',
+          margin: [0, 10, 0, 10]
+        },
+        ...createApprovalsTable(approvals),
+        
+        // Page break before QR
+        { text: '', pageBreak: 'before' },
+        
+        // QR Code section
+        {
+          text: 'التحقق من الطلب',
+          style: 'subheader',
+          alignment: 'center',
+          margin: [0, 10, 0, 10]
+        },
+        {
+          image: qrCodeData,
+          width: 150,
+          alignment: 'center',
+          margin: [0, 10, 0, 10]
+        },
+        {
+          text: 'يمكن التحقق من صحة هذا الطلب عن طريق مسح رمز QR أعلاه',
+          alignment: 'center',
+          margin: [0, 10, 0, 0]
+        }
+      ],
+      
+      // Footer content
+      footer: (currentPage, pageCount) => {
+        return {
+          columns: [
+            { text: `صفحة ${currentPage} من ${pageCount}`, alignment: 'left', margin: [40, 0, 0, 0] },
+            { text: timestamp, alignment: 'right', margin: [0, 0, 40, 0] }
+          ],
+          margin: [40, 20, 40, 0]
+        };
+      },
+      
+      // Styles
+      styles: {
+        header: {
+          fontSize: 18,
+          bold: true,
+          margin: [0, 0, 0, 10]
+        },
+        subheader: {
+          fontSize: 14,
+          bold: true,
+          margin: [0, 10, 0, 5]
+        },
+        tableHeader: {
+          bold: true,
+          fontSize: 11,
+          color: 'black',
+          fillColor: '#eeeeee'
+        },
+        commentCell: {
+          fontSize: 9,
+          italics: true,
+          color: '#666666'
+        }
+      }
+    };
     
-    // Add form data
-    startY = addFormDataSection(pdf, request.form_data, startY);
-    
-    // Add approvals section
-    startY = addApprovalsSection(pdf, approvals, startY);
-    
-    // Add QR code for verification
-    startY = await addVerificationQR(pdf, qrCodeData, startY);
-    
-    // Add footer with timestamp and page numbers
-    addFooter(pdf);
-    
-    // Generate filename
+    // Generate the filename
     const fileName = `طلب_${request.title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
     
-    // Force download the PDF
-    console.log("Attempting to download PDF...");
-    const downloadSuccess = forcePdfDownload(pdf, fileName);
-    
-    if (downloadSuccess) {
-      toast.success("تم تصدير الطلب بنجاح");
-    } else {
-      toast.error("فشل تنزيل ملف PDF. الرجاء المحاولة مرة أخرى");
+    // Create and download the PDF
+    try {
+      const pdfDoc = pdfMake.createPdf(docDefinition);
+      
+      console.log("PDF created, initiating download...");
+      toast.info("جاري تنزيل الملف...");
+      
+      pdfDoc.download(fileName, () => {
+        console.log("PDF download complete");
+        toast.success("تم تصدير الطلب بنجاح");
+      });
+    } catch (error) {
+      console.error("Error generating or downloading PDF:", error);
+      toast.error("فشل إنشاء ملف PDF. الرجاء المحاولة مرة أخرى");
     }
   } catch (error) {
-    console.error("Error exporting request to PDF:", error);
+    console.error("Error in exportRequestToPdf:", error);
     toast.error("حدث خطأ أثناء تصدير الطلب");
   }
 };
