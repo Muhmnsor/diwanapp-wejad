@@ -1,194 +1,205 @@
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRequestStatistics } from "../hooks/useRequestStatistics";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { FileText, Clock, CheckCircle, XCircle } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, AlertCircle, FileText, Clock, CheckCircle, XCircle, BarChart4 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { 
+  BarChart, 
+  Bar, 
+  PieChart, 
+  Pie, 
+  Cell, 
+  ResponsiveContainer, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  Legend 
+} from "recharts";
 
 export const RequestsOverview = () => {
-  const { statistics, isLoading, error } = useRequestStatistics();
-
+  const { statistics, isLoading, error, refreshStatistics } = useRequestStatistics();
+  
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+  const STATUS_COLORS: Record<string, string> = {
+    pending: '#FFBB28',
+    completed: '#00C49F',
+    rejected: '#FF8042',
+  };
+  
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i}>
-            <CardHeader className="pb-2">
-              <Skeleton className="h-5 w-1/2" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-10 w-1/3 mb-2" />
-              <Skeleton className="h-4 w-2/3" />
-            </CardContent>
-          </Card>
-        ))}
-        
-        <div className="col-span-1 md:col-span-2 lg:col-span-4">
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-1/4" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-[300px] w-full rounded" />
-            </CardContent>
-          </Card>
-        </div>
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
+        <span>جاري تحميل الإحصائيات...</span>
       </div>
     );
   }
-
+  
   if (error) {
     return (
-      <div className="p-6 bg-red-50 rounded-lg">
-        <h2 className="text-xl font-semibold text-red-600 mb-2">حدث خطأ</h2>
-        <p className="text-red-600">{error}</p>
-      </div>
+      <Alert variant="destructive" className="mb-4">
+        <AlertCircle className="h-4 w-4 ml-2" />
+        <AlertDescription>
+          {error}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mr-2 mt-2"
+            onClick={() => refreshStatistics()}
+          >
+            إعادة المحاولة
+          </Button>
+        </AlertDescription>
+      </Alert>
     );
   }
   
   if (!statistics) {
     return (
-      <div className="p-6 bg-yellow-50 rounded-lg">
-        <h2 className="text-xl font-semibold text-yellow-600 mb-2">لا توجد بيانات</h2>
-        <p className="text-yellow-600">لم يتم العثور على إحصائيات للطلبات</p>
+      <div className="text-center py-8">
+        <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+        <h3 className="text-lg font-medium">لا توجد إحصائيات متاحة</h3>
+        <p className="text-muted-foreground">لم يتم العثور على أي بيانات إحصائية للطلبات</p>
       </div>
     );
   }
-
-  // Prepare status colors for pie chart
-  const STATUS_COLORS = {
-    pending: "#f59e0b", // amber-500
-    completed: "#10b981", // emerald-500
-    rejected: "#ef4444", // red-500
-    default: "#6b7280" // gray-500
-  };
-
-  const getStatusColor = (status: string) => {
-    return (STATUS_COLORS as any)[status] || STATUS_COLORS.default;
-  };
   
-  // Format data for status chart
-  const statusChartData = statistics.requestsByStatus.map(item => ({
-    name: item.status === "pending" ? "قيد الانتظار" : 
-          item.status === "completed" ? "مكتمل" : 
-          item.status === "rejected" ? "مرفوض" : item.status,
-    value: item.count,
-    status: item.status
+  const pieChartData = statistics.requestsByStatus?.map(item => ({
+    name: item.status === 'pending' ? 'قيد الانتظار' : 
+          item.status === 'completed' ? 'مكتملة' : 
+          item.status === 'rejected' ? 'مرفوضة' : item.status,
+    value: item.count
   }));
   
-  // Format data for type chart
-  const typeChartData = statistics.requestsByType.map(item => ({
+  const barChartData = statistics.requestsByType?.map(item => ({
     name: item.typeName,
     count: item.count
   }));
-
+  
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
+      <h1 className="text-2xl font-bold">لوحة معلومات الطلبات</h1>
+      
+      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">إجمالي الطلبات</CardTitle>
+          <CardHeader className="pb-2 flex flex-row justify-between items-center">
+            <CardTitle className="text-lg text-muted-foreground">إجمالي الطلبات</CardTitle>
+            <FileText className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="flex items-center">
-              <FileText className="h-5 w-5 ml-2 text-primary" />
-              <p className="text-2xl font-bold">{statistics.totalRequests}</p>
-            </div>
+            <div className="text-3xl font-bold">{statistics.totalRequests}</div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">قيد الانتظار</CardTitle>
+          <CardHeader className="pb-2 flex flex-row justify-between items-center">
+            <CardTitle className="text-lg text-muted-foreground">قيد الانتظار</CardTitle>
+            <Clock className="h-5 w-5 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <div className="flex items-center">
-              <Clock className="h-5 w-5 ml-2 text-amber-500" />
-              <p className="text-2xl font-bold">{statistics.pendingRequests}</p>
-            </div>
+            <div className="text-3xl font-bold text-amber-500">{statistics.pendingRequests}</div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">تمت الموافقة</CardTitle>
+          <CardHeader className="pb-2 flex flex-row justify-between items-center">
+            <CardTitle className="text-lg text-muted-foreground">مكتملة</CardTitle>
+            <CheckCircle className="h-5 w-5 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="flex items-center">
-              <CheckCircle className="h-5 w-5 ml-2 text-emerald-500" />
-              <p className="text-2xl font-bold">{statistics.approvedRequests}</p>
-            </div>
+            <div className="text-3xl font-bold text-green-500">{statistics.approvedRequests}</div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">مرفوضة</CardTitle>
+          <CardHeader className="pb-2 flex flex-row justify-between items-center">
+            <CardTitle className="text-lg text-muted-foreground">مرفوضة</CardTitle>
+            <XCircle className="h-5 w-5 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="flex items-center">
-              <XCircle className="h-5 w-5 ml-2 text-red-500" />
-              <p className="text-2xl font-bold">{statistics.rejectedRequests}</p>
-            </div>
+            <div className="text-3xl font-bold text-red-500">{statistics.rejectedRequests}</div>
           </CardContent>
         </Card>
       </div>
       
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Status Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle>توزيع الطلبات حسب الحالة</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={statusChartData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={true}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {statusChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={getStatusColor(entry.status)} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => [`${value} طلب`, ""]} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="status" className="w-full">
+        <TabsList>
+          <TabsTrigger value="status">
+            <BarChart4 className="h-4 w-4 ml-2" />
+            حسب الحالة
+          </TabsTrigger>
+          <TabsTrigger value="types">
+            <BarChart4 className="h-4 w-4 ml-2" />
+            حسب النوع
+          </TabsTrigger>
+        </TabsList>
         
-        {/* Request Types */}
-        <Card>
-          <CardHeader>
-            <CardTitle>توزيع الطلبات حسب النوع</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart
-                data={typeChartData}
-                layout="vertical"
-                margin={{ top: 20, right: 30, left: 30, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={100} />
-                <Tooltip formatter={(value) => [`${value} طلب`, ""]} />
-                <Bar dataKey="count" fill="#8884d8" barSize={20} radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+        <TabsContent value="status">
+          <Card>
+            <CardHeader>
+              <CardTitle>توزيع الطلبات حسب الحالة</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieChartData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={120}
+                      fill="#8884d8"
+                      label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {pieChartData?.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={
+                            entry.name === 'قيد الانتظار' ? STATUS_COLORS.pending :
+                            entry.name === 'مكتملة' ? STATUS_COLORS.completed :
+                            entry.name === 'مرفوضة' ? STATUS_COLORS.rejected :
+                            COLORS[index % COLORS.length]
+                          } 
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`${value} طلب`, 'العدد']} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="types">
+          <Card>
+            <CardHeader>
+              <CardTitle>توزيع الطلبات حسب النوع</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={barChartData}>
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => [`${value} طلب`, 'العدد']} />
+                    <Legend />
+                    <Bar dataKey="count" name="عدد الطلبات" fill="#8884d8" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

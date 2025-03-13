@@ -12,7 +12,7 @@ export const AdminRequestsManager = () => {
   const isAdmin = user?.isAdmin || user?.role === 'developer' || user?.role === 'admin';
   
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
-  const { requests, isLoading, error, refreshRequests } = useAllRequests();
+  const { requests, isLoading, refreshRequests } = useAllRequests();
   
   const handleViewRequest = (request: any) => {
     setSelectedRequestId(request.id);
@@ -45,24 +45,6 @@ export const AdminRequestsManager = () => {
     );
   }
   
-  // Handle error state
-  if (error && !isLoading) {
-    return (
-      <div className="p-6 bg-yellow-50 rounded-lg">
-        <h2 className="text-xl font-semibold text-yellow-600 mb-2">حدث خطأ</h2>
-        <p className="text-yellow-600">{error}</p>
-        <Button 
-          onClick={refreshRequests} 
-          variant="outline" 
-          className="mt-4"
-        >
-          <RefreshCw className="h-4 w-4 ml-2" />
-          إعادة المحاولة
-        </Button>
-      </div>
-    );
-  }
-  
   return (
     <div className="space-y-4">
       <Tabs defaultValue="overview" className="w-full">
@@ -87,6 +69,3 @@ export const AdminRequestsManager = () => {
     </div>
   );
 };
-
-import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
