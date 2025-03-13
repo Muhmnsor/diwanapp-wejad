@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Hero } from "@/components/home/Hero";
 import { EventsTabs } from "@/components/home/EventsTabs";
@@ -127,30 +128,47 @@ const Index = () => {
     isAuthenticated
   ]);
 
-  return (
-    <div className="min-h-screen" dir="rtl">
-      <TopHeader />
-      <Hero />
-      <div className="container mx-auto px-4 space-y-12">
-        <EventsTabs
-          events={events}
-          upcomingEvents={upcomingEvents}
-          pastEvents={pastEvents}
-          activeTab={activeEventsTab}
-          setActiveTab={setActiveEventsTab}
-          registrations={registrations}
-        />
-        <ProjectTabs
-          projects={projects}
-          upcomingProjects={upcomingProjects}
-          pastProjects={pastProjects}
-          activeTab={activeProjectsTab}
-          setActiveTab={setActiveProjectsTab}
-        />
+  // إضافة معالج للأخطاء لمنع تعطل التطبيق بالكامل
+  try {
+    return (
+      <div className="min-h-screen" dir="rtl">
+        <TopHeader />
+        <Hero />
+        <div className="container mx-auto px-4 space-y-12">
+          <EventsTabs
+            events={events}
+            upcomingEvents={upcomingEvents}
+            pastEvents={pastEvents}
+            activeTab={activeEventsTab}
+            setActiveTab={setActiveEventsTab}
+            registrations={registrations}
+          />
+          <ProjectTabs
+            projects={projects}
+            upcomingProjects={upcomingProjects}
+            pastProjects={pastProjects}
+            activeTab={activeProjectsTab}
+            setActiveTab={setActiveProjectsTab}
+          />
+        </div>
+        <Footer />
       </div>
-      <Footer />
-    </div>
-  );
+    );
+  } catch (error) {
+    console.error("خطأ في عرض الصفحة الرئيسية:", error);
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4" dir="rtl">
+        <h1 className="text-2xl font-bold text-red-600 mb-4">حدث خطأ أثناء تحميل التطبيق</h1>
+        <p className="text-gray-700 mb-6">نعتذر عن هذا الخطأ، يرجى تحديث الصفحة أو المحاولة مرة أخرى لاحقاً.</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+        >
+          إعادة تحميل الصفحة
+        </button>
+      </div>
+    );
+  }
 };
 
 export default Index;
