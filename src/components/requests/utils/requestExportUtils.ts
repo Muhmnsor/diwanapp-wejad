@@ -8,17 +8,20 @@ import { toast } from "sonner";
  */
 export const fetchRequestExportData = async (requestId: string): Promise<any> => {
   try {
+    // Show loading toast
+    toast.info("جاري تحميل بيانات الطلب...");
+    
     // Get enhanced data for PDF export
     const { data, error } = await supabase
       .rpc('get_request_pdf_export_data', { p_request_id: requestId });
     
     if (error) {
       console.error("Error fetching request data for export:", error);
-      throw new Error(error.message);
+      throw new Error(`خطأ في جلب بيانات الطلب: ${error.message}`);
     }
     
     if (!data) {
-      throw new Error("No data returned for the request");
+      throw new Error("لم يتم العثور على بيانات للطلب");
     }
     
     // Record the export action (optional, only if you want to track exports)
