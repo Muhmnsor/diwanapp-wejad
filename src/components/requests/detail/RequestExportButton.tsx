@@ -24,6 +24,11 @@ export const RequestExportButton = ({
       return;
     }
     
+    if (isExporting) {
+      // Prevent multiple clicks
+      return;
+    }
+    
     try {
       setIsExporting(true);
       await exportRequestWithEnhancedData(requestId);
@@ -31,7 +36,10 @@ export const RequestExportButton = ({
       console.error("Error exporting request:", error);
       // Toast error is already handled in the export function
     } finally {
-      setIsExporting(false);
+      // Small delay to prevent immediate re-click
+      setTimeout(() => {
+        setIsExporting(false);
+      }, 1000);
     }
   };
   

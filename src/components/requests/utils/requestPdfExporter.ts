@@ -1,9 +1,8 @@
-
 import { toast } from "sonner";
 import QRCode from "qrcode";
 import { formatDate, formatArabicDate } from "@/utils/dateUtils";
 import pdfMake from "pdfmake/build/pdfmake";
-import { getArabicFontDefinition, getArabicDocumentStyles } from "@/utils/pdf/arabicUtils";
+import { getArabicFontDefinition, getArabicDocumentStyles, loadFonts } from "@/utils/pdf/arabicUtils";
 
 // Define types for pdfmake since the direct import is not working
 interface Content {
@@ -45,10 +44,6 @@ interface TDocumentDefinitions {
   pageOrientation?: string;
   pageMargins?: number[];
 }
-
-// Register Arabic fonts with pdfMake
-pdfMake.vfs = pdfMake.vfs || {};
-pdfMake.fonts = getArabicFontDefinition();
 
 // Generate QR code for verification
 const generateQRCode = async (requestId: string, baseUrl: string): Promise<string> => {
@@ -196,6 +191,23 @@ const createVerificationSection = (qrCodeData: string): Content[] => {
   ];
 };
 
+// Initialize pdfMake fonts
+const initializePdfMake = async () => {
+  try {
+    // Load the fonts first
+    await loadFonts();
+    
+    // Set the font definitions
+    pdfMake.vfs = pdfMake.vfs || {};
+    pdfMake.fonts = await getArabicFontDefinition();
+    
+    return true;
+  } catch (error) {
+    console.error("Error initializing PDF fonts:", error);
+    return false;
+  }
+};
+
 // Create document definition for pdfmake
 const createDocumentDefinition = async (data: any): Promise<TDocumentDefinitions> => {
   const { request, requestType, approvals = [] } = data;
@@ -243,16 +255,27 @@ export const exportRequestToPdf = async (data: any): Promise<void> => {
   try {
     toast.info("جاري إنشاء ملف PDF...");
     
+    // Initialize pdfMake with fonts
+    const initialized = await initializePdfMake();
+    if (!initialized) {
+      throw new Error("فشل في تحميل خطوط PDF");
+    }
+    
     // Create document definition
     const docDefinition = await createDocumentDefinition(data);
     
     // Generate filename
     const fileName = `طلب_${request.title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
     
-    // Download the PDF
-    pdfMake.createPdf(docDefinition).download(fileName);
-    
-    toast.success("تم تصدير الطلب بنجاح");
+    // Download the PDF with extended error handling
+    try {
+      pdfMake.createPdf(docDefinition).download(fileName);
+      toast.success("تم تصدير الطلب بنجاح");
+    } catch (pdfError) {
+      console.error("PDF generation error:", pdfError);
+      toast.error("حدث خطأ أثناء إنشاء ملف PDF");
+      throw pdfError;
+    }
   } catch (error) {
     console.error("Error exporting request to PDF:", error);
     toast.error("حدث خطأ أثناء تصدير الطلب");

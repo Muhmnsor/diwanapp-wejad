@@ -3,9 +3,74 @@
  * Utilities for handling Arabic text in PDF documents
  */
 
-// Map for Arabic character reshaping (simplified approach)
-const arabicCharMap: Record<string, string> = {
-  // Add specific character mappings if needed
+// Base64 encoded font data will be loaded here
+// We'll use a simpler approach that doesn't rely on external URLs
+let amiriFontBase64: Record<string, string> = {
+  normal: '',
+  bold: '',
+  italics: '', 
+  bolditalics: ''
+};
+
+// Initialize font loading status
+let fontsLoaded = false;
+let loadingPromise: Promise<void> | null = null;
+
+/**
+ * Load the Amiri font files and convert them to base64
+ */
+export const loadFonts = async (): Promise<void> => {
+  if (fontsLoaded) return;
+  if (loadingPromise) return loadingPromise;
+
+  loadingPromise = new Promise(async (resolve) => {
+    try {
+      console.log("Loading Amiri fonts for PDF...");
+      
+      // Load the font files
+      const normalFontResponse = await fetch('/fonts/amiri-regular.ttf');
+      const boldFontResponse = await fetch('/fonts/amiri-bold.ttf');
+      const italicsFontResponse = await fetch('/fonts/amiri-slanted.ttf');
+      const boldItalicsFontResponse = await fetch('/fonts/amiri-boldslanted.ttf');
+      
+      // Convert to array buffers
+      const normalBuffer = await normalFontResponse.arrayBuffer();
+      const boldBuffer = await boldFontResponse.arrayBuffer();
+      const italicsBuffer = await italicsFontResponse.arrayBuffer();
+      const boldItalicsBuffer = await boldItalicsFontResponse.arrayBuffer();
+      
+      // Convert to base64
+      amiriFontBase64.normal = arrayBufferToBase64(normalBuffer);
+      amiriFontBase64.bold = arrayBufferToBase64(boldBuffer);
+      amiriFontBase64.italics = arrayBufferToBase64(italicsBuffer);
+      amiriFontBase64.bolditalics = arrayBufferToBase64(boldItalicsBuffer);
+      
+      fontsLoaded = true;
+      console.log("Amiri fonts loaded successfully");
+    } catch (error) {
+      console.error("Error loading Amiri fonts:", error);
+      // Fallback to online fonts in case of error
+      amiriFontBase64 = {
+        normal: 'https://cdn.jsdelivr.net/npm/amiri-font@0.7.0/amiri-regular.ttf',
+        bold: 'https://cdn.jsdelivr.net/npm/amiri-font@0.7.0/amiri-bold.ttf',
+        italics: 'https://cdn.jsdelivr.net/npm/amiri-font@0.7.0/amiri-slanted.ttf',
+        bolditalics: 'https://cdn.jsdelivr.net/npm/amiri-font@0.7.0/amiri-boldslanted.ttf'
+      };
+    }
+    resolve();
+  });
+
+  return loadingPromise;
+};
+
+/**
+ * Helper function to convert ArrayBuffer to base64 string
+ */
+const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+  const binary = Array.from(new Uint8Array(buffer))
+    .map(b => String.fromCharCode(b))
+    .join('');
+  return btoa(binary);
 };
 
 /**
@@ -23,14 +88,11 @@ export const processArabicText = (text: string): string => {
 /**
  * Get PDF definition for Arabic font support
  */
-export const getArabicFontDefinition = () => {
+export const getArabicFontDefinition = async (): Promise<Record<string, Record<string, string>>> => {
+  await loadFonts();
+  
   return {
-    Amiri: {
-      normal: 'https://cdn.jsdelivr.net/npm/amiri-font@0.7.0/amiri-regular.ttf',
-      bold: 'https://cdn.jsdelivr.net/npm/amiri-font@0.7.0/amiri-bold.ttf',
-      italics: 'https://cdn.jsdelivr.net/npm/amiri-font@0.7.0/amiri-slanted.ttf',
-      bolditalics: 'https://cdn.jsdelivr.net/npm/amiri-font@0.7.0/amiri-boldslanted.ttf'
-    }
+    Amiri: amiriFontBase64
   };
 };
 

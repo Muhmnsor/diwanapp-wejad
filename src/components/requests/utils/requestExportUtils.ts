@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { exportRequestToPdf } from "./requestPdfExporter";
 import { toast } from "sonner";
+import { loadFonts } from "@/utils/pdf/arabicUtils";
 
 /**
  * Fetches enhanced request data for PDF export and records the export action
@@ -48,6 +49,9 @@ export const fetchRequestExportData = async (requestId: string): Promise<any> =>
 export const exportRequestWithEnhancedData = async (requestId: string): Promise<void> => {
   try {
     toast.info("جاري تجهيز بيانات الطلب للتصدير...");
+    
+    // Pre-load the Arabic fonts while we're fetching the data
+    loadFonts().catch(err => console.error("Font preloading error:", err));
     
     // Fetch all needed data
     const data = await fetchRequestExportData(requestId);
