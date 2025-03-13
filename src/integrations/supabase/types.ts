@@ -3226,6 +3226,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_requests_requester"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "requests_current_step_id_fkey"
             columns: ["current_step_id"]
             isOneToOne: false
@@ -4865,6 +4872,10 @@ export type Database = {
           updated_at: string | null
           workflow_id: string | null
         }[]
+      }
+      get_all_requests_with_relations: {
+        Args: Record<PropertyKey, never>
+        Returns: Json[]
       }
       get_app_keys_for_module: {
         Args: {

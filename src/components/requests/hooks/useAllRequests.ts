@@ -54,41 +54,58 @@ export const useAllRequests = () => {
     try {
       console.log("Fetching all requests...");
       
-      // Skip RPC and go directly to query since we know the RPC might be causing issues
-      const { data: directData, error: directError } = await supabase
-        .from("requests")
-        .select(`
-          *,
-          request_type: request_types (*),
-          workflow: request_workflows (*),
-          requester: profiles (*),
-          current_step: workflow_steps (*)
-        `)
-        .order("created_at", { ascending: false });
+      // Use the new RPC function that includes all relations
+      const { data: rpcData, error: rpcError } = await supabase
+        .rpc('get_all_requests_with_relations');
         
-      if (directError) {
-        console.error("Error with direct query:", directError);
-        throw directError;
+      if (rpcError) {
+        console.error("Error with RPC function:", rpcError);
+        throw rpcError;
       }
       
-      console.log("Fetched requests via direct query:", directData?.length || 0, "requests");
-      
-      if (directData) {
-        // Map the data to ensure proper structure
-        const formattedData = directData.map(request => ({
-          ...request,
-          request_type: request.request_type?.[0] || null,
-          workflow: request.workflow?.[0] || null,
-          requester: request.requester?.[0] || null,
-          current_step: request.current_step?.[0] || null
-        }));
-        
-        setRequests(formattedData);
-        setFilteredRequests(formattedData);
+      if (rpcData) {
+        console.log("Fetched requests via RPC:", rpcData.length || 0, "requests");
+        setRequests(rpcData);
+        setFilteredRequests(rpcData);
       } else {
-        // Set empty arrays if no data returned
-        setRequests([]);
-        setFilteredRequests([]);
+        // Fallback to direct query if RPC returns no data
+        console.log("RPC returned no data, trying direct query...");
+        
+        const { data: directData, error: directError } = await supabase
+          .from("requests")
+          .select(`
+            *,
+            request_type: request_types (*),
+            workflow: request_workflows (*),
+            requester: profiles (*),
+            current_step: workflow_steps (*)
+          `)
+          .order("created_at", { ascending: false });
+          
+        if (directError) {
+          console.error("Error with direct query:", directError);
+          throw directError;
+        }
+        
+        console.log("Fetched requests via direct query:", directData?.length || 0, "requests");
+        
+        if (directData) {
+          // Map the data to ensure proper structure
+          const formattedData = directData.map(request => ({
+            ...request,
+            request_type: request.request_type?.[0] || null,
+            workflow: request.workflow?.[0] || null,
+            requester: request.requester?.[0] || null,
+            current_step: request.current_step?.[0] || null
+          }));
+          
+          setRequests(formattedData);
+          setFilteredRequests(formattedData);
+        } else {
+          // Set empty arrays if no data returned
+          setRequests([]);
+          setFilteredRequests([]);
+        }
       }
     } catch (error: any) {
       console.error("Error fetching all requests:", error);
