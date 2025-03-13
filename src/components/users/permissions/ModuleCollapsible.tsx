@@ -5,8 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronDown, ChevronUp, Info } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface ModuleCollapsibleProps {
   module: Module;
@@ -134,21 +133,9 @@ export const ModuleCollapsible = ({
                         key={permission.id}
                         className="flex items-center justify-between py-1 px-2 rounded-md hover:bg-muted"
                       >
-                        <div className="flex items-center">
-                          <span className="text-sm">
-                            {permission.display_name || permission.name}
-                          </span>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Info className="h-4 w-4 ml-1 text-muted-foreground cursor-help" />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p className="text-sm">اسم الصلاحية: {permission.name}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
+                        <span className="text-sm">
+                          {permission.display_name || permission.name}
+                        </span>
                         <Switch
                           checked={selectedPermissions[permission.id] || false}
                           onCheckedChange={() => {
@@ -171,21 +158,9 @@ export const ModuleCollapsible = ({
                   key={permission.id}
                   className="flex items-center justify-between py-1 px-2 rounded-md hover:bg-muted"
                 >
-                  <div className="flex items-center">
-                    <span className="text-sm">
-                      {permission.display_name || permission.name}
-                    </span>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Info className="h-4 w-4 ml-1 text-muted-foreground cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="text-sm">اسم الصلاحية: {permission.name}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
+                  <span className="text-sm">
+                    {permission.display_name || permission.name}
+                  </span>
                   <Switch
                     checked={selectedPermissions[permission.id] || false}
                     onCheckedChange={() => {

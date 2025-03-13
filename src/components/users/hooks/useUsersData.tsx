@@ -1,8 +1,8 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Role, UserRoleData } from "../types";
-import { toast } from "sonner";
+import { Role, User } from "../types";
+import { formatDate } from "@/utils/formatters";
 
 export const useUsersData = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -10,58 +10,114 @@ export const useUsersData = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchUsers = async () => {
-    setIsLoading(true);
     try {
-      // Fetch profiles
+      console.log("بدء جلب بيانات المستخدمين");
+
+      const response = await supabase.functions.invoke('manage-users', {
+        body: JSON.stringify({
+          operation: 'get_users'
+        })
+      });
+
+      if (response.error) {
+        console.error("خطأ في جلب المستخدمين:", response.error);
+        throw response.error;
+      }
+
+      const { users: authUsers } = response.data;
+      
+      if (!authUsers || !Array.isArray(authUsers)) {
+        console.error("خطأ: لم يتم استلام بيانات المستخدمين بشكل صحيح");
+        throw new Error("بيانات المستخدمين غير صالحة");
+      }
+      
+      console.log(`تم جلب ${authUsers.length} مستخدم من نظام المصادقة`);
+      
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('*');
+        .select('id, display_name, is_active')
+        .in('id', authUsers.map(u => u.id));
       
-      if (profilesError) throw profilesError;
-
-      // Log the structure of profiles to understand the data
-      console.log("Profiles fetched:", profiles);
-
-      // Fetch user roles with proper join structure
-      const { data: userRoles, error: userRolesError } = await supabase
+      if (profilesError) {
+        console.error("خطأ في جلب الملفات الشخصية:", profilesError);
+        throw profilesError;
+      }
+      
+      const profilesMap = new Map();
+      if (profiles) {
+        profiles.forEach(profile => {
+          profilesMap.set(profile.id, {
+            displayName: profile.display_name,
+            isActive: profile.is_active !== false
+          });
+        });
+      }
+      
+      const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
-        .select(`
-          user_id,
-          roles:role_id(id, name, description)
-        `);
+        .select('user_id, roles:role_id(id, name)');
       
-      if (userRolesError) throw userRolesError;
+      if (rolesError) {
+        console.error("خطأ في جلب أدوار المستخدمين:", rolesError);
+        throw rolesError;
+      }
       
-      // Log the structure of user roles to debug
-      console.log("User roles fetched:", userRoles);
+      const rolesMap = new Map();
+      if (userRoles) {
+        userRoles.forEach(ur => {
+          // تعديل للتعامل مع حالة كون roles مصفوفة أو كائن فردي
+          if (ur.roles) {
+            // تحقق مما إذا كان roles مصفوفة
+            if (Array.isArray(ur.roles)) {
+              // إذا كان مصفوفة، استخدم الكائن الأول إذا كان موجودًا
+              if (ur.roles.length > 0) {
+                // تحديد النوع بشكل صريح للتأكد من أن TypeScript يفهم البنية
+                const role = ur.roles[0] as { id: string, name: string };
+                rolesMap.set(ur.user_id, role.name);
+              }
+            } else {
+              // إذا كان كائنًا فرديًا
+              const role = ur.roles as { id: string, name: string };
+              rolesMap.set(ur.user_id, role.name);
+            }
+          }
+        });
+      }
       
-      // Map users with their roles
-      const mappedUsers = profiles.map((profile: any) => {
-        // Find role data for this user
-        const userRoleData = userRoles.find((ur: UserRoleData) => ur.user_id === profile.id);
+      const formattedUsers = authUsers.map(user => {
+        const profileData = profilesMap.get(user.id) || {};
         
-        // Default role name
-        let roleName = 'No Role';
-        
-        // Handle role data safely with proper type checking
-        if (userRoleData && userRoleData.roles) {
-          roleName = userRoleData.roles.name || 'No Role';
+        let lastLoginDisplay = 'لم يسجل الدخول بعد';
+        if (user.last_sign_in_at) {
+          // تنسيق التاريخ بالميلادي باستخدام تنسيق dd/MM/yyyy والوقت بنظام 12 ساعة
+          const date = new Date(user.last_sign_in_at);
+          
+          // تنسيق الوقت بنظام 12 ساعة
+          const hours = date.getHours();
+          const minutes = date.getMinutes().toString().padStart(2, '0');
+          const ampm = hours >= 12 ? 'م' : 'ص';
+          const hours12 = hours % 12 || 12;
+          
+          // استخدام تنسيق التاريخ الميلادي
+          const formattedDate = formatDate(user.last_sign_in_at);
+          lastLoginDisplay = `${formattedDate} ${hours12}:${minutes} ${ampm}`;
         }
         
         return {
-          id: profile.id,
-          username: profile.username || profile.email,
-          displayName: profile.display_name,
-          role: roleName,
-          lastLogin: profile.last_login,
-          isActive: profile.is_active
+          id: user.id,
+          username: user.email || 'لا يوجد بريد إلكتروني',
+          role: rolesMap.get(user.id) || 'لم يتم تعيين دور',
+          lastLogin: lastLoginDisplay,
+          displayName: profileData.displayName || '',
+          isActive: profileData.isActive !== false
         };
       });
       
-      setUsers(mappedUsers);
+      console.log("تم إعداد بيانات المستخدمين:", formattedUsers.length);
+      setUsers(formattedUsers);
+      
     } catch (error) {
-      console.error("Error fetching users:", error);
-      toast.error("حدث خطأ أثناء جلب بيانات المستخدمين");
+      console.error("خطأ عام في جلب بيانات المستخدمين:", error);
     } finally {
       setIsLoading(false);
     }
@@ -75,21 +131,27 @@ export const useUsersData = () => {
       
       if (error) throw error;
       
-      setRoles(data);
+      console.log("تم جلب الأدوار:", data);
+      setRoles(data || []);
     } catch (error) {
-      console.error("Error fetching roles:", error);
-      toast.error("حدث خطأ أثناء جلب الأدوار");
+      console.error("خطأ في جلب الأدوار:", error);
     }
   };
 
-  const refetchUsers = () => {
-    fetchUsers();
+  const refetchUsers = async () => {
+    setIsLoading(true);
+    await Promise.all([fetchUsers(), fetchRoles()]);
+    setIsLoading(false);
   };
 
   useEffect(() => {
-    fetchUsers();
-    fetchRoles();
+    refetchUsers();
   }, []);
 
-  return { users, roles, isLoading, refetchUsers };
+  return {
+    users,
+    roles,
+    isLoading,
+    refetchUsers
+  };
 };

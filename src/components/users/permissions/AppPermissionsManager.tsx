@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/refactored-auth";
-import { useDetailedPermissions } from "@/hooks/useDetailedPermissions";
 
 // Define app information interface
 interface AppInfo {
@@ -81,24 +80,18 @@ const AVAILABLE_APPS: AppInfo[] = [
 interface AppPermissionsManagerProps {
   role: Role;
   onPermissionsChange?: () => void;
-  isReadOnly?: boolean;
 }
 
-export const AppPermissionsManager = ({ role, onPermissionsChange, isReadOnly = false }: AppPermissionsManagerProps) => {
+export const AppPermissionsManager = ({ role, onPermissionsChange }: AppPermissionsManagerProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState<string | null>(null);
   const [appPermissions, setAppPermissions] = useState<Record<string, boolean>>({});
   const [hasSavedChanges, setHasSavedChanges] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuthStore();
-  const { hasPermission } = useDetailedPermissions();
-  
-  // Check if current user has permission to edit app permissions
-  const canEditAppPermissions = hasPermission('app_permissions_edit');
   
   // Check if current user is admin or developer
   const isAdminOrDeveloper = user?.isAdmin || user?.role === 'developer';
-  const hasEditRights = !isReadOnly && (isAdminOrDeveloper || canEditAppPermissions);
 
   // Fetch current app permissions for the role
   const fetchAppPermissions = useCallback(async () => {
@@ -144,7 +137,7 @@ export const AppPermissionsManager = ({ role, onPermissionsChange, isReadOnly = 
 
   // Toggle app permission
   const handleToggleAppPermission = async (appKey: string, enabled: boolean) => {
-    if (!hasEditRights) {
+    if (!isAdminOrDeveloper) {
       toast.error('ليس لديك صلاحية لتعديل صلاحيات التطبيقات');
       return;
     }
@@ -257,7 +250,7 @@ export const AppPermissionsManager = ({ role, onPermissionsChange, isReadOnly = 
           </Alert>
         )}
 
-        {!hasEditRights && (
+        {!isAdminOrDeveloper && (
           <Alert className="mb-4 bg-blue-50">
             <Info className="h-4 w-4 ml-2" />
             <AlertDescription>
@@ -278,7 +271,7 @@ export const AppPermissionsManager = ({ role, onPermissionsChange, isReadOnly = 
                   id={`app-${app.key}`}
                   checked={appPermissions[app.key] || false}
                   onCheckedChange={(checked) => handleToggleAppPermission(app.key, checked)}
-                  disabled={isSaving === app.key || !hasEditRights}
+                  disabled={isSaving === app.key || !isAdminOrDeveloper}
                 />
                 {isSaving === app.key && (
                   <Loader2 className="ml-2 h-4 w-4 animate-spin" />

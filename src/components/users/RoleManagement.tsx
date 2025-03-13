@@ -7,15 +7,8 @@ import { TabsNavigation } from "./roles/TabsNavigation";
 import { RoleDialogs } from "./roles/RoleDialogs";
 import { useEffect } from "react";
 import { initializeDeveloperRole } from "@/utils/developerRole";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
-import { useDetailedPermissions } from "@/hooks/useDetailedPermissions";
 
-interface RoleManagementProps {
-  canEditRoles?: boolean;
-}
-
-export const RoleManagement = ({ canEditRoles = false }: RoleManagementProps) => {
+export const RoleManagement = () => {
   const {
     roles,
     isLoading,
@@ -34,28 +27,10 @@ export const RoleManagement = ({ canEditRoles = false }: RoleManagementProps) =>
     handleSelectRole
   } = useRoleManagement();
 
-  const { hasPermission } = useDetailedPermissions();
-  
-  // Double-check permissions
-  const hasViewPermission = hasPermission('roles_view');
-  const hasEditPermission = canEditRoles || hasPermission('roles_edit');
-  const hasManagePermission = hasPermission('roles_manage');
-
   useEffect(() => {
     // Initialize developer role
     initializeDeveloperRole();
   }, []);
-
-  if (!hasViewPermission && !hasEditPermission && !hasManagePermission) {
-    return (
-      <Alert variant="warning">
-        <AlertTriangle className="h-4 w-4 ml-2" />
-        <AlertDescription>
-          ليس لديك الصلاحيات اللازمة لعرض أو إدارة الأدوار
-        </AlertDescription>
-      </Alert>
-    );
-  }
 
   return (
     <Card className="shadow-sm" dir="rtl">
@@ -75,28 +50,25 @@ export const RoleManagement = ({ canEditRoles = false }: RoleManagementProps) =>
             selectedRoleId={selectedRoleId}
             activeTab={activeTab}
             onSelectRole={handleSelectRole}
-            onEditRole={hasEditPermission ? setRoleToEdit : undefined}
-            onDeleteRole={hasEditPermission ? setRoleToDelete : undefined}
-            onAddRole={hasEditPermission ? handleAddRole : undefined}
-            canEditRoles={hasEditPermission}
+            onEditRole={setRoleToEdit}
+            onDeleteRole={setRoleToDelete}
+            onAddRole={handleAddRole}
           />
         </Tabs>
       </CardContent>
 
-      {hasEditPermission && (
-        <RoleDialogs 
-          roleToEdit={roleToEdit}
-          roleToDelete={roleToDelete}
-          isAddDialogOpen={isAddDialogOpen}
-          onCloseEditDialog={() => {
-            setIsAddDialogOpen(false);
-            setRoleToEdit(null);
-          }}
-          onCloseDeleteDialog={() => setRoleToDelete(null)}
-          onRoleSaved={handleRoleSaved}
-          onRoleDeleted={handleRoleDeleted}
-        />
-      )}
+      <RoleDialogs 
+        roleToEdit={roleToEdit}
+        roleToDelete={roleToDelete}
+        isAddDialogOpen={isAddDialogOpen}
+        onCloseEditDialog={() => {
+          setIsAddDialogOpen(false);
+          setRoleToEdit(null);
+        }}
+        onCloseDeleteDialog={() => setRoleToDelete(null)}
+        onRoleSaved={handleRoleSaved}
+        onRoleDeleted={handleRoleDeleted}
+      />
     </Card>
   );
 };

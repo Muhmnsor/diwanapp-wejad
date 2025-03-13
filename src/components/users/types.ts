@@ -2,36 +2,33 @@
 export interface User {
   id: string;
   username: string;
-  displayName?: string;
   role: string;
-  lastLogin?: string;
-  isActive?: boolean;
+  lastLogin: string;
+  displayName?: string;  // إضافة حقل المسمى الوظيفي
+  isActive?: boolean;    // إضافة حقل حالة المستخدم
 }
 
 export interface Role {
   id: string;
   name: string;
-  description?: string;
+  description: string;
 }
 
-// Update UserRoleData interface to match the actual structure returned by Supabase
 export interface UserRoleData {
   user_id: string;
-  roles: {
-    id: string;
-    name: string;
-    description?: string;
-  } | null;
+  roles: Role;
 }
 
 export interface UserActivity {
   id: string;
-  userId: string;
-  activityType: string;
-  details?: string;
-  timestamp: string;
-  user?: {
-    username: string;
-    displayName?: string;
-  };
+  user_id: string;
+  activity_type: string;
+  details: string;
+  created_at: string;
+}
+
+export interface Permission {
+  id: string;
+  app_name: string;
+  role_id: string;
 }
