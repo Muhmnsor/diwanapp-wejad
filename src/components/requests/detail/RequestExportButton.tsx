@@ -26,12 +26,15 @@ export const RequestExportButton = ({
     
     try {
       setIsExporting(true);
+      toast.info("جاري تحضير البيانات للتصدير...");
       await exportRequestWithEnhancedData(requestId);
     } catch (error) {
       console.error("Error exporting request:", error);
-      // Toast error is already handled in the export function
+      toast.error("فشل تصدير الطلب. الرجاء المحاولة مرة أخرى");
     } finally {
-      setIsExporting(false);
+      setTimeout(() => {
+        setIsExporting(false);
+      }, 1000); // Small delay to ensure UI feedback is visible
     }
   };
   
