@@ -5,20 +5,50 @@ import html2canvas from "html2canvas";
 import QRCode from "qrcode";
 import { formatDate } from "@/utils/dateUtils";
 import { formatArabicDate } from "@/utils/dateUtils";
+// Import for font support
+import 'jspdf-autotable';
+
+// Add Arabic font to jsPDF
+const addArabicFontToPdf = async (pdf: jsPDF): Promise<jsPDF> => {
+  try {
+    // Load Amiri font which supports Arabic characters well
+    const normalFont = await fetch('/fonts/Amiri-Regular.ttf').then(res => res.arrayBuffer());
+    const boldFont = await fetch('/fonts/Amiri-Bold.ttf').then(res => res.arrayBuffer());
+    
+    // Add the fonts to the PDF document
+    pdf.addFileToVFS('Amiri-Regular.ttf', normalFont);
+    pdf.addFileToVFS('Amiri-Bold.ttf', boldFont);
+    pdf.addFont('Amiri-Regular.ttf', 'Amiri', 'normal');
+    pdf.addFont('Amiri-Bold.ttf', 'Amiri', 'bold');
+    
+    // Set the default font
+    pdf.setFont('Amiri');
+    
+    return pdf;
+  } catch (error) {
+    console.error("Error loading Arabic font:", error);
+    // Fall back to Helvetica if font loading fails
+    pdf.setFont("Helvetica");
+    return pdf;
+  }
+};
 
 // Configure PDF for Arabic text with RTL support
-const configurePdfForArabic = (pdf: jsPDF) => {
+const configurePdfForArabic = async (pdf: jsPDF): Promise<jsPDF> => {
   try {
     // Set right-to-left mode for Arabic text
     pdf.setR2L(true);
     
-    // Use Helvetica as it has better support for Arabic compared to built-in fonts
-    pdf.setFont("Helvetica");
+    // Add Arabic font support
+    await addArabicFontToPdf(pdf);
     
     return pdf;
   } catch (error) {
     console.error("Error configuring PDF for Arabic:", error);
-    return pdf; // Return the pdf instance even if configuration fails
+    // Fallback to basic configuration
+    pdf.setR2L(true);
+    pdf.setFont("Helvetica");
+    return pdf;
   }
 };
 
@@ -44,10 +74,12 @@ const addRequestHeader = (
   
   // Add title
   pdf.setFontSize(18);
+  pdf.setFont('Amiri', 'bold');
   pdf.text("تفاصيل الطلب", pageWidth / 2, startY, { align: "center" });
   
   // Add request info
   pdf.setFontSize(12);
+  pdf.setFont('Amiri', 'normal');
   startY += 10;
   pdf.text(`رقم الطلب: ${request.id.substring(0, 8)}`, pageWidth - 15, startY, { align: "right" });
   startY += 7;
@@ -81,11 +113,13 @@ const addFormDataSection = (
   
   // Section header
   pdf.setFontSize(14);
+  pdf.setFont('Amiri', 'bold');
   pdf.text("بيانات الطلب", pageWidth - 15, startY, { align: "right" });
   startY += 10;
   
   // Form data
   pdf.setFontSize(11);
+  pdf.setFont('Amiri', 'normal');
   
   if (formData && Object.keys(formData).length > 0) {
     Object.entries(formData).forEach(([key, value]) => {
@@ -122,12 +156,14 @@ const addApprovalsSection = (
   
   // Section header
   pdf.setFontSize(14);
+  pdf.setFont('Amiri', 'bold');
   pdf.text("سجل الموافقات", pageWidth - 15, startY, { align: "right" });
   startY += 10;
   
   if (approvals && approvals.length > 0) {
     // Table headers
     pdf.setFontSize(10);
+    pdf.setFont('Amiri', 'bold');
     const headerY = startY;
     
     // Draw header texts (reversed for RTL)
@@ -144,6 +180,7 @@ const addApprovalsSection = (
     
     // Table rows
     pdf.setFontSize(9);
+    pdf.setFont('Amiri', 'normal');
     approvals.forEach((approval, index) => {
       // Check page break if needed
       if (startY > pdf.internal.pageSize.getHeight() - 20) {
@@ -152,6 +189,7 @@ const addApprovalsSection = (
         
         // Re-add table headers on new page
         pdf.setFontSize(10);
+        pdf.setFont('Amiri', 'bold');
         pdf.text("التاريخ", 40, startY, { align: "center" });
         pdf.text("الحالة", 85, startY, { align: "center" });
         pdf.text("المسؤول", 150, startY, { align: "center" });
@@ -162,6 +200,7 @@ const addApprovalsSection = (
         pdf.line(15, startY, pageWidth - 15, startY);
         startY += 5;
         pdf.setFontSize(9);
+        pdf.setFont('Amiri', 'normal');
       }
       
       const stepName = approval.step?.step_name || "خطوة غير معروفة";
@@ -192,6 +231,7 @@ const addApprovalsSection = (
     });
   } else {
     pdf.setFontSize(11);
+    pdf.setFont('Amiri', 'normal');
     pdf.text("لا توجد موافقات مسجلة لهذا الطلب", pageWidth - 15, startY, { align: "right" });
     startY += 7;
   }
@@ -222,6 +262,7 @@ const addVerificationQR = async (
   
   // Section header
   pdf.setFontSize(14);
+  pdf.setFont('Amiri', 'bold');
   pdf.text("التحقق من الطلب", pageWidth / 2, startY, { align: "center" });
   startY += 10;
   
@@ -231,6 +272,7 @@ const addVerificationQR = async (
   
   // Add verification instructions
   pdf.setFontSize(10);
+  pdf.setFont('Amiri', 'normal');
   pdf.text("يمكن التحقق من صحة هذا الطلب عن طريق مسح رمز QR أعلاه", pageWidth / 2, startY, { align: "center" });
   
   return startY + 10;
@@ -250,6 +292,7 @@ const addFooter = (pdf: jsPDF): void => {
     
     // Add timestamp at bottom left (displayed on right due to RTL)
     pdf.setFontSize(8);
+    pdf.setFont('Amiri', 'normal');
     pdf.text(timestamp, 15, pageHeight - 10);
     
     // Add page number at bottom right (displayed on left due to RTL)
@@ -297,11 +340,12 @@ export const exportRequestToPdf = async (data: any): Promise<void> => {
     const pdf = new jsPDF({
       orientation: "portrait",
       unit: "mm",
-      format: "a4"
+      format: "a4",
+      putOnlyUsedFonts: true
     });
     
-    // Configure for Arabic
-    configurePdfForArabic(pdf);
+    // Configure for Arabic with font support
+    await configurePdfForArabic(pdf);
     
     // Generate QR code for verification
     const baseUrl = window.location.origin;
