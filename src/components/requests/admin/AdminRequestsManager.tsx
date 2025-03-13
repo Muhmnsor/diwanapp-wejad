@@ -12,7 +12,13 @@ export const AdminRequestsManager = () => {
   const isAdmin = user?.isAdmin || user?.role === 'developer' || user?.role === 'admin';
   
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
-  const { requests, isLoading, refreshRequests } = useAllRequests();
+  const { 
+    requests, 
+    isLoading, 
+    refreshRequests, 
+    filterByStatus, 
+    statusFilter 
+  } = useAllRequests();
   
   const handleViewRequest = (request: any) => {
     setSelectedRequestId(request.id);
@@ -47,10 +53,10 @@ export const AdminRequestsManager = () => {
   
   return (
     <div className="space-y-4">
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs defaultValue="all-requests" className="w-full">
         <TabsList className="mb-6">
-          <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
           <TabsTrigger value="all-requests">جميع الطلبات</TabsTrigger>
+          <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview">
@@ -63,6 +69,8 @@ export const AdminRequestsManager = () => {
             isLoading={isLoading}
             onViewRequest={handleViewRequest}
             onRefresh={refreshRequests}
+            filterByStatus={filterByStatus}
+            statusFilter={statusFilter}
           />
         </TabsContent>
       </Tabs>

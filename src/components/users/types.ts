@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   username: string;
@@ -38,18 +37,14 @@ export interface RequestStatistics {
   pendingRequests: number;
   approvedRequests: number;
   rejectedRequests: number;
-  averageApprovalTime?: number;
-  requestsByType?: {
+  inProgressRequests?: number;
+  requestsByType: {
     typeId: string;
     typeName: string;
     count: number;
   }[];
-  requestsByStatus?: {
+  requestsByStatus: {
     status: string;
-    count: number;
-  }[];
-  requestsByMonth?: {
-    month: string;
     count: number;
   }[];
 }
