@@ -4,10 +4,10 @@ import QRCode from "qrcode";
 import { formatArabicDate } from "@/utils/dateUtils";
 import * as pdfMake from "pdfmake/build/pdfmake";
 import * as pdfFonts from "pdfmake/build/vfs_fonts";
-import { TDocumentDefinitions, TTableCell } from "pdfmake/interfaces";
+import { TDocumentDefinitions, TableCell } from "pdfmake/interfaces";
 
 // Initialize pdfmake with virtual file system for fonts
-(pdfMake as any).vfs = pdfFonts.pdfMake.vfs;
+(pdfMake as any).vfs = pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : pdfFonts.vfs;
 
 // Register custom fonts for Arabic support
 const fonts = {
@@ -87,7 +87,7 @@ const createApprovalsTable = (approvals: any[]) => {
   }
 
   // Create table headers
-  const tableBody: TTableCell[][] = [
+  const tableBody: TableCell[][] = [
     [
       { text: 'الخطوة', style: 'tableHeader', alignment: 'right' },
       { text: 'المسؤول', style: 'tableHeader', alignment: 'center' },
@@ -103,7 +103,7 @@ const createApprovalsTable = (approvals: any[]) => {
     const status = getApprovalStatusTranslation(approval.status);
     const date = approval.approved_at ? formatArabicDate(approval.approved_at) : "-";
     
-    const row: TTableCell[] = [
+    const row: TableCell[] = [
       { text: stepName, alignment: 'right' },
       { text: approverName, alignment: 'center' },
       { text: status, alignment: 'center' },
@@ -173,7 +173,7 @@ export const exportRequestToPdf = async (data: any): Promise<void> => {
       pageMargins: [40, 60, 40, 60],
       
       // RTL (Right-to-Left) for Arabic
-      rightToLeft: true,
+      rtl: true, // Use rtl instead of rightToLeft
       
       // Default font settings
       defaultStyle: {
