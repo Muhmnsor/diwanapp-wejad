@@ -10,16 +10,14 @@ const arabicCharMap: Record<string, string> = {
 
 /**
  * Process Arabic text for proper display in PDFs
- * This is a more robust implementation than the previous one
+ * This function ensures Arabic text displays correctly in pdfmake
  */
 export const processArabicText = (text: string): string => {
   if (!text) return "";
   
-  // Fix common issues with Arabic text rendering
-  return text
-    .split('')
-    .map(char => arabicCharMap[char] || char)
-    .join('');
+  // Return the text as is - pdfmake with Amiri font handles Arabic correctly
+  // when direction and font are set properly
+  return text;
 };
 
 /**

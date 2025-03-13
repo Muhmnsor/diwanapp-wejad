@@ -2,8 +2,9 @@
 import { toast } from "sonner";
 import QRCode from "qrcode";
 import { formatDate, formatArabicDate } from "@/utils/dateUtils";
-import * as pdfMake from "pdfmake/build/pdfmake";
+import pdfMake from "pdfmake/build/pdfmake";
 import { getArabicFontDefinition, getArabicDocumentStyles } from "@/utils/pdf/arabicUtils";
+import { Content, TDocumentDefinitions, StyleDictionary } from "pdfmake/interfaces";
 
 // Register Arabic fonts with pdfMake
 pdfMake.vfs = pdfMake.vfs || {};
@@ -45,7 +46,7 @@ const getApprovalStatusTranslation = (status: string): string => {
 };
 
 // Create request header section
-const createRequestHeaderSection = (request: any, requestType: any) => {
+const createRequestHeaderSection = (request: any, requestType: any): Content[] => {
   return [
     { text: 'تفاصيل الطلب', style: 'header' },
     { text: `رقم الطلب: ${request.id.substring(0, 8)}`, margin: [0, 5, 0, 0] },
@@ -59,8 +60,8 @@ const createRequestHeaderSection = (request: any, requestType: any) => {
 };
 
 // Create form data section
-const createFormDataSection = (formData: Record<string, any>) => {
-  const content = [
+const createFormDataSection = (formData: Record<string, any>): Content[] => {
+  const content: Content[] = [
     { text: 'بيانات الطلب', style: 'subheader' }
   ];
   
@@ -79,14 +80,14 @@ const createFormDataSection = (formData: Record<string, any>) => {
 };
 
 // Create approvals section
-const createApprovalsSection = (approvals: any[]) => {
-  const content = [
+const createApprovalsSection = (approvals: any[]): Content[] => {
+  const content: Content[] = [
     { text: 'سجل الموافقات', style: 'subheader' }
   ];
   
   if (approvals && approvals.length > 0) {
     // Create table for approvals
-    const tableBody = [
+    const tableBody: any[][] = [
       [
         { text: 'الخطوة', style: 'tableHeader' },
         { text: 'المسؤول', style: 'tableHeader' },
@@ -129,7 +130,7 @@ const createApprovalsSection = (approvals: any[]) => {
         hLineWidth: function(i: number, node: any) {
           return (i === 0 || i === node.table.body.length) ? 1 : 1;
         },
-        vLineWidth: function(i: number, node: any) {
+        vLineWidth: function() {
           return 1;
         }
       },
@@ -145,7 +146,7 @@ const createApprovalsSection = (approvals: any[]) => {
 };
 
 // Create verification section with QR code
-const createVerificationSection = (qrCodeData: string) => {
+const createVerificationSection = (qrCodeData: string): Content[] => {
   if (!qrCodeData) return [];
   
   return [
@@ -156,7 +157,7 @@ const createVerificationSection = (qrCodeData: string) => {
 };
 
 // Create document definition for pdfmake
-const createDocumentDefinition = async (data: any) => {
+const createDocumentDefinition = async (data: any): Promise<TDocumentDefinitions> => {
   const { request, requestType, approvals = [] } = data;
   
   // Generate QR code
@@ -164,7 +165,7 @@ const createDocumentDefinition = async (data: any) => {
   const qrCodeData = await generateQRCode(request.id, baseUrl);
   
   // Create document content
-  const documentContent = [
+  const documentContent: Content[] = [
     ...createRequestHeaderSection(request, requestType),
     ...createFormDataSection(request.form_data),
     ...createApprovalsSection(approvals),
@@ -173,6 +174,7 @@ const createDocumentDefinition = async (data: any) => {
   
   // Add footer
   const now = new Date();
+  const styles = getArabicDocumentStyles();
   
   return {
     content: documentContent,
@@ -184,8 +186,8 @@ const createDocumentDefinition = async (data: any) => {
         ]
       };
     },
-    defaultStyle: getArabicDocumentStyles().defaultStyle,
-    styles: getArabicDocumentStyles()
+    defaultStyle: styles.defaultStyle,
+    styles: styles as any
   };
 };
 
