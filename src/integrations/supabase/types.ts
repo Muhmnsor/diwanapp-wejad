@@ -4749,6 +4749,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_admin_role: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       check_if_request_accessible: {
         Args: {
           request_id: string
@@ -4845,6 +4849,23 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      get_all_requests_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string | null
+          current_step_id: string | null
+          due_date: string | null
+          form_data: Json
+          id: string
+          priority: string | null
+          request_type_id: string | null
+          requester_id: string | null
+          status: string
+          title: string
+          updated_at: string | null
+          workflow_id: string | null
+        }[]
+      }
       get_app_keys_for_module: {
         Args: {
           module_name: string
@@ -4938,6 +4959,12 @@ export type Database = {
             }
             Returns: boolean
           }
+      is_approver_for_current_request: {
+        Args: {
+          request_id: string
+        }
+        Returns: boolean
+      }
       is_approver_for_request: {
         Args: {
           request_id: string

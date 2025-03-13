@@ -14,8 +14,6 @@ export const useRequestStatistics = () => {
     setError(null);
     
     try {
-      console.log("Fetching request statistics for admin dashboard");
-      
       // Get total requests count
       const { count: totalRequests, error: totalError } = await supabase
         .from('requests')
@@ -31,13 +29,13 @@ export const useRequestStatistics = () => {
       
       if (pendingError) throw pendingError;
       
-      // Get approved requests count
-      const { count: approvedRequests, error: approvedError } = await supabase
+      // Get completed requests count
+      const { count: completedRequests, error: completedError } = await supabase
         .from('requests')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'completed');
       
-      if (approvedError) throw approvedError;
+      if (completedError) throw completedError;
       
       // Get rejected requests count
       const { count: rejectedRequests, error: rejectedError } = await supabase
@@ -46,6 +44,14 @@ export const useRequestStatistics = () => {
         .eq('status', 'rejected');
       
       if (rejectedError) throw rejectedError;
+      
+      // Get in progress count (not pending, not completed, not rejected)
+      const { count: inProgressRequests, error: inProgressError } = await supabase
+        .from('requests')
+        .select('*', { count: 'exact', head: true })
+        .not('status', 'in', '(pending,completed,rejected)');
+      
+      if (inProgressError) throw inProgressError;
       
       // Get requests by type
       const { data: requestsByType, error: typeError } = await supabase
@@ -64,7 +70,6 @@ export const useRequestStatistics = () => {
       const typeCount: Record<string, { id: string, name: string, count: number }> = {};
       requestsByType?.forEach(request => {
         const typeId = request.request_type_id;
-        // Properly access the name property from request_types
         const typeName = request.request_types?.name || 'غير محدد';
         
         if (!typeCount[typeId]) {
@@ -77,35 +82,37 @@ export const useRequestStatistics = () => {
       // Get requests by status for chart
       const { data: statusData, error: statusError } = await supabase
         .from('requests')
-        .select('status')
-        .order('status');
+        .select('status');
       
       if (statusError) throw statusError;
       
-      const statusCounts: Record<string, number> = {};
+      const statusCounts: Record<string, number> = {
+        'pending': 0,
+        'completed': 0,
+        'rejected': 0,
+        'in_progress': 0
+      };
+      
       statusData?.forEach(request => {
         const status = request.status || 'غير محدد';
-        if (!statusCounts[status]) {
-          statusCounts[status] = 0;
+        if (status === 'pending') {
+          statusCounts['pending']++;
+        } else if (status === 'completed') {
+          statusCounts['completed']++;
+        } else if (status === 'rejected') {
+          statusCounts['rejected']++;
+        } else {
+          statusCounts['in_progress']++;
         }
-        statusCounts[status]++;
-      });
-      
-      console.log("Statistics data prepared:", {
-        totalRequests,
-        pendingRequests,
-        approvedRequests,
-        rejectedRequests,
-        typeCountsSize: Object.keys(typeCount).length,
-        statusCountsSize: Object.keys(statusCounts).length
       });
       
       // Format statistics
       const statsData: RequestStatistics = {
         totalRequests: totalRequests || 0,
         pendingRequests: pendingRequests || 0,
-        approvedRequests: approvedRequests || 0,
+        approvedRequests: completedRequests || 0,
         rejectedRequests: rejectedRequests || 0,
+        inProgressRequests: inProgressRequests || 0,
         requestsByType: Object.values(typeCount).map(item => ({
           typeId: item.id,
           typeName: item.name,
