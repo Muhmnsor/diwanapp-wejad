@@ -52,57 +52,43 @@ export const useAllRequests = () => {
     setError(null);
 
     try {
-      // Try using our new security definer function to avoid RLS issues
-      const { data, error: fetchError } = await supabase
-        .rpc('get_all_requests_admin');
-
-      if (fetchError) {
-        // Fall back to direct query if RPC fails
-        console.warn("Falling back to direct query due to RPC error:", fetchError);
-        const { data: directData, error: directError } = await supabase
-          .from("requests")
-          .select(`
-            *,
-            request_type: request_types (*),
-            workflow: request_workflows (*),
-            requester: profiles (*),
-            current_step: workflow_steps (*)
-          `)
-          .order("created_at", { ascending: false });
-          
-        if (directError) throw directError;
+      console.log("Fetching all requests...");
+      
+      // Skip RPC and go directly to query since we know the RPC might be causing issues
+      const { data: directData, error: directError } = await supabase
+        .from("requests")
+        .select(`
+          *,
+          request_type: request_types (*),
+          workflow: request_workflows (*),
+          requester: profiles (*),
+          current_step: workflow_steps (*)
+        `)
+        .order("created_at", { ascending: false });
         
-        console.log("Fetched requests via direct query:", directData);
-        setRequests(directData || []);
-        setFilteredRequests(directData || []);
-      } else {
-        console.log("Fetched requests via RPC:", data);
-        
-        // We need to fetch the relations separately since RPC can't do joins
-        const enrichedData = await Promise.all((data || []).map(async (request) => {
-          // Fetch related data
-          const [requestTypeRes, workflowRes, requesterRes, stepRes] = await Promise.all([
-            // Get request type
-            request.request_type_id ? supabase.from('request_types').select('*').eq('id', request.request_type_id).single() : null,
-            // Get workflow
-            request.workflow_id ? supabase.from('request_workflows').select('*').eq('id', request.workflow_id).single() : null,
-            // Get requester
-            request.requester_id ? supabase.from('profiles').select('*').eq('id', request.requester_id).single() : null,
-            // Get current step
-            request.current_step_id ? supabase.from('workflow_steps').select('*').eq('id', request.current_step_id).single() : null
-          ]);
-          
-          return {
-            ...request,
-            request_type: requestTypeRes?.data || null,
-            workflow: workflowRes?.data || null,
-            requester: requesterRes?.data || null,
-            current_step: stepRes?.data || null
-          };
+      if (directError) {
+        console.error("Error with direct query:", directError);
+        throw directError;
+      }
+      
+      console.log("Fetched requests via direct query:", directData?.length || 0, "requests");
+      
+      if (directData) {
+        // Map the data to ensure proper structure
+        const formattedData = directData.map(request => ({
+          ...request,
+          request_type: request.request_type?.[0] || null,
+          workflow: request.workflow?.[0] || null,
+          requester: request.requester?.[0] || null,
+          current_step: request.current_step?.[0] || null
         }));
         
-        setRequests(enrichedData || []);
-        setFilteredRequests(enrichedData || []);
+        setRequests(formattedData);
+        setFilteredRequests(formattedData);
+      } else {
+        // Set empty arrays if no data returned
+        setRequests([]);
+        setFilteredRequests([]);
       }
     } catch (error: any) {
       console.error("Error fetching all requests:", error);
