@@ -3,7 +3,8 @@ import * as pdfMake from "pdfmake/build/pdfmake";
 import * as pdfFontsModule from "pdfmake/build/vfs_fonts";
 
 // Initialize pdfMake with virtual file system for fonts
-(pdfMake as any).vfs = pdfFontsModule.pdfFonts.vfs;
+// The VFS is directly available on the module in most pdfMake distributions
+(pdfMake as any).vfs = pdfFontsModule.pdfFonts ? pdfFontsModule.pdfFonts.vfs : pdfFontsModule.vfs;
 
 // Register custom fonts for Arabic support
 export const customFonts = {
