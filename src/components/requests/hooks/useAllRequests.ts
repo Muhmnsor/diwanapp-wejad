@@ -54,7 +54,7 @@ export const useAllRequests = () => {
     try {
       console.log("Fetching all requests...");
       
-      // Use the new RPC function that includes all relations
+      // Use the RPC function that includes all relations
       const { data: rpcData, error: rpcError } = await supabase
         .rpc('get_all_requests_with_relations');
         
@@ -68,28 +68,49 @@ export const useAllRequests = () => {
         
         // Transform the data to ensure it matches our Request type
         const transformedData: Request[] = rpcData.map(item => {
-          // Parse the JSON if it's a string
-          const request = typeof item === 'string' ? JSON.parse(item) : item;
-          
-          return {
-            id: request.id || '',
-            title: request.title || '',
-            form_data: request.form_data || {},
-            status: request.status || 'pending',
-            priority: request.priority || 'medium',
-            requester_id: request.requester_id || '',
-            request_type_id: request.request_type_id || '',
-            workflow_id: request.workflow_id || '',
-            current_step_id: request.current_step_id || null,
-            due_date: request.due_date || null,
-            created_at: request.created_at || new Date().toISOString(),
-            updated_at: request.updated_at || new Date().toISOString(),
-            request_type: request.request_type || null,
-            workflow: request.workflow || null,
-            requester: request.requester || null,
-            current_step: request.current_step || null
-          };
-        });
+          try {
+            // Parse the JSON if it's a string
+            const requestData = typeof item === 'string' ? JSON.parse(item) : item;
+            
+            // Ensure all required fields exist with proper defaults
+            return {
+              id: requestData.id || '',
+              title: requestData.title || '',
+              form_data: requestData.form_data || {},
+              status: requestData.status || 'pending',
+              priority: requestData.priority || 'medium',
+              requester_id: requestData.requester_id || '',
+              request_type_id: requestData.request_type_id || '',
+              workflow_id: requestData.workflow_id || '',
+              current_step_id: requestData.current_step_id || null,
+              due_date: requestData.due_date || null,
+              created_at: requestData.created_at || new Date().toISOString(),
+              updated_at: requestData.updated_at || new Date().toISOString(),
+              // Ensure nested objects are properly structured
+              request_type: requestData.request_type || null,
+              workflow: requestData.workflow || null,
+              requester: requestData.requester || null,
+              current_step: requestData.current_step || null
+            };
+          } catch (parseError) {
+            console.error("Error parsing request data:", parseError, item);
+            // Return a minimal valid object in case of parsing error
+            return {
+              id: '',
+              title: 'Error parsing data',
+              form_data: {},
+              status: 'error',
+              priority: 'medium',
+              requester_id: '',
+              request_type_id: '',
+              workflow_id: '',
+              current_step_id: null,
+              due_date: null,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+          }
+        }).filter(req => req.id !== ''); // Filter out any invalid records
         
         console.log("Transformed data:", transformedData);
         setRequests(transformedData);
