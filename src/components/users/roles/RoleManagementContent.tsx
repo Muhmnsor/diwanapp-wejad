@@ -1,9 +1,10 @@
 
-import { useState } from "react";
-import { Role } from "../types";
-import { RolesTabContent } from "./RolesTabContent";
-import { PermissionsTabContent } from "./PermissionsTabContent";
 import { TabsContent } from "@/components/ui/tabs";
+import { Role } from "../types";
+import { Button } from "@/components/ui/button";
+import { Plus, Loader2 } from "lucide-react";
+import { RolesListTabContent } from "./RolesListTabContent";
+import { PermissionsTabContent } from "./PermissionsTabContent";
 
 interface RoleManagementContentProps {
   roles: Role[];
@@ -11,9 +12,10 @@ interface RoleManagementContentProps {
   selectedRoleId: string | null;
   activeTab: string;
   onSelectRole: (roleId: string) => void;
-  onEditRole: (role: Role) => void;
-  onDeleteRole: (role: Role) => void;
-  onAddRole: () => void;
+  onEditRole?: (role: Role) => void;
+  onDeleteRole?: (role: Role) => void;
+  onAddRole?: () => void;
+  canEditRoles?: boolean;
 }
 
 export const RoleManagementContent = ({
@@ -24,22 +26,37 @@ export const RoleManagementContent = ({
   onSelectRole,
   onEditRole,
   onDeleteRole,
-  onAddRole
+  onAddRole,
+  canEditRoles = false
 }: RoleManagementContentProps) => {
-  // العثور على الدور المحدد حاليا من قائمة الأدوار
   const selectedRole = roles.find(role => role.id === selectedRoleId);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="mr-2">جاري التحميل...</span>
+      </div>
+    );
+  }
 
   return (
     <>
-      <TabsContent value="roles">
-        <RolesTabContent 
-          roles={roles}
-          isLoading={isLoading}
-          selectedRoleId={selectedRoleId}
-          onAddRole={onAddRole}
-          onSelectRole={onSelectRole}
-          onEditRole={onEditRole}
-          onDeleteRole={onDeleteRole}
+      <TabsContent value="roles" className="space-y-4">
+        <div className="flex justify-end">
+          {canEditRoles && onAddRole && (
+            <Button onClick={onAddRole}>
+              <Plus className="h-4 w-4 ml-2" />
+              إضافة دور جديد
+            </Button>
+          )}
+        </div>
+        
+        <RolesListTabContent 
+          roles={roles} 
+          onRoleSelected={onSelectRole} 
+          onEditRole={canEditRoles ? onEditRole : undefined} 
+          onDeleteRole={canEditRoles ? onDeleteRole : undefined}
         />
       </TabsContent>
       

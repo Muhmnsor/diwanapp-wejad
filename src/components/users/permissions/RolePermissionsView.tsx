@@ -12,6 +12,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/refactored-auth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useDetailedPermissions } from "@/hooks/useDetailedPermissions";
 
 interface RolePermissionsViewProps {
   role: Role;
@@ -21,9 +22,15 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [activeTab, setActiveTab] = useState("permissions");
   const { user } = useAuthStore();
+  const { hasPermission } = useDetailedPermissions();
+  
+  // Check permissions for editing role permissions
+  const canEditPermissions = hasPermission('permissions_edit');
+  const canAssignPermissions = hasPermission('permissions_assign');
   
   // Check if current user is admin or developer
   const isAdminOrDeveloper = user?.isAdmin || user?.role === 'developer';
+  const hasEditRights = isAdminOrDeveloper || (canEditPermissions && canAssignPermissions);
   
   const {
     modules,
@@ -87,7 +94,7 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">صلاحيات الدور: {role.name}</h2>
-        {isAdminOrDeveloper && (
+        {hasEditRights && (
           <Button 
             onClick={handleSave} 
             disabled={isSubmitting}
@@ -102,9 +109,9 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
         )}
       </div>
 
-      {!isAdminOrDeveloper && (
+      {!hasEditRights && (
         <div className="p-3 bg-blue-50 rounded-md mb-4 text-sm">
-          أنت في وضع العرض فقط. فقط المشرفون والمطورون يمكنهم تعديل صلاحيات الأدوار.
+          أنت في وضع العرض فقط. فقط المشرفون والمطورون أو من لديهم صلاحية تعديل الصلاحيات يمكنهم تعديل صلاحيات الأدوار.
         </div>
       )}
 
@@ -126,14 +133,19 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
                 onPermissionToggle={handlePermissionToggle}
                 onModuleToggle={handleModuleToggle}
                 toggleOpen={toggleModuleOpen}
-                isReadOnly={!isAdminOrDeveloper}
+                isReadOnly={!hasEditRights}
               />
             ))
           )}
         </TabsContent>
         
         <TabsContent value="apps">
-          <AppPermissionsManager role={role} key={`app-permissions-${refreshKey}`} onPermissionsChange={() => setRefreshKey(prev => prev + 1)} />
+          <AppPermissionsManager 
+            role={role} 
+            key={`app-permissions-${refreshKey}`} 
+            onPermissionsChange={() => setRefreshKey(prev => prev + 1)} 
+            isReadOnly={!hasEditRights}
+          />
         </TabsContent>
       </Tabs>
     </div>
