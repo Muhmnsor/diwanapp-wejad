@@ -62,6 +62,7 @@ export const useRequestStatistics = () => {
       const typeCount: Record<string, { id: string, name: string, count: number }> = {};
       requestsByType?.forEach(request => {
         const typeId = request.request_type_id;
+        // Fix: properly access the name property from request_types
         const typeName = request.request_types?.name || 'غير محدد';
         
         if (!typeCount[typeId]) {
