@@ -2,12 +2,13 @@
 import { toast } from "sonner";
 import * as pdfMake from "pdfmake/build/pdfmake";
 import { RequestPdfData } from "./pdf-export/types";
-import { pdfFonts } from "./pdf-export/fonts";
+import { customFonts } from "./pdf-export/fonts";
 import { generateQRCode } from "./pdf-export/qrcode";
 import { buildDocumentDefinition } from "./pdf-export/document-definition";
 
-// Register the fonts with pdfMake
-pdfMake.fonts = pdfFonts;
+// Configure pdfMake with our custom fonts (using a workaround for the readonly property)
+const pdfMakeInstance = pdfMake as any;
+pdfMakeInstance.fonts = customFonts;
 
 /**
  * Main export function to generate and download a PDF for a request

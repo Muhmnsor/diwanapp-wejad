@@ -1,12 +1,12 @@
 
 import * as pdfMake from "pdfmake/build/pdfmake";
-import * as pdfFonts from "pdfmake/build/vfs_fonts";
+import * as pdfFontsModule from "pdfmake/build/vfs_fonts";
 
 // Initialize pdfMake with virtual file system for fonts
-(pdfMake as any).vfs = pdfFonts.vfs;
+(pdfMake as any).vfs = pdfFontsModule.pdfFonts.vfs;
 
 // Register custom fonts for Arabic support
-export const pdfFonts = {
+export const customFonts = {
   Roboto: {
     normal: 'Roboto-Regular.ttf',
     bold: 'Roboto-Medium.ttf',
@@ -20,4 +20,3 @@ export const pdfFonts = {
     bolditalics: 'https://cdn.jsdelivr.net/npm/amiri-font@0.4.0/amiri-boldslanted.ttf'
   }
 };
-

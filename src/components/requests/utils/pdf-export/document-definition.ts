@@ -1,8 +1,7 @@
-
 import { TDocumentDefinitions } from "pdfmake/interfaces";
 import { formatArabicDate } from "@/utils/dateUtils";
 import { createApprovalsTable, createFormDataContent } from "./content-builders";
-import { pdfFonts } from "./fonts";
+import { customFonts } from "./fonts";
 import { getStatusTranslation } from "./translations";
 import { RequestPdfData } from "./types";
 
@@ -162,4 +161,3 @@ export const buildDocumentDefinition = (
     }
   };
 };
-
