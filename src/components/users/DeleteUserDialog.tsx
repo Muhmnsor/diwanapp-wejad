@@ -42,9 +42,10 @@ export const DeleteUserDialog = ({ open, onOpenChange, user, onUserDeleted }: De
       if (profileError) throw profileError;
 
       // Soft delete the user in auth (or disable)
+      // Use updateUser instead of admin.updateUserById to update user status
       const { error: authError } = await supabase.auth.admin.updateUserById(
         user.id,
-        { banned: true }
+        { disabled: true } // Use disabled property instead of banned
       );
 
       if (authError) throw authError;

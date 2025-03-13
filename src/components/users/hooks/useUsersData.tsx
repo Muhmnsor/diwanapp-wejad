@@ -30,11 +30,20 @@ export const useUsersData = () => {
       const mappedUsers = profiles.map((profile: any) => {
         const userRole = userRoles.find((ur: any) => ur.user_id === profile.id);
         
+        // Handle the roles object correctly, checking if it exists and has a name property
+        let roleName = 'No Role';
+        if (userRole && userRole.roles) {
+          // Handle case where roles might be an object or array
+          if (typeof userRole.roles === 'object') {
+            roleName = userRole.roles.name || 'No Role';
+          }
+        }
+        
         return {
           id: profile.id,
           username: profile.username || profile.email,
           displayName: profile.display_name,
-          role: userRole?.roles?.name || 'No Role',
+          role: roleName,
           lastLogin: profile.last_login,
           isActive: profile.is_active
         };
