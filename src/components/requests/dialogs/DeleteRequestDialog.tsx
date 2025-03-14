@@ -14,6 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DeleteRequestDialogProps {
   isOpen: boolean;
@@ -97,9 +98,9 @@ export const DeleteRequestDialog = ({
           </AlertDialogDescription>
           
           {errorMessage && (
-            <div className="mt-2 text-sm text-red-500">
-              <p>خطأ: {errorMessage}</p>
-            </div>
+            <Alert variant="destructive" className="mt-2">
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
           )}
         </AlertDialogHeader>
         <AlertDialogFooter>

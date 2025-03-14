@@ -28,7 +28,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WorkflowDebugPanel } from "./workflow/debug/WorkflowDebugPanel";
-import { checkRequestTypeDependencies } from "./utils/workflowHelpers";
 
 export const AdminWorkflows = () => {
   const queryClient = useQueryClient();
@@ -39,13 +38,6 @@ export const AdminWorkflows = () => {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("request-types");
-  const [dependencies, setDependencies] = useState<{
-    workflows: any[];
-    requests: any[];
-    hasWorkflows: boolean;
-    hasRequests: boolean;
-  } | null>(null);
-  const [isCheckingDeps, setIsCheckingDeps] = useState(false);
 
   const { data: requestTypes, isLoading: typesLoading } = useQuery({
     queryKey: ["requestTypes"],
@@ -84,31 +76,15 @@ export const AdminWorkflows = () => {
     toast.success("تم حفظ خطوات سير العمل بنجاح");
   };
   
-  const confirmDeleteRequestType = async (requestType: RequestType) => {
+  const confirmDeleteRequestType = (requestType: RequestType) => {
     setSelectedRequestType(requestType);
     setDeleteError(null);
-    setDependencies(null);
-    setIsCheckingDeps(true);
-    
-    try {
-      const deps = await checkRequestTypeDependencies(requestType.id);
-      setDependencies(deps);
-      
-      if (deps.hasRequests) {
-        setDeleteError(`لا يمكن حذف نوع الطلب لأنه مرتبط بـ ${deps.requests.length} من الطلبات الموجودة.`);
-      }
-    } catch (error) {
-      console.error("Error checking dependencies:", error);
-      setDeleteError("حدث خطأ أثناء التحقق من العلاقات المرتبطة بنوع الطلب");
-    } finally {
-      setIsCheckingDeps(false);
-      setShowDeleteDialog(true);
-    }
+    setShowDeleteDialog(true);
   };
 
   const deleteRequestTypeMutation = useMutation({
     mutationFn: async (typeId: string) => {
-      // Now calling the RPC function which leverages CASCADE deletion
+      // Directly call the RPC function which handles all dependency validation internally
       const { data, error } = await supabase
         .rpc('delete_request_type', { p_request_type_id: typeId });
       
@@ -275,44 +251,26 @@ export const AdminWorkflows = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           
-          {isCheckingDeps && (
-            <div className="flex items-center justify-center py-4">
-              <Skeleton className="h-4 w-full" />
-              <p className="text-sm text-muted-foreground mt-2">جاري التحقق من الارتباطات...</p>
-            </div>
-          )}
-          
           {deleteError && (
             <Alert variant="destructive" className="mt-4">
               <AlertDescription>{deleteError}</AlertDescription>
             </Alert>
           )}
           
-          {dependencies?.hasWorkflows && !dependencies.hasRequests && (
-            <Alert variant="warning" className="mt-4 bg-amber-50 text-amber-800 border-amber-200">
-              <AlertDescription>
-                هذا النوع مرتبط بـ {dependencies.workflows.length} من مسارات سير العمل.
-                سيتم حذف جميع مسارات سير العمل المرتبطة به تلقائيًا.
-              </AlertDescription>
-            </Alert>
-          )}
-          
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteError(null)}>إلغاء</AlertDialogCancel>
-            {!dependencies?.hasRequests && (
-              <AlertDialogAction
-                onClick={handleForceDelete}
-                disabled={deleteRequestTypeMutation.isPending}
-                className="bg-red-500 hover:bg-red-600"
-              >
-                {deleteRequestTypeMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    جاري الحذف...
-                  </>
-                ) : "حذف"}
-              </AlertDialogAction>
-            )}
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleForceDelete}
+              disabled={deleteRequestTypeMutation.isPending}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {deleteRequestTypeMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  جاري الحذف...
+                </>
+              ) : "حذف"}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
