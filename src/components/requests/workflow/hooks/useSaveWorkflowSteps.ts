@@ -59,8 +59,30 @@ export const useSaveWorkflowSteps = ({
         }
       }
 
+      // Handle empty steps array - we still need to process the deletion in the database
       if (steps.length === 0) {
+        console.log("Saving empty steps list for workflow:", currentWorkflowId);
+        
+        // Delete all steps from this workflow in the database
+        const { error: deleteError } = await supabase
+          .from('workflow_steps')
+          .delete()
+          .eq('workflow_id', currentWorkflowId);
+          
+        if (deleteError) {
+          console.error("Error deleting workflow steps:", deleteError);
+          throw new Error(`فشل في حذف خطوات سير العمل: ${deleteError.message}`);
+        }
+        
+        // Update local state
         updateWorkflowSteps([]);
+        toast.success("تم حفظ خطوات سير العمل بنجاح");
+        
+        // Update default workflow if needed
+        if (requestTypeId) {
+          await updateDefaultWorkflow(requestTypeId, currentWorkflowId);
+        }
+        
         return true;
       }
       
