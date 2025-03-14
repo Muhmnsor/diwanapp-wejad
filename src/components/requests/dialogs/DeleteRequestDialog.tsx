@@ -31,6 +31,7 @@ export const DeleteRequestDialog = ({
   const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [retryAttempt, setRetryAttempt] = React.useState(0);
 
   const handleDelete = async () => {
     if (!requestId) return;
@@ -80,6 +81,15 @@ export const DeleteRequestDialog = ({
     }
   };
 
+  // Function to try again with exponential backoff
+  const handleRetry = () => {
+    setRetryAttempt(prev => prev + 1);
+    setTimeout(() => {
+      handleDelete();
+    }, Math.min(1000 * Math.pow(2, retryAttempt), 10000)); // Max 10 seconds
+    toast.info("جاري إعادة المحاولة...");
+  };
+
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent>
@@ -98,6 +108,15 @@ export const DeleteRequestDialog = ({
           {errorMessage && (
             <div className="mt-2 text-sm text-red-500">
               <p>خطأ: {errorMessage}</p>
+              {retryAttempt < 3 && (
+                <button 
+                  onClick={handleRetry} 
+                  className="underline text-blue-500 mr-2 mt-1"
+                  disabled={isDeleting}
+                >
+                  إعادة المحاولة
+                </button>
+              )}
             </div>
           )}
         </AlertDialogHeader>

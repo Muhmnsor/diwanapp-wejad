@@ -6,7 +6,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from "@/components/ui/card";
 import {
   Table,
@@ -17,7 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, Settings, Bug } from "lucide-react";
+import { Plus, Edit, Trash2, Settings, Bug, Loader2 } from "lucide-react";
 import { RequestType } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -28,7 +27,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WorkflowDebugPanel } from "./workflow/debug/WorkflowDebugPanel";
-import { checkRequestTypeDependencies } from "./utils/workflowHelpers";
+import { checkRequestTypeDependencies, deleteRequestType } from "./utils/workflowHelpers";
 
 export const AdminWorkflows = () => {
   const queryClient = useQueryClient();
@@ -45,6 +44,7 @@ export const AdminWorkflows = () => {
     hasWorkflows: boolean;
     hasRequests: boolean;
   } | null>(null);
+  const [isCheckingDeps, setIsCheckingDeps] = useState(false);
 
   const { data: requestTypes, isLoading: typesLoading } = useQuery({
     queryKey: ["requestTypes"],
@@ -86,6 +86,8 @@ export const AdminWorkflows = () => {
   const confirmDeleteRequestType = async (requestType: RequestType) => {
     setSelectedRequestType(requestType);
     setDeleteError(null);
+    setDependencies(null);
+    setIsCheckingDeps(true);
     
     try {
       const deps = await checkRequestTypeDependencies(requestType.id);
@@ -96,13 +98,14 @@ export const AdminWorkflows = () => {
       }
     } catch (error) {
       console.error("Error checking dependencies:", error);
-      setDeleteError("حدث خطأ أثناء التحقق من العلاقات المرتبطة بنوع الطلب");
+      setDeleteError("حدث خطأ أثناء التحقق من العلاقات ال��رتبطة بنوع الطلب");
+    } finally {
+      setIsCheckingDeps(false);
+      setShowDeleteDialog(true);
     }
-    
-    setShowDeleteDialog(true);
   };
 
-  const deleteRequestType = useMutation({
+  const deleteRequestTypeMutation = useMutation({
     mutationFn: async (typeId: string) => {
       const { data, error } = await supabase
         .rpc('delete_request_type', { p_request_type_id: typeId });
@@ -130,7 +133,7 @@ export const AdminWorkflows = () => {
 
   const handleForceDelete = () => {
     if (selectedRequestType) {
-      deleteRequestType.mutate(selectedRequestType.id);
+      deleteRequestTypeMutation.mutate(selectedRequestType.id);
     }
   };
 
@@ -270,6 +273,13 @@ export const AdminWorkflows = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           
+          {isCheckingDeps && (
+            <div className="flex items-center justify-center py-4">
+              <Skeleton className="h-4 w-full" />
+              <p className="text-sm text-muted-foreground mt-2">جاري التحقق من الارتباطات...</p>
+            </div>
+          )}
+          
           {deleteError && (
             <Alert variant="destructive" className="mt-4">
               <AlertDescription>{deleteError}</AlertDescription>
@@ -290,10 +300,15 @@ export const AdminWorkflows = () => {
             {!dependencies?.hasRequests && (
               <AlertDialogAction
                 onClick={handleForceDelete}
-                disabled={deleteRequestType.isPending}
+                disabled={deleteRequestTypeMutation.isPending}
                 className="bg-red-500 hover:bg-red-600"
               >
-                {deleteRequestType.isPending ? "جاري الحذف..." : "حذف"}
+                {deleteRequestTypeMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    جاري الحذف...
+                  </>
+                ) : "حذف"}
               </AlertDialogAction>
             )}
           </AlertDialogFooter>
