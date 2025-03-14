@@ -1,4 +1,5 @@
 
+
 -- تحديث لعملية حذف أنواع الطلبات مع التعامل مع جميع العلاقات المرتبطة
 -- Function to delete a request type and its related records
 CREATE OR REPLACE FUNCTION public.delete_request_type(p_request_type_id uuid)
@@ -73,17 +74,6 @@ BEGIN
         WHERE table_schema = 'public' AND table_name = 'request_workflow_operation_logs'
       ) THEN
         UPDATE request_workflow_operation_logs
-        SET request_type_id = NULL
-        WHERE request_type_id = p_request_type_id;
-      END IF;
-      
-      -- تحديث سجلات تتبع أقدم للتوافق
-      IF EXISTS (
-        SELECT 1
-        FROM information_schema.tables
-        WHERE table_schema = 'public' AND table_name = 'workflow_operation_logs'
-      ) THEN
-        UPDATE workflow_operation_logs
         SET request_type_id = NULL
         WHERE request_type_id = p_request_type_id;
       END IF;
@@ -289,3 +279,4 @@ BEGIN
   END;
 END;
 $function$;
+
