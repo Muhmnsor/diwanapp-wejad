@@ -24,6 +24,8 @@ export const RequestWorkflowCard = ({ workflow, currentStep, requestId }: Reques
       }
 
       try {
+        console.log("Fetching workflow steps for workflow ID:", workflow.id);
+        
         // Fetch all steps for this workflow
         const { data: steps, error: stepsError } = await supabase
           .from('workflow_steps')
@@ -31,15 +33,25 @@ export const RequestWorkflowCard = ({ workflow, currentStep, requestId }: Reques
           .eq('workflow_id', workflow.id)
           .order('step_order', { ascending: true });
 
-        if (stepsError) throw stepsError;
+        if (stepsError) {
+          console.error("Error fetching workflow steps:", stepsError);
+          throw stepsError;
+        }
 
+        console.log("Fetched workflow steps:", steps);
+        
         // Fetch approvals for this request
         const { data: approvalData, error: approvalsError } = await supabase
           .from('request_approvals')
           .select('*, approver:profiles(display_name, email)')
           .eq('request_id', requestId);
 
-        if (approvalsError) throw approvalsError;
+        if (approvalsError) {
+          console.error("Error fetching approvals:", approvalsError);
+          throw approvalsError;
+        }
+
+        console.log("Fetched approvals:", approvalData);
 
         setWorkflowSteps(steps || []);
         setApprovals(approvalData || []);
