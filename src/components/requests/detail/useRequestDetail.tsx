@@ -69,7 +69,8 @@ export const useRequestDetail = (requestId: string) => {
         throw err;
       }
     },
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: false,
+    refetchInterval: 10000, // Refresh every 10 seconds to see updates
   });
 
   // Updated logic: any authenticated user can participate in opinion steps,
@@ -141,7 +142,9 @@ export const useRequestDetail = (requestId: string) => {
   };
 
   const handleApproveClick = () => {
-    if (!isCurrentApprover() && data?.current_step?.step_type !== 'opinion') {
+    const isOpinionStep = data?.current_step?.step_type === 'opinion';
+    
+    if (!isCurrentApprover() && !isOpinionStep) {
       toast.error("ليس لديك الصلاحية للموافقة على هذا الطلب");
       return;
     }
@@ -149,7 +152,9 @@ export const useRequestDetail = (requestId: string) => {
   };
 
   const handleRejectClick = () => {
-    if (!isCurrentApprover() && data?.current_step?.step_type !== 'opinion') {
+    const isOpinionStep = data?.current_step?.step_type === 'opinion';
+    
+    if (!isCurrentApprover() && !isOpinionStep) {
       toast.error("ليس لديك الصلاحية لرفض هذا الطلب");
       return;
     }

@@ -41,6 +41,9 @@ export const RequestApproveDialog = ({
   // Check if this is a self-approval (user is approving their own request)
   const isSelfApproval = user?.id === requesterId;
   
+  // Determine if this is an opinion step
+  const isOpinionStep = stepType === 'opinion';
+  
   const approveMutation = useMutation({
     mutationFn: async () => {
       if (!stepId) {
@@ -48,7 +51,7 @@ export const RequestApproveDialog = ({
       }
       
       // Self-approval warning for non-opinion steps
-      if (isSelfApproval && stepType !== 'opinion') {
+      if (isSelfApproval && !isOpinionStep) {
         throw new Error("لا يمكن الموافقة على طلبك الخاص إلا في حالة خطوات الرأي فقط");
       }
       
@@ -91,7 +94,7 @@ export const RequestApproveDialog = ({
         return;
       }
       
-      const successMessage = stepType === 'opinion' 
+      const successMessage = isOpinionStep 
         ? "تم تسجيل رأيك بنجاح" 
         : "تمت الموافقة على الطلب بنجاح";
       
@@ -105,9 +108,9 @@ export const RequestApproveDialog = ({
       queryClient.invalidateQueries({ queryKey: ['request-details', requestId] });
       
       // For opinion steps, make sure the request is immediately removed from the incoming list
-      if (stepType === 'opinion') {
+      if (isOpinionStep) {
         // Force refetch rather than just invalidate
-        queryClient.invalidateQueries({ queryKey: ['requests', 'incoming'] });
+        queryClient.refetchQueries({ queryKey: ['requests', 'incoming'] });
       }
     },
     onError: (error) => {
@@ -125,16 +128,16 @@ export const RequestApproveDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {stepType === 'opinion' ? 'إبداء الرأي على الطلب' : 'الموافقة على الطلب'}
+            {isOpinionStep ? 'إبداء الرأي على الطلب' : 'الموافقة على الطلب'}
           </DialogTitle>
           <DialogDescription>
-            {stepType === 'opinion' 
+            {isOpinionStep 
               ? 'الرجاء إبداء رأيك حول هذا الطلب' 
               : 'هل أنت متأكد من رغبتك في الموافقة على هذا الطلب؟'}
           </DialogDescription>
         </DialogHeader>
         
-        {isSelfApproval && stepType !== 'opinion' && (
+        {isSelfApproval && !isOpinionStep && (
           <Alert variant="destructive" className="my-2">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>تنبيه</AlertTitle>
@@ -144,7 +147,7 @@ export const RequestApproveDialog = ({
           </Alert>
         )}
         
-        {stepType === 'opinion' && (
+        {isOpinionStep && (
           <Alert variant="default" className="my-2 bg-blue-50 text-blue-700 border-blue-200">
             <InfoIcon className="h-4 w-4" />
             <AlertTitle>معلومة</AlertTitle>
@@ -156,11 +159,11 @@ export const RequestApproveDialog = ({
         
         <div className="py-4">
           <label htmlFor="comments" className="block text-sm font-medium mb-2">
-            {stepType === 'opinion' ? 'رأيك (اختياري)' : 'التعليقات (اختياري)'}
+            {isOpinionStep ? 'رأيك (اختياري)' : 'التعليقات (اختياري)'}
           </label>
           <Textarea
             id="comments"
-            placeholder={stepType === 'opinion' ? 'أضف رأيك هنا...' : 'أضف تعليقًا...'}
+            placeholder={isOpinionStep ? 'أضف رأيك هنا...' : 'أضف تعليقًا...'}
             value={comments}
             onChange={(e) => setComments(e.target.value)}
             rows={4}
@@ -172,10 +175,10 @@ export const RequestApproveDialog = ({
           </Button>
           <Button 
             onClick={handleApprove} 
-            disabled={approveMutation.isPending || (isSelfApproval && stepType !== 'opinion')} 
-            className="bg-green-600 hover:bg-green-700"
+            disabled={approveMutation.isPending || (isSelfApproval && !isOpinionStep)} 
+            className={isOpinionStep ? "bg-blue-600 hover:bg-blue-700" : "bg-green-600 hover:bg-green-700"}
           >
-            {approveMutation.isPending ? "جاري المعالجة..." : stepType === 'opinion' ? 'إرسال الرأي' : 'موافقة'}
+            {approveMutation.isPending ? "جاري المعالجة..." : isOpinionStep ? 'إرسال الرأي' : 'موافقة'}
           </Button>
         </DialogFooter>
       </DialogContent>
