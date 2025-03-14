@@ -81,6 +81,12 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   console.log("Request workflow data:", workflow);
   console.log("Current step data:", currentStep);
   console.log("Requester data:", requester);
+  console.log("Step type:", stepType);
+  console.log("Approvals data:", approvals);
+
+  // Custom dialog titles based on step type
+  const approveDialogTitle = stepType === 'opinion' ? 'إبداء الرأي' : 'الموافقة على الطلب';
+  const rejectDialogTitle = stepType === 'opinion' ? 'إبداء الملاحظات' : 'رفض الطلب';
 
   return (
     <>
@@ -124,6 +130,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
         requesterId={request.requester_id}
         isOpen={isApproveDialogOpen}
         onOpenChange={setIsApproveDialogOpen}
+        dialogTitle={approveDialogTitle}
       />
 
       <RequestRejectDialog
@@ -133,6 +140,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
         requesterId={request.requester_id}
         isOpen={isRejectDialogOpen}
         onOpenChange={setIsRejectDialogOpen}
+        dialogTitle={rejectDialogTitle}
       />
     </>
   );
