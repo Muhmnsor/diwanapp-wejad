@@ -103,16 +103,21 @@ BEGIN
     -- Update logs to NULL references before deletion
     -- This prevents foreign key constraint violations
     
-    -- 1. Update request_approval_logs to set step_id to NULL where step will be deleted
+    -- 1. Update request_workflow_operation_logs for steps
     IF v_step_ids IS NOT NULL AND array_length(v_step_ids, 1) > 0 THEN
-      UPDATE request_approval_logs
+      UPDATE request_workflow_operation_logs
+      SET step_id = NULL
+      WHERE step_id = ANY(v_step_ids);
+      
+      -- Also update old-style logs (for compatibility)
+      UPDATE workflow_operation_logs
       SET step_id = NULL
       WHERE step_id = ANY(v_step_ids);
     END IF;
 
-    -- 2. Update request_workflow_operation_logs for steps
+    -- 2. Update request_approval_logs to set step_id to NULL where step will be deleted
     IF v_step_ids IS NOT NULL AND array_length(v_step_ids, 1) > 0 THEN
-      UPDATE request_workflow_operation_logs
+      UPDATE request_approval_logs
       SET step_id = NULL
       WHERE step_id = ANY(v_step_ids);
     END IF;
@@ -122,10 +127,20 @@ BEGIN
       UPDATE request_workflow_operation_logs
       SET workflow_id = NULL
       WHERE workflow_id = ANY(v_workflow_ids);
+      
+      -- Also update old-style logs (for compatibility)
+      UPDATE workflow_operation_logs
+      SET workflow_id = NULL
+      WHERE workflow_id = ANY(v_workflow_ids);
     END IF;
     
     -- 4. Update request_workflow_operation_logs for request type
     UPDATE request_workflow_operation_logs
+    SET request_type_id = NULL
+    WHERE request_type_id = p_request_type_id;
+    
+    -- Also update old-style logs (for compatibility)
+    UPDATE workflow_operation_logs
     SET request_type_id = NULL
     WHERE request_type_id = p_request_type_id;
 

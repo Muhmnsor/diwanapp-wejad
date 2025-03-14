@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,7 +54,7 @@ export const WorkflowDebugPanel = () => {
     queryKey: ["workflowLogs", operationType, limit],
     queryFn: async () => {
       let query = supabase
-        .from("request_workflow_operations_view") // استخدام اسم العرض الصحيح
+        .from("request_workflow_operations_view")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(limit);
@@ -65,6 +64,24 @@ export const WorkflowDebugPanel = () => {
       }
       
       const { data, error } = await query;
+      
+      if (error && error.code === "PGRST116") {
+        console.log("Falling back to workflow_operations_view");
+        query = supabase
+          .from("workflow_operations_view")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        
+        if (operationType) {
+          query = query.ilike("operation_type", `%${operationType}%`);
+        }
+        
+        const fallbackResult = await query;
+        
+        if (fallbackResult.error) throw fallbackResult.error;
+        return fallbackResult.data as LogEntry[];
+      }
       
       if (error) throw error;
       return data as LogEntry[];
