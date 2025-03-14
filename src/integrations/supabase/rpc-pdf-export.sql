@@ -57,53 +57,83 @@ BEGIN
   WHERE r.id = p_request_id;
   
   -- Get approvals data with step and approver info
+  -- Using a CTE to avoid GROUP BY issues
+  WITH approval_data AS (
+    SELECT 
+      ra.id,
+      ra.status,
+      ra.comments,
+      ra.approved_at,
+      ra.created_at,
+      ws.id as step_id,
+      ws.step_name,
+      ws.step_type,
+      ws.approver_type,
+      p.id as approver_id,
+      p.display_name,
+      p.email
+    FROM request_approvals ra
+    LEFT JOIN workflow_steps ws ON ra.step_id = ws.id
+    LEFT JOIN profiles p ON ra.approver_id = p.id
+    WHERE ra.request_id = p_request_id
+    ORDER BY ra.created_at ASC
+  )
   SELECT json_agg(
     json_build_object(
-      'id', ra.id,
-      'status', ra.status,
-      'comments', ra.comments,
-      'approved_at', ra.approved_at,
-      'created_at', ra.created_at,
+      'id', ad.id,
+      'status', ad.status,
+      'comments', ad.comments,
+      'approved_at', ad.approved_at,
+      'created_at', ad.created_at,
       'step', json_build_object(
-        'id', ws.id,
-        'step_name', ws.step_name,
-        'step_type', ws.step_type,
-        'approver_type', ws.approver_type
+        'id', ad.step_id,
+        'step_name', ad.step_name,
+        'step_type', ad.step_type,
+        'approver_type', ad.approver_type
       ),
       'approver', json_build_object(
-        'id', p.id,
-        'display_name', p.display_name,
-        'email', p.email
+        'id', ad.approver_id,
+        'display_name', ad.display_name,
+        'email', ad.email
       )
     )
   )
   INTO v_approvals
-  FROM request_approvals ra
-  LEFT JOIN workflow_steps ws ON ra.step_id = ws.id
-  LEFT JOIN profiles p ON ra.approver_id = p.id
-  WHERE ra.request_id = p_request_id
-  ORDER BY ra.created_at ASC;
+  FROM approval_data ad;
   
-  -- Get attachments
+  -- Get attachments with uploader info
+  WITH attachment_data AS (
+    SELECT 
+      ra.id,
+      ra.file_name,
+      ra.file_path,
+      ra.file_type,
+      ra.file_size,
+      ra.created_at,
+      p.id as uploader_id,
+      p.display_name,
+      p.email
+    FROM request_attachments ra
+    LEFT JOIN profiles p ON ra.uploaded_by = p.id
+    WHERE ra.request_id = p_request_id
+  )
   SELECT json_agg(
     json_build_object(
-      'id', ra.id,
-      'file_name', ra.file_name,
-      'file_path', ra.file_path,
-      'file_type', ra.file_type,
-      'file_size', ra.file_size,
-      'created_at', ra.created_at,
+      'id', ad.id,
+      'file_name', ad.file_name,
+      'file_path', ad.file_path,
+      'file_type', ad.file_type,
+      'file_size', ad.file_size,
+      'created_at', ad.created_at,
       'uploaded_by', json_build_object(
-        'id', p.id,
-        'display_name', p.display_name,
-        'email', p.email
+        'id', ad.uploader_id,
+        'display_name', ad.display_name,
+        'email', ad.email
       )
     )
   )
   INTO v_attachments
-  FROM request_attachments ra
-  LEFT JOIN profiles p ON ra.uploaded_by = p.id
-  WHERE ra.request_id = p_request_id;
+  FROM attachment_data ad;
   
   -- Build the final result object
   v_result := json_build_object(
@@ -175,4 +205,3 @@ CREATE POLICY "Users can create export records"
   ON public.request_export_logs 
   FOR INSERT 
   WITH CHECK (auth.uid() = exported_by);
-
