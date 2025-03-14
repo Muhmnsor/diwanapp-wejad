@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { FileDown } from "lucide-react";
-import { exportRequestWithEnhancedData } from '../utils/requestExportUtils';
 import { toast } from 'sonner';
+import { exportRequest } from '../utils/requestImageExporter';
 
 interface RequestExportButtonProps {
   requestId: string;
@@ -32,14 +32,13 @@ export const RequestExportButton = ({
     
     try {
       setIsExporting(true);
-      toast.info("جاري تجهيز ملف PDF...");
       
       // Add a timeout to ensure the UI updates before heavy processing
       setTimeout(async () => {
         try {
-          await exportRequestWithEnhancedData(requestId);
+          await exportRequest(requestId);
         } catch (error) {
-          console.error("Error during PDF export:", error);
+          console.error("Error during export:", error);
           toast.error(`فشل تصدير الطلب: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`);
         } finally {
           // Small delay before resetting to prevent accidental double-clicks
@@ -69,7 +68,7 @@ export const RequestExportButton = ({
       className="gap-1 hover:bg-slate-100"
     >
       <FileDown className="h-4 w-4" />
-      {isExporting ? "جاري التصدير..." : "تصدير PDF"}
+      {isExporting ? "جاري التصدير..." : "تصدير"}
     </Button>
   );
 };
