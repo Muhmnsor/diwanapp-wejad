@@ -1,4 +1,5 @@
 
+
 -- جدول لتخزين سجلات عمليات سير العمل
 CREATE TABLE IF NOT EXISTS workflow_operation_logs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

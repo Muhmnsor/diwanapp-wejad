@@ -1,7 +1,5 @@
 
 
--- ... keep existing code
-
 -- تحديث لعملية حذف أنواع الطلبات مع التعامل مع جميع العلاقات المرتبطة
 -- Function to delete a request type and its related records
 CREATE OR REPLACE FUNCTION public.delete_request_type(p_request_type_id uuid)
@@ -18,6 +16,7 @@ DECLARE
   v_workflow_steps jsonb[];
   v_step_ids uuid[];
   v_related_requests int;
+  v_error_message text;
 BEGIN
   -- Check if user is admin or developer
   SELECT EXISTS (
@@ -211,5 +210,3 @@ BEGIN
   END;
 END;
 $function$;
-
-
