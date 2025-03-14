@@ -10,11 +10,6 @@ DECLARE
   v_is_admin boolean;
   v_result jsonb;
   v_request_type_data jsonb;
-  v_workflows jsonb[];
-  v_workflow_ids uuid[];
-  v_workflow_count int;
-  v_step_ids uuid[];
-  v_step_count int;
   v_related_requests int;
   v_error_message text;
 BEGIN
@@ -66,75 +61,9 @@ BEGIN
     );
   END IF;
 
-  -- Get all workflow IDs for this request type
-  SELECT array_agg(id)
-  INTO v_workflow_ids
-  FROM request_workflows
-  WHERE request_type_id = p_request_type_id;
-
-  -- Count workflows for logging
-  SELECT COUNT(*)
-  INTO v_workflow_count
-  FROM request_workflows
-  WHERE request_type_id = p_request_type_id;
-
-  -- Get all step IDs for these workflows if workflows exist
-  IF v_workflow_ids IS NOT NULL AND array_length(v_workflow_ids, 1) > 0 THEN
-    SELECT array_agg(id)
-    INTO v_step_ids
-    FROM workflow_steps
-    WHERE workflow_id = ANY(v_workflow_ids);
-    
-    -- Count steps for logging
-    SELECT COUNT(*)
-    INTO v_step_count
-    FROM workflow_steps
-    WHERE workflow_id = ANY(v_workflow_ids);
-  ELSE
-    v_step_count := 0;
-  END IF;
-
-  -- Begin transaction to delete request type and related records
-  -- Using serializable isolation to prevent race conditions
+  -- Begin transaction to delete request type (CASCADE takes care of dependents)
   BEGIN
-    -- Set transaction isolation level
-    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
-    
-    -- Update logs to NULL references before deletion
-    -- This prevents foreign key constraint violations
-    
-    -- 1. Update request_workflow_operation_logs for steps
-    IF v_step_ids IS NOT NULL AND array_length(v_step_ids, 1) > 0 THEN
-      UPDATE request_workflow_operation_logs
-      SET step_id = NULL
-      WHERE step_id = ANY(v_step_ids);
-      
-      -- Also update old-style logs (for compatibility)
-      UPDATE workflow_operation_logs
-      SET step_id = NULL
-      WHERE step_id = ANY(v_step_ids);
-    END IF;
-
-    -- 2. Update request_approval_logs to set step_id to NULL where step will be deleted
-    IF v_step_ids IS NOT NULL AND array_length(v_step_ids, 1) > 0 THEN
-      UPDATE request_approval_logs
-      SET step_id = NULL
-      WHERE step_id = ANY(v_step_ids);
-    END IF;
-
-    -- 3. Update request_workflow_operation_logs for workflows
-    IF v_workflow_ids IS NOT NULL AND array_length(v_workflow_ids, 1) > 0 THEN
-      UPDATE request_workflow_operation_logs
-      SET workflow_id = NULL
-      WHERE workflow_id = ANY(v_workflow_ids);
-      
-      -- Also update old-style logs (for compatibility)
-      UPDATE workflow_operation_logs
-      SET workflow_id = NULL
-      WHERE workflow_id = ANY(v_workflow_ids);
-    END IF;
-    
-    -- 4. Update request_workflow_operation_logs for request type
+    -- Nullify the log references to avoid foreign key constraint errors
     UPDATE request_workflow_operation_logs
     SET request_type_id = NULL
     WHERE request_type_id = p_request_type_id;
@@ -143,23 +72,11 @@ BEGIN
     UPDATE workflow_operation_logs
     SET request_type_id = NULL
     WHERE request_type_id = p_request_type_id;
-
-    -- 5. Delete workflow steps first (children)
-    IF v_workflow_ids IS NOT NULL AND array_length(v_workflow_ids, 1) > 0 THEN
-      DELETE FROM workflow_steps
-      WHERE workflow_id = ANY(v_workflow_ids);
-    END IF;
     
-    -- 6. Delete workflows next (parent of steps, child of request type)
-    IF v_workflow_ids IS NOT NULL AND array_length(v_workflow_ids, 1) > 0 THEN
-      DELETE FROM request_workflows
-      WHERE request_type_id = p_request_type_id;
-    END IF;
-    
-    -- 7. Finally delete the request type (parent)
+    -- Now simply delete the request type and let CASCADE handle the rest
     DELETE FROM request_types WHERE id = p_request_type_id;
-
-    -- 8. Log the deletion operation
+    
+    -- Log the deletion operation
     BEGIN
       IF EXISTS (
         SELECT 1
@@ -178,9 +95,7 @@ BEGIN
           v_request_type_data,
           jsonb_build_object(
             'deleted_by', auth.uid(),
-            'deleted_at', now(),
-            'workflow_count', v_workflow_count,
-            'step_count', v_step_count
+            'deleted_at', now()
           ),
           'تم حذف نوع الطلب بنجاح'
         );
@@ -193,9 +108,7 @@ BEGIN
     v_result := jsonb_build_object(
       'success', true,
       'message', 'تم حذف نوع الطلب بنجاح',
-      'request_type_id', p_request_type_id,
-      'workflows_deleted', v_workflow_count,
-      'steps_deleted', v_step_count
+      'request_type_id', p_request_type_id
     );
 
     RETURN v_result;
@@ -237,3 +150,123 @@ BEGIN
 END;
 $function$;
 
+
+-- تحديث لدالة حذف الطلبات باستخدام خاصية الحذف المتتالي CASCADE
+CREATE OR REPLACE FUNCTION public.delete_request(p_request_id uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+DECLARE
+  v_request jsonb;
+  v_user_id uuid := auth.uid();
+  v_has_permission boolean;
+  v_error_message text;
+BEGIN
+  -- Get request data for logging
+  SELECT jsonb_build_object(
+    'id', id,
+    'title', title,
+    'request_type_id', request_type_id,
+    'requester_id', requester_id,
+    'workflow_id', workflow_id
+  )
+  INTO v_request
+  FROM requests
+  WHERE id = p_request_id;
+  
+  IF v_request IS NULL THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'message', 'الطلب غير موجود'
+    );
+  END IF;
+  
+  -- Check if user is admin or the request creator
+  SELECT EXISTS (
+    SELECT 1 
+    FROM user_roles ur
+    JOIN roles r ON r.id = ur.role_id
+    WHERE ur.user_id = v_user_id
+    AND (r.name IN ('admin', 'app_admin', 'developer'))
+  ) OR v_user_id = (v_request->>'requester_id')::uuid
+  INTO v_has_permission;
+  
+  IF NOT v_has_permission THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'message', 'ليس لديك صلاحية لحذف هذا الطلب'
+    );
+  END IF;
+  
+  -- Do the actual deletion (CASCADE handles the rest)
+  BEGIN
+    -- First nullify foreign key references in logs to avoid constraint errors
+    UPDATE request_workflow_operation_logs
+    SET request_id = NULL
+    WHERE request_id = p_request_id;
+    
+    -- Update approval logs to avoid constraint errors
+    UPDATE request_approval_logs
+    SET request_id = NULL 
+    WHERE request_id = p_request_id;
+    
+    -- Now delete the request (and rely on CASCADE for the rest)
+    DELETE FROM requests WHERE id = p_request_id;
+    
+    -- Log the deletion
+    IF EXISTS (
+      SELECT 1
+      FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name = 'request_workflow_operation_logs'
+    ) THEN
+      INSERT INTO request_workflow_operation_logs(
+        operation_type,
+        user_id,
+        request_data,
+        details
+      ) VALUES (
+        'delete_request',
+        v_user_id,
+        v_request,
+        'تم حذف الطلب بنجاح'
+      );
+    END IF;
+    
+    RETURN jsonb_build_object(
+      'success', true,
+      'message', 'تم حذف الطلب بنجاح',
+      'request_id', p_request_id
+    );
+  EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS v_error_message = MESSAGE_TEXT;
+    
+    -- Log the error
+    IF EXISTS (
+      SELECT 1
+      FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name = 'request_workflow_operation_logs'
+    ) THEN
+      INSERT INTO request_workflow_operation_logs(
+        operation_type,
+        user_id,
+        request_data,
+        error_message,
+        details
+      ) VALUES (
+        'delete_request_error',
+        v_user_id,
+        v_request,
+        v_error_message,
+        'فشل حذف الطلب'
+      );
+    END IF;
+    
+    RETURN jsonb_build_object(
+      'success', false,
+      'message', 'حدث خطأ أثناء حذف الطلب: ' || v_error_message,
+      'error_details', v_error_message
+    );
+  END;
+END;
+$function$;
