@@ -142,6 +142,7 @@ export const checkRequestTypeDependencies = async (requestTypeId: string) => {
 
 /**
  * Deletes a request type and all its associated workflows and steps
+ * using the database function that properly handles foreign key constraints
  * @param requestTypeId The ID of the request type to delete
  * @returns Result of the deletion operation
  */

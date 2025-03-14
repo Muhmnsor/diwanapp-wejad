@@ -30,11 +30,13 @@ export const DeleteRequestDialog = ({
 }: DeleteRequestDialogProps) => {
   const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   const handleDelete = async () => {
     if (!requestId) return;
     
     setIsDeleting(true);
+    setErrorMessage(null);
     
     try {
       console.log("Attempting to delete request:", requestId);
@@ -45,12 +47,14 @@ export const DeleteRequestDialog = ({
       
       if (error) {
         console.error("Error deleting request:", error);
+        setErrorMessage(error.message || "فشل في حذف الطلب");
         toast.error(error.message || "فشل في حذف الطلب");
         return;
       }
       
       if (!data.success) {
         console.error("Request deletion failed:", data);
+        setErrorMessage(data.message || "فشل في حذف الطلب");
         toast.error(data.message || "فشل في حذف الطلب");
         return;
       }
@@ -69,6 +73,7 @@ export const DeleteRequestDialog = ({
       onOpenChange(false);
     } catch (error: any) {
       console.error("Exception deleting request:", error);
+      setErrorMessage(error.message || "حدث خطأ أثناء محاولة حذف الطلب");
       toast.error(error.message || "حدث خطأ أثناء محاولة حذف الطلب");
     } finally {
       setIsDeleting(false);
@@ -89,6 +94,12 @@ export const DeleteRequestDialog = ({
             <br />
             لا يمكن التراجع عن هذه العملية بعد التأكيد.
           </AlertDialogDescription>
+          
+          {errorMessage && (
+            <div className="mt-2 text-sm text-red-500">
+              <p>خطأ: {errorMessage}</p>
+            </div>
+          )}
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>إلغاء</AlertDialogCancel>
