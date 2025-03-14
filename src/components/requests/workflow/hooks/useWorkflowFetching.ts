@@ -54,9 +54,11 @@ export const useWorkflowFetching = ({
         }
         
         let fetchedWorkflowId = requestType.default_workflow_id;
+        console.log("Request type default workflow ID:", fetchedWorkflowId);
         
         // If no default workflow, check if there's any workflow for this request type
         if (!fetchedWorkflowId) {
+          console.log("No default workflow found, searching for active workflows");
           const { data: workflows, error: workflowsError } = await supabase
             .from('request_workflows')
             .select('id')
@@ -72,6 +74,9 @@ export const useWorkflowFetching = ({
           
           if (workflows && workflows.length > 0) {
             fetchedWorkflowId = workflows[0].id;
+            console.log("Found active workflow ID:", fetchedWorkflowId);
+          } else {
+            console.log("No active workflows found for request type");
           }
         }
         
@@ -92,7 +97,7 @@ export const useWorkflowFetching = ({
           }
           
           if (newSteps && newSteps.length > 0) {
-            console.log(`Found ${newSteps.length} steps in workflow_steps table`);
+            console.log(`Found ${newSteps.length} steps in workflow_steps table:`, newSteps);
             setWorkflowSteps(newSteps);
             setCurrentStep(getInitialStepState(newSteps.length + 1, fetchedWorkflowId));
             setInitialized(true);
@@ -113,7 +118,7 @@ export const useWorkflowFetching = ({
           }
           
           if (legacySteps && legacySteps.length > 0) {
-            console.log(`Found ${legacySteps.length} steps in legacy request_workflow_steps table`);
+            console.log(`Found ${legacySteps.length} steps in legacy request_workflow_steps table:`, legacySteps);
             setWorkflowSteps(legacySteps);
             setCurrentStep(getInitialStepState(legacySteps.length + 1, fetchedWorkflowId));
           } else {

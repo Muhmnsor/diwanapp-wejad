@@ -60,6 +60,7 @@ export const WorkflowConfigDialog = ({
         
         if (newSteps && newSteps.length > 0) {
           console.log("Found steps in workflow_steps table:", newSteps.length);
+          console.log("Steps data:", newSteps);
           return newSteps as WorkflowStep[];
         }
         
@@ -78,6 +79,7 @@ export const WorkflowConfigDialog = ({
         
         if (legacySteps && legacySteps.length > 0) {
           console.log("Found steps in legacy request_workflow_steps table:", legacySteps.length);
+          console.log("Legacy steps data:", legacySteps);
           return legacySteps as WorkflowStep[];
         }
         
@@ -89,7 +91,9 @@ export const WorkflowConfigDialog = ({
         return [];
       }
     },
-    enabled: !!workflowId && isOpen
+    enabled: !!workflowId && isOpen,
+    refetchOnWindowFocus: false,
+    staleTime: 10000, // Reduce refetching to avoid race conditions
   });
   
   // Set the initial steps when they're loaded
@@ -106,6 +110,7 @@ export const WorkflowConfigDialog = ({
   // Set error if fetch fails
   useEffect(() => {
     if (fetchError) {
+      console.error("Fetch error in WorkflowConfigDialog:", fetchError);
       setError(`فشل في جلب خطوات سير العمل: ${fetchError.message}`);
     }
   }, [fetchError]);

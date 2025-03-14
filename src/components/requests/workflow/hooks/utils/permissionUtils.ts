@@ -1,46 +1,38 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 /**
- * Checks if the current user has admin permissions
- * @returns Object containing session, isAdmin status, and error if any
+ * Checks if the current user has permissions to manage workflows
+ * @returns Object with session and admin status
  */
 export const checkUserPermissions = async () => {
-  try {
-    // Get the current session
-    const { data, error } = await supabase.auth.getSession();
-    
-    if (error || !data.session) {
-      toast.error("يجب تسجيل الدخول لإدارة سير العمل");
-      return { session: null, isAdmin: false };
-    }
-    
-    // Check if user has admin role
-    const { data: userRoles, error: roleError } = await supabase
-      .from('user_roles')
-      .select('role_id, roles(name)')
-      .eq('user_id', data.session.user.id);
-      
-    if (roleError) {
-      console.error("Error checking user roles:", roleError);
-      toast.error("حدث خطأ في التحقق من صلاحيات المستخدم");
-      return { session: data.session, isAdmin: false };
-    }
-    
-    // Check if user has admin or app_admin role
-    const isAdmin = userRoles?.some(role => {
-      const roleName = Array.isArray(role.roles) 
-        ? (role.roles[0]?.name) 
-        : (role.roles as any).name;
-      
-      return roleName === 'admin' || roleName === 'app_admin';
-    });
-    
-    return { session: data.session, isAdmin };
-  } catch (error) {
-    console.error("Error in checkUserPermissions:", error);
-    toast.error("حدث خطأ في التحقق من صلاحيات المستخدم");
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (!session) {
+    console.log("No authenticated session found");
     return { session: null, isAdmin: false };
+  }
+  
+  // Check if user is admin
+  try {
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('is_admin, role')
+      .eq('id', session.user.id)
+      .single();
+    
+    if (userError) {
+      console.error("Error checking user permissions:", userError);
+      return { session, isAdmin: false };
+    }
+    
+    const isAdmin = userData?.is_admin || 
+                  userData?.role === 'admin' ||
+                  userData?.role === 'developer';
+    
+    return { session, isAdmin };
+  } catch (error) {
+    console.error("Exception checking user permissions:", error);
+    return { session, isAdmin: false };
   }
 };
