@@ -120,7 +120,8 @@ export const checkRequestTypeDependencies = async (requestTypeId: string) => {
 
     if (workflowsError) throw workflowsError;
 
-    // Get requests for this request type
+    // Get requests for this request type - these are the critical dependencies
+    // that would prevent deletion
     const { data: requests, error: requestsError } = await supabase
       .from('requests')
       .select('*')

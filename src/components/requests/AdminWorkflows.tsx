@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -27,7 +28,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WorkflowDebugPanel } from "./workflow/debug/WorkflowDebugPanel";
-import { checkRequestTypeDependencies, deleteRequestType } from "./utils/workflowHelpers";
+import { checkRequestTypeDependencies } from "./utils/workflowHelpers";
 
 export const AdminWorkflows = () => {
   const queryClient = useQueryClient();
@@ -98,7 +99,7 @@ export const AdminWorkflows = () => {
       }
     } catch (error) {
       console.error("Error checking dependencies:", error);
-      setDeleteError("حدث خطأ أثناء التحقق من العلاقات ال��رتبطة بنوع الطلب");
+      setDeleteError("حدث خطأ أثناء التحقق من العلاقات المرتبطة بنوع الطلب");
     } finally {
       setIsCheckingDeps(false);
       setShowDeleteDialog(true);
@@ -107,6 +108,7 @@ export const AdminWorkflows = () => {
 
   const deleteRequestTypeMutation = useMutation({
     mutationFn: async (typeId: string) => {
+      // Now calling the RPC function which leverages CASCADE deletion
       const { data, error } = await supabase
         .rpc('delete_request_type', { p_request_type_id: typeId });
       
@@ -290,7 +292,7 @@ export const AdminWorkflows = () => {
             <Alert variant="warning" className="mt-4 bg-amber-50 text-amber-800 border-amber-200">
               <AlertDescription>
                 هذا النوع مرتبط بـ {dependencies.workflows.length} من مسارات سير العمل.
-                سيتم حذف جميع مسارات سير العمل المرتبطة به تلقائياً.
+                سيتم حذف جميع مسارات سير العمل المرتبطة به تلقائيًا.
               </AlertDescription>
             </Alert>
           )}
