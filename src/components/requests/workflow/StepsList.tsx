@@ -34,14 +34,14 @@ export const StepsList = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [stepToDelete, setStepToDelete] = useState<number | null>(null);
 
-  // Handler for step deletion with confirmation if it's the last step
+  // Handler for step deletion with confirmation only if it's the last step
   const handleDeleteStep = (index: number) => {
     // If this is the last step, show a confirmation dialog
     if (workflowSteps.length === 1) {
       setStepToDelete(index);
       setShowDeleteDialog(true);
     } else {
-      // If not the last step, delete immediately
+      // If not the last step, delete immediately without confirmation
       onRemoveStep(index);
     }
   };
