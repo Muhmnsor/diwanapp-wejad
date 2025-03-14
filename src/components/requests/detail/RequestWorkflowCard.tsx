@@ -15,14 +15,18 @@ export const RequestWorkflowCard = ({ workflow, currentStep, requestId }: Reques
   const [workflowSteps, setWorkflowSteps] = useState<any[]>([]);
   const [approvals, setApprovals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchWorkflowDetails = async () => {
       if (!workflow?.id) {
+        console.log("No workflow ID provided");
         setLoading(false);
         return;
       }
 
+      setLoading(true);
+      setError(null);
       try {
         console.log("Fetching workflow steps for workflow ID:", workflow.id);
         
@@ -35,28 +39,56 @@ export const RequestWorkflowCard = ({ workflow, currentStep, requestId }: Reques
 
         if (stepsError) {
           console.error("Error fetching workflow steps:", stepsError);
+          setError(`Error fetching workflow steps: ${stepsError.message}`);
           throw stepsError;
         }
 
-        console.log("Fetched workflow steps:", steps);
+        console.log("Fetched workflow steps:", steps || []);
+        setWorkflowSteps(steps || []);
         
         // Fetch approvals for this request
-        const { data: approvalData, error: approvalsError } = await supabase
-          .from('request_approvals')
-          .select('*, approver:profiles(display_name, email)')
-          .eq('request_id', requestId);
+        if (requestId) {
+          console.log("Fetching approvals for request ID:", requestId);
+          
+          const { data: approvalData, error: approvalsError } = await supabase
+            .from('request_approvals')
+            .select('*')
+            .eq('request_id', requestId);
 
-        if (approvalsError) {
-          console.error("Error fetching approvals:", approvalsError);
-          throw approvalsError;
+          if (approvalsError) {
+            console.error("Error fetching approvals:", approvalsError);
+            setError(`Error fetching approvals: ${approvalsError.message}`);
+            throw approvalsError;
+          }
+
+          console.log("Fetched approvals:", approvalData || []);
+          
+          // Fetch approver details
+          const approversWithDetails = await Promise.all((approvalData || []).map(async (approval) => {
+            try {
+              const { data: approverData, error: approverError } = await supabase
+                .from('profiles')
+                .select('display_name, email')
+                .eq('id', approval.approver_id)
+                .single();
+                
+              if (approverError) throw approverError;
+              
+              return {
+                ...approval,
+                approver: approverData
+              };
+            } catch (err) {
+              console.warn("Could not fetch approver details for approval:", approval.id);
+              return approval;
+            }
+          }));
+          
+          setApprovals(approversWithDetails || []);
         }
-
-        console.log("Fetched approvals:", approvalData);
-
-        setWorkflowSteps(steps || []);
-        setApprovals(approvalData || []);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching workflow details:", error);
+        setError(error.message || "An error occurred while fetching workflow details");
       } finally {
         setLoading(false);
       }
@@ -130,6 +162,24 @@ export const RequestWorkflowCard = ({ workflow, currentStep, requestId }: Reques
         return <Clock className="h-5 w-5 text-gray-300" />;
     }
   };
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>مسار العمل</CardTitle>
+          <CardDescription className="text-red-500">
+            حدث خطأ أثناء تحميل مسار العمل
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="p-4 bg-red-50 rounded-md">
+            <p className="text-red-600">{error}</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
