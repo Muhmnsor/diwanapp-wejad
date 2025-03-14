@@ -4912,6 +4912,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      fix_orphaned_request_types: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       generate_next_registration_number:
         | {
             Args: {
