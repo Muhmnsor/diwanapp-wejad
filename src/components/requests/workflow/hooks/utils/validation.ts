@@ -13,9 +13,23 @@ export const isValidUUID = (str: string | null | undefined): boolean => {
 };
 
 /**
- * Creates a utility to check permissions for current user
+ * Checks user permissions for admin functionality by calling the API endpoint
+ * @returns Promise that resolves to the permission check result
  */
-export const checkUserPermissions = async () => {
-  const { data: sessionData } = await fetch('/api/check-admin-permissions');
-  return sessionData;
+export const checkUserPermissions = async (): Promise<{ session: any; isAdmin: boolean }> => {
+  try {
+    const response = await fetch('/api/check-admin-permissions');
+    
+    if (!response.ok) {
+      console.error("Error checking permissions: HTTP status", response.status);
+      return { session: null, isAdmin: false };
+    }
+    
+    // Parse the JSON response before trying to access data
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error("Exception in checkUserPermissions:", error);
+    return { session: null, isAdmin: false };
+  }
 };
