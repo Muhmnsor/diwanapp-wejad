@@ -111,6 +111,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
             <RequestWorkflowCard 
               workflow={workflow}
               currentStep={currentStep}
+              requestId={requestId}
             />
           </div>
         </div>
