@@ -74,13 +74,28 @@ export const useSaveWorkflowSteps = ({
           throw new Error(`فشل في حذف خطوات سير العمل: ${deleteError.message}`);
         }
         
+        // Now that all steps are deleted, we should also delete the workflow
+        if (isValidUUID(currentWorkflowId)) {
+          const { error: workflowDeleteError } = await supabase
+            .from('request_workflows')
+            .delete()
+            .eq('id', currentWorkflowId);
+            
+          if (workflowDeleteError) {
+            console.error("Error deleting workflow:", workflowDeleteError);
+            // Not throwing here since the steps were deleted successfully
+          } else {
+            console.log("Successfully deleted workflow after removing all steps");
+          }
+        }
+        
         // Update local state
         updateWorkflowSteps([]);
-        toast.success("تم حفظ خطوات سير العمل بنجاح");
+        toast.success("تم حذف سير العمل بنجاح");
         
-        // Update default workflow if needed
+        // Update default workflow if needed - set to null since workflow was deleted
         if (requestTypeId) {
-          await updateDefaultWorkflow(requestTypeId, currentWorkflowId);
+          await updateDefaultWorkflow(requestTypeId, null);
         }
         
         return true;
