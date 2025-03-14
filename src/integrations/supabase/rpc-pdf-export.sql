@@ -139,7 +139,7 @@ BEGIN
   ) VALUES (
     p_request_id,
     p_exported_by,
-    'pdf'
+    'png'
   ) RETURNING id INTO v_export_id;
   
   -- Return result
@@ -147,14 +147,14 @@ BEGIN
     'id', v_export_id,
     'request_id', p_request_id,
     'exported_by', p_exported_by,
-    'export_type', 'pdf'
+    'export_type', 'png'
   );
   
   RETURN v_result;
 END;
 $function$;
 
--- Create a table to track PDF exports
+-- Create a table to track exports if it doesn't exist
 CREATE TABLE IF NOT EXISTS public.request_export_logs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   request_id UUID REFERENCES public.requests(id) NOT NULL,
@@ -175,3 +175,4 @@ CREATE POLICY "Users can create export records"
   ON public.request_export_logs 
   FOR INSERT 
   WITH CHECK (auth.uid() = exported_by);
+

@@ -153,35 +153,42 @@ export const exportRequest = async (requestId: string): Promise<void> => {
     container.id = 'temp-export-container';
     document.body.appendChild(container);
     
-    // Import the components dynamically to avoid JSX in TS file
-    const ReactDOM = await import('react-dom');
-    const ExportCard = await import('../detail/RequestExportCard');
-    
-    // Create the component element using React.createElement instead of JSX
-    const element = React.createElement(ExportCard.RequestExportCard, {
-      request: data.request,
-      requestType: data.request_type,
-      approvals: data.approvals || []
-    });
-    
-    // Render the component to the DOM
-    ReactDOM.render(element, container);
-    
-    // Wait for rendering and fonts to load
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast.info("جاري تصدير الطلب...");
-    
-    // Export the rendered component to image
-    const success = await exportRequestToImage('request-export-card', data.request.title);
-    
-    // Clean up the temporary container
-    document.body.removeChild(container);
-    
-    if (success) {
-      toast.success("تم تصدير الطلب بنجاح");
-    } else {
-      toast.error("حدث خطأ أثناء تصدير الطلب");
+    try {
+      // Import the components dynamically to avoid JSX in TS file
+      const ReactDOM = await import('react-dom');
+      const ExportCard = await import('../detail/RequestExportCard');
+      
+      // Create the component element using React.createElement instead of JSX
+      const element = React.createElement(ExportCard.RequestExportCard, {
+        request: data.request,
+        requestType: data.request_type,
+        approvals: data.approvals || []
+      });
+      
+      // Render the component to the DOM
+      ReactDOM.render(element, container);
+      
+      // Wait for rendering and fonts to load
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast.info("جاري تصدير الطلب...");
+      
+      // Export the rendered component to image
+      const success = await exportRequestToImage('request-export-card', data.request.title);
+      
+      if (success) {
+        toast.success("تم تصدير الطلب بنجاح");
+      } else {
+        toast.error("حدث خطأ أثناء تصدير الطلب");
+      }
+    } catch (renderError) {
+      console.error("Error rendering export component:", renderError);
+      toast.error("حدث خطأ أثناء إنشاء مكون التصدير");
+    } finally {
+      // Always clean up the temporary container
+      if (document.body.contains(container)) {
+        document.body.removeChild(container);
+      }
     }
   } catch (error: any) {
     console.error("Error exporting request:", error);
