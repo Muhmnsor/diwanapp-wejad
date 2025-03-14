@@ -87,21 +87,19 @@ export const diagnoseRequestWorkflow = async (requestId: string) => {
   try {
     console.log(`Diagnosing workflow for request ID: ${requestId}`);
     
-    // Use the new validation function which handles edge cases better
+    // Use the validation function which handles edge cases better
     const validationResult = await validateAndRepairRequest(requestId);
     
     // Add information about whether the workflow can be repaired automatically
     const canBeRepaired = !validationResult.valid && !validationResult.repaired;
     
-    if (validationResult && validationResult.validationResult) {
-      validationResult.validationResult.canBeRepaired = canBeRepaired;
-    }
-    
     return {
       request: validationResult.request,
       currentStep: validationResult.currentStep,
       issues: validationResult.valid ? [] : [validationResult.error],
-      validationResult
+      // Pass the entire validation result for reference
+      canBeRepaired,
+      ...validationResult
     };
   } catch (error) {
     console.error('Exception in diagnoseRequestWorkflow:', error);

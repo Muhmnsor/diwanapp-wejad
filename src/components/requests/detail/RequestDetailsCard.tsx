@@ -51,9 +51,9 @@ export const RequestDetailsCard = ({
       console.log("Workflow diagnosis:", diagnosis);
       
       // If repair was successful, update the state
-      if (diagnosis.validationResult && diagnosis.validationResult.repaired) {
+      if (diagnosis && diagnosis.repaired) {
         setWorkflowFixed(true);
-        console.log("Workflow was automatically repaired:", diagnosis.validationResult.repairMessage);
+        console.log("Workflow was automatically repaired:", diagnosis.repairMessage);
       }
     } catch (error) {
       console.error("Error diagnosing workflow:", error);
@@ -140,7 +140,7 @@ export const RequestDetailsCard = ({
                       <li key={idx}>{issue}</li>
                     ))}
                   </ul>
-                  {workflowDiagnosis.validationResult?.canBeRepaired && (
+                  {workflowDiagnosis.canBeRepaired && (
                     <Button 
                       variant="outline" 
                       size="sm"
