@@ -63,20 +63,39 @@ BEGIN
 
   -- Begin transaction to delete request type (CASCADE takes care of dependents)
   BEGIN
-    -- Nullify the log references to avoid foreign key constraint errors
-    UPDATE request_workflow_operation_logs
-    SET request_type_id = NULL
-    WHERE request_type_id = p_request_type_id;
+    -- محاولة تحديث سجلات التتبع للإشارة إلى أن نوع الطلب تم حذفه
+    -- ولكن إذا فشلت، سنتابع العملية بدون توقف
+    BEGIN
+      -- تحديث سجلات تتبع سير العمل لتجنب أخطاء قيود المفاتيح الخارجية
+      IF EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'request_workflow_operation_logs'
+      ) THEN
+        UPDATE request_workflow_operation_logs
+        SET request_type_id = NULL
+        WHERE request_type_id = p_request_type_id;
+      END IF;
+      
+      -- تحديث سجلات تتبع أقدم للتوافق
+      IF EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'workflow_operation_logs'
+      ) THEN
+        UPDATE workflow_operation_logs
+        SET request_type_id = NULL
+        WHERE request_type_id = p_request_type_id;
+      END IF;
+    EXCEPTION WHEN OTHERS THEN
+      -- إذا فشلت عمليات التحديث، لا نريد إيقاف العملية
+      RAISE NOTICE 'Failed to update log references: %', SQLERRM;
+    END;
     
-    -- Also update old-style logs (for compatibility)
-    UPDATE workflow_operation_logs
-    SET request_type_id = NULL
-    WHERE request_type_id = p_request_type_id;
-    
-    -- Now simply delete the request type and let CASCADE handle the rest
+    -- ببساطة احذف نوع الطلب ودع CASCADE يتعامل مع الباقي
     DELETE FROM request_types WHERE id = p_request_type_id;
     
-    -- Log the deletion operation
+    -- محاولة تسجيل عملية الحذف
     BEGIN
       IF EXISTS (
         SELECT 1
@@ -101,7 +120,7 @@ BEGIN
         );
       END IF;
     EXCEPTION WHEN OTHERS THEN
-      -- If logging fails, just continue with the deletion
+      -- إذا فشل التسجيل، فقط استمر في عملية الحذف
       RAISE NOTICE 'Failed to log workflow operation: %', SQLERRM;
     END;
 
@@ -113,7 +132,7 @@ BEGIN
 
     RETURN v_result;
   EXCEPTION WHEN OTHERS THEN
-    -- Log error and return failure message
+    -- سجل الخطأ وأعد رسالة الفشل
     GET STACKED DIAGNOSTICS v_error_message = MESSAGE_TEXT;
     
     BEGIN
@@ -137,7 +156,7 @@ BEGIN
         );
       END IF;
     EXCEPTION WHEN OTHERS THEN
-      -- If logging fails, just continue with returning the error
+      -- إذا فشل تسجيل الخطأ، فقط استمر بإعادة الخطأ
       RAISE NOTICE 'Failed to log workflow error: %', SQLERRM;
     END;
 
