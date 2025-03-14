@@ -23,7 +23,16 @@ export const checkUserPermissions = async () => {
     
     if (userError) {
       console.error("Error checking user permissions:", userError);
-      return { session, isAdmin: false };
+      
+      // Try the RPC function as a fallback
+      const { data: isAdmin, error: rpcError } = await supabase.rpc('is_admin');
+      
+      if (rpcError) {
+        console.error("Error checking admin status via RPC:", rpcError);
+        return { session, isAdmin: false };
+      }
+      
+      return { session, isAdmin: isAdmin || false };
     }
     
     const isAdmin = userData?.is_admin || 
@@ -33,6 +42,20 @@ export const checkUserPermissions = async () => {
     return { session, isAdmin };
   } catch (error) {
     console.error("Exception checking user permissions:", error);
-    return { session, isAdmin: false };
+    
+    // Try the RPC function as a fallback
+    try {
+      const { data: isAdmin, error: rpcError } = await supabase.rpc('is_admin');
+      
+      if (rpcError) {
+        console.error("Error checking admin status via RPC:", rpcError);
+        return { session, isAdmin: false };
+      }
+      
+      return { session, isAdmin: isAdmin || false };
+    } catch (e) {
+      console.error("Exception in RPC fallback:", e);
+      return { session, isAdmin: false };
+    }
   }
 };

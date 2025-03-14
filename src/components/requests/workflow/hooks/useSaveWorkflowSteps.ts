@@ -77,6 +77,19 @@ export const useSaveWorkflowSteps = ({
       // Check if the current session user has permissions for this action
       console.log("Current user ID:", session?.user?.id);
       
+      // Check if admin or has permission
+      const { data: isPermitted, error: permissionError } = await supabase.rpc('is_admin');
+      
+      if (permissionError) {
+        console.error("Error checking permissions:", permissionError);
+        throw new Error("فشل في التحقق من الصلاحيات");
+      }
+      
+      if (!isPermitted) {
+        console.error("User doesn't have permission to manage workflow steps");
+        throw new Error("ليس لديك الصلاحية لإدارة خطوات سير العمل");
+      }
+      
       // Prepare steps for insertion with complete data and ensure valid UUIDs
       const stepsToInsert = stepsWithCorrectWorkflowId.map((step, index) => {
         // Verify workflow_id format
@@ -160,8 +173,9 @@ export const useSaveWorkflowSteps = ({
       if (rpcResult && rpcResult.data) {
         updateWorkflowSteps(rpcResult.data);
       } else {
-        // If we don't have server data, use our local state
-        updateWorkflowSteps(stepsWithCorrectWorkflowId);
+        // If we don't have server data, use our local state with correct IDs
+        const updatedSteps = checkSteps || stepsWithCorrectWorkflowId;
+        updateWorkflowSteps(updatedSteps);
       }
 
       // Update default workflow if needed
