@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { format } from "date-fns";
 import { 
@@ -67,10 +66,7 @@ export const RequestDetailsCard = ({
             <CardDescription>{requestType?.name || "نوع الطلب غير محدد"}</CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            <RequestExportButton 
-              requestId={request.id} 
-              status={request.status} 
-            />
+            <RequestExportButton requestId={request.id} status={request.status} />
             <RequestStatusBadge status={request.status} />
             <RequestPriorityBadge priority={request.priority} />
           </div>
@@ -97,7 +93,7 @@ export const RequestDetailsCard = ({
             <Alert className="bg-blue-50 border-blue-200">
               <AlertCircle className="h-4 w-4 text-blue-600" />
               <AlertDescription className="text-blue-700">
-                هذا الطلب مرتب‌ط بمسار سير عمل وينتظر الموافقة من المعتمدين المختصين
+                هذا الطلب مرت��ط بمسار سير عمل وينتظر الموافقة من المعتمدين المختصين
                 {diagnosing ? (
                   <span className="block mt-2 text-sm animate-pulse">جاري تشخيص مسار العمل...</span>
                 ) : (

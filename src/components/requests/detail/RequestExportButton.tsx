@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { FileDown, Loader2 } from "lucide-react";
+import { FileDown } from "lucide-react";
 import { exportRequestWithEnhancedData } from '../utils/requestExportUtils';
 import { toast } from 'sonner';
 
@@ -26,12 +26,10 @@ export const RequestExportButton = ({
     
     try {
       setIsExporting(true);
-      console.log(`بدء تصدير الطلب بمعرف: ${requestId}`);
       await exportRequestWithEnhancedData(requestId);
-      toast.success("تم تصدير الطلب بنجاح");
     } catch (error) {
       console.error("Error exporting request:", error);
-      toast.error(`حدث خطأ أثناء تصدير الطلب: ${error instanceof Error ? error.message : "خطأ غير معروف"}`);
+      // Toast error is already handled in the export function
     } finally {
       setIsExporting(false);
     }
@@ -50,17 +48,8 @@ export const RequestExportButton = ({
       disabled={isExporting}
       className="gap-1 hover:bg-slate-100"
     >
-      {isExporting ? (
-        <>
-          <Loader2 className="h-4 w-4 animate-spin" />
-          جاري التصدير...
-        </>
-      ) : (
-        <>
-          <FileDown className="h-4 w-4" />
-          تصدير PDF
-        </>
-      )}
+      <FileDown className="h-4 w-4" />
+      {isExporting ? "جاري التصدير..." : "تصدير PDF"}
     </Button>
   );
 };
