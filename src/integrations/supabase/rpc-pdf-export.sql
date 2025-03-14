@@ -57,53 +57,75 @@ BEGIN
   WHERE r.id = p_request_id;
   
   -- Get approvals data with step and approver info
-  SELECT json_agg(
-    json_build_object(
-      'id', ra.id,
-      'status', ra.status,
-      'comments', ra.comments,
-      'approved_at', ra.approved_at,
-      'created_at', ra.created_at,
-      'step', json_build_object(
+  -- Using a subquery approach to avoid GROUP BY issues
+  WITH approval_data AS (
+    SELECT 
+      ra.id,
+      ra.status,
+      ra.comments,
+      ra.approved_at,
+      ra.created_at,
+      json_build_object(
         'id', ws.id,
         'step_name', ws.step_name,
         'step_type', ws.step_type,
         'approver_type', ws.approver_type
-      ),
-      'approver', json_build_object(
+      ) AS step,
+      json_build_object(
         'id', p.id,
         'display_name', p.display_name,
         'email', p.email
-      )
-    )
+      ) AS approver
+    FROM request_approvals ra
+    LEFT JOIN workflow_steps ws ON ra.step_id = ws.id
+    LEFT JOIN profiles p ON ra.approver_id = p.id
+    WHERE ra.request_id = p_request_id
   )
-  INTO v_approvals
-  FROM request_approvals ra
-  LEFT JOIN workflow_steps ws ON ra.step_id = ws.id
-  LEFT JOIN profiles p ON ra.approver_id = p.id
-  WHERE ra.request_id = p_request_id
-  ORDER BY ra.created_at ASC;
-  
-  -- Get attachments
   SELECT json_agg(
     json_build_object(
-      'id', ra.id,
-      'file_name', ra.file_name,
-      'file_path', ra.file_path,
-      'file_type', ra.file_type,
-      'file_size', ra.file_size,
-      'created_at', ra.created_at,
-      'uploaded_by', json_build_object(
+      'id', ad.id,
+      'status', ad.status,
+      'comments', ad.comments,
+      'approved_at', ad.approved_at,
+      'created_at', ad.created_at,
+      'step', ad.step,
+      'approver', ad.approver
+    ) ORDER BY ad.created_at ASC
+  )
+  INTO v_approvals
+  FROM approval_data ad;
+  
+  -- Get attachments
+  WITH attachment_data AS (
+    SELECT 
+      ra.id,
+      ra.file_name,
+      ra.file_path,
+      ra.file_type,
+      ra.file_size,
+      ra.created_at,
+      json_build_object(
         'id', p.id,
         'display_name', p.display_name,
         'email', p.email
-      )
-    )
+      ) AS uploaded_by
+    FROM request_attachments ra
+    LEFT JOIN profiles p ON ra.uploaded_by = p.id
+    WHERE ra.request_id = p_request_id
+  )
+  SELECT json_agg(
+    json_build_object(
+      'id', ad.id,
+      'file_name', ad.file_name,
+      'file_path', ad.file_path,
+      'file_type', ad.file_type,
+      'file_size', ad.file_size,
+      'created_at', ad.created_at,
+      'uploaded_by', ad.uploaded_by
+    ) ORDER BY ad.created_at DESC
   )
   INTO v_attachments
-  FROM request_attachments ra
-  LEFT JOIN profiles p ON ra.uploaded_by = p.id
-  WHERE ra.request_id = p_request_id;
+  FROM attachment_data ad;
   
   -- Build the final result object
   v_result := json_build_object(
@@ -115,5 +137,14 @@ BEGIN
   );
   
   RETURN v_result;
+EXCEPTION
+  WHEN OTHERS THEN
+    -- Log the error with details
+    RAISE LOG 'Error in get_request_pdf_export_data: %', SQLERRM;
+    RETURN json_build_object(
+      'error', SQLERRM,
+      'detail', 'An error occurred while preparing PDF export data'
+    );
 END;
 $function$;
+
