@@ -17,12 +17,14 @@ interface RequestExportButtonProps {
   requestId: string;
   status?: string;
   isEnabled?: boolean;
+  forceShow?: boolean;
 }
 
 export const RequestExportButton = ({ 
   requestId,
   status,
-  isEnabled = true 
+  isEnabled = true,
+  forceShow = false
 }: RequestExportButtonProps) => {
   const [isExporting, setIsExporting] = useState(false);
   
@@ -66,9 +68,10 @@ export const RequestExportButton = ({
   };
   
   // Disable export for pending requests or if explicitly disabled
-  const canExport = isEnabled && 
+  // Add forceShow parameter to override validation in specific cases
+  const canExport = (isEnabled && 
     status && 
-    ['completed', 'approved', 'executed', 'implementation_complete'].includes(status);
+    ['completed', 'approved', 'executed', 'implementation_complete'].includes(status)) || forceShow;
   
   if (!canExport) return null;
   

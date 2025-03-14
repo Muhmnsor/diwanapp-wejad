@@ -12,6 +12,8 @@ DECLARE
   v_attachments json;
   v_result json;
   v_requester json;
+  v_workflow json;
+  v_step_count int;
 BEGIN
   -- Get the request data
   SELECT 
@@ -56,6 +58,32 @@ BEGIN
   JOIN requests r ON r.requester_id = p.id
   WHERE r.id = p_request_id;
   
+  -- Get workflow data if it exists
+  IF (SELECT workflow_id FROM requests WHERE id = p_request_id) IS NOT NULL THEN
+    SELECT 
+      json_build_object(
+        'id', rw.id,
+        'name', rw.name,
+        'description', rw.description
+      )
+    INTO v_workflow
+    FROM request_workflows rw
+    JOIN requests r ON r.workflow_id = rw.id
+    WHERE r.id = p_request_id;
+    
+    -- Check if we have any steps in either table (new or legacy)
+    SELECT 
+      COALESCE(
+        (SELECT COUNT(*) FROM workflow_steps WHERE workflow_id = (SELECT workflow_id FROM requests WHERE id = p_request_id)),
+        (SELECT COUNT(*) FROM request_workflow_steps WHERE workflow_id = (SELECT workflow_id FROM requests WHERE id = p_request_id)),
+        0
+      )
+    INTO v_step_count;
+    
+    -- Add step count to workflow data
+    v_workflow := v_workflow || '{"step_count": ' || v_step_count || '}';
+  END IF;
+  
   -- Get approvals data with step and approver info
   -- Use CTE to avoid GROUP BY issues
   WITH approvals_data AS (
@@ -66,14 +94,15 @@ BEGIN
       ra.approved_at,
       ra.created_at,
       ws.id AS step_id,
-      ws.step_name,
-      ws.step_type,
-      ws.approver_type,
+      COALESCE(ws.step_name, rws.step_name) AS step_name,
+      COALESCE(ws.step_type, rws.step_type) AS step_type,
+      COALESCE(ws.approver_type, rws.approver_type) AS approver_type,
       p.id AS approver_id,
       p.display_name,
       p.email
     FROM request_approvals ra
     LEFT JOIN workflow_steps ws ON ra.step_id = ws.id
+    LEFT JOIN request_workflow_steps rws ON ra.step_id = rws.id
     LEFT JOIN profiles p ON ra.approver_id = p.id
     WHERE ra.request_id = p_request_id
     ORDER BY ra.created_at ASC
@@ -141,6 +170,7 @@ BEGIN
     'request', v_request,
     'request_type', v_request_type,
     'requester', v_requester,
+    'workflow', v_workflow,
     'approvals', COALESCE(v_approvals, '[]'::json),
     'attachments', COALESCE(v_attachments, '[]'::json)
   );
