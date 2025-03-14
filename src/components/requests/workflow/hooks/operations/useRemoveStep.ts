@@ -50,20 +50,15 @@ export const useRemoveStep = (
       // Remove the step
       const updatedSteps = workflowSteps.filter((_, i) => i !== index);
 
-      // If there are no steps left, don't try to update the database
-      if (updatedSteps.length === 0) {
-        console.log("No steps left after removal, not updating database");
-        return;
-      }
-
-      // Update step order
+      // Update step order in remaining steps if there are any
       const reorderedSteps = updatedSteps.map((step, i) => ({
         ...step,
         step_order: i + 1,
         workflow_id: workflowId // Ensure consistent workflow ID
       }));
 
-      // Save the updated steps
+      // Always save the changes to the database, even if the result is an empty array
+      // This ensures the database is in sync with the UI
       const result = await saveWorkflowSteps(reorderedSteps);
       
       if (result === false) {
