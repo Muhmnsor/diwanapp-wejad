@@ -12,3 +12,23 @@ export const isValidUUID = (str: string): boolean => {
   
   return uuidPattern.test(str);
 };
+
+/**
+ * Checks if an API endpoint is available
+ * @param url The URL to check
+ * @returns Promise resolving to boolean indicating if the endpoint is available
+ */
+export const checkEndpointAvailability = async (url: string): Promise<boolean> => {
+  try {
+    const response = await fetch(url, { 
+      method: 'HEAD',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    return response.ok;
+  } catch (error) {
+    console.error("Error checking endpoint availability:", error);
+    return false;
+  }
+};
+
