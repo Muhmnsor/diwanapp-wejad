@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { validateWorkflow, validateRequestType, validateAndRepairRequest, repairWorkflow } from './workflowValidator';
 
@@ -135,6 +136,34 @@ export const checkRequestTypeDependencies = async (requestTypeId: string) => {
     };
   } catch (error) {
     console.error("Error checking request type dependencies:", error);
+    throw error;
+  }
+};
+
+/**
+ * Deletes a request type and all its associated workflows and steps
+ * @param requestTypeId The ID of the request type to delete
+ * @returns Result of the deletion operation
+ */
+export const deleteRequestType = async (requestTypeId: string) => {
+  try {
+    console.log(`Deleting request type ID: ${requestTypeId}`);
+    
+    // Call the RPC function to delete the request type
+    const { data, error } = await supabase
+      .rpc('delete_request_type', {
+        p_request_type_id: requestTypeId
+      });
+    
+    if (error) {
+      console.error("Error deleting request type:", error);
+      throw error;
+    }
+    
+    console.log("Request type deletion result:", data);
+    return data;
+  } catch (error) {
+    console.error("Error in deleteRequestType:", error);
     throw error;
   }
 };

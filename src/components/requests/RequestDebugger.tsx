@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { validateWorkflow, validateAndRepairRequest, repairAllRequestWorkflows, repairWorkflow } from './utils/workflowValidator';
+import { deleteRequestType } from './utils/workflowHelpers';
 import { toast } from 'sonner';
 
 interface RequestDebuggerProps {
@@ -185,6 +186,19 @@ export const RequestDebugger = ({ enableRepair = false }: RequestDebuggerProps) 
       // Get debug info
       getDebugInfo: () => {
         return debugInfo;
+      },
+      
+      // Delete a request type
+      deleteRequestType: async (requestTypeId: string) => {
+        console.log(`🗑️ Deleting request type ${requestTypeId}...`);
+        try {
+          const result = await deleteRequestType(requestTypeId);
+          console.log('Deletion result:', result);
+          return result;
+        } catch (error) {
+          console.error('❌ Error during request type deletion:', error);
+          return { success: false, error };
+        }
       }
     };
     
@@ -196,6 +210,7 @@ export const RequestDebugger = ({ enableRepair = false }: RequestDebuggerProps) 
     console.log('  workflowDebug.repairAllRequests()');
     console.log('  workflowDebug.repairWorkflow(workflowId)');
     console.log('  workflowDebug.getDebugInfo()');
+    console.log('  workflowDebug.deleteRequestType(requestTypeId)');
     
     return () => {
       // Clean up

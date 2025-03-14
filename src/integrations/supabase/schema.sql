@@ -1,4 +1,164 @@
 
+-- Fix foreign key constraints for request_workflow_operation_logs
+
+-- First, handle any orphaned records by setting their step_id to NULL
+UPDATE request_workflow_operation_logs
+SET step_id = NULL
+WHERE step_id IS NOT NULL AND NOT EXISTS (
+  SELECT 1 FROM workflow_steps WHERE id = request_workflow_operation_logs.step_id
+);
+
+-- Do the same for the older workflow_operation_logs table if it exists
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'workflow_operation_logs'
+  ) THEN
+    UPDATE workflow_operation_logs
+    SET step_id = NULL
+    WHERE step_id IS NOT NULL AND NOT EXISTS (
+      SELECT 1 FROM workflow_steps WHERE id = workflow_operation_logs.step_id
+    );
+  END IF;
+END
+$$;
+
+-- Also handle orphaned records in request_approval_logs
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'request_approval_logs'
+  ) THEN
+    UPDATE request_approval_logs
+    SET step_id = NULL
+    WHERE step_id IS NOT NULL AND NOT EXISTS (
+      SELECT 1 FROM workflow_steps WHERE id = request_approval_logs.step_id
+    );
+  END IF;
+END
+$$;
+
+-- Modify the foreign key constraints to SET NULL on delete for request_workflow_operation_logs
+DO $$
+BEGIN
+  -- Drop existing constraints if they exist
+  IF EXISTS (
+    SELECT FROM pg_constraint 
+    WHERE conname = 'workflow_operation_logs_request_type_id_fkey'
+    AND conrelid = 'request_workflow_operation_logs'::regclass
+  ) THEN
+    ALTER TABLE request_workflow_operation_logs 
+    DROP CONSTRAINT workflow_operation_logs_request_type_id_fkey;
+    
+    -- Re-add with ON DELETE SET NULL
+    ALTER TABLE request_workflow_operation_logs 
+    ADD CONSTRAINT workflow_operation_logs_request_type_id_fkey 
+    FOREIGN KEY (request_type_id) REFERENCES request_types(id) ON DELETE SET NULL;
+  END IF;
+
+  IF EXISTS (
+    SELECT FROM pg_constraint 
+    WHERE conname = 'workflow_operation_logs_workflow_id_fkey'
+    AND conrelid = 'request_workflow_operation_logs'::regclass
+  ) THEN
+    ALTER TABLE request_workflow_operation_logs 
+    DROP CONSTRAINT workflow_operation_logs_workflow_id_fkey;
+    
+    -- Re-add with ON DELETE SET NULL
+    ALTER TABLE request_workflow_operation_logs 
+    ADD CONSTRAINT workflow_operation_logs_workflow_id_fkey 
+    FOREIGN KEY (workflow_id) REFERENCES request_workflows(id) ON DELETE SET NULL;
+  END IF;
+
+  IF EXISTS (
+    SELECT FROM pg_constraint 
+    WHERE conname = 'workflow_operation_logs_step_id_fkey'
+    AND conrelid = 'request_workflow_operation_logs'::regclass
+  ) THEN
+    ALTER TABLE request_workflow_operation_logs 
+    DROP CONSTRAINT workflow_operation_logs_step_id_fkey;
+    
+    -- Re-add with ON DELETE SET NULL
+    ALTER TABLE request_workflow_operation_logs 
+    ADD CONSTRAINT workflow_operation_logs_step_id_fkey 
+    FOREIGN KEY (step_id) REFERENCES workflow_steps(id) ON DELETE SET NULL;
+  END IF;
+END
+$$;
+
+-- Handle the old workflow_operation_logs table if it exists
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'workflow_operation_logs'
+  ) THEN
+    -- Drop and recreate constraints for the old table
+    IF EXISTS (
+      SELECT FROM pg_constraint 
+      WHERE conname = 'workflow_operation_logs_request_type_id_fkey'
+      AND conrelid = 'workflow_operation_logs'::regclass
+    ) THEN
+      ALTER TABLE workflow_operation_logs 
+      DROP CONSTRAINT workflow_operation_logs_request_type_id_fkey;
+      
+      ALTER TABLE workflow_operation_logs 
+      ADD CONSTRAINT workflow_operation_logs_request_type_id_fkey 
+      FOREIGN KEY (request_type_id) REFERENCES request_types(id) ON DELETE SET NULL;
+    END IF;
+
+    IF EXISTS (
+      SELECT FROM pg_constraint 
+      WHERE conname = 'workflow_operation_logs_workflow_id_fkey'
+      AND conrelid = 'workflow_operation_logs'::regclass
+    ) THEN
+      ALTER TABLE workflow_operation_logs 
+      DROP CONSTRAINT workflow_operation_logs_workflow_id_fkey;
+      
+      ALTER TABLE workflow_operation_logs 
+      ADD CONSTRAINT workflow_operation_logs_workflow_id_fkey 
+      FOREIGN KEY (workflow_id) REFERENCES request_workflows(id) ON DELETE SET NULL;
+    END IF;
+
+    IF EXISTS (
+      SELECT FROM pg_constraint 
+      WHERE conname = 'workflow_operation_logs_step_id_fkey'
+      AND conrelid = 'workflow_operation_logs'::regclass
+    ) THEN
+      ALTER TABLE workflow_operation_logs 
+      DROP CONSTRAINT workflow_operation_logs_step_id_fkey;
+      
+      ALTER TABLE workflow_operation_logs 
+      ADD CONSTRAINT workflow_operation_logs_step_id_fkey 
+      FOREIGN KEY (step_id) REFERENCES workflow_steps(id) ON DELETE SET NULL;
+    END IF;
+  END IF;
+END
+$$;
+
+-- Handle the request_approval_logs table
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'request_approval_logs'
+  ) THEN
+    IF EXISTS (
+      SELECT FROM pg_constraint 
+      WHERE conname = 'request_approval_logs_step_id_fkey'
+    ) THEN
+      ALTER TABLE request_approval_logs 
+      DROP CONSTRAINT request_approval_logs_step_id_fkey;
+      
+      ALTER TABLE request_approval_logs 
+      ADD CONSTRAINT request_approval_logs_step_id_fkey 
+      FOREIGN KEY (step_id) REFERENCES workflow_steps(id) ON DELETE SET NULL;
+    END IF;
+  END IF;
+END
+$$;
 
 -- تحديث دالة إدراج خطوات سير العمل لتكون أكثر قوة وأمانًا
 CREATE OR REPLACE FUNCTION public.insert_workflow_steps(steps jsonb[])
