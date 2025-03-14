@@ -1,6 +1,9 @@
+
 import * as htmlToImage from "html-to-image";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import React from 'react';
+import type { ReactElement } from 'react';
 
 /**
  * Fetch enhanced request data for export
@@ -150,19 +153,19 @@ export const exportRequest = async (requestId: string): Promise<void> => {
     container.id = 'temp-export-container';
     document.body.appendChild(container);
     
-    // Render the RequestExportCard using ReactDOM
-    const { render } = await import('react-dom');
-    const { RequestExportCard } = await import('../detail/RequestExportCard');
+    // Import the components dynamically to avoid JSX in TS file
+    const ReactDOM = await import('react-dom');
+    const ExportCard = await import('../detail/RequestExportCard');
+    
+    // Create the component element using React.createElement instead of JSX
+    const element = React.createElement(ExportCard.RequestExportCard, {
+      request: data.request,
+      requestType: data.request_type,
+      approvals: data.approvals || []
+    });
     
     // Render the component to the DOM
-    render(
-      <RequestExportCard 
-        request={data.request} 
-        requestType={data.request_type} 
-        approvals={data.approvals || []}
-      />, 
-      container
-    );
+    ReactDOM.render(element, container);
     
     // Wait for rendering and fonts to load
     await new Promise(resolve => setTimeout(resolve, 1000));
