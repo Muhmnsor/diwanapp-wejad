@@ -1,328 +1,290 @@
 
--- جدول لتخزين سجلات عمليات سير العمل
-CREATE TABLE IF NOT EXISTS workflow_operation_logs (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  operation_type TEXT NOT NULL,  -- نوع العملية (إنشاء، تحديث، حذف، إلخ)
-  user_id UUID REFERENCES auth.users(id),  -- المستخدم الذي قام بالعملية
-  request_type_id UUID REFERENCES request_types(id),  -- معرف نوع الطلب (اختياري)
-  workflow_id UUID REFERENCES request_workflows(id),  -- معرف سير العمل (اختياري)
-  step_id UUID REFERENCES workflow_steps(id),  -- معرف الخطوة (اختياري)
-  request_data JSONB,  -- بيانات الطلب
-  response_data JSONB,  -- بيانات الاستجابة
-  error_message TEXT,  -- رسالة الخطأ إن وجدت
-  details TEXT,  -- تفاصيل إضافية
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
-);
 
--- منظر لعرض سجلات العمليات مع بيانات المستخدم واسم نوع الطلب وسير العمل
-CREATE OR REPLACE VIEW workflow_operations_view AS
-SELECT 
-  wol.id,
-  wol.operation_type,
-  wol.created_at,
-  p.display_name as user_name,
-  p.email as user_email,
-  wol.request_type_id,
-  rt.name as request_type_name,
-  wol.workflow_id,
-  rw.name as workflow_name,
-  wol.step_id,
-  ws.step_name,
-  wol.request_data,
-  wol.response_data,
-  wol.error_message,
-  wol.details
-FROM 
-  workflow_operation_logs wol
-LEFT JOIN 
-  profiles p ON wol.user_id = p.id
-LEFT JOIN 
-  request_types rt ON wol.request_type_id = rt.id
-LEFT JOIN 
-  request_workflows rw ON wol.workflow_id = rw.id
-LEFT JOIN 
-  workflow_steps ws ON wol.step_id = ws.id
-ORDER BY 
-  wol.created_at DESC;
-
--- دالة لتسجيل عمليات سير العمل
-CREATE OR REPLACE FUNCTION log_workflow_operation(
-  p_operation_type TEXT,
-  p_request_type_id UUID DEFAULT NULL,
-  p_workflow_id UUID DEFAULT NULL,
-  p_step_id UUID DEFAULT NULL,
-  p_request_data JSONB DEFAULT NULL,
-  p_response_data JSONB DEFAULT NULL,
-  p_error_message TEXT DEFAULT NULL,
-  p_details TEXT DEFAULT NULL
-) RETURNS UUID
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
+-- تحديث دالة إدراج خطوات سير العمل لتكون أكثر قوة وأمانًا
+CREATE OR REPLACE FUNCTION public.insert_workflow_steps(steps jsonb[])
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
 DECLARE
-  v_log_id UUID;
+  step jsonb;
+  result jsonb;
+  inserted_steps jsonb[] := '{}';
+  step_result jsonb;
+  v_is_admin boolean;
+  v_error text;
+  v_workflow_id uuid;
+  v_workflow_ids uuid[] := '{}';
+  v_step_count int := 0;
+  v_is_valid_uuid boolean;
+  v_step_id uuid;
+  v_loop_index int;
 BEGIN
-  INSERT INTO workflow_operation_logs(
-    operation_type,
-    user_id,
-    request_type_id,
-    workflow_id,
-    step_id,
-    request_data,
-    response_data,
-    error_message,
-    details
-  ) VALUES (
-    p_operation_type,
-    auth.uid(),
-    p_request_type_id,
-    p_workflow_id,
-    p_step_id,
-    p_request_data,
-    p_response_data,
-    p_error_message,
-    p_details
-  ) RETURNING id INTO v_log_id;
+  -- Check if user is admin or developer
+  SELECT EXISTS (
+    SELECT 1 
+    FROM user_roles ur
+    JOIN roles r ON r.id = ur.role_id
+    WHERE ur.user_id = auth.uid()
+    AND (r.name IN ('admin', 'app_admin', 'developer'))
+  ) INTO v_is_admin;
   
-  RETURN v_log_id;
+  IF NOT v_is_admin THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'message', 'ليس لديك صلاحية لإدارة خطوات سير العمل'
+    );
+  END IF;
+
+  -- Start transaction to ensure all steps are inserted or none
+  BEGIN
+    -- Safety check: Ensure steps array is not null or empty
+    IF steps IS NULL OR array_length(steps, 1) IS NULL THEN
+      RAISE EXCEPTION 'No workflow steps provided';
+    END IF;
+    
+    v_step_count := array_length(steps, 1);
+    RAISE NOTICE 'Processing % workflow steps', v_step_count;
+    
+    -- First collect all workflow IDs to delete existing steps
+    FOR v_loop_index IN 1..v_step_count LOOP
+      step := steps[v_loop_index];
+      
+      -- Validate workflow ID exists in each step
+      IF step->>'workflow_id' IS NULL THEN
+        RAISE EXCEPTION 'Workflow ID is required for step %', v_loop_index;
+      END IF;
+      
+      -- Check if workflow_id is a valid UUID
+      BEGIN
+        v_workflow_id := (step->>'workflow_id')::uuid;
+        v_is_valid_uuid := true;
+      EXCEPTION WHEN others THEN
+        RAISE NOTICE 'Invalid UUID format for workflow_id in step %: %', v_loop_index, step->>'workflow_id';
+        v_is_valid_uuid := false;
+      END;
+      
+      IF NOT v_is_valid_uuid THEN
+        RAISE EXCEPTION 'Invalid UUID format for workflow_id in step %: %', v_loop_index, step->>'workflow_id';
+      END IF;
+      
+      -- Add to workflow IDs array if not already there
+      IF NOT (v_workflow_id = ANY(v_workflow_ids)) THEN
+        v_workflow_ids := array_append(v_workflow_ids, v_workflow_id);
+      END IF;
+    END LOOP;
+    
+    -- Delete existing steps for all collected workflow IDs
+    IF array_length(v_workflow_ids, 1) > 0 THEN
+      DELETE FROM workflow_steps 
+      WHERE workflow_id = ANY(v_workflow_ids);
+    END IF;
+    
+    -- Process each step
+    FOR v_loop_index IN 1..v_step_count LOOP
+      step := steps[v_loop_index];
+      
+      -- Extract and validate workflow_id
+      BEGIN
+        v_workflow_id := (step->>'workflow_id')::uuid;
+      EXCEPTION WHEN others THEN
+        RAISE EXCEPTION 'Invalid UUID format for workflow_id in step %', v_loop_index;
+      END;
+      
+      -- Validate workflow exists
+      IF NOT EXISTS (SELECT 1 FROM request_workflows WHERE id = v_workflow_id) THEN
+        RAISE EXCEPTION 'Workflow with ID % does not exist', v_workflow_id;
+      END IF;
+      
+      -- Check if step ID is provided
+      IF step->>'id' IS NOT NULL AND (step->>'id') != 'null' AND (step->>'id') != '' THEN
+        BEGIN
+          v_step_id := (step->>'id')::uuid;
+        EXCEPTION WHEN others THEN
+          v_step_id := uuid_generate_v4();
+        END;
+      ELSE
+        v_step_id := uuid_generate_v4();
+      END IF;
+      
+      -- Insert the step
+      INSERT INTO workflow_steps (
+        id,
+        workflow_id,
+        step_order, 
+        step_name,
+        step_type,
+        approver_id,
+        approver_type,
+        instructions,
+        is_required
+      ) VALUES (
+        v_step_id,
+        v_workflow_id,
+        COALESCE((step->>'step_order')::integer, v_loop_index),
+        step->>'step_name',
+        COALESCE(step->>'step_type', 'decision'),
+        (step->>'approver_id')::uuid,
+        COALESCE(step->>'approver_type', 'user'),
+        step->>'instructions',
+        COALESCE((step->>'is_required')::boolean, true)
+      );
+      
+      -- Add to inserted steps array
+      inserted_steps := array_append(inserted_steps, jsonb_build_object(
+        'id', v_step_id,
+        'workflow_id', v_workflow_id,
+        'step_order', COALESCE((step->>'step_order')::integer, v_loop_index),
+        'step_name', step->>'step_name',
+        'step_type', COALESCE(step->>'step_type', 'decision'),
+        'approver_id', (step->>'approver_id')::uuid,
+        'approver_type', COALESCE(step->>'approver_type', 'user'),
+        'instructions', step->>'instructions',
+        'is_required', COALESCE((step->>'is_required')::boolean, true),
+        'created_at', now()
+      ));
+    END LOOP;
+    
+    -- Return success result with inserted steps
+    result := jsonb_build_object(
+      'success', true,
+      'message', 'Successfully inserted ' || array_length(inserted_steps, 1) || ' workflow steps',
+      'data', inserted_steps
+    );
+    
+    -- Try to log the operation
+    BEGIN
+      IF EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'request_workflow_operation_logs'
+      ) THEN
+        INSERT INTO request_workflow_operation_logs(
+          operation_type,
+          user_id,
+          workflow_id,
+          request_data,
+          response_data,
+          details
+        ) VALUES (
+          'insert_workflow_steps',
+          auth.uid(),
+          v_workflow_ids[1],
+          to_jsonb(steps),
+          result,
+          'تم حفظ خطوات سير العمل بنجاح'
+        );
+      END IF;
+    EXCEPTION WHEN OTHERS THEN
+      -- If logging fails, just continue
+      RAISE NOTICE 'Failed to log workflow operation: %', SQLERRM;
+    END;
+    
+    RETURN result;
+  EXCEPTION WHEN others THEN
+    -- Return error result
+    v_error := SQLERRM;
+    result := jsonb_build_object(
+      'success', false,
+      'message', 'Error inserting workflow steps: ' || v_error,
+      'error', v_error
+    );
+    
+    -- Try to log the error
+    BEGIN
+      IF EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'request_workflow_operation_logs'
+      ) THEN
+        INSERT INTO request_workflow_operation_logs(
+          operation_type,
+          user_id,
+          request_data,
+          error_message,
+          details
+        ) VALUES (
+          'insert_workflow_steps_error',
+          auth.uid(),
+          to_jsonb(steps),
+          v_error,
+          'فشل في حفظ خطوات سير العمل'
+        );
+      END IF;
+    EXCEPTION WHEN OTHERS THEN
+      -- If logging fails, just continue
+      RAISE NOTICE 'Failed to log workflow error: %', SQLERRM;
+    END;
+    
+    RETURN result;
+  END;
 END;
+$function$;
+
+-- إضافة سياسات RLS جديدة لضمان عمل حذف وتعديل خطوات سير العمل
+DO $$
+BEGIN
+  -- Delete any existing policies that might conflict
+  DROP POLICY IF EXISTS "Allow admins to delete workflow steps" ON public.workflow_steps;
+  DROP POLICY IF EXISTS "Allow admins to insert workflow steps" ON public.workflow_steps;
+  DROP POLICY IF EXISTS "Allow admins to update workflow steps" ON public.workflow_steps;
+  DROP POLICY IF EXISTS "Allow admins to select workflow steps" ON public.workflow_steps;
+  
+  -- Ensure RLS is enabled
+  ALTER TABLE IF EXISTS public.workflow_steps ENABLE ROW LEVEL SECURITY;
+  
+  -- Create comprehensive policies
+  CREATE POLICY "Allow admins to delete workflow steps"
+  ON public.workflow_steps
+  FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.user_id = auth.uid()
+      AND (r.name IN ('admin', 'app_admin', 'developer'))
+    )
+  );
+  
+  CREATE POLICY "Allow admins to insert workflow steps"
+  ON public.workflow_steps
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.user_id = auth.uid()
+      AND (r.name IN ('admin', 'app_admin', 'developer'))
+    )
+  );
+  
+  CREATE POLICY "Allow admins to update workflow steps"
+  ON public.workflow_steps
+  FOR UPDATE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.user_id = auth.uid()
+      AND (r.name IN ('admin', 'app_admin', 'developer'))
+    )
+  );
+  
+  CREATE POLICY "Allow admins to select workflow steps"
+  ON public.workflow_steps
+  FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.user_id = auth.uid()
+      AND (r.name IN ('admin', 'app_admin', 'developer'))
+    )
+  );
+END
 $$;
 
--- تعليمات للمطورين:
--- يرجى ملاحظة أنه تم تغيير اسم الجدول من workflow_operation_logs إلى request_workflow_operation_logs
--- لضمان التوافق، نحن نحافظ على كلا الجدولين والعروض حاليًا
--- الرجاء استخدام request_workflow_operation_logs في الكود الجديد
--- الجدول الجديد والعرض موجودان في schema.sql الرئيسي
-
--- منظر بديل يدعم الجدول المستخدم في النظام - هذا للتوافق فقط
-CREATE OR REPLACE VIEW request_workflow_operations_view AS
-SELECT 
-  wol.id,
-  wol.operation_type,
-  wol.created_at,
-  p.display_name as user_name,
-  p.email as user_email,
-  wol.request_type_id,
-  rt.name as request_type_name,
-  wol.workflow_id,
-  rw.name as workflow_name,
-  wol.step_id,
-  ws.step_name,
-  wol.request_data,
-  wol.response_data,
-  wol.error_message,
-  wol.details
-FROM 
-  request_workflow_operation_logs wol
-LEFT JOIN 
-  profiles p ON wol.user_id = p.id
-LEFT JOIN 
-  request_types rt ON wol.request_type_id = rt.id
-LEFT JOIN 
-  request_workflows rw ON wol.workflow_id = rw.id
-LEFT JOIN 
-  workflow_steps ws ON wol.step_id = ws.id
-ORDER BY 
-  wol.created_at DESC;
-
--- إضافة سياسات RLS لجداول سير العمل للسماح بالحذف للمسؤولين
--- 1. سياسات للجدول request_types
-ALTER TABLE IF EXISTS public.request_types ENABLE ROW LEVEL SECURITY;
-
--- سياسة للسماح للمسؤولين بحذف أنواع الطلبات بغض النظر عن حالة is_active
-CREATE POLICY IF NOT EXISTS "Allow admins to delete request types"
-ON public.request_types
-FOR DELETE
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.user_id = auth.uid()
-    AND (r.name IN ('admin', 'app_admin', 'developer'))
-  )
-);
-
--- 2. سياسات للجدول request_workflows
-ALTER TABLE IF EXISTS public.request_workflows ENABLE ROW LEVEL SECURITY;
-
--- سياسة للسماح للمسؤولين بحذف مسارات سير العمل بغض النظر عن حالة is_active
-CREATE POLICY IF NOT EXISTS "Allow admins to delete workflows"
-ON public.request_workflows
-FOR DELETE
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.user_id = auth.uid()
-    AND (r.name IN ('admin', 'app_admin', 'developer'))
-  )
-);
-
--- 3. سياسات للجدول workflow_steps
-ALTER TABLE IF EXISTS public.workflow_steps ENABLE ROW LEVEL SECURITY;
-
--- سياسة للسماح للمسؤولين بحذف خطوات سير العمل
-CREATE POLICY IF NOT EXISTS "Allow admins to delete workflow steps"
-ON public.workflow_steps
-FOR DELETE
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.user_id = auth.uid()
-    AND (r.name IN ('admin', 'app_admin', 'developer'))
-  )
-);
-
--- سياسات عامة لتمكين المسؤولين من قراءة وتعديل وإضافة لكل الجداول
--- للجدول request_types
-CREATE POLICY IF NOT EXISTS "Allow admins to select request types"
-ON public.request_types
-FOR SELECT
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.user_id = auth.uid()
-    AND (r.name IN ('admin', 'app_admin', 'developer'))
-  )
-);
-
-CREATE POLICY IF NOT EXISTS "Allow admins to insert request types"
-ON public.request_types
-FOR INSERT
-TO authenticated
-WITH CHECK (
-  EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.user_id = auth.uid()
-    AND (r.name IN ('admin', 'app_admin', 'developer'))
-  )
-);
-
-CREATE POLICY IF NOT EXISTS "Allow admins to update request types"
-ON public.request_types
-FOR UPDATE
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.user_id = auth.uid()
-    AND (r.name IN ('admin', 'app_admin', 'developer'))
-  )
-);
-
--- للجدول request_workflows
-CREATE POLICY IF NOT EXISTS "Allow admins to select workflows"
-ON public.request_workflows
-FOR SELECT
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.user_id = auth.uid()
-    AND (r.name IN ('admin', 'app_admin', 'developer'))
-  )
-);
-
-CREATE POLICY IF NOT EXISTS "Allow admins to insert workflows"
-ON public.request_workflows
-FOR INSERT
-TO authenticated
-WITH CHECK (
-  EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.user_id = auth.uid()
-    AND (r.name IN ('admin', 'app_admin', 'developer'))
-  )
-);
-
-CREATE POLICY IF NOT EXISTS "Allow admins to update workflows"
-ON public.request_workflows
-FOR UPDATE
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.user_id = auth.uid()
-    AND (r.name IN ('admin', 'app_admin', 'developer'))
-  )
-);
-
--- للجدول workflow_steps
-CREATE POLICY IF NOT EXISTS "Allow admins to select workflow steps"
-ON public.workflow_steps
-FOR SELECT
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.user_id = auth.uid()
-    AND (r.name IN ('admin', 'app_admin', 'developer'))
-  )
-);
-
-CREATE POLICY IF NOT EXISTS "Allow admins to insert workflow steps"
-ON public.workflow_steps
-FOR INSERT
-TO authenticated
-WITH CHECK (
-  EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.user_id = auth.uid()
-    AND (r.name IN ('admin', 'app_admin', 'developer'))
-  )
-);
-
-CREATE POLICY IF NOT EXISTS "Allow admins to update workflow steps"
-ON public.workflow_steps
-FOR UPDATE
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.user_id = auth.uid()
-    AND (r.name IN ('admin', 'app_admin', 'developer'))
-  )
-);
-
--- سياسات للجدول request_workflow_operation_logs
-ALTER TABLE IF EXISTS public.request_workflow_operation_logs ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY IF NOT EXISTS "Allow admins to select operation logs"
-ON public.request_workflow_operation_logs
-FOR SELECT
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.user_id = auth.uid()
-    AND (r.name IN ('admin', 'app_admin', 'developer'))
-  )
-);
-
-CREATE POLICY IF NOT EXISTS "Allow admins to update operation logs"
-ON public.request_workflow_operation_logs
-FOR UPDATE
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.id
-    WHERE ur.user_id = auth.uid()
-    AND (r.name IN ('admin', 'app_admin', 'developer'))
-  )
-);
