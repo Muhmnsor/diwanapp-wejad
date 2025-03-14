@@ -84,12 +84,23 @@ export const AdminWorkflows = () => {
 
   const deleteRequestTypeMutation = useMutation({
     mutationFn: async (typeId: string) => {
-      // الاعتماد مباشرة على دالة حذف نوع الطلب في قاعدة البيانات
+      // استخدام وظيفة حذف نوع الطلب المحسّنة
+      console.log("Calling delete_request_type with ID:", typeId);
+      
       const { data, error } = await supabase
         .rpc('delete_request_type', { p_request_type_id: typeId });
       
-      if (error) throw error;
-      if (!data.success) throw new Error(data.message);
+      console.log("Result from delete_request_type:", { data, error });
+      
+      if (error) {
+        console.error("Error from delete_request_type RPC:", error);
+        throw error;
+      }
+      
+      if (!data.success) {
+        console.error("Unsuccessful delete operation:", data);
+        throw new Error(data.message);
+      }
       
       return data;
     },
@@ -111,6 +122,7 @@ export const AdminWorkflows = () => {
 
   const handleForceDelete = () => {
     if (selectedRequestType) {
+      console.log("Initiating deletion for request type:", selectedRequestType.id);
       deleteRequestTypeMutation.mutate(selectedRequestType.id);
     }
   };

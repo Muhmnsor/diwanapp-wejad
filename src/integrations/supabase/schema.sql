@@ -312,34 +312,6 @@ BEGIN
       'data', inserted_steps
     );
     
-    -- Try to log the operation
-    BEGIN
-      IF EXISTS (
-        SELECT 1
-        FROM information_schema.tables
-        WHERE table_schema = 'public' AND table_name = 'request_workflow_operation_logs'
-      ) THEN
-        INSERT INTO request_workflow_operation_logs(
-          operation_type,
-          user_id,
-          workflow_id,
-          request_data,
-          response_data,
-          details
-        ) VALUES (
-          'insert_workflow_steps',
-          auth.uid(),
-          v_workflow_ids[1],
-          to_jsonb(steps),
-          result,
-          'تم حفظ خطوات سير العمل بنجاح'
-        );
-      END IF;
-    EXCEPTION WHEN OTHERS THEN
-      -- If logging fails, just continue
-      RAISE NOTICE 'Failed to log workflow operation: %', SQLERRM;
-    END;
-    
     RETURN result;
   EXCEPTION WHEN others THEN
     -- Return error result
@@ -349,32 +321,6 @@ BEGIN
       'message', 'Error inserting workflow steps: ' || v_error,
       'error', v_error
     );
-    
-    -- Try to log the error
-    BEGIN
-      IF EXISTS (
-        SELECT 1
-        FROM information_schema.tables
-        WHERE table_schema = 'public' AND table_name = 'request_workflow_operation_logs'
-      ) THEN
-        INSERT INTO request_workflow_operation_logs(
-          operation_type,
-          user_id,
-          request_data,
-          error_message,
-          details
-        ) VALUES (
-          'insert_workflow_steps_error',
-          auth.uid(),
-          to_jsonb(steps),
-          v_error,
-          'فشل في حفظ خطوات سير العمل'
-        );
-      END IF;
-    EXCEPTION WHEN OTHERS THEN
-      -- If logging fails, just continue
-      RAISE NOTICE 'Failed to log workflow error: %', SQLERRM;
-    END;
     
     RETURN result;
   END;
@@ -447,4 +393,3 @@ BEGIN
   );
 END
 $$;
-
