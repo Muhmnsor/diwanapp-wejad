@@ -1,4 +1,5 @@
 
+
 /**
  * Validates if a string is a valid UUID
  * @param str String to validate as UUID
