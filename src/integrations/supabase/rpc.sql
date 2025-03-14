@@ -389,3 +389,128 @@ BEGIN
   ORDER BY r.created_at DESC;
 END;
 $function$;
+
+-- UPDATED FUNCTION: Handle request deletion with proper cleanup of all related records
+CREATE OR REPLACE FUNCTION public.delete_request(p_request_id uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+DECLARE
+  v_is_admin boolean;
+  v_is_requester boolean;
+  v_result jsonb;
+  v_request_data jsonb;
+  v_approvals_count int;
+  v_attachments_count int;
+  v_logs_count int;
+BEGIN
+  -- Check if user is admin
+  SELECT EXISTS (
+    SELECT 1 
+    FROM user_roles ur
+    JOIN roles r ON r.id = ur.role_id
+    WHERE ur.user_id = auth.uid()
+    AND (r.name IN ('admin', 'app_admin', 'developer'))
+  ) INTO v_is_admin;
+  
+  -- Check if user is the requester of this request
+  SELECT EXISTS (
+    SELECT 1 
+    FROM requests
+    WHERE id = p_request_id AND requester_id = auth.uid()
+  ) INTO v_is_requester;
+  
+  -- Only allow admins or request creators to delete
+  IF NOT (v_is_admin OR v_is_requester) THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'message', 'ليس لديك صلاحية لحذف هذا الطلب'
+    );
+  END IF;
+
+  -- Get request data before deletion for logging
+  SELECT json_build_object(
+    'id', r.id,
+    'title', r.title,
+    'status', r.status,
+    'requester_id', r.requester_id,
+    'request_type_id', r.request_type_id,
+    'created_at', r.created_at
+  )::jsonb
+  INTO v_request_data
+  FROM requests r
+  WHERE r.id = p_request_id;
+
+  IF v_request_data IS NULL THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'message', 'الطلب غير موجود'
+    );
+  END IF;
+
+  -- Begin transaction to delete request and related records
+  BEGIN
+    -- Count related records for reporting
+    SELECT COUNT(*) INTO v_approvals_count FROM request_approvals WHERE request_id = p_request_id;
+    SELECT COUNT(*) INTO v_attachments_count FROM request_attachments WHERE request_id = p_request_id;
+    SELECT COUNT(*) INTO v_logs_count FROM request_approval_logs WHERE request_id = p_request_id;
+    
+    -- Delete in proper order: logs, then approvals, then attachments, then request
+    -- First delete request_approval_logs (requires foreign key constraint fix)
+    DELETE FROM request_approval_logs WHERE request_id = p_request_id;
+    
+    -- Delete approvals related to this request
+    DELETE FROM request_approvals WHERE request_id = p_request_id;
+
+    -- Delete attachments related to this request
+    DELETE FROM request_attachments WHERE request_id = p_request_id;
+
+    -- Finally delete the request
+    DELETE FROM requests WHERE id = p_request_id;
+
+    -- Log the deletion operation
+    PERFORM log_workflow_operation(
+      'delete_request',
+      (v_request_data->>'request_type_id')::uuid,
+      NULL,
+      NULL,
+      v_request_data,
+      jsonb_build_object(
+        'deleted_by', auth.uid(),
+        'deleted_at', now(),
+        'deleted_approvals', v_approvals_count,
+        'deleted_attachments', v_attachments_count,
+        'deleted_logs', v_logs_count
+      )
+    );
+
+    v_result := jsonb_build_object(
+      'success', true,
+      'message', 'تم حذف الطلب بنجاح',
+      'request_id', p_request_id,
+      'deleted_approvals', v_approvals_count,
+      'deleted_attachments', v_attachments_count,
+      'deleted_logs', v_logs_count
+    );
+
+    RETURN v_result;
+  EXCEPTION WHEN OTHERS THEN
+    -- Log error and return failure message
+    PERFORM log_workflow_operation(
+      'delete_request_error',
+      (v_request_data->>'request_type_id')::uuid,
+      NULL,
+      NULL,
+      v_request_data,
+      NULL,
+      SQLERRM
+    );
+
+    RETURN jsonb_build_object(
+      'success', false,
+      'message', 'حدث خطأ أثناء حذف الطلب: ' || SQLERRM
+    );
+  END;
+END;
+$function$;
