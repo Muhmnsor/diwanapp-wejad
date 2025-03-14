@@ -64,11 +64,14 @@ export const RequestsTable = ({
                 p_request_id: id
               });
               
-              if (!error) {
+              if (error) {
+                console.error(`Error checking delete permission for request ${id}:`, error);
+              } else {
+                console.log(`Permission check result for ${id}:`, data);
                 deletableMap[id] = data;
               }
             } catch (error) {
-              console.error(`Error checking delete permission for request ${id}:`, error);
+              console.error(`Exception checking delete permission for request ${id}:`, error);
             }
           })
         );
@@ -82,6 +85,7 @@ export const RequestsTable = ({
   
   // Handle delete button click
   const handleDeleteClick = (request: any) => {
+    console.log("Opening delete dialog for request:", request.id);
     setRequestToDelete(request);
     setShowDeleteDialog(true);
   };
