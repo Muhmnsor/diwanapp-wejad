@@ -1,5 +1,4 @@
 
-
 -- جدول لتخزين سجلات عمليات سير العمل
 CREATE TABLE IF NOT EXISTS workflow_operation_logs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -89,3 +88,39 @@ BEGIN
 END;
 $$;
 
+-- تعليمات للمطورين:
+-- يرجى ملاحظة أنه تم تغيير اسم الجدول من workflow_operation_logs إلى request_workflow_operation_logs
+-- لضمان التوافق، نحن نحافظ على كلا الجدولين والعروض حاليًا
+-- الرجاء استخدام request_workflow_operation_logs في الكود الجديد
+-- الجدول الجديد والعرض موجودان في schema.sql الرئيسي
+
+-- منظر بديل يدعم الجدول المستخدم في النظام - هذا للتوافق فقط
+CREATE OR REPLACE VIEW request_workflow_operations_view AS
+SELECT 
+  wol.id,
+  wol.operation_type,
+  wol.created_at,
+  p.display_name as user_name,
+  p.email as user_email,
+  wol.request_type_id,
+  rt.name as request_type_name,
+  wol.workflow_id,
+  rw.name as workflow_name,
+  wol.step_id,
+  ws.step_name,
+  wol.request_data,
+  wol.response_data,
+  wol.error_message,
+  wol.details
+FROM 
+  request_workflow_operation_logs wol
+LEFT JOIN 
+  profiles p ON wol.user_id = p.id
+LEFT JOIN 
+  request_types rt ON wol.request_type_id = rt.id
+LEFT JOIN 
+  request_workflows rw ON wol.workflow_id = rw.id
+LEFT JOIN 
+  workflow_steps ws ON wol.step_id = ws.id
+ORDER BY 
+  wol.created_at DESC;

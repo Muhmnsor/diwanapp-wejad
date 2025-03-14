@@ -1,5 +1,4 @@
 
-
 -- تحديث لعملية حذف أنواع الطلبات مع التعامل مع جميع العلاقات المرتبطة
 -- Function to delete a request type and its related records
 CREATE OR REPLACE FUNCTION public.delete_request_type(p_request_type_id uuid)
@@ -13,8 +12,9 @@ DECLARE
   v_request_type_data jsonb;
   v_workflows jsonb[];
   v_workflow_ids uuid[];
-  v_workflow_steps jsonb[];
+  v_workflow_count int;
   v_step_ids uuid[];
+  v_step_count int;
   v_related_requests int;
   v_error_message text;
 BEGIN
@@ -72,108 +72,104 @@ BEGIN
   FROM request_workflows
   WHERE request_type_id = p_request_type_id;
 
+  -- Count workflows for logging
+  SELECT COUNT(*)
+  INTO v_workflow_count
+  FROM request_workflows
+  WHERE request_type_id = p_request_type_id;
+
+  -- Get all step IDs for these workflows if workflows exist
+  IF v_workflow_ids IS NOT NULL AND array_length(v_workflow_ids, 1) > 0 THEN
+    SELECT array_agg(id)
+    INTO v_step_ids
+    FROM workflow_steps
+    WHERE workflow_id = ANY(v_workflow_ids);
+    
+    -- Count steps for logging
+    SELECT COUNT(*)
+    INTO v_step_count
+    FROM workflow_steps
+    WHERE workflow_id = ANY(v_workflow_ids);
+  ELSE
+    v_step_count := 0;
+  END IF;
+
   -- Begin transaction to delete request type and related records
+  -- Using serializable isolation to prevent race conditions
   BEGIN
-    -- Check if the workflow_operation_logs table exists
-    IF EXISTS (
-      SELECT 1
-      FROM information_schema.tables
-      WHERE table_schema = 'public' AND table_name = 'workflow_operation_logs'
-    ) THEN
-      -- 0. Update workflow_operation_logs to set request_type_id to NULL for the request type we're deleting
-      UPDATE workflow_operation_logs
-      SET request_type_id = NULL
-      WHERE request_type_id = p_request_type_id;
-      
-      -- 1. Update workflow_operation_logs to set workflow_id to NULL for any workflows we're going to delete
-      IF v_workflow_ids IS NOT NULL AND array_length(v_workflow_ids, 1) > 0 THEN
-        UPDATE workflow_operation_logs
-        SET workflow_id = NULL
-        WHERE workflow_id = ANY(v_workflow_ids);
-        
-        -- 2. Get all step IDs for these workflows
-        SELECT array_agg(id)
-        INTO v_step_ids
-        FROM workflow_steps
-        WHERE workflow_id = ANY(v_workflow_ids);
-        
-        -- 3. Update workflow_operation_logs to set step_id to NULL where step will be deleted
-        IF v_step_ids IS NOT NULL AND array_length(v_step_ids, 1) > 0 THEN
-          UPDATE workflow_operation_logs
-          SET step_id = NULL
-          WHERE step_id = ANY(v_step_ids);
-          
-          -- 4. Update request_approval_logs to set step_id to NULL where step will be deleted
-          UPDATE request_approval_logs
-          SET step_id = NULL
-          WHERE step_id = ANY(v_step_ids);
-        END IF;
-      END IF;
-    ELSIF EXISTS (
-      SELECT 1
-      FROM information_schema.tables
-      WHERE table_schema = 'public' AND table_name = 'request_workflow_operation_logs'
-    ) THEN
-      -- Fallback to the old table name if it exists
-      -- 0. Update request_workflow_operation_logs to set request_type_id to NULL for the request type we're deleting
+    -- Set transaction isolation level
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+    
+    -- Update logs to NULL references before deletion
+    -- This prevents foreign key constraint violations
+    
+    -- 1. Update request_approval_logs to set step_id to NULL where step will be deleted
+    IF v_step_ids IS NOT NULL AND array_length(v_step_ids, 1) > 0 THEN
+      UPDATE request_approval_logs
+      SET step_id = NULL
+      WHERE step_id = ANY(v_step_ids);
+    END IF;
+
+    -- 2. Update request_workflow_operation_logs for steps
+    IF v_step_ids IS NOT NULL AND array_length(v_step_ids, 1) > 0 THEN
       UPDATE request_workflow_operation_logs
-      SET request_type_id = NULL
-      WHERE request_type_id = p_request_type_id;
-      
-      -- 1. Update request_workflow_operation_logs to set workflow_id to NULL for any workflows we're going to delete
-      IF v_workflow_ids IS NOT NULL AND array_length(v_workflow_ids, 1) > 0 THEN
-        UPDATE request_workflow_operation_logs
-        SET workflow_id = NULL
-        WHERE workflow_id = ANY(v_workflow_ids);
-        
-        -- 2. Get all step IDs for these workflows
-        SELECT array_agg(id)
-        INTO v_step_ids
-        FROM workflow_steps
-        WHERE workflow_id = ANY(v_workflow_ids);
-        
-        -- 3. Update request_workflow_operation_logs to set step_id to NULL where step will be deleted
-        IF v_step_ids IS NOT NULL AND array_length(v_step_ids, 1) > 0 THEN
-          UPDATE request_workflow_operation_logs
-          SET step_id = NULL
-          WHERE step_id = ANY(v_step_ids);
-          
-          -- 4. Update request_approval_logs to set step_id to NULL where step will be deleted
-          UPDATE request_approval_logs
-          SET step_id = NULL
-          WHERE step_id = ANY(v_step_ids);
-        END IF;
-      END IF;
+      SET step_id = NULL
+      WHERE step_id = ANY(v_step_ids);
+    END IF;
+
+    -- 3. Update request_workflow_operation_logs for workflows
+    IF v_workflow_ids IS NOT NULL AND array_length(v_workflow_ids, 1) > 0 THEN
+      UPDATE request_workflow_operation_logs
+      SET workflow_id = NULL
+      WHERE workflow_id = ANY(v_workflow_ids);
     END IF;
     
-    -- 5. Delete workflow steps if there are any
+    -- 4. Update request_workflow_operation_logs for request type
+    UPDATE request_workflow_operation_logs
+    SET request_type_id = NULL
+    WHERE request_type_id = p_request_type_id;
+
+    -- 5. Delete workflow steps first (children)
     IF v_workflow_ids IS NOT NULL AND array_length(v_workflow_ids, 1) > 0 THEN
       DELETE FROM workflow_steps
       WHERE workflow_id = ANY(v_workflow_ids);
-      
-      -- 6. Delete workflows
+    END IF;
+    
+    -- 6. Delete workflows next (parent of steps, child of request type)
+    IF v_workflow_ids IS NOT NULL AND array_length(v_workflow_ids, 1) > 0 THEN
       DELETE FROM request_workflows
       WHERE request_type_id = p_request_type_id;
     END IF;
     
-    -- 7. Finally delete the request type
+    -- 7. Finally delete the request type (parent)
     DELETE FROM request_types WHERE id = p_request_type_id;
 
     -- 8. Log the deletion operation
     BEGIN
-      PERFORM log_workflow_operation(
-        'delete_request_type',
-        NULL,
-        NULL,
-        NULL,
-        v_request_type_data,
-        jsonb_build_object(
-          'deleted_by', auth.uid(),
-          'deleted_at', now(),
-          'workflow_count', array_length(v_workflow_ids, 1),
-          'step_count', array_length(v_step_ids, 1)
-        )
-      );
+      IF EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'request_workflow_operation_logs'
+      ) THEN
+        INSERT INTO request_workflow_operation_logs(
+          operation_type,
+          user_id,
+          request_data,
+          response_data,
+          details
+        ) VALUES (
+          'delete_request_type',
+          auth.uid(),
+          v_request_type_data,
+          jsonb_build_object(
+            'deleted_by', auth.uid(),
+            'deleted_at', now(),
+            'workflow_count', v_workflow_count,
+            'step_count', v_step_count
+          ),
+          'تم حذف نوع الطلب بنجاح'
+        );
+      END IF;
     EXCEPTION WHEN OTHERS THEN
       -- If logging fails, just continue with the deletion
       RAISE NOTICE 'Failed to log workflow operation: %', SQLERRM;
@@ -182,22 +178,36 @@ BEGIN
     v_result := jsonb_build_object(
       'success', true,
       'message', 'تم حذف نوع الطلب بنجاح',
-      'request_type_id', p_request_type_id
+      'request_type_id', p_request_type_id,
+      'workflows_deleted', v_workflow_count,
+      'steps_deleted', v_step_count
     );
 
     RETURN v_result;
   EXCEPTION WHEN OTHERS THEN
     -- Log error and return failure message
+    GET STACKED DIAGNOSTICS v_error_message = MESSAGE_TEXT;
+    
     BEGIN
-      PERFORM log_workflow_operation(
-        'delete_request_type_error',
-        NULL,
-        NULL,
-        NULL,
-        v_request_type_data,
-        NULL,
-        SQLERRM
-      );
+      IF EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'request_workflow_operation_logs'
+      ) THEN
+        INSERT INTO request_workflow_operation_logs(
+          operation_type,
+          user_id,
+          request_data,
+          error_message,
+          details
+        ) VALUES (
+          'delete_request_type_error',
+          auth.uid(),
+          v_request_type_data,
+          v_error_message,
+          'فشل حذف نوع الطلب'
+        );
+      END IF;
     EXCEPTION WHEN OTHERS THEN
       -- If logging fails, just continue with returning the error
       RAISE NOTICE 'Failed to log workflow error: %', SQLERRM;
@@ -205,7 +215,8 @@ BEGIN
 
     RETURN jsonb_build_object(
       'success', false,
-      'message', 'حدث خطأ أثناء حذف نوع الطلب: ' || SQLERRM
+      'message', 'حدث خطأ أثناء حذف نوع الطلب: ' || v_error_message,
+      'error_details', v_error_message
     );
   END;
 END;
