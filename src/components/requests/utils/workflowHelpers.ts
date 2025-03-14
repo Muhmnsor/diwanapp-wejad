@@ -36,9 +36,11 @@ export const fetchWorkflowDetails = async (workflowId: string) => {
       .order('step_order', { ascending: true });
     
     if (!newStepsError && newSteps && newSteps.length > 0) {
+      console.log(`Found ${newSteps.length} steps in workflow_steps table`);
       steps = newSteps;
     } else {
       // If no steps in the new table, try the legacy table
+      console.log('No steps found in workflow_steps table, checking legacy table');
       const { data: legacySteps, error: legacyStepsError } = await supabase
         .from('request_workflow_steps')
         .select('*')
@@ -46,7 +48,10 @@ export const fetchWorkflowDetails = async (workflowId: string) => {
         .order('step_order', { ascending: true });
       
       if (!legacyStepsError && legacySteps && legacySteps.length > 0) {
+        console.log(`Found ${legacySteps.length} steps in legacy request_workflow_steps table`);
         steps = legacySteps;
+      } else {
+        console.log('No workflow steps found in either table');
       }
     }
     

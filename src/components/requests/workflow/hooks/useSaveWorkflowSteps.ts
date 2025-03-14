@@ -118,6 +118,20 @@ export const useSaveWorkflowSteps = ({
       }
 
       console.log("Steps saved successfully:", rpcResult);
+      
+      // Add log of the database table
+      console.log("Checking inserted steps in workflow_steps table");
+      const { data: checkSteps, error: checkError } = await supabase
+        .from('workflow_steps')
+        .select('*')
+        .eq('workflow_id', currentWorkflowId)
+        .order('step_order', { ascending: true });
+        
+      if (checkError) {
+        console.error("Error checking saved steps:", checkError);
+      } else {
+        console.log(`Found ${checkSteps?.length || 0} steps in database after save:`, checkSteps);
+      }
 
       // Update steps with server data
       if (rpcResult && rpcResult.data) {

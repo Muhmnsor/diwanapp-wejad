@@ -77,23 +77,47 @@ export const useWorkflowFetching = ({
         
         // If we have a workflow ID, fetch its steps
         if (fetchedWorkflowId) {
+          console.log(`Found workflow ID: ${fetchedWorkflowId}, fetching steps`);
           setWorkflowId(fetchedWorkflowId);
           
-          const { data: steps, error: stepsError } = await supabase
-            .from('request_workflow_steps') // Updated table name
+          // First try the new workflow_steps table
+          const { data: newSteps, error: newStepsError } = await supabase
+            .from('workflow_steps')
             .select('*')
             .eq('workflow_id', fetchedWorkflowId)
             .order('step_order', { ascending: true });
           
-          if (stepsError) {
-            console.error("Error fetching workflow steps:", stepsError);
+          if (newStepsError) {
+            console.error("Error fetching from workflow_steps:", newStepsError);
+          }
+          
+          if (newSteps && newSteps.length > 0) {
+            console.log(`Found ${newSteps.length} steps in workflow_steps table`);
+            setWorkflowSteps(newSteps);
+            setCurrentStep(getInitialStepState(newSteps.length + 1, fetchedWorkflowId));
+            setInitialized(true);
+            return;
+          }
+          
+          // If no steps in the new table, try the legacy table
+          console.log("No steps found in workflow_steps table, checking legacy table");
+          const { data: legacySteps, error: legacyStepsError } = await supabase
+            .from('request_workflow_steps')
+            .select('*')
+            .eq('workflow_id', fetchedWorkflowId)
+            .order('step_order', { ascending: true });
+          
+          if (legacyStepsError) {
+            console.error("Error fetching from request_workflow_steps:", legacyStepsError);
             throw new Error("فشل في العثور على خطوات سير العمل");
           }
           
-          if (steps && steps.length > 0) {
-            setWorkflowSteps(steps);
-            setCurrentStep(getInitialStepState(steps.length + 1, fetchedWorkflowId));
+          if (legacySteps && legacySteps.length > 0) {
+            console.log(`Found ${legacySteps.length} steps in legacy request_workflow_steps table`);
+            setWorkflowSteps(legacySteps);
+            setCurrentStep(getInitialStepState(legacySteps.length + 1, fetchedWorkflowId));
           } else {
+            console.log("No workflow steps found in either table");
             setCurrentStep(getInitialStepState(1, fetchedWorkflowId));
           }
         } else {
