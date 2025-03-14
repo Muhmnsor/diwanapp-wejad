@@ -50,10 +50,10 @@ export const RequestDetailsCard = ({
       setWorkflowDiagnosis(diagnosis);
       console.log("Workflow diagnosis:", diagnosis);
       
-      // If repair was successful, update the state
-      if (diagnosis && diagnosis.repaired) {
+      // If repair was successful, update the state - safely access properties
+      if (diagnosis && diagnosis.repaired === true) {
         setWorkflowFixed(true);
-        console.log("Workflow was automatically repaired:", diagnosis.repairMessage);
+        console.log("Workflow was automatically repaired:", diagnosis.repairMessage || "No repair message provided");
       }
     } catch (error) {
       console.error("Error diagnosing workflow:", error);

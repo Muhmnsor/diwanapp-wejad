@@ -93,17 +93,33 @@ export const diagnoseRequestWorkflow = async (requestId: string) => {
     // Add information about whether the workflow can be repaired automatically
     const canBeRepaired = !validationResult.valid && !validationResult.repaired;
     
+    // Create a standardized return object with all possible properties
     return {
       request: validationResult.request,
-      currentStep: validationResult.currentStep,
+      currentStep: validationResult.currentStep || null,
+      workflow: validationResult.workflow || null,
       issues: validationResult.valid ? [] : [validationResult.error],
-      // Pass the entire validation result for reference
+      valid: validationResult.valid || false,
+      repaired: validationResult.repaired || false,
+      repairMessage: validationResult.repairMessage || null,
       canBeRepaired,
-      ...validationResult
+      error: validationResult.error || null,
+      originalRequest: validationResult.originalRequest || null
     };
   } catch (error) {
     console.error('Exception in diagnoseRequestWorkflow:', error);
-    return { request: null, issues: ['Exception during diagnosis'] };
+    return { 
+      request: null, 
+      issues: ['Exception during diagnosis'],
+      valid: false,
+      repaired: false,
+      currentStep: null,
+      workflow: null,
+      canBeRepaired: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      repairMessage: null,
+      originalRequest: null
+    };
   }
 };
 
