@@ -2996,44 +2996,6 @@ export type Database = {
           },
         ]
       }
-      request_export_logs: {
-        Row: {
-          error_message: string | null
-          export_type: string
-          exported_at: string
-          exported_by: string | null
-          id: string
-          request_id: string | null
-          status: string | null
-        }
-        Insert: {
-          error_message?: string | null
-          export_type: string
-          exported_at?: string
-          exported_by?: string | null
-          id?: string
-          request_id?: string | null
-          status?: string | null
-        }
-        Update: {
-          error_message?: string | null
-          export_type?: string
-          exported_at?: string
-          exported_by?: string | null
-          id?: string
-          request_id?: string | null
-          status?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "request_export_logs_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: false
-            referencedRelation: "requests"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       request_types: {
         Row: {
           created_at: string | null
@@ -4927,12 +4889,6 @@ export type Database = {
         }
         Returns: Json
       }
-      get_request_pdf_export_data: {
-        Args: {
-          p_request_id: string
-        }
-        Returns: Json
-      }
       get_request_statistics: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -5122,13 +5078,6 @@ export type Database = {
           p_response_data?: Json
           p_error_message?: string
           p_details?: string
-        }
-        Returns: string
-      }
-      record_request_pdf_export: {
-        Args: {
-          p_request_id: string
-          p_exported_by: string
         }
         Returns: string
       }

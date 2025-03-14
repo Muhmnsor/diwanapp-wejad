@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { FileDown } from "lucide-react";
+import { exportRequestWithEnhancedData } from '../utils/requestExportUtils';
 import { toast } from 'sonner';
-import { exportRequest } from '../utils/requestImageExporter';
 
 interface RequestExportButtonProps {
   requestId: string;
@@ -24,38 +24,21 @@ export const RequestExportButton = ({
       return;
     }
     
-    if (isExporting) {
-      // Prevent multiple clicks during processing
-      toast.info("جاري تصدير الطلب، يرجى الانتظار...");
-      return;
-    }
-    
     try {
       setIsExporting(true);
-      
-      // Add a timeout to ensure the UI updates before heavy processing
-      setTimeout(async () => {
-        try {
-          await exportRequest(requestId);
-        } catch (error) {
-          console.error("Error during export:", error);
-          toast.error(`فشل تصدير الطلب: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`);
-        } finally {
-          // Small delay before resetting to prevent accidental double-clicks
-          setTimeout(() => {
-            setIsExporting(false);
-          }, 1000);
-        }
-      }, 100);
+      await exportRequestWithEnhancedData(requestId);
     } catch (error) {
-      console.error("Error initiating export process:", error);
-      toast.error("حدث خطأ أثناء بدء عملية التصدير");
+      console.error("Error exporting request:", error);
+      // Toast error is already handled in the export function
+    } finally {
       setIsExporting(false);
     }
   };
   
-  // Show export for all statuses except draft
-  const canExport = isEnabled && status && status !== 'draft';
+  // Disable export for pending requests or if explicitly disabled
+  const canExport = isEnabled && 
+    status && 
+    ['completed', 'approved', 'executed', 'implementation_complete'].includes(status);
   
   if (!canExport) return null;
   
@@ -65,10 +48,10 @@ export const RequestExportButton = ({
       size="sm"
       onClick={handleExport}
       disabled={isExporting}
-      className="gap-1 hover:bg-slate-100"
+      className="gap-1"
     >
       <FileDown className="h-4 w-4" />
-      {isExporting ? "جاري التصدير..." : "تصدير"}
+      {isExporting ? "جاري التصدير..." : "تصدير PDF"}
     </Button>
   );
 };

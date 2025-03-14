@@ -57,83 +57,53 @@ BEGIN
   WHERE r.id = p_request_id;
   
   -- Get approvals data with step and approver info
-  -- Using a CTE to avoid GROUP BY issues
-  WITH approval_data AS (
-    SELECT 
-      ra.id,
-      ra.status,
-      ra.comments,
-      ra.approved_at,
-      ra.created_at,
-      ws.id as step_id,
-      ws.step_name,
-      ws.step_type,
-      ws.approver_type,
-      p.id as approver_id,
-      p.display_name,
-      p.email
-    FROM request_approvals ra
-    LEFT JOIN workflow_steps ws ON ra.step_id = ws.id
-    LEFT JOIN profiles p ON ra.approver_id = p.id
-    WHERE ra.request_id = p_request_id
-    ORDER BY ra.created_at ASC
-  )
   SELECT json_agg(
     json_build_object(
-      'id', ad.id,
-      'status', ad.status,
-      'comments', ad.comments,
-      'approved_at', ad.approved_at,
-      'created_at', ad.created_at,
+      'id', ra.id,
+      'status', ra.status,
+      'comments', ra.comments,
+      'approved_at', ra.approved_at,
+      'created_at', ra.created_at,
       'step', json_build_object(
-        'id', ad.step_id,
-        'step_name', ad.step_name,
-        'step_type', ad.step_type,
-        'approver_type', ad.approver_type
+        'id', ws.id,
+        'step_name', ws.step_name,
+        'step_type', ws.step_type,
+        'approver_type', ws.approver_type
       ),
       'approver', json_build_object(
-        'id', ad.approver_id,
-        'display_name', ad.display_name,
-        'email', ad.email
+        'id', p.id,
+        'display_name', p.display_name,
+        'email', p.email
       )
     )
   )
   INTO v_approvals
-  FROM approval_data ad;
+  FROM request_approvals ra
+  LEFT JOIN workflow_steps ws ON ra.step_id = ws.id
+  LEFT JOIN profiles p ON ra.approver_id = p.id
+  WHERE ra.request_id = p_request_id
+  ORDER BY ra.created_at ASC;
   
-  -- Get attachments with uploader info
-  WITH attachment_data AS (
-    SELECT 
-      ra.id,
-      ra.file_name,
-      ra.file_path,
-      ra.file_type,
-      ra.file_size,
-      ra.created_at,
-      p.id as uploader_id,
-      p.display_name,
-      p.email
-    FROM request_attachments ra
-    LEFT JOIN profiles p ON ra.uploaded_by = p.id
-    WHERE ra.request_id = p_request_id
-  )
+  -- Get attachments
   SELECT json_agg(
     json_build_object(
-      'id', ad.id,
-      'file_name', ad.file_name,
-      'file_path', ad.file_path,
-      'file_type', ad.file_type,
-      'file_size', ad.file_size,
-      'created_at', ad.created_at,
+      'id', ra.id,
+      'file_name', ra.file_name,
+      'file_path', ra.file_path,
+      'file_type', ra.file_type,
+      'file_size', ra.file_size,
+      'created_at', ra.created_at,
       'uploaded_by', json_build_object(
-        'id', ad.uploader_id,
-        'display_name', ad.display_name,
-        'email', ad.email
+        'id', p.id,
+        'display_name', p.display_name,
+        'email', p.email
       )
     )
   )
   INTO v_attachments
-  FROM attachment_data ad;
+  FROM request_attachments ra
+  LEFT JOIN profiles p ON ra.uploaded_by = p.id
+  WHERE ra.request_id = p_request_id;
   
   -- Build the final result object
   v_result := json_build_object(
@@ -169,7 +139,7 @@ BEGIN
   ) VALUES (
     p_request_id,
     p_exported_by,
-    'png'
+    'pdf'
   ) RETURNING id INTO v_export_id;
   
   -- Return result
@@ -177,14 +147,14 @@ BEGIN
     'id', v_export_id,
     'request_id', p_request_id,
     'exported_by', p_exported_by,
-    'export_type', 'png'
+    'export_type', 'pdf'
   );
   
   RETURN v_result;
 END;
 $function$;
 
--- Create a table to track exports if it doesn't exist
+-- Create a table to track PDF exports
 CREATE TABLE IF NOT EXISTS public.request_export_logs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   request_id UUID REFERENCES public.requests(id) NOT NULL,
