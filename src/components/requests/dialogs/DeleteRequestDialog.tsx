@@ -42,7 +42,7 @@ export const DeleteRequestDialog = ({
     try {
       console.log("Attempting to delete request:", requestId);
       
-      // Call the delete_request RPC function which now leverages CASCADE deletion
+      // استدعاء دالة حذف الطلب التي تستخدم خاصية CASCADE للحذف
       const { data, error } = await supabase.rpc('delete_request', {
         p_request_id: requestId
       });
@@ -63,15 +63,15 @@ export const DeleteRequestDialog = ({
       
       console.log("Request deleted successfully:", data);
       
-      // Invalidate queries to refresh the data
+      // تحديث الاستعلامات لتحديث البيانات
       await queryClient.invalidateQueries({
         queryKey: ["requests"]
       });
       
-      // Show success message
+      // إظهار رسالة نجاح
       toast.success("تم حذف الطلب بنجاح");
       
-      // Close dialog
+      // إغلاق نافذة الحوار
       onOpenChange(false);
     } catch (error: any) {
       console.error("Exception deleting request:", error);

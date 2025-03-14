@@ -84,7 +84,7 @@ export const AdminWorkflows = () => {
 
   const deleteRequestTypeMutation = useMutation({
     mutationFn: async (typeId: string) => {
-      // Directly call the RPC function which handles all dependency validation internally
+      // الاعتماد مباشرة على دالة حذف نوع الطلب في قاعدة البيانات
       const { data, error } = await supabase
         .rpc('delete_request_type', { p_request_type_id: typeId });
       
