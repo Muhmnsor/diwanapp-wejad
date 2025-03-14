@@ -142,6 +142,30 @@ export const checkRequestTypeDependencies = async (requestTypeId: string) => {
 };
 
 /**
+ * Fixes orphaned request types that have invalid default_workflow_id references
+ * @returns Result of the repair operation
+ */
+export const fixOrphanedRequestTypes = async () => {
+  try {
+    console.log('Fixing orphaned request types...');
+    
+    const { data, error } = await supabase
+      .rpc('fix_orphaned_request_types');
+    
+    if (error) {
+      console.error("Error fixing orphaned request types:", error);
+      throw error;
+    }
+    
+    console.log("Orphaned request types fixed:", data);
+    return data;
+  } catch (error) {
+    console.error("Error in fixOrphanedRequestTypes:", error);
+    throw error;
+  }
+};
+
+/**
  * Deletes a request type and all its associated workflows and steps
  * using the database function that properly handles foreign key constraints
  * @param requestTypeId The ID of the request type to delete
@@ -150,6 +174,9 @@ export const checkRequestTypeDependencies = async (requestTypeId: string) => {
 export const deleteRequestType = async (requestTypeId: string) => {
   try {
     console.log(`Deleting request type ID: ${requestTypeId}`);
+    
+    // First attempt to fix any orphaned request types
+    await fixOrphanedRequestTypes();
     
     // Call the RPC function to delete the request type
     const { data, error } = await supabase

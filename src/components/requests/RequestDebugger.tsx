@@ -1,8 +1,8 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { validateWorkflow, validateAndRepairRequest, repairAllRequestWorkflows, repairWorkflow } from './utils/workflowValidator';
-import { deleteRequestType } from './utils/workflowHelpers';
+import { validateWorkflow, validateAndRepairRequest, repairAllRequestWorkflows, repairWorkflow, fixOrphanedRequestTypes } from './utils/workflowValidator';
+import { deleteRequestType, fixOrphanedRequestTypes as fixRequestTypes } from './utils/workflowHelpers';
 import { toast } from 'sonner';
 
 interface RequestDebuggerProps {
@@ -183,6 +183,19 @@ export const RequestDebugger = ({ enableRepair = false }: RequestDebuggerProps) 
         }
       },
       
+      // Fix orphaned request types
+      fixOrphanedRequestTypes: async () => {
+        console.log('🔧 Fixing orphaned request types...');
+        setIsRepairing(true);
+        try {
+          const result = await fixRequestTypes();
+          console.log('Fix result:', result);
+          return result;
+        } finally {
+          setIsRepairing(false);
+        }
+      },
+      
       // Get debug info
       getDebugInfo: () => {
         return debugInfo;
@@ -209,6 +222,7 @@ export const RequestDebugger = ({ enableRepair = false }: RequestDebuggerProps) 
     console.log('  workflowDebug.repairRequest(requestId)');
     console.log('  workflowDebug.repairAllRequests()');
     console.log('  workflowDebug.repairWorkflow(workflowId)');
+    console.log('  workflowDebug.fixOrphanedRequestTypes()');
     console.log('  workflowDebug.getDebugInfo()');
     console.log('  workflowDebug.deleteRequestType(requestTypeId)');
     
