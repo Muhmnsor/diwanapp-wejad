@@ -103,6 +103,49 @@ export const validateRequestWorkflow = async (requestTypeId: string): Promise<bo
   }
 };
 
+/**
+ * Checks if a request type has any dependencies (associated workflows or requests)
+ * @param requestTypeId The ID of the request type to check
+ * @returns Object containing workflows and requests associated with the type
+ */
+export const checkRequestTypeDependencies = async (requestTypeId: string) => {
+  try {
+    console.log(`Checking dependencies for request type ID: ${requestTypeId}`);
+    
+    // Check for associated workflows
+    const { data: workflows, error: workflowsError } = await supabase
+      .from('request_workflows')
+      .select('id, name')
+      .eq('request_type_id', requestTypeId);
+    
+    if (workflowsError) {
+      console.error('Error checking workflows:', workflowsError);
+      throw workflowsError;
+    }
+    
+    // Check for requests using this type
+    const { data: requests, error: requestsError } = await supabase
+      .from('requests')
+      .select('id, title')
+      .eq('request_type_id', requestTypeId);
+    
+    if (requestsError) {
+      console.error('Error checking requests:', requestsError);
+      throw requestsError;
+    }
+    
+    return { 
+      workflows: workflows || [], 
+      requests: requests || [],
+      hasWorkflows: workflows && workflows.length > 0,
+      hasRequests: requests && requests.length > 0,
+      hasDependencies: (workflows && workflows.length > 0) || (requests && requests.length > 0)
+    };
+  } catch (error) {
+    console.error('Exception in checkRequestTypeDependencies:', error);
+    throw error;
+  }
+};
+
 // Expose additional validation functions from workflowValidator
 export { validateWorkflow, validateRequestType, validateAndRepairRequest, repairWorkflow } from './workflowValidator';
-

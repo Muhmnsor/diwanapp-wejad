@@ -29,6 +29,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WorkflowDebugPanel } from "./workflow/debug/WorkflowDebugPanel";
+import { checkRequestTypeDependencies } from "./utils/workflowHelpers";
 
 export const AdminWorkflows = () => {
   const queryClient = useQueryClient();
@@ -39,6 +40,12 @@ export const AdminWorkflows = () => {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("request-types");
+  const [dependencies, setDependencies] = useState<{
+    workflows: any[];
+    requests: any[];
+    hasWorkflows: boolean;
+    hasRequests: boolean;
+  } | null>(null);
 
   const { data: requestTypes, isLoading: typesLoading } = useQuery({
     queryKey: ["requestTypes"],
@@ -77,11 +84,62 @@ export const AdminWorkflows = () => {
     toast.success("تم حفظ خطوات سير العمل بنجاح");
   };
 
-  const confirmDeleteRequestType = (requestType: RequestType) => {
+  const confirmDeleteRequestType = async (requestType: RequestType) => {
     setSelectedRequestType(requestType);
     setDeleteError(null);
+    
+    try {
+      // Check for dependencies before showing delete confirmation
+      const deps = await checkRequestTypeDependencies(requestType.id);
+      setDependencies(deps);
+      
+      if (deps.hasDependencies) {
+        let errorMessage = "";
+        
+        if (deps.hasWorkflows) {
+          errorMessage += `لا يمكن حذف نوع الطلب لأنه مرتبط بـ ${deps.workflows.length} من مسارات سير العمل. قم بحذف مسارات سير العمل أولاً.`;
+        }
+        
+        if (deps.hasRequests) {
+          if (errorMessage) errorMessage += "\n";
+          errorMessage += `لا يمكن حذف نوع الطلب لأنه مرتبط بـ ${deps.requests.length} من الطلبات الموجودة.`;
+        }
+        
+        setDeleteError(errorMessage);
+      }
+    } catch (error) {
+      console.error("Error checking dependencies:", error);
+      setDeleteError("حدث خطأ أثناء التحقق من العلاقات المرتبطة بنوع الطلب");
+    }
+    
     setShowDeleteDialog(true);
   };
+
+  const deleteWorkflows = useMutation({
+    mutationFn: async (workflowIds: string[]) => {
+      const results = [];
+      for (const id of workflowIds) {
+        const { data, error } = await supabase
+          .from('request_workflows')
+          .delete()
+          .eq('id', id);
+        
+        if (error) throw error;
+        results.push(data);
+      }
+      return results;
+    },
+    onSuccess: () => {
+      // After successfully deleting workflows, try to delete the request type
+      if (selectedRequestType) {
+        deleteRequestType.mutate(selectedRequestType.id);
+      }
+    },
+    onError: (error: any) => {
+      console.error("Error deleting workflows:", error);
+      setDeleteError(`حدث خطأ أثناء حذف مسارات سير العمل: ${error.message || "خطأ غير معروف"}`);
+    }
+  });
 
   const deleteRequestType = useMutation({
     mutationFn: async (typeId: string) => {
@@ -108,6 +166,16 @@ export const AdminWorkflows = () => {
       }
     }
   });
+
+  const handleForceDelete = () => {
+    if (dependencies?.hasWorkflows && selectedRequestType) {
+      const workflowIds = dependencies.workflows.map(wf => wf.id);
+      toast.info("جارٍ حذف مسارات سير العمل المرتبطة...");
+      deleteWorkflows.mutate(workflowIds);
+    } else if (selectedRequestType) {
+      deleteRequestType.mutate(selectedRequestType.id);
+    }
+  };
 
   const toggleDebugPanel = () => {
     setShowDebugPanel(!showDebugPanel);
@@ -251,15 +319,34 @@ export const AdminWorkflows = () => {
             </Alert>
           )}
           
+          {dependencies?.hasWorkflows && !dependencies.hasRequests && (
+            <Alert variant="warning" className="mt-4 bg-amber-50 text-amber-800 border-amber-200">
+              <AlertDescription>
+                هذا النوع مرتبط بـ {dependencies.workflows.length} من مسارات سير العمل.
+                هل ترغب في المتابعة وحذف مسارات سير العمل المرتبطة أيضاً؟
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setDeleteError(null)}>إلغاء</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => selectedRequestType && deleteRequestType.mutate(selectedRequestType.id)}
-              disabled={deleteRequestType.isPending}
-              className="bg-red-500 hover:bg-red-600"
-            >
-              {deleteRequestType.isPending ? "جاري الحذف..." : "حذف"}
-            </AlertDialogAction>
+            {dependencies?.hasWorkflows && !dependencies.hasRequests ? (
+              <AlertDialogAction
+                onClick={handleForceDelete}
+                disabled={deleteRequestType.isPending || deleteWorkflows.isPending}
+                className="bg-red-500 hover:bg-red-600"
+              >
+                {deleteRequestType.isPending || deleteWorkflows.isPending ? "جاري الحذف..." : "حذف مع مسارات سير العمل"}
+              </AlertDialogAction>
+            ) : !dependencies?.hasRequests ? (
+              <AlertDialogAction
+                onClick={() => selectedRequestType && deleteRequestType.mutate(selectedRequestType.id)}
+                disabled={deleteRequestType.isPending}
+                className="bg-red-500 hover:bg-red-600"
+              >
+                {deleteRequestType.isPending ? "جاري الحذف..." : "حذف"}
+              </AlertDialogAction>
+            ) : null}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

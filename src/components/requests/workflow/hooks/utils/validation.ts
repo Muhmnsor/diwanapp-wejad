@@ -32,3 +32,23 @@ export const checkEndpointAvailability = async (url: string): Promise<boolean> =
   }
 };
 
+/**
+ * Parse error message from Supabase RPC calls
+ * @param error The error response from Supabase
+ * @returns A user-friendly error message
+ */
+export const parseRPCErrorMessage = (error: any): string => {
+  if (!error) return "حدث خطأ غير معروف";
+  
+  // Check for specific error code patterns in the message
+  if (error.message && error.message.includes("FK_")) {
+    if (error.message.includes("request_workflows")) {
+      return "لا يمكن حذف نوع الطلب لأنه مرتبط بمسارات سير عمل. قم بحذف مسارات سير العمل أولاً.";
+    }
+    if (error.message.includes("requests")) {
+      return "لا يمكن حذف نوع الطلب لأنه مرتبط بطلبات موجودة.";
+    }
+  }
+  
+  return error.message || "حدث خطأ أثناء تنفيذ العملية";
+};
