@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, InfoIcon, MessageCircle } from "lucide-react";
+import { AlertCircle, InfoIcon } from "lucide-react";
 import { useAuthStore } from "@/store/refactored-auth";
 
 interface RequestRejectDialogProps {
@@ -38,30 +38,25 @@ export const RequestRejectDialog = ({
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   
-  const isOpinion = stepType === 'opinion';
-  
   // Check if this is a self-rejection (user is rejecting their own request)
   const isSelfRejection = user?.id === requesterId;
   
   const rejectMutation = useMutation({
     mutationFn: async () => {
       if (!stepId) {
-        throw new Error(isOpinion 
-          ? "لا يمكن إبداء الرأي على هذا الطلب لأنه لا يوجد خطوة حالية"
-          : "لا يمكن رفض هذا الطلب لأنه لا يوجد خطوة حالية"
-        );
+        throw new Error("لا يمكن رفض هذا الطلب لأنه لا يوجد خطوة حالية");
       }
       
       if (!comments || comments.trim() === '') {
-        throw new Error(isOpinion ? "يجب إدخال رأيك" : "يجب إدخال سبب الرفض");
+        throw new Error(stepType === 'opinion' ? "يجب إدخال رأيك" : "يجب إدخال سبب الرفض");
       }
       
       // Self-rejection warning for non-opinion steps
-      if (isSelfRejection && !isOpinion) {
+      if (isSelfRejection && stepType !== 'opinion') {
         throw new Error("لا يمكن رفض طلبك الخاص إلا في حالة خطوات الرأي فقط");
       }
       
-      console.log(`${isOpinion ? "Submitting negative opinion" : "Rejecting request"}: ${requestId}, step: ${stepId}, type: ${stepType}, comments: "${comments}"`);
+      console.log(`Rejecting request: ${requestId}, step: ${stepId}, type: ${stepType}, comments: "${comments}"`);
 
       // Add more metadata to help with debugging
       const metadata = {
@@ -86,11 +81,11 @@ export const RequestRejectDialog = ({
         });
         
       if (error) {
-        console.error(`Error ${isOpinion ? "submitting opinion" : "rejecting request"}:`, error);
+        console.error("Error rejecting request:", error);
         throw error;
       }
       
-      console.log(`${isOpinion ? "Opinion" : "Rejection"} result:`, data);
+      console.log("Rejection result:", data);
       return data;
     },
     onSuccess: (result) => {
@@ -100,9 +95,8 @@ export const RequestRejectDialog = ({
         return;
       }
       
-      // Show appropriate success message based on step type
-      const successMessage = isOpinion
-        ? "تم تسجيل رأيك السلبي بنجاح" 
+      const successMessage = stepType === 'opinion' 
+        ? "تم تسجيل رأيك بنجاح" 
         : "تم رفض الطلب بنجاح";
       
       toast.success(successMessage);
@@ -115,20 +109,20 @@ export const RequestRejectDialog = ({
       queryClient.invalidateQueries({ queryKey: ['request-details', requestId] });
       
       // For opinion steps, make sure the request is immediately removed from the incoming list
-      if (isOpinion) {
+      if (stepType === 'opinion') {
         // Force refetch rather than just invalidate
         queryClient.invalidateQueries({ queryKey: ['requests', 'incoming'] });
       }
     },
     onError: (error) => {
-      console.error(`Error ${isOpinion ? "submitting opinion" : "rejecting request"}:`, error);
-      toast.error(`حدث خطأ: ${error.message}`);
+      console.error("Error rejecting request:", error);
+      toast.error(`حدث خطأ أثناء رفض الطلب: ${error.message}`);
     }
   });
 
   const handleReject = () => {
     if (!comments.trim()) {
-      toast.error(isOpinion ? "يجب إدخال رأيك" : "يجب إدخال سبب الرفض");
+      toast.error(stepType === 'opinion' ? "يجب إدخال رأيك" : "يجب إدخال سبب الرفض");
       return;
     }
     rejectMutation.mutate();
@@ -139,16 +133,16 @@ export const RequestRejectDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isOpinion ? 'إبداء الرأي على الطلب' : 'رفض الطلب'}
+            {stepType === 'opinion' ? 'إبداء الرأي على الطلب' : 'رفض الطلب'}
           </DialogTitle>
           <DialogDescription>
-            {isOpinion 
+            {stepType === 'opinion' 
               ? 'الرجاء إبداء رأيك حول هذا الطلب' 
               : 'يرجى توضيح سبب رفض هذا الطلب'}
           </DialogDescription>
         </DialogHeader>
         
-        {isSelfRejection && !isOpinion && (
+        {isSelfRejection && stepType !== 'opinion' && (
           <Alert variant="destructive" className="my-2">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>تنبيه</AlertTitle>
@@ -158,7 +152,7 @@ export const RequestRejectDialog = ({
           </Alert>
         )}
         
-        {isOpinion && (
+        {stepType === 'opinion' && (
           <Alert variant="default" className="my-2 bg-blue-50 text-blue-700 border-blue-200">
             <InfoIcon className="h-4 w-4" />
             <AlertTitle>معلومة</AlertTitle>
@@ -170,11 +164,11 @@ export const RequestRejectDialog = ({
         
         <div className="py-4">
           <label htmlFor="comments" className="block text-sm font-medium mb-2 text-destructive">
-            {isOpinion ? 'رأيك (مطلوب) *' : 'سبب الرفض (مطلوب) *'}
+            {stepType === 'opinion' ? 'رأيك (مطلوب) *' : 'سبب الرفض (مطلوب) *'}
           </label>
           <Textarea
             id="comments"
-            placeholder={isOpinion ? 'اكتب رأيك هنا...' : 'اكتب سبب الرفض هنا...'}
+            placeholder={stepType === 'opinion' ? 'اكتب رأيك هنا...' : 'اكتب سبب الرفض هنا...'}
             value={comments}
             onChange={(e) => setComments(e.target.value)}
             rows={4}
@@ -183,7 +177,7 @@ export const RequestRejectDialog = ({
           />
           {!comments.trim() && (
             <p className="text-sm text-destructive mt-1">
-              {isOpinion ? 'يجب إدخال رأيك' : 'يجب إدخال سبب الرفض'}
+              {stepType === 'opinion' ? 'يجب إدخال رأيك' : 'يجب إدخال سبب الرفض'}
             </p>
           )}
         </div>
@@ -193,16 +187,10 @@ export const RequestRejectDialog = ({
           </Button>
           <Button 
             onClick={handleReject} 
-            disabled={rejectMutation.isPending || !comments.trim() || (isSelfRejection && !isOpinion)}
-            className={isOpinion ? "bg-blue-600 hover:bg-blue-700" : ""}
-            variant={isOpinion ? "default" : "destructive"}
+            disabled={rejectMutation.isPending || !comments.trim() || (isSelfRejection && stepType !== 'opinion')}
+            variant="destructive"
           >
-            {rejectMutation.isPending 
-              ? "جاري المعالجة..." 
-              : isOpinion 
-                ? 'إرسال رأي سلبي' 
-                : 'رفض الطلب'
-            }
+            {rejectMutation.isPending ? "جاري المعالجة..." : stepType === 'opinion' ? 'إرسال الرأي' : 'رفض الطلب'}
           </Button>
         </DialogFooter>
       </DialogContent>

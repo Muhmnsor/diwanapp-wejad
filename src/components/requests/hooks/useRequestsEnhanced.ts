@@ -84,16 +84,10 @@ export const useRequestsEnhanced = () => {
   // Mutation for approving requests
   const approveRequest = useMutation({
     mutationFn: async ({ requestId, stepId, comments, metadata }: { requestId: string, stepId?: string, comments?: string, metadata?: any }) => {
-      // Check if this is an opinion or decision step
-      const isOpinion = metadata?.step_type === 'opinion';
-      
-      console.log(`${isOpinion ? "Submitting positive opinion" : "Approving request"}: ${requestId}, step: ${stepId}, comments: ${comments}`);
+      console.log(`Approving request: ${requestId}, step: ${stepId}, comments: ${comments}`);
       
       if (!stepId) {
-        throw new Error(isOpinion 
-          ? "لا يمكن إبداء الرأي على هذا الطلب لأنه لا يوجد خطوة حالية" 
-          : "لا يمكن الموافقة على هذا الطلب لأنه لا يوجد خطوة حالية"
-        );
+        throw new Error("لا يمكن الموافقة على هذا الطلب لأنه لا يوجد خطوة حالية");
       }
       
       // Use the RPC function 
@@ -111,13 +105,6 @@ export const useRequestsEnhanced = () => {
       // Check if this was an opinion submission
       const isOpinion = data?.step_type === 'opinion';
       
-      // Show appropriate toast message
-      if (isOpinion) {
-        toast.success("تم تسجيل رأيك الإيجابي بنجاح");
-      } else {
-        toast.success("تمت الموافقة على الطلب بنجاح");
-      }
-      
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['requests'] });
       
@@ -134,20 +121,14 @@ export const useRequestsEnhanced = () => {
   // Mutation for rejecting requests
   const rejectRequest = useMutation({
     mutationFn: async ({ requestId, stepId, comments, metadata }: { requestId: string, stepId?: string, comments: string, metadata?: any }) => {
-      // Check if this is an opinion or decision step
-      const isOpinion = metadata?.step_type === 'opinion';
-      
-      console.log(`${isOpinion ? "Submitting negative opinion" : "Rejecting request"}: ${requestId}, step: ${stepId}, comments: ${comments}`);
+      console.log(`Rejecting request: ${requestId}, step: ${stepId}, comments: ${comments}`);
       
       if (!stepId) {
-        throw new Error(isOpinion 
-          ? "لا يمكن إبداء الرأي على هذا الطلب لأنه لا يوجد خطوة حالية" 
-          : "لا يمكن رفض هذا الطلب لأنه لا يوجد خطوة حالية"
-        );
+        throw new Error("لا يمكن رفض هذا الطلب لأنه لا يوجد خطوة حالية");
       }
       
       if (!comments || comments.trim() === '') {
-        throw new Error(isOpinion ? "يجب إدخال رأيك" : "يجب إدخال سبب الرفض");
+        throw new Error("يجب إدخال سبب الرفض");
       }
       
       // Use the RPC function
@@ -164,13 +145,6 @@ export const useRequestsEnhanced = () => {
     onSuccess: (data) => {
       // Check if this was an opinion submission
       const isOpinion = data?.step_type === 'opinion';
-      
-      // Show appropriate toast message
-      if (isOpinion) {
-        toast.success("تم تسجيل رأيك السلبي بنجاح");
-      } else {
-        toast.success("تم رفض الطلب بنجاح");
-      }
       
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['requests'] });

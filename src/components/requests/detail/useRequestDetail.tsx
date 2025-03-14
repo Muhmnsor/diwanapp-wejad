@@ -141,10 +141,7 @@ export const useRequestDetail = (requestId: string) => {
   };
 
   const handleApproveClick = () => {
-    const currentStep = data?.current_step;
-    const isOpinion = currentStep?.step_type === 'opinion';
-    
-    if (!isCurrentApprover() && !isOpinion) {
+    if (!isCurrentApprover() && data?.current_step?.step_type !== 'opinion') {
       toast.error("ليس لديك الصلاحية للموافقة على هذا الطلب");
       return;
     }
@@ -152,10 +149,7 @@ export const useRequestDetail = (requestId: string) => {
   };
 
   const handleRejectClick = () => {
-    const currentStep = data?.current_step;
-    const isOpinion = currentStep?.step_type === 'opinion';
-    
-    if (!isCurrentApprover() && !isOpinion) {
+    if (!isCurrentApprover() && data?.current_step?.step_type !== 'opinion') {
       toast.error("ليس لديك الصلاحية لرفض هذا الطلب");
       return;
     }
