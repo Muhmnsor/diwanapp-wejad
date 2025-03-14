@@ -2,50 +2,45 @@
 import { supabase } from "@/integrations/supabase/client";
 import { exportRequestToPdf } from "./requestPdfExporter";
 import { toast } from "sonner";
+import { loadFonts } from "@/utils/pdf/arabicUtils";
 
 /**
  * Fetches enhanced request data for PDF export and records the export action
  */
 export const fetchRequestExportData = async (requestId: string): Promise<any> => {
   try {
-    // Show toast to indicate data fetching has started
-    toast.info("جاري جلب بيانات الطلب...", { id: "fetch-request-data" });
-    
-    console.log("Fetching export data for request:", requestId);
+    console.log("Fetching request data for export:", requestId);
     
     // Get enhanced data for PDF export
     const { data, error } = await supabase
       .rpc('get_request_pdf_export_data', { p_request_id: requestId });
     
     if (error) {
-      console.error("Error fetching request data for export:", error);
-      toast.error("خطأ في جلب بيانات الطلب", { id: "fetch-request-data" });
+      console.error("Supabase error fetching request data:", error);
       throw new Error(error.message);
     }
     
     if (!data) {
-      toast.error("لا توجد بيانات للطلب المطلوب", { id: "fetch-request-data" });
+      console.error("No data returned for request:", requestId);
       throw new Error("لا توجد بيانات للطلب المطلوب");
     }
     
-    // Log successful data retrieval
-    console.log("Successfully fetched request export data:", {
-      requestId,
-      hasRequestData: !!data.request,
-      approvalsCount: data.approvals?.length || 0
-    });
-    
-    toast.success("تم جلب البيانات بنجاح", { id: "fetch-request-data" });
+    console.log("Successfully retrieved request data:", data);
     
     // Record the export action (optional, only if you want to track exports)
     try {
       const userId = (await supabase.auth.getSession()).data.session?.user.id;
       if (userId) {
-        await supabase.rpc('record_request_pdf_export', {
+        const { data: logData, error: logError } = await supabase.rpc('record_request_pdf_export', {
           p_request_id: requestId,
           p_exported_by: userId
         });
-        console.log("Export action recorded for request:", requestId);
+        
+        if (logError) {
+          console.warn("Failed to record export action:", logError);
+        } else {
+          console.log("Export action recorded:", logData);
+        }
       }
     } catch (recordError) {
       // Log but don't block the export if recording fails
@@ -64,23 +59,28 @@ export const fetchRequestExportData = async (requestId: string): Promise<any> =>
  */
 export const exportRequestWithEnhancedData = async (requestId: string): Promise<void> => {
   try {
-    console.log("Starting export process for request:", requestId);
+    // Pre-load the Arabic fonts while we're fetching the data
+    loadFonts().catch(err => console.error("Font preloading error:", err));
     
     // Fetch all needed data
+    console.log("Starting data fetch for request:", requestId);
     const data = await fetchRequestExportData(requestId);
     
     if (!data.request) {
+      console.error("Request data is missing in the response:", data);
       toast.error("تعذر العثور على بيانات الطلب");
       return;
     }
     
-    console.log("Request data fetched, proceeding to PDF generation");
+    console.log("Preparing to generate PDF for request:", data.request.id);
     
     // Export to PDF
     await exportRequestToPdf(data);
+    console.log("PDF export completed successfully");
     
   } catch (error: any) {
     console.error("Error exporting request:", error);
     toast.error(`حدث خطأ أثناء تصدير الطلب: ${error.message || "خطأ غير معروف"}`);
+    throw error; // Re-throw to allow the button component to handle it
   }
 };

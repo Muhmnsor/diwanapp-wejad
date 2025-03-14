@@ -11,19 +11,12 @@ import { useEffect, useState } from "react";
 import { isDeveloper } from "./utils/developer/roleManagement";
 
 const AppRoutes = () => {
-  const { isAuthenticated, user, isLoading } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const [showDevTools, setShowDevTools] = useState(false);
-  const [isCheckingDeveloper, setIsCheckingDeveloper] = useState(false);
   
   useEffect(() => {
     const checkDeveloperStatus = async () => {
-      if (!isAuthenticated || !user || isLoading) {
-        setShowDevTools(false);
-        return;
-      }
-      
-      try {
-        setIsCheckingDeveloper(true);
+      if (isAuthenticated && user) {
         const hasDeveloperRole = await isDeveloper(user.id);
         setShowDevTools(hasDeveloperRole);
         
@@ -34,23 +27,18 @@ const AppRoutes = () => {
           role: user.role,
           hasDeveloperRole
         });
-      } catch (error) {
-        console.error('Error checking developer status:', error);
+      } else {
         setShowDevTools(false);
-      } finally {
-        setIsCheckingDeveloper(false);
       }
     };
     
     checkDeveloperStatus();
-  }, [isAuthenticated, user, isLoading]);
+  }, [isAuthenticated, user]);
   
   console.log('AppRoutes - Current auth state:', { 
     isAuthenticated, 
     userEmail: user?.email,
-    userRole: user?.role,
-    isLoading,
-    isCheckingDeveloper
+    userRole: user?.role 
   });
 
   return (

@@ -24,17 +24,34 @@ export const RequestExportButton = ({
       return;
     }
     
+    if (isExporting) {
+      // Prevent multiple clicks during processing
+      toast.info("جاري تصدير الطلب، يرجى الانتظار...");
+      return;
+    }
+    
     try {
       setIsExporting(true);
-      toast.info("جاري تحضير البيانات للتصدير...");
-      await exportRequestWithEnhancedData(requestId);
+      toast.info("جاري تجهيز ملف PDF...");
+      
+      // Add a timeout to ensure the UI updates before heavy processing
+      setTimeout(async () => {
+        try {
+          await exportRequestWithEnhancedData(requestId);
+        } catch (error) {
+          console.error("Error during PDF export:", error);
+          toast.error(`فشل تصدير الطلب: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`);
+        } finally {
+          // Small delay before resetting to prevent accidental double-clicks
+          setTimeout(() => {
+            setIsExporting(false);
+          }, 1000);
+        }
+      }, 100);
     } catch (error) {
-      console.error("Error exporting request:", error);
-      toast.error("فشل تصدير الطلب. الرجاء المحاولة مرة أخرى");
-    } finally {
-      setTimeout(() => {
-        setIsExporting(false);
-      }, 1000); // Small delay to ensure UI feedback is visible
+      console.error("Error initiating export process:", error);
+      toast.error("حدث خطأ أثناء بدء عملية التصدير");
+      setIsExporting(false);
     }
   };
   
