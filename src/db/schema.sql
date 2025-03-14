@@ -1,7 +1,5 @@
 
-
--- تحديث لعملية حذف أنواع الطلبات مع التعامل مع جميع العلاقات المرتبطة
--- Function to delete a request type and its related records
+-- تبسيط دالة حذف أنواع الطلبات مع التعامل فقط مع الخطوات الأساسية
 CREATE OR REPLACE FUNCTION public.delete_request_type(p_request_type_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -10,11 +8,9 @@ AS $function$
 DECLARE
   v_is_admin boolean;
   v_result jsonb;
-  v_request_type_data jsonb;
   v_related_requests int;
-  v_error_message text;
 BEGIN
-  -- Check if user is admin or developer
+  -- التحقق من صلاحيات المستخدم
   SELECT EXISTS (
     SELECT 1 
     FROM user_roles ur
@@ -23,7 +19,7 @@ BEGIN
     AND (r.name IN ('admin', 'app_admin', 'developer'))
   ) INTO v_is_admin;
   
-  -- Only allow admins to delete request types
+  -- السماح فقط للمشرفين بحذف أنواع الطلبات
   IF NOT v_is_admin THEN
     RETURN jsonb_build_object(
       'success', false,
@@ -31,7 +27,7 @@ BEGIN
     );
   END IF;
 
-  -- Check if there are any requests using this request type
+  -- التحقق من وجود طلبات مرتبطة بهذا النوع
   SELECT COUNT(*)
   INTO v_related_requests
   FROM requests
@@ -44,161 +40,60 @@ BEGIN
     );
   END IF;
 
-  -- Get request type data before deletion for logging
-  SELECT json_build_object(
-    'id', rt.id,
-    'name', rt.name,
-    'description', rt.description,
-    'is_active', rt.is_active
-  )::jsonb
-  INTO v_request_type_data
-  FROM request_types rt
-  WHERE rt.id = p_request_type_id;
-
-  IF v_request_type_data IS NULL THEN
+  -- التأكد من وجود نوع الطلب
+  IF NOT EXISTS (SELECT 1 FROM request_types WHERE id = p_request_type_id) THEN
     RETURN jsonb_build_object(
       'success', false,
       'message', 'نوع الطلب غير موجود'
     );
   END IF;
 
-  -- Begin transaction to delete request type (CASCADE takes care of dependents)
-  BEGIN
-    -- محاولة تحديث سجلات التتبع للإشارة إلى أن نوع الطلب تم حذفه
-    -- ولكن إذا فشلت، سنتابع العملية بدون توقف
-    BEGIN
-      -- تحديث سجلات تتبع سير العمل لتجنب أخطاء قيود المفاتيح الخارجية
-      IF EXISTS (
-        SELECT 1
-        FROM information_schema.tables
-        WHERE table_schema = 'public' AND table_name = 'request_workflow_operation_logs'
-      ) THEN
-        UPDATE request_workflow_operation_logs
-        SET request_type_id = NULL
-        WHERE request_type_id = p_request_type_id;
-      END IF;
-    EXCEPTION WHEN OTHERS THEN
-      -- إذا فشلت عمليات التحديث، لا نريد إيقاف العملية
-      RAISE NOTICE 'Failed to update log references: %', SQLERRM;
-    END;
-    
-    -- ببساطة احذف نوع الطلب ودع CASCADE يتعامل مع الباقي
-    DELETE FROM request_types WHERE id = p_request_type_id;
-    
-    -- محاولة تسجيل عملية الحذف
-    BEGIN
-      IF EXISTS (
-        SELECT 1
-        FROM information_schema.tables
-        WHERE table_schema = 'public' AND table_name = 'request_workflow_operation_logs'
-      ) THEN
-        INSERT INTO request_workflow_operation_logs(
-          operation_type,
-          user_id,
-          request_data,
-          response_data,
-          details
-        ) VALUES (
-          'delete_request_type',
-          auth.uid(),
-          v_request_type_data,
-          jsonb_build_object(
-            'deleted_by', auth.uid(),
-            'deleted_at', now()
-          ),
-          'تم حذف نوع الطلب بنجاح'
-        );
-      END IF;
-    EXCEPTION WHEN OTHERS THEN
-      -- إذا فشل التسجيل، فقط استمر في عملية الحذف
-      RAISE NOTICE 'Failed to log workflow operation: %', SQLERRM;
-    END;
+  -- حذف نوع الطلب مباشرة والاعتماد على CASCADE للعلاقات
+  DELETE FROM request_types WHERE id = p_request_type_id;
 
-    v_result := jsonb_build_object(
-      'success', true,
-      'message', 'تم حذف نوع الطلب بنجاح',
-      'request_type_id', p_request_type_id
-    );
+  -- إعادة نتيجة نجاح العملية
+  RETURN jsonb_build_object(
+    'success', true,
+    'message', 'تم حذف نوع الطلب بنجاح',
+    'request_type_id', p_request_type_id
+  );
 
-    RETURN v_result;
-  EXCEPTION WHEN OTHERS THEN
-    -- سجل الخطأ وأعد رسالة الفشل
-    GET STACKED DIAGNOSTICS v_error_message = MESSAGE_TEXT;
-    
-    BEGIN
-      IF EXISTS (
-        SELECT 1
-        FROM information_schema.tables
-        WHERE table_schema = 'public' AND table_name = 'request_workflow_operation_logs'
-      ) THEN
-        INSERT INTO request_workflow_operation_logs(
-          operation_type,
-          user_id,
-          request_data,
-          error_message,
-          details
-        ) VALUES (
-          'delete_request_type_error',
-          auth.uid(),
-          v_request_type_data,
-          v_error_message,
-          'فشل حذف نوع الطلب'
-        );
-      END IF;
-    EXCEPTION WHEN OTHERS THEN
-      -- إذا فشل تسجيل الخطأ، فقط استمر بإعادة الخطأ
-      RAISE NOTICE 'Failed to log workflow error: %', SQLERRM;
-    END;
-
-    RETURN jsonb_build_object(
-      'success', false,
-      'message', 'حدث خطأ أثناء حذف نوع الطلب: ' || v_error_message,
-      'error_details', v_error_message
-    );
-  END;
+EXCEPTION WHEN OTHERS THEN
+  -- إعادة رسالة خطأ مبسطة
+  RETURN jsonb_build_object(
+    'success', false,
+    'message', 'حدث خطأ أثناء حذف نوع الطلب: ' || SQLERRM
+  );
 END;
 $function$;
 
 
--- تحديث لدالة حذف الطلبات باستخدام خاصية الحذف المتتالي CASCADE
+-- تبسيط دالة حذف الطلبات
 CREATE OR REPLACE FUNCTION public.delete_request(p_request_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
 AS $function$
 DECLARE
-  v_request jsonb;
   v_user_id uuid := auth.uid();
   v_has_permission boolean;
-  v_error_message text;
 BEGIN
-  -- Get request data for logging
-  SELECT jsonb_build_object(
-    'id', id,
-    'title', title,
-    'request_type_id', request_type_id,
-    'requester_id', requester_id,
-    'workflow_id', workflow_id
-  )
-  INTO v_request
-  FROM requests
-  WHERE id = p_request_id;
-  
-  IF v_request IS NULL THEN
+  -- التحقق من وجود الطلب
+  IF NOT EXISTS (SELECT 1 FROM requests WHERE id = p_request_id) THEN
     RETURN jsonb_build_object(
       'success', false,
       'message', 'الطلب غير موجود'
     );
   END IF;
   
-  -- Check if user is admin or the request creator
+  -- التحقق إذا كان المستخدم مشرف أو منشئ الطلب
   SELECT EXISTS (
     SELECT 1 
     FROM user_roles ur
     JOIN roles r ON r.id = ur.role_id
     WHERE ur.user_id = v_user_id
     AND (r.name IN ('admin', 'app_admin', 'developer'))
-  ) OR v_user_id = (v_request->>'requester_id')::uuid
+  ) OR v_user_id = (SELECT requester_id FROM requests WHERE id = p_request_id)
   INTO v_has_permission;
   
   IF NOT v_has_permission THEN
@@ -208,39 +103,15 @@ BEGIN
     );
   END IF;
   
-  -- Do the actual deletion (CASCADE handles the rest)
+  -- حذف الطلب مباشرةً والاعتماد على CASCADE
   BEGIN
-    -- First nullify foreign key references in logs to avoid constraint errors
-    UPDATE request_workflow_operation_logs
-    SET request_id = NULL
-    WHERE request_id = p_request_id;
+    -- إزالة المرجع إلى الخطوة لتجنب أخطاء العلاقات
+    UPDATE requests
+    SET current_step_id = NULL
+    WHERE id = p_request_id;
     
-    -- Update approval logs to avoid constraint errors
-    UPDATE request_approval_logs
-    SET request_id = NULL 
-    WHERE request_id = p_request_id;
-    
-    -- Now delete the request (and rely on CASCADE for the rest)
+    -- حذف الطلب
     DELETE FROM requests WHERE id = p_request_id;
-    
-    -- Log the deletion
-    IF EXISTS (
-      SELECT 1
-      FROM information_schema.tables
-      WHERE table_schema = 'public' AND table_name = 'request_workflow_operation_logs'
-    ) THEN
-      INSERT INTO request_workflow_operation_logs(
-        operation_type,
-        user_id,
-        request_data,
-        details
-      ) VALUES (
-        'delete_request',
-        v_user_id,
-        v_request,
-        'تم حذف الطلب بنجاح'
-      );
-    END IF;
     
     RETURN jsonb_build_object(
       'success', true,
@@ -248,35 +119,10 @@ BEGIN
       'request_id', p_request_id
     );
   EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS v_error_message = MESSAGE_TEXT;
-    
-    -- Log the error
-    IF EXISTS (
-      SELECT 1
-      FROM information_schema.tables
-      WHERE table_schema = 'public' AND table_name = 'request_workflow_operation_logs'
-    ) THEN
-      INSERT INTO request_workflow_operation_logs(
-        operation_type,
-        user_id,
-        request_data,
-        error_message,
-        details
-      ) VALUES (
-        'delete_request_error',
-        v_user_id,
-        v_request,
-        v_error_message,
-        'فشل حذف الطلب'
-      );
-    END IF;
-    
     RETURN jsonb_build_object(
       'success', false,
-      'message', 'حدث خطأ أثناء حذف الطلب: ' || v_error_message,
-      'error_details', v_error_message
+      'message', 'حدث خطأ أثناء حذف الطلب: ' || SQLERRM
     );
   END;
 END;
 $function$;
-
