@@ -1,5 +1,5 @@
 
-import { Clock, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Clock, CheckCircle, AlertCircle, Loader2, MessageCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
@@ -99,31 +99,39 @@ export const RequestWorkflowCard = ({ workflow, currentStep, requestId }: Reques
 
   // Helper to get step status based on approvals and current step
   const getStepStatus = (stepId: string) => {
-    if (currentStep?.id === stepId) {
-      return "current";
-    }
-
+    // Get step information first (to check if it's an opinion step)
+    const step = workflowSteps.find(step => step.id === stepId);
+    const isOpinionStep = step?.step_type === 'opinion';
+    
+    // Get approvals for this step
     const stepApprovals = approvals.filter(approval => approval.step_id === stepId);
+    
+    // First check if there are approvals for this step
     if (stepApprovals.length > 0) {
-      const approved = stepApprovals.some(approval => approval.status === "approved");
-      const rejected = stepApprovals.some(approval => approval.status === "rejected");
+      const approved = stepApprovals.some(approval => approval.status === 'approved');
+      const rejected = stepApprovals.some(approval => approval.status === 'rejected');
       
-      if (rejected) return "rejected";
-      if (approved) return "completed";
-      return "pending";
+      if (rejected) return 'rejected';
+      if (approved) return 'completed';
+      return 'pending';
     }
-
-    // If no approvals and not current, check if it's before or after current step
+    
+    // If no approvals, check if it's the current step
+    if (currentStep?.id === stepId) {
+      return 'current';
+    }
+    
+    // If it's not the current step and no approvals, check if it's before or after current
     if (currentStep && workflowSteps.length > 0) {
       const currentStepIndex = workflowSteps.findIndex(step => step.id === currentStep.id);
       const thisStepIndex = workflowSteps.findIndex(step => step.id === stepId);
       
-      if (currentStepIndex === -1 || thisStepIndex === -1) return "pending";
+      if (currentStepIndex === -1 || thisStepIndex === -1) return 'pending';
       
-      return thisStepIndex < currentStepIndex ? "completed" : "pending";
+      return thisStepIndex < currentStepIndex ? 'completed' : 'pending';
     }
 
-    return "pending";
+    return 'pending';
   };
 
   // Helper to get approvers display name for a step
@@ -199,6 +207,11 @@ export const RequestWorkflowCard = ({ workflow, currentStep, requestId }: Reques
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-primary" />
                     <span className="font-medium">{currentStep.step_name || "غير محدد"}</span>
+                    {currentStep.step_type === 'opinion' && (
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 text-xs">
+                        مرحلة إبداء رأي
+                      </Badge>
+                    )}
                   </div>
                   {currentStep.instructions && (
                     <p className="text-sm text-muted-foreground mt-2 border-r-2 border-primary pr-3 py-1">
@@ -224,6 +237,8 @@ export const RequestWorkflowCard = ({ workflow, currentStep, requestId }: Reques
                 <div className="space-y-3">
                   {workflowSteps.map((step, index) => {
                     const status = getStepStatus(step.id);
+                    const stepApprovals = approvals.filter(approval => approval.step_id === step.id);
+                    const hasOpinions = step.step_type === 'opinion' && stepApprovals.length > 0;
                     
                     return (
                       <div 
@@ -237,7 +252,10 @@ export const RequestWorkflowCard = ({ workflow, currentStep, requestId }: Reques
                       >
                         <div className="flex justify-between items-start">
                           <div className="flex items-center gap-2">
-                            {getStatusIcon(status)}
+                            {hasOpinions ? 
+                              <MessageCircle className="h-5 w-5 text-blue-500" /> :
+                              getStatusIcon(status)
+                            }
                             <div>
                               <div className="font-medium flex items-center gap-2">
                                 <span>{step.step_name}</span>
@@ -252,10 +270,13 @@ export const RequestWorkflowCard = ({ workflow, currentStep, requestId }: Reques
                                 {status === 'rejected' && (
                                   <span className="text-red-600">تم الرفض بواسطة: {getStepApprovers(step.id)}</span>
                                 )}
+                                {hasOpinions && (
+                                  <span className="text-blue-600">تم إبداء الرأي بواسطة: {getStepApprovers(step.id)}</span>
+                                )}
                                 {status === 'current' && (
                                   <span className="text-primary">قيد الانتظار</span>
                                 )}
-                                {status === 'pending' && index > 0 && (
+                                {status === 'pending' && index > 0 && !hasOpinions && (
                                   <span className="text-gray-500">في انتظار الخطوات السابقة</span>
                                 )}
                               </div>
