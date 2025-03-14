@@ -16,11 +16,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ArrowDown, Eye, CheckCircle, XCircle, Info } from "lucide-react";
+import { ArrowDown, Eye, CheckCircle, XCircle, Info, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RequestStatusBadge } from "./detail/RequestStatusBadge";
 import { RequestPriorityBadge } from "./detail/RequestPriorityBadge";
 import { getStepTypeLabel, getStepTypeBadgeClass } from "./workflow/utils";
+import { DeleteRequestDialog } from "./dialogs/DeleteRequestDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RequestsTableProps {
   requests: any[];
@@ -39,6 +41,51 @@ export const RequestsTable = ({
   onApproveRequest,
   onRejectRequest,
 }: RequestsTableProps) => {
+  const [requestToDelete, setRequestToDelete] = React.useState<any | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+  const [deletableRequests, setDeletableRequests] = React.useState<Record<string, boolean>>({});
+  
+  // Only run this check for outgoing requests
+  React.useEffect(() => {
+    if (type !== "outgoing" || requests.length === 0) return;
+    
+    const checkDeletionPermissions = async () => {
+      const deletableMap: Record<string, boolean> = {};
+      const requestIds = requests.map(r => r.id);
+      
+      // Check in batches of 10 to avoid too many concurrent requests
+      for (let i = 0; i < requestIds.length; i += 10) {
+        const batch = requestIds.slice(i, i + 10);
+        
+        await Promise.all(
+          batch.map(async (id) => {
+            try {
+              const { data, error } = await supabase.rpc('can_delete_request', {
+                p_request_id: id
+              });
+              
+              if (!error) {
+                deletableMap[id] = data;
+              }
+            } catch (error) {
+              console.error(`Error checking delete permission for request ${id}:`, error);
+            }
+          })
+        );
+      }
+      
+      setDeletableRequests(deletableMap);
+    };
+    
+    checkDeletionPermissions();
+  }, [requests, type]);
+  
+  // Handle delete button click
+  const handleDeleteClick = (request: any) => {
+    setRequestToDelete(request);
+    setShowDeleteDialog(true);
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-48">
@@ -116,51 +163,78 @@ export const RequestsTable = ({
                     request.status === "pending" &&
                     onApproveRequest &&
                     onRejectRequest && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="bg-green-50 text-green-600 hover:bg-green-100 border-green-200"
-                              onClick={() => onApproveRequest(request)}
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>الموافقة على الطلب</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      <>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-green-50 text-green-600 hover:bg-green-100 border-green-200"
+                                onClick={() => onApproveRequest(request)}
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>الموافقة على الطلب</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-red-50 text-red-600 hover:bg-red-100 border-red-200"
+                                onClick={() => onRejectRequest(request)}
+                              >
+                                <XCircle className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>رفض الطلب</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </>
                     )}
-                  {type === "incoming" &&
-                    request.status === "pending" &&
-                    onRejectRequest && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="bg-red-50 text-red-600 hover:bg-red-100 border-red-200"
-                              onClick={() => onRejectRequest(request)}
-                            >
-                              <XCircle className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>رفض الطلب</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
+                  
+                  {/* Delete button (only for outgoing requests with permission) */}
+                  {type === "outgoing" && deletableRequests[request.id] && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="bg-red-50 text-red-600 hover:bg-red-100 border-red-200"
+                            onClick={() => handleDeleteClick(request)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>حذف الطلب</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                 </div>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+      
+      {/* Delete Dialog */}
+      <DeleteRequestDialog
+        isOpen={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        requestId={requestToDelete?.id || null}
+        requestTitle={requestToDelete?.title}
+      />
     </div>
   );
 };

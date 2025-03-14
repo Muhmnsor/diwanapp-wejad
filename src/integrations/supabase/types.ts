@@ -2996,6 +2996,30 @@ export type Database = {
           },
         ]
       }
+      request_deletion_logs: {
+        Row: {
+          deleted_at: string
+          deleted_by: string
+          id: string
+          request_data: Json
+          request_id: string
+        }
+        Insert: {
+          deleted_at?: string
+          deleted_by: string
+          id?: string
+          request_data: Json
+          request_id: string
+        }
+        Update: {
+          deleted_at?: string
+          deleted_by?: string
+          id?: string
+          request_data?: Json
+          request_id?: string
+        }
+        Relationships: []
+      }
       request_export_logs: {
         Row: {
           error_message: string | null
@@ -4794,6 +4818,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      can_delete_request: {
+        Args: {
+          p_request_id: string
+        }
+        Returns: boolean
+      }
       check_admin_role: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -4849,6 +4879,12 @@ export type Database = {
           p_user_id: string
         }
         Returns: boolean
+      }
+      delete_request: {
+        Args: {
+          p_request_id: string
+        }
+        Returns: Json
       }
       delete_request_type: {
         Args: {

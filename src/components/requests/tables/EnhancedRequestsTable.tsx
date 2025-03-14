@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { format } from "date-fns";
-import { Eye, RefreshCw } from "lucide-react";
+import { Eye, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RequestStatusBadge } from "../detail/RequestStatusBadge";
 import { RequestPriorityBadge } from "../detail/RequestPriorityBadge";
@@ -21,6 +21,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DeleteRequestDialog } from "../dialogs/DeleteRequestDialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
 
 interface EnhancedRequestsTableProps {
   requests: Request[];
@@ -43,11 +51,53 @@ export const EnhancedRequestsTable = ({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   
+  // State for delete dialog
+  const [requestToDelete, setRequestToDelete] = useState<Request | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  
+  // State to store deletion permissions for each request
+  const [deletableRequests, setDeletableRequests] = useState<Record<string, boolean>>({});
+  
   // Calculate the requests to display based on pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentRequests = requests.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(requests.length / itemsPerPage);
+  
+  // Check which requests the user can delete
+  React.useEffect(() => {
+    const checkDeletionPermissions = async () => {
+      const deletableMap: Record<string, boolean> = {};
+      const requestIds = requests.map(r => r.id);
+      
+      // Check in batches of 10 to avoid too many concurrent requests
+      for (let i = 0; i < requestIds.length; i += 10) {
+        const batch = requestIds.slice(i, i + 10);
+        
+        await Promise.all(
+          batch.map(async (id) => {
+            try {
+              const { data, error } = await supabase.rpc('can_delete_request', {
+                p_request_id: id
+              });
+              
+              if (!error) {
+                deletableMap[id] = data;
+              }
+            } catch (error) {
+              console.error(`Error checking delete permission for request ${id}:`, error);
+            }
+          })
+        );
+      }
+      
+      setDeletableRequests(deletableMap);
+    };
+    
+    if (requests.length > 0) {
+      checkDeletionPermissions();
+    }
+  }, [requests]);
   
   // Status filter options
   const statusOptions = [
@@ -66,6 +116,12 @@ export const EnhancedRequestsTable = ({
   // Handle pagination
   const goToPage = (page: number) => {
     setCurrentPage(page);
+  };
+  
+  // Handle delete button click
+  const handleDeleteClick = (request: Request) => {
+    setRequestToDelete(request);
+    setShowDeleteDialog(true);
   };
 
   if (isLoading) {
@@ -147,14 +203,36 @@ export const EnhancedRequestsTable = ({
                         : "غير محدد"}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onViewRequest(request)}
-                      >
-                        <Eye className="h-4 w-4 ml-1" />
-                        عرض
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onViewRequest(request)}
+                        >
+                          <Eye className="h-4 w-4 ml-1" />
+                          عرض
+                        </Button>
+                        
+                        {deletableRequests[request.id] && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="bg-red-50 text-red-600 hover:bg-red-100 border-red-200"
+                                  onClick={() => handleDeleteClick(request)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>حذف الطلب</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -203,6 +281,14 @@ export const EnhancedRequestsTable = ({
       <div className="mt-2 text-sm text-muted-foreground">
         عرض {currentRequests.length} من إجمالي {requests.length} طلب
       </div>
+      
+      {/* Delete Dialog */}
+      <DeleteRequestDialog
+        isOpen={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        requestId={requestToDelete?.id || null}
+        requestTitle={requestToDelete?.title}
+      />
     </div>
   );
 };
