@@ -14,25 +14,25 @@ import { toast } from "sonner";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isAuthenticated } = useAuthStore();
+  const { login, isAuthenticated, isLoading } = useAuthStore();
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!isLoading && isAuthenticated) {
       const from = (location.state as any)?.from?.pathname || "/admin/dashboard";
       console.log("Login: Already authenticated, redirecting to:", from);
       navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate, location.state]);
+  }, [isAuthenticated, isLoading, navigate, location.state]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setFormLoading(true);
     setError(null);
 
     try {
@@ -65,11 +65,21 @@ const Login = () => {
       
       toast.error("فشل تسجيل الدخول");
     } finally {
-      setIsLoading(false);
+      setFormLoading(false);
     }
   };
 
-  // If already authenticated, show a loading state while redirecting
+  // If already authenticated or loading, show a loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center" dir="rtl">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <p className="mt-4 text-gray-500">يرجى الانتظار...</p>
+      </div>
+    );
+  }
+
+  // If already authenticated but not loading, show a redirecting state
   if (isAuthenticated) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center" dir="rtl">
@@ -100,7 +110,7 @@ const Login = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
+                disabled={formLoading}
                 required
               />
             </div>
@@ -111,16 +121,16 @@ const Login = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
+                disabled={formLoading}
                 required
               />
             </div>
             <Button 
               type="submit" 
               className="w-full" 
-              disabled={isLoading}
+              disabled={formLoading}
             >
-              {isLoading ? (
+              {formLoading ? (
                 <>
                   <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                   جاري تسجيل الدخول...

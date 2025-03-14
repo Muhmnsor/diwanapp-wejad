@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -7,7 +8,7 @@ import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 export const UserNav = () => {
   const navigate = useNavigate();
-  const { logout, isAuthenticated } = useAuthStore();
+  const { logout, isAuthenticated, isLoading } = useAuthStore();
 
   const handleLogout = async () => {
     try {
@@ -19,16 +20,17 @@ export const UserNav = () => {
       navigate("/login", { replace: true });
     } catch (error) {
       console.error("UserNav: Error during logout:", error);
+      toast.error("حدث خطأ أثناء تسجيل الخروج");
       // Still clear local state and redirect even if server logout fails
       navigate("/login", { replace: true });
     }
   };
 
-  if (!isAuthenticated) return null;
+  if (isLoading || !isAuthenticated) return null;
 
   return (
     <div className="flex items-center gap-4">
-      {isAuthenticated && <NotificationBell />}
+      <NotificationBell />
       <Button
         variant="outline"
         size="sm"
