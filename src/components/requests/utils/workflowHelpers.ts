@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { validateWorkflow, validateRequestType, validateAndRepairRequest, repairWorkflow } from './workflowValidator';
 
@@ -112,37 +111,30 @@ export const checkRequestTypeDependencies = async (requestTypeId: string) => {
   try {
     console.log(`Checking dependencies for request type ID: ${requestTypeId}`);
     
-    // Check for associated workflows
+    // Get workflows for this request type
     const { data: workflows, error: workflowsError } = await supabase
       .from('request_workflows')
-      .select('id, name')
+      .select('*')
       .eq('request_type_id', requestTypeId);
-    
-    if (workflowsError) {
-      console.error('Error checking workflows:', workflowsError);
-      throw workflowsError;
-    }
-    
-    // Check for requests using this type
+
+    if (workflowsError) throw workflowsError;
+
+    // Get requests for this request type
     const { data: requests, error: requestsError } = await supabase
       .from('requests')
-      .select('id, title')
+      .select('*')
       .eq('request_type_id', requestTypeId);
-    
-    if (requestsError) {
-      console.error('Error checking requests:', requestsError);
-      throw requestsError;
-    }
-    
-    return { 
-      workflows: workflows || [], 
+
+    if (requestsError) throw requestsError;
+
+    return {
+      workflows: workflows || [],
       requests: requests || [],
       hasWorkflows: workflows && workflows.length > 0,
       hasRequests: requests && requests.length > 0,
-      hasDependencies: (workflows && workflows.length > 0) || (requests && requests.length > 0)
     };
   } catch (error) {
-    console.error('Exception in checkRequestTypeDependencies:', error);
+    console.error("Error checking request type dependencies:", error);
     throw error;
   }
 };

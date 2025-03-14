@@ -76,7 +76,7 @@ BEGIN
   BEGIN
     -- 1. Update workflow_operation_logs to set workflow_id to NULL for any workflows we're going to delete
     IF v_workflow_ids IS NOT NULL AND array_length(v_workflow_ids, 1) > 0 THEN
-      UPDATE workflow_operation_logs
+      UPDATE request_workflow_operation_logs
       SET workflow_id = NULL
       WHERE workflow_id = ANY(v_workflow_ids);
       
@@ -88,7 +88,7 @@ BEGIN
       
       -- 3. Update workflow_operation_logs to set step_id to NULL where step will be deleted
       IF v_step_ids IS NOT NULL AND array_length(v_step_ids, 1) > 0 THEN
-        UPDATE workflow_operation_logs
+        UPDATE request_workflow_operation_logs
         SET step_id = NULL
         WHERE step_id = ANY(v_step_ids);
         

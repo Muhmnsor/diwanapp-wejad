@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -101,31 +102,6 @@ export const AdminWorkflows = () => {
     
     setShowDeleteDialog(true);
   };
-
-  const deleteWorkflows = useMutation({
-    mutationFn: async (workflowIds: string[]) => {
-      const results = [];
-      for (const id of workflowIds) {
-        const { data, error } = await supabase
-          .from('request_workflows')
-          .delete()
-          .eq('id', id);
-        
-        if (error) throw error;
-        results.push(data);
-      }
-      return results;
-    },
-    onSuccess: () => {
-      if (selectedRequestType) {
-        deleteRequestType.mutate(selectedRequestType.id);
-      }
-    },
-    onError: (error: any) => {
-      console.error("Error deleting workflows:", error);
-      setDeleteError(`حدث خطأ أثناء حذف مسارات سير العمل: ${error.message || "خطأ غير معروف"}`);
-    }
-  });
 
   const deleteRequestType = useMutation({
     mutationFn: async (typeId: string) => {
