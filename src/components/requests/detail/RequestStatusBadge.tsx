@@ -19,12 +19,6 @@ export const RequestStatusBadge = ({ status }: RequestStatusBadgeProps) => {
       return <Badge variant="destructive">مرفوض</Badge>;
     case 'cancelled':
       return <Badge variant="outline" className="bg-gray-200">ملغي</Badge>;
-    case 'in_execution':
-      return <Badge variant="default" className="bg-blue-500 hover:bg-blue-600">قيد التنفيذ</Badge>;
-    case 'executed':
-      return <Badge variant="default" className="bg-green-600 hover:bg-green-700">تم التنفيذ</Badge>;
-    case 'implementation_complete':
-      return <Badge variant="default" className="bg-purple-600 hover:bg-purple-700">اكتمل التنفيذ</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;
   }

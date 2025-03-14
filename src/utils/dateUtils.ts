@@ -1,3 +1,4 @@
+
 export const parseDate = (dateStr: string | null | undefined): Date | null => {
   if (!dateStr) return null;
   try {
@@ -22,7 +23,8 @@ export const getEventDateTime = (date: string, time: string = '00:00'): Date => 
   return eventDate;
 };
 
-export const formatDate = (dateString: string | null | undefined): string => {
+// تعديل دالة formatDate لتعرض التاريخ بالميلادي والوقت بنظام 12 ساعة
+export const formatDate = (dateString: string): string => {
   if (!dateString) return '';
   
   try {
@@ -39,29 +41,6 @@ export const formatDate = (dateString: string | null | undefined): string => {
     return `${day}/${month}/${year}`;
   } catch (error) {
     console.error('Error formatting date:', error);
-    return dateString;
-  }
-};
-
-export const formatDateWithTime = (dateString: string | null | undefined): string => {
-  if (!dateString) return '';
-  
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      return dateString;
-    }
-    
-    // Format date as DD/MM/YYYY HH:MM
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
-  } catch (error) {
-    console.error('Error formatting date with time:', error);
     return dateString;
   }
 };

@@ -15,7 +15,7 @@ import { WorkflowStep } from "../types";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Info } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 interface WorkflowConfigDialogProps {
   isOpen: boolean;
@@ -44,56 +44,23 @@ export const WorkflowConfigDialog = ({
       if (!workflowId) return [];
       
       try {
-        console.log("Fetching workflow steps for workflowId:", workflowId);
-        
-        // First try the workflow_steps table (new structure)
-        const { data: newSteps, error: newStepsError } = await supabase
+        const { data, error } = await supabase
           .from("workflow_steps")
           .select("*")
           .eq("workflow_id", workflowId)
           .order("step_order", { ascending: true });
           
-        if (newStepsError) {
-          console.error("Error fetching from workflow_steps:", newStepsError);
-          throw newStepsError;
-        }
+        if (error) throw error;
         
-        if (newSteps && newSteps.length > 0) {
-          console.log("Found steps in workflow_steps table:", newSteps.length);
-          console.log("Steps data:", newSteps);
-          return newSteps as WorkflowStep[];
-        }
-        
-        // If no steps in the new table, try the legacy table
-        console.log("No steps found in workflow_steps table, checking legacy table");
-        const { data: legacySteps, error: legacyStepsError } = await supabase
-          .from("request_workflow_steps")
-          .select("*")
-          .eq("workflow_id", workflowId)
-          .order("step_order", { ascending: true });
-          
-        if (legacyStepsError) {
-          console.error("Error fetching from request_workflow_steps:", legacyStepsError);
-          throw legacyStepsError;
-        }
-        
-        if (legacySteps && legacySteps.length > 0) {
-          console.log("Found steps in legacy request_workflow_steps table:", legacySteps.length);
-          console.log("Legacy steps data:", legacySteps);
-          return legacySteps as WorkflowStep[];
-        }
-        
-        console.log("No workflow steps found in either table");
-        return [] as WorkflowStep[];
+        console.log("Fetched workflow steps:", data);
+        return data as WorkflowStep[];
       } catch (error) {
         console.error("Error fetching workflow steps:", error);
         setError(`فشل في جلب خطوات سير العمل: ${error.message}`);
         return [];
       }
     },
-    enabled: !!workflowId && isOpen,
-    refetchOnWindowFocus: false,
-    staleTime: 10000, // Reduce refetching to avoid race conditions
+    enabled: !!workflowId && isOpen
   });
   
   // Set the initial steps when they're loaded
@@ -101,16 +68,12 @@ export const WorkflowConfigDialog = ({
     if (initialSteps && initialSteps.length > 0) {
       console.log("Setting initial steps:", initialSteps);
       setWorkflowSteps(initialSteps);
-    } else if (initialSteps && initialSteps.length === 0 && isOpen) {
-      console.log("No steps found for workflow:", workflowId);
-      setWorkflowSteps([]);
     }
-  }, [initialSteps, isOpen, workflowId]);
+  }, [initialSteps]);
   
   // Set error if fetch fails
   useEffect(() => {
     if (fetchError) {
-      console.error("Fetch error in WorkflowConfigDialog:", fetchError);
       setError(`فشل في جلب خطوات سير العمل: ${fetchError.message}`);
     }
   }, [fetchError]);
@@ -143,15 +106,6 @@ export const WorkflowConfigDialog = ({
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        
-        {workflowId && (
-          <Alert variant="default" className="mb-4">
-            <Info className="h-4 w-4" />
-            <AlertDescription>
-              معرّف سير العمل: {workflowId}
-            </AlertDescription>
           </Alert>
         )}
         

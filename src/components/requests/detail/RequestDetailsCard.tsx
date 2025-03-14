@@ -17,12 +17,10 @@ import {
 import { RequestStatusBadge } from "./RequestStatusBadge";
 import { RequestPriorityBadge } from "./RequestPriorityBadge";
 import { RequestApprovalsTab } from "./RequestApprovalsTab";
-import { RequestImplementationTab } from "./RequestImplementationTab";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { diagnoseRequestWorkflow } from "../utils/workflowHelpers";
 import { Button } from "@/components/ui/button";
-import { RequestExportButton } from "./RequestExportButton";
 
 interface RequestDetailsCardProps {
   request: any;
@@ -39,7 +37,6 @@ export const RequestDetailsCard = ({
 }: RequestDetailsCardProps) => {
   const [workflowDiagnosis, setWorkflowDiagnosis] = useState<any>(null);
   const [diagnosing, setDiagnosing] = useState(false);
-  const [workflowFixed, setWorkflowFixed] = useState(false);
 
   const handleDiagnoseWorkflow = async () => {
     if (!request?.id) return;
@@ -49,28 +46,12 @@ export const RequestDetailsCard = ({
       const diagnosis = await diagnoseRequestWorkflow(request.id);
       setWorkflowDiagnosis(diagnosis);
       console.log("Workflow diagnosis:", diagnosis);
-      
-      // If repair was successful, update the state - safely access properties
-      if (diagnosis && diagnosis.repaired === true) {
-        setWorkflowFixed(true);
-        console.log("Workflow was automatically repaired:", diagnosis.repairMessage || "No repair message provided");
-      }
     } catch (error) {
       console.error("Error diagnosing workflow:", error);
     } finally {
       setDiagnosing(false);
     }
   };
-
-  // Determine if implementation tab should be shown
-  // This will be more advanced in the future once the implementation features are added
-  const isImplementationEnabled = 
-    request?.status && 
-    ['approved', 'completed', 'in_execution', 'executed', 'implementation_complete'].includes(request.status);
-
-  // Calculate if we should force show the export button
-  // Show export button if workflow was fixed or if request has approvals regardless of workflow state
-  const shouldForceShowExport = workflowFixed || (approvals && approvals.length > 0);
 
   return (
     <Card className="w-full">
@@ -81,11 +62,6 @@ export const RequestDetailsCard = ({
             <CardDescription>{requestType?.name || "نوع الطلب غير محدد"}</CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            <RequestExportButton 
-              requestId={request.id} 
-              status={request.status} 
-              forceShow={shouldForceShowExport}
-            />
             <RequestStatusBadge status={request.status} />
             <RequestPriorityBadge priority={request.priority} />
           </div>
@@ -115,8 +91,6 @@ export const RequestDetailsCard = ({
                 هذا الطلب مرتبط بمسار سير عمل وينتظر الموافقة من المعتمدين المختصين
                 {diagnosing ? (
                   <span className="block mt-2 text-sm animate-pulse">جاري تشخيص مسار العمل...</span>
-                ) : workflowFixed ? (
-                  <span className="block mt-2 text-sm text-green-600">تم إصلاح مشكلة في مسار العمل بنجاح</span>
                 ) : (
                   <Button 
                     variant="link" 
@@ -130,7 +104,7 @@ export const RequestDetailsCard = ({
               </AlertDescription>
             </Alert>
             
-            {workflowDiagnosis && workflowDiagnosis.issues && workflowDiagnosis.issues.length > 0 && !workflowFixed && (
+            {workflowDiagnosis && workflowDiagnosis.issues && workflowDiagnosis.issues.length > 0 && (
               <Alert variant="destructive" className="mt-2">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
@@ -140,16 +114,6 @@ export const RequestDetailsCard = ({
                       <li key={idx}>{issue}</li>
                     ))}
                   </ul>
-                  {workflowDiagnosis.canBeRepaired && (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="mt-2 bg-white hover:bg-gray-100"
-                      onClick={handleDiagnoseWorkflow}
-                    >
-                      محاولة إصلاح المشكلة تلقائياً
-                    </Button>
-                  )}
                 </AlertDescription>
               </Alert>
             )}
@@ -160,9 +124,6 @@ export const RequestDetailsCard = ({
           <TabsList className="mb-4">
             <TabsTrigger value="details">تفاصيل الطلب</TabsTrigger>
             <TabsTrigger value="approvals">الموافقات</TabsTrigger>
-            {isImplementationEnabled && (
-              <TabsTrigger value="implementation">التنفيذ</TabsTrigger>
-            )}
             {attachments.length > 0 && (
               <TabsTrigger value="attachments">المرفقات</TabsTrigger>
             )}
@@ -189,15 +150,6 @@ export const RequestDetailsCard = ({
           <TabsContent value="approvals">
             <RequestApprovalsTab approvals={approvals} />
           </TabsContent>
-          
-          {isImplementationEnabled && (
-            <TabsContent value="implementation">
-              <RequestImplementationTab 
-                request={request} 
-                isImplementationEnabled={isImplementationEnabled} 
-              />
-            </TabsContent>
-          )}
           
           {attachments.length > 0 && (
             <TabsContent value="attachments">

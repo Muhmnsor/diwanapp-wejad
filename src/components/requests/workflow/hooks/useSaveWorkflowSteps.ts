@@ -74,22 +74,6 @@ export const useSaveWorkflowSteps = ({
       console.log("Preparing steps with workflow ID:", currentWorkflowId);
       console.log("Steps to insert:", stepsWithCorrectWorkflowId);
       
-      // Check if the current session user has permissions for this action
-      console.log("Current user ID:", session?.user?.id);
-      
-      // Check if admin or has permission
-      const { data: isPermitted, error: permissionError } = await supabase.rpc('is_admin');
-      
-      if (permissionError) {
-        console.error("Error checking permissions:", permissionError);
-        throw new Error("فشل في التحقق من الصلاحيات");
-      }
-      
-      if (!isPermitted) {
-        console.error("User doesn't have permission to manage workflow steps");
-        throw new Error("ليس لديك الصلاحية لإدارة خطوات سير العمل");
-      }
-      
       // Prepare steps for insertion with complete data and ensure valid UUIDs
       const stepsToInsert = stepsWithCorrectWorkflowId.map((step, index) => {
         // Verify workflow_id format
@@ -130,52 +114,17 @@ export const useSaveWorkflowSteps = ({
 
       if (rpcError) {
         console.error("Error inserting workflow steps:", rpcError);
-        // Check if it's a permissions error
-        if (rpcError.code === '42501' || rpcError.message.includes('permission')) {
-          throw new Error("ليس لديك الصلاحية لإنشاء أو تعديل خطوات سير العمل");
-        }
         throw new Error(`فشل في حفظ خطوات سير العمل: ${rpcError.message}`);
       }
 
       console.log("Steps saved successfully:", rpcResult);
-      
-      // Add log of the database table to verify steps were actually inserted
-      console.log("Checking inserted steps in workflow_steps table");
-      const { data: checkSteps, error: checkError } = await supabase
-        .from('workflow_steps')
-        .select('*')
-        .eq('workflow_id', currentWorkflowId)
-        .order('step_order', { ascending: true });
-        
-      if (checkError) {
-        console.error("Error checking saved steps:", checkError);
-      } else {
-        console.log(`Found ${checkSteps?.length || 0} steps in database after save:`, checkSteps);
-        
-        // If no steps found in the new table, also check the legacy table
-        if (!checkSteps || checkSteps.length === 0) {
-          console.log("No steps found in workflow_steps table, checking legacy table");
-          const { data: legacyCheckSteps, error: legacyCheckError } = await supabase
-            .from('request_workflow_steps')
-            .select('*')
-            .eq('workflow_id', currentWorkflowId)
-            .order('step_order', { ascending: true });
-            
-          if (legacyCheckError) {
-            console.error("Error checking legacy table for saved steps:", legacyCheckError);
-          } else {
-            console.log(`Found ${legacyCheckSteps?.length || 0} steps in legacy table after save:`, legacyCheckSteps);
-          }
-        }
-      }
 
       // Update steps with server data
       if (rpcResult && rpcResult.data) {
         updateWorkflowSteps(rpcResult.data);
       } else {
-        // If we don't have server data, use our local state with correct IDs
-        const updatedSteps = checkSteps || stepsWithCorrectWorkflowId;
-        updateWorkflowSteps(updatedSteps);
+        // If we don't have server data, use our local state
+        updateWorkflowSteps(stepsWithCorrectWorkflowId);
       }
 
       // Update default workflow if needed
