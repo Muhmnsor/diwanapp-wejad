@@ -27,9 +27,10 @@ export const RequestExportButton = ({
     try {
       setIsExporting(true);
       await exportRequestWithEnhancedData(requestId);
+      toast.success("تم تصدير الطلب بنجاح");
     } catch (error) {
       console.error("Error exporting request:", error);
-      // Toast error is already handled in the export function
+      toast.error(`حدث خطأ أثناء تصدير الطلب: ${error instanceof Error ? error.message : "خطأ غير معروف"}`);
     } finally {
       setIsExporting(false);
     }

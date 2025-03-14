@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { exportRequestToPdf } from "./requestPdfExporter";
+import { exportRequestToPdf } from "./enhancedArabicPdfExporter";
 import { toast } from "sonner";
 
 /**
@@ -8,6 +8,9 @@ import { toast } from "sonner";
  */
 export const fetchRequestExportData = async (requestId: string): Promise<any> => {
   try {
+    // Show loading toast
+    toast.info("جاري تحميل بيانات الطلب...");
+    
     // Get enhanced data for PDF export
     const { data, error } = await supabase
       .rpc('get_request_pdf_export_data', { p_request_id: requestId });
@@ -47,8 +50,6 @@ export const fetchRequestExportData = async (requestId: string): Promise<any> =>
  */
 export const exportRequestWithEnhancedData = async (requestId: string): Promise<void> => {
   try {
-    toast.info("جاري تجهيز بيانات الطلب للتصدير...");
-    
     // Fetch all needed data
     const data = await fetchRequestExportData(requestId);
     
@@ -57,7 +58,7 @@ export const exportRequestWithEnhancedData = async (requestId: string): Promise<
       return;
     }
     
-    // Export to PDF
+    // Export to PDF using the enhanced Arabic PDF exporter
     await exportRequestToPdf(data);
     
   } catch (error: any) {

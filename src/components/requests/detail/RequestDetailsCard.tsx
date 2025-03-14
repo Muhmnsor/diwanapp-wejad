@@ -66,7 +66,10 @@ export const RequestDetailsCard = ({
             <CardDescription>{requestType?.name || "نوع الطلب غير محدد"}</CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            <RequestExportButton requestId={request.id} status={request.status} />
+            <RequestExportButton 
+              requestId={request.id} 
+              status={request.status} 
+            />
             <RequestStatusBadge status={request.status} />
             <RequestPriorityBadge priority={request.priority} />
           </div>
