@@ -37,6 +37,8 @@ export const DeleteRequestDialog = ({
     setIsDeleting(true);
     
     try {
+      console.log("Attempting to delete request:", requestId);
+      
       const { data, error } = await supabase.rpc('delete_request', {
         p_request_id: requestId
       });
@@ -48,9 +50,12 @@ export const DeleteRequestDialog = ({
       }
       
       if (!data.success) {
+        console.error("Request deletion failed:", data);
         toast.error(data.message || "فشل في حذف الطلب");
         return;
       }
+      
+      console.log("Request deleted successfully:", data);
       
       // Invalidate queries to refresh the data
       await queryClient.invalidateQueries({
