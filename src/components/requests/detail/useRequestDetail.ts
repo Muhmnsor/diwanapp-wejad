@@ -77,6 +77,9 @@ export const useRequestDetail = (requestId: string) => {
   const isCurrentApprover = () => {
     if (!data || !user || !data.current_step) return false;
     
+    // For completed requests, no approver is needed
+    if (data.request?.status === 'completed') return false;
+    
     console.log("التحقق من كون المستخدم هو المعتمد الحالي للطلب");
     console.log("معرف المستخدم:", user.id);
     
@@ -193,8 +196,22 @@ export const useRequestDetail = (requestId: string) => {
       const result = await diagnoseRequestWorkflow(requestId);
       setDiagnosticResult(result);
       
-      if (result?.diagnose?.needs_fixing) {
-        toast.warning("تم اكتشاف مشاكل في مسار العمل");
+      // Check for workflow issues specifically related to completion state
+      const needsFixing = result?.diagnose?.needs_fixing || 
+                         (result?.analysis?.issues && result.analysis.issues.length > 0);
+                         
+      const completionIssue = 
+        (result?.analysis?.issues || []).some((issue: string) => 
+          issue.includes('completed') || 
+          issue.includes('All required steps are approved')
+        );
+      
+      if (needsFixing) {
+        if (completionIssue) {
+          toast.warning("تم اكتشاف مشكلة في حالة اكتمال الطلب");
+        } else {
+          toast.warning("تم اكتشاف مشاكل في مسار العمل");
+        }
       } else {
         toast.success("تم فحص مسار العمل، لم يتم العثور على مشاكل");
       }
@@ -218,8 +235,14 @@ export const useRequestDetail = (requestId: string) => {
       
       if (error) throw error;
       
-      toast.success("تم إصلاح مسار العمل بنجاح");
-      queryClient.invalidateQueries({ queryKey: ["request-details", requestId] });
+      // Check if any modifications were made
+      if (data.was_modified) {
+        toast.success(data.result.message || "تم إصلاح مسار العمل بنجاح");
+        queryClient.invalidateQueries({ queryKey: ["request-details", requestId] });
+      } else {
+        toast.info(data.result.message || "لا توجد تغييرات مطلوبة");
+      }
+      
       return data;
     } catch (error) {
       console.error("Error fixing workflow:", error);

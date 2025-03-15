@@ -49,14 +49,14 @@ BEGIN
     UPDATE requests 
     SET 
       status = 'completed',
-      current_step_id = NULL,
+      current_step_id = NULL,  -- Always set to NULL for completed requests
       updated_at = now()
     WHERE id = p_request_id;
     
     v_was_modified := true;
     v_result := jsonb_build_object(
       'action', 'marked_completed',
-      'message', 'تم تحديث حالة الطلب إلى مكتمل'
+      'message', 'تم تحديث حالة الطلب إلى مكتمل وإزالة الخطوة الحالية'
     );
   
   -- Case 2: Request has approved steps but is still pending
@@ -77,7 +77,7 @@ BEGIN
   ELSIF v_request_data.status = 'completed' AND v_request_data.current_step_id IS NOT NULL THEN
     UPDATE requests 
     SET 
-      current_step_id = NULL,
+      current_step_id = NULL,  -- Always set to NULL for completed requests
       updated_at = now()
     WHERE id = p_request_id;
     
@@ -89,35 +89,9 @@ BEGIN
   
   -- Case 4: Find the next appropriate step if current step is missing
   ELSIF v_request_data.current_step_id IS NULL AND v_request_data.status IN ('pending', 'in_progress') THEN
-    -- Find the next step that hasn't been approved yet
-    SELECT ws.id INTO v_next_step_id
-    FROM workflow_steps ws
-    WHERE ws.workflow_id = v_request_data.workflow_id
-    AND NOT EXISTS (
-      SELECT 1 FROM request_approvals ra 
-      WHERE ra.request_id = p_request_id 
-      AND ra.step_id = ws.id 
-      AND ra.status = 'approved'
-    )
-    ORDER BY ws.step_order
-    LIMIT 1;
-    
-    IF v_next_step_id IS NOT NULL THEN
-      UPDATE requests 
-      SET 
-        current_step_id = v_next_step_id,
-        status = 'in_progress',
-        updated_at = now()
-      WHERE id = p_request_id;
-      
-      v_was_modified := true;
-      v_result := jsonb_build_object(
-        'action', 'assigned_next_step',
-        'message', 'تم تعيين الخطوة التالية للطلب',
-        'next_step_id', v_next_step_id
-      );
-    ELSE
-      -- All steps completed
+    -- Check if all required steps are completed
+    IF v_completed_steps >= v_total_required_steps THEN
+      -- All steps completed, mark as completed
       UPDATE requests 
       SET 
         status = 'completed',
@@ -129,6 +103,48 @@ BEGIN
         'action', 'marked_completed_missing_step',
         'message', 'تم تحديث حالة الطلب إلى مكتمل (جميع الخطوات منجزة)'
       );
+    ELSE
+      -- Find the next step that hasn't been approved yet
+      SELECT ws.id INTO v_next_step_id
+      FROM workflow_steps ws
+      WHERE ws.workflow_id = v_request_data.workflow_id
+      AND NOT EXISTS (
+        SELECT 1 FROM request_approvals ra 
+        WHERE ra.request_id = p_request_id 
+        AND ra.step_id = ws.id 
+        AND ra.status = 'approved'
+      )
+      ORDER BY ws.step_order
+      LIMIT 1;
+      
+      IF v_next_step_id IS NOT NULL THEN
+        UPDATE requests 
+        SET 
+          current_step_id = v_next_step_id,
+          status = 'in_progress',
+          updated_at = now()
+        WHERE id = p_request_id;
+        
+        v_was_modified := true;
+        v_result := jsonb_build_object(
+          'action', 'assigned_next_step',
+          'message', 'تم تعيين الخطوة التالية للطلب',
+          'next_step_id', v_next_step_id
+        );
+      ELSE
+        -- All steps completed but status not updated
+        UPDATE requests 
+        SET 
+          status = 'completed',
+          updated_at = now()
+        WHERE id = p_request_id;
+        
+        v_was_modified := true;
+        v_result := jsonb_build_object(
+          'action', 'marked_completed_no_next_step',
+          'message', 'تم تحديث حالة الطلب إلى مكتمل (لا توجد خطوات متبقية)'
+        );
+      END IF;
     END IF;
   ELSE
     v_result := jsonb_build_object(
@@ -142,7 +158,13 @@ BEGIN
     'success', true,
     'was_modified', v_was_modified,
     'request_id', p_request_id,
-    'result', v_result
+    'result', v_result,
+    'debug', jsonb_build_object(
+      'status', v_request_data.status,
+      'current_step_id', v_request_data.current_step_id,
+      'completed_steps', v_completed_steps,
+      'total_required_steps', v_total_required_steps
+    )
   );
   
 EXCEPTION WHEN OTHERS THEN

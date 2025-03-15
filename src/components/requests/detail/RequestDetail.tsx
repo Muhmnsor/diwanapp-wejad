@@ -90,6 +90,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   console.log("Current step data:", currentStep);
   console.log("Requester data:", requester);
   console.log("Step type:", stepType);
+  console.log("Request status:", request.status);
   console.log("Has submitted opinion:", hasSubmittedOpinion() ? "Yes" : "No");
 
   return (
@@ -135,6 +136,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
               workflow={workflow}
               currentStep={currentStep}
               requestId={requestId}
+              requestStatus={request.status}
             />
           </div>
         </div>

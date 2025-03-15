@@ -9,7 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 export const useWorkflowCardData = (
   requestId: string,
   workflow?: { id: string } | null,
-  currentStep?: WorkflowStep | null
+  currentStep?: WorkflowStep | null,
+  requestStatus: string = 'pending'
 ): WorkflowCardDataHookResult => {
   const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(-1);
@@ -38,23 +39,29 @@ export const useWorkflowCardData = (
     if (steps && steps.length > 0) {
       setWorkflowSteps(steps);
       
-      // Find current step index
-      const index = currentStep 
-        ? steps.findIndex(step => step.id === currentStep.id)
-        : -1;
+      // For completed requests, set currentStepIndex to indicate completion
+      if (requestStatus === 'completed') {
+        setCurrentStepIndex(-1); // -1 indicates all steps are complete
+        setProgressPercentage(100);
+      } else {
+        // Find current step index
+        const index = currentStep 
+          ? steps.findIndex(step => step.id === currentStep.id)
+          : -1;
+          
+        setCurrentStepIndex(index !== -1 ? index : -1);
         
-      setCurrentStepIndex(index !== -1 ? index : -1);
-      
-      // Calculate progress percentage
-      const totalSteps = steps.length;
-      const completedSteps = index !== -1 ? index : totalSteps;
-      const progress = totalSteps > 0 
-        ? (completedSteps / totalSteps) * 100
-        : 0;
-        
-      setProgressPercentage(progress);
+        // Calculate progress percentage
+        const totalSteps = steps.length;
+        const completedSteps = index !== -1 ? index : (index === -1 && !currentStep ? totalSteps : 0);
+        const progress = totalSteps > 0 
+          ? (completedSteps / totalSteps) * 100
+          : 0;
+          
+        setProgressPercentage(progress);
+      }
     }
-  }, [steps, currentStep]);
+  }, [steps, currentStep, requestStatus]);
 
   // Function to diagnose workflow issues with better error handling
   const diagnoseWorkflow = useCallback(async () => {
@@ -72,8 +79,8 @@ export const useWorkflowCardData = (
   }, [requestId]);
 
   // Function to refresh workflow data
-  const refreshWorkflowData = useCallback(() => {
-    refetch();
+  const refreshWorkflowData = useCallback(async () => {
+    await refetch();
   }, [refetch]);
 
   return {

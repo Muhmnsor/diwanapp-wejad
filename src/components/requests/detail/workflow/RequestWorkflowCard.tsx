@@ -17,11 +17,13 @@ import { WorkflowStepsList } from "./WorkflowStepsList";
 import { useWorkflowCardData } from "./useWorkflowCardData";
 import { Progress } from "@/components/ui/progress";
 import { DiagnoseWorkflowButton } from "./DiagnoseWorkflowButton";
+import { CurrentStepDisplay } from "./CurrentStepDisplay";
 
 export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({ 
   workflow, 
   currentStep,
-  requestId
+  requestId,
+  requestStatus = 'pending'
 }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDiagnosing, setIsDiagnosing] = useState(false);
@@ -35,7 +37,7 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
     progressPercentage,
     diagnoseWorkflow,
     refreshWorkflowData
-  } = useWorkflowCardData(requestId, workflow, currentStep);
+  } = useWorkflowCardData(requestId, workflow, currentStep, requestStatus);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -51,7 +53,7 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
   };
 
   // Determine if the workflow is completed
-  const isWorkflowCompleted = currentStepIndex === -1 && workflowSteps.length > 0;
+  const isWorkflowCompleted = requestStatus === 'completed' || (currentStepIndex === -1 && workflowSteps.length > 0);
 
   return (
     <Card>
@@ -110,6 +112,18 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
         
         <Separator className="my-3" />
         
+        {/* Current step display */}
+        <div className="mb-4">
+          <h4 className="text-sm font-medium mb-2">الخطوة الحالية</h4>
+          <CurrentStepDisplay 
+            currentStep={currentStep} 
+            requestStatus={requestStatus}
+            isLoading={isLoading} 
+          />
+        </div>
+        
+        <Separator className="my-3" />
+        
         {/* All workflow steps with clearer visualization */}
         <div>
           <h4 className="text-sm font-medium mb-2">خطوات سير العمل</h4>
@@ -117,6 +131,7 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
             steps={workflowSteps}
             currentStepIndex={currentStepIndex}
             isLoading={isLoading}
+            requestStatus={requestStatus}
           />
         </div>
         

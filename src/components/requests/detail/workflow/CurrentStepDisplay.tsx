@@ -8,6 +8,7 @@ import { CheckCircle, AlertCircle, User, Clock } from "lucide-react";
 
 export const CurrentStepDisplay: React.FC<CurrentStepDisplayProps> = ({ 
   currentStep,
+  requestStatus,
   isLoading = false
 }) => {
   if (isLoading) {
@@ -19,7 +20,8 @@ export const CurrentStepDisplay: React.FC<CurrentStepDisplayProps> = ({
     );
   }
 
-  if (!currentStep) {
+  // For completed requests, show a completion message regardless of currentStep
+  if (requestStatus === 'completed' || !currentStep) {
     return (
       <div className="text-center p-4 border rounded-md border-dashed">
         <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />

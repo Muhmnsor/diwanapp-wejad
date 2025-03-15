@@ -39,6 +39,20 @@ serve(async (req) => {
 
     console.log(`Attempting to fix status for request ${requestId}`);
 
+    // Get the current request state for better diagnostics
+    const { data: requestData, error: requestError } = await supabaseClient
+      .from('requests')
+      .select('status, current_step_id, workflow_id')
+      .eq('id', requestId)
+      .single();
+      
+    if (requestError) {
+      console.error("Error getting request data:", requestError);
+      throw requestError;
+    }
+    
+    console.log("Current request state:", requestData);
+
     // Call the DB function to fix the request status
     const { data, error } = await supabaseClient.rpc('fix_request_status', {
       p_request_id: requestId
@@ -50,9 +64,44 @@ serve(async (req) => {
     }
 
     console.log("Fix request status result:", data);
+    
+    // If current_step_id is not null but request is completed,
+    // verify it was set to null in the fix
+    if (requestData.status === 'completed' && requestData.current_step_id) {
+      // Get the updated request state
+      const { data: updatedRequestData, error: updatedRequestError } = await supabaseClient
+        .from('requests')
+        .select('status, current_step_id')
+        .eq('id', requestId)
+        .single();
+        
+      if (!updatedRequestError && updatedRequestData.current_step_id) {
+        console.warn("Request is still marked as completed but has a current_step_id.");
+        console.log("Forcing removal of current_step_id for completed request...");
+        
+        // Force removal of current_step_id
+        const { data: updateResult, error: updateError } = await supabaseClient
+          .from('requests')
+          .update({ current_step_id: null, updated_at: new Date() })
+          .eq('id', requestId)
+          .eq('status', 'completed');
+          
+        if (updateError) {
+          console.error("Error updating request to remove current_step_id:", updateError);
+        } else {
+          console.log("Successfully removed current_step_id from completed request");
+          data.additional_fixes = { removed_current_step_id: true };
+        }
+      }
+    }
 
     return new Response(
-      JSON.stringify({ success: true, message: "Request status updated successfully", data }),
+      JSON.stringify({ 
+        success: true, 
+        message: "Request status updated successfully", 
+        data,
+        original_state: requestData 
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
