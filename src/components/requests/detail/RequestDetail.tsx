@@ -1,13 +1,12 @@
-
 import { Loader2 } from "lucide-react";
 import { RequestDetailsCard } from "./RequestDetailsCard";
-import { RequestWorkflowCard } from "./RequestWorkflowCard";
 import { RequestActionButtons } from "./RequestActionButtons";
 import { RequestApproveDialog } from "./RequestApproveDialog";
 import { RequestRejectDialog } from "./RequestRejectDialog";
 import { useRequestDetail } from "./useRequestDetail";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { RequestWorkflowCard } from "./workflow/RequestWorkflowCard";
 
 interface RequestDetailProps {
   requestId: string;
@@ -73,13 +72,11 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   const requester = data.requester;
   const stepType = currentStep?.step_type || "decision";
 
-  // Add requester info to the request object for easier access
   const enhancedRequest = {
     ...request,
     requester: requester
   };
 
-  // Debug info for workflow data
   console.log("Request workflow data:", workflow);
   console.log("Current step data:", currentStep);
   console.log("Requester data:", requester);
