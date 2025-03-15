@@ -78,14 +78,22 @@ export const debugWorkflowStatus = async (requestId: string) => {
       currentStepIndex: -1,
       completedSteps: 0,
       totalRequiredSteps: 0,
+      totalSteps: 0,
+      totalDecisionSteps: 0,
+      totalOpinionSteps: 0,
+      completedDecisionSteps: 0,
+      completedOpinionSteps: 0,
       isComplete: false,
       nextExpectedStep: null,
       issues: []
     };
     
-    // Count required steps
+    // Count steps by type and required status
     if (steps) {
+      analysis.totalSteps = steps.length;
       analysis.totalRequiredSteps = steps.filter(s => s.is_required).length;
+      analysis.totalDecisionSteps = steps.filter(s => s.step_type === 'decision' && s.is_required).length;
+      analysis.totalOpinionSteps = steps.filter(s => s.step_type === 'opinion').length;
       
       // Find current step index
       if (request.current_step_id) {
@@ -98,16 +106,32 @@ export const debugWorkflowStatus = async (requestId: string) => {
       }
     }
     
-    // Count completed steps
+    // Count completed steps by type
     if (approvals) {
-      analysis.completedSteps = approvals.filter(a => a.status === 'approved').length;
+      const approvedApprovals = approvals.filter(a => a.status === 'approved');
+      analysis.completedSteps = approvedApprovals.length;
       
-      // Check if workflow should be complete
-      if (analysis.completedSteps >= analysis.totalRequiredSteps) {
+      // Count decision vs opinion steps completed
+      if (steps) {
+        const stepTypeMap = new Map(steps.map(s => [s.id, s.step_type]));
+        
+        analysis.completedDecisionSteps = approvedApprovals.filter(a => 
+          stepTypeMap.get(a.step_id) === 'decision'
+        ).length;
+        
+        analysis.completedOpinionSteps = approvedApprovals.filter(a => 
+          stepTypeMap.get(a.step_id) === 'opinion'
+        ).length;
+      }
+      
+      // Check if workflow should be complete - all required steps are approved
+      // For decision steps, all required ones must be completed
+      // For opinion steps, they don't block completion
+      if (analysis.completedDecisionSteps >= analysis.totalDecisionSteps) {
         analysis.isComplete = true;
         
         if (request.status !== 'completed') {
-          analysis.issues.push("All required steps are approved but request status is not 'completed'");
+          analysis.issues.push("All required decision steps are approved but request status is not 'completed'");
         }
       }
     }
@@ -123,6 +147,11 @@ export const debugWorkflowStatus = async (requestId: string) => {
     
     if (!request.workflow_id) {
       analysis.issues.push("Request has no workflow assigned");
+    }
+    
+    // Check for mixed step type workflow completion issues
+    if (request.status === 'in_progress' && analysis.isComplete) {
+      analysis.issues.push("Request should be marked as completed - all required steps are approved");
     }
     
     console.log("Workflow analysis:", analysis);

@@ -94,6 +94,61 @@ serve(async (req) => {
         }
       }
     }
+    
+    // Additional check - if all required decision steps are approved but status is still in_progress
+    if (requestData.status === 'in_progress') {
+      // Check if all required decision steps are approved
+      const { data: workflowData, error: workflowError } = await supabaseClient
+        .from('requests')
+        .select(`
+          id,
+          status,
+          current_step_id,
+          workflow_id,
+          workflow_steps!workflow_id(id, step_type, is_required),
+          request_approvals!inner(id, step_id, status)
+        `)
+        .eq('id', requestId)
+        .single();
+        
+      if (!workflowError && workflowData) {
+        console.log("Checking if all required decision steps are approved...");
+        
+        const requiredDecisionSteps = workflowData.workflow_steps.filter(
+          (step: any) => step.step_type === 'decision' && step.is_required
+        );
+        
+        const approvedSteps = workflowData.request_approvals.filter(
+          (approval: any) => approval.status === 'approved'
+        );
+        
+        const approvedStepIds = new Set(approvedSteps.map((a: any) => a.step_id));
+        
+        const allRequiredDecisionStepsApproved = requiredDecisionSteps.every(
+          (step: any) => approvedStepIds.has(step.id)
+        );
+        
+        if (allRequiredDecisionStepsApproved) {
+          console.log("All required decision steps are approved, forcing completion...");
+          
+          const { data: updateResult, error: updateError } = await supabaseClient
+            .from('requests')
+            .update({ 
+              status: 'completed', 
+              current_step_id: null,
+              updated_at: new Date()
+            })
+            .eq('id', requestId);
+            
+          if (updateError) {
+            console.error("Error updating request to completed:", updateError);
+          } else {
+            console.log("Successfully marked request as completed");
+            data.additional_fixes = { ...(data.additional_fixes || {}), forced_completion: true };
+          }
+        }
+      }
+    }
 
     return new Response(
       JSON.stringify({ 

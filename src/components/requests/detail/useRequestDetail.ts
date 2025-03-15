@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRequestDetails, diagnoseRequestWorkflow, fixRequestWorkflow } from "./services/requestService";
@@ -59,6 +60,34 @@ export const useRequestDetail = (requestId: string) => {
         if (data.approvals && data.approvals.length > 0) {
           console.log("عدد سجلات الموافقة:", data.approvals.length);
           console.log("تفاصيل أول سجل موافقة:", data.approvals[0]);
+          
+          // Check for completed approvals when status is still in_progress
+          if (data.request.status === 'in_progress') {
+            const approvedSteps = data.approvals.filter((a: any) => a.status === 'approved');
+            const requiredSteps = data.workflow?.steps?.filter((s: any) => s.is_required && s.step_type === 'decision') || [];
+            
+            if (approvedSteps.length >= requiredSteps.length && requiredSteps.length > 0) {
+              console.warn("الطلب قد يكون مكتملاً ولكن حالته لا تزال 'قيد المعالجة'");
+              
+              // Check if it's safe to auto-diagnose and fix
+              const shouldAutoFix = approvedSteps.some((a: any) => {
+                // If approval was within the last minute
+                const approvedAt = new Date(a.approved_at);
+                const now = new Date();
+                const diffInSeconds = (now.getTime() - approvedAt.getTime()) / 1000;
+                return diffInSeconds < 60; // If approval was within the last minute
+              });
+              
+              if (shouldAutoFix) {
+                console.log("تم اكتشاف حالة تحتاج للإصلاح، سيتم محاولة التصحيح التلقائي...");
+                
+                // Perform auto-diagnosis and potentially auto-fix silently
+                setTimeout(() => {
+                  diagnoseAndFixIfNeeded(requestId);
+                }, 1000);
+              }
+            }
+          }
         } else {
           console.warn("لا توجد موافقات لهذا الطلب");
         }
@@ -73,6 +102,32 @@ export const useRequestDetail = (requestId: string) => {
     },
     refetchOnWindowFocus: false
   });
+
+  // Helper function for auto-diagnosis and fixing
+  const diagnoseAndFixIfNeeded = async (reqId: string) => {
+    try {
+      console.log("بدء التشخيص التلقائي للطلب:", reqId);
+      const result = await diagnoseRequestWorkflow(reqId);
+      
+      if (result?.issues?.length > 0 || result?.analysis?.issues?.length > 0) {
+        console.log("تم اكتشاف مشاكل، بدء عملية الإصلاح التلقائي...");
+        
+        const fixResult = await fixRequestWorkflow(reqId);
+        if (fixResult.success) {
+          console.log("تم إصلاح المشكلة تلقائيًا:", fixResult);
+          
+          // Refresh data after fix
+          setTimeout(() => {
+            refetch();
+          }, 500);
+        }
+      } else {
+        console.log("لم يتم اكتشاف أي مشاكل في التشخيص التلقائي");
+      }
+    } catch (error) {
+      console.error("خطأ في التشخيص/الإصلاح التلقائي:", error);
+    }
+  };
 
   const isCurrentApprover = () => {
     if (!data || !user || !data.current_step) return false;
@@ -239,6 +294,11 @@ export const useRequestDetail = (requestId: string) => {
       if (data.was_modified) {
         toast.success(data.result.message || "تم إصلاح مسار العمل بنجاح");
         queryClient.invalidateQueries({ queryKey: ["request-details", requestId] });
+        
+        // Force reload after a short delay to ensure we get the latest state
+        setTimeout(() => {
+          refetch();
+        }, 500);
       } else {
         toast.info(data.result.message || "لا توجد تغييرات مطلوبة");
       }
