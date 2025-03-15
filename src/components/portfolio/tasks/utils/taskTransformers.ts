@@ -1,28 +1,22 @@
 
 interface Task {
-  name?: string;
   title: string;
-  notes?: string;
   description?: string;
-  completed?: boolean;
   status?: string;
   priority?: string;
   due_date?: string;
   id: string;
-  assignee?: {
-    id?: string;
-  };
   assigned_to?: string;
 }
 
 export const transformTask = (task: Task, workspaceId: string) => ({
   workspace_id: workspaceId,
-  title: task.title || task.name || '',
-  description: task.description || task.notes || null,
-  status: task.status || (task.completed ? 'completed' : 'pending'),
+  title: task.title || '',
+  description: task.description || null,
+  status: task.status || 'pending',
   priority: task.priority || 'medium',
   due_date: task.due_date ? new Date(task.due_date).toISOString() : null,
-  assigned_to: task.assigned_to || task.assignee?.id || null,
+  assigned_to: task.assigned_to || null,
   updated_at: new Date().toISOString()
 });
 

@@ -1,3 +1,4 @@
+
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -28,20 +29,20 @@ export const TaskFormFields = ({
   setAssignedTo,
   workspaceId
 }: TaskFormFieldsProps) => {
-  // Fetch Asana users
+  // Fetch users
   const { data: users = [], isLoading: isLoadingUsers } = useQuery({
-    queryKey: ['asana-users', workspaceId],
+    queryKey: ['portfolio-users'],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke('get-asana-users', {
-        body: { workspaceId }
-      });
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, display_name, email');
 
       if (error) {
-        console.error('Error fetching Asana users:', error);
+        console.error('Error fetching users:', error);
         throw error;
       }
 
-      return data.data || [];
+      return data || [];
     }
   });
 
@@ -91,8 +92,8 @@ export const TaskFormFields = ({
           </SelectTrigger>
           <SelectContent>
             {users.map((user: any) => (
-              <SelectItem key={user.gid} value={user.gid}>
-                {user.name}
+              <SelectItem key={user.id} value={user.id}>
+                {user.display_name || user.email}
               </SelectItem>
             ))}
           </SelectContent>

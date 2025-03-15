@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -11,7 +12,7 @@ type Portfolio = Database['public']['Tables']['portfolios']['Row'] & {
 interface PortfolioCardProps {
   portfolio: Portfolio;
   onEdit: (portfolio: { id: string; name: string; description: string | null }) => void;
-  onDelete: (portfolio: { id: string; name: string; asanaGid: string | null }) => void;
+  onDelete: (portfolio: { id: string; name: string }) => void;
   onClick: (e: React.MouseEvent, id: string) => void;
 }
 
@@ -52,8 +53,7 @@ export const PortfolioCard = ({ portfolio, onEdit, onDelete, onClick }: Portfoli
                 e.stopPropagation();
                 onDelete({
                   id: portfolio.id,
-                  name: portfolio.name,
-                  asanaGid: portfolio.asana_gid
+                  name: portfolio.name
                 });
               }}
             >
@@ -68,11 +68,11 @@ export const PortfolioCard = ({ portfolio, onEdit, onDelete, onClick }: Portfoli
             <span>{portfolio.total_projects}</span>
           </div>
           <Progress 
-            value={portfolio.sync_enabled ? 100 : 0} 
+            value={50} 
             className="h-2"
           />
           <div className="text-xs text-gray-500 text-right">
-            {portfolio.sync_enabled ? 'متزامن مع Asana' : 'غير متزامن'}
+            محفظة المشاريع
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, RefreshCcw } from 'lucide-react';
 import { AddPortfolioDialog } from '../AddPortfolioDialog';
 import { useState } from 'react';
 
@@ -15,6 +15,16 @@ export const PortfolioHeader = ({ onSync }: PortfolioHeaderProps) => {
     <div className="flex justify-between items-center mb-6">
       <h2 className="text-2xl font-bold">المحافظ</h2>
       <div className="flex gap-2">
+        {onSync && (
+          <Button
+            variant="outline"
+            onClick={onSync}
+            className="flex items-center gap-2"
+          >
+            <RefreshCcw className="h-4 w-4" />
+            تحديث
+          </Button>
+        )}
         <Button
           onClick={() => setIsDialogOpen(true)}
           className="flex items-center gap-2"
