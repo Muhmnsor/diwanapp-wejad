@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -38,7 +37,6 @@ export const RequestApproveDialog = ({
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   
-  // Check if this is a self-approval (user is approving their own request)
   const isSelfApproval = user?.id === requesterId;
   
   const approveMutation = useMutation({
@@ -47,14 +45,12 @@ export const RequestApproveDialog = ({
         throw new Error("لا يمكن الموافقة على هذا الطلب لأنه لا يوجد خطوة حالية");
       }
       
-      // Self-approval warning for non-opinion steps
       if (isSelfApproval && stepType !== 'opinion') {
         throw new Error("لا يمكن الموافقة على طلبك الخاص إلا في حالة خطوات الرأي فقط");
       }
       
       console.log(`Approving request: ${requestId}, step: ${stepId}, type: ${stepType}, comments: "${comments}"`);
       
-      // Add more metadata to help with debugging
       const metadata = {
         isSelfApproval,
         stepType,
@@ -67,7 +63,6 @@ export const RequestApproveDialog = ({
         }
       };
       
-      // Use the RPC function that handles everything in a single transaction
       const { data, error } = await supabase
         .rpc('approve_request', { 
           p_request_id: requestId,
@@ -83,7 +78,6 @@ export const RequestApproveDialog = ({
       
       console.log("Approval result:", data);
       
-      // For all steps, we need to call the edge function to ensure the workflow progresses
       try {
         console.log("Step completed. Updating workflow to next step...");
         
@@ -101,14 +95,29 @@ export const RequestApproveDialog = ({
         
         if (updateError) {
           console.error("Error updating workflow step:", updateError);
-          // Don't throw here, as the opinion was still recorded successfully
           toast.warning("تم تسجيل رأيك ولكن هناك مشكلة في تحديث الخطوة التالية");
         } else {
           console.log("Workflow updated successfully:", updateResult);
         }
+        
+        if (data && data.is_last_step) {
+          console.log("This appears to be the last step. Running fix-request-status...");
+          try {
+            const { data: fixResult, error: fixError } = await supabase.functions.invoke('fix-request-status', {
+              body: { requestId }
+            });
+            
+            if (fixError) {
+              console.error("Error fixing request status:", fixError);
+            } else {
+              console.log("Fix request status result:", fixResult);
+            }
+          } catch (fixError) {
+            console.error("Exception fixing request status:", fixError);
+          }
+        }
       } catch (updateError) {
         console.error("Exception updating workflow step:", updateError);
-        // Don't throw here, as the opinion was still recorded successfully
       }
       
       return data;
@@ -128,7 +137,6 @@ export const RequestApproveDialog = ({
       onOpenChange(false);
       setComments("");
       
-      // Invalidate all relevant queries to ensure UI is updated
       queryClient.invalidateQueries({ queryKey: ['requests'] });
       queryClient.invalidateQueries({ queryKey: ['requests', 'incoming'] });
       queryClient.invalidateQueries({ queryKey: ['request-details', requestId] });

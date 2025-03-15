@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -38,7 +37,6 @@ export const RequestRejectDialog = ({
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   
-  // Check if this is a self-rejection (user is rejecting their own request)
   const isSelfRejection = user?.id === requesterId;
   
   const rejectMutation = useMutation({
@@ -51,14 +49,12 @@ export const RequestRejectDialog = ({
         throw new Error(stepType === 'opinion' ? "يجب إدخال رأيك" : "يجب إدخال سبب الرفض");
       }
       
-      // Self-rejection warning for non-opinion steps
       if (isSelfRejection && stepType !== 'opinion') {
         throw new Error("لا يمكن رفض طلبك الخاص إلا في حالة خطوات الرأي فقط");
       }
       
       console.log(`Rejecting request: ${requestId}, step: ${stepId}, type: ${stepType}, comments: "${comments}"`);
 
-      // Add more metadata to help with debugging
       const metadata = {
         isSelfRejection,
         stepType,
@@ -71,7 +67,6 @@ export const RequestRejectDialog = ({
         }
       };
 
-      // Use the RPC function that handles everything in a single transaction
       const { data, error } = await supabase
         .rpc('reject_request', { 
           p_request_id: requestId,
@@ -87,8 +82,6 @@ export const RequestRejectDialog = ({
       
       console.log("Rejection result:", data);
       
-      // For opinion steps, we need to manually progress the workflow 
-      // to the next step since the RPC function doesn't do this
       if (stepType === 'opinion') {
         try {
           console.log("Opinion step completed with negative opinion. Updating workflow to next step...");
@@ -107,14 +100,27 @@ export const RequestRejectDialog = ({
           
           if (updateError) {
             console.error("Error updating workflow step:", updateError);
-            // Don't throw here, as the opinion was still recorded successfully
             toast.warning("تم تسجيل رأيك ولكن هناك مشكلة في تحديث الخطوة التالية");
           } else {
             console.log("Workflow updated successfully:", updateResult);
           }
         } catch (updateError) {
           console.error("Exception updating workflow step:", updateError);
-          // Don't throw here, as the opinion was still recorded successfully
+        }
+      } else {
+        try {
+          console.log("Decision step rejected. Running fix-request-status...");
+          const { data: fixResult, error: fixError } = await supabase.functions.invoke('fix-request-status', {
+            body: { requestId }
+          });
+          
+          if (fixError) {
+            console.error("Error fixing request status:", fixError);
+          } else {
+            console.log("Fix request status result:", fixResult);
+          }
+        } catch (fixError) {
+          console.error("Exception fixing request status:", fixError);
         }
       }
       
@@ -135,14 +141,11 @@ export const RequestRejectDialog = ({
       onOpenChange(false);
       setComments("");
       
-      // Invalidate all relevant queries to ensure UI is updated
       queryClient.invalidateQueries({ queryKey: ['requests'] });
       queryClient.invalidateQueries({ queryKey: ['requests', 'incoming'] });
       queryClient.invalidateQueries({ queryKey: ['request-details', requestId] });
       
-      // For opinion steps, make sure the request is immediately removed from the incoming list
       if (stepType === 'opinion') {
-        // Force refetch rather than just invalidate
         queryClient.invalidateQueries({ queryKey: ['requests', 'incoming'] });
       }
     },

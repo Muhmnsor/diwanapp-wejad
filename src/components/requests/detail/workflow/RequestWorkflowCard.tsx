@@ -17,6 +17,7 @@ import { CurrentStepDisplay } from "./CurrentStepDisplay";
 import { WorkflowStepsList } from "./WorkflowStepsList";
 import { useWorkflowCardData } from "./useWorkflowCardData";
 import { Progress } from "@/components/ui/progress";
+import { DiagnoseWorkflowButton } from "./DiagnoseWorkflowButton";
 
 export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({ 
   workflow, 
@@ -47,26 +48,6 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
       toast.error("حدث خطأ أثناء تحديث البيانات");
     } finally {
       setIsRefreshing(false);
-    }
-  };
-
-  const handleDiagnose = async () => {
-    setIsDiagnosing(true);
-    setDiagnosticResult(null);
-    try {
-      const result = await diagnoseWorkflow();
-      setDiagnosticResult(result);
-      
-      if (result?.success) {
-        toast.success("تم فحص مسار العمل بنجاح");
-      } else {
-        toast.error("تم العثور على مشاكل في مسار العمل");
-      }
-    } catch (error) {
-      console.error("Error diagnosing workflow:", error);
-      toast.error("حدث خطأ أثناء تشخيص مسار العمل");
-    } finally {
-      setIsDiagnosing(false);
     }
   };
 
@@ -173,17 +154,12 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
         )}
       </CardContent>
       
-      <CardFooter className="pt-0">
-        <Button 
-          variant="outline" 
-          size="sm" 
+      <CardFooter className="pt-0 flex gap-2">
+        <DiagnoseWorkflowButton 
+          requestId={requestId} 
+          onSuccess={refreshWorkflowData}
           className="w-full" 
-          onClick={handleDiagnose}
-          disabled={isDiagnosing || !requestId}
-        >
-          <Activity className={`h-4 w-4 mr-2 ${isDiagnosing ? 'animate-pulse' : ''}`} />
-          تشخيص مسار العمل
-        </Button>
+        />
       </CardFooter>
     </Card>
   );

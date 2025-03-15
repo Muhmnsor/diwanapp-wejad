@@ -1,90 +1,73 @@
-
-import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuthStore } from '@/store/refactored-auth';
-import { useParams } from 'react-router-dom';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getRequestDetails, diagnoseRequestWorkflow, debugRequestWorkflow } from "./services/requestService";
+import { useAuthStore } from "@/store/refactored-auth";
 
 export const useRequestDetail = (requestId: string) => {
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const { user } = useAuthStore();
-  
-  // Fetch request details with related data
+
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['request-details', requestId],
-    queryFn: async () => {
-      console.log('Fetching request details for ID:', requestId);
-      try {
-        // Log request view
-        await supabase.rpc('log_request_view', {
-          p_request_id: requestId,
-          p_metadata: {
-            client_info: navigator.userAgent,
-            view_time: new Date().toISOString()
-          }
-        });
-        
-        // Get details
-        const { data, error } = await supabase.rpc('get_request_details', {
-          p_request_id: requestId
-        });
-        
-        if (error) throw error;
-        console.log('Request details loaded:', data);
-        return data;
-      } catch (error) {
-        console.error('Error fetching request details:', error);
-        throw error;
-      }
-    },
-    refetchOnWindowFocus: false
+    queryKey: ["request-details", requestId],
+    queryFn: () => getRequestDetails(requestId),
+    enabled: !!requestId,
   });
-  
-  // Handlers for dialog open/close
+
   const handleApproveClick = () => {
-    console.log('Opening approve dialog');
     setIsApproveDialogOpen(true);
   };
-  
+
   const handleRejectClick = () => {
-    console.log('Opening reject dialog');
     setIsRejectDialogOpen(true);
   };
-  
-  // Check if the current user is an approver for this request
+
+  // Check if the current user is the approver for the current step
   const isCurrentApprover = () => {
     if (!data || !data.current_step || !user) return false;
     
-    const { current_step } = data;
+    // Admin users can approve any step
+    if (user.isAdmin) return true;
     
-    // Direct approver match (by user ID)
-    if (current_step.approver_id === user.id) {
-      return true;
-    }
-    
-    // Admin users can approve any request
-    return user.isAdmin;
+    // Otherwise, check if the user is the specific approver for this step
+    return data.current_step.id && 
+           data.current_step.approver_id === user.id;
   };
-  
-  // Check if the user has already submitted an opinion for the current step
+
+  // Check if the user has already submitted their opinion
   const hasSubmittedOpinion = () => {
     if (!data || !data.approvals || !user) return false;
     
-    // Check if there's already an approval record for this user in the current step
-    return data.approvals.some(approval => 
-      approval.approver?.id === user.id && 
-      approval.step?.id === data.request?.current_step_id
+    const currentStepId = data.request.current_step_id;
+    if (!currentStepId) return false;
+    
+    return data.approvals.some(
+      approval => approval.step_id === currentStepId && 
+                approval.approver_id === user.id
     );
   };
-
-  // Automatically refresh data when dialogs are closed 
-  useEffect(() => {
-    if (!isApproveDialogOpen && !isRejectDialogOpen) {
-      refetch();
+  
+  // Function to diagnose workflow issues
+  const diagnoseWorkflow = async () => {
+    try {
+      const result = await diagnoseRequestWorkflow(requestId);
+      return result;
+    } catch (error) {
+      console.error("Error diagnosing workflow:", error);
+      throw error;
     }
-  }, [isApproveDialogOpen, isRejectDialogOpen, refetch]);
+  };
+  
+  // Function to debug workflow issues
+  const debugWorkflow = async () => {
+    try {
+      const result = await debugRequestWorkflow(requestId);
+      return result;
+    } catch (error) {
+      console.error("Error debugging workflow:", error);
+      throw error;
+    }
+  };
 
   return {
     data,
@@ -98,6 +81,8 @@ export const useRequestDetail = (requestId: string) => {
     handleRejectClick,
     isCurrentApprover,
     hasSubmittedOpinion,
-    refetch
+    refetch,
+    diagnoseWorkflow,
+    debugWorkflow
   };
 };
