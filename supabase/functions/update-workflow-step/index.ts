@@ -39,6 +39,7 @@ Deno.serve(async (req) => {
     )
     
     // Get the request with full details about current step
+    // Use aliases and fully qualified column names to avoid ambiguity
     const { data: requestData1, error: requestError } = await supabaseAdmin
       .from('requests')
       .select(`
@@ -60,6 +61,7 @@ Deno.serve(async (req) => {
     console.log('Finding next step in workflow...')
     
     // Get the next step in the workflow based on step_order
+    // Use explicit column names with table references to avoid ambiguity
     const { data: nextStep, error: nextStepError } = await supabaseAdmin
       .from('workflow_steps')
       .select('id, step_order, step_type')

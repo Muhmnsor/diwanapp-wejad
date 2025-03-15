@@ -1,201 +1,96 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { validateWorkflow, validateRequestType, validateAndRepairRequest, repairWorkflow } from './workflowValidator';
+import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Utility functions to help with workflow operations
- */
-
-/**
- * Fetches a request workflow by ID and logs diagnostic information
- */
-export const fetchWorkflowDetails = async (workflowId: string) => {
-  try {
-    console.log(`Fetching workflow details for ID: ${workflowId}`);
-    
-    // Get the workflow
-    const { data: workflow, error: workflowError } = await supabase
-      .from('request_workflows')
-      .select('*')
-      .eq('id', workflowId)
-      .single();
-    
-    if (workflowError) {
-      console.error('Error fetching workflow:', workflowError);
-      return null;
-    }
-    
-    // Get the workflow steps
-    const { data: steps, error: stepsError } = await supabase
-      .from('workflow_steps')
-      .select('*')
-      .eq('workflow_id', workflowId)
-      .order('step_order', { ascending: true });
-    
-    if (stepsError) {
-      console.error('Error fetching workflow steps:', stepsError);
-      return { workflow, steps: [] };
-    }
-    
-    console.log(`Workflow found with ${steps?.length || 0} steps`);
-    return { workflow, steps };
-  } catch (error) {
-    console.error('Exception in fetchWorkflowDetails:', error);
-    return null;
-  }
-};
-
-/**
- * Fetches requests that are linked to a specific workflow
- */
-export const fetchRequestsByWorkflow = async (workflowId: string) => {
-  try {
-    const { data, error } = await supabase
-      .from('requests')
-      .select('*')
-      .eq('workflow_id', workflowId);
-    
-    if (error) {
-      console.error('Error fetching requests by workflow:', error);
-      return [];
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Exception in fetchRequestsByWorkflow:', error);
-    return [];
-  }
-};
-
-/**
- * Diagnoses issues with a particular request's workflow
+ * Diagnoses issues with a request's workflow
+ * @param requestId The ID of the request to diagnose
+ * @returns Diagnosis result with any issues found
  */
 export const diagnoseRequestWorkflow = async (requestId: string) => {
   try {
-    console.log(`Diagnosing workflow for request ID: ${requestId}`);
-    
-    // Use the new validation function which handles edge cases better
-    const validationResult = await validateAndRepairRequest(requestId);
-    
-    return {
-      request: validationResult.request,
-      currentStep: validationResult.currentStep,
-      issues: validationResult.valid ? [] : [validationResult.error],
-      validationResult
-    };
-  } catch (error) {
-    console.error('Exception in diagnoseRequestWorkflow:', error);
-    return { request: null, issues: ['Exception during diagnosis'] };
-  }
-};
-
-/**
- * A utility to check if a request is properly associated with a workflow
- */
-export const validateRequestWorkflow = async (requestTypeId: string): Promise<boolean> => {
-  try {
-    // Use the enhanced validation function
-    const validationResult = await validateRequestType(requestTypeId);
-    return validationResult.valid;
-  } catch (error) {
-    console.error('Exception in validateRequestWorkflow:', error);
-    return false;
-  }
-};
-
-/**
- * Checks if a request type has any dependencies (associated workflows or requests)
- * @param requestTypeId The ID of the request type to check
- * @returns Object containing workflows and requests associated with the type
- */
-export const checkRequestTypeDependencies = async (requestTypeId: string) => {
-  try {
-    console.log(`Checking dependencies for request type ID: ${requestTypeId}`);
-    
-    // Get workflows for this request type
-    const { data: workflows, error: workflowsError } = await supabase
-      .from('request_workflows')
-      .select('*')
-      .eq('request_type_id', requestTypeId);
-
-    if (workflowsError) throw workflowsError;
-
-    // Get requests for this request type - these are the critical dependencies
-    // that would prevent deletion
-    const { data: requests, error: requestsError } = await supabase
-      .from('requests')
-      .select('*')
-      .eq('request_type_id', requestTypeId);
-
-    if (requestsError) throw requestsError;
-
-    return {
-      workflows: workflows || [],
-      requests: requests || [],
-      hasWorkflows: workflows && workflows.length > 0,
-      hasRequests: requests && requests.length > 0,
-    };
-  } catch (error) {
-    console.error("Error checking request type dependencies:", error);
-    throw error;
-  }
-};
-
-/**
- * Fixes orphaned request types that have invalid default_workflow_id references
- * @returns Result of the repair operation
- */
-export const fixOrphanedRequestTypes = async () => {
-  try {
-    console.log('Fixing orphaned request types...');
-    
+    // Call the diagnostic function
     const { data, error } = await supabase
-      .rpc('fix_orphaned_request_types');
-    
-    if (error) {
-      console.error("Error fixing orphaned request types:", error);
-      throw error;
-    }
-    
-    console.log("Orphaned request types fixed:", data);
-    return data;
-  } catch (error) {
-    console.error("Error in fixOrphanedRequestTypes:", error);
-    throw error;
-  }
-};
-
-/**
- * Deletes a request type and all its associated workflows and steps
- * using the database function that properly handles foreign key constraints
- * @param requestTypeId The ID of the request type to delete
- * @returns Result of the deletion operation
- */
-export const deleteRequestType = async (requestTypeId: string) => {
-  try {
-    console.log(`Deleting request type ID: ${requestTypeId}`);
-    
-    // First attempt to fix any orphaned request types
-    await fixOrphanedRequestTypes();
-    
-    // Call the RPC function to delete the request type
-    const { data, error } = await supabase
-      .rpc('delete_request_type', {
-        p_request_type_id: requestTypeId
+      .rpc('diagnose_workflow_issues', { 
+        p_request_id: requestId 
       });
     
     if (error) {
-      console.error("Error deleting request type:", error);
+      console.error("Error diagnosing workflow:", error);
       throw error;
     }
     
-    console.log("Request type deletion result:", data);
-    return data;
+    return data || { issues: [] };
   } catch (error) {
-    console.error("Error in deleteRequestType:", error);
-    throw error;
+    console.error("Error in workflow diagnosis:", error);
+    return { 
+      success: false, 
+      issues: ["حدث خطأ أثناء تشخيص مسار العمل"] 
+    };
   }
 };
 
-// Expose additional validation functions from workflowValidator
-export { validateWorkflow, validateRequestType, validateAndRepairRequest, repairWorkflow } from './workflowValidator';
+/**
+ * Updates a workflow step for a request
+ */
+export const updateWorkflowStep = async (
+  requestId: string, 
+  currentStepId: string, 
+  action: 'approve' | 'reject' | 'complete',
+  metadata?: Record<string, any>
+) => {
+  try {
+    // Use the Edge Function to update the workflow
+    const { data, error } = await supabase.functions.invoke('update-workflow-step', {
+      body: {
+        requestId,
+        currentStepId,
+        action,
+        metadata
+      }
+    });
+    
+    if (error) {
+      console.error("Error updating workflow step:", error);
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Error in workflow step update:", error);
+    throw new Error(error instanceof Error ? error.message : "خطأ غير معروف");
+  }
+};
+
+/**
+ * Validates a new request before submission
+ */
+export const validateNewRequest = async (requestData: any) => {
+  try {
+    // Check if workflow is valid
+    if (requestData.workflow_id) {
+      const { data, error } = await supabase
+        .rpc('validate_workflow', { 
+          p_workflow_id: requestData.workflow_id 
+        });
+      
+      if (error) throw error;
+      
+      if (!data.valid) {
+        return { 
+          valid: false, 
+          error: data.message || "مسار العمل غير صالح", 
+          requestData 
+        };
+      }
+    }
+    
+    return { valid: true, requestData };
+  } catch (error) {
+    console.error("Error validating request:", error);
+    return { 
+      valid: false, 
+      error: error instanceof Error ? error.message : "خطأ في التحقق من صحة الطلب",
+      requestData
+    };
+  }
+};
