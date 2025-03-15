@@ -48,7 +48,7 @@ export const RequestRejectDialog = ({
       }
       
       if (!comments || comments.trim() === '') {
-        throw new Error("يجب إدخال سبب الرفض");
+        throw new Error(stepType === 'opinion' ? "يجب إدخال رأيك" : "يجب إدخال سبب الرفض");
       }
       
       // Self-rejection warning for non-opinion steps
@@ -71,13 +71,13 @@ export const RequestRejectDialog = ({
         }
       };
 
-      // Use the RPC function
+      // Use the RPC function that handles everything in a single transaction
       const { data, error } = await supabase
         .rpc('reject_request', { 
           p_request_id: requestId,
           p_step_id: stepId,
           p_comments: comments.trim(),
-          p_metadata: metadata || {}
+          p_metadata: metadata
         });
         
       if (error) {
@@ -122,30 +122,27 @@ export const RequestRejectDialog = ({
 
   const handleReject = () => {
     if (!comments.trim()) {
-      toast.error("يجب إدخال سبب الرفض");
+      toast.error(stepType === 'opinion' ? "يجب إدخال رأيك" : "يجب إدخال سبب الرفض");
       return;
     }
     rejectMutation.mutate();
   };
-
-  // Only show rejection dialog for decisions, not opinions
-  if (stepType === 'opinion') {
-    return null;
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            رفض الطلب
+            {stepType === 'opinion' ? 'إبداء الرأي على الطلب' : 'رفض الطلب'}
           </DialogTitle>
           <DialogDescription>
-            يرجى توضيح سبب رفض هذا الطلب
+            {stepType === 'opinion' 
+              ? 'الرجاء إبداء رأيك حول هذا الطلب' 
+              : 'يرجى توضيح سبب رفض هذا الطلب'}
           </DialogDescription>
         </DialogHeader>
         
-        {isSelfRejection && (
+        {isSelfRejection && stepType !== 'opinion' && (
           <Alert variant="destructive" className="my-2">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>تنبيه</AlertTitle>
@@ -155,13 +152,23 @@ export const RequestRejectDialog = ({
           </Alert>
         )}
         
+        {stepType === 'opinion' && (
+          <Alert variant="default" className="my-2 bg-blue-50 text-blue-700 border-blue-200">
+            <InfoIcon className="h-4 w-4" />
+            <AlertTitle>معلومة</AlertTitle>
+            <AlertDescription>
+              هذه خطوة لإبداء الرأي فقط ولن تؤثر على سير الطلب.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <div className="py-4">
           <label htmlFor="comments" className="block text-sm font-medium mb-2 text-destructive">
-            سبب الرفض (مطلوب) *
+            {stepType === 'opinion' ? 'رأيك (مطلوب) *' : 'سبب الرفض (مطلوب) *'}
           </label>
           <Textarea
             id="comments"
-            placeholder="اكتب سبب الرفض هنا..."
+            placeholder={stepType === 'opinion' ? 'اكتب رأيك هنا...' : 'اكتب سبب الرفض هنا...'}
             value={comments}
             onChange={(e) => setComments(e.target.value)}
             rows={4}
@@ -170,7 +177,7 @@ export const RequestRejectDialog = ({
           />
           {!comments.trim() && (
             <p className="text-sm text-destructive mt-1">
-              يجب إدخال سبب الرفض
+              {stepType === 'opinion' ? 'يجب إدخال رأيك' : 'يجب إدخال سبب الرفض'}
             </p>
           )}
         </div>
@@ -183,7 +190,7 @@ export const RequestRejectDialog = ({
             disabled={rejectMutation.isPending || !comments.trim() || (isSelfRejection && stepType !== 'opinion')}
             variant="destructive"
           >
-            {rejectMutation.isPending ? "جاري المعالجة..." : 'رفض الطلب'}
+            {rejectMutation.isPending ? "جاري المعالجة..." : stepType === 'opinion' ? 'إرسال الرأي' : 'رفض الطلب'}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -5,7 +5,6 @@ import { RequestWorkflowCard } from "./RequestWorkflowCard";
 import { RequestActionButtons } from "./RequestActionButtons";
 import { RequestApproveDialog } from "./RequestApproveDialog";
 import { RequestRejectDialog } from "./RequestRejectDialog";
-import { OpinionDialog } from "./OpinionDialog";
 import { useRequestDetail } from "./useRequestDetail";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -24,8 +23,6 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
     setIsApproveDialogOpen,
     isRejectDialogOpen,
     setIsRejectDialogOpen,
-    isOpinionDialogOpen,
-    setIsOpinionDialogOpen,
     handleApproveClick,
     handleRejectClick,
     isCurrentApprover
@@ -120,41 +117,23 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
         </div>
       </div>
 
-      {stepType === 'opinion' && (
-        <OpinionDialog
-          requestId={requestId}
-          stepId={request.current_step_id}
-          requesterId={request.requester_id}
-          isOpen={isOpinionDialogOpen || isApproveDialogOpen || isRejectDialogOpen}
-          onOpenChange={(open) => {
-            setIsOpinionDialogOpen(open);
-            setIsApproveDialogOpen(false);
-            setIsRejectDialogOpen(false);
-          }}
-        />
-      )}
+      <RequestApproveDialog
+        requestId={requestId}
+        stepId={request.current_step_id}
+        stepType={stepType}
+        requesterId={request.requester_id}
+        isOpen={isApproveDialogOpen}
+        onOpenChange={setIsApproveDialogOpen}
+      />
 
-      {stepType !== 'opinion' && (
-        <>
-          <RequestApproveDialog
-            requestId={requestId}
-            stepId={request.current_step_id}
-            stepType={stepType}
-            requesterId={request.requester_id}
-            isOpen={isApproveDialogOpen}
-            onOpenChange={setIsApproveDialogOpen}
-          />
-
-          <RequestRejectDialog
-            requestId={requestId}
-            stepId={request.current_step_id}
-            stepType={stepType}
-            requesterId={request.requester_id}
-            isOpen={isRejectDialogOpen}
-            onOpenChange={setIsRejectDialogOpen}
-          />
-        </>
-      )}
+      <RequestRejectDialog
+        requestId={requestId}
+        stepId={request.current_step_id}
+        stepType={stepType}
+        requesterId={request.requester_id}
+        isOpen={isRejectDialogOpen}
+        onOpenChange={setIsRejectDialogOpen}
+      />
     </>
   );
 };

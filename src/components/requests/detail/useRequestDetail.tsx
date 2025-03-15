@@ -10,7 +10,6 @@ export const useRequestDetail = (requestId: string) => {
   const queryClient = useQueryClient();
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
-  const [isOpinionDialogOpen, setIsOpinionDialogOpen] = useState(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["request-details", requestId],
@@ -142,31 +141,19 @@ export const useRequestDetail = (requestId: string) => {
   };
 
   const handleApproveClick = () => {
-    if (!isCurrentApprover()) {
-      toast.error("ليس لديك الصلاحية للتفاعل مع هذا الطلب");
+    if (!isCurrentApprover() && data?.current_step?.step_type !== 'opinion') {
+      toast.error("ليس لديك الصلاحية للموافقة على هذا الطلب");
       return;
     }
-    
-    // For opinion steps, open the opinion dialog instead
-    if (data?.current_step?.step_type === 'opinion') {
-      setIsOpinionDialogOpen(true);
-    } else {
-      setIsApproveDialogOpen(true);
-    }
+    setIsApproveDialogOpen(true);
   };
 
   const handleRejectClick = () => {
-    if (!isCurrentApprover()) {
-      toast.error("ليس لديك الصلاحية للتفاعل مع هذا الطلب");
+    if (!isCurrentApprover() && data?.current_step?.step_type !== 'opinion') {
+      toast.error("ليس لديك الصلاحية لرفض هذا الطلب");
       return;
     }
-    
-    // For opinion steps, open the opinion dialog instead
-    if (data?.current_step?.step_type === 'opinion') {
-      setIsOpinionDialogOpen(true);
-    } else {
-      setIsRejectDialogOpen(true);
-    }
+    setIsRejectDialogOpen(true);
   };
 
   return {
@@ -177,8 +164,6 @@ export const useRequestDetail = (requestId: string) => {
     setIsApproveDialogOpen,
     isRejectDialogOpen,
     setIsRejectDialogOpen,
-    isOpinionDialogOpen,
-    setIsOpinionDialogOpen,
     handleApproveClick,
     handleRejectClick,
     isCurrentApprover,
