@@ -10,6 +10,7 @@ interface RequestActionButtonsProps {
   onReject: () => void;
   onClose: () => void;
   hasSubmittedOpinion?: boolean;
+  isRequester?: boolean;
 }
 
 export const RequestActionButtons = ({ 
@@ -19,16 +20,17 @@ export const RequestActionButtons = ({
   onApprove, 
   onReject, 
   onClose,
-  hasSubmittedOpinion = false
+  hasSubmittedOpinion = false,
+  isRequester = false
 }: RequestActionButtonsProps) => {
   // SECURITY ENHANCEMENT: Only show approve/reject buttons if:
   // 1. Status is 'pending' or 'in_progress' 
   // 2. AND user is STRICTLY designated as the current approver or it's an opinion step
-  // 3. For opinion steps: user hasn't already submitted an opinion
+  // 3. For opinion steps: user hasn't already submitted an opinion AND is not the requester
   // 4. For decision steps: always respect approver designation
   const showActionButtons = (status === 'pending' || status === 'in_progress') && 
                            (isCurrentApprover) &&
-                           (stepType !== 'opinion' || !hasSubmittedOpinion);
+                           ((stepType !== 'opinion') || (!hasSubmittedOpinion && !isRequester));
   
   // Extra logging for debugging
   console.log("RequestActionButtons props:", {
@@ -36,6 +38,7 @@ export const RequestActionButtons = ({
     isCurrentApprover,
     stepType,
     hasSubmittedOpinion,
+    isRequester,
     showActionButtons
   });
   

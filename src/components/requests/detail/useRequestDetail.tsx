@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,6 +74,17 @@ export const useRequestDetail = (requestId: string) => {
     refetchOnWindowFocus: false
   });
 
+  // Check if the current user is the requester
+  const isRequester = () => {
+    if (!data || !user || !data.request) return false;
+    
+    console.log("التحقق من كون المستخدم هو مقدم الطلب");
+    console.log("معرف المستخدم:", user.id);
+    console.log("معرف مقدم الطلب:", data.request.requester_id);
+    
+    return user.id === data.request.requester_id;
+  };
+  
   // Updated logic: any authenticated user can participate in opinion steps,
   // but decision steps still require proper authorization
   const isCurrentApprover = () => {
@@ -179,10 +189,17 @@ export const useRequestDetail = (requestId: string) => {
       return;
     }
     
-    // For opinion steps, check if user has already submitted
-    if (data?.current_step?.step_type === 'opinion' && hasSubmittedOpinion()) {
-      toast.error("لقد قمت بالفعل بإبداء رأيك على هذه الخطوة");
-      return;
+    // For opinion steps, check if user has already submitted or is the requester
+    if (data?.current_step?.step_type === 'opinion') {
+      if (hasSubmittedOpinion()) {
+        toast.error("لقد قمت بالفعل بإبداء رأيك على هذه الخطوة");
+        return;
+      }
+      
+      if (isRequester()) {
+        toast.error("لا يمكنك إبداء رأي على طلبك الخاص");
+        return;
+      }
     }
     
     setIsApproveDialogOpen(true);
@@ -194,10 +211,17 @@ export const useRequestDetail = (requestId: string) => {
       return;
     }
     
-    // For opinion steps, check if user has already submitted
-    if (data?.current_step?.step_type === 'opinion' && hasSubmittedOpinion()) {
-      toast.error("لقد قمت بالفعل بإبداء رأيك على هذه الخطوة");
-      return;
+    // For opinion steps, check if user has already submitted or is the requester
+    if (data?.current_step?.step_type === 'opinion') {
+      if (hasSubmittedOpinion()) {
+        toast.error("لقد قمت بالفعل بإبداء رأيك على هذه الخطوة");
+        return;
+      }
+      
+      if (isRequester()) {
+        toast.error("لا يمكنك إبداء رأي على طلبك الخاص");
+        return;
+      }
     }
     
     setIsRejectDialogOpen(true);
@@ -258,6 +282,7 @@ export const useRequestDetail = (requestId: string) => {
     handleRejectClick,
     isCurrentApprover,
     hasSubmittedOpinion,
+    isRequester,
     user,
     queryClient,
     refetch,
