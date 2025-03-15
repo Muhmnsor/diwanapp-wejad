@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, InfoIcon, MessageCircle } from "lucide-react";
+import { AlertCircle, InfoIcon } from "lucide-react";
 import { useAuthStore } from "@/store/refactored-auth";
 
 interface RequestApproveDialogProps {
@@ -40,22 +40,19 @@ export const RequestApproveDialog = ({
   
   // Check if this is a self-approval (user is approving their own request)
   const isSelfApproval = user?.id === requesterId;
-  const isOpinionStep = stepType === 'opinion';
   
   const approveMutation = useMutation({
     mutationFn: async () => {
       if (!stepId) {
-        throw new Error(isOpinionStep 
-          ? "لا يمكن إبداء الرأي على هذا الطلب لأنه لا يوجد خطوة حالية" 
-          : "لا يمكن الموافقة على هذا الطلب لأنه لا يوجد خطوة حالية");
+        throw new Error("لا يمكن الموافقة على هذا الطلب لأنه لا يوجد خطوة حالية");
       }
       
       // Self-approval warning for non-opinion steps
-      if (isSelfApproval && !isOpinionStep) {
+      if (isSelfApproval && stepType !== 'opinion') {
         throw new Error("لا يمكن الموافقة على طلبك الخاص إلا في حالة خطوات الرأي فقط");
       }
       
-      console.log(`${isOpinionStep ? "Opinion" : "Approving"} request: ${requestId}, step: ${stepId}, type: ${stepType}, comments: "${comments}"`);
+      console.log(`Approving request: ${requestId}, step: ${stepId}, type: ${stepType}, comments: "${comments}"`);
       
       // Add more metadata to help with debugging
       const metadata = {
@@ -94,7 +91,7 @@ export const RequestApproveDialog = ({
         return;
       }
       
-      const successMessage = isOpinionStep
+      const successMessage = stepType === 'opinion' 
         ? "تم تسجيل رأيك بنجاح" 
         : "تمت الموافقة على الطلب بنجاح";
       
@@ -108,14 +105,14 @@ export const RequestApproveDialog = ({
       queryClient.invalidateQueries({ queryKey: ['request-details', requestId] });
       
       // For opinion steps, make sure the request is immediately removed from the incoming list
-      if (isOpinionStep) {
+      if (stepType === 'opinion') {
         // Force refetch rather than just invalidate
         queryClient.invalidateQueries({ queryKey: ['requests', 'incoming'] });
       }
     },
     onError: (error) => {
       console.error("Error approving request:", error);
-      toast.error(`حدث خطأ أثناء ${isOpinionStep ? "إبداء الرأي" : "الموافقة على الطلب"}: ${error.message}`);
+      toast.error(`حدث خطأ أثناء الموافقة على الطلب: ${error.message}`);
     }
   });
 
@@ -127,24 +124,17 @@ export const RequestApproveDialog = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {isOpinionStep ? (
-              <>
-                <MessageCircle className="h-5 w-5 text-blue-600" />
-                إبداء رأي إيجابي
-              </>
-            ) : (
-              'الموافقة على الطلب'
-            )}
+          <DialogTitle>
+            {stepType === 'opinion' ? 'إبداء الرأي على الطلب' : 'الموافقة على الطلب'}
           </DialogTitle>
           <DialogDescription>
-            {isOpinionStep
-              ? 'الرجاء إبداء رأيك الإيجابي حول هذا الطلب' 
+            {stepType === 'opinion' 
+              ? 'الرجاء إبداء رأيك حول هذا الطلب' 
               : 'هل أنت متأكد من رغبتك في الموافقة على هذا الطلب؟'}
           </DialogDescription>
         </DialogHeader>
         
-        {isSelfApproval && !isOpinionStep && (
+        {isSelfApproval && stepType !== 'opinion' && (
           <Alert variant="destructive" className="my-2">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>تنبيه</AlertTitle>
@@ -154,7 +144,7 @@ export const RequestApproveDialog = ({
           </Alert>
         )}
         
-        {isOpinionStep && (
+        {stepType === 'opinion' && (
           <Alert variant="default" className="my-2 bg-blue-50 text-blue-700 border-blue-200">
             <InfoIcon className="h-4 w-4" />
             <AlertTitle>معلومة</AlertTitle>
@@ -166,11 +156,11 @@ export const RequestApproveDialog = ({
         
         <div className="py-4">
           <label htmlFor="comments" className="block text-sm font-medium mb-2">
-            {isOpinionStep ? 'رأيك (اختياري)' : 'التعليقات (اختياري)'}
+            {stepType === 'opinion' ? 'رأيك (اختياري)' : 'التعليقات (اختياري)'}
           </label>
           <Textarea
             id="comments"
-            placeholder={isOpinionStep ? 'أضف رأيك هنا...' : 'أضف تعليقًا...'}
+            placeholder={stepType === 'opinion' ? 'أضف رأيك هنا...' : 'أضف تعليقًا...'}
             value={comments}
             onChange={(e) => setComments(e.target.value)}
             rows={4}
@@ -182,14 +172,10 @@ export const RequestApproveDialog = ({
           </Button>
           <Button 
             onClick={handleApprove} 
-            disabled={approveMutation.isPending || (isSelfApproval && !isOpinionStep)} 
-            className={isOpinionStep ? "bg-blue-600 hover:bg-blue-700" : "bg-green-600 hover:bg-green-700"}
+            disabled={approveMutation.isPending || (isSelfApproval && stepType !== 'opinion')} 
+            className="bg-green-600 hover:bg-green-700"
           >
-            {approveMutation.isPending 
-              ? "جاري المعالجة..." 
-              : isOpinionStep 
-                ? 'إرسال الرأي' 
-                : 'موافقة'}
+            {approveMutation.isPending ? "جاري المعالجة..." : stepType === 'opinion' ? 'إرسال الرأي' : 'موافقة'}
           </Button>
         </DialogFooter>
       </DialogContent>

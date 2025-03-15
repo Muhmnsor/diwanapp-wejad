@@ -41,31 +41,6 @@ export const RequestApprovalsTab = ({ approvals }: RequestApprovalsTabProps) => 
       </div>
     );
   }
-  
-  // Function to get appropriate status text based on step type and status
-  const getStatusBadge = (approval: RequestApproval) => {
-    const isOpinionStep = approval.step?.step_type === 'opinion';
-    
-    if (isOpinionStep) {
-      // For opinion steps, use neutral language
-      if (approval.status === "approved") {
-        return <Badge variant="default" className="bg-blue-500 hover:bg-blue-600">رأي إيجابي</Badge>;
-      } else if (approval.status === "rejected") {
-        return <Badge variant="outline" className="border-blue-500 text-blue-700 bg-blue-50">رأي سلبي</Badge>;
-      } else {
-        return <Badge variant="outline">معلق</Badge>;
-      }
-    } else {
-      // For decision steps, use approval language
-      if (approval.status === "approved") {
-        return <Badge variant="success">تمت الموافقة</Badge>;
-      } else if (approval.status === "rejected") {
-        return <Badge variant="destructive">مرفوض</Badge>;
-      } else {
-        return <Badge variant="outline">معلق</Badge>;
-      }
-    }
-  };
 
   return (
     <Table>
@@ -89,7 +64,7 @@ export const RequestApprovalsTab = ({ approvals }: RequestApprovalsTabProps) => 
                 <Tooltip>
                   <TooltipTrigger className="flex items-center">
                     {approval.step?.step_type === 'opinion' ? 
-                      <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200">رأي</Badge> : 
+                      <Badge variant="secondary">رأي</Badge> : 
                       <Badge>قرار</Badge>}
                     <InfoIcon className="h-4 w-4 mr-1 text-muted-foreground" />
                   </TooltipTrigger>
@@ -123,7 +98,11 @@ export const RequestApprovalsTab = ({ approvals }: RequestApprovalsTabProps) => 
                (approval.step?.approver_type === 'role' ? "أي مستخدم بالدور المحدد" : "غير معروف")}
             </TableCell>
             <TableCell>
-              {getStatusBadge(approval)}
+              {approval.status === "approved" ? 
+                <Badge variant="success">تمت الموافقة</Badge> : 
+                approval.status === "rejected" ?
+                <Badge variant="destructive">مرفوض</Badge> :
+                <Badge variant="outline">معلق</Badge>}
             </TableCell>
             <TableCell>{approval.comments || "-"}</TableCell>
             <TableCell>
