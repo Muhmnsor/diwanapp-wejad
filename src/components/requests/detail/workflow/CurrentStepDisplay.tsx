@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WorkflowStatusBadge } from "./WorkflowStatusBadge";
 import { CurrentStepDisplayProps } from "./types";
-import { AlertCircle, User } from "lucide-react";
+import { CheckCircle, AlertCircle, User, Clock } from "lucide-react";
 
 export const CurrentStepDisplay: React.FC<CurrentStepDisplayProps> = ({ 
   currentStep,
@@ -22,9 +22,9 @@ export const CurrentStepDisplay: React.FC<CurrentStepDisplayProps> = ({
   if (!currentStep) {
     return (
       <div className="text-center p-4 border rounded-md border-dashed">
-        <AlertCircle className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-        <p className="text-muted-foreground text-sm">
-          لا توجد خطوة حالية أو تم اكتمال سير العمل
+        <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
+        <p className="text-green-600 font-medium">
+          تم اكتمال جميع خطوات سير العمل
         </p>
       </div>
     );
@@ -49,16 +49,26 @@ export const CurrentStepDisplay: React.FC<CurrentStepDisplayProps> = ({
             </p>
           )}
           
-          <div className="flex items-center text-sm space-x-1 space-x-reverse mt-2">
-            <User className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">المعتمد:</span>
-            <span className="text-muted-foreground">
-              {currentStep.approver_type === 'user' 
-                ? 'مستخدم محدد' 
-                : currentStep.approver_type === 'role' 
-                ? 'مجموعة معتمدين' 
-                : 'غير محدد'}
-            </span>
+          <div className="flex flex-col space-y-1 mt-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <User className="h-3.5 w-3.5" />
+              <span>
+                {currentStep.approver_type === 'user' 
+                  ? 'مستخدم محدد' 
+                  : currentStep.approver_type === 'role' 
+                  ? 'مجموعة معتمدين' 
+                  : 'غير محدد'}
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" />
+              <span>
+                {currentStep.timeout_days 
+                  ? `المهلة: ${currentStep.timeout_days} أيام` 
+                  : 'بدون مهلة محددة'}
+              </span>
+            </div>
           </div>
         </div>
       </CardContent>

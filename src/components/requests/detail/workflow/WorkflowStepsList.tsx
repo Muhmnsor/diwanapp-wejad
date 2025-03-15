@@ -39,10 +39,10 @@ export const WorkflowStepsList: React.FC<WorkflowStepsListProps> = ({
   }
 
   return (
-    <div className="space-y-1 mt-2">
+    <div className="space-y-1">
       {steps.map((step, index) => (
         <WorkflowStepItem
-          key={step.id}
+          key={step.id || index}
           step={step}
           isCurrent={index === currentStepIndex}
           isCompleted={index < currentStepIndex}

@@ -2,6 +2,7 @@
 import React from 'react';
 import { CheckCircle2, CircleDashed, Circle } from "lucide-react";
 import { WorkflowStepItemProps } from "./types";
+import { WorkflowStatusBadge } from "./WorkflowStatusBadge";
 
 export const WorkflowStepItem: React.FC<WorkflowStepItemProps> = ({ 
   step, 
@@ -29,15 +30,15 @@ export const WorkflowStepItem: React.FC<WorkflowStepItemProps> = ({
     : "text-gray-500";
   
   return (
-    <div className="flex items-center py-1.5">
+    <div className="flex items-center py-1.5 group">
       <div className={`flex-shrink-0 ${iconColor}`}>
         <StepIcon className="h-5 w-5" />
       </div>
-      <div className={`mr-2 text-sm ${textColor} flex-grow`}>
-        {step.step_name}
+      <div className={`mr-2 text-sm ${textColor} flex-grow flex justify-between items-center`}>
+        <span>{step.step_name}</span>
         {step.step_type && (
-          <span className="mr-1 text-xs text-muted-foreground">
-            ({step.step_type === 'decision' ? 'قرار' : 'رأي'})
+          <span className="mr-auto">
+            <WorkflowStatusBadge status={step.step_type} />
           </span>
         )}
       </div>

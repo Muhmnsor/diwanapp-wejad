@@ -31,6 +31,7 @@ export interface WorkflowCardDataHookResult {
   error: Error | null;
   workflowSteps: WorkflowStep[];
   currentStepIndex: number;
+  progressPercentage: number;
   diagnoseWorkflow: () => Promise<any>;
   refreshWorkflowData: () => void;
 }

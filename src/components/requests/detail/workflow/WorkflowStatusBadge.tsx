@@ -4,31 +4,30 @@ import { Badge } from "@/components/ui/badge";
 import { WorkflowStatusBadgeProps } from "./types";
 
 export const WorkflowStatusBadge: React.FC<WorkflowStatusBadgeProps> = ({ status }) => {
-  const getStatusBadgeVariant = () => {
-    switch (status) {
+  const getStatusConfig = () => {
+    switch (status.toLowerCase()) {
       case 'decision':
-        return 'default';
+        return { variant: 'default', label: 'قرار' };
       case 'opinion':
-        return 'secondary';
+        return { variant: 'secondary', label: 'رأي' };
+      case 'approval':
+        return { variant: 'success', label: 'اعتماد' };
+      case 'review':
+        return { variant: 'outline', label: 'مراجعة' };
+      case 'completed':
+        return { variant: 'success', label: 'مكتمل' };
+      case 'pending':
+        return { variant: 'outline', label: 'قيد الانتظار' };
       default:
-        return 'outline';
+        return { variant: 'outline', label: status };
     }
   };
 
-  const getStatusLabel = () => {
-    switch (status) {
-      case 'decision':
-        return 'قرار';
-      case 'opinion':
-        return 'رأي';
-      default:
-        return status;
-    }
-  };
+  const config = getStatusConfig();
 
   return (
-    <Badge variant={getStatusBadgeVariant()}>
-      {getStatusLabel()}
+    <Badge variant={config.variant as any}>
+      {config.label}
     </Badge>
   );
 };

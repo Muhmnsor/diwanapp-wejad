@@ -8,7 +8,7 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, RotateCw, Activity } from "lucide-react";
+import { AlertCircle, RotateCw, Activity, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
@@ -32,14 +32,10 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
     error, 
     workflowSteps, 
     currentStepIndex,
+    progressPercentage,
     diagnoseWorkflow,
     refreshWorkflowData
   } = useWorkflowCardData(requestId, workflow, currentStep);
-
-  // Calculate progress percentage
-  const progressPercentage = workflowSteps.length > 0
-    ? ((currentStepIndex === -1 ? workflowSteps.length : currentStepIndex) / workflowSteps.length) * 100
-    : 0;
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -74,6 +70,9 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
     }
   };
 
+  // Determine if the workflow is completed
+  const isWorkflowCompleted = currentStepIndex === -1 && workflowSteps.length > 0;
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -99,12 +98,21 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
       </CardHeader>
       
       <CardContent className="pb-2 space-y-4">
-        {/* Progress indicator */}
+        {/* Progress indicator with improved styling */}
         {workflowSteps.length > 0 && (
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
               <span>التقدم في سير العمل</span>
-              <span>{Math.round(progressPercentage)}%</span>
+              <span>
+                {isWorkflowCompleted ? (
+                  <span className="flex items-center text-green-600">
+                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                    مكتمل
+                  </span>
+                ) : (
+                  `${Math.round(progressPercentage)}%`
+                )}
+              </span>
             </div>
             <Progress 
               value={progressPercentage} 
@@ -120,7 +128,7 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
           </div>
         )}
 
-        {/* Current step */}
+        {/* Current step with improved display */}
         <CurrentStepDisplay 
           currentStep={currentStep} 
           isLoading={isLoading} 
@@ -128,7 +136,7 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
         
         <Separator className="my-3" />
         
-        {/* All workflow steps */}
+        {/* All workflow steps with clearer visualization */}
         <div>
           <h4 className="text-sm font-medium mb-2">خطوات سير العمل</h4>
           <WorkflowStepsList 
@@ -138,7 +146,7 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
           />
         </div>
         
-        {/* Error display */}
+        {/* Improved error display */}
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -148,7 +156,7 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
           </Alert>
         )}
 
-        {/* Diagnostic results */}
+        {/* Better diagnostic results display */}
         {diagnosticResult && !diagnosticResult.success && (
           <Alert variant="warning" className="mt-4">
             <AlertCircle className="h-4 w-4" />
@@ -157,7 +165,7 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
               {diagnosticResult.debug_info && (
                 <details className="mt-2">
                   <summary className="text-xs cursor-pointer">عرض التفاصيل</summary>
-                  <pre className="text-xs mt-2 bg-muted p-2 rounded overflow-auto">{JSON.stringify(diagnosticResult.debug_info, null, 2)}</pre>
+                  <pre className="text-xs mt-2 bg-muted p-2 rounded overflow-auto rtl">{JSON.stringify(diagnosticResult.debug_info, null, 2)}</pre>
                 </details>
               )}
             </AlertDescription>
