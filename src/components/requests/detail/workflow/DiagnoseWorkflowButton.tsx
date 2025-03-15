@@ -155,7 +155,7 @@ export const DiagnoseWorkflowButton: React.FC<DiagnoseWorkflowButtonProps> = ({
             )}
             
             {!hasFixableIssues && (
-              <Alert variant="success">
+              <Alert variant="default">
                 <CheckSquare className="h-4 w-4" />
                 <AlertDescription>
                   مسار العمل في حالة جيدة. لا توجد مشاكل تحتاج للإصلاح.

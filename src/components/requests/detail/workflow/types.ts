@@ -30,3 +30,13 @@ export interface WorkflowStepsListProps {
   isLoading: boolean;
   requestStatus?: 'pending' | 'in_progress' | 'completed' | 'rejected';
 }
+
+export interface WorkflowStepItemProps {
+  step: WorkflowStep;
+  isCurrent: boolean;
+  isCompleted: boolean;
+}
+
+export interface WorkflowStatusBadgeProps {
+  status: 'decision' | 'opinion' | 'approval' | 'review' | 'completed' | 'pending' | string;
+}
