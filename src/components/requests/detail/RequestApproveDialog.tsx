@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, InfoIcon } from "lucide-react";
+import { AlertCircle, InfoIcon, MessageCircle, Check } from "lucide-react";
 import { useAuthStore } from "@/store/refactored-auth";
 
 interface RequestApproveDialogProps {
@@ -120,21 +120,24 @@ export const RequestApproveDialog = ({
     approveMutation.mutate();
   };
 
+  // Only show approval dialog for decisions, not opinions
+  if (stepType === 'opinion') {
+    return null;
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {stepType === 'opinion' ? 'إبداء الرأي على الطلب' : 'الموافقة على الطلب'}
+            الموافقة على الطلب
           </DialogTitle>
           <DialogDescription>
-            {stepType === 'opinion' 
-              ? 'الرجاء إبداء رأيك حول هذا الطلب' 
-              : 'هل أنت متأكد من رغبتك في الموافقة على هذا الطلب؟'}
+            هل أنت متأكد من رغبتك في الموافقة على هذا الطلب؟
           </DialogDescription>
         </DialogHeader>
         
-        {isSelfApproval && stepType !== 'opinion' && (
+        {isSelfApproval && (
           <Alert variant="destructive" className="my-2">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>تنبيه</AlertTitle>
@@ -144,23 +147,13 @@ export const RequestApproveDialog = ({
           </Alert>
         )}
         
-        {stepType === 'opinion' && (
-          <Alert variant="default" className="my-2 bg-blue-50 text-blue-700 border-blue-200">
-            <InfoIcon className="h-4 w-4" />
-            <AlertTitle>معلومة</AlertTitle>
-            <AlertDescription>
-              هذه خطوة لإبداء الرأي فقط ولن تؤثر على سير الطلب.
-            </AlertDescription>
-          </Alert>
-        )}
-        
         <div className="py-4">
           <label htmlFor="comments" className="block text-sm font-medium mb-2">
-            {stepType === 'opinion' ? 'رأيك (اختياري)' : 'التعليقات (اختياري)'}
+            التعليقات (اختياري)
           </label>
           <Textarea
             id="comments"
-            placeholder={stepType === 'opinion' ? 'أضف رأيك هنا...' : 'أضف تعليقًا...'}
+            placeholder="أضف تعليقًا..."
             value={comments}
             onChange={(e) => setComments(e.target.value)}
             rows={4}
@@ -175,7 +168,7 @@ export const RequestApproveDialog = ({
             disabled={approveMutation.isPending || (isSelfApproval && stepType !== 'opinion')} 
             className="bg-green-600 hover:bg-green-700"
           >
-            {approveMutation.isPending ? "جاري المعالجة..." : stepType === 'opinion' ? 'إرسال الرأي' : 'موافقة'}
+            {approveMutation.isPending ? "جاري المعالجة..." : 'موافقة'}
           </Button>
         </DialogFooter>
       </DialogContent>

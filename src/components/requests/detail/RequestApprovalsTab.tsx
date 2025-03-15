@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { InfoIcon } from "lucide-react";
+import { InfoIcon, MessageCircle } from "lucide-react";
 
 interface RequestApproval {
   id: string;
@@ -64,7 +64,10 @@ export const RequestApprovalsTab = ({ approvals }: RequestApprovalsTabProps) => 
                 <Tooltip>
                   <TooltipTrigger className="flex items-center">
                     {approval.step?.step_type === 'opinion' ? 
-                      <Badge variant="secondary">رأي</Badge> : 
+                      <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800">
+                        <MessageCircle className="h-3 w-3 mr-1" />
+                        رأي
+                      </Badge> : 
                       <Badge>قرار</Badge>}
                     <InfoIcon className="h-4 w-4 mr-1 text-muted-foreground" />
                   </TooltipTrigger>
@@ -98,11 +101,17 @@ export const RequestApprovalsTab = ({ approvals }: RequestApprovalsTabProps) => 
                (approval.step?.approver_type === 'role' ? "أي مستخدم بالدور المحدد" : "غير معروف")}
             </TableCell>
             <TableCell>
-              {approval.status === "approved" ? 
+              {approval.step?.step_type === 'opinion' ? (
+                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                  تم إبداء الرأي
+                </Badge>
+              ) : (
+                approval.status === "approved" ? 
                 <Badge variant="success">تمت الموافقة</Badge> : 
                 approval.status === "rejected" ?
                 <Badge variant="destructive">مرفوض</Badge> :
-                <Badge variant="outline">معلق</Badge>}
+                <Badge variant="outline">معلق</Badge>
+              )}
             </TableCell>
             <TableCell>{approval.comments || "-"}</TableCell>
             <TableCell>

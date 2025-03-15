@@ -1,5 +1,5 @@
 
-import { Check, X } from "lucide-react";
+import { Check, X, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface RequestActionButtonsProps {
@@ -28,14 +28,23 @@ export const RequestActionButtons = ({
     <div className="flex gap-2">
       {showActionButtons ? (
         <>
-          <Button variant="outline" onClick={onReject} className="bg-red-50 text-red-600 hover:bg-red-100">
-            <X className="mr-2 h-4 w-4" />
-            {stepType === 'opinion' ? 'رأي سلبي' : 'رفض الطلب'}
-          </Button>
-          <Button onClick={onApprove} className="bg-green-600 hover:bg-green-700">
-            <Check className="mr-2 h-4 w-4" />
-            {stepType === 'opinion' ? 'رأي إيجابي' : 'الموافقة على الطلب'}
-          </Button>
+          {stepType === 'opinion' ? (
+            <Button onClick={onApprove} className="bg-blue-600 hover:bg-blue-700">
+              <MessageCircle className="mr-2 h-4 w-4" />
+              إبداء الرأي
+            </Button>
+          ) : (
+            <>
+              <Button variant="outline" onClick={onReject} className="bg-red-50 text-red-600 hover:bg-red-100">
+                <X className="mr-2 h-4 w-4" />
+                رفض الطلب
+              </Button>
+              <Button onClick={onApprove} className="bg-green-600 hover:bg-green-700">
+                <Check className="mr-2 h-4 w-4" />
+                الموافقة على الطلب
+              </Button>
+            </>
+          )}
         </>
       ) : null}
       <Button variant="outline" onClick={onClose}>
