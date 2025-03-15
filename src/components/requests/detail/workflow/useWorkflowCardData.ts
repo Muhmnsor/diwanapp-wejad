@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { WorkflowStep } from "../../types";
 import { WorkflowCardDataHookResult } from "./types";
-import { diagnoseRequestWorkflow } from '../services/requestService';
+import { diagnoseRequestWorkflow, fixRequestWorkflow } from '../services/requestService';
 import { supabase } from "@/integrations/supabase/client";
 
 export const useWorkflowCardData = (
@@ -51,9 +51,20 @@ export const useWorkflowCardData = (
           
         setCurrentStepIndex(index !== -1 ? index : -1);
         
-        // Calculate progress percentage
+        // Calculate progress percentage more accurately - count all completed steps
+        // including opinion steps that have been processed
         const totalSteps = steps.length;
-        const completedSteps = index !== -1 ? index : (index === -1 && !currentStep ? totalSteps : 0);
+        let completedSteps = 0;
+        
+        if (index !== -1) {
+          // Count steps before current step as completed
+          completedSteps = index;
+        } else if (index === -1 && !currentStep && requestStatus !== 'pending') {
+          // If no current step and request is in_progress, 
+          // this could mean all steps are done or workflow is broken
+          completedSteps = totalSteps;
+        }
+        
         const progress = totalSteps > 0 
           ? (completedSteps / totalSteps) * 100
           : 0;
@@ -78,6 +89,21 @@ export const useWorkflowCardData = (
     }
   }, [requestId]);
 
+  // Function to fix workflow issues
+  const fixWorkflow = useCallback(async () => {
+    if (!requestId) return null;
+    
+    try {
+      return await fixRequestWorkflow(requestId);
+    } catch (error) {
+      console.error("Error fixing workflow:", error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : "حدث خطأ أثناء إصلاح مسار العمل"
+      };
+    }
+  }, [requestId]);
+
   // Function to refresh workflow data
   const refreshWorkflowData = useCallback(async () => {
     await refetch();
@@ -90,6 +116,7 @@ export const useWorkflowCardData = (
     currentStepIndex,
     progressPercentage,
     diagnoseWorkflow,
+    fixWorkflow,
     refreshWorkflowData
   };
 };

@@ -36,6 +36,7 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
     currentStepIndex,
     progressPercentage,
     diagnoseWorkflow,
+    fixWorkflow,
     refreshWorkflowData
   } = useWorkflowCardData(requestId, workflow, currentStep, requestStatus);
 
@@ -49,6 +50,43 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
       toast.error("حدث خطأ أثناء تحديث البيانات");
     } finally {
       setIsRefreshing(false);
+    }
+  };
+
+  const handleDiagnoseWorkflow = async () => {
+    setIsDiagnosing(true);
+    try {
+      const result = await diagnoseWorkflow();
+      setDiagnosticResult(result);
+      
+      if (!result?.success) {
+        toast.error("فشل تشخيص سير العمل: " + (result?.error || "خطأ غير معروف"));
+      } else if (result.issues?.length === 0) {
+        toast.success("لا توجد مشاكل في سير العمل");
+      }
+    } catch (error) {
+      console.error("Error diagnosing workflow:", error);
+      toast.error("حدث خطأ أثناء تشخيص سير العمل");
+    } finally {
+      setIsDiagnosing(false);
+    }
+  };
+  
+  const handleFixWorkflow = async () => {
+    try {
+      const result = await fixWorkflow();
+      console.log("Fix workflow result:", result);
+      
+      if (result?.success) {
+        toast.success("تم إصلاح سير العمل بنجاح");
+        refreshWorkflowData();
+        setDiagnosticResult(null);
+      } else {
+        toast.error("فشل إصلاح سير العمل: " + (result?.error || "خطأ غير معروف"));
+      }
+    } catch (error) {
+      console.error("Error fixing workflow:", error);
+      toast.error("حدث خطأ أثناء إصلاح سير العمل");
     }
   };
 
@@ -160,12 +198,38 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
             </AlertDescription>
           </Alert>
         )}
+        
+        {diagnosticResult && diagnosticResult.success && diagnosticResult.issues && diagnosticResult.issues.length > 0 && (
+          <Alert variant="warning" className="mt-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <div className="font-medium">تم اكتشاف مشاكل في مسار سير العمل:</div>
+              <ul className="list-disc list-inside mt-1 space-y-1">
+                {diagnosticResult.issues.map((issue: string, index: number) => (
+                  <li key={index} className="text-sm">{issue}</li>
+                ))}
+              </ul>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleFixWorkflow} 
+                className="mt-2"
+              >
+                إصلاح المشاكل
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
       </CardContent>
       
       <CardFooter className="pt-0 flex gap-2">
         <DiagnoseWorkflowButton 
           requestId={requestId} 
+          onDiagnose={handleDiagnoseWorkflow}
+          onFix={handleFixWorkflow}
           onSuccess={refreshWorkflowData}
+          isDiagnosing={isDiagnosing}
+          diagnosticResult={diagnosticResult}
           className="w-full" 
         />
       </CardFooter>
