@@ -75,7 +75,7 @@ export const useRequestDetail = (requestId: string) => {
   // Updated logic: any authenticated user can participate in opinion steps,
   // but decision steps still require proper authorization
   const isCurrentApprover = () => {
-    if (!data || !user) return false;
+    if (!data || !user || !data.current_step) return false;
     
     console.log("التحقق من كون المستخدم هو المعتمد الحالي للطلب");
     console.log("معرف المستخدم:", user.id);
@@ -110,14 +110,13 @@ export const useRequestDetail = (requestId: string) => {
       return true;
     }
     
-    // For decision steps, maintain the regular authorization checks
-    // Check for direct approval
-    if (currentStep.approver_id === user.id) {
+    // For decision steps, direct approver check
+    if (data.current_step.id && user.id === data.current_step.approver_id) {
       console.log("المستخدم هو المعتمد المباشر للخطوة الحالية");
       return true;
     }
     
-    // Check for role-based approval or admin override
+    // Admin users can approve any request
     if (user.isAdmin) {
       console.log("المستخدم مدير ويمكنه الموافقة على الطلب");
       return true;
