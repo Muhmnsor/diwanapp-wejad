@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,15 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { WorkflowStep, User } from '../types';
-import { PlusCircle, X, Save, ArrowUp, ArrowDown, Pencil, Trash2 } from 'lucide-react';
+import { PlusCircle, Save } from 'lucide-react';
 
 interface StepFormProps {
   currentStep: WorkflowStep;
   setCurrentStep: (step: WorkflowStep) => void;
-  handleAddStep: () => void;
-  handleMoveStep: (index: number, direction: 'up' | 'down') => void;
-  handleRemoveStep: (index: number) => void;
-  workflowSteps: WorkflowStep[];
+  onAddStep: () => void;
   editingStepIndex: number | null;
   users: User[];
   isLoading?: boolean;
@@ -25,10 +22,7 @@ interface StepFormProps {
 export const StepForm: React.FC<StepFormProps> = ({
   currentStep,
   setCurrentStep,
-  handleAddStep,
-  handleMoveStep,
-  handleRemoveStep,
-  workflowSteps,
+  onAddStep,
   editingStepIndex,
   users,
   isLoading = false
@@ -122,7 +116,7 @@ export const StepForm: React.FC<StepFormProps> = ({
           <div className="pt-2 flex justify-end">
             <Button
               type="button"
-              onClick={handleAddStep}
+              onClick={onAddStep}
               disabled={isLoading || !currentStep.step_name || !currentStep.approver_id}
               className="w-full"
             >

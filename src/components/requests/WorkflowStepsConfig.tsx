@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { WorkflowStep } from "./types";
 import { StepForm } from "./workflow/StepForm";
@@ -136,7 +137,7 @@ export const WorkflowStepsConfig = ({
         editingStepIndex={editingStepIndex}
         users={users}
         isLoading={isLoading}
-        onStepChange={setCurrentStep}
+        setCurrentStep={setCurrentStep}
         onAddStep={handleAddStep}
       />
       
