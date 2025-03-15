@@ -1,7 +1,6 @@
-
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getRequestDetails, diagnoseRequestWorkflow, debugRequestWorkflow } from "./services/requestService";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getRequestDetails, diagnoseRequestWorkflow, fixRequestWorkflow } from "./services/requestService";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/store/refactored-auth";
 import { toast } from "sonner";
@@ -75,8 +74,6 @@ export const useRequestDetail = (requestId: string) => {
     refetchOnWindowFocus: false
   });
 
-  // Updated logic: any authenticated user can participate in opinion steps,
-  // but decision steps still require proper authorization
   const isCurrentApprover = () => {
     if (!data || !user || !data.current_step) return false;
     
@@ -142,7 +139,6 @@ export const useRequestDetail = (requestId: string) => {
     return false;
   };
 
-  // Check if the user has already submitted an opinion
   const hasSubmittedOpinion = () => {
     if (!data || !user || !data.current_step) return false;
     
@@ -189,7 +185,6 @@ export const useRequestDetail = (requestId: string) => {
     setIsRejectDialogOpen(true);
   };
   
-  // Function to diagnose workflow issues
   const handleDiagnoseWorkflow = async () => {
     if (!requestId) return;
     
@@ -213,7 +208,6 @@ export const useRequestDetail = (requestId: string) => {
     }
   };
   
-  // Function to fix workflow issues
   const handleFixWorkflow = async () => {
     if (!requestId) return;
     
@@ -225,7 +219,7 @@ export const useRequestDetail = (requestId: string) => {
       if (error) throw error;
       
       toast.success("تم إصلاح مسار العمل بنجاح");
-      refetch();  // Refresh the request details
+      queryClient.invalidateQueries({ queryKey: ["request-details", requestId] });
       return data;
     } catch (error) {
       console.error("Error fixing workflow:", error);

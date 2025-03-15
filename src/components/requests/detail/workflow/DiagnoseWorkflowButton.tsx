@@ -18,11 +18,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { diagnoseRequestWorkflow, fixRequestWorkflow } from "../services/requestService";
 
 interface DiagnoseWorkflowButtonProps {
   requestId: string;
-  onDiagnose: () => Promise<any>;
-  onFix: () => Promise<any>;
+  onDiagnose?: () => Promise<any>;
+  onFix?: () => Promise<any>;
   onSuccess?: () => void;
   isDiagnosing?: boolean;
   diagnosticResult?: any;
@@ -44,16 +45,44 @@ export const DiagnoseWorkflowButton: React.FC<DiagnoseWorkflowButtonProps> = ({
 }) => {
   const [isFixing, setIsFixing] = useState(false);
   const [showFixDialog, setShowFixDialog] = useState(false);
+  const [localDiagnosticResult, setLocalDiagnosticResult] = useState(diagnosticResult);
+  const [localIsDiagnosing, setLocalIsDiagnosing] = useState(isDiagnosing);
   
+  // Use provided handlers or default ones
   const handleDiagnose = async () => {
-    try {
-      const result = await onDiagnose();
-      
-      if (result?.diagnose?.needs_fixing) {
-        setShowFixDialog(true);
+    if (onDiagnose) {
+      try {
+        const result = await onDiagnose();
+        
+        if (result?.diagnose?.needs_fixing) {
+          setShowFixDialog(true);
+          setLocalDiagnosticResult(result);
+        }
+        
+        return result;
+      } catch (error) {
+        console.error("Error in diagnosis handler:", error);
       }
-    } catch (error) {
-      console.error("Error in diagnosis handler:", error);
+    } else {
+      // Default implementation if no handler provided
+      setLocalIsDiagnosing(true);
+      try {
+        const result = await diagnoseRequestWorkflow(requestId);
+        setLocalDiagnosticResult(result);
+        
+        if (result?.diagnose?.needs_fixing) {
+          setShowFixDialog(true);
+        } else {
+          toast.success("تم فحص مسار العمل، لم يتم العثور على مشاكل");
+        }
+        
+        return result;
+      } catch (error) {
+        console.error("Error diagnosing workflow:", error);
+        toast.error("حدث خطأ أثناء تشخيص مسار العمل");
+      } finally {
+        setLocalIsDiagnosing(false);
+      }
     }
   };
   
@@ -61,18 +90,31 @@ export const DiagnoseWorkflowButton: React.FC<DiagnoseWorkflowButtonProps> = ({
     setIsFixing(true);
     
     try {
-      await onFix();
+      if (onFix) {
+        await onFix();
+      } else {
+        // Default implementation if no handler provided
+        await fixRequestWorkflow(requestId);
+      }
+      
       setShowFixDialog(false);
       
       if (onSuccess) {
         onSuccess();
       }
+      
+      toast.success("تم إصلاح مسار العمل بنجاح");
     } catch (error) {
       console.error("Error in fix handler:", error);
+      toast.error("حدث خطأ أثناء محاولة إصلاح مسار العمل");
     } finally {
       setIsFixing(false);
     }
   };
+  
+  // Determine which diagnostic result to use
+  const displayDiagnosticResult = localDiagnosticResult || diagnosticResult;
+  const displayIsDiagnosing = localIsDiagnosing || isDiagnosing;
   
   return (
     <>
@@ -81,9 +123,9 @@ export const DiagnoseWorkflowButton: React.FC<DiagnoseWorkflowButtonProps> = ({
         size={size}
         className={className}
         onClick={handleDiagnose}
-        disabled={isDiagnosing}
+        disabled={displayIsDiagnosing}
       >
-        {isDiagnosing ? (
+        {displayIsDiagnosing ? (
           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
         ) : (
           <AlertCircle className="h-4 w-4 mr-2" />
@@ -98,11 +140,11 @@ export const DiagnoseWorkflowButton: React.FC<DiagnoseWorkflowButtonProps> = ({
             <AlertDialogDescription>
               تم اكتشاف مشاكل في مسار العمل للطلب. هل ترغب في إصلاحها الآن؟
               
-              {diagnosticResult && (
+              {displayDiagnosticResult && (
                 <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-800">
                   <p className="font-semibold mb-2">المشاكل المكتشفة:</p>
                   <ul className="list-disc list-inside space-y-1 text-sm">
-                    {diagnosticResult.diagnose.issues?.map((issue: string, idx: number) => (
+                    {displayDiagnosticResult.diagnose?.issues?.map((issue: string, idx: number) => (
                       <li key={idx}>{issue}</li>
                     ))}
                   </ul>
