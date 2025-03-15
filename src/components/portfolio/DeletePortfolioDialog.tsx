@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -10,15 +11,13 @@ interface DeletePortfolioDialogProps {
   onOpenChange: (open: boolean) => void;
   portfolioId: string;
   portfolioName: string;
-  asanaGid?: string | null;
 }
 
 export const DeletePortfolioDialog = ({
   open,
   onOpenChange,
   portfolioId,
-  portfolioName,
-  asanaGid
+  portfolioName
 }: DeletePortfolioDialogProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const queryClient = useQueryClient();
@@ -27,19 +26,6 @@ export const DeletePortfolioDialog = ({
     setIsDeleting(true);
     try {
       console.log('Deleting portfolio:', portfolioId);
-
-      // If portfolio has Asana integration, delete from Asana first
-      if (asanaGid) {
-        console.log('Deleting from Asana first:', asanaGid);
-        const { error: asanaError } = await supabase.functions.invoke('delete-portfolio', {
-          body: { portfolioGid: asanaGid }
-        });
-
-        if (asanaError) {
-          console.error('Error deleting from Asana:', asanaError);
-          throw asanaError;
-        }
-      }
 
       // First delete all related portfolio_only_projects
       const { error: projectsError } = await supabase

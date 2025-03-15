@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useState } from "react";
 import { PortfolioForm } from "./PortfolioForm";
@@ -25,27 +26,13 @@ export const AddPortfolioDialog = ({
     try {
       console.log('Creating portfolio with data:', formData);
 
-      // First create portfolio in Asana
-      const { data: asanaResponse, error: asanaError } = await supabase.functions.invoke('create-portfolio', {
-        body: formData
-      });
-
-      if (asanaError) {
-        console.error('Error creating portfolio in Asana:', asanaError);
-        throw asanaError;
-      }
-
-      console.log('Successfully created portfolio in Asana:', asanaResponse);
-
-      // Then create in our database
+      // Create in our database
       const { error: createError } = await supabase
         .from('portfolios')
         .insert([
           {
             name: formData.name,
             description: formData.description,
-            asana_gid: asanaResponse.gid,
-            asana_sync_enabled: true,
             sync_enabled: true
           }
         ]);

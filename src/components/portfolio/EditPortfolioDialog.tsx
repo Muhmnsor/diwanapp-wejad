@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PortfolioForm } from "./PortfolioForm";
@@ -28,31 +29,7 @@ export const EditPortfolioDialog = ({
     console.log('Updating portfolio:', values);
 
     try {
-      // First update in Asana if the portfolio has an Asana ID
-      const { data: portfolioData } = await supabase
-        .from('portfolios')
-        .select('asana_gid')
-        .eq('id', portfolio.id)
-        .single();
-
-      if (portfolioData?.asana_gid) {
-        console.log('Updating portfolio in Asana:', portfolioData.asana_gid);
-        const response = await supabase.functions.invoke('update-portfolio', {
-          body: {
-            portfolioId: portfolio.id,
-            asanaGid: portfolioData.asana_gid,
-            name: values.name,
-            description: values.description
-          }
-        });
-
-        if (response.error) {
-          console.error('Error updating portfolio in Asana:', response.error);
-          throw new Error('فشل في تحديث المحفظة في Asana');
-        }
-      }
-
-      // Then update in our database
+      // Update in the database
       const { error: updateError } = await supabase
         .from('portfolios')
         .update({
@@ -72,7 +49,7 @@ export const EditPortfolioDialog = ({
       onOpenChange(false);
     } catch (error) {
       console.error('Error in handleSubmit:', error);
-      toast.error(error instanceof Error ? error.message : 'حدث خطأ أثناء تحديث المحفظة');
+      toast.error('حدث خطأ أثناء تحديث المحفظة');
     } finally {
       setIsSubmitting(false);
     }

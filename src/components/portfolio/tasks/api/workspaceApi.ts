@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export const getOrCreateWorkspace = async (workspaceId: string) => {
@@ -8,7 +9,7 @@ export const getOrCreateWorkspace = async (workspaceId: string) => {
     const { data: workspace, error: workspaceError } = await supabase
       .from('portfolio_workspaces')
       .select('*')
-      .eq('asana_gid', workspaceId)
+      .eq('id', workspaceId)
       .maybeSingle();
 
     if (workspaceError) {
@@ -21,7 +22,6 @@ export const getOrCreateWorkspace = async (workspaceId: string) => {
       const { data: newWorkspace, error: createError } = await supabase
         .from('portfolio_workspaces')
         .insert([{ 
-          asana_gid: workspaceId,
           name: 'مساحة عمل جديدة'
         }])
         .select()
@@ -44,27 +44,6 @@ export const getOrCreateWorkspace = async (workspaceId: string) => {
   }
 };
 
-export const syncTasksWithAsana = async (workspaceId: string) => {
-  console.log('🔄 Syncing tasks with Asana for workspace:', workspaceId);
-  try {
-    const { data: syncedTasks, error: syncError } = await supabase
-      .functions.invoke('get-workspace', {
-        body: { workspaceId }
-      });
-
-    if (syncError) {
-      console.error('❌ Error syncing with Asana:', syncError);
-      return null;
-    }
-
-    console.log('✅ Successfully synced tasks from Asana:', syncedTasks);
-    return syncedTasks;
-  } catch (error) {
-    console.error('❌ Error in syncTasksWithAsana:', error);
-    return null;
-  }
-};
-
 export const fetchWorkspaceTasks = async (workspaceId: string) => {
   console.log('🔍 Fetching tasks for workspace:', workspaceId);
   
@@ -79,8 +58,7 @@ export const fetchWorkspaceTasks = async (workspaceId: string) => {
         priority,
         due_date,
         assigned_to,
-        updated_at,
-        asana_gid
+        updated_at
       `)
       .eq('workspace_id', workspaceId)
       .order('created_at', { ascending: false });

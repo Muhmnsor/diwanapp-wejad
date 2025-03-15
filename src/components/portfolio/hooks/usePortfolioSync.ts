@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -6,7 +7,7 @@ export const usePortfolioSync = () => {
   const { data: portfolios, isLoading, error, refetch } = useQuery({
     queryKey: ['portfolios'],
     queryFn: async () => {
-      console.log('🔄 Starting portfolio synchronization...');
+      console.log('🔄 Fetching portfolios from database...');
       
       try {
         const { data: dbPortfolios, error: dbError } = await supabase
@@ -20,26 +21,10 @@ export const usePortfolioSync = () => {
         }
 
         console.log('📊 Portfolios from database:', dbPortfolios);
-
-        // Get workspace data from Asana
-        console.log('🔍 Fetching Asana workspace data...');
-        const response = await supabase.functions.invoke('get-workspace', {
-          body: {} // No need to specify workspaceId, it will be fetched from API
-        });
-
-        if (response.error) {
-          console.error('❌ Asana sync failed:', response.error);
-          toast.error('فشل في مزامنة البيانات مع Asana');
-          return dbPortfolios;
-        }
-
-        console.log('✅ Asana sync successful:', response.data);
-        toast.success('تم تحديث البيانات بنجاح');
-        
-        return response.data.portfolios || dbPortfolios;
+        return dbPortfolios;
       } catch (error) {
-        console.error('❌ Error syncing with Asana:', error);
-        toast.error('حدث خطأ أثناء الاتصال مع Asana');
+        console.error('❌ Error fetching portfolios:', error);
+        toast.error('حدث خطأ أثناء جلب البيانات');
         throw error;
       }
     },
@@ -48,10 +33,11 @@ export const usePortfolioSync = () => {
   });
 
   const handleSync = async () => {
-    console.log('🔄 Starting manual sync...');
-    toast.loading('جاري مزامنة البيانات مع Asana...');
+    console.log('🔄 Starting manual data refresh...');
+    toast.loading('جاري تحديث البيانات...');
     try {
       await refetch();
+      toast.success('تم تحديث البيانات بنجاح');
     } catch (error) {
       console.error('❌ Sync error:', error);
       toast.error('فشل في تحديث البيانات');
