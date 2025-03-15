@@ -9,6 +9,7 @@ interface RequestActionButtonsProps {
   onApprove: () => void;
   onReject: () => void;
   onClose: () => void;
+  hasSubmittedOpinion?: boolean;
 }
 
 export const RequestActionButtons = ({ 
@@ -17,12 +18,16 @@ export const RequestActionButtons = ({
   stepType = "decision",
   onApprove, 
   onReject, 
-  onClose 
+  onClose,
+  hasSubmittedOpinion = false
 }: RequestActionButtonsProps) => {
   // Show approve/reject buttons if:
   // 1. Status is 'pending' or 'in_progress' 
   // 2. AND user is current approver OR it's an opinion step and user is allowed to participate
-  const showActionButtons = (status === 'pending' || status === 'in_progress') && isCurrentApprover;
+  // 3. AND user hasn't already submitted an opinion (for opinion steps)
+  const showActionButtons = (status === 'pending' || status === 'in_progress') && 
+                           isCurrentApprover &&
+                           !(stepType === 'opinion' && hasSubmittedOpinion);
   
   return (
     <div className="flex gap-2">

@@ -25,7 +25,8 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
     setIsRejectDialogOpen,
     handleApproveClick,
     handleRejectClick,
-    isCurrentApprover
+    isCurrentApprover,
+    hasSubmittedOpinion
   } = useRequestDetail(requestId);
 
   if (isLoading) {
@@ -81,6 +82,8 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   console.log("Request workflow data:", workflow);
   console.log("Current step data:", currentStep);
   console.log("Requester data:", requester);
+  console.log("Step type:", stepType);
+  console.log("Has submitted opinion:", hasSubmittedOpinion ? "Yes" : "No");
 
   return (
     <>
@@ -91,6 +94,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
             status={request.status}
             isCurrentApprover={isCurrentApprover()}
             stepType={stepType}
+            hasSubmittedOpinion={hasSubmittedOpinion()}
             onApprove={handleApproveClick}
             onReject={handleRejectClick}
             onClose={onClose}

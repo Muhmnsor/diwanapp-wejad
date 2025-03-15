@@ -42,6 +42,16 @@ export const RequestApprovalsTab = ({ approvals }: RequestApprovalsTabProps) => 
     );
   }
 
+  // Group approvals by step to better display multiple approvals for opinion steps
+  const approvalsByStep = approvals.reduce((acc, approval) => {
+    const stepId = approval.step?.step_name || 'غير معروف';
+    if (!acc[stepId]) {
+      acc[stepId] = [];
+    }
+    acc[stepId].push(approval);
+    return acc;
+  }, {} as Record<string, RequestApproval[]>);
+
   return (
     <Table>
       <TableHeader>
@@ -70,7 +80,7 @@ export const RequestApprovalsTab = ({ approvals }: RequestApprovalsTabProps) => 
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>{approval.step?.step_type === 'opinion' ? 
-                         "خطوة لإبداء الرأي فقط" : 
+                         "خطوة لإبداء الرأي فقط، والانتقال للخطوة التالية تلقائي بعد إبداء الرأي" : 
                          "خطوة قرار تؤثر على سير الطلب"}</p>
                   </TooltipContent>
                 </Tooltip>

@@ -140,11 +140,35 @@ export const useRequestDetail = (requestId: string) => {
     return false;
   };
 
+  // Check if the user has already submitted an opinion
+  const hasSubmittedOpinion = () => {
+    if (!data || !user || !data.current_step) return false;
+    
+    const currentStep = data.current_step;
+    const stepType = currentStep.step_type || 'decision';
+    
+    // Only applicable for opinion steps
+    if (stepType !== 'opinion') return false;
+    
+    return data.approvals?.some(
+      (approval: any) => 
+        approval.step_id === currentStep.id && 
+        approval.approver_id === user.id
+    ) || false;
+  };
+
   const handleApproveClick = () => {
     if (!isCurrentApprover() && data?.current_step?.step_type !== 'opinion') {
       toast.error("ليس لديك الصلاحية للموافقة على هذا الطلب");
       return;
     }
+    
+    // For opinion steps, check if user has already submitted
+    if (data?.current_step?.step_type === 'opinion' && hasSubmittedOpinion()) {
+      toast.error("لقد قمت بالفعل بإبداء رأيك على هذه الخطوة");
+      return;
+    }
+    
     setIsApproveDialogOpen(true);
   };
 
@@ -153,6 +177,13 @@ export const useRequestDetail = (requestId: string) => {
       toast.error("ليس لديك الصلاحية لرفض هذا الطلب");
       return;
     }
+    
+    // For opinion steps, check if user has already submitted
+    if (data?.current_step?.step_type === 'opinion' && hasSubmittedOpinion()) {
+      toast.error("لقد قمت بالفعل بإبداء رأيك على هذه الخطوة");
+      return;
+    }
+    
     setIsRejectDialogOpen(true);
   };
 
@@ -167,6 +198,7 @@ export const useRequestDetail = (requestId: string) => {
     handleApproveClick,
     handleRejectClick,
     isCurrentApprover,
+    hasSubmittedOpinion,
     user,
     queryClient
   };
