@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -97,6 +98,7 @@ export const useRequestDetail = (requestId: string) => {
     // For opinion steps, always allow any authenticated user to participate
     if (stepType === 'opinion') {
       console.log("هذه خطوة رأي ويمكن لأي مستخدم إبداء رأيه");
+      
       // Check if the user has already submitted their opinion
       const hasAlreadySubmitted = data.approvals?.some(
         (approval: any) => 
@@ -146,16 +148,29 @@ export const useRequestDetail = (requestId: string) => {
     if (!data || !user || !data.current_step) return false;
     
     const currentStep = data.current_step;
+    if (!currentStep || !currentStep.id) return false;
+    
     const stepType = currentStep.step_type || 'decision';
     
     // Only applicable for opinion steps
     if (stepType !== 'opinion') return false;
     
-    return data.approvals?.some(
+    // Add detailed logging
+    const approvals = data.approvals || [];
+    console.log("Checking if user has submitted opinion:", {
+      userId: user.id,
+      stepId: currentStep.id,
+      approvals: approvals.filter(a => a.step_id === currentStep.id)
+    });
+    
+    const hasSubmitted = approvals.some(
       (approval: any) => 
         approval.step_id === currentStep.id && 
         approval.approver_id === user.id
-    ) || false;
+    );
+    
+    console.log("User has submitted opinion:", hasSubmitted);
+    return hasSubmitted;
   };
 
   const handleApproveClick = () => {

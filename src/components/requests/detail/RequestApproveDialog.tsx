@@ -39,6 +39,7 @@ export const RequestApproveDialog = ({
   const { user } = useAuthStore();
   
   const isSelfApproval = user?.id === requesterId;
+  const isOpinionStep = stepType === 'opinion';
   
   const approveMutation = useMutation({
     mutationFn: async () => {
@@ -46,7 +47,12 @@ export const RequestApproveDialog = ({
         throw new Error("لا يمكن الموافقة على هذا الطلب لأنه لا يوجد خطوة حالية");
       }
       
-      if (isSelfApproval && stepType !== 'opinion') {
+      // For opinion steps, comments are required
+      if (isOpinionStep && (!comments || comments.trim() === '')) {
+        throw new Error("يجب إدخال رأيك للمتابعة");
+      }
+      
+      if (isSelfApproval && !isOpinionStep) {
         throw new Error("لا يمكن الموافقة على طلبك الخاص إلا في حالة خطوات الرأي فقط");
       }
       
@@ -63,7 +69,7 @@ export const RequestApproveDialog = ({
         throw new Error("حدث خطأ أثناء التحقق من صلاحية الموافقة");
       }
       
-      if (stepData.approver_id !== user?.id) {
+      if (stepData.approver_id !== user?.id && !isOpinionStep) {
         throw new Error("أنت لست المعتمد المخول للموافقة على هذه الخطوة");
       }
       
@@ -80,6 +86,7 @@ export const RequestApproveDialog = ({
         }
       };
       
+      // Use the appropriate RPC call
       const { data, error } = await supabase
         .rpc('approve_request', { 
           p_request_id: requestId,
@@ -146,7 +153,7 @@ export const RequestApproveDialog = ({
         return;
       }
       
-      const successMessage = stepType === 'opinion' 
+      const successMessage = isOpinionStep 
         ? "تم تسجيل رأيك بنجاح" 
         : "تمت الموافقة على الطلب بنجاح";
       
@@ -165,6 +172,12 @@ export const RequestApproveDialog = ({
   });
 
   const handleApprove = () => {
+    // For opinion steps, ensure comments are provided
+    if (isOpinionStep && (!comments || comments.trim() === '')) {
+      toast.error("يجب إدخال رأيك للمتابعة");
+      return;
+    }
+    
     approveMutation.mutate();
   };
 
@@ -173,16 +186,16 @@ export const RequestApproveDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {stepType === 'opinion' ? 'إبداء الرأي على الطلب' : 'الموافقة على الطلب'}
+            {isOpinionStep ? 'إبداء الرأي على الطلب' : 'الموافقة على الطلب'}
           </DialogTitle>
           <DialogDescription>
-            {stepType === 'opinion' 
+            {isOpinionStep 
               ? 'الرجاء إبداء رأيك حول هذا الطلب' 
               : 'هل أنت متأكد من رغبتك في الموافقة على هذا الطلب؟'}
           </DialogDescription>
         </DialogHeader>
         
-        {isSelfApproval && stepType !== 'opinion' && (
+        {isSelfApproval && !isOpinionStep && (
           <Alert variant="destructive" className="my-2">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>تنبيه</AlertTitle>
@@ -192,7 +205,7 @@ export const RequestApproveDialog = ({
           </Alert>
         )}
         
-        {stepType === 'opinion' && (
+        {isOpinionStep && (
           <Alert variant="default" className="my-2 bg-blue-50 text-blue-700 border-blue-200">
             <InfoIcon className="h-4 w-4" />
             <AlertTitle>معلومة</AlertTitle>
@@ -203,16 +216,23 @@ export const RequestApproveDialog = ({
         )}
         
         <div className="py-4">
-          <label htmlFor="comments" className="block text-sm font-medium mb-2">
-            {stepType === 'opinion' ? 'رأيك (اختياري)' : 'التعليقات (اختياري)'}
+          <label htmlFor="comments" className={`block text-sm font-medium mb-2 ${isOpinionStep ? 'text-primary' : ''}`}>
+            {isOpinionStep ? 'رأيك (مطلوب) *' : 'التعليقات (اختياري)'}
           </label>
           <Textarea
             id="comments"
-            placeholder={stepType === 'opinion' ? 'أضف رأيك هنا...' : 'أضف تعليقًا...'}
+            placeholder={isOpinionStep ? 'أضف رأيك هنا...' : 'أضف تعليقًا...'}
             value={comments}
             onChange={(e) => setComments(e.target.value)}
             rows={4}
+            className={isOpinionStep && !comments.trim() ? "border-primary" : ""}
+            required={isOpinionStep}
           />
+          {isOpinionStep && !comments.trim() && (
+            <p className="text-sm text-primary mt-1">
+              يجب إدخال رأيك للمتابعة
+            </p>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -220,10 +240,10 @@ export const RequestApproveDialog = ({
           </Button>
           <Button 
             onClick={handleApprove} 
-            disabled={approveMutation.isPending || (isSelfApproval && stepType !== 'opinion')} 
+            disabled={approveMutation.isPending || (isSelfApproval && !isOpinionStep) || (isOpinionStep && !comments.trim())} 
             className="bg-green-600 hover:bg-green-700"
           >
-            {approveMutation.isPending ? "جاري المعالجة..." : stepType === 'opinion' ? 'إرسال الرأي' : 'موافقة'}
+            {approveMutation.isPending ? "جاري المعالجة..." : isOpinionStep ? 'إرسال الرأي' : 'موافقة'}
           </Button>
         </DialogFooter>
       </DialogContent>

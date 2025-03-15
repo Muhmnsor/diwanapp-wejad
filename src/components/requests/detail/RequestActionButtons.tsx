@@ -23,12 +23,21 @@ export const RequestActionButtons = ({
 }: RequestActionButtonsProps) => {
   // SECURITY ENHANCEMENT: Only show approve/reject buttons if:
   // 1. Status is 'pending' or 'in_progress' 
-  // 2. AND user is STRICTLY designated as the current approver
+  // 2. AND user is STRICTLY designated as the current approver or it's an opinion step
   // 3. For opinion steps: user hasn't already submitted an opinion
   // 4. For decision steps: always respect approver designation
   const showActionButtons = (status === 'pending' || status === 'in_progress') && 
-                           isCurrentApprover &&
+                           (isCurrentApprover) &&
                            (stepType !== 'opinion' || !hasSubmittedOpinion);
+  
+  // Extra logging for debugging
+  console.log("RequestActionButtons props:", {
+    status,
+    isCurrentApprover,
+    stepType,
+    hasSubmittedOpinion,
+    showActionButtons
+  });
   
   return (
     <div className="flex gap-2">
