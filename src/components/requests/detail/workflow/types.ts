@@ -1,12 +1,8 @@
 
-import { WorkflowStep } from "../../types";
+import { WorkflowStep, RequestWorkflow } from "../../types";
 
 export interface WorkflowCardProps {
-  workflow?: {
-    id: string;
-    name: string;
-    description?: string;
-  } | null;
+  workflow?: RequestWorkflow | null;
   currentStep?: WorkflowStep | null;
   requestId: string;
 }

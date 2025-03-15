@@ -1,116 +1,96 @@
 
 import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { FileText, Download, Eye } from "lucide-react";
+import { format } from "date-fns";
+import { ar } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { FileIcon, Download, FileX, File } from "lucide-react";
 
 interface Attachment {
   id: string;
-  file_name: string;
-  file_path: string;
-  file_type?: string;
+  filename: string;
   file_size?: number;
-  uploaded_by?: {
-    id: string;
-    display_name?: string;
-    email?: string;
-  };
+  content_type?: string;
   created_at: string;
+  uploaded_by?: string;
+  url?: string;
 }
 
 interface AttachmentsListProps {
   attachments: Attachment[];
 }
 
-export const AttachmentsList = ({ attachments }: AttachmentsListProps) => {
+export const AttachmentsList: React.FC<AttachmentsListProps> = ({ attachments }) => {
   if (!attachments || attachments.length === 0) {
     return (
-      <div className="text-center py-12 bg-muted/20 rounded-lg">
-        <FileX className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-        <h3 className="font-medium text-lg">لا توجد مرفقات</h3>
-        <p className="text-muted-foreground">لم يتم إضافة أي مرفقات لهذا الطلب</p>
+      <div className="text-center py-8 text-muted-foreground">
+        لا توجد مرفقات لهذا الطلب
       </div>
     );
   }
 
-  // Format file size to human readable format
   const formatFileSize = (size?: number) => {
     if (!size) return "غير معروف";
-    
     const kb = size / 1024;
     if (kb < 1024) {
-      return `${Math.round(kb * 10) / 10} KB`;
+      return `${kb.toFixed(2)} KB`;
+    } else {
+      return `${(kb / 1024).toFixed(2)} MB`;
     }
-    
-    const mb = kb / 1024;
-    return `${Math.round(mb * 10) / 10} MB`;
   };
 
-  // Determine file icon based on mime type
-  const getFileIcon = (fileType?: string) => {
-    if (!fileType) return <File className="h-5 w-5" />;
-    
-    if (fileType.includes("image")) {
-      return <FileIcon className="h-5 w-5 text-blue-500" />;
-    } else if (fileType.includes("pdf")) {
-      return <FileIcon className="h-5 w-5 text-red-500" />;
-    } else if (fileType.includes("word") || fileType.includes("document")) {
-      return <FileIcon className="h-5 w-5 text-blue-700" />;
-    } else if (fileType.includes("excel") || fileType.includes("sheet")) {
-      return <FileIcon className="h-5 w-5 text-green-600" />;
+  const handleDownload = (attachment: Attachment) => {
+    if (attachment.url) {
+      window.open(attachment.url, "_blank");
     }
-    
-    return <FileIcon className="h-5 w-5 text-gray-500" />;
   };
 
-  const handleDownload = (filePath: string, fileName: string) => {
-    // For public files, create a direct download link
-    const downloadLink = filePath.startsWith('http') 
-      ? filePath 
-      : `${filePath}`;
-    
-    // Create a temporary anchor element to trigger the download
-    const a = document.createElement('a');
-    a.href = downloadLink;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  const handlePreview = (attachment: Attachment) => {
+    if (attachment.url) {
+      window.open(attachment.url, "_blank");
+    }
   };
 
   return (
     <div className="space-y-4">
       {attachments.map((attachment) => (
-        <Card key={attachment.id} className="overflow-hidden">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3 space-x-reverse">
-                <div className="bg-muted p-3 rounded-lg">
-                  {getFileIcon(attachment.file_type)}
-                </div>
-                <div>
-                  <h4 className="font-medium truncate max-w-[200px] md:max-w-[300px]">
-                    {attachment.file_name}
-                  </h4>
-                  <div className="flex gap-x-3 text-sm text-muted-foreground">
-                    <span>{formatFileSize(attachment.file_size)}</span>
-                    {attachment.uploaded_by?.display_name && (
-                      <span>بواسطة: {attachment.uploaded_by.display_name}</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              <Button 
-                variant="ghost" 
-                size="icon"
-                onClick={() => handleDownload(attachment.file_path, attachment.file_name)}
-              >
-                <Download className="h-4 w-4" />
-              </Button>
+        <div
+          key={attachment.id}
+          className="flex items-center justify-between border rounded-md p-3 bg-card"
+        >
+          <div className="flex items-center">
+            <div className="p-2 bg-primary/10 rounded-md mr-3">
+              <FileText className="h-5 w-5 text-primary" />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <div className="font-medium">{attachment.filename}</div>
+              <div className="text-xs text-muted-foreground">
+                <span>{formatFileSize(attachment.file_size)}</span>
+                <span className="mx-2">•</span>
+                <span>
+                  {format(new Date(attachment.created_at), "P", { locale: ar })}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="flex space-x-2 space-x-reverse">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handlePreview(attachment)}
+              title="معاينة"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleDownload(attachment)}
+              title="تنزيل"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       ))}
     </div>
   );

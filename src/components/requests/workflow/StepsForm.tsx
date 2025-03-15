@@ -59,15 +59,16 @@ export const StepForm = ({
         <div className="space-y-2">
           <label className="text-sm font-medium">نوع الخطوة</label>
           <Select
-            value={currentStep.step_type || 'opinion'}
+            value={currentStep.step_type || 'decision'}
             onValueChange={(value) => handleInputChange('step_type', value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="اختر نوع الخطوة" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="opinion">رأي</SelectItem>
               <SelectItem value="decision">قرار</SelectItem>
+              <SelectItem value="opinion">رأي</SelectItem>
+              <SelectItem value="notification">إشعار</SelectItem>
             </SelectContent>
           </Select>
         </div>

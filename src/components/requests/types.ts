@@ -1,13 +1,25 @@
-
 // Define types for request components
 
 export interface RequestType {
   id: string;
   name: string;
   description?: string;
-  form_schema: any;
+  form_schema: FormSchema;
   is_active: boolean;
   default_workflow_id?: string | null;
+}
+
+export interface FormField {
+  id: string;
+  name: string;
+  label: string;
+  type: string;
+  required: boolean;
+  options?: (string | { label: string; value: string })[];
+}
+
+export interface FormSchema {
+  fields: FormField[];
 }
 
 export interface WorkflowStep {
@@ -22,7 +34,7 @@ export interface WorkflowStep {
   created_at: string | null;
 }
 
-export interface Workflow {
+export interface RequestWorkflow {
   id: string;
   name: string;
   description?: string;
@@ -32,6 +44,9 @@ export interface Workflow {
   created_by?: string;
   steps?: WorkflowStep[];
 }
+
+// Keep backward compatibility by aliasing RequestWorkflow as Workflow
+export type Workflow = RequestWorkflow;
 
 export interface Request {
   id: string;
@@ -63,4 +78,14 @@ export interface RequestApproval {
   comments?: string;
   approved_at?: string;
   created_at: string;
+}
+
+export interface User {
+  id: string;
+  username?: string;
+  display_name?: string;
+  email?: string;
+  role?: string;
+  lastLogin?: string;
+  isActive?: boolean;
 }
