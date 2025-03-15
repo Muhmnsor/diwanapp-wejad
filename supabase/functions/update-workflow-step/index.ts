@@ -9,6 +9,12 @@ interface RequestData {
   metadata?: Record<string, any>;
 }
 
+interface NextStepResult {
+  id: string | null;
+  step_order: number | null;
+  step_type: string | null;
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
@@ -32,11 +38,11 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
     
-    // Get the request and current step
+    // Get the request with full details about current step
     const { data: requestData1, error: requestError } = await supabaseAdmin
       .from('requests')
       .select(`
-        *,
+        id,
         workflow_id,
         current_step_id,
         current_step:workflow_steps!inner(id, step_order, step_type)
@@ -48,80 +54,80 @@ Deno.serve(async (req) => {
       throw new Error(`Error fetching request: ${requestError.message}`)
     }
     
-    // If the current step is an opinion step, we need to find the next step in the workflow
-    if (requestData1.current_step.step_type === 'opinion') {
-      console.log('Current step is an opinion step. Finding next step in workflow...')
+    console.log('Found request with details:', requestData1)
+    
+    // For both opinion and decision steps, we find the next step in the workflow
+    console.log('Finding next step in workflow...')
+    
+    // Get the next step in the workflow based on step_order
+    const { data: nextStep, error: nextStepError } = await supabaseAdmin
+      .from('workflow_steps')
+      .select('id, step_order, step_type')
+      .eq('workflow_id', requestData1.workflow_id)
+      .gt('step_order', requestData1.current_step.step_order)
+      .order('step_order', { ascending: true })
+      .limit(1)
+      .single()
+    
+    let nextStepResult: NextStepResult = {
+      id: null,
+      step_order: null,
+      step_type: null
+    }
+    
+    if (nextStepError) {
+      console.log('No next step found, workflow may be complete:', nextStepError)
       
-      // Get the next step in the workflow
-      const { data: nextStep, error: nextStepError } = await supabaseAdmin
-        .from('workflow_steps')
-        .select('*')
-        .eq('workflow_id', requestData1.workflow_id)
-        .gt('step_order', requestData1.current_step.step_order)
-        .order('step_order', { ascending: true })
-        .limit(1)
-        .single()
-      
-      if (nextStepError) {
-        console.log('No next step found, workflow may be complete:', nextStepError)
-        
-        // If there's no next step, mark the request as completed
-        const { data: updatedRequest, error: updateError } = await supabaseAdmin
-          .from('requests')
-          .update({ 
-            status: 'completed',
-            current_step_id: null,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', requestData.requestId)
-          .select()
-        
-        if (updateError) {
-          throw new Error(`Error completing request: ${updateError.message}`)
-        }
-        
-        return new Response(
-          JSON.stringify({ 
-            success: true, 
-            message: 'Request completed successfully',
-            data: updatedRequest
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      }
-      
-      console.log('Next step found:', nextStep)
-      
-      // Update the request to the next step
+      // If there's no next step, mark the request as completed
       const { data: updatedRequest, error: updateError } = await supabaseAdmin
         .from('requests')
         .update({ 
-          current_step_id: nextStep.id,
+          status: 'completed',
+          current_step_id: null,
           updated_at: new Date().toISOString()
         })
         .eq('id', requestData.requestId)
         .select()
       
       if (updateError) {
-        throw new Error(`Error updating request to next step: ${updateError.message}`)
+        throw new Error(`Error completing request: ${updateError.message}`)
       }
       
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: 'Request updated to next step successfully',
-          data: updatedRequest
+          message: 'Request completed successfully',
+          data: updatedRequest,
+          next_step: null
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
     
-    // For decision steps, the workflow progression is handled by the approve_request and reject_request functions
+    console.log('Next step found:', nextStep)
+    nextStepResult = nextStep
+    
+    // For opinion steps, we need to update the request to the next step 
+    // but we do not change the request status, just move to next step
+    const { data: updatedRequest, error: updateError } = await supabaseAdmin
+      .from('requests')
+      .update({ 
+        current_step_id: nextStep.id,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', requestData.requestId)
+      .select()
+    
+    if (updateError) {
+      throw new Error(`Error updating request to next step: ${updateError.message}`)
+    }
+    
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'No action needed for decision step',
-        data: null
+        message: 'Request updated to next step successfully',
+        data: updatedRequest,
+        next_step: nextStepResult
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

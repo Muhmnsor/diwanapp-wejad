@@ -59,19 +59,19 @@ export const useRequestDetail = (requestId: string) => {
     
     const { current_step } = data;
     
-    // Get the approver information from the step
-    const approverType = current_step.approver_type;
-    const approverId = current_step.approver_id;
-    
-    if (approverType === 'user') {
-      return approverId === user.id;
-    } else if (approverType === 'role') {
-      // For role-based approvals, check if the user has the required role
-      // This information would need to come from the user's roles
-      return user.roles?.includes(approverId) || false;
+    // Direct approver match (by user ID)
+    if (current_step.approver_id === user.id) {
+      return true;
     }
     
-    return false;
+    // For role-based approval, check if the user has the right role
+    if (current_step.approver_type === 'role') {
+      // Check if user has the right role (based on single role property)
+      return user.role === current_step.approver_id || user.isAdmin;
+    }
+    
+    // Admin users can approve any request
+    return user.isAdmin;
   };
   
   // Check if the user has already submitted an opinion for the current step
