@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
       .select(`
         id,
         workflow_id,
-        current_step_id,
+        requests.current_step_id,
         current_step:workflow_steps!inner(id, step_order, step_type)
       `)
       .eq('id', requestData.requestId)
@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
     // Use explicit column names with table references to avoid ambiguity
     const { data: nextStep, error: nextStepError } = await supabaseAdmin
       .from('workflow_steps')
-      .select('id, step_order, step_type')
+      .select('workflow_steps.id, workflow_steps.step_order, workflow_steps.step_type')
       .eq('workflow_id', requestData1.workflow_id)
       .gt('step_order', requestData1.current_step.step_order)
       .order('step_order', { ascending: true })
