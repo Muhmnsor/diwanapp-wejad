@@ -66,7 +66,7 @@ export const useRequestDetail = (requestId: string) => {
     
     // For role-based approval, check if the user has the right role
     if (current_step.approver_type === 'role') {
-      // Check if user has the right role (based on single role property)
+      // Check if user has the right role
       return user.role === current_step.approver_id || user.isAdmin;
     }
     

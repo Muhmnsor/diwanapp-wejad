@@ -16,7 +16,6 @@ interface RequestApproval {
   id: string;
   step?: { 
     step_name?: string;
-    approver_type?: string; 
     step_type?: string;
   };
   approver?: { 
@@ -42,23 +41,12 @@ export const RequestApprovalsTab = ({ approvals }: RequestApprovalsTabProps) => 
     );
   }
 
-  // Group approvals by step to better display multiple approvals for opinion steps
-  const approvalsByStep = approvals.reduce((acc, approval) => {
-    const stepId = approval.step?.step_name || 'غير معروف';
-    if (!acc[stepId]) {
-      acc[stepId] = [];
-    }
-    acc[stepId].push(approval);
-    return acc;
-  }, {} as Record<string, RequestApproval[]>);
-
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>الخطوة</TableHead>
           <TableHead>نوع الخطوة</TableHead>
-          <TableHead>نوع المعتمد</TableHead>
           <TableHead>المسؤول</TableHead>
           <TableHead>الحالة</TableHead>
           <TableHead>التعليقات</TableHead>
@@ -87,25 +75,7 @@ export const RequestApprovalsTab = ({ approvals }: RequestApprovalsTabProps) => 
               </TooltipProvider>
             </TableCell>
             <TableCell>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger className="flex items-center">
-                    {approval.step?.approver_type === 'user' ? "مستخدم" : 
-                     approval.step?.approver_type === 'role' ? "دور وظيفي" : 
-                     "غير معروف"}
-                    <InfoIcon className="h-4 w-4 mr-1 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{approval.step?.approver_type === 'user' ? 
-                         "موافقة مستخدم محدد" : 
-                         "موافقة مستندة إلى الدور الوظيفي"}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </TableCell>
-            <TableCell>
-              {approval.approver?.display_name || approval.approver?.email || 
-               (approval.step?.approver_type === 'role' ? "أي مستخدم بالدور المحدد" : "غير معروف")}
+              {approval.approver?.display_name || approval.approver?.email || "غير معروف"}
             </TableCell>
             <TableCell>
               {approval.status === "approved" ? 
