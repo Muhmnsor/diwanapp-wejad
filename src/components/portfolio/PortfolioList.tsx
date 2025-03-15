@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -13,7 +14,6 @@ export const PortfolioList = () => {
   const [portfolioToDelete, setPortfolioToDelete] = useState<{
     id: string;
     name: string;
-    asanaGid: string | null;
   } | null>(null);
   const [portfolioToEdit, setPortfolioToEdit] = useState<{
     id: string;
@@ -101,7 +101,6 @@ export const PortfolioList = () => {
           onOpenChange={() => setPortfolioToDelete(null)}
           portfolioId={portfolioToDelete.id}
           portfolioName={portfolioToDelete.name}
-          asanaGid={portfolioToDelete.asanaGid}
         />
       )}
 

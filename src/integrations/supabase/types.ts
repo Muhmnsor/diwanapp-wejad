@@ -2018,55 +2018,43 @@ export type Database = {
       }
       portfolio_tasks: {
         Row: {
-          asana_gid: string | null
           assigned_to: string | null
           created_at: string
           description: string | null
           due_date: string | null
           id: string
-          last_sync_at: string | null
           parent_task_id: string | null
           priority: string | null
           project_id: string | null
           status: string | null
-          sync_error: string | null
-          sync_status: string | null
           title: string
           updated_at: string
           workspace_id: string | null
         }
         Insert: {
-          asana_gid?: string | null
           assigned_to?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
           id?: string
-          last_sync_at?: string | null
           parent_task_id?: string | null
           priority?: string | null
           project_id?: string | null
           status?: string | null
-          sync_error?: string | null
-          sync_status?: string | null
           title: string
           updated_at?: string
           workspace_id?: string | null
         }
         Update: {
-          asana_gid?: string | null
           assigned_to?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
           id?: string
-          last_sync_at?: string | null
           parent_task_id?: string | null
           priority?: string | null
           project_id?: string | null
           status?: string | null
-          sync_error?: string | null
-          sync_status?: string | null
           title?: string
           updated_at?: string
           workspace_id?: string | null
@@ -2104,7 +2092,6 @@ export type Database = {
       }
       portfolio_workspaces: {
         Row: {
-          asana_gid: string | null
           created_at: string
           description: string | null
           id: string
@@ -2112,7 +2099,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          asana_gid?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -2120,7 +2106,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          asana_gid?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -2131,42 +2116,24 @@ export type Database = {
       }
       portfolios: {
         Row: {
-          asana_folder_gid: string | null
-          asana_gid: string | null
-          asana_sync_enabled: boolean | null
           created_at: string
           description: string | null
           id: string
-          last_sync_at: string | null
           name: string
-          sync_enabled: boolean | null
-          sync_error: string | null
           updated_at: string
         }
         Insert: {
-          asana_folder_gid?: string | null
-          asana_gid?: string | null
-          asana_sync_enabled?: boolean | null
           created_at?: string
           description?: string | null
           id?: string
-          last_sync_at?: string | null
           name: string
-          sync_enabled?: boolean | null
-          sync_error?: string | null
           updated_at?: string
         }
         Update: {
-          asana_folder_gid?: string | null
-          asana_gid?: string | null
-          asana_sync_enabled?: boolean | null
           created_at?: string
           description?: string | null
           id?: string
-          last_sync_at?: string | null
           name?: string
-          sync_enabled?: boolean | null
-          sync_error?: string | null
           updated_at?: string
         }
         Relationships: []
