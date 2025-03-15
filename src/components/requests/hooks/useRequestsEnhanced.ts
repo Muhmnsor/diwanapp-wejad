@@ -99,6 +99,34 @@ export const useRequestsEnhanced = () => {
       });
       
       if (error) throw error;
+      
+      // After approval, call the edge function to progress the workflow if needed
+      // This ensures the workflow always advances regardless of opinion/decision step type
+      try {
+        console.log("Calling edge function to update workflow step");
+        const { data: stepUpdateData, error: stepUpdateError } = await supabase.functions.invoke('update-workflow-step', {
+          body: {
+            requestId: requestId,
+            currentStepId: stepId,
+            action: 'approve',
+            metadata: {
+              comments,
+              ...metadata
+            }
+          }
+        });
+        
+        if (stepUpdateError) {
+          console.error("Error updating workflow step:", stepUpdateError);
+          // Don't throw here, as the approval was still recorded
+          toast.warning("تم تسجيل الموافقة ولكن هناك مشكلة في تحديث سير العمل");
+        } else {
+          console.log("Workflow updated successfully:", stepUpdateData);
+        }
+      } catch (stepUpdateError) {
+        console.error("Exception updating workflow step:", stepUpdateError);
+      }
+      
       return data;
     },
     onSuccess: (data) => {
@@ -107,11 +135,6 @@ export const useRequestsEnhanced = () => {
       
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['requests'] });
-      
-      // For opinions, immediately remove from the incoming list
-      if (isOpinion) {
-        queryClient.invalidateQueries({ queryKey: ['requests', 'incoming'] });
-      }
       
       // Also invalidate any request details that might be showing
       queryClient.invalidateQueries({ queryKey: ['request-details'] });
@@ -140,19 +163,41 @@ export const useRequestsEnhanced = () => {
       });
       
       if (error) throw error;
+      
+      // For opinion steps, call the edge function to progress the workflow
+      const stepType = data?.step_type;
+      if (stepType === 'opinion') {
+        try {
+          console.log("Opinion step completed. Calling edge function to update workflow...");
+          
+          const { data: updateResult, error: updateError } = await supabase.functions.invoke('update-workflow-step', {
+            body: {
+              requestId: requestId,
+              currentStepId: stepId,
+              action: 'reject',
+              metadata: {
+                comments,
+                ...metadata
+              }
+            }
+          });
+          
+          if (updateError) {
+            console.error("Error updating workflow step:", updateError);
+            toast.warning("تم تسجيل رأيك ولكن هناك مشكلة في تحديث الخطوة التالية");
+          } else {
+            console.log("Workflow updated successfully:", updateResult);
+          }
+        } catch (updateError) {
+          console.error("Exception updating workflow step:", updateError);
+        }
+      }
+      
       return data;
     },
     onSuccess: (data) => {
-      // Check if this was an opinion submission
-      const isOpinion = data?.step_type === 'opinion';
-      
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['requests'] });
-      
-      // For opinions, immediately remove from the incoming list
-      if (isOpinion) {
-        queryClient.invalidateQueries({ queryKey: ['requests', 'incoming'] });
-      }
       
       // Also invalidate any request details that might be showing
       queryClient.invalidateQueries({ queryKey: ['request-details'] });

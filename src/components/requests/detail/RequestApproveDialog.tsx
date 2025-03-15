@@ -83,35 +83,32 @@ export const RequestApproveDialog = ({
       
       console.log("Approval result:", data);
       
-      // For opinion steps, we need to manually progress the workflow 
-      // to the next step since the RPC function doesn't do this
-      if (stepType === 'opinion') {
-        try {
-          console.log("Opinion step completed. Updating workflow to next step...");
-          
-          const { data: updateResult, error: updateError } = await supabase.functions.invoke('update-workflow-step', {
-            body: {
-              requestId: requestId,
-              currentStepId: stepId,
-              action: 'approve',
-              metadata: {
-                ...metadata,
-                comments
-              }
+      // For all steps, we need to call the edge function to ensure the workflow progresses
+      try {
+        console.log("Step completed. Updating workflow to next step...");
+        
+        const { data: updateResult, error: updateError } = await supabase.functions.invoke('update-workflow-step', {
+          body: {
+            requestId: requestId,
+            currentStepId: stepId,
+            action: 'approve',
+            metadata: {
+              ...metadata,
+              comments
             }
-          });
-          
-          if (updateError) {
-            console.error("Error updating workflow step:", updateError);
-            // Don't throw here, as the opinion was still recorded successfully
-            toast.warning("تم تسجيل رأيك ولكن هناك مشكلة في تحديث الخطوة التالية");
-          } else {
-            console.log("Workflow updated successfully:", updateResult);
           }
-        } catch (updateError) {
-          console.error("Exception updating workflow step:", updateError);
+        });
+        
+        if (updateError) {
+          console.error("Error updating workflow step:", updateError);
           // Don't throw here, as the opinion was still recorded successfully
+          toast.warning("تم تسجيل رأيك ولكن هناك مشكلة في تحديث الخطوة التالية");
+        } else {
+          console.log("Workflow updated successfully:", updateResult);
         }
+      } catch (updateError) {
+        console.error("Exception updating workflow step:", updateError);
+        // Don't throw here, as the opinion was still recorded successfully
       }
       
       return data;
@@ -135,12 +132,6 @@ export const RequestApproveDialog = ({
       queryClient.invalidateQueries({ queryKey: ['requests'] });
       queryClient.invalidateQueries({ queryKey: ['requests', 'incoming'] });
       queryClient.invalidateQueries({ queryKey: ['request-details', requestId] });
-      
-      // For opinion steps, make sure the request is immediately removed from the incoming list
-      if (stepType === 'opinion') {
-        // Force refetch rather than just invalidate
-        queryClient.invalidateQueries({ queryKey: ['requests', 'incoming'] });
-      }
     },
     onError: (error) => {
       console.error("Error approving request:", error);

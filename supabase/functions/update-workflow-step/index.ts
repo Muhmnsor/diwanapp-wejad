@@ -95,6 +95,8 @@ Deno.serve(async (req) => {
         throw new Error(`Error completing request: ${updateError.message}`)
       }
       
+      console.log('Request marked as completed:', updatedRequest)
+      
       return new Response(
         JSON.stringify({ 
           success: true, 
@@ -115,6 +117,8 @@ Deno.serve(async (req) => {
       .from('requests')
       .update({ 
         current_step_id: nextStep.id,
+        // Always ensure the status is set to in_progress when moving to next step
+        status: 'in_progress',
         updated_at: new Date().toISOString()
       })
       .eq('id', requestData.requestId)
@@ -123,6 +127,8 @@ Deno.serve(async (req) => {
     if (updateError) {
       throw new Error(`Error updating request to next step: ${updateError.message}`)
     }
+    
+    console.log('Request updated to next step:', updatedRequest)
     
     return new Response(
       JSON.stringify({ 
