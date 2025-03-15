@@ -86,6 +86,38 @@ export const RequestRejectDialog = ({
       }
       
       console.log("Rejection result:", data);
+      
+      // For opinion steps, we need to manually progress the workflow 
+      // to the next step since the RPC function doesn't do this
+      if (stepType === 'opinion') {
+        try {
+          console.log("Opinion step completed with negative opinion. Updating workflow to next step...");
+          
+          const { data: updateResult, error: updateError } = await supabase.functions.invoke('update-workflow-step', {
+            body: {
+              requestId: requestId,
+              currentStepId: stepId,
+              action: 'reject',
+              metadata: {
+                ...metadata,
+                comments
+              }
+            }
+          });
+          
+          if (updateError) {
+            console.error("Error updating workflow step:", updateError);
+            // Don't throw here, as the opinion was still recorded successfully
+            toast.warning("تم تسجيل رأيك ولكن هناك مشكلة في تحديث الخطوة التالية");
+          } else {
+            console.log("Workflow updated successfully:", updateResult);
+          }
+        } catch (updateError) {
+          console.error("Exception updating workflow step:", updateError);
+          // Don't throw here, as the opinion was still recorded successfully
+        }
+      }
+      
       return data;
     },
     onSuccess: (result) => {

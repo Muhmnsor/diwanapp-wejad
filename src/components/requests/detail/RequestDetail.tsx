@@ -26,7 +26,8 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
     handleApproveClick,
     handleRejectClick,
     isCurrentApprover,
-    hasSubmittedOpinion
+    hasSubmittedOpinion,
+    refetch
   } = useRequestDetail(requestId);
 
   if (isLoading) {
@@ -83,7 +84,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   console.log("Current step data:", currentStep);
   console.log("Requester data:", requester);
   console.log("Step type:", stepType);
-  console.log("Has submitted opinion:", hasSubmittedOpinion ? "Yes" : "No");
+  console.log("Has submitted opinion:", hasSubmittedOpinion() ? "Yes" : "No");
 
   return (
     <>
@@ -127,7 +128,10 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
         stepType={stepType}
         requesterId={request.requester_id}
         isOpen={isApproveDialogOpen}
-        onOpenChange={setIsApproveDialogOpen}
+        onOpenChange={(open) => {
+          setIsApproveDialogOpen(open);
+          if (!open) refetch();
+        }}
       />
 
       <RequestRejectDialog
@@ -136,7 +140,10 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
         stepType={stepType}
         requesterId={request.requester_id}
         isOpen={isRejectDialogOpen}
-        onOpenChange={setIsRejectDialogOpen}
+        onOpenChange={(open) => {
+          setIsRejectDialogOpen(open);
+          if (!open) refetch();
+        }}
       />
     </>
   );
