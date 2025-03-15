@@ -120,6 +120,20 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
         </div>
       </div>
 
+      {stepType === 'opinion' && (
+        <OpinionDialog
+          requestId={requestId}
+          stepId={request.current_step_id}
+          requesterId={request.requester_id}
+          isOpen={isOpinionDialogOpen || isApproveDialogOpen || isRejectDialogOpen}
+          onOpenChange={(open) => {
+            setIsOpinionDialogOpen(open);
+            setIsApproveDialogOpen(false);
+            setIsRejectDialogOpen(false);
+          }}
+        />
+      )}
+
       {stepType !== 'opinion' && (
         <>
           <RequestApproveDialog
@@ -140,20 +154,6 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
             onOpenChange={setIsRejectDialogOpen}
           />
         </>
-      )}
-
-      {stepType === 'opinion' && (
-        <OpinionDialog
-          requestId={requestId}
-          stepId={request.current_step_id}
-          requesterId={request.requester_id}
-          isOpen={isOpinionDialogOpen || isApproveDialogOpen || isRejectDialogOpen}
-          onOpenChange={(open) => {
-            setIsOpinionDialogOpen(open);
-            setIsApproveDialogOpen(false);
-            setIsRejectDialogOpen(false);
-          }}
-        />
       )}
     </>
   );
