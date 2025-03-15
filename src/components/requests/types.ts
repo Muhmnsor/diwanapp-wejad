@@ -1,3 +1,4 @@
+
 // Define types for request components
 
 export interface RequestType {
@@ -13,9 +14,11 @@ export interface FormField {
   id: string;
   name: string;
   label: string;
-  type: string;
+  type: "text" | "textarea" | "number" | "date" | "select" | "array" | "file";
   required: boolean;
+  placeholder?: string;
   options?: (string | { label: string; value: string })[];
+  subfields?: FormField[];
 }
 
 export interface FormSchema {

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -194,8 +193,15 @@ export const useRequestTypeForm = ({
     setCurrentField,
     setFormError,
     handleAddField,
-    handleRemoveField,
-    handleEditField,
+    handleRemoveField: (index: number) => {
+      const updatedFields = formFields.filter((_, i) => i !== index);
+      setFormFields(updatedFields);
+      form.setValue("form_schema.fields", updatedFields as any);
+    },
+    handleEditField: (index: number) => {
+      setCurrentField(formFields[index]);
+      setEditingFieldIndex(index);
+    },
     onSubmit
   };
 };

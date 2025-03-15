@@ -49,7 +49,7 @@ export const StepForm: React.FC<StepFormProps> = ({
               <Label htmlFor="step_type">نوع الخطوة</Label>
               <Select
                 value={currentStep.step_type}
-                onValueChange={(value) => setCurrentStep({
+                onValueChange={(value: 'decision' | 'opinion' | 'notification') => setCurrentStep({
                   ...currentStep,
                   step_type: value
                 })}
@@ -60,6 +60,7 @@ export const StepForm: React.FC<StepFormProps> = ({
                 <SelectContent>
                   <SelectItem value="decision">قرار (يؤثر على مسار الطلب)</SelectItem>
                   <SelectItem value="opinion">رأي (لا يؤثر على مسار الطلب)</SelectItem>
+                  <SelectItem value="notification">إشعار</SelectItem>
                 </SelectContent>
               </Select>
             </div>

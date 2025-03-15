@@ -39,6 +39,7 @@ export const requestTypeSchema = z.object({
         label: z.string().min(1, { message: "عنوان الحقل مطلوب" }),
         type: z.enum(fieldTypes),
         required: z.boolean().default(false),
+        placeholder: z.string().optional(),
         options: z.array(
           z.union([
             z.string(),
@@ -48,6 +49,23 @@ export const requestTypeSchema = z.object({
             })
           ])
         ).optional(),
+        subfields: z.array(z.lazy(() => z.object({
+          id: z.string(),
+          name: z.string(),
+          label: z.string(),
+          type: z.enum(fieldTypes),
+          required: z.boolean(),
+          placeholder: z.string().optional(),
+          options: z.array(
+            z.union([
+              z.string(),
+              z.object({
+                label: z.string(),
+                value: z.string()
+              })
+            ])
+          ).optional(),
+        }))).optional(),
       })
     ),
   }).default({ fields: [] }),
