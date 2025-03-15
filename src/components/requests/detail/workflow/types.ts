@@ -21,6 +21,7 @@ export interface WorkflowCardDataHookResult {
   currentStepIndex: number;
   progressPercentage: number;
   diagnoseWorkflow: () => Promise<any>;
+  fixWorkflow: () => Promise<any>;
   refreshWorkflowData: () => Promise<void>;
 }
 
