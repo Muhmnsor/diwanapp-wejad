@@ -4863,6 +4863,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      debug_request_workflow: {
+        Args: {
+          request_id: string
+        }
+        Returns: Json
+      }
       delete_draft_project: {
         Args: {
           p_project_id: string
@@ -4909,8 +4915,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      diagnose_workflow_issues: {
+        Args: {
+          p_request_id: string
+        }
+        Returns: Json
+      }
       fix_orphaned_request_types: {
         Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      fix_request_status: {
+        Args: {
+          p_request_id: string
+        }
         Returns: Json
       }
       generate_next_registration_number:

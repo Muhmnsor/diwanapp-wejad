@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { 
   AlertCircle, 
   Wrench, 
@@ -22,7 +21,11 @@ import {
 
 interface DiagnoseWorkflowButtonProps {
   requestId: string;
+  onDiagnose: () => Promise<any>;
+  onFix: () => Promise<any>;
   onSuccess?: () => void;
+  isDiagnosing?: boolean;
+  diagnosticResult?: any;
   variant?: 'default' | 'outline' | 'destructive' | 'link' | 'ghost' | 'secondary';
   size?: 'default' | 'sm' | 'lg' | 'icon';
   className?: string;
@@ -30,45 +33,27 @@ interface DiagnoseWorkflowButtonProps {
 
 export const DiagnoseWorkflowButton: React.FC<DiagnoseWorkflowButtonProps> = ({
   requestId,
+  onDiagnose,
+  onFix,
   onSuccess,
+  isDiagnosing = false,
+  diagnosticResult = null,
   variant = 'outline',
   size = 'sm',
   className = ''
 }) => {
-  const [isDiagnosing, setIsDiagnosing] = useState(false);
   const [isFixing, setIsFixing] = useState(false);
-  const [diagnosticResult, setDiagnosticResult] = useState<any>(null);
   const [showFixDialog, setShowFixDialog] = useState(false);
   
   const handleDiagnose = async () => {
-    setIsDiagnosing(true);
-    setDiagnosticResult(null);
-    
     try {
-      // Call the diagnose-workflow-issues function
-      const { data, error } = await supabase.functions.invoke('diagnose-workflow-issues', {
-        body: { requestId }
-      });
+      const result = await onDiagnose();
       
-      if (error) {
-        console.error("Error diagnosing workflow:", error);
-        toast.error("حدث خطأ أثناء تشخيص مسار العمل");
-        return;
-      }
-      
-      setDiagnosticResult(data);
-      
-      if (data?.diagnose?.needs_fixing) {
-        toast.warning("تم اكتشاف مشاكل في مسار العمل، يمكنك إصلاحها الآن");
+      if (result?.diagnose?.needs_fixing) {
         setShowFixDialog(true);
-      } else {
-        toast.success("تم فحص مسار العمل بنجاح، لم يتم العثور على مشاكل");
       }
     } catch (error) {
-      console.error("Error diagnosing workflow:", error);
-      toast.error("حدث خطأ أثناء تشخيص مسار العمل");
-    } finally {
-      setIsDiagnosing(false);
+      console.error("Error in diagnosis handler:", error);
     }
   };
   
@@ -76,26 +61,14 @@ export const DiagnoseWorkflowButton: React.FC<DiagnoseWorkflowButtonProps> = ({
     setIsFixing(true);
     
     try {
-      // Call the fix-request-status function
-      const { data, error } = await supabase.functions.invoke('fix-request-status', {
-        body: { requestId }
-      });
-      
-      if (error) {
-        console.error("Error fixing workflow:", error);
-        toast.error("حدث خطأ أثناء محاولة إصلاح مسار العمل");
-        return;
-      }
-      
-      toast.success("تم إصلاح مسار العمل بنجاح");
+      await onFix();
       setShowFixDialog(false);
       
       if (onSuccess) {
         onSuccess();
       }
     } catch (error) {
-      console.error("Error fixing workflow:", error);
-      toast.error("حدث خطأ أثناء محاولة إصلاح مسار العمل");
+      console.error("Error in fix handler:", error);
     } finally {
       setIsFixing(false);
     }

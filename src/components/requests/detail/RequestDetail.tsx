@@ -1,3 +1,4 @@
+
 import { Loader2 } from "lucide-react";
 import { RequestDetailsCard } from "./RequestDetailsCard";
 import { RequestActionButtons } from "./RequestActionButtons";
@@ -7,6 +8,8 @@ import { useRequestDetail } from "./useRequestDetail";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { RequestWorkflowCard } from "./workflow/RequestWorkflowCard";
+import { DiagnoseWorkflowButton } from "./workflow/DiagnoseWorkflowButton";
+import { Button } from "@/components/ui/button";
 
 interface RequestDetailProps {
   requestId: string;
@@ -26,7 +29,11 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
     handleRejectClick,
     isCurrentApprover,
     hasSubmittedOpinion,
-    refetch
+    refetch,
+    isDiagnosing,
+    diagnosticResult,
+    handleDiagnoseWorkflow,
+    handleFixWorkflow
   } = useRequestDetail(requestId);
 
   if (isLoading) {
@@ -72,11 +79,13 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   const requester = data.requester;
   const stepType = currentStep?.step_type || "decision";
 
+  // Add requester info to the request object for easier access
   const enhancedRequest = {
     ...request,
     requester: requester
   };
 
+  // Debug info for workflow data
   console.log("Request workflow data:", workflow);
   console.log("Current step data:", currentStep);
   console.log("Requester data:", requester);
@@ -88,15 +97,27 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold">تفاصيل الطلب</h2>
-          <RequestActionButtons 
-            status={request.status}
-            isCurrentApprover={isCurrentApprover()}
-            stepType={stepType}
-            hasSubmittedOpinion={hasSubmittedOpinion()}
-            onApprove={handleApproveClick}
-            onReject={handleRejectClick}
-            onClose={onClose}
-          />
+          <div className="flex gap-2">
+            {/* Add the DiagnoseWorkflowButton here alongside the action buttons */}
+            <DiagnoseWorkflowButton 
+              requestId={requestId}
+              onDiagnose={handleDiagnoseWorkflow}
+              onFix={handleFixWorkflow}
+              onSuccess={refetch}
+              isDiagnosing={isDiagnosing}
+              diagnosticResult={diagnosticResult}
+              className="ml-2"
+            />
+            <RequestActionButtons 
+              status={request.status}
+              isCurrentApprover={isCurrentApprover()}
+              stepType={stepType}
+              hasSubmittedOpinion={hasSubmittedOpinion()}
+              onApprove={handleApproveClick}
+              onReject={handleRejectClick}
+              onClose={onClose}
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
