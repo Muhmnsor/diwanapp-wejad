@@ -19,12 +19,15 @@ export const useWorkflowState = ({
   
   // Current step being edited
   const [currentStep, setCurrentStep] = useState<WorkflowStep>({
+    id: null, // Allow null for new steps
     step_name: '',
     step_type: 'decision',
     approver_id: '',
     is_required: true,
     workflow_id: workflowId,
-    step_order: 1
+    step_order: 1,
+    instructions: null,
+    created_at: null
   });
   
   // Index of the step being edited (null if adding a new step)
@@ -41,12 +44,15 @@ export const useWorkflowState = ({
   const resetWorkflowState = () => {
     setWorkflowSteps([]);
     setCurrentStep({
+      id: null,
       step_name: '',
       step_type: 'decision',
       approver_id: '',
       is_required: true,
       workflow_id: workflowId,
-      step_order: 1
+      step_order: 1,
+      instructions: null,
+      created_at: null
     });
     setEditingStepIndex(null);
     setError(null);
