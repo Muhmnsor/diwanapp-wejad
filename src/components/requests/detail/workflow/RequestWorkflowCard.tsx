@@ -13,7 +13,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { WorkflowCardProps } from "./types";
-import { CurrentStepDisplay } from "./CurrentStepDisplay";
 import { WorkflowStepsList } from "./WorkflowStepsList";
 import { useWorkflowCardData } from "./useWorkflowCardData";
 import { Progress } from "@/components/ui/progress";
@@ -108,12 +107,6 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
             />
           </div>
         )}
-
-        {/* Current step with improved display */}
-        <CurrentStepDisplay 
-          currentStep={currentStep} 
-          isLoading={isLoading} 
-        />
         
         <Separator className="my-3" />
         
