@@ -53,20 +53,7 @@ export const CurrentStepDisplay: React.FC<CurrentStepDisplayProps> = ({
             <div className="flex items-center gap-1.5">
               <User className="h-3.5 w-3.5" />
               <span>
-                {currentStep.approver_type === 'user' 
-                  ? 'مستخدم محدد' 
-                  : currentStep.approver_type === 'role' 
-                  ? 'مجموعة معتمدين' 
-                  : 'غير محدد'}
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5" />
-              <span>
-                {currentStep.timeout_days 
-                  ? `المهلة: ${currentStep.timeout_days} أيام` 
-                  : 'بدون مهلة محددة'}
+                المسؤول عن الموافقة
               </span>
             </div>
           </div>

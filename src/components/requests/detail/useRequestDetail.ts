@@ -64,12 +64,6 @@ export const useRequestDetail = (requestId: string) => {
       return true;
     }
     
-    // For role-based approval, check if the user has the right role
-    if (current_step.approver_type === 'role') {
-      // Check if user has the right role
-      return user.role === current_step.approver_id || user.isAdmin;
-    }
-    
     // Admin users can approve any request
     return user.isAdmin;
   };

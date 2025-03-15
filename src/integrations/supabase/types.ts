@@ -4468,7 +4468,6 @@ export type Database = {
       workflow_steps: {
         Row: {
           approver_id: string | null
-          approver_type: string
           created_at: string | null
           id: string
           instructions: string | null
@@ -4480,7 +4479,6 @@ export type Database = {
         }
         Insert: {
           approver_id?: string | null
-          approver_type?: string
           created_at?: string | null
           id?: string
           instructions?: string | null
@@ -4492,7 +4490,6 @@ export type Database = {
         }
         Update: {
           approver_id?: string | null
-          approver_type?: string
           created_at?: string | null
           id?: string
           instructions?: string | null

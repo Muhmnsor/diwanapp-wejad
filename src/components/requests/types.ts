@@ -5,7 +5,7 @@ export interface WorkflowStep {
   step_name: string;
   step_type: string;
   approver_id: string | null;
-  approver_type: string;
+  approver_type?: string;
   instructions: string | null;
   is_required: boolean;
   created_at: string | null;

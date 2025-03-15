@@ -133,7 +133,6 @@ export const useSaveWorkflowSteps = ({
           approver_id: step.approver_id,
           instructions: step.instructions || null,
           is_required: step.is_required === false ? false : true,
-          approver_type: step.approver_type || 'user',
           id: step.id || null,
           created_at: step.created_at || null
         };
