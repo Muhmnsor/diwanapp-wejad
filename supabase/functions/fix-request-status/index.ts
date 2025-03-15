@@ -36,6 +36,35 @@ serve(async (req) => {
         auth: { persistSession: false }
       }
     );
+    
+    // Security Enhancement: Verify user is admin before allowing this operation
+    // Get the current user info
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser();
+    if (userError) {
+      console.error("Error getting user data:", userError);
+      return new Response(
+        JSON.stringify({ success: false, message: "Authentication error: " + userError.message }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      );
+    }
+    
+    // Check if user is admin using the RPC function
+    const { data: isAdmin, error: adminCheckError } = await supabaseClient.rpc('is_admin');
+    if (adminCheckError) {
+      console.error("Error checking admin status:", adminCheckError);
+      return new Response(
+        JSON.stringify({ success: false, message: "Error checking permissions: " + adminCheckError.message }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+      );
+    }
+    
+    // If not admin, cannot perform this operation
+    if (!isAdmin) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Only administrators can fix request status" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+      );
+    }
 
     console.log(`Attempting to fix status for request ${requestId}`);
 
@@ -148,6 +177,27 @@ serve(async (req) => {
           }
         }
       }
+    }
+
+    // Log the fix operation for audit purposes
+    try {
+      const { data: logData, error: logError } = await supabaseClient.from('request_approval_logs').insert({
+        request_id: requestId,
+        user_id: userData.user.id,
+        action_type: 'fix_status',
+        status: 'success',
+        metadata: {
+          original_state: requestData,
+          fix_result: data,
+          timestamp: new Date().toISOString()
+        }
+      });
+      
+      if (logError) {
+        console.error("Error logging fix operation:", logError);
+      }
+    } catch (logError) {
+      console.error("Exception logging fix operation:", logError);
     }
 
     return new Response(

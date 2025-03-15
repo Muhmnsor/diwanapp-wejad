@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -49,6 +50,23 @@ export const RequestApproveDialog = ({
         throw new Error("لا يمكن الموافقة على طلبك الخاص إلا في حالة خطوات الرأي فقط");
       }
       
+      // SECURITY ENHANCEMENT: Verify that the current user is authorized approver
+      // The server will also verify this, this is a client-side check
+      const { data: stepData, error: stepError } = await supabase
+        .from('workflow_steps')
+        .select('approver_id, step_type')
+        .eq('id', stepId)
+        .single();
+        
+      if (stepError) {
+        console.error("Error checking step approver:", stepError);
+        throw new Error("حدث خطأ أثناء التحقق من صلاحية الموافقة");
+      }
+      
+      if (stepData.approver_id !== user?.id) {
+        throw new Error("أنت لست المعتمد المخول للموافقة على هذه الخطوة");
+      }
+      
       console.log(`Approving request: ${requestId}, step: ${stepId}, type: ${stepType}, comments: "${comments}"`);
       
       const metadata = {
@@ -56,7 +74,6 @@ export const RequestApproveDialog = ({
         stepType,
         userId: user?.id,
         userRole: user?.role,
-        userIsAdmin: user?.isAdmin,
         clientInfo: {
           timestamp: new Date().toISOString(),
           browser: navigator.userAgent

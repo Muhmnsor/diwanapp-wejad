@@ -15,7 +15,24 @@ DECLARE
   v_next_step_id uuid;
   v_result jsonb;
   v_was_modified boolean := false;
+  v_is_admin boolean;
 BEGIN
+  -- SECURITY ENHANCEMENT: Only allow admins to perform this operation
+  SELECT EXISTS (
+    SELECT 1 
+    FROM user_roles ur
+    JOIN roles r ON r.id = ur.role_id
+    WHERE ur.user_id = auth.uid()
+    AND r.name IN ('admin', 'app_admin', 'developer')
+  ) INTO v_is_admin;
+  
+  IF NOT v_is_admin THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'message', 'ليس لديك صلاحية إصلاح حالة الطلبات'
+    );
+  END IF;
+
   -- Get request data
   SELECT * INTO v_request_data 
   FROM requests 
@@ -162,6 +179,25 @@ BEGIN
       'message', 'لا توجد إجراءات مطلوبة'
     );
   END IF;
+
+  -- Audit the operation
+  INSERT INTO request_approval_logs(
+    request_id,
+    user_id,
+    action_type,
+    status,
+    metadata
+  ) VALUES (
+    p_request_id,
+    auth.uid(),
+    'fix_status',
+    'success',
+    jsonb_build_object(
+      'action', v_result->>'action',
+      'was_modified', v_was_modified,
+      'timestamp', now()
+    )
+  );
 
   -- Return result
   RETURN jsonb_build_object(

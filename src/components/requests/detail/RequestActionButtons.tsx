@@ -21,9 +21,9 @@ export const RequestActionButtons = ({
   onClose,
   hasSubmittedOpinion = false
 }: RequestActionButtonsProps) => {
-  // Show approve/reject buttons if:
+  // SECURITY ENHANCEMENT: Only show approve/reject buttons if:
   // 1. Status is 'pending' or 'in_progress' 
-  // 2. AND user is current approver OR it's an opinion step and user is allowed to participate
+  // 2. AND user is STRICTLY designated as the current approver
   // 3. AND user hasn't already submitted an opinion (for opinion steps)
   const showActionButtons = (status === 'pending' || status === 'in_progress') && 
                            isCurrentApprover &&

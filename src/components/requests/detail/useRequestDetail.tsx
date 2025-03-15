@@ -1,17 +1,19 @@
-
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/store/refactored-auth";
 import { toast } from "sonner";
+import { fixRequestWorkflow, debugWorkflowStatus } from "./services/requestService";
 
 export const useRequestDetail = (requestId: string) => {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const [isDiagnosing, setIsDiagnosing] = useState(false);
+  const [diagnosticResult, setDiagnosticResult] = useState<any>(null);
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["request-details", requestId],
     queryFn: async () => {
       console.log("=== بدء جلب تفاصيل الطلب ===");
@@ -185,6 +187,49 @@ export const useRequestDetail = (requestId: string) => {
     
     setIsRejectDialogOpen(true);
   };
+  
+  // Diagnostic functionality for admins only (kept separate from approval flow)
+  const handleDiagnoseWorkflow = async () => {
+    if (!requestId) return;
+    
+    setIsDiagnosing(true);
+    try {
+      const result = await debugWorkflowStatus(requestId);
+      setDiagnosticResult(result);
+      console.log("Workflow diagnosis result:", result);
+      
+      if (!result.success) {
+        toast.error("فشل تشخيص سير العمل: " + result.error);
+      } else if (result.issues?.length === 0) {
+        toast.success("لا توجد مشاكل في سير العمل");
+      }
+    } catch (error) {
+      console.error("Error diagnosing workflow:", error);
+      toast.error("حدث خطأ أثناء تشخيص سير العمل");
+    } finally {
+      setIsDiagnosing(false);
+    }
+  };
+  
+  const handleFixWorkflow = async () => {
+    if (!requestId) return;
+    
+    try {
+      const result = await fixRequestWorkflow(requestId);
+      console.log("Fix workflow result:", result);
+      
+      if (result.success) {
+        toast.success("تم إصلاح سير العمل بنجاح");
+        refetch();
+        setDiagnosticResult(null);
+      } else {
+        toast.error("فشل إصلاح سير العمل: " + result.error);
+      }
+    } catch (error) {
+      console.error("Error fixing workflow:", error);
+      toast.error("حدث خطأ أثناء إصلاح سير العمل");
+    }
+  };
 
   return {
     data,
@@ -199,6 +244,11 @@ export const useRequestDetail = (requestId: string) => {
     isCurrentApprover,
     hasSubmittedOpinion,
     user,
-    queryClient
+    queryClient,
+    refetch,
+    isDiagnosing,
+    diagnosticResult,
+    handleDiagnoseWorkflow,
+    handleFixWorkflow
   };
 };
