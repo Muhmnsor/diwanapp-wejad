@@ -111,7 +111,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
               isCurrentApprover={isCurrentApprover()}
               stepType={stepType}
               hasSubmittedOpinion={hasSubmittedOpinion()}
-              isRequester={isRequester()}
+              isRequester={isRequester()} // Properly calling the function here
               onApprove={handleApproveClick}
               onReject={handleRejectClick}
               onClose={onClose}
