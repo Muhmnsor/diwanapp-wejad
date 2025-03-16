@@ -43,10 +43,10 @@ export const CurrentStepDisplay: React.FC<CurrentStepDisplayProps> = ({
   
   const isOpinionStep = currentStep.step_type === 'opinion';
   
-  // Display current step info with approver info if available
+  // Display current step info without approver info
   return (
     <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
-      <div className="flex items-center gap-2 mb-1">
+      <div className="flex items-center gap-2">
         {isOpinionStep ? (
           <MessageSquareQuote className="h-5 w-5 text-blue-500 flex-shrink-0" />
         ) : (
@@ -61,12 +61,6 @@ export const CurrentStepDisplay: React.FC<CurrentStepDisplayProps> = ({
           </div>
         </div>
       </div>
-      
-      {currentStep.approver && (
-        <div className="mt-1 text-sm text-blue-700">
-          {currentStep.approver.display_name || currentStep.approver.email}
-        </div>
-      )}
     </div>
   );
 };

@@ -32,7 +32,6 @@ export const useRequestDetail = (requestId: string) => {
           console.error("رسالة الخطأ:", error.message);
           console.error("تفاصيل الخطأ:", error.details);
           
-          // Check if this is an RLS policy issue
           if (error.code === 'PGRST301') {
             console.error("خطأ في سياسة RLS: ليس لديك صلاحية للوصول إلى هذا الطلب");
           }
@@ -42,7 +41,6 @@ export const useRequestDetail = (requestId: string) => {
         
         console.log("تم جلب تفاصيل الطلب بنجاح:", data);
         
-        // Add additional debug info
         if (!data.workflow || !data.workflow.id) {
           console.warn("بيانات سير العمل مفقودة أو غير مكتملة:", data.workflow);
         }
@@ -55,7 +53,6 @@ export const useRequestDetail = (requestId: string) => {
           console.warn("بيانات مقدم الطلب مفقودة أو غير مكتملة:", data.requester);
         }
 
-        // Detailed info about approvals
         if (data.approvals && data.approvals.length > 0) {
           console.log("عدد سجلات الموافقة:", data.approvals.length);
           console.log("تفاصيل أول سجل موافقة:", data.approvals[0]);
