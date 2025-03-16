@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { FormField } from "../types";
 import { Input } from "@/components/ui/input";
@@ -99,7 +98,7 @@ export const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
             <label className="text-sm font-medium">نوع الحقل</label>
             <Select
               value={currentField.type}
-              onValueChange={(value: string) => {
+              onValueChange={(value: "text" | "textarea" | "number" | "date" | "select" | "array" | "file") => {
                 // Reset options if changing from select to another type
                 const newField = { 
                   ...currentField, 

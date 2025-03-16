@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -103,7 +102,7 @@ export const useSaveWorkflowSteps = () => {
         `)
         .eq('workflow_id', workflowId)
         .order('step_order', { ascending: true });
-        
+      
       if (error) {
         console.error('Error loading workflow steps:', error);
         throw error;
@@ -111,7 +110,7 @@ export const useSaveWorkflowSteps = () => {
       
       // Transform data to include approver_name from the joined users table
       const transformedSteps = data.map(step => {
-        // Handle the nested users object properly
+        // Handle the nested users object properly (not an array)
         let approverName = null;
         if (step.users) {
           approverName = step.users.display_name || null;

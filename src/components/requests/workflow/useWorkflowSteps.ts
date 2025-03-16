@@ -1,4 +1,3 @@
-
 import { WorkflowStep } from "../types";
 import { useUsersList } from "./hooks/useUsersList";
 import { useWorkflowState } from "./hooks/useWorkflowState";
@@ -112,7 +111,7 @@ export const useWorkflowSteps = ({
       const transformedSteps = data.map(step => {
         let approverName = null;
         if (step.users) {
-          // Handle nested user object correctly
+          // Handle nested user object correctly (not an array)
           approverName = step.users.display_name || null;
         }
         

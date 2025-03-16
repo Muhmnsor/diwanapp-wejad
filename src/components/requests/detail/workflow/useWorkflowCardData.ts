@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { WorkflowStep } from '../../types';
 import { supabase } from '@/integrations/supabase/client';
@@ -58,6 +57,7 @@ export const useWorkflowCardData = (
       const transformedSteps = data.map(step => {
         let approverName = null;
         if (step.users) {
+          // Handle the nested user object - not array
           approverName = step.users.display_name || null;
         }
         
