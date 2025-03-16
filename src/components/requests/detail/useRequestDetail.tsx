@@ -5,7 +5,6 @@ import { useAuthStore } from "@/store/refactored-auth";
 import { toast } from "sonner";
 import { fixRequestWorkflow, debugWorkflowStatus } from "./services/requestService";
 
-// Define an interface for the return type of the hook
 export interface RequestDetailHookResult {
   data: any;
   isLoading: boolean;
@@ -18,7 +17,6 @@ export interface RequestDetailHookResult {
   handleRejectClick: () => void;
   isCurrentApprover: () => boolean;
   hasSubmittedOpinion: () => boolean;
-  isRequester: () => boolean;
   user: any;
   queryClient: any;
   refetch: () => Promise<any>;
@@ -94,16 +92,6 @@ export const useRequestDetail = (requestId: string): RequestDetailHookResult => 
     refetchOnWindowFocus: false
   });
 
-  const isRequester = () => {
-    if (!data || !user || !data.request) return false;
-    
-    console.log("التحقق من كون المستخدم هو مقدم الطلب");
-    console.log("معرف المستخدم:", user.id);
-    console.log("معرف مقدم الطلب:", data.request.requester_id);
-    
-    return user.id === data.request.requester_id;
-  };
-  
   const isCurrentApprover = () => {
     if (!data || !user || !data.current_step) return false;
     
@@ -178,7 +166,7 @@ export const useRequestDetail = (requestId: string): RequestDetailHookResult => 
     console.log("Checking if user has submitted opinion:", {
       userId: user.id,
       stepId: currentStep.id,
-      approvals: approvals.filter(a => a.step_id === currentStep.id)
+      approvals: approvals.filter((a: any) => a.step_id === currentStep.id)
     });
     
     const hasSubmitted = approvals.some(
@@ -197,13 +185,15 @@ export const useRequestDetail = (requestId: string): RequestDetailHookResult => 
       return;
     }
     
+    const isRequesterValue = user?.id === data?.request?.requester_id;
+    
     if (data?.current_step?.step_type === 'opinion') {
       if (hasSubmittedOpinion()) {
         toast.error("لقد قمت بالفعل بإبداء رأيك على هذه الخطوة");
         return;
       }
       
-      if (isRequester()) {
+      if (isRequesterValue) {
         toast.error("لا يمكنك إبداء رأي على طلبك الخاص");
         return;
       }
@@ -218,13 +208,15 @@ export const useRequestDetail = (requestId: string): RequestDetailHookResult => 
       return;
     }
     
+    const isRequesterValue = user?.id === data?.request?.requester_id;
+    
     if (data?.current_step?.step_type === 'opinion') {
       if (hasSubmittedOpinion()) {
         toast.error("لقد قمت بالفعل بإبداء رأيك على هذه الخطوة");
         return;
       }
       
-      if (isRequester()) {
+      if (isRequesterValue) {
         toast.error("لا يمكنك إبداء رأي على طلبك الخاص");
         return;
       }
@@ -287,7 +279,6 @@ export const useRequestDetail = (requestId: string): RequestDetailHookResult => 
     handleRejectClick,
     isCurrentApprover,
     hasSubmittedOpinion,
-    isRequester,
     user,
     queryClient,
     refetch,

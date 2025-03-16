@@ -9,6 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { RequestWorkflowCard } from "./workflow/RequestWorkflowCard";
 import { DiagnoseWorkflowButton } from "./workflow/DiagnoseWorkflowButton";
+import { useIsRequester } from "./hooks/useIsRequester";
 
 interface RequestDetailProps {
   requestId: string;
@@ -28,13 +29,15 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
     handleRejectClick,
     isCurrentApprover,
     hasSubmittedOpinion,
-    isRequester,
     refetch,
     isDiagnosing,
     diagnosticResult,
     handleDiagnoseWorkflow,
     handleFixWorkflow
   } = useRequestDetail(requestId);
+
+  // Use the new hook to determine if user is requester
+  const isRequester = useIsRequester(data?.request?.requester_id);
 
   if (isLoading) {
     return (
@@ -89,7 +92,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   console.log("Requester data:", requester);
   console.log("Step type:", stepType);
   console.log("Has submitted opinion:", hasSubmittedOpinion() ? "Yes" : "No");
-  console.log("Is requester:", isRequester() ? "Yes" : "No");
+  console.log("Is requester:", isRequester ? "Yes" : "No");
 
   return (
     <>
@@ -111,7 +114,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
               isCurrentApprover={isCurrentApprover()}
               stepType={stepType}
               hasSubmittedOpinion={hasSubmittedOpinion()}
-              isRequester={isRequester()}
+              isRequester={isRequester}
               onApprove={handleApproveClick}
               onReject={handleRejectClick}
               onClose={onClose}
