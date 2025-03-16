@@ -1,147 +1,136 @@
 
-import React, { useState, useEffect } from "react";
+import React from 'react';
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { WorkflowStep, User } from "../types";
-import { v4 as uuidv4 } from "uuid";
+import { Switch } from "@/components/ui/switch";
+import { WorkflowStep, User } from '../types';
+import { PlusCircle, Save } from 'lucide-react';
 
-export interface StepFormProps {
-  step: WorkflowStep;
-  editingIndex: number | null;
+interface StepFormProps {
+  currentStep: WorkflowStep;
+  setCurrentStep: (step: WorkflowStep) => void;
+  onAddStep: () => void;
+  editingStepIndex: number | null;
   users: User[];
   isLoading?: boolean;
-  onUpdateStep: (step: WorkflowStep) => void;
-  onSaveStep: () => void;
 }
 
 export const StepForm: React.FC<StepFormProps> = ({
-  step,
-  editingIndex,
+  currentStep,
+  setCurrentStep,
+  onAddStep,
+  editingStepIndex,
   users,
-  isLoading = false,
-  onUpdateStep,
-  onSaveStep,
+  isLoading = false
 }) => {
-  const handleStepTypeChange = (value: "decision" | "opinion" | "notification") => {
-    onUpdateStep({
-      ...step,
-      step_type: value,
-    });
-  };
-
-  const handleApproverChange = (value: string) => {
-    const selectedUser = users.find(user => user.id === value);
-    onUpdateStep({
-      ...step,
-      approver_id: value,
-      approver_name: selectedUser?.display_name || null,
-    });
-  };
-
-  const handleRequiredChange = (checked: boolean) => {
-    onUpdateStep({
-      ...step,
-      is_required: checked,
-    });
-  };
-
-  const isValid = () => {
-    return !!step.step_name && !!step.approver_id;
-  };
-
   return (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle className="text-lg">
-          {editingIndex !== null ? "تعديل خطوة" : "إضافة خطوة جديدة"}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="step-name">اسم الخطوة</Label>
-            <Input
-              id="step-name"
-              placeholder="أدخل اسماً للخطوة"
-              value={step.step_name || ""}
-              onChange={(e) => onUpdateStep({ ...step, step_name: e.target.value })}
-            />
+    <Card className="border-dashed border-muted-foreground/50">
+      <CardContent className="pt-6 px-4">
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="step_name">اسم الخطوة</Label>
+              <Input
+                id="step_name"
+                placeholder="أدخل اسم الخطوة"
+                value={currentStep.step_name}
+                onChange={(e) => setCurrentStep({
+                  ...currentStep,
+                  step_name: e.target.value
+                })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="step_type">نوع الخطوة</Label>
+              <Select
+                value={currentStep.step_type}
+                onValueChange={(value: 'decision' | 'opinion' | 'notification') => setCurrentStep({
+                  ...currentStep,
+                  step_type: value
+                })}
+              >
+                <SelectTrigger id="step_type">
+                  <SelectValue placeholder="اختر نوع الخطوة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="decision">قرار (يؤثر على مسار الطلب)</SelectItem>
+                  <SelectItem value="opinion">رأي (لا يؤثر على مسار الطلب)</SelectItem>
+                  <SelectItem value="notification">إشعار</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          
+
           <div className="space-y-2">
-            <Label htmlFor="step-type">نوع الخطوة</Label>
+            <Label htmlFor="approver_id">المسؤول عن الموافقة</Label>
             <Select
-              value={step.step_type}
-              onValueChange={handleStepTypeChange}
+              value={currentStep.approver_id || ''}
+              onValueChange={(value) => setCurrentStep({
+                ...currentStep,
+                approver_id: value
+              })}
             >
-              <SelectTrigger id="step-type">
-                <SelectValue placeholder="اختر نوع الخطوة" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="decision">موافقة / رفض</SelectItem>
-                <SelectItem value="opinion">إبداء رأي</SelectItem>
-                <SelectItem value="notification">إخطار فقط</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="approver">المسؤول</Label>
-            <Select
-              value={step.approver_id || ""}
-              onValueChange={handleApproverChange}
-            >
-              <SelectTrigger id="approver">
-                <SelectValue placeholder="اختر المسؤول عن الخطوة" />
+              <SelectTrigger id="approver_id">
+                <SelectValue placeholder="اختر المسؤول عن الموافقة" />
               </SelectTrigger>
               <SelectContent>
                 {users.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
-                    {user.display_name || user.email}
+                    {user.display_name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          
-          <div className="flex items-center pt-8">
-            <div className="flex items-center space-x-2 rtl:space-x-reverse">
-              <Switch
-                id="is-required"
-                checked={step.is_required}
-                onCheckedChange={handleRequiredChange}
-              />
-              <Label htmlFor="is-required">خطوة إلزامية</Label>
-            </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="instructions">تعليمات للمعتمد</Label>
+            <Textarea
+              id="instructions"
+              placeholder="تعليمات اختيارية للمعتمد (اختياري)"
+              value={currentStep.instructions || ''}
+              onChange={(e) => setCurrentStep({
+                ...currentStep,
+                instructions: e.target.value
+              })}
+              rows={3}
+            />
+          </div>
+
+          <div className="flex items-center space-x-2 space-x-reverse">
+            <Switch
+              id="required"
+              checked={currentStep.is_required !== false}
+              onCheckedChange={(checked) => setCurrentStep({
+                ...currentStep,
+                is_required: checked
+              })}
+            />
+            <Label htmlFor="required">خطوة إلزامية</Label>
+          </div>
+
+          <div className="pt-2 flex justify-end">
+            <Button
+              type="button"
+              onClick={onAddStep}
+              disabled={isLoading || !currentStep.step_name || !currentStep.approver_id}
+              className="w-full"
+            >
+              {editingStepIndex !== null ? (
+                <Save className="h-4 w-4 ml-2" />
+              ) : (
+                <PlusCircle className="h-4 w-4 ml-2" />
+              )}
+              {editingStepIndex !== null ? 'حفظ التغييرات' : 'إضافة خطوة'}
+            </Button>
           </div>
         </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="instructions">تعليمات (اختياري)</Label>
-          <Textarea
-            id="instructions"
-            placeholder="تعليمات أو ملاحظات إضافية للخطوة"
-            value={step.instructions || ""}
-            onChange={(e) => onUpdateStep({ ...step, instructions: e.target.value })}
-          />
-        </div>
       </CardContent>
-      <CardFooter>
-        <Button
-          onClick={onSaveStep}
-          disabled={!isValid() || isLoading}
-          className="w-full md:w-auto"
-        >
-          {isLoading ? "جارٍ الحفظ..." : editingIndex !== null ? "تحديث الخطوة" : "إضافة الخطوة"}
-        </Button>
-      </CardFooter>
     </Card>
   );
 };

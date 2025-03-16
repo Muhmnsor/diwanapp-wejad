@@ -1,4 +1,3 @@
-
 import { Loader2 } from "lucide-react";
 import { RequestDetailsCard } from "./RequestDetailsCard";
 import { RequestActionButtons } from "./RequestActionButtons";
@@ -9,7 +8,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { RequestWorkflowCard } from "./workflow/RequestWorkflowCard";
 import { DiagnoseWorkflowButton } from "./workflow/DiagnoseWorkflowButton";
-import { useIsRequester } from "./hooks/useIsRequester";
 
 interface RequestDetailProps {
   requestId: string;
@@ -29,15 +27,13 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
     handleRejectClick,
     isCurrentApprover,
     hasSubmittedOpinion,
+    isRequester,
     refetch,
     isDiagnosing,
     diagnosticResult,
     handleDiagnoseWorkflow,
     handleFixWorkflow
   } = useRequestDetail(requestId);
-
-  // Use the new hook to determine if user is requester
-  const isRequester = useIsRequester(data?.request?.requester_id);
 
   if (isLoading) {
     return (
@@ -81,8 +77,6 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   const attachments = data.attachments || [];
   const requester = data.requester;
   const stepType = currentStep?.step_type || "decision";
-  // Get permissions from the data
-  const permissions = data.permissions || {};
 
   const enhancedRequest = {
     ...request,
@@ -93,9 +87,9 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   console.log("Current step data:", currentStep);
   console.log("Requester data:", requester);
   console.log("Step type:", stepType);
+  console.log("Request status:", request.status);
   console.log("Has submitted opinion:", hasSubmittedOpinion() ? "Yes" : "No");
-  console.log("Is requester:", isRequester ? "Yes" : "No");
-  console.log("Permissions:", permissions);
+  console.log("Is requester:", isRequester() ? "Yes" : "No");
 
   return (
     <>
@@ -117,7 +111,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
               isCurrentApprover={isCurrentApprover()}
               stepType={stepType}
               hasSubmittedOpinion={hasSubmittedOpinion()}
-              isRequester={isRequester}
+              isRequester={isRequester()}
               onApprove={handleApproveClick}
               onReject={handleRejectClick}
               onClose={onClose}
@@ -141,12 +135,6 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
               currentStep={currentStep}
               requestId={requestId}
               requestStatus={request.status}
-              permissions={{
-                canViewWorkflow: !!permissions.can_view_workflow,
-                isRequester: !!permissions.is_requester,
-                isAdmin: !!permissions.is_admin,
-                isInWorkflow: !!permissions.is_in_workflow
-              }}
             />
           </div>
         </div>

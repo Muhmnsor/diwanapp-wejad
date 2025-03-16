@@ -1,92 +1,45 @@
 
 import React from 'react';
-import { CheckCircle2, CircleDashed, Clock, MessageSquareQuote, XCircle } from "lucide-react";
+import { CheckCircle2, CircleDashed, Circle } from "lucide-react";
 import { WorkflowStepItemProps } from "./types";
-import { cn } from "@/lib/utils";
+import { WorkflowStatusBadge } from "./WorkflowStatusBadge";
 
 export const WorkflowStepItem: React.FC<WorkflowStepItemProps> = ({ 
   step, 
   isCurrent,
-  isCompleted,
-  isRejected = false
+  isCompleted
 }) => {
-  // Check if this is an opinion step
-  const isOpinionStep = step.step_type === 'opinion';
-  
-  // Determine step icon based on status and type
-  let StepIcon = CircleDashed;
-  let stepIconColor = "text-gray-300";
+  // Status icon based on step status
+  const StepIcon = isCompleted 
+    ? CheckCircle2 
+    : isCurrent 
+    ? Circle 
+    : CircleDashed;
 
-  if (isRejected) {
-    StepIcon = XCircle;
-    stepIconColor = "text-red-500";
-  } else if (isCompleted) {
-    StepIcon = CheckCircle2;
-    stepIconColor = "text-green-500";
-  } else if (isCurrent) {
-    StepIcon = isOpinionStep ? MessageSquareQuote : Clock;
-    stepIconColor = "text-blue-500";
-  }
+  // Colors based on status
+  const iconColor = isCompleted 
+    ? "text-green-500" 
+    : isCurrent 
+    ? "text-blue-500" 
+    : "text-gray-300";
   
-  // Determine text color based on status
-  const textColor = cn(
-    isCurrent && "text-blue-500 font-medium",
-    isCompleted && "text-green-500",
-    isRejected && "text-red-500",
-    !isCurrent && !isCompleted && !isRejected && "text-muted-foreground"
-  );
-  
-  // Display appropriate status message based on step type and completion status
-  let statusMessage = '';
-  
-  if (isOpinionStep) {
-    if (isCompleted) {
-      // Completed opinion step - Use specific text for opinions
-      statusMessage = step.approver_name 
-        ? `تم إبداء الرأي بواسطة: ${step.approver_name}` 
-        : 'تم إبداء الرأي';
-    } else if (isCurrent) {
-      // Current opinion step 
-      statusMessage = 'إبداء رأي مطلوب';
-    } else {
-      // Future opinion step
-      statusMessage = 'مرحلة إبداء الرأي';
-    }
-  } else {
-    // Decision/approval step
-    if (isCompleted) {
-      // Completed approval step
-      statusMessage = step.approver_name 
-        ? `تمت الموافقة بواسطة: ${step.approver_name}` 
-        : 'تمت الموافقة';
-    } else if (isCurrent) {
-      // Current approval step
-      statusMessage = 'موافقة مطلوبة';
-    } else {
-      // Future approval step
-      statusMessage = 'مرحلة موافقة';
-    }
-  }
+  const textColor = isCompleted 
+    ? "text-green-600" 
+    : isCurrent 
+    ? "text-blue-600 font-medium" 
+    : "text-gray-500";
   
   return (
-    <div className={cn(
-      "flex items-start py-1.5",
-      isCurrent && "animate-pulse-light"
-    )}>
-      <StepIcon className={cn("h-6 w-6 ml-2", stepIconColor)} />
-      <div className="flex-1">
-        <p className={cn("text-sm font-medium", textColor)}>
-          {step.step_name || 'خطوة غير معرفة'}
-        </p>
-        
-        <p className="text-xs text-muted-foreground">
-          {statusMessage}
-        </p>
-        
-        {step.instructions && (
-          <p className="text-xs mt-1 text-muted-foreground">
-            {step.instructions}
-          </p>
+    <div className="flex items-center py-1.5 group">
+      <div className={`flex-shrink-0 ${iconColor}`}>
+        <StepIcon className="h-5 w-5" />
+      </div>
+      <div className={`mr-2 text-sm ${textColor} flex-grow flex justify-between items-center`}>
+        <span>{step.step_name}</span>
+        {step.step_type && (
+          <span className="mr-auto">
+            <WorkflowStatusBadge status={step.step_type} />
+          </span>
         )}
       </div>
     </div>

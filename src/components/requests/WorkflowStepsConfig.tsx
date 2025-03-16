@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { WorkflowStep } from "./types";
 import { StepForm } from "./workflow/StepForm";
 import { StepsList } from "./workflow/StepsList";
@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { v4 as uuidv4 } from "uuid";
 
 interface WorkflowStepsConfigProps {
   requestTypeId: string | null;
@@ -52,7 +51,7 @@ export const WorkflowStepsConfig = ({
   // Display error if there's any
   useEffect(() => {
     if (error) {
-      toast.error(`خطأ في إدارة خطوات سير العمل: ${error.message || 'حدث خطأ غير معروف'}`);
+      toast.error(`خطأ في إدارة خطوات سير العمل: ${error}`);
     }
   }, [error]);
 
@@ -92,37 +91,6 @@ export const WorkflowStepsConfig = ({
     }
   };
 
-  // Handle update step from form
-  const handleUpdateStep = (updatedStep: WorkflowStep) => {
-    setCurrentStep(updatedStep);
-  };
-
-  // Handle save step from form
-  const handleSaveStep = () => {
-    const updatedSteps = [...workflowSteps];
-    
-    if (editingStepIndex !== null) {
-      // Update existing step
-      updatedSteps[editingStepIndex] = {
-        ...currentStep,
-        workflow_id: currentWorkflowId || 'temp-workflow-id'
-      };
-    } else {
-      // Add new step
-      updatedSteps.push({
-        ...currentStep,
-        id: currentStep.id || uuidv4(),
-        workflow_id: currentWorkflowId || 'temp-workflow-id',
-        step_order: workflowSteps.length
-      });
-    }
-    
-    onWorkflowStepsUpdated(updatedSteps);
-    
-    // Reset current step
-    handleAddStep();
-  };
-
   // Add a message to prompt users to save when in standalone mode and steps exist
   const showSavePrompt = standalone && workflowSteps.length > 0 && !isLoading;
 
@@ -141,7 +109,7 @@ export const WorkflowStepsConfig = ({
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {error.message || 'حدث خطأ غير معروف'}
+            {error}
           </AlertDescription>
         </Alert>
       )}
@@ -165,12 +133,12 @@ export const WorkflowStepsConfig = ({
       )}
       
       <StepForm
-        step={currentStep}
-        editingIndex={editingStepIndex}
+        currentStep={currentStep}
+        editingStepIndex={editingStepIndex}
         users={users}
         isLoading={isLoading}
-        onUpdateStep={handleUpdateStep}
-        onSaveStep={handleSaveStep}
+        setCurrentStep={setCurrentStep}
+        onAddStep={handleAddStep}
       />
       
       <StepsList
@@ -202,7 +170,7 @@ export const WorkflowStepsConfig = ({
             <div>عدد الخطوات: {workflowSteps.length}</div>
             <div>الخطوة التي يتم تحريرها: {editingStepIndex !== null ? editingStepIndex : 'لا يوجد'}</div>
             <div>جاري التحميل: {isLoading ? 'نعم' : 'لا'}</div>
-            <div>خطأ: {error ? (error.message || String(error)) : 'لا يوجد'}</div>
+            <div>خطأ: {error || 'لا يوجد'}</div>
             <div className="mt-2">حالة الخطوات:</div>
             <div className="pl-4">
               {workflowSteps.map((step, index) => (

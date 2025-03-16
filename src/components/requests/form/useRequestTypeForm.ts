@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,12 +51,10 @@ export const useRequestTypeForm = ({
       form.reset({
         name: requestType.name,
         description: requestType.description || "",
-        is_active: requestType.is_active !== undefined ? requestType.is_active : true,
-        form_schema: {
-          fields: (requestType.form_schema?.fields || []) as any,
-        },
+        is_active: requestType.is_active,
+        form_schema: requestType.form_schema,
       });
-      setFormFields(requestType.form_schema?.fields || []);
+      setFormFields(requestType.form_schema.fields || []);
       setCreatedRequestTypeId(requestType.id);
     } else {
       form.reset({
@@ -128,12 +125,13 @@ export const useRequestTypeForm = ({
       fields: formFields,
     };
     
-    // Cast the type to appease TypeScript while maintaining the runtime values
+    values.form_schema = formSchemaWithFields;
+
     const requestTypeData = {
       name: values.name,
       description: values.description || null,
       is_active: values.is_active,
-      form_schema: formSchemaWithFields as any,
+      form_schema: formSchemaWithFields,
     };
 
     if (isEditing && requestType) {
@@ -174,7 +172,7 @@ export const useRequestTypeForm = ({
       toast.success(isEditing ? "تم تحديث نوع الطلب بنجاح" : "تم إنشاء نوع الطلب بنجاح");
       onRequestTypeCreated();
       onClose();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error saving request type:", error);
       toast.error(isEditing ? "حدث خطأ أثناء تحديث نوع الطلب" : "حدث خطأ أثناء إنشاء نوع الطلب");
       setFormError(`${error.message || "حدث خطأ غير متوقع أثناء العملية"}`);
@@ -195,8 +193,15 @@ export const useRequestTypeForm = ({
     setCurrentField,
     setFormError,
     handleAddField,
-    handleRemoveField,
-    handleEditField,
+    handleRemoveField: (index: number) => {
+      const updatedFields = formFields.filter((_, i) => i !== index);
+      setFormFields(updatedFields);
+      form.setValue("form_schema.fields", updatedFields as any);
+    },
+    handleEditField: (index: number) => {
+      setCurrentField(formFields[index]);
+      setEditingFieldIndex(index);
+    },
     onSubmit
   };
 };

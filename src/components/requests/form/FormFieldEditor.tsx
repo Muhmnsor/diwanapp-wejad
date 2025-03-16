@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { FormField } from "../types";
 import { Input } from "@/components/ui/input";
@@ -73,7 +74,8 @@ export const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
                 const formattedName = e.target.value.toLowerCase().replace(/\s+/g, '_');
                 setCurrentField({ 
                   ...currentField, 
-                  name: formattedName
+                  name: formattedName,
+                  id: currentField.id || uuidv4() // Ensure id exists
                 });
               }}
             />
@@ -86,7 +88,8 @@ export const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
               onChange={(e) =>
                 setCurrentField({ 
                   ...currentField, 
-                  label: e.target.value
+                  label: e.target.value,
+                  id: currentField.id || uuidv4() // Ensure id exists
                 })
               }
             />
@@ -103,6 +106,7 @@ export const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
                 const newField = { 
                   ...currentField, 
                   type: value,
+                  id: currentField.id || uuidv4(), // Ensure id exists
                   // Clear options if not a select field
                   ...(value !== 'select' ? { options: [] } : {})
                 };
@@ -129,7 +133,7 @@ export const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
                 id="required-field"
                 checked={currentField.required}
                 onCheckedChange={(checked) =>
-                  setCurrentField({ ...currentField, required: checked })
+                  setCurrentField({ ...currentField, required: checked, id: currentField.id || uuidv4() })
                 }
               />
               <label

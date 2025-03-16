@@ -5,8 +5,7 @@ import {
   XCircle, 
   Clock, 
   MessageSquare,
-  InfoIcon,
-  MessageSquareQuote 
+  InfoIcon 
 } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -50,79 +49,72 @@ export const ApprovalHistoryList = ({ approvals }: ApprovalHistoryListProps) => 
 
   return (
     <div className="space-y-3">
-      {sortedApprovals.map((approval) => {
-        // Determine if this is an opinion step
-        const isOpinionStep = approval.step?.step_type === 'opinion';
-        
-        // Set the appropriate border color based on step type and status
-        let borderColor = '#6b7280'; // Default gray
-        if (isOpinionStep) {
-          borderColor = '#3b82f6'; // Blue for opinions
-        } else if (approval.status === 'approved') {
-          borderColor = '#10b981'; // Green for approvals
-        } else if (approval.status === 'rejected') {
-          borderColor = '#ef4444'; // Red for rejections
-        }
-        
-        return (
-          <Card 
-            key={approval.id} 
-            className="border-r-4 overflow-hidden" 
-            style={{ borderRightColor: borderColor }}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-4 space-x-reverse">
-                  <div className="mt-0.5">
-                    {isOpinionStep ? (
-                      <MessageSquareQuote className="h-5 w-5 text-blue-500" />
-                    ) : approval.status === 'approved' ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    ) : approval.status === 'rejected' ? (
-                      <XCircle className="h-5 w-5 text-red-500" />
-                    ) : (
-                      <Clock className="h-5 w-5 text-gray-500" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-medium">
-                      {isOpinionStep ? (
-                        <span>تم إبداء الرأي على {approval.step?.step_name || "الطلب"}</span>
-                      ) : (
-                        <>
-                          {approval.status === 'approved' ? (
-                            <span>تمت الموافقة على {approval.step?.step_name || "الطلب"}</span>
-                          ) : approval.status === 'rejected' ? (
-                            <span>تم رفض {approval.step?.step_name || "الطلب"}</span>
-                          ) : (
-                            <span>جاري فحص {approval.step?.step_name || "الطلب"}</span>
-                          )}
-                        </>
-                      )}
-                    </p>
-                    
-                    {approval.comments && (
-                      <div className="mt-2 p-2 bg-muted/50 rounded-md">
-                        <p className="text-sm whitespace-pre-wrap">{approval.comments}</p>
-                      </div>
-                    )}
-                    
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {approval.approved_at && format(new Date(approval.approved_at), 'PPpp', { locale: ar })}
-                    </p>
-                  </div>
+      {sortedApprovals.map((approval) => (
+        <Card key={approval.id} className="border-r-4 overflow-hidden" 
+          style={{ 
+            borderRightColor: approval.status === 'approved' 
+              ? '#10b981' 
+              : approval.status === 'rejected' 
+                ? '#ef4444' 
+                : '#6b7280'
+          }}
+        >
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start space-x-4 space-x-reverse">
+                <div className="mt-0.5">
+                  {approval.status === 'approved' ? (
+                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  ) : approval.status === 'rejected' ? (
+                    <XCircle className="h-5 w-5 text-red-500" />
+                  ) : approval.status === 'pending' ? (
+                    <Clock className="h-5 w-5 text-gray-500" />
+                  ) : approval.step?.step_type === 'opinion' ? (
+                    <InfoIcon className="h-5 w-5 text-blue-500" />
+                  ) : (
+                    <MessageSquare className="h-5 w-5 text-gray-500" />
+                  )}
                 </div>
-                
-                {isOpinionStep && (
-                  <div className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">
-                    رأي
-                  </div>
-                )}
+                <div>
+                  <p className="font-medium">
+                    <span>
+                      {approval.approver?.display_name || approval.approver?.email || "مستخدم غير معروف"}
+                    </span>
+                    <span className="mx-1">
+                      {approval.status === 'approved' 
+                        ? 'وافق على' 
+                        : approval.status === 'rejected' 
+                          ? 'رفض' 
+                          : approval.step?.step_type === 'opinion'
+                            ? 'أبدى رأيه على'
+                            : 'فحص'}
+                    </span>
+                    <span>
+                      {approval.step?.step_name || "الطلب"}
+                    </span>
+                  </p>
+                  
+                  {approval.comments && (
+                    <div className="mt-2 p-2 bg-muted/50 rounded-md">
+                      <p className="text-sm whitespace-pre-wrap">{approval.comments}</p>
+                    </div>
+                  )}
+                  
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {approval.approved_at && format(new Date(approval.approved_at), 'PPpp', { locale: ar })}
+                  </p>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        );
-      })}
+              
+              {approval.step?.step_type === 'opinion' && (
+                <div className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">
+                  رأي
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 };

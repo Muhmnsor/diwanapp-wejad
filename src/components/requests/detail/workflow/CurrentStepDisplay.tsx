@@ -1,109 +1,66 @@
 
 import React from 'react';
-import { 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  Flag, 
-  AlertCircle,
-  Loader2,
-  MessageSquareQuote
-} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-
-interface CurrentStepDisplayProps {
-  currentStep: any;
-  requestStatus: string;
-  isLoading: boolean;
-}
+import { WorkflowStatusBadge } from "./WorkflowStatusBadge";
+import { CurrentStepDisplayProps } from "./types";
+import { CheckCircle, AlertCircle, User, Clock } from "lucide-react";
 
 export const CurrentStepDisplay: React.FC<CurrentStepDisplayProps> = ({ 
-  currentStep, 
+  currentStep,
   requestStatus,
-  isLoading
+  isLoading = false
 }) => {
   if (isLoading) {
     return (
-      <div className="flex items-center space-x-3 rtl:space-x-reverse">
-        <Skeleton className="h-6 w-6 rounded-full" />
-        <div className="space-y-2">
-          <Skeleton className="h-5 w-48" />
-          <Skeleton className="h-4 w-32" />
-        </div>
+      <div className="space-y-2">
+        <Skeleton className="h-5 w-32" />
+        <Skeleton className="h-20 w-full" />
       </div>
     );
   }
 
-  if (!currentStep || !currentStep.id) {
-    if (requestStatus === 'completed') {
-      return (
-        <div className="flex items-center space-x-3 rtl:space-x-reverse">
-          <CheckCircle className="h-6 w-6 text-green-500" />
-          <div>
-            <p className="font-medium">تم اكتمال جميع الخطوات</p>
-            <p className="text-sm text-muted-foreground">تم استكمال سير العمل بنجاح</p>
-          </div>
-        </div>
-      );
-    }
-    
-    if (requestStatus === 'rejected') {
-      return (
-        <div className="flex items-center space-x-3 rtl:space-x-reverse">
-          <XCircle className="h-6 w-6 text-red-500" />
-          <div>
-            <p className="font-medium">تم رفض الطلب</p>
-            <p className="text-sm text-muted-foreground">لا يوجد خطوات إضافية</p>
-          </div>
-        </div>
-      );
-    }
-    
-    if (requestStatus === 'canceled') {
-      return (
-        <div className="flex items-center space-x-3 rtl:space-x-reverse">
-          <Flag className="h-6 w-6 text-orange-500" />
-          <div>
-            <p className="font-medium">تم إلغاء الطلب</p>
-            <p className="text-sm text-muted-foreground">تم إلغاء سير العمل</p>
-          </div>
-        </div>
-      );
-    }
-    
+  // For completed requests, show a completion message regardless of currentStep
+  if (requestStatus === 'completed' || !currentStep) {
     return (
-      <div className="flex items-center space-x-3 rtl:space-x-reverse">
-        <AlertCircle className="h-6 w-6 text-yellow-500" />
-        <div>
-          <p className="font-medium">لا توجد خطوة حالية</p>
-          <p className="text-sm text-muted-foreground">
-            قد يكون هناك خطأ في تكوين سير العمل
-          </p>
-        </div>
+      <div className="text-center p-4 border rounded-md border-dashed">
+        <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
+        <p className="text-green-600 font-medium">
+          تم اكتمال جميع خطوات سير العمل
+        </p>
       </div>
     );
   }
 
-  // Check if this is an opinion step
-  const isOpinionStep = currentStep.step_type === 'opinion';
-  
   return (
-    <div className="flex items-center space-x-3 rtl:space-x-reverse">
-      {isOpinionStep ? (
-        <MessageSquareQuote className="h-6 w-6 text-blue-500" />
-      ) : (
-        <Clock className="h-6 w-6 text-blue-500" />
-      )}
-      <div>
-        <p className="font-medium">
-          {currentStep.step_name}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          {isOpinionStep 
-            ? 'إبداء رأي مطلوب' 
-            : 'في انتظار الموافقة'}
-        </p>
-      </div>
-    </div>
+    <Card>
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h4 className="text-sm font-medium">الخطوة الحالية</h4>
+          {currentStep.step_type && (
+            <WorkflowStatusBadge status={currentStep.step_type} />
+          )}
+        </div>
+
+        <div className="bg-muted/50 p-3 rounded-md">
+          <h3 className="font-semibold mb-1">{currentStep.step_name}</h3>
+          
+          {currentStep.instructions && (
+            <p className="text-sm text-muted-foreground mb-2">
+              {currentStep.instructions}
+            </p>
+          )}
+          
+          <div className="flex flex-col space-y-1 mt-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <User className="h-3.5 w-3.5" />
+              <span>
+                المسؤول عن الموافقة
+              </span>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
