@@ -1,12 +1,11 @@
 
 import React from 'react';
-import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle, Clock, MessageSquareQuote, XCircle } from "lucide-react";
-import { WorkflowStep } from "../../../types";
+import { Clock, MessageSquareQuote, CheckCircle2, XCircle } from "lucide-react";
+import { WorkflowStep } from '../../../types';
 
 interface WorkflowCurrentStepProps {
   currentStep: WorkflowStep | null;
-  requestStatus: 'pending' | 'in_progress' | 'completed' | 'rejected';
+  requestStatus: string;
   isLoading: boolean;
 }
 
@@ -15,69 +14,56 @@ export const WorkflowCurrentStep: React.FC<WorkflowCurrentStepProps> = ({
   requestStatus,
   isLoading
 }) => {
-  if (isLoading) {
+  if (isLoading || !currentStep) {
     return (
-      <div className="space-y-2">
-        <h4 className="text-sm font-medium">الخطوة الحالية</h4>
-        <div className="flex items-center space-x-2">
-          <Skeleton className="h-6 w-6 rounded-full" />
-          <div className="space-y-1 flex-1">
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-3 w-1/2" />
-          </div>
-        </div>
+      <div className="text-sm text-muted-foreground">
+        {isLoading ? 'جاري تحميل مرحلة العمل الحالية...' : 'لا توجد مرحلة حالية'}
       </div>
     );
   }
 
-  let statusIcon = <Clock className="h-5 w-5 text-blue-500" />;
-  let statusTitle = "قيد الإجراء";
-  let statusClass = "text-blue-500";
+  // Determine if this is an opinion step
+  const isOpinionStep = currentStep.step_type === 'opinion';
+  
+  // Set the status icon and color based on request status and step type
+  let StatusIcon = Clock;
+  let statusColor = "text-blue-500";
+  let statusText = isOpinionStep ? 'إبداء رأي مطلوب' : 'موافقة مطلوبة';
   
   if (requestStatus === 'completed') {
-    statusIcon = <CheckCircle className="h-5 w-5 text-green-500" />;
-    statusTitle = "مكتمل";
-    statusClass = "text-green-500";
+    StatusIcon = CheckCircle2;
+    statusColor = "text-green-500";
+    statusText = isOpinionStep ? 'تم إبداء الرأي' : 'تمت الموافقة';
   } else if (requestStatus === 'rejected') {
-    statusIcon = <XCircle className="h-5 w-5 text-red-500" />;
-    statusTitle = "مرفوض";
-    statusClass = "text-red-500";
-  } else if (currentStep?.step_type === 'opinion') {
-    statusIcon = <MessageSquareQuote className="h-5 w-5 text-blue-500" />;
-    statusTitle = "بانتظار إبداء الرأي";
+    StatusIcon = XCircle;
+    statusColor = "text-red-500";
+    statusText = 'تم رفض الطلب';
+  } else if (isOpinionStep) {
+    StatusIcon = MessageSquareQuote;
   }
 
   return (
-    <div className="space-y-2">
-      <h4 className="text-sm font-medium">الخطوة الحالية</h4>
-      {!currentStep && requestStatus !== 'completed' && requestStatus !== 'rejected' ? (
-        <div className="text-sm text-muted-foreground py-1">
-          لا توجد خطوة حالية محددة
-        </div>
-      ) : (
-        <div className="flex items-start">
-          <div className="mr-0 ml-2 pt-0.5">{statusIcon}</div>
-          <div>
-            <p className={`text-sm font-medium ${statusClass}`}>
-              {currentStep?.step_name || statusTitle}
-            </p>
-            {currentStep && (
-              <p className="text-xs text-muted-foreground">
-                {currentStep.step_type === 'opinion' 
-                  ? 'مرحلة إبداء الرأي' 
-                  : currentStep.approver_id 
-                    ? 'بانتظار الموافقة' 
-                    : 'غير محدد'}
-              </p>
-            )}
-            {currentStep?.instructions && (
-              <p className="text-xs mt-1 text-muted-foreground">
-                {currentStep.instructions}
-              </p>
-            )}
-          </div>
-        </div>
-      )}
+    <div className="p-3 bg-muted/30 rounded-md flex items-start">
+      <StatusIcon className={`h-5 w-5 mt-0.5 ml-2 ${statusColor}`} />
+      <div>
+        <p className="text-sm font-medium">
+          {currentStep.step_name || 'الخطوة الحالية'}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {statusText}
+          {currentStep.approver_name && requestStatus === 'completed' && (
+            <span className={isOpinionStep ? "text-blue-600" : "text-green-600"}>
+              {isOpinionStep ? ' تم إبداء الرأي بواسطة: ' : ' تمت الموافقة بواسطة: '}
+              {currentStep.approver_name}
+            </span>
+          )}
+        </p>
+        {currentStep.instructions && (
+          <p className="text-xs mt-1 text-muted-foreground">
+            {currentStep.instructions}
+          </p>
+        )}
+      </div>
     </div>
   );
-};
+}
