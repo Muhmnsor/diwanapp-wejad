@@ -77,9 +77,15 @@ export const WorkflowStepsList: React.FC<WorkflowStepsListProps> = ({
         // Determine the appropriate text to show based on step type
         let approverText = '';
         if (isOpinionStep) {
-          approverText = step.approver_id ? 'تم إبداء الرأي' : 'مرحلة إبداء الرأي';
+          // Fixed: simplified text for opinion steps
+          approverText = step.approver_id && isCompleted 
+            ? 'تم إبداء الرأي' 
+            : 'مرحلة إبداء الرأي';
         } else {
-          approverText = step.approver_id ? 'موافقة مطلوبة' : 'غير محدد';
+          // Fixed: simplified text for approval steps
+          approverText = step.approver_id && isPending 
+            ? 'موافقة مطلوبة' 
+            : (isCompleted ? 'تمت الموافقة' : 'غير محدد');
         }
 
         return (

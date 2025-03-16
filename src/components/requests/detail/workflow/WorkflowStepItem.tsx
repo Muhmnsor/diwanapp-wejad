@@ -41,10 +41,10 @@ export const WorkflowStepItem: React.FC<WorkflowStepItemProps> = ({
   
   if (isOpinionStep) {
     if (isCompleted) {
-      // Completed opinion step
+      // Completed opinion step - Fixed redundant text
       statusMessage = step.approver_name 
         ? `تم إبداء الرأي بواسطة: ${step.approver_name}` 
-        : (step.approver_id ? `تم إبداء الرأي` : 'تم إبداء الرأي');
+        : 'تم إبداء الرأي';
     } else if (isCurrent) {
       // Current opinion step 
       statusMessage = 'إبداء رأي مطلوب';
@@ -55,10 +55,10 @@ export const WorkflowStepItem: React.FC<WorkflowStepItemProps> = ({
   } else {
     // Decision/approval step
     if (isCompleted) {
-      // Completed approval step
+      // Completed approval step - Fixed redundant text
       statusMessage = step.approver_name 
         ? `تمت الموافقة بواسطة: ${step.approver_name}` 
-        : (step.approver_id ? `تمت الموافقة` : 'تمت الموافقة');
+        : 'تمت الموافقة';
     } else if (isCurrent) {
       // Current approval step
       statusMessage = 'موافقة مطلوبة';
