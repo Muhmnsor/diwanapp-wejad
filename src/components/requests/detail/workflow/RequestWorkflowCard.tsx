@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { WorkflowCardProps } from "./types";
 import { useWorkflowCardData } from "./useWorkflowCardData";
 
-// Import the new component modules
+// Import the component modules
 import { WorkflowHeader } from "./components/WorkflowHeader";
 import { WorkflowProgress } from "./components/WorkflowProgress";
 import { WorkflowCurrentStep } from "./components/WorkflowCurrentStep";

@@ -23,7 +23,7 @@ BEGIN
     AND r.name IN ('admin', 'app_admin')
   ) INTO v_is_admin;
 
-  -- Get the request base data, using aliases to avoid ambiguous column references
+  -- Get the request base data with proper aliases to avoid ambiguity
   WITH request_data AS (
     SELECT 
       r.id, 
@@ -81,7 +81,8 @@ BEGIN
                 'approver_name', u.display_name,
                 'is_required', ws.is_required,
                 'step_order', ws.step_order,
-                'instructions', ws.instructions
+                'instructions', ws.instructions,
+                'workflow_id', ws.workflow_id
               ) ORDER BY ws.step_order
             )
             FROM workflow_steps ws
@@ -102,7 +103,8 @@ BEGIN
           'approver_name', u.display_name,
           'is_required', ws.is_required,
           'step_order', ws.step_order,
-          'instructions', ws.instructions
+          'instructions', ws.instructions,
+          'workflow_id', ws.workflow_id
         )
         FROM workflow_steps ws
         LEFT JOIN users u ON ws.approver_id = u.id
@@ -112,6 +114,7 @@ BEGIN
         (SELECT jsonb_agg(
           jsonb_build_object(
             'id', ra.id,
+            'request_id', ra.request_id,
             'step_id', ra.step_id,
             'step_name', ws.step_name,
             'step_type', ws.step_type,
