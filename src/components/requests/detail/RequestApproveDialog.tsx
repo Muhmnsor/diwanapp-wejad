@@ -155,7 +155,6 @@ export const RequestApproveDialog = ({
       
       const successMessage = isOpinionStep 
         ? "تم تسجيل رأيك بنجاح" 
-        : "تمت الموافقة على الطلب بنجاح";
       
       toast.success(successMessage);
       onOpenChange(false);
