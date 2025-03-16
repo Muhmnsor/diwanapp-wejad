@@ -7,7 +7,7 @@ interface WorkflowStepsListComponentProps {
   steps: WorkflowStep[];
   currentStepIndex: number;
   isLoading: boolean;
-  requestStatus?: string;
+  requestStatus?: 'pending' | 'in_progress' | 'completed' | 'rejected';
 }
 
 export const WorkflowStepsListComponent: React.FC<WorkflowStepsListComponentProps> = ({ 
