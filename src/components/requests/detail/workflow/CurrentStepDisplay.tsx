@@ -32,6 +32,17 @@ export const CurrentStepDisplay: React.FC<CurrentStepDisplayProps> = ({
     );
   }
 
+  // Determine the appropriate responsible label based on step type
+  const getResponsibleLabel = () => {
+    if (currentStep.step_type === 'opinion') {
+      return "المسؤول عن إبداء الرأي";
+    } else if (currentStep.step_type === 'review') {
+      return "المسؤول عن المراجعة";
+    } else {
+      return "المسؤول عن الموافقة";
+    }
+  };
+
   return (
     <Card>
       <CardContent className="p-4 space-y-3">
@@ -55,7 +66,7 @@ export const CurrentStepDisplay: React.FC<CurrentStepDisplayProps> = ({
             <div className="flex items-center gap-1.5">
               <User className="h-3.5 w-3.5" />
               <span>
-                المسؤول عن الموافقة
+                {getResponsibleLabel()}
               </span>
             </div>
           </div>
