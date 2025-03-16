@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,7 +6,30 @@ import { useAuthStore } from "@/store/refactored-auth";
 import { toast } from "sonner";
 import { fixRequestWorkflow, debugWorkflowStatus } from "./services/requestService";
 
-export const useRequestDetail = (requestId: string) => {
+// Define an interface for the return type of the hook
+export interface RequestDetailHookResult {
+  data: any;
+  isLoading: boolean;
+  error: Error | null;
+  isApproveDialogOpen: boolean;
+  setIsApproveDialogOpen: (open: boolean) => void;
+  isRejectDialogOpen: boolean;
+  setIsRejectDialogOpen: (open: boolean) => void;
+  handleApproveClick: () => void;
+  handleRejectClick: () => void;
+  isCurrentApprover: () => boolean;
+  hasSubmittedOpinion: () => boolean;
+  isRequester: () => boolean;
+  user: any;
+  queryClient: any;
+  refetch: () => Promise<any>;
+  isDiagnosing: boolean;
+  diagnosticResult: any;
+  handleDiagnoseWorkflow: () => Promise<any>;
+  handleFixWorkflow: () => Promise<any>;
+}
+
+export const useRequestDetail = (requestId: string): RequestDetailHookResult => {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
