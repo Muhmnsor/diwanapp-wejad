@@ -9,7 +9,7 @@ interface WorkflowStepsListProps {
   steps: WorkflowStep[];
   currentStepIndex: number;
   isLoading: boolean;
-  requestStatus?: 'pending' | 'in_progress' | 'completed' | 'rejected';
+  requestStatus?: string;
 }
 
 export const WorkflowStepsList: React.FC<WorkflowStepsListProps> = ({
@@ -76,7 +76,7 @@ export const WorkflowStepsList: React.FC<WorkflowStepsListProps> = ({
 
         return (
           <div 
-            key={step.id} 
+            key={step.id || index} 
             className={cn(
               "flex items-start",
               isPending && "animate-pulse-light"
@@ -95,7 +95,7 @@ export const WorkflowStepsList: React.FC<WorkflowStepsListProps> = ({
               </p>
               
               <p className="text-xs text-muted-foreground">
-                {isOpinionStep ? 'مرحلة إبداء الرأي' : (step.approver_name || 'غير محدد')}
+                {isOpinionStep ? 'مرحلة إبداء الرأي' : (step.approver_id ? 'موافقة مطلوبة' : 'غير محدد')}
               </p>
               
               {step.instructions && (

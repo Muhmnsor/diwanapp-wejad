@@ -10,7 +10,7 @@ export const useWorkflowCardData = (
   requestId: string,
   workflow?: { id: string } | null,
   currentStep?: WorkflowStep | null,
-  requestStatus: string = 'pending'
+  requestStatus: 'pending' | 'in_progress' | 'completed' | 'rejected' = 'pending'
 ): WorkflowCardDataHookResult => {
   const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(-1);
@@ -58,29 +58,32 @@ export const useWorkflowCardData = (
       
       // For completed requests, set currentStepIndex to indicate completion
       if (requestStatus === 'completed') {
-        setCurrentStepIndex(-1); // -1 indicates all steps are complete
+        setCurrentStepIndex(steps.length); // Set to length to indicate all steps complete
         setProgressPercentage(100);
-      } else {
-        // Find current step index
+      } else if (requestStatus === 'rejected') {
+        // For rejected requests, find the step where rejection occurred
         const index = currentStep 
           ? steps.findIndex(step => step.id === currentStep.id)
           : -1;
+        setCurrentStepIndex(index !== -1 ? index : 0);
+        
+        // Calculate progress percentage
+        const progress = steps.length > 0 
+          ? ((index !== -1 ? index : 0) / steps.length) * 100
+          : 0;
           
-        setCurrentStepIndex(index !== -1 ? index : -1);
+        setProgressPercentage(progress);
+      } else {
+        // For in-progress requests
+        const index = currentStep 
+          ? steps.findIndex(step => step.id === currentStep.id)
+          : 0;
+          
+        setCurrentStepIndex(index !== -1 ? index : 0);
         
-        // Calculate progress percentage more accurately - count all completed steps
-        // including opinion steps that have been processed
+        // Calculate progress percentage more accurately
         const totalSteps = steps.length;
-        let completedSteps = 0;
-        
-        if (index !== -1) {
-          // Count steps before current step as completed
-          completedSteps = index;
-        } else if (index === -1 && !currentStep && requestStatus !== 'pending') {
-          // If no current step and request is in_progress, 
-          // this could mean all steps are done or workflow is broken
-          completedSteps = totalSteps;
-        }
+        const completedSteps = index !== -1 ? index : 0;
         
         const progress = totalSteps > 0 
           ? (completedSteps / totalSteps) * 100

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Tools, RefreshCw } from "lucide-react";
+import { AlertCircle, Wrench, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { isDeveloper } from "@/utils/developer/roleManagement";
 import { useAuthStore } from "@/store/refactored-auth";
@@ -70,7 +70,7 @@ export const WorkflowDiagnostics: React.FC<WorkflowDiagnosticsProps> = ({
 
     return (
       <div className="w-full space-y-3">
-        <Alert variant={hasIssues ? "destructive" : "success"}>
+        <Alert variant={hasIssues ? "destructive" : "default"}>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             {hasIssues 
@@ -92,7 +92,7 @@ export const WorkflowDiagnostics: React.FC<WorkflowDiagnosticsProps> = ({
               className="w-full mt-2"
               variant="secondary"
             >
-              <Tools className="w-4 h-4 mr-2" />
+              <Wrench className="w-4 h-4 mr-2" />
               إصلاح المشاكل
             </Button>
           </div>
@@ -137,7 +137,7 @@ export const WorkflowDiagnostics: React.FC<WorkflowDiagnosticsProps> = ({
         className="w-full"
         size="sm"
       >
-        <Tools className="w-4 h-4 mr-2" />
+        <Wrench className="w-4 h-4 mr-2" />
         تشخيص مسار العمل
       </Button>
     </div>

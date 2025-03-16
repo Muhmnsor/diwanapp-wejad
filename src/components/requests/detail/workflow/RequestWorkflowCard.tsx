@@ -29,6 +29,9 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
   const [isDiagnosing, setIsDiagnosing] = useState(false);
   const [diagnosticResult, setDiagnosticResult] = useState<any>(null);
   
+  // Convert requestStatus to the expected type
+  const normalizedStatus = (requestStatus || 'pending') as 'pending' | 'in_progress' | 'completed' | 'rejected';
+  
   const { 
     isLoading,
     error, 
@@ -38,7 +41,7 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
     diagnoseWorkflow,
     fixWorkflow,
     refreshWorkflowData
-  } = useWorkflowCardData(requestId, workflow, currentStep, requestStatus);
+  } = useWorkflowCardData(requestId, workflow, currentStep, normalizedStatus);
 
   const handleDiagnoseWorkflow = async () => {
     setIsDiagnosing(true);
@@ -114,7 +117,7 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
   }
 
   // Determine if the workflow is completed
-  const isWorkflowCompleted = requestStatus === 'completed' || (currentStepIndex === -1 && workflowSteps.length > 0);
+  const isWorkflowCompleted = normalizedStatus === 'completed' || (currentStepIndex === -1 && workflowSteps.length > 0);
 
   // If workflow or steps are missing, show appropriate message
   if (!workflow || !workflow.id) {
@@ -161,7 +164,7 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
         {/* Current step display */}
         <WorkflowCurrentStep 
           currentStep={currentStep}
-          requestStatus={requestStatus}
+          requestStatus={normalizedStatus}
           isLoading={isLoading}
         />
         
@@ -172,7 +175,7 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
           steps={workflowSteps}
           currentStepIndex={currentStepIndex}
           isLoading={isLoading}
-          requestStatus={requestStatus}
+          requestStatus={normalizedStatus}
         />
       </CardContent>
       
