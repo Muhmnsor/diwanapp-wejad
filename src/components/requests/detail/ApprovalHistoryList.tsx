@@ -90,16 +90,13 @@ export const ApprovalHistoryList = ({ approvals }: ApprovalHistoryListProps) => 
                         <span>تم إبداء الرأي على {approval.step?.step_name || "الطلب"}</span>
                       ) : (
                         <>
-                          <span>
-                            {approval.approver?.display_name || approval.approver?.email || "مستخدم غير معروف"}
-                          </span>
-                          <span className="mx-1">
-                            {approval.status === 'approved' ? 'وافق على' : 
-                             approval.status === 'rejected' ? 'رفض' : 'فحص'}
-                          </span>
-                          <span>
-                            {approval.step?.step_name || "الطلب"}
-                          </span>
+                          {approval.status === 'approved' ? (
+                            <span>تمت الموافقة على {approval.step?.step_name || "الطلب"}</span>
+                          ) : approval.status === 'rejected' ? (
+                            <span>تم رفض {approval.step?.step_name || "الطلب"}</span>
+                          ) : (
+                            <span>جاري فحص {approval.step?.step_name || "الطلب"}</span>
+                          )}
                         </>
                       )}
                     </p>
