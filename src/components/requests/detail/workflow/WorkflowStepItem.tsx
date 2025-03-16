@@ -41,7 +41,7 @@ export const WorkflowStepItem: React.FC<WorkflowStepItemProps> = ({
   
   if (isOpinionStep) {
     if (isCompleted) {
-      // Completed opinion step - Fixed redundant text
+      // Completed opinion step - Use specific text for opinions
       statusMessage = step.approver_name 
         ? `تم إبداء الرأي بواسطة: ${step.approver_name}` 
         : 'تم إبداء الرأي';
@@ -55,7 +55,7 @@ export const WorkflowStepItem: React.FC<WorkflowStepItemProps> = ({
   } else {
     // Decision/approval step
     if (isCompleted) {
-      // Completed approval step - Fixed redundant text
+      // Completed approval step
       statusMessage = step.approver_name 
         ? `تمت الموافقة بواسطة: ${step.approver_name}` 
         : 'تمت الموافقة';
