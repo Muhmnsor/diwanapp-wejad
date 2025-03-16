@@ -1,17 +1,17 @@
 
 import { WorkflowStep } from "../../types";
 
-export interface CurrentStepDisplayProps {
-  currentStep: WorkflowStep | null;
-  requestStatus?: 'pending' | 'in_progress' | 'completed' | 'rejected';
-  isLoading?: boolean;
-}
-
 export interface WorkflowCardProps {
-  workflow: any | null;
+  workflow: {
+    id: string;
+    name?: string;
+    description?: string;
+    is_active?: boolean;
+    steps?: WorkflowStep[];
+  } | null;
   currentStep: WorkflowStep | null;
   requestId: string;
-  requestStatus?: 'pending' | 'in_progress' | 'completed' | 'rejected';
+  requestStatus?: string;
 }
 
 export interface WorkflowCardDataHookResult {
@@ -22,22 +22,5 @@ export interface WorkflowCardDataHookResult {
   progressPercentage: number;
   diagnoseWorkflow: () => Promise<any>;
   fixWorkflow: () => Promise<any>;
-  refreshWorkflowData: () => Promise<void>;
-}
-
-export interface WorkflowStepsListProps {
-  steps: WorkflowStep[];
-  currentStepIndex: number;
-  isLoading: boolean;
-  requestStatus?: 'pending' | 'in_progress' | 'completed' | 'rejected';
-}
-
-export interface WorkflowStepItemProps {
-  step: WorkflowStep;
-  isCurrent: boolean;
-  isCompleted: boolean;
-}
-
-export interface WorkflowStatusBadgeProps {
-  status: 'decision' | 'opinion' | 'approval' | 'review' | 'completed' | 'pending' | string;
+  refreshWorkflowData: () => Promise<any>;
 }

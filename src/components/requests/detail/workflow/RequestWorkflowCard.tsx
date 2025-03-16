@@ -77,8 +77,66 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
     }
   };
 
+  // If there's an error, check if it's a permission issue
+  if (error) {
+    console.error("Error loading workflow data:", error);
+    
+    // Check if it's a permission error
+    const errorMessage = error.message || '';
+    const isPermissionError = errorMessage.includes('permission') || 
+                             errorMessage.includes('صلاحية') || 
+                             errorMessage.includes('not allowed');
+    
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <WorkflowHeader 
+            workflowName="مسار سير العمل"
+            workflowDescription={null}
+          />
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {isPermissionError
+                ? "ليس لديك صلاحية الاطلاع على مسار سير العمل لهذا الطلب"
+                : "حدث خطأ أثناء تحميل مسار العمل"
+              }
+              {process.env.NODE_ENV === 'development' && (
+                <div className="mt-2 text-xs opacity-70">{error.message}</div>
+              )}
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
   // Determine if the workflow is completed
   const isWorkflowCompleted = requestStatus === 'completed' || (currentStepIndex === -1 && workflowSteps.length > 0);
+
+  // If workflow or steps are missing, show appropriate message
+  if (!workflow || !workflow.id) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <WorkflowHeader 
+            workflowName="مسار سير العمل"
+            workflowDescription={null}
+          />
+        </CardHeader>
+        <CardContent>
+          <Alert variant="warning" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              لا يوجد مسار سير عمل معرف لهذا الطلب
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 
 interface WorkflowProgressProps {
   progressPercentage: number;
@@ -13,13 +13,13 @@ export const WorkflowProgress: React.FC<WorkflowProgressProps> = ({
   isWorkflowCompleted 
 }) => {
   return (
-    <div className="space-y-1">
-      <div className="flex justify-between text-xs">
-        <span>التقدم في سير العمل</span>
-        <span>
+    <div className="space-y-2">
+      <div className="flex justify-between items-center">
+        <h4 className="text-sm font-medium">تقدم الطلب</h4>
+        <span className="text-sm text-muted-foreground">
           {isWorkflowCompleted ? (
-            <span className="flex items-center text-green-600">
-              <CheckCircle2 className="h-3 w-3 mr-1" />
+            <span className="flex items-center text-green-500">
+              <CheckCircle className="h-4 w-4 mr-1" />
               مكتمل
             </span>
           ) : (
@@ -29,14 +29,8 @@ export const WorkflowProgress: React.FC<WorkflowProgressProps> = ({
       </div>
       <Progress 
         value={progressPercentage} 
-        className="h-2"
-        indicatorClassName={
-          progressPercentage >= 100 
-            ? "bg-green-500" 
-            : progressPercentage > 60 
-            ? "bg-blue-500" 
-            : "bg-primary"
-        }
+        className={isWorkflowCompleted ? "bg-green-100" : ""} 
+        indicatorClassName={isWorkflowCompleted ? "bg-green-500" : ""}
       />
     </div>
   );

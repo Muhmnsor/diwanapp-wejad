@@ -20,23 +20,40 @@ export const useWorkflowCardData = (
   const { data: steps, isLoading, error, refetch } = useQuery({
     queryKey: ['workflow-steps', workflow?.id, requestId],
     queryFn: async () => {
-      if (!workflow?.id) return [];
+      if (!workflow?.id) {
+        console.log("No workflow ID provided, skipping steps fetch");
+        return [];
+      }
       
-      const { data, error } = await supabase
-        .from('workflow_steps')
-        .select('*')
-        .eq('workflow_id', workflow.id)
-        .order('step_order', { ascending: true });
+      try {
+        console.log(`Fetching workflow steps for workflow ID: ${workflow.id}`);
+        const { data, error } = await supabase
+          .from('workflow_steps')
+          .select('*')
+          .eq('workflow_id', workflow.id)
+          .order('step_order', { ascending: true });
+          
+        if (error) {
+          console.error("Error fetching workflow steps:", error);
+          throw new Error(`Error fetching workflow steps: ${error.message}`);
+        }
         
-      if (error) throw new Error(`Error fetching workflow steps: ${error.message}`);
-      return data as WorkflowStep[];
+        console.log(`Retrieved ${data?.length || 0} workflow steps`);
+        return data as WorkflowStep[];
+      } catch (err) {
+        console.error("Exception in workflow steps fetch:", err);
+        throw err;
+      }
     },
-    enabled: !!workflow?.id && !!requestId
+    enabled: !!workflow?.id && !!requestId,
+    retry: 1, // Only retry once to avoid excessive requests on permission errors
+    retryDelay: 1000
   });
 
   // Set workflow steps and calculate current step index when data loads
   useEffect(() => {
     if (steps && steps.length > 0) {
+      console.log("Setting workflow steps and calculating progress");
       setWorkflowSteps(steps);
       
       // For completed requests, set currentStepIndex to indicate completion
@@ -71,14 +88,24 @@ export const useWorkflowCardData = (
           
         setProgressPercentage(progress);
       }
+    } else {
+      // Reset state when no steps are available
+      console.log("No workflow steps available, resetting state");
+      setWorkflowSteps([]);
+      setCurrentStepIndex(-1);
+      setProgressPercentage(0);
     }
   }, [steps, currentStep, requestStatus]);
 
   // Function to diagnose workflow issues with better error handling
   const diagnoseWorkflow = useCallback(async () => {
-    if (!requestId) return null;
+    if (!requestId) {
+      console.warn("Cannot diagnose workflow: No request ID provided");
+      return null;
+    }
     
     try {
+      console.log("Diagnosing workflow for request:", requestId);
       return await diagnoseRequestWorkflow(requestId);
     } catch (error) {
       console.error("Error diagnosing workflow:", error);
@@ -91,9 +118,13 @@ export const useWorkflowCardData = (
 
   // Function to fix workflow issues
   const fixWorkflow = useCallback(async () => {
-    if (!requestId) return null;
+    if (!requestId) {
+      console.warn("Cannot fix workflow: No request ID provided");
+      return null;
+    }
     
     try {
+      console.log("Fixing workflow for request:", requestId);
       return await fixRequestWorkflow(requestId);
     } catch (error) {
       console.error("Error fixing workflow:", error);
@@ -106,6 +137,7 @@ export const useWorkflowCardData = (
 
   // Function to refresh workflow data
   const refreshWorkflowData = useCallback(async () => {
+    console.log("Refreshing workflow data");
     await refetch();
   }, [refetch]);
 
