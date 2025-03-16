@@ -36,15 +36,17 @@ export const WorkflowStepItem: React.FC<WorkflowStepItemProps> = ({
     !isCurrent && !isCompleted && !isRejected && "text-muted-foreground"
   );
   
-  // Display approver information with appropriate label based on step type
-  const approverInfo = step.approver_id ? 
-    (step.approver_name ? 
-      (isOpinionStep ? `تم إبداء الرأي بواسطة: ${step.approver_name}` : `الموافق: ${step.approver_name}`)
-      : 
-      (isOpinionStep ? `تم إبداء الرأي بواسطة: ${step.approver_id}` : `الموافق: ${step.approver_id}`)
-    ) 
-    : 
-    (isOpinionStep ? 'إبداء رأي مطلوب' : 'موافقة مطلوبة');
+  // Display either opinion or approval text based on step type, not both
+  let approverInfo = '';
+  if (isOpinionStep) {
+    approverInfo = step.approver_id ? 
+      (step.approver_name ? `تم إبداء الرأي بواسطة: ${step.approver_name}` : `تم إبداء الرأي بواسطة: ${step.approver_id}`) 
+      : 'إبداء رأي مطلوب';
+  } else {
+    approverInfo = step.approver_id ? 
+      (step.approver_name ? `الموافق: ${step.approver_name}` : `الموافق: ${step.approver_id}`) 
+      : 'موافقة مطلوبة';
+  }
   
   return (
     <div className={cn(

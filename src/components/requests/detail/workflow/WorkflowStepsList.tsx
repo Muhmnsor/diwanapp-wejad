@@ -74,6 +74,14 @@ export const WorkflowStepsList: React.FC<WorkflowStepsListProps> = ({
           stepIconColor = "text-red-500";
         }
 
+        // Determine the appropriate text to show based on step type
+        let approverText = '';
+        if (isOpinionStep) {
+          approverText = step.approver_id ? 'تم إبداء الرأي' : 'مرحلة إبداء الرأي';
+        } else {
+          approverText = step.approver_id ? 'موافقة مطلوبة' : 'غير محدد';
+        }
+
         return (
           <div 
             key={step.id || index} 
@@ -95,7 +103,7 @@ export const WorkflowStepsList: React.FC<WorkflowStepsListProps> = ({
               </p>
               
               <p className="text-xs text-muted-foreground">
-                {isOpinionStep ? 'مرحلة إبداء الرأي' : (step.approver_id ? 'موافقة مطلوبة' : 'غير محدد')}
+                {approverText}
               </p>
               
               {step.instructions && (
