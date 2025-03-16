@@ -1,185 +1,135 @@
 
-import { WorkflowStep } from "../../types";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { isValidUUID } from "./utils/validation";
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { WorkflowStep } from '../../types';
+import { v4 as uuidv4 } from 'uuid';
 
-interface UseSaveWorkflowStepsProps {
-  requestTypeId: string | null;
-  workflowId: string | null;
-  setIsLoading: (value: boolean) => void;
-  setError: (value: string | null) => void;
-  updateWorkflowSteps: (steps: WorkflowStep[]) => void;
-  ensureWorkflowExists: () => Promise<string>;
-  updateDefaultWorkflow: (requestTypeId: string | null, workflowId: string | null) => Promise<void>;
-}
+export const useSaveWorkflowSteps = () => {
+  const [isLoading, setIsLoading] = useState(false);
 
-export const useSaveWorkflowSteps = ({
-  requestTypeId,
-  workflowId,
-  setIsLoading,
-  setError,
-  updateWorkflowSteps,
-  ensureWorkflowExists,
-  updateDefaultWorkflow
-}: UseSaveWorkflowStepsProps) => {
-  const saveWorkflowSteps = async (steps: WorkflowStep[]): Promise<boolean | undefined> => {
-    // First check for session
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      toast.error("يجب تسجيل الدخول لحفظ خطوات سير العمل");
-      setError("يجب تسجيل الدخول لحفظ خطوات سير العمل");
-      return false;
+  // Helper function to prepare steps for saving
+  const prepareStepsForSave = (
+    steps: WorkflowStep[], 
+    workflowId: string
+  ): WorkflowStep[] => {
+    return steps.map((step, index) => ({
+      ...step,
+      workflow_id: workflowId,
+      step_order: index,
+      // Ensure each step has an ID
+      id: step.id || uuidv4()
+    }));
+  };
+
+  // Saves all workflow steps - creates new ones and updates existing ones
+  const saveWorkflowSteps = async (
+    steps: WorkflowStep[], 
+    workflowId: string
+  ): Promise<{ success: boolean; error?: any }> => {
+    if (!workflowId) {
+      console.error('Cannot save steps: No workflow ID provided');
+      return { success: false, error: 'No workflow ID provided' };
     }
-    
+
     setIsLoading(true);
-    setError(null);
-
+    
     try {
-      // Get the actual workflow ID first (this is critical)
-      console.log("Calling ensureWorkflowExists to get valid workflow ID");
-      const currentWorkflowId = await ensureWorkflowExists();
-      console.log("Received workflow ID:", currentWorkflowId);
-
-      if (currentWorkflowId === 'temp-workflow-id') {
-        if (!requestTypeId) {
-          console.log("No request type ID and using temporary workflow ID, saving steps locally only");
-          
-          const stepsWithWorkflowId = steps.map(step => ({
-            ...step,
-            workflow_id: currentWorkflowId
-          }));
-          
-          updateWorkflowSteps(stepsWithWorkflowId);
-          return true;
-        } else {
-          console.error("Failed to create workflow even though we have a request type ID");
-          toast.error("فشل في إنشاء سير العمل. يرجى المحاولة مرة أخرى.");
-          return false;
-        }
-      }
-
-      // Handle empty steps array - we still need to process the deletion in the database
-      if (steps.length === 0) {
-        console.log("Saving empty steps list for workflow:", currentWorkflowId);
+      console.log('Saving workflow steps for workflow:', workflowId);
+      console.log('Steps to save:', steps);
+      
+      // Prepare steps for saving
+      const preparedSteps = prepareStepsForSave(steps, workflowId);
+      
+      // First, delete all existing steps for this workflow
+      const { error: deleteError } = await supabase
+        .from('workflow_steps')
+        .delete()
+        .eq('workflow_id', workflowId);
         
-        // Delete all steps from this workflow in the database
-        const { error: deleteError } = await supabase
+      if (deleteError) {
+        console.error('Error deleting existing workflow steps:', deleteError);
+        throw deleteError;
+      }
+      
+      // Then insert all steps
+      if (preparedSteps.length > 0) {
+        const { error: insertError } = await supabase
           .from('workflow_steps')
-          .delete()
-          .eq('workflow_id', currentWorkflowId);
+          .insert(preparedSteps);
           
-        if (deleteError) {
-          console.error("Error deleting workflow steps:", deleteError);
-          throw new Error(`فشل في حذف خطوات سير العمل: ${deleteError.message}`);
+        if (insertError) {
+          console.error('Error inserting workflow steps:', insertError);
+          throw insertError;
         }
-        
-        // Now that all steps are deleted, we should also delete the workflow
-        if (isValidUUID(currentWorkflowId)) {
-          const { error: workflowDeleteError } = await supabase
-            .from('request_workflows')
-            .delete()
-            .eq('id', currentWorkflowId);
-            
-          if (workflowDeleteError) {
-            console.error("Error deleting workflow:", workflowDeleteError);
-            // Not throwing here since the steps were deleted successfully
-          } else {
-            console.log("Successfully deleted workflow after removing all steps");
-          }
-        }
-        
-        // Update local state
-        updateWorkflowSteps([]);
-        toast.success("تم حذف سير العمل بنجاح");
-        
-        // Update default workflow if needed - set to null since workflow was deleted
-        if (requestTypeId) {
-          await updateDefaultWorkflow(requestTypeId, null);
-        }
-        
-        return true;
       }
       
-      // Ensure all steps have the correct workflowId
-      const stepsWithCorrectWorkflowId = steps.map(step => ({
-        ...step,
-        workflow_id: currentWorkflowId
-      }));
-      
-      // Log for debugging
-      console.log("Preparing steps with workflow ID:", currentWorkflowId);
-      console.log("Steps to insert:", stepsWithCorrectWorkflowId);
-      
-      // Prepare steps for insertion with complete data and ensure valid UUIDs
-      const stepsToInsert = stepsWithCorrectWorkflowId.map((step, index) => {
-        // Verify workflow_id format
-        if (!isValidUUID(currentWorkflowId)) {
-          console.error("Invalid workflow_id detected:", currentWorkflowId);
-          throw new Error(`خطأ: معرّف سير العمل غير صالح (${currentWorkflowId})`);
-        }
-        
-        if (!step.approver_id || !isValidUUID(step.approver_id)) {
-          console.error("Step missing valid approver_id", step);
-          throw new Error("خطأ: بعض الخطوات تفتقد إلى معرّف صحيح للمعتمد");
-        }
-        
-        // Create a clean step object with only the required properties
-        return {
-          workflow_id: currentWorkflowId, // Always use the confirmed workflow ID
-          step_order: index + 1,
-          step_name: step.step_name,
-          step_type: step.step_type || 'decision',
-          approver_id: step.approver_id,
-          instructions: step.instructions || null,
-          is_required: step.is_required === false ? false : true,
-          id: step.id || null,
-          created_at: step.created_at || null
-        };
-      });
-
-      console.log("Sending steps to database RPC function");
-      
-      // Call the RPC function to insert steps - with detailed logging
-      console.log("Calling RPC function insert_workflow_steps with parameters:", JSON.stringify(stepsToInsert));
-      
-      const { data: rpcResult, error: rpcError } = await supabase
-        .rpc('insert_workflow_steps', {
-          steps: stepsToInsert
-        });
-
-      if (rpcError) {
-        console.error("Error inserting workflow steps:", rpcError);
-        throw new Error(`فشل في حفظ خطوات سير العمل: ${rpcError.message}`);
-      }
-
-      console.log("Steps saved successfully:", rpcResult);
-
-      // Update steps with server data
-      if (rpcResult && rpcResult.data) {
-        updateWorkflowSteps(rpcResult.data);
-      } else {
-        // If we don't have server data, use our local state
-        updateWorkflowSteps(stepsWithCorrectWorkflowId);
-      }
-
-      // Update default workflow if needed
-      if (requestTypeId) {
-        await updateDefaultWorkflow(requestTypeId, currentWorkflowId);
-      }
-
-      toast.success("تم حفظ خطوات سير العمل بنجاح");
-      return true;
+      toast.success('تم حفظ مسار العمل بنجاح');
+      return { success: true };
     } catch (error) {
-      console.error("Error in saveWorkflowSteps:", error);
-      setError(error instanceof Error ? error.message : "حدث خطأ أثناء حفظ خطوات سير العمل");
-      
-      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء حفظ خطوات سير العمل");
-      return false;
+      console.error('Error saving workflow steps:', error);
+      toast.error('حدث خطأ أثناء حفظ مسار العمل');
+      return { success: false, error };
     } finally {
       setIsLoading(false);
     }
   };
-  
-  return { saveWorkflowSteps };
+
+  // Loads workflow steps for a given workflow ID
+  const loadWorkflowSteps = async (workflowId: string): Promise<WorkflowStep[]> => {
+    if (!workflowId) {
+      console.warn('Cannot load steps: No workflow ID provided');
+      return [];
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase
+        .from('workflow_steps')
+        .select(`
+          id,
+          step_name,
+          step_type,
+          approver_id,
+          is_required,
+          step_order,
+          instructions,
+          workflow_id,
+          users:approver_id (
+            id,
+            display_name
+          )
+        `)
+        .eq('workflow_id', workflowId)
+        .order('step_order', { ascending: true });
+        
+      if (error) {
+        console.error('Error loading workflow steps:', error);
+        throw error;
+      }
+      
+      // Transform data to include approver_name from the joined users table
+      const transformedSteps = data.map(step => ({
+        ...step,
+        approver_name: step.users?.display_name || null,
+        // Remove the nested users object
+        users: undefined
+      }));
+      
+      return transformedSteps as WorkflowStep[];
+    } catch (error) {
+      console.error('Error in loadWorkflowSteps:', error);
+      toast.error('حدث خطأ أثناء تحميل خطوات مسار العمل');
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return {
+    isLoading,
+    saveWorkflowSteps,
+    loadWorkflowSteps
+  };
 };

@@ -1,136 +1,176 @@
 
 import React from 'react';
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { WorkflowStep, User } from '../types';
-import { PlusCircle, Save } from 'lucide-react';
 
 interface StepFormProps {
-  currentStep: WorkflowStep;
-  setCurrentStep: (step: WorkflowStep) => void;
-  onAddStep: () => void;
-  editingStepIndex: number | null;
+  step: WorkflowStep;
   users: User[];
-  isLoading?: boolean;
+  onSave: (step: WorkflowStep) => void;
+  onCancel: () => void;
 }
 
-export const StepForm: React.FC<StepFormProps> = ({
-  currentStep,
-  setCurrentStep,
-  onAddStep,
-  editingStepIndex,
-  users,
-  isLoading = false
-}) => {
-  return (
-    <Card className="border-dashed border-muted-foreground/50">
-      <CardContent className="pt-6 px-4">
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="step_name">اسم الخطوة</Label>
-              <Input
-                id="step_name"
-                placeholder="أدخل اسم الخطوة"
-                value={currentStep.step_name}
-                onChange={(e) => setCurrentStep({
-                  ...currentStep,
-                  step_name: e.target.value
-                })}
-              />
-            </div>
+// Define the form schema
+const stepFormSchema = z.object({
+  step_name: z.string().min(1, { message: 'يرجى إدخال اسم الخطوة' }),
+  step_type: z.enum(['decision', 'opinion', 'notification']),
+  approver_id: z.string().optional().nullable(),
+  is_required: z.boolean().default(true),
+  instructions: z.string().optional().nullable()
+});
 
-            <div className="space-y-2">
-              <Label htmlFor="step_type">نوع الخطوة</Label>
-              <Select
-                value={currentStep.step_type}
-                onValueChange={(value: 'decision' | 'opinion' | 'notification') => setCurrentStep({
-                  ...currentStep,
-                  step_type: value
-                })}
-              >
-                <SelectTrigger id="step_type">
-                  <SelectValue placeholder="اختر نوع الخطوة" />
-                </SelectTrigger>
+export const StepForm: React.FC<StepFormProps> = ({ step, users, onSave, onCancel }) => {
+  const form = useForm<z.infer<typeof stepFormSchema>>({
+    resolver: zodResolver(stepFormSchema),
+    defaultValues: {
+      step_name: step.step_name || '',
+      step_type: (step.step_type as 'decision' | 'opinion' | 'notification') || 'decision',
+      approver_id: step.approver_id || null,
+      is_required: step.is_required !== false, // Default to true if undefined
+      instructions: step.instructions || ''
+    }
+  });
+
+  const stepType = form.watch('step_type');
+
+  const handleSubmit = (values: z.infer<typeof stepFormSchema>) => {
+    onSave({
+      ...step,
+      ...values
+    });
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="step_name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>اسم الخطوة</FormLabel>
+              <FormControl>
+                <Input placeholder="أدخل اسم الخطوة" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="step_type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>نوع الخطوة</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر نوع الخطوة" />
+                  </SelectTrigger>
+                </FormControl>
                 <SelectContent>
-                  <SelectItem value="decision">قرار (يؤثر على مسار الطلب)</SelectItem>
-                  <SelectItem value="opinion">رأي (لا يؤثر على مسار الطلب)</SelectItem>
+                  <SelectItem value="decision">اعتماد وقرار</SelectItem>
+                  <SelectItem value="opinion">إبداء رأي</SelectItem>
                   <SelectItem value="notification">إشعار</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-          </div>
+              <FormDescription>
+                نوع "اعتماد وقرار" سيتطلب موافقة أو رفض. نوع "إبداء رأي" لا يوقف سير العمل.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-          <div className="space-y-2">
-            <Label htmlFor="approver_id">المسؤول عن الموافقة</Label>
-            <Select
-              value={currentStep.approver_id || ''}
-              onValueChange={(value) => setCurrentStep({
-                ...currentStep,
-                approver_id: value
-              })}
-            >
-              <SelectTrigger id="approver_id">
-                <SelectValue placeholder="اختر المسؤول عن الموافقة" />
-              </SelectTrigger>
-              <SelectContent>
-                {users.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.display_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        {(stepType === 'decision' || stepType === 'opinion') && (
+          <FormField
+            control={form.control}
+            name="approver_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>المسؤول عن الخطوة</FormLabel>
+                <Select 
+                  onValueChange={field.onChange} 
+                  defaultValue={field.value || ''}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر المسؤول" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {users.map(user => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.display_name || user.email || user.id}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
-          <div className="space-y-2">
-            <Label htmlFor="instructions">تعليمات للمعتمد</Label>
-            <Textarea
-              id="instructions"
-              placeholder="تعليمات اختيارية للمعتمد (اختياري)"
-              value={currentStep.instructions || ''}
-              onChange={(e) => setCurrentStep({
-                ...currentStep,
-                instructions: e.target.value
-              })}
-              rows={3}
-            />
-          </div>
+        <FormField
+          control={form.control}
+          name="is_required"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">خطوة إلزامية</FormLabel>
+                <FormDescription>
+                  ضبط الخطوة كإلزامية يعني أنها يجب أن تتم قبل الانتقال إلى الخطوة التالية
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
 
-          <div className="flex items-center space-x-2 space-x-reverse">
-            <Switch
-              id="required"
-              checked={currentStep.is_required !== false}
-              onCheckedChange={(checked) => setCurrentStep({
-                ...currentStep,
-                is_required: checked
-              })}
-            />
-            <Label htmlFor="required">خطوة إلزامية</Label>
-          </div>
+        <FormField
+          control={form.control}
+          name="instructions"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>تعليمات الخطوة</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="أدخل أي تعليمات أو ملاحظات خاصة بهذه الخطوة"
+                  className="resize-y"
+                  {...field}
+                  value={field.value || ''}
+                />
+              </FormControl>
+              <FormDescription>
+                سيتم عرض هذه التعليمات للمسؤول عن الخطوة
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-          <div className="pt-2 flex justify-end">
-            <Button
-              type="button"
-              onClick={onAddStep}
-              disabled={isLoading || !currentStep.step_name || !currentStep.approver_id}
-              className="w-full"
-            >
-              {editingStepIndex !== null ? (
-                <Save className="h-4 w-4 ml-2" />
-              ) : (
-                <PlusCircle className="h-4 w-4 ml-2" />
-              )}
-              {editingStepIndex !== null ? 'حفظ التغييرات' : 'إضافة خطوة'}
-            </Button>
-          </div>
+        <div className="flex justify-end space-x-2 rtl:space-x-reverse">
+          <Button type="button" variant="outline" onClick={onCancel} className="ml-2">
+            إلغاء
+          </Button>
+          <Button type="submit">حفظ الخطوة</Button>
         </div>
-      </CardContent>
-    </Card>
+      </form>
+    </Form>
   );
 };

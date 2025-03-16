@@ -1,16 +1,48 @@
 
 // Add this to the existing types file or create if it doesn't exist
 
+export interface FormField {
+  name: string;
+  label: string;
+  type: string;
+  required?: boolean;
+  placeholder?: string;
+  options?: { label: string; value: string }[];
+  default_value?: any;
+  validation?: {
+    min?: number;
+    max?: number;
+    pattern?: string;
+    message?: string;
+  };
+}
+
+export interface FormSchema {
+  title?: string;
+  description?: string;
+  fields: FormField[];
+}
+
+export interface User {
+  id: string;
+  display_name?: string;
+  email?: string;
+  role?: string;
+  department_id?: string;
+  created_at?: string;
+}
+
 export interface WorkflowStep {
   id: string;
   step_name?: string;
-  step_type?: 'decision' | 'opinion';
+  step_type?: 'decision' | 'opinion' | 'notification';
   approver_id?: string | null;
   approver_name?: string | null;
   is_required?: boolean;
   step_order?: number;
   instructions?: string | null;
   workflow_id?: string;
+  created_at?: string;
 }
 
 export interface RequestApproval {
@@ -18,7 +50,7 @@ export interface RequestApproval {
   request_id: string;
   step_id: string;
   step_name?: string;
-  step_type?: 'decision' | 'opinion';
+  step_type?: 'decision' | 'opinion' | 'notification';
   approver_id: string;
   approver_name?: string;
   status: 'pending' | 'approved' | 'rejected';
@@ -43,7 +75,9 @@ export interface RequestType {
   id: string;
   name: string;
   description?: string;
-  form_schema?: any;
+  form_schema?: FormSchema;
+  is_active?: boolean;
+  default_workflow_id?: string | null;
 }
 
 export interface Requester {
@@ -56,7 +90,7 @@ export interface Request {
   id: string;
   title: string;
   status: 'pending' | 'in_progress' | 'completed' | 'rejected';
-  priority?: 'low' | 'medium' | 'high';
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
   requester_id: string;
   request_type_id: string;
   workflow_id?: string;
