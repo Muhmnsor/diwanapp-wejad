@@ -3,10 +3,10 @@ import React from 'react';
 import { 
   CheckCircle, 
   Circle, 
-  AlertCircle,
   ArrowRight, 
   Clock,
-  Loader2
+  Loader2,
+  MessageSquareQuote
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WorkflowStepsListProps } from "./types";
@@ -36,7 +36,7 @@ export const WorkflowStepsList: React.FC<WorkflowStepsListProps> = ({
   if (steps.length === 0) {
     return (
       <div className="text-center p-4 border border-dashed rounded-md">
-        <AlertCircle className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+        <Circle className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
           لا يوجد خطوات محددة لسير العمل
         </p>
@@ -53,6 +53,7 @@ export const WorkflowStepsList: React.FC<WorkflowStepsListProps> = ({
         let StepIcon;
         let stepColor;
         let lineColor = "bg-muted"; // Default line color
+        const isOpinionStep = step.step_type === 'opinion';
         
         if (isCompleted) {
           // If request is completed, all steps should be marked as complete
@@ -66,12 +67,12 @@ export const WorkflowStepsList: React.FC<WorkflowStepsListProps> = ({
           lineColor = "bg-green-500";
         } else if (index === currentStepIndex) {
           // Current step - in progress
-          StepIcon = Clock;
-          stepColor = "text-blue-500";
-          lineColor = "bg-blue-500";
+          StepIcon = isOpinionStep ? MessageSquareQuote : Clock;
+          stepColor = isOpinionStep ? "text-blue-500" : "text-blue-500";
+          lineColor = isOpinionStep ? "bg-blue-400" : "bg-blue-500";
         } else {
           // Future steps - pending
-          StepIcon = Circle;
+          StepIcon = isOpinionStep ? MessageSquareQuote : Circle;
           stepColor = "text-muted-foreground";
         }
 
@@ -94,9 +95,11 @@ export const WorkflowStepsList: React.FC<WorkflowStepsListProps> = ({
                   {step.step_name}
                 </h4>
                 {step.step_type && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {step.step_type === 'decision' ? 'قرار' : 
-                     step.step_type === 'opinion' ? 'إبداء رأي' : 'تنبيه'}
+                  <p className={`text-xs mt-1 ${
+                    isOpinionStep ? "text-blue-600" : "text-muted-foreground"
+                  }`}>
+                    {isOpinionStep ? 'إبداء رأي' : 
+                     step.step_type === 'decision' ? 'قرار' : 'تنبيه'}
                   </p>
                 )}
               </div>
