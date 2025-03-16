@@ -40,7 +40,20 @@ export const useWorkflowCardData = (
         console.log(`Fetching workflow steps for workflow ID: ${workflow.id}`);
         const { data, error } = await supabase
           .from('workflow_steps')
-          .select('*')
+          .select(`
+            id,
+            step_name,
+            step_type,
+            approver_id,
+            is_required,
+            step_order,
+            instructions,
+            workflow_id,
+            users:approver_id (
+              id,
+              display_name
+            )
+          `)
           .eq('workflow_id', workflow.id)
           .order('step_order', { ascending: true });
           
@@ -57,9 +70,16 @@ export const useWorkflowCardData = (
           throw new Error(`خطأ في جلب خطوات سير العمل: ${error.message}`);
         }
         
-        console.log(`Retrieved ${data?.length || 0} workflow steps`);
+        // Transform the data to include approver_name from the joined users table
+        const transformedData = data.map(step => ({
+          ...step,
+          approver_name: step.users?.display_name || null,
+          users: undefined // Remove the nested users object
+        }));
+        
+        console.log(`Retrieved ${transformedData?.length || 0} workflow steps`);
         setHasPermission(true);
-        return data as WorkflowStep[];
+        return transformedData as WorkflowStep[];
       } catch (err) {
         console.error("Exception in workflow steps fetch:", err);
         throw err;

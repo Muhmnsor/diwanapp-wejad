@@ -36,6 +36,11 @@ export const WorkflowStepItem: React.FC<WorkflowStepItemProps> = ({
     !isCurrent && !isCompleted && !isRejected && "text-muted-foreground"
   );
   
+  // Display approver information
+  const approverInfo = step.approver_id ? 
+    (step.approver_name ? `الموافق: ${step.approver_name}` : `الموافق: ${step.approver_id}`) : 
+    'موافقة مطلوبة';
+  
   return (
     <div className={cn(
       "flex items-start py-1.5",
@@ -48,11 +53,7 @@ export const WorkflowStepItem: React.FC<WorkflowStepItemProps> = ({
         </p>
         
         <p className="text-xs text-muted-foreground">
-          {isOpinionStep ? 
-            'مرحلة إبداء الرأي' : 
-            (step.approver_id ? 
-              `الموافق: ${step.approver_id}` : 
-              'موافقة مطلوبة')}
+          {isOpinionStep ? 'مرحلة إبداء الرأي' : approverInfo}
         </p>
         
         {step.instructions && (
