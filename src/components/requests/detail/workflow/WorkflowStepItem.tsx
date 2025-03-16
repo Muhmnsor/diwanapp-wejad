@@ -58,7 +58,7 @@ export const WorkflowStepItem: React.FC<WorkflowStepItemProps> = ({
         </p>
         
         <p className="text-xs text-muted-foreground">
-          {isOpinionStep ? 'مرحلة إبداء الرأي' : approverInfo}
+          {approverInfo}
         </p>
         
         {step.instructions && (
