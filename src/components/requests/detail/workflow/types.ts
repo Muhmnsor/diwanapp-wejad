@@ -24,3 +24,9 @@ export interface WorkflowCardDataHookResult {
   fixWorkflow: () => Promise<any>;
   refreshWorkflowData: () => Promise<any>;
 }
+
+export interface WorkflowStepItemProps {
+  step: WorkflowStep;
+  isCompleted: boolean;
+  isCurrent: boolean;
+}

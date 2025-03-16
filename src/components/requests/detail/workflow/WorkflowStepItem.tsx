@@ -1,45 +1,55 @@
 
 import React from 'react';
-import { CheckCircle2, CircleDashed, Circle } from "lucide-react";
+import { CheckCircle2, CircleDashed, Circle, MessageSquareQuote, Clock, XCircle } from "lucide-react";
 import { WorkflowStepItemProps } from "./types";
-import { WorkflowStatusBadge } from "./WorkflowStatusBadge";
+import { cn } from "@/lib/utils";
 
 export const WorkflowStepItem: React.FC<WorkflowStepItemProps> = ({ 
   step, 
   isCurrent,
   isCompleted
 }) => {
-  // Status icon based on step status
-  const StepIcon = isCompleted 
-    ? CheckCircle2 
-    : isCurrent 
-    ? Circle 
-    : CircleDashed;
-
-  // Colors based on status
-  const iconColor = isCompleted 
-    ? "text-green-500" 
-    : isCurrent 
-    ? "text-blue-500" 
-    : "text-gray-300";
+  // Check if this is an opinion step
+  const isOpinionStep = step.step_type === 'opinion';
   
-  const textColor = isCompleted 
-    ? "text-green-600" 
-    : isCurrent 
-    ? "text-blue-600 font-medium" 
-    : "text-gray-500";
+  // Determine step icon based on status and type
+  let StepIcon = CircleDashed;
+  let stepIconColor = "text-gray-300";
+
+  if (isCompleted) {
+    StepIcon = CheckCircle2;
+    stepIconColor = "text-green-500";
+  } else if (isCurrent) {
+    StepIcon = isOpinionStep ? MessageSquareQuote : Clock;
+    stepIconColor = "text-blue-500";
+  }
+  
+  // Determine text color based on status
+  const textColor = cn(
+    isCurrent && "text-blue-500 font-medium",
+    isCompleted && "text-green-500",
+    !isCurrent && !isCompleted && "text-muted-foreground"
+  );
   
   return (
-    <div className="flex items-center py-1.5 group">
-      <div className={`flex-shrink-0 ${iconColor}`}>
-        <StepIcon className="h-5 w-5" />
-      </div>
-      <div className={`mr-2 text-sm ${textColor} flex-grow flex justify-between items-center`}>
-        <span>{step.step_name}</span>
-        {step.step_type && (
-          <span className="mr-auto">
-            <WorkflowStatusBadge status={step.step_type} />
-          </span>
+    <div className={cn(
+      "flex items-start py-1.5",
+      isCurrent && "animate-pulse-light"
+    )}>
+      <StepIcon className={cn("h-6 w-6", stepIconColor)} />
+      <div className="mr-3 flex-1">
+        <p className={cn("text-sm font-medium", textColor)}>
+          {step.step_name}
+        </p>
+        
+        <p className="text-xs text-muted-foreground">
+          {isOpinionStep ? 'مرحلة إبداء الرأي' : (step.approver_id ? 'موافقة مطلوبة' : 'غير محدد')}
+        </p>
+        
+        {step.instructions && (
+          <p className="text-xs mt-1 text-muted-foreground">
+            {step.instructions}
+          </p>
         )}
       </div>
     </div>
