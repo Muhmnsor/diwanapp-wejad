@@ -1,66 +1,72 @@
 
 import React from 'react';
-import { Card, CardContent } from "@/components/ui/card";
+import { CircleDashed, Clock, CheckCircle2, MessageSquareQuote } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert } from "@/components/ui/alert";
 import { WorkflowStatusBadge } from "./WorkflowStatusBadge";
-import { CurrentStepDisplayProps } from "./types";
-import { CheckCircle, AlertCircle, User, Clock } from "lucide-react";
+
+interface CurrentStepDisplayProps {
+  currentStep: any;
+  requestStatus: string;
+  isLoading: boolean;
+}
 
 export const CurrentStepDisplay: React.FC<CurrentStepDisplayProps> = ({ 
-  currentStep,
+  currentStep, 
   requestStatus,
-  isLoading = false
+  isLoading
 }) => {
   if (isLoading) {
-    return (
-      <div className="space-y-2">
-        <Skeleton className="h-5 w-32" />
-        <Skeleton className="h-20 w-full" />
-      </div>
-    );
+    return <Skeleton className="h-16 w-full" />;
   }
-
-  // For completed requests, show a completion message regardless of currentStep
-  if (requestStatus === 'completed' || !currentStep) {
+  
+  if (requestStatus === 'completed') {
     return (
-      <div className="text-center p-4 border rounded-md border-dashed">
-        <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
-        <p className="text-green-600 font-medium">
-          تم اكتمال جميع خطوات سير العمل
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <Card>
-      <CardContent className="p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <h4 className="text-sm font-medium">الخطوة الحالية</h4>
-          {currentStep.step_type && (
-            <WorkflowStatusBadge status={currentStep.step_type} />
-          )}
+      <div className="p-3 bg-green-50 border border-green-200 rounded-md flex items-center gap-2">
+        <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
+        <div>
+          <p className="text-green-800 font-medium">تم إكمال سير العمل</p>
+          <p className="text-sm text-green-700">تمت معالجة الطلب بنجاح</p>
         </div>
+      </div>
+    );
+  }
 
-        <div className="bg-muted/50 p-3 rounded-md">
-          <h3 className="font-semibold mb-1">{currentStep.step_name}</h3>
-          
-          {currentStep.instructions && (
-            <p className="text-sm text-muted-foreground mb-2">
-              {currentStep.instructions}
-            </p>
-          )}
-          
-          <div className="flex flex-col space-y-1 mt-2 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <User className="h-3.5 w-3.5" />
-              <span>
-                المسؤول عن الموافقة
-              </span>
-            </div>
+  if (!currentStep || !currentStep.id) {
+    return (
+      <Alert variant="default" className="bg-amber-50 text-amber-800 border-amber-200">
+        <Clock className="h-4 w-4" />
+        <span className="mr-2">لا توجد خطوة حالية</span>
+      </Alert>
+    );
+  }
+  
+  const isOpinionStep = currentStep.step_type === 'opinion';
+  
+  // Display current step info with approver info if available
+  return (
+    <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+      <div className="flex items-center gap-2 mb-1">
+        {isOpinionStep ? (
+          <MessageSquareQuote className="h-5 w-5 text-blue-500 flex-shrink-0" />
+        ) : (
+          <Clock className="h-5 w-5 text-blue-500 flex-shrink-0" /> 
+        )}
+        <div className="flex-grow">
+          <div className="flex items-center justify-between">
+            <p className="text-blue-800 font-medium">{currentStep.step_name}</p>
+            {currentStep.step_type && (
+              <WorkflowStatusBadge status={currentStep.step_type} />
+            )}
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+      
+      {currentStep.approver && (
+        <div className="mt-1 text-sm text-blue-700">
+          {currentStep.approver.display_name || currentStep.approver.email}
+        </div>
+      )}
+    </div>
   );
 };
