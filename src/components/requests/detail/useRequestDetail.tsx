@@ -288,7 +288,7 @@ export const useRequestDetail = (requestId: string): RequestDetailHookResult => 
     handleRejectClick,
     isCurrentApprover,
     hasSubmittedOpinion,
-    isRequester,
+    isRequester,  // Now properly included in the returned object
     user,
     queryClient,
     refetch,
