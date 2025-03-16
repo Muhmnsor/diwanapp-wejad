@@ -74,8 +74,7 @@ export const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
                 const formattedName = e.target.value.toLowerCase().replace(/\s+/g, '_');
                 setCurrentField({ 
                   ...currentField, 
-                  name: formattedName,
-                  id: currentField.id || uuidv4() // Ensure id exists
+                  name: formattedName
                 });
               }}
             />
@@ -88,8 +87,7 @@ export const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
               onChange={(e) =>
                 setCurrentField({ 
                   ...currentField, 
-                  label: e.target.value,
-                  id: currentField.id || uuidv4() // Ensure id exists
+                  label: e.target.value
                 })
               }
             />
@@ -101,12 +99,11 @@ export const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
             <label className="text-sm font-medium">نوع الحقل</label>
             <Select
               value={currentField.type}
-              onValueChange={(value: "text" | "textarea" | "number" | "date" | "select" | "array" | "file") => {
+              onValueChange={(value: string) => {
                 // Reset options if changing from select to another type
                 const newField = { 
                   ...currentField, 
                   type: value,
-                  id: currentField.id || uuidv4(), // Ensure id exists
                   // Clear options if not a select field
                   ...(value !== 'select' ? { options: [] } : {})
                 };
@@ -133,7 +130,7 @@ export const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
                 id="required-field"
                 checked={currentField.required}
                 onCheckedChange={(checked) =>
-                  setCurrentField({ ...currentField, required: checked, id: currentField.id || uuidv4() })
+                  setCurrentField({ ...currentField, required: checked })
                 }
               />
               <label

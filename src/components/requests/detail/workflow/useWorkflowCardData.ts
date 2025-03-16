@@ -1,202 +1,235 @@
-
 import { useState, useEffect, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { WorkflowStep } from "../../types";
-import { WorkflowCardDataHookResult } from "./types";
-import { diagnoseRequestWorkflow, fixRequestWorkflow } from '../services/requestService';
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/integrations/supabase/client';
+import { WorkflowStep } from '../../types';
+import { WorkflowCardDataHookResult } from './types';
+import { toast } from 'sonner';
 
 export const useWorkflowCardData = (
-  requestId: string,
-  workflow?: { id: string } | null,
-  currentStep?: WorkflowStep | null,
-  requestStatus: 'pending' | 'in_progress' | 'completed' | 'rejected' = 'pending',
-  permissions?: { canViewWorkflow?: boolean }
+  workflowId: string | null | undefined,
+  requestId: string | null | undefined,
+  requestStatus?: string
 ): WorkflowCardDataHookResult => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
-  const [currentStepIndex, setCurrentStepIndex] = useState<number>(-1);
-  const [progressPercentage, setProgressPercentage] = useState<number>(0);
-  const [hasPermission, setHasPermission] = useState<boolean>(true);
+  const [currentStepIndex, setCurrentStepIndex] = useState(-1);
+  const [progressPercentage, setProgressPercentage] = useState(0);
+  const [hasPermission, setHasPermission] = useState(true);
 
-  // Determine if user has permission to view workflow
-  const canViewWorkflow = permissions?.canViewWorkflow !== false;
+  // Load workflow steps
+  useEffect(() => {
+    const loadWorkflowSteps = async () => {
+      if (!workflowId) {
+        setIsLoading(false);
+        return;
+      }
 
-  // Fetch workflow steps with proper error handling
-  const { data: steps, isLoading, error, refetch } = useQuery({
-    queryKey: ['workflow-steps', workflow?.id, requestId],
-    queryFn: async () => {
-      if (!workflow?.id) {
-        console.log("No workflow ID provided, skipping steps fetch");
-        return [];
-      }
-      
-      if (!canViewWorkflow) {
-        console.log("User does not have permission to view workflow");
-        setHasPermission(false);
-        throw new Error("ليس لديك صلاحية الاطلاع على مسار سير العمل لهذا الطلب");
-      }
-      
       try {
-        console.log(`Fetching workflow steps for workflow ID: ${workflow.id}`);
+        setIsLoading(true);
+        
         const { data, error } = await supabase
           .from('workflow_steps')
           .select(`
-            id,
-            step_name,
-            step_type,
-            approver_id,
-            is_required,
-            step_order,
-            instructions,
-            workflow_id,
-            users:approver_id (
-              id,
-              display_name
-            )
+            id, step_name, step_type, approver_id, is_required, 
+            step_order, instructions, workflow_id,
+            users:approver_id (id, display_name)
           `)
-          .eq('workflow_id', workflow.id)
+          .eq('workflow_id', workflowId)
           .order('step_order', { ascending: true });
           
-        if (error) {
-          console.error("Error fetching workflow steps:", error);
+        if (error) throw error;
+        
+        // Transform data to include approver_name from the joined users table
+        const transformedSteps = data.map(step => {
+          // Handle the nested users object
+          const approverName = step.users && typeof step.users === 'object' ? 
+                              (step.users as any).display_name : null;
           
-          // If it's a permission error, set the permission flag
-          if (error.message.includes('permission') || 
-              error.code === 'PGRST301' || 
-              error.code === '42501') {
-            setHasPermission(false);
+          return {
+            ...step,
+            approver_name: approverName,
+            users: undefined
+          };
+        });
+        
+        setWorkflowSteps(transformedSteps as WorkflowStep[]);
+        
+        // Get current step index from request data
+        if (requestId) {
+          const { data: requestData, error: requestError } = await supabase
+            .from('requests')
+            .select('current_step_id')
+            .eq('id', requestId)
+            .single();
+            
+          if (requestError) {
+            if (requestError.code === 'PGRST116') {
+              setHasPermission(false);
+            } else {
+              throw requestError;
+            }
           }
           
-          throw new Error(`خطأ في جلب خطوات سير العمل: ${error.message}`);
+          if (requestData && requestData.current_step_id) {
+            const currentIndex = transformedSteps.findIndex(step => step.id === requestData.current_step_id);
+            setCurrentStepIndex(currentIndex >= 0 ? currentIndex : 0);
+            
+            // Calculate progress percentage
+            if (transformedSteps.length > 0) {
+              const progress = ((currentIndex + 1) / transformedSteps.length) * 100;
+              setProgressPercentage(Math.min(progress, 100));
+            }
+          } else if (transformedSteps.length > 0) {
+            // No current step, but we have workflow steps, assume it's at the beginning
+            setCurrentStepIndex(0);
+            setProgressPercentage(0);
+          }
         }
-        
-        // Transform the data to include approver_name from the joined users table
-        const transformedData = data.map(step => ({
-          ...step,
-          approver_name: step.users?.display_name || null,
-          users: undefined // Remove the nested users object
-        }));
-        
-        console.log(`Retrieved ${transformedData?.length || 0} workflow steps`);
-        setHasPermission(true);
-        return transformedData as WorkflowStep[];
       } catch (err) {
-        console.error("Exception in workflow steps fetch:", err);
-        throw err;
+        console.error('Error loading workflow steps:', err);
+        setError(err instanceof Error ? err : new Error('Failed to load workflow data'));
+      } finally {
+        setIsLoading(false);
       }
-    },
-    enabled: !!workflow?.id && !!requestId && canViewWorkflow,
-    retry: 1,
-    retryDelay: 1000
-  });
-
-  // Set workflow steps and calculate current step index when data loads
+    };
+    
+    loadWorkflowSteps();
+  }, [workflowId, requestId]);
+  
+  // Calculate progress percentage if requestStatus or currentStepIndex changes
   useEffect(() => {
-    if (steps && steps.length > 0) {
-      console.log("Setting workflow steps and calculating progress");
-      setWorkflowSteps(steps);
-      
-      // For completed requests, set currentStepIndex to indicate completion
-      if (requestStatus === 'completed') {
-        setCurrentStepIndex(steps.length); // Set to length to indicate all steps complete
-        setProgressPercentage(100);
-      } else if (requestStatus === 'rejected') {
-        // For rejected requests, find the step where rejection occurred
-        const index = currentStep 
-          ? steps.findIndex(step => step.id === currentStep.id)
-          : -1;
-        setCurrentStepIndex(index !== -1 ? index : 0);
-        
-        // Calculate progress percentage
-        const progress = steps.length > 0 
-          ? ((index !== -1 ? index : 0) / steps.length) * 100
-          : 0;
-          
-        setProgressPercentage(progress);
-      } else {
-        // For in-progress requests
-        const index = currentStep 
-          ? steps.findIndex(step => step.id === currentStep.id)
-          : 0;
-          
-        setCurrentStepIndex(index !== -1 ? index : 0);
-        
-        // Calculate progress percentage more accurately
-        const totalSteps = steps.length;
-        const completedSteps = index !== -1 ? index : 0;
-        
-        const progress = totalSteps > 0 
-          ? (completedSteps / totalSteps) * 100
-          : 0;
-          
-        setProgressPercentage(progress);
-      }
-    } else {
-      // Reset state when no steps are available
-      console.log("No workflow steps available, resetting state");
-      setWorkflowSteps([]);
-      setCurrentStepIndex(-1);
-      setProgressPercentage(0);
+    if (requestStatus === 'completed') {
+      setProgressPercentage(100);
+    } else if (requestStatus === 'rejected') {
+      // Don't change the progress, keep it at the rejected step
+    } else if (workflowSteps.length > 0) {
+      const progress = ((currentStepIndex + 1) / workflowSteps.length) * 100;
+      setProgressPercentage(Math.min(progress, 100));
     }
-  }, [steps, currentStep, requestStatus]);
-
-  // Function to diagnose workflow issues with better error handling
+  }, [requestStatus, currentStepIndex, workflowSteps.length]);
+  
+  // Diagnose workflow issues
   const diagnoseWorkflow = useCallback(async () => {
-    if (!requestId) {
-      console.warn("Cannot diagnose workflow: No request ID provided");
-      return null;
-    }
-    
-    if (!hasPermission) {
-      console.warn("Cannot diagnose workflow: User lacks permission");
-      throw new Error("ليس لديك صلاحية لتشخيص مسار سير العمل لهذا الطلب");
-    }
+    if (!requestId || !workflowId) return null;
     
     try {
-      console.log("Diagnosing workflow for request:", requestId);
-      return await diagnoseRequestWorkflow(requestId);
-    } catch (error) {
-      console.error("Error diagnosing workflow:", error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : "حدث خطأ أثناء تشخيص مسار العمل"
-      };
+      setIsLoading(true);
+      const { data, error } = await supabase.rpc('diagnose_request_workflow', {
+        p_request_id: requestId,
+        p_workflow_id: workflowId
+      });
+      
+      if (error) throw error;
+      
+      return data;
+    } catch (err) {
+      console.error('Error diagnosing workflow:', err);
+      toast.error('Failed to diagnose workflow issues');
+      return null;
+    } finally {
+      setIsLoading(false);
     }
-  }, [requestId, hasPermission]);
-
-  // Function to fix workflow issues
+  }, [requestId, workflowId]);
+  
+  // Fix workflow issues
   const fixWorkflow = useCallback(async () => {
-    if (!requestId) {
-      console.warn("Cannot fix workflow: No request ID provided");
-      return null;
-    }
-    
-    if (!hasPermission) {
-      console.warn("Cannot fix workflow: User lacks permission");
-      throw new Error("ليس لديك صلاحية لإصلاح مسار سير العمل لهذا الطلب");
-    }
+    if (!requestId || !workflowId) return false;
     
     try {
-      console.log("Fixing workflow for request:", requestId);
-      return await fixRequestWorkflow(requestId);
-    } catch (error) {
-      console.error("Error fixing workflow:", error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : "حدث خطأ أثناء إصلاح مسار العمل"
-      };
+      setIsLoading(true);
+      const { error } = await supabase.rpc('fix_request_workflow', {
+        p_request_id: requestId
+      });
+      
+      if (error) throw error;
+      
+      toast.success('Workflow fixes applied successfully');
+      return true;
+    } catch (err) {
+      console.error('Error fixing workflow:', err);
+      toast.error('Failed to fix workflow issues');
+      return false;
+    } finally {
+      setIsLoading(false);
     }
-  }, [requestId, hasPermission]);
-
-  // Function to refresh workflow data
+  }, [requestId, workflowId]);
+  
+  // Refresh workflow data
   const refreshWorkflowData = useCallback(async () => {
-    console.log("Refreshing workflow data");
-    await refetch();
-  }, [refetch]);
-
+    if (!workflowId) return false;
+    
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase
+        .from('workflow_steps')
+        .select(`
+          id, step_name, step_type, approver_id, is_required, 
+          step_order, instructions, workflow_id,
+          users:approver_id (id, display_name)
+        `)
+        .eq('workflow_id', workflowId)
+        .order('step_order', { ascending: true });
+        
+      if (error) throw error;
+      
+      // Transform data to include approver_name from the joined users table
+      const transformedSteps = data.map(step => {
+        // Handle the nested users object properly
+        const approverName = step.users && typeof step.users === 'object' ? 
+                            (step.users as any).display_name : null;
+        
+        return {
+          ...step,
+          approver_name: approverName,
+          users: undefined
+        };
+      });
+      
+      setWorkflowSteps(transformedSteps as WorkflowStep[]);
+      
+      // Get current step index from request data
+      if (requestId) {
+        const { data: requestData, error: requestError } = await supabase
+          .from('requests')
+          .select('current_step_id, status')
+          .eq('id', requestId)
+          .single();
+          
+        if (requestError) throw requestError;
+        
+        if (requestData) {
+          // Update current step index
+          if (requestData.current_step_id) {
+            const currentIndex = transformedSteps.findIndex(step => step.id === requestData.current_step_id);
+            setCurrentStepIndex(currentIndex >= 0 ? currentIndex : 0);
+          }
+          
+          // Calculate progress percentage
+          if (transformedSteps.length > 0) {
+            if (requestData.status === 'completed') {
+              setProgressPercentage(100);
+            } else {
+              const progress = ((currentStepIndex + 1) / transformedSteps.length) * 100;
+              setProgressPercentage(Math.min(progress, 100));
+            }
+          }
+        }
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('Error refreshing workflow data:', err);
+      setError(err instanceof Error ? err : new Error('Failed to refresh workflow data'));
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [workflowId, requestId, currentStepIndex]);
+  
   return {
     isLoading,
-    error: error as Error | null,
+    error,
     workflowSteps,
     currentStepIndex,
     progressPercentage,

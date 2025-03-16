@@ -2,12 +2,14 @@
 // Add this to the existing types file or create if it doesn't exist
 
 export interface FormField {
+  id: string;  // Add id property
   name: string;
   label: string;
   type: string;
   required?: boolean;
   placeholder?: string;
   options?: { label: string; value: string }[];
+  subfields?: FormField[];  // Add subfields property
   default_value?: any;
   validation?: {
     min?: number;

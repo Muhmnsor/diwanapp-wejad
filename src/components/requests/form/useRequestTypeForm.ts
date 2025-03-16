@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -51,10 +52,10 @@ export const useRequestTypeForm = ({
       form.reset({
         name: requestType.name,
         description: requestType.description || "",
-        is_active: requestType.is_active,
-        form_schema: requestType.form_schema,
+        is_active: requestType.is_active !== undefined ? requestType.is_active : true,
+        form_schema: requestType.form_schema || { fields: [] },
       });
-      setFormFields(requestType.form_schema.fields || []);
+      setFormFields(requestType.form_schema?.fields || []);
       setCreatedRequestTypeId(requestType.id);
     } else {
       form.reset({
@@ -125,8 +126,7 @@ export const useRequestTypeForm = ({
       fields: formFields,
     };
     
-    values.form_schema = formSchemaWithFields;
-
+    // Use the schema with properly updated fields
     const requestTypeData = {
       name: values.name,
       description: values.description || null,
@@ -193,15 +193,8 @@ export const useRequestTypeForm = ({
     setCurrentField,
     setFormError,
     handleAddField,
-    handleRemoveField: (index: number) => {
-      const updatedFields = formFields.filter((_, i) => i !== index);
-      setFormFields(updatedFields);
-      form.setValue("form_schema.fields", updatedFields as any);
-    },
-    handleEditField: (index: number) => {
-      setCurrentField(formFields[index]);
-      setEditingFieldIndex(index);
-    },
+    handleRemoveField,
+    handleEditField,
     onSubmit
   };
 };

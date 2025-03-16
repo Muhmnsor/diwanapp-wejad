@@ -1,6 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { WorkflowStep } from '../../types';
+import { v4 as uuidv4 } from 'uuid';
 
 // Define a default empty step
 const DEFAULT_EMPTY_STEP: WorkflowStep = {
@@ -14,11 +15,32 @@ const DEFAULT_EMPTY_STEP: WorkflowStep = {
   workflow_id: ''
 };
 
-export const useWorkflowState = (initialSteps: WorkflowStep[] = []) => {
+export const useWorkflowState = (initialConfig: { initialSteps?: WorkflowStep[], initialWorkflowId?: string | null } = {}) => {
+  const { initialSteps = [], initialWorkflowId = null } = initialConfig;
+  
+  const [workflowId, setWorkflowId] = useState<string | null>(initialWorkflowId || 'temp-workflow-id');
   const [steps, setSteps] = useState<WorkflowStep[]>(initialSteps);
+  const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>(initialSteps);
+  const [currentStep, setCurrentStep] = useState<WorkflowStep>(DEFAULT_EMPTY_STEP);
   const [editingStep, setEditingStep] = useState<WorkflowStep>(DEFAULT_EMPTY_STEP);
+  const [editingStepIndex, setEditingStepIndex] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const resetWorkflowState = () => {
+    setWorkflowId('temp-workflow-id');
+    setSteps([]);
+    setWorkflowSteps([]);
+    setCurrentStep(DEFAULT_EMPTY_STEP);
+    setEditingStep(DEFAULT_EMPTY_STEP);
+    setEditingStepIndex(null);
+    setInitialized(false);
+    setIsLoading(false);
+    setError(null);
+  };
 
   const addStep = useCallback(() => {
     const nextOrder = steps.length > 0 
@@ -78,18 +100,33 @@ export const useWorkflowState = (initialSteps: WorkflowStep[] = []) => {
   }, []);
 
   return {
+    workflowId,
+    setWorkflowId,
     steps,
     setSteps,
+    workflowSteps,
+    setWorkflowSteps,
+    currentStep,
+    setCurrentStep,
     editingStep,
+    editingStepIndex,
+    setEditingStepIndex,
     isDialogOpen,
     setIsDialogOpen,
     isConfirmDeleteOpen,
     setIsConfirmDeleteOpen,
+    initialized,
+    setInitialized,
+    isLoading,
+    setIsLoading,
+    error,
+    setError,
     addStep,
     editStep,
     saveStep,
     removeStep,
     confirmDelete,
-    reorderSteps
+    reorderSteps,
+    resetWorkflowState
   };
 };

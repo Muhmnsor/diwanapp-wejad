@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { WorkflowStep } from "./types";
 import { StepForm } from "./workflow/StepForm";
 import { StepsList } from "./workflow/StepsList";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { v4 as uuidv4 } from "uuid";
 
 interface WorkflowStepsConfigProps {
   requestTypeId: string | null;
@@ -91,6 +92,37 @@ export const WorkflowStepsConfig = ({
     }
   };
 
+  // Handle update step from form
+  const handleUpdateStep = (updatedStep: WorkflowStep) => {
+    setCurrentStep(updatedStep);
+  };
+
+  // Handle save step from form
+  const handleSaveStep = () => {
+    const updatedSteps = [...workflowSteps];
+    
+    if (editingStepIndex !== null) {
+      // Update existing step
+      updatedSteps[editingStepIndex] = {
+        ...currentStep,
+        workflow_id: currentWorkflowId || 'temp-workflow-id'
+      };
+    } else {
+      // Add new step
+      updatedSteps.push({
+        ...currentStep,
+        id: currentStep.id || uuidv4(),
+        workflow_id: currentWorkflowId || 'temp-workflow-id',
+        step_order: workflowSteps.length
+      });
+    }
+    
+    onWorkflowStepsUpdated(updatedSteps);
+    
+    // Reset current step
+    handleAddStep();
+  };
+
   // Add a message to prompt users to save when in standalone mode and steps exist
   const showSavePrompt = standalone && workflowSteps.length > 0 && !isLoading;
 
@@ -133,12 +165,12 @@ export const WorkflowStepsConfig = ({
       )}
       
       <StepForm
-        currentStep={currentStep}
-        editingStepIndex={editingStepIndex}
+        step={currentStep}
+        editingIndex={editingStepIndex}
         users={users}
         isLoading={isLoading}
-        setCurrentStep={setCurrentStep}
-        onAddStep={handleAddStep}
+        onUpdateStep={handleUpdateStep}
+        onSaveStep={handleSaveStep}
       />
       
       <StepsList
