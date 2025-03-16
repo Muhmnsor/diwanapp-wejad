@@ -12,6 +12,12 @@ export interface WorkflowCardProps {
   currentStep: WorkflowStep | null;
   requestId: string;
   requestStatus?: string;
+  permissions?: {
+    canViewWorkflow: boolean;
+    isRequester: boolean;
+    isAdmin: boolean;
+    isInWorkflow: boolean;
+  };
 }
 
 export interface WorkflowCardDataHookResult {
@@ -23,10 +29,12 @@ export interface WorkflowCardDataHookResult {
   diagnoseWorkflow: () => Promise<any>;
   fixWorkflow: () => Promise<any>;
   refreshWorkflowData: () => Promise<any>;
+  hasPermission: boolean;
 }
 
 export interface WorkflowStepItemProps {
   step: WorkflowStep;
   isCompleted: boolean;
   isCurrent: boolean;
+  isRejected?: boolean;
 }

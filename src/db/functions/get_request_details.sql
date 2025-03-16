@@ -23,13 +23,23 @@ BEGIN
     AND r.name IN ('admin', 'app_admin')
   ) INTO v_is_admin;
 
-  -- Get the request base data
+  -- Get the request base data, using aliases to avoid ambiguous column references
   WITH request_data AS (
-    SELECT r.id, r.title, r.status, r.priority, r.requester_id, 
-          r.request_type_id, r.workflow_id, r.current_step_id, 
-          r.created_at, r.updated_at, r.form_data,
-          rt.name as request_type_name, rt.description as request_type_description,
-          rt.form_schema as request_type_form_schema
+    SELECT 
+      r.id, 
+      r.title, 
+      r.status, 
+      r.priority, 
+      r.requester_id, 
+      r.request_type_id, 
+      r.workflow_id, 
+      r.current_step_id, 
+      r.created_at, 
+      r.updated_at, 
+      r.form_data,
+      rt.name as request_type_name, 
+      rt.description as request_type_description,
+      rt.form_schema as request_type_form_schema
     FROM requests r
     JOIN request_types rt ON r.request_type_id = rt.id
     WHERE r.id = p_request_id
@@ -179,6 +189,12 @@ BEGIN
       'is_in_workflow', v_is_in_workflow,
       'has_supervisor_access', v_has_supervisor_access,
       'can_view', (
+        v_requester_id = v_current_user_id OR 
+        v_is_admin OR 
+        v_is_in_workflow OR
+        v_has_supervisor_access
+      ),
+      'can_view_workflow', (
         v_requester_id = v_current_user_id OR 
         v_is_admin OR 
         v_is_in_workflow OR

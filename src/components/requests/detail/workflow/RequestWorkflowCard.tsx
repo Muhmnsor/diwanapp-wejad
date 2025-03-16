@@ -7,7 +7,7 @@ import {
   CardHeader
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, ShieldAlert } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { WorkflowCardProps } from "./types";
@@ -24,13 +24,17 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
   workflow, 
   currentStep,
   requestId,
-  requestStatus = 'pending'
+  requestStatus = 'pending',
+  permissions
 }) => {
   const [isDiagnosing, setIsDiagnosing] = useState(false);
   const [diagnosticResult, setDiagnosticResult] = useState<any>(null);
   
   // Convert requestStatus to the expected type
   const normalizedStatus = (requestStatus || 'pending') as 'pending' | 'in_progress' | 'completed' | 'rejected';
+  
+  // Extract permission
+  const canViewWorkflow = permissions?.canViewWorkflow !== false;
   
   const { 
     isLoading,
@@ -40,8 +44,15 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
     progressPercentage,
     diagnoseWorkflow,
     fixWorkflow,
-    refreshWorkflowData
-  } = useWorkflowCardData(requestId, workflow, currentStep, normalizedStatus);
+    refreshWorkflowData,
+    hasPermission
+  } = useWorkflowCardData(
+    requestId, 
+    workflow, 
+    currentStep, 
+    normalizedStatus,
+    { canViewWorkflow }
+  );
 
   const handleDiagnoseWorkflow = async () => {
     setIsDiagnosing(true);
@@ -88,7 +99,8 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
     const errorMessage = error.message || '';
     const isPermissionError = errorMessage.includes('permission') || 
                              errorMessage.includes('صلاحية') || 
-                             errorMessage.includes('not allowed');
+                             errorMessage.includes('not allowed') ||
+                             !hasPermission;
     
     return (
       <Card>
@@ -100,7 +112,7 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
         </CardHeader>
         <CardContent>
           <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
+            {isPermissionError ? <ShieldAlert className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
             <AlertDescription>
               {isPermissionError
                 ? "ليس لديك صلاحية الاطلاع على مسار سير العمل لهذا الطلب"

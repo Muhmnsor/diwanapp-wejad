@@ -81,6 +81,8 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   const attachments = data.attachments || [];
   const requester = data.requester;
   const stepType = currentStep?.step_type || "decision";
+  // Get permissions from the data
+  const permissions = data.permissions || {};
 
   const enhancedRequest = {
     ...request,
@@ -93,6 +95,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   console.log("Step type:", stepType);
   console.log("Has submitted opinion:", hasSubmittedOpinion() ? "Yes" : "No");
   console.log("Is requester:", isRequester ? "Yes" : "No");
+  console.log("Permissions:", permissions);
 
   return (
     <>
@@ -138,6 +141,12 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
               currentStep={currentStep}
               requestId={requestId}
               requestStatus={request.status}
+              permissions={{
+                canViewWorkflow: !!permissions.can_view_workflow,
+                isRequester: !!permissions.is_requester,
+                isAdmin: !!permissions.is_admin,
+                isInWorkflow: !!permissions.is_in_workflow
+              }}
             />
           </div>
         </div>

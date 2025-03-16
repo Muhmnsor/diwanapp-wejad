@@ -1,17 +1,17 @@
 
-import { useAuthStore } from "@/store/refactored-auth";
+import { useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Hook to check if the current user is the requester of a request
- * @param requesterId The ID of the requester
- * @returns Boolean indicating if the current user is the requester
+ * @param requesterId The ID of the requester to check against
+ * @returns Boolean indicating if current user is the requester
  */
-export const useIsRequester = (requesterId?: string): boolean => {
-  const { user } = useAuthStore();
+export const useIsRequester = (requesterId?: string | null): boolean => {
+  if (!requesterId) return false;
   
-  if (!requesterId || !user) {
-    return false;
-  }
+  const user = supabase.auth.getUser();
+  const currentUserId = user?.data?.user?.id;
   
-  return requesterId === user.id;
+  return currentUserId === requesterId;
 };

@@ -1,13 +1,14 @@
 
 import React from 'react';
-import { CheckCircle2, CircleDashed, Circle, MessageSquareQuote, Clock, XCircle } from "lucide-react";
+import { CheckCircle2, CircleDashed, Clock, MessageSquareQuote, XCircle } from "lucide-react";
 import { WorkflowStepItemProps } from "./types";
 import { cn } from "@/lib/utils";
 
 export const WorkflowStepItem: React.FC<WorkflowStepItemProps> = ({ 
   step, 
   isCurrent,
-  isCompleted
+  isCompleted,
+  isRejected = false
 }) => {
   // Check if this is an opinion step
   const isOpinionStep = step.step_type === 'opinion';
@@ -16,7 +17,10 @@ export const WorkflowStepItem: React.FC<WorkflowStepItemProps> = ({
   let StepIcon = CircleDashed;
   let stepIconColor = "text-gray-300";
 
-  if (isCompleted) {
+  if (isRejected) {
+    StepIcon = XCircle;
+    stepIconColor = "text-red-500";
+  } else if (isCompleted) {
     StepIcon = CheckCircle2;
     stepIconColor = "text-green-500";
   } else if (isCurrent) {
@@ -28,7 +32,8 @@ export const WorkflowStepItem: React.FC<WorkflowStepItemProps> = ({
   const textColor = cn(
     isCurrent && "text-blue-500 font-medium",
     isCompleted && "text-green-500",
-    !isCurrent && !isCompleted && "text-muted-foreground"
+    isRejected && "text-red-500",
+    !isCurrent && !isCompleted && !isRejected && "text-muted-foreground"
   );
   
   return (
@@ -36,14 +41,18 @@ export const WorkflowStepItem: React.FC<WorkflowStepItemProps> = ({
       "flex items-start py-1.5",
       isCurrent && "animate-pulse-light"
     )}>
-      <StepIcon className={cn("h-6 w-6", stepIconColor)} />
-      <div className="mr-3 flex-1">
+      <StepIcon className={cn("h-6 w-6 ml-2", stepIconColor)} />
+      <div className="flex-1">
         <p className={cn("text-sm font-medium", textColor)}>
-          {step.step_name}
+          {step.step_name || 'خطوة غير معرفة'}
         </p>
         
         <p className="text-xs text-muted-foreground">
-          {isOpinionStep ? 'مرحلة إبداء الرأي' : (step.approver_id ? 'موافقة مطلوبة' : 'غير محدد')}
+          {isOpinionStep ? 
+            'مرحلة إبداء الرأي' : 
+            (step.approver_id ? 
+              `الموافق: ${step.approver_name || 'غير محدد'}` : 
+              'موافقة مطلوبة')}
         </p>
         
         {step.instructions && (

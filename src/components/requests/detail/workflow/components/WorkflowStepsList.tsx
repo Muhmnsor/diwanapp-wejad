@@ -49,12 +49,13 @@ export const WorkflowStepsListComponent: React.FC<WorkflowStepsListComponentProp
   const isRejected = requestStatus === 'rejected';
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {steps.map((step, index) => {
         // Determine step status
         const isPending = currentStepIndex === index;
-        const isStepCompleted = isRejected ? false : 
-                            (requestStatus === 'completed' ? true : index < currentStepIndex);
+        const isStepCompleted = isCompleted ? true : 
+                               (isRejected ? false : index < currentStepIndex);
+        const isStepRejected = isRejected && index === currentStepIndex;
         
         return (
           <WorkflowStepItem
@@ -62,6 +63,7 @@ export const WorkflowStepsListComponent: React.FC<WorkflowStepsListComponentProp
             step={step}
             isCurrent={isPending}
             isCompleted={isStepCompleted}
+            isRejected={isStepRejected}
           />
         );
       })}

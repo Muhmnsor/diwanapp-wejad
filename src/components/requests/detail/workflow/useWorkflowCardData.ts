@@ -10,11 +10,16 @@ export const useWorkflowCardData = (
   requestId: string,
   workflow?: { id: string } | null,
   currentStep?: WorkflowStep | null,
-  requestStatus: 'pending' | 'in_progress' | 'completed' | 'rejected' = 'pending'
+  requestStatus: 'pending' | 'in_progress' | 'completed' | 'rejected' = 'pending',
+  permissions?: { canViewWorkflow?: boolean }
 ): WorkflowCardDataHookResult => {
   const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(-1);
   const [progressPercentage, setProgressPercentage] = useState<number>(0);
+  const [hasPermission, setHasPermission] = useState<boolean>(true);
+
+  // Determine if user has permission to view workflow
+  const canViewWorkflow = permissions?.canViewWorkflow !== false;
 
   // Fetch workflow steps with proper error handling
   const { data: steps, isLoading, error, refetch } = useQuery({
@@ -23,6 +28,12 @@ export const useWorkflowCardData = (
       if (!workflow?.id) {
         console.log("No workflow ID provided, skipping steps fetch");
         return [];
+      }
+      
+      if (!canViewWorkflow) {
+        console.log("User does not have permission to view workflow");
+        setHasPermission(false);
+        throw new Error("ليس لديك صلاحية الاطلاع على مسار سير العمل لهذا الطلب");
       }
       
       try {
@@ -35,18 +46,27 @@ export const useWorkflowCardData = (
           
         if (error) {
           console.error("Error fetching workflow steps:", error);
-          throw new Error(`Error fetching workflow steps: ${error.message}`);
+          
+          // If it's a permission error, set the permission flag
+          if (error.message.includes('permission') || 
+              error.code === 'PGRST301' || 
+              error.code === '42501') {
+            setHasPermission(false);
+          }
+          
+          throw new Error(`خطأ في جلب خطوات سير العمل: ${error.message}`);
         }
         
         console.log(`Retrieved ${data?.length || 0} workflow steps`);
+        setHasPermission(true);
         return data as WorkflowStep[];
       } catch (err) {
         console.error("Exception in workflow steps fetch:", err);
         throw err;
       }
     },
-    enabled: !!workflow?.id && !!requestId,
-    retry: 1, // Only retry once to avoid excessive requests on permission errors
+    enabled: !!workflow?.id && !!requestId && canViewWorkflow,
+    retry: 1,
     retryDelay: 1000
   });
 
@@ -107,6 +127,11 @@ export const useWorkflowCardData = (
       return null;
     }
     
+    if (!hasPermission) {
+      console.warn("Cannot diagnose workflow: User lacks permission");
+      throw new Error("ليس لديك صلاحية لتشخيص مسار سير العمل لهذا الطلب");
+    }
+    
     try {
       console.log("Diagnosing workflow for request:", requestId);
       return await diagnoseRequestWorkflow(requestId);
@@ -117,13 +142,18 @@ export const useWorkflowCardData = (
         error: error instanceof Error ? error.message : "حدث خطأ أثناء تشخيص مسار العمل"
       };
     }
-  }, [requestId]);
+  }, [requestId, hasPermission]);
 
   // Function to fix workflow issues
   const fixWorkflow = useCallback(async () => {
     if (!requestId) {
       console.warn("Cannot fix workflow: No request ID provided");
       return null;
+    }
+    
+    if (!hasPermission) {
+      console.warn("Cannot fix workflow: User lacks permission");
+      throw new Error("ليس لديك صلاحية لإصلاح مسار سير العمل لهذا الطلب");
     }
     
     try {
@@ -136,7 +166,7 @@ export const useWorkflowCardData = (
         error: error instanceof Error ? error.message : "حدث خطأ أثناء إصلاح مسار العمل"
       };
     }
-  }, [requestId]);
+  }, [requestId, hasPermission]);
 
   // Function to refresh workflow data
   const refreshWorkflowData = useCallback(async () => {
@@ -152,6 +182,7 @@ export const useWorkflowCardData = (
     progressPercentage,
     diagnoseWorkflow,
     fixWorkflow,
-    refreshWorkflowData
+    refreshWorkflowData,
+    hasPermission
   };
 };
