@@ -111,7 +111,7 @@ export const useSaveWorkflowSteps = () => {
       
       // Transform data to include approver_name from the joined users table
       const transformedSteps = data.map(step => {
-        // Handle the nested users object properly (not an array)
+        // Fix: access display_name from the users object, not an array
         let approverName = null;
         if (step.users) {
           approverName = step.users.display_name || null;
