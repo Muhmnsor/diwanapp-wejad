@@ -43,9 +43,8 @@ export const WorkflowStepsListComponent: React.FC<WorkflowStepsListComponentProp
     );
   }
 
-  // All steps are completed when request status is completed
+  // Request statuses
   const isCompleted = requestStatus === 'completed';
-  // Request was rejected
   const isRejected = requestStatus === 'rejected';
 
   return (
@@ -53,8 +52,9 @@ export const WorkflowStepsListComponent: React.FC<WorkflowStepsListComponentProp
       {steps.map((step, index) => {
         // Determine step status
         const isPending = currentStepIndex === index;
-        const isStepCompleted = isCompleted ? true : 
-                               (isRejected ? false : index < currentStepIndex);
+        const isStepCompleted = isRejected 
+          ? false 
+          : (isCompleted || index < currentStepIndex);
         const isStepRejected = isRejected && index === currentStepIndex;
         
         return (

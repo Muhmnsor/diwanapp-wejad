@@ -100,8 +100,8 @@ export const CurrentStepDisplay: React.FC<CurrentStepDisplayProps> = ({
         </p>
         <p className="text-sm text-muted-foreground">
           {isOpinionStep 
-            ? 'مرحلة إبداء الرأي' 
-            : 'في انتظار المراجعة'}
+            ? 'إبداء رأي مطلوب' 
+            : 'في انتظار الموافقة'}
         </p>
       </div>
     </div>

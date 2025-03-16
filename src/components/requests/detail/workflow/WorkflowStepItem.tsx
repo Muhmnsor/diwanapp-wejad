@@ -36,16 +36,36 @@ export const WorkflowStepItem: React.FC<WorkflowStepItemProps> = ({
     !isCurrent && !isCompleted && !isRejected && "text-muted-foreground"
   );
   
-  // Display either opinion or approval text based on step type, not both
-  let approverInfo = '';
+  // Display appropriate status message based on step type and completion status
+  let statusMessage = '';
+  
   if (isOpinionStep) {
-    approverInfo = step.approver_id ? 
-      (step.approver_name ? `تم إبداء الرأي بواسطة: ${step.approver_name}` : `تم إبداء الرأي بواسطة: ${step.approver_id}`) 
-      : 'إبداء رأي مطلوب';
+    if (isCompleted) {
+      // Completed opinion step
+      statusMessage = step.approver_name 
+        ? `تم إبداء الرأي بواسطة: ${step.approver_name}` 
+        : (step.approver_id ? `تم إبداء الرأي` : 'تم إبداء الرأي');
+    } else if (isCurrent) {
+      // Current opinion step 
+      statusMessage = 'إبداء رأي مطلوب';
+    } else {
+      // Future opinion step
+      statusMessage = 'مرحلة إبداء الرأي';
+    }
   } else {
-    approverInfo = step.approver_id ? 
-      (step.approver_name ? `الموافق: ${step.approver_name}` : `الموافق: ${step.approver_id}`) 
-      : 'موافقة مطلوبة';
+    // Decision/approval step
+    if (isCompleted) {
+      // Completed approval step
+      statusMessage = step.approver_name 
+        ? `تمت الموافقة بواسطة: ${step.approver_name}` 
+        : (step.approver_id ? `تمت الموافقة` : 'تمت الموافقة');
+    } else if (isCurrent) {
+      // Current approval step
+      statusMessage = 'موافقة مطلوبة';
+    } else {
+      // Future approval step
+      statusMessage = 'مرحلة موافقة';
+    }
   }
   
   return (
@@ -60,7 +80,7 @@ export const WorkflowStepItem: React.FC<WorkflowStepItemProps> = ({
         </p>
         
         <p className="text-xs text-muted-foreground">
-          {approverInfo}
+          {statusMessage}
         </p>
         
         {step.instructions && (
