@@ -51,7 +51,7 @@ export const WorkflowStepItem: React.FC<WorkflowStepItemProps> = ({
           {isOpinionStep ? 
             'مرحلة إبداء الرأي' : 
             (step.approver_id ? 
-              `الموافق: ${step.approver_name || 'غير محدد'}` : 
+              `الموافق: ${step.approver_id}` : 
               'موافقة مطلوبة')}
         </p>
         

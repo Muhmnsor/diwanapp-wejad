@@ -1,5 +1,5 @@
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -8,10 +8,23 @@ import { supabase } from "@/integrations/supabase/client";
  * @returns Boolean indicating if current user is the requester
  */
 export const useIsRequester = (requesterId?: string | null): boolean => {
-  if (!requesterId) return false;
+  const [isRequester, setIsRequester] = useState(false);
   
-  const user = supabase.auth.getUser();
-  const currentUserId = user?.data?.user?.id;
+  useEffect(() => {
+    const checkUser = async () => {
+      if (!requesterId) {
+        setIsRequester(false);
+        return;
+      }
+      
+      const { data } = await supabase.auth.getUser();
+      const currentUserId = data?.user?.id;
+      
+      setIsRequester(currentUserId === requesterId);
+    };
+    
+    checkUser();
+  }, [requesterId]);
   
-  return currentUserId === requesterId;
+  return isRequester;
 };
