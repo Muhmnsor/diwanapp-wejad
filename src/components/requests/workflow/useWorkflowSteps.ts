@@ -109,11 +109,19 @@ export const useWorkflowSteps = ({
       if (error) throw error;
 
       // Transform data to include approver_name from the joined users table
-      const transformedSteps = data.map(step => ({
-        ...step,
-        approver_name: step.users?.display_name || null,
-        users: undefined
-      }));
+      const transformedSteps = data.map(step => {
+        let approverName = null;
+        if (step.users) {
+          // Handle nested user object correctly
+          approverName = step.users.display_name || null;
+        }
+        
+        return {
+          ...step,
+          approver_name: approverName,
+          users: undefined // Remove the nested users object
+        };
+      });
 
       setWorkflowSteps(transformedSteps);
     } catch (err) {

@@ -53,7 +53,9 @@ export const useRequestTypeForm = ({
         name: requestType.name,
         description: requestType.description || "",
         is_active: requestType.is_active !== undefined ? requestType.is_active : true,
-        form_schema: requestType.form_schema || { fields: [] },
+        form_schema: {
+          fields: (requestType.form_schema?.fields || []) as any,
+        },
       });
       setFormFields(requestType.form_schema?.fields || []);
       setCreatedRequestTypeId(requestType.id);
@@ -126,12 +128,12 @@ export const useRequestTypeForm = ({
       fields: formFields,
     };
     
-    // Use the schema with properly updated fields
+    // Cast the type to appease TypeScript while maintaining the runtime values
     const requestTypeData = {
       name: values.name,
       description: values.description || null,
       is_active: values.is_active,
-      form_schema: formSchemaWithFields,
+      form_schema: formSchemaWithFields as any,
     };
 
     if (isEditing && requestType) {
@@ -172,7 +174,7 @@ export const useRequestTypeForm = ({
       toast.success(isEditing ? "تم تحديث نوع الطلب بنجاح" : "تم إنشاء نوع الطلب بنجاح");
       onRequestTypeCreated();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving request type:", error);
       toast.error(isEditing ? "حدث خطأ أثناء تحديث نوع الطلب" : "حدث خطأ أثناء إنشاء نوع الطلب");
       setFormError(`${error.message || "حدث خطأ غير متوقع أثناء العملية"}`);

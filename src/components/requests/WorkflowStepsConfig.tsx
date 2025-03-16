@@ -52,7 +52,7 @@ export const WorkflowStepsConfig = ({
   // Display error if there's any
   useEffect(() => {
     if (error) {
-      toast.error(`خطأ في إدارة خطوات سير العمل: ${error}`);
+      toast.error(`خطأ في إدارة خطوات سير العمل: ${error.message || 'حدث خطأ غير معروف'}`);
     }
   }, [error]);
 
@@ -141,7 +141,7 @@ export const WorkflowStepsConfig = ({
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {error}
+            {error.message || 'حدث خطأ غير معروف'}
           </AlertDescription>
         </Alert>
       )}
@@ -202,7 +202,7 @@ export const WorkflowStepsConfig = ({
             <div>عدد الخطوات: {workflowSteps.length}</div>
             <div>الخطوة التي يتم تحريرها: {editingStepIndex !== null ? editingStepIndex : 'لا يوجد'}</div>
             <div>جاري التحميل: {isLoading ? 'نعم' : 'لا'}</div>
-            <div>خطأ: {error || 'لا يوجد'}</div>
+            <div>خطأ: {error ? (error.message || String(error)) : 'لا يوجد'}</div>
             <div className="mt-2">حالة الخطوات:</div>
             <div className="pl-4">
               {workflowSteps.map((step, index) => (
