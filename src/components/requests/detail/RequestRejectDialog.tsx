@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, InfoIcon } from "lucide-react";
+import { AlertCircle, InfoIcon, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/refactored-auth";
 
 interface RequestRejectDialogProps {
@@ -35,13 +35,26 @@ export const RequestRejectDialog = ({
   onOpenChange 
 }: RequestRejectDialogProps) => {
   const [comments, setComments] = useState("");
+  const [processingWorkflow, setProcessingWorkflow] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   
   const isSelfRejection = user?.id === requesterId;
   
+  // Reset error message when dialog opens/closes
+  const handleOpenChange = (open: boolean) => {
+    setErrorMessage(null);
+    if (!open) {
+      setComments(""); // Clear comments when closing
+    }
+    onOpenChange(open);
+  };
+  
   const rejectMutation = useMutation({
     mutationFn: async () => {
+      setErrorMessage(null);
+      
       if (!stepId) {
         throw new Error("لا يمكن رفض هذا الطلب لأنه لا يوجد خطوة حالية");
       }
@@ -99,54 +112,52 @@ export const RequestRejectDialog = ({
       
       console.log("Rejection result:", data);
       
-      if (stepType === 'opinion') {
-        try {
-          console.log("Opinion step completed with negative opinion. Updating workflow to next step...");
-          
-          const { data: updateResult, error: updateError } = await supabase.functions.invoke('update-workflow-step', {
-            body: {
-              requestId: requestId,
-              currentStepId: stepId,
-              action: 'reject',
-              metadata: {
-                ...metadata,
-                comments
-              }
+      if (!data || !data.success) {
+        const errorMsg = data?.message || "فشلت عملية الرفض لسبب غير معروف";
+        console.error("Rejection failed:", errorMsg);
+        throw new Error(errorMsg);
+      }
+      
+      // The initial rejection was successful
+      // Now update the workflow status using our new edge function
+      setProcessingWorkflow(true);
+      
+      try {
+        console.log("Step rejected. Updating workflow using process-workflow-update function...");
+        
+        const { data: updateResult, error: updateError } = await supabase.functions.invoke('process-workflow-update', {
+          body: {
+            requestId: requestId,
+            currentStepId: stepId,
+            action: 'reject',
+            metadata: {
+              ...metadata,
+              comments
             }
-          });
-          
-          if (updateError) {
-            console.error("Error updating workflow step:", updateError);
-            toast.warning("تم تسجيل رأيك ولكن هناك مشكلة في تحديث الخطوة التالية");
-          } else {
-            console.log("Workflow updated successfully:", updateResult);
           }
-        } catch (updateError) {
-          console.error("Exception updating workflow step:", updateError);
+        });
+        
+        if (updateError) {
+          console.error("Error updating workflow step:", updateError);
+          // Don't throw here - we'll show a warning but still consider the operation successful
+          toast.warning("تم تسجيل رفضك ولكن هناك مشكلة في تحديث الخطوة التالية");
+        } else {
+          console.log("Workflow updated successfully:", updateResult);
         }
-      } else {
-        try {
-          console.log("Decision step rejected. Running fix-request-status...");
-          const { data: fixResult, error: fixError } = await supabase.functions.invoke('fix-request-status', {
-            body: { requestId }
-          });
-          
-          if (fixError) {
-            console.error("Error fixing request status:", fixError);
-          } else {
-            console.log("Fix request status result:", fixResult);
-          }
-        } catch (fixError) {
-          console.error("Exception fixing request status:", fixError);
-        }
+      } catch (updateError) {
+        console.error("Exception updating workflow step:", updateError);
+        // Don't throw - we'll show a warning but the rejection was recorded
+        toast.warning("تم تسجيل رفضك ولكن هناك مشكلة في تحديث حالة الطلب");
+      } finally {
+        setProcessingWorkflow(false);
       }
       
       return data;
     },
     onSuccess: (result) => {
       if (result && !result.success) {
+        setErrorMessage(result.message || "فشلت عملية الرفض");
         toast.warning(result.message);
-        onOpenChange(false);
         return;
       }
       
@@ -155,25 +166,25 @@ export const RequestRejectDialog = ({
         : "تم رفض الطلب بنجاح";
       
       toast.success(successMessage);
-      onOpenChange(false);
-      setComments("");
       
+      // Only close the dialog after a successful submission
+      handleOpenChange(false);
+      
+      // Invalidate relevant queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['requests'] });
       queryClient.invalidateQueries({ queryKey: ['requests', 'incoming'] });
       queryClient.invalidateQueries({ queryKey: ['request-details', requestId] });
-      
-      if (stepType === 'opinion') {
-        queryClient.invalidateQueries({ queryKey: ['requests', 'incoming'] });
-      }
     },
-    onError: (error) => {
-      console.error("Error rejecting request:", error);
+    onError: (error: Error) => {
+      console.error("Error in rejectMutation:", error);
+      setErrorMessage(error.message || "حدث خطأ أثناء رفض الطلب");
       toast.error(`حدث خطأ أثناء رفض الطلب: ${error.message}`);
     }
   });
 
   const handleReject = () => {
     if (!comments.trim()) {
+      setErrorMessage(stepType === 'opinion' ? "يجب إدخال رأيك" : "يجب إدخال سبب الرفض");
       toast.error(stepType === 'opinion' ? "يجب إدخال رأيك" : "يجب إدخال سبب الرفض");
       return;
     }
@@ -181,7 +192,7 @@ export const RequestRejectDialog = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
@@ -214,6 +225,14 @@ export const RequestRejectDialog = ({
           </Alert>
         )}
         
+        {errorMessage && (
+          <Alert variant="destructive" className="my-2">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>خطأ</AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        )}
+        
         <div className="py-4">
           <label htmlFor="comments" className="block text-sm font-medium mb-2 text-destructive">
             {stepType === 'opinion' ? 'رأيك (مطلوب) *' : 'سبب الرفض (مطلوب) *'}
@@ -234,15 +253,27 @@ export const RequestRejectDialog = ({
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
             إلغاء
           </Button>
           <Button 
             onClick={handleReject} 
-            disabled={rejectMutation.isPending || !comments.trim() || (isSelfRejection && stepType !== 'opinion')}
+            disabled={
+              rejectMutation.isPending || 
+              processingWorkflow || 
+              !comments.trim() || 
+              (isSelfRejection && stepType !== 'opinion')
+            }
             variant="destructive"
           >
-            {rejectMutation.isPending ? "جاري المعالجة..." : stepType === 'opinion' ? 'إرسال الرأي' : 'رفض الطلب'}
+            {rejectMutation.isPending || processingWorkflow ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                {processingWorkflow ? 'جاري تحديث الحالة...' : 'جاري المعالجة...'}
+              </>
+            ) : (
+              stepType === 'opinion' ? 'إرسال الرأي' : 'رفض الطلب'
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

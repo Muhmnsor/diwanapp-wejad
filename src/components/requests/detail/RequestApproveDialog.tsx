@@ -36,6 +36,7 @@ export const RequestApproveDialog = ({
 }: RequestApproveDialogProps) => {
   const [comments, setComments] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [processingWorkflow, setProcessingWorkflow] = useState(false);
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   
@@ -105,44 +106,38 @@ export const RequestApproveDialog = ({
           throw new Error(errorMsg);
         }
         
-        // Only for successful operations, update the workflow step
-        console.log("Step completed. Updating workflow to next step...");
+        // The initial approval was successful
+        // Now update the workflow using our new edge function
+        setProcessingWorkflow(true);
         
-        const { data: updateResult, error: updateError } = await supabase.functions.invoke('update-workflow-step', {
-          body: {
-            requestId: requestId,
-            currentStepId: stepId,
-            action: 'approve',
-            metadata: {
-              ...metadata,
-              comments
+        try {
+          console.log("Step completed. Updating workflow to next step using process-workflow-update function...");
+          
+          const { data: updateResult, error: updateError } = await supabase.functions.invoke('process-workflow-update', {
+            body: {
+              requestId: requestId,
+              currentStepId: stepId,
+              action: 'approve',
+              metadata: {
+                ...metadata,
+                comments
+              }
             }
+          });
+          
+          if (updateError) {
+            console.error("Error updating workflow step:", updateError);
+            // Don't throw here - we'll show a warning but still consider the operation successful
+            toast.warning("تم تسجيل موافقتك ولكن هناك مشكلة في تحديث الخطوة التالية");
+          } else {
+            console.log("Workflow updated successfully:", updateResult);
           }
-        });
-        
-        if (updateError) {
-          console.error("Error updating workflow step:", updateError);
-          throw new Error("تم تسجيل رأيك ولكن هناك مشكلة في تحديث الخطوة التالية");
-        }
-        
-        console.log("Workflow updated successfully:", updateResult);
-        
-        // Check if we need to run the fix-request-status function
-        if (data && data.is_last_step) {
-          console.log("This appears to be the last step. Running fix-request-status...");
-          try {
-            const { data: fixResult, error: fixError } = await supabase.functions.invoke('fix-request-status', {
-              body: { requestId }
-            });
-            
-            if (fixError) {
-              console.error("Error fixing request status:", fixError);
-            } else {
-              console.log("Fix request status result:", fixResult);
-            }
-          } catch (fixError) {
-            console.error("Exception fixing request status:", fixError);
-          }
+        } catch (updateError) {
+          console.error("Exception updating workflow step:", updateError);
+          // Don't throw - we'll show a warning but the approval was recorded
+          toast.warning("تم تسجيل موافقتك ولكن هناك مشكلة في تحديث الخطوة التالية");
+        } finally {
+          setProcessingWorkflow(false);
         }
         
         return data;
@@ -257,13 +252,18 @@ export const RequestApproveDialog = ({
           </Button>
           <Button 
             onClick={handleApprove} 
-            disabled={approveMutation.isPending || (isSelfApproval && !isOpinionStep) || (isOpinionStep && !comments.trim())} 
+            disabled={
+              approveMutation.isPending || 
+              processingWorkflow || 
+              (isSelfApproval && !isOpinionStep) || 
+              (isOpinionStep && !comments.trim())
+            } 
             className="bg-green-600 hover:bg-green-700"
           >
-            {approveMutation.isPending ? (
+            {approveMutation.isPending || processingWorkflow ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                جاري المعالجة...
+                {processingWorkflow ? 'جاري تحديث الخطوات...' : 'جاري المعالجة...'}
               </>
             ) : (
               isOpinionStep ? 'إرسال الرأي' : 'موافقة'
