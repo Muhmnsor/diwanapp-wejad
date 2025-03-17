@@ -55,7 +55,7 @@ export const MeetingParticipantsField = ({ form }: MeetingParticipantsFieldProps
   });
 
   // Get unique user IDs already in the participants array
-  const participantUserIds = fields.map(field => field.user_id);
+  const participantUserIds = fields.map(field => (field as any).user_id);
 
   // Filter out users that are already participants
   const availableUsers = users.filter(user => !participantUserIds.includes(user.id));
@@ -177,10 +177,10 @@ export const MeetingParticipantsField = ({ form }: MeetingParticipantsFieldProps
         </div>
       )}
 
-      {fields.length > 0 && (
-        <FormMessage>
-          {form.formState.errors.participants?.root?.message}
-        </FormMessage>
+      {fields.length > 0 && form.formState.errors.participants?.root?.message && (
+        <div className="text-sm font-medium text-destructive">
+          {String(form.formState.errors.participants.root.message)}
+        </div>
       )}
     </div>
   );

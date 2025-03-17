@@ -10,10 +10,10 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
-import { MeetingTask } from '../types';
 import { TaskFormFields } from '../form/TaskFormFields';
 import { useTaskForm } from '../hooks/useTaskForm';
 import { useUsers } from '../hooks/useUsers';
+import { MeetingTask } from '../types';
 
 interface NewTaskDialogProps {
   open: boolean;

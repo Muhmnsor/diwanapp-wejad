@@ -6,20 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { User } from 'lucide-react';
-
-interface MeetingParticipant {
-  id: string;
-  meeting_id: string;
-  user_id: string;
-  role: string;
-  status: string;
-  created_at: string;
-  user: {
-    display_name: string;
-    email: string;
-    avatar_url?: string;
-  };
-}
+import { MeetingParticipant } from '../types';
 
 interface MeetingParticipantsPanelProps {
   meetingId: string;

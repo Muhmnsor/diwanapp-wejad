@@ -5,21 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Lightbulb, CheckCircle, Clock, AlertCircle } from 'lucide-react';
-
-interface MeetingDecision {
-  id: string;
-  meeting_id: string;
-  title: string;
-  description?: string;
-  status: string;
-  assigned_to?: string;
-  due_date?: string;
-  created_at: string;
-  assignee?: {
-    display_name: string;
-    email: string;
-  };
-}
+import { MeetingDecision } from '../types';
 
 interface MeetingDecisionsPanelProps {
   meetingId: string;
