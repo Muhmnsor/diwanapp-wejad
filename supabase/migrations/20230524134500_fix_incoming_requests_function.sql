@@ -1,4 +1,5 @@
 
+
 CREATE OR REPLACE FUNCTION public.get_user_incoming_requests(p_user_id uuid)
  RETURNS SETOF json
  LANGUAGE plpgsql
@@ -139,3 +140,4 @@ BEGIN
   RETURN v_role_ids;
 END;
 $function$;
+
