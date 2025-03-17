@@ -12,50 +12,36 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 
 interface MeetingsFilterProps {
-  onFilterChange: (filters: {
-    status?: string;
-    type?: string;
-    search?: string;
-  }) => void;
+  onStatusChange: (status: string) => void;
+  onTypeChange: (type: string) => void;
 }
 
-export const MeetingsFilter = ({ onFilterChange }: MeetingsFilterProps) => {
+export const MeetingsFilter = ({ onStatusChange, onTypeChange }: MeetingsFilterProps) => {
   const [status, setStatus] = useState<string>("");
   const [type, setType] = useState<string>("");
   const [search, setSearch] = useState<string>("");
 
   const handleStatusChange = (value: string) => {
     setStatus(value);
-    applyFilters(value, type, search);
+    onStatusChange(value);
   };
 
   const handleTypeChange = (value: string) => {
     setType(value);
-    applyFilters(status, value, search);
+    onTypeChange(value);
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
-    applyFilters(status, type, e.target.value);
-  };
-
-  const applyFilters = (
-    statusValue: string,
-    typeValue: string,
-    searchValue: string
-  ) => {
-    onFilterChange({
-      status: statusValue || undefined,
-      type: typeValue || undefined,
-      search: searchValue || undefined,
-    });
+    // Note: Search functionality will be implemented in a future update
   };
 
   const resetFilters = () => {
     setStatus("");
     setType("");
     setSearch("");
-    onFilterChange({});
+    onStatusChange("");
+    onTypeChange("");
   };
 
   return (

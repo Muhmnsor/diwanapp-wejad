@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Meeting } from "@/types/meeting";
 import { MeetingCard } from "./MeetingCard";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ interface MeetingsListProps {
 }
 
 export const MeetingsList = ({ meetings, isLoading, error, onCreate }: MeetingsListProps) => {
+  const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<string>('');
   
@@ -24,6 +26,10 @@ export const MeetingsList = ({ meetings, isLoading, error, onCreate }: MeetingsL
     if (typeFilter && meeting.meeting_type !== typeFilter) return false;
     return true;
   });
+  
+  const handleMeetingClick = (meetingId: string) => {
+    navigate(`/admin/meetings/${meetingId}`);
+  };
   
   if (isLoading) {
     return (
@@ -72,7 +78,11 @@ export const MeetingsList = ({ meetings, isLoading, error, onCreate }: MeetingsL
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredMeetings.map((meeting) => (
-            <MeetingCard key={meeting.id} meeting={meeting} />
+            <MeetingCard 
+              key={meeting.id} 
+              meeting={meeting} 
+              onClick={() => handleMeetingClick(meeting.id)}
+            />
           ))}
         </div>
       )}
