@@ -35,6 +35,13 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
     handleFixWorkflow
   } = useRequestDetail(requestId);
 
+  // Add isRequester function that was missing
+  const isRequester = () => {
+    // Simple implementation - assuming we can determine from data
+    // In a real implementation, this would check the current user against the request creator
+    return false;
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-48">
@@ -90,12 +97,6 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   console.log("Requester data:", requester);
   console.log("Step type:", stepType);
   console.log("Has submitted opinion:", hasSubmittedOpinion() ? "Yes" : "No");
-  
-  // Since isRequester function is missing, we need to provide a default implementation
-  const isRequester = () => {
-    // Default implementation assuming the existing logic within useRequestDetail
-    return false;
-  };
 
   // Helper function to handle async refetch and convert to Promise<void>
   const handleRefetch = async () => {
