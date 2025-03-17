@@ -20,6 +20,7 @@ import { useFieldArray, UseFormReturn } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { FormDescription } from '@/components/ui/form';
+import { ParticipantFieldWrapper } from './ParticipantFieldWrapper';
 
 interface User {
   id: string;
@@ -55,7 +56,7 @@ export const MeetingParticipantsField = ({ form }: MeetingParticipantsFieldProps
   });
 
   // Get unique user IDs already in the participants array
-  const participantUserIds = fields.map(field => field.user_id);
+  const participantUserIds = fields.map(field => field.id);
 
   // Filter out users that are already participants
   const availableUsers = users.filter(user => !participantUserIds.includes(user.id));
@@ -68,7 +69,7 @@ export const MeetingParticipantsField = ({ form }: MeetingParticipantsFieldProps
   const addParticipant = () => {
     if (availableUsers.length > 0) {
       append({ 
-        user_id: availableUsers[0].id,
+        id: availableUsers[0].id,
         role: 'member'
       });
     }
@@ -106,62 +107,51 @@ export const MeetingParticipantsField = ({ form }: MeetingParticipantsFieldProps
         <div className="space-y-3">
           {fields.map((field, index) => (
             <div key={field.id} className="flex items-end gap-4 border p-3 rounded-md">
-              <FormField
-                control={form.control}
-                name={`participants.${index}.user_id`}
-                render={({ field: userField }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel htmlFor={`user-${index}`}>المشارك</FormLabel>
-                    <Select
-                      onValueChange={userField.onChange}
-                      defaultValue={userField.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger id={`user-${index}`}>
-                          <SelectValue placeholder="اختر مشارك" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value={userField.value}>
-                          {getUserNameById(userField.value)}
-                        </SelectItem>
-                        {availableUsers.map(user => (
-                          <SelectItem key={user.id} value={user.id}>
-                            {user.display_name || user.email || 'مستخدم غير معروف'}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
+              <ParticipantFieldWrapper
+                form={form}
+                name={`participants.${index}.id`}
+                label="المشارك"
+              >
+                <Select
+                  onValueChange={(value) => form.setValue(`participants.${index}.id`, value)}
+                  defaultValue={field.id}
+                >
+                  <SelectTrigger id={`user-${index}`}>
+                    <SelectValue placeholder="اختر مشارك" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={field.id}>
+                      {getUserNameById(field.id)}
+                    </SelectItem>
+                    {availableUsers.map(user => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.display_name || user.email || 'مستخدم غير معروف'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </ParticipantFieldWrapper>
 
-              <FormField
-                control={form.control}
+              <ParticipantFieldWrapper
+                form={form}
                 name={`participants.${index}.role`}
-                render={({ field: roleField }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel htmlFor={`role-${index}`}>الدور</FormLabel>
-                    <Select
-                      onValueChange={roleField.onChange}
-                      defaultValue={roleField.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger id={`role-${index}`}>
-                          <SelectValue placeholder="اختر الدور" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="chairman">رئيس</SelectItem>
-                        <SelectItem value="secretary">مقرر</SelectItem>
-                        <SelectItem value="member">عضو</SelectItem>
-                        <SelectItem value="observer">مراقب</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                label="الدور"
+              >
+                <Select
+                  onValueChange={(value) => form.setValue(`participants.${index}.role`, value)}
+                  defaultValue={field.role}
+                >
+                  <SelectTrigger id={`role-${index}`}>
+                    <SelectValue placeholder="اختر الدور" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="chairman">رئيس</SelectItem>
+                    <SelectItem value="secretary">مقرر</SelectItem>
+                    <SelectItem value="member">عضو</SelectItem>
+                    <SelectItem value="observer">مراقب</SelectItem>
+                  </SelectContent>
+                </Select>
+              </ParticipantFieldWrapper>
 
               <Button
                 type="button"
@@ -177,9 +167,9 @@ export const MeetingParticipantsField = ({ form }: MeetingParticipantsFieldProps
         </div>
       )}
 
-      {fields.length > 0 && (
+      {form.formState.errors.participants?.root?.message && (
         <FormMessage>
-          {form.formState.errors.participants?.root?.message}
+          {String(form.formState.errors.participants?.root?.message)}
         </FormMessage>
       )}
     </div>

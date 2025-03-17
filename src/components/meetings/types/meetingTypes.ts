@@ -9,7 +9,7 @@ export interface MeetingFormAgendaItem {
 }
 
 // Create a type adapter that enforces title is required when saving to database
-export function validateAndConvertAgendaItems(items: MeetingFormAgendaItem[]): MeetingAgendaItem[] {
+export function validateAndConvertAgendaItems(items: MeetingFormAgendaItem[]): Omit<MeetingAgendaItem, 'id' | 'meeting_id' | 'created_at' | 'updated_at'>[] {
   return items
     .filter(item => item.title && item.title.trim() !== '')
     .map((item, index) => ({

@@ -9,8 +9,10 @@ export const useRequestDetail = (requestId: string) => {
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [isAddNoteDialogOpen, setIsAddNoteDialogOpen] = useState(false);
+  const [isDiagnosing, setIsDiagnosing] = useState(false);
+  const [diagnosticResult, setDiagnosticResult] = useState<any>(null);
   
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['request', requestId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -33,7 +35,9 @@ export const useRequestDetail = (requestId: string) => {
   });
   
   // Check if the current user is the requester
-  const isRequester = !!data && !!user && data.requested_by === user.id;
+  const isRequester = () => {
+    return !!data && !!user && data.requested_by === user.id;
+  };
   
   // Handle approve request
   const handleApprove = async (comments?: string) => {
@@ -62,10 +66,24 @@ export const useRequestDetail = (requestId: string) => {
     console.log('Reassigning request', requestId, 'to user', userId);
   };
   
+  // Handle diagnosing workflow issues
+  const handleDiagnoseWorkflow = async () => {
+    // Implementation for diagnosing workflow
+    console.log('Diagnosing workflow for request', requestId);
+    setIsDiagnosing(true);
+    // Simulate diagnosis
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setDiagnosticResult({ issues: [] });
+    setIsDiagnosing(false);
+    return { success: true };
+  };
+  
   // Handle fixing workflow errors
   const handleFixWorkflow = async () => {
     // Implementation for fixing workflow
     console.log('Fixing workflow for request', requestId);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return { success: true };
   };
   
   return {
@@ -83,6 +101,10 @@ export const useRequestDetail = (requestId: string) => {
     handleReject,
     handleAddNote,
     handleReassign,
-    handleFixWorkflow
+    isDiagnosing,
+    diagnosticResult,
+    handleDiagnoseWorkflow,
+    handleFixWorkflow,
+    refetch
   };
 };

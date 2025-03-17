@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { MeetingParticipant } from "@/components/meetings/types";
 import { UseFormReturn } from "react-hook-form";
 import { formatFormError } from "../types/meetingTypes";
 
@@ -30,7 +29,7 @@ export const ParticipantFieldWrapper: React.FC<ParticipantFieldWrapperProps> = (
           </FormControl>
           {fieldState.error && (
             <FormMessage>
-              {formatFormError(fieldState.error)}
+              {String(formatFormError(fieldState.error))}
             </FormMessage>
           )}
         </FormItem>

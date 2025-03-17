@@ -1,19 +1,23 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MeetingDecision } from "@/components/meetings/types";
+import { MeetingDecision, MeetingAgendaItem } from "@/components/meetings/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckSquare, User, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface MeetingDecisionsPanelProps {
   decisions: MeetingDecision[];
+  agendaItems?: MeetingAgendaItem[];
   onSelectDecision?: (decision: MeetingDecision) => void;
+  onAddDecision?: (decision: Omit<MeetingDecision, "id" | "created_at" | "updated_at">) => void;
 }
 
 export const MeetingDecisionsPanel: React.FC<MeetingDecisionsPanelProps> = ({ 
   decisions,
-  onSelectDecision 
+  agendaItems,
+  onSelectDecision,
+  onAddDecision
 }) => {
   if (!decisions || decisions.length === 0) {
     return (

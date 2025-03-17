@@ -1,18 +1,20 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MeetingMinutes } from "@/components/meetings/types";
+import { MeetingMinutes, MeetingAgendaItem } from "@/components/meetings/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileText, Edit, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface MeetingMinutesPanelProps {
   minutes: MeetingMinutes | null;
+  agendaItems?: MeetingAgendaItem[];
   onEdit?: () => void;
 }
 
 export const MeetingMinutesPanel: React.FC<MeetingMinutesPanelProps> = ({ 
   minutes,
+  agendaItems,
   onEdit 
 }) => {
   if (!minutes) {

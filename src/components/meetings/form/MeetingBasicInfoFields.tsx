@@ -10,7 +10,12 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
-import { DatePicker } from "@/components/ui/date-picker";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { CalendarIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 import { formatFormError } from "../types/meetingTypes";
 
 interface MeetingBasicInfoFieldsProps {
@@ -72,10 +77,34 @@ export const MeetingBasicInfoFields = ({ form }: MeetingBasicInfoFieldsProps) =>
           render={({ field, fieldState }) => (
             <FormItem className="flex flex-col">
               <FormLabel>تاريخ الاجتماع</FormLabel>
-              <DatePicker
-                date={field.value ? new Date(field.value) : undefined}
-                setDate={(date) => field.onChange(date?.toISOString().split('T')[0])}
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full pl-3 text-right font-normal",
+                        !field.value && "text-muted-foreground"
+                      )}
+                    >
+                      {field.value ? (
+                        format(new Date(field.value), "yyyy-MM-dd")
+                      ) : (
+                        <span>اختر التاريخ</span>
+                      )}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value ? new Date(field.value) : undefined}
+                    onSelect={(date) => field.onChange(date?.toISOString().split('T')[0])}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
               {fieldState.error && (
                 <FormMessage>{formatFormError(fieldState.error)}</FormMessage>
               )}

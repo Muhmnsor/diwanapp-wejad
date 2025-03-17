@@ -9,11 +9,15 @@ import { Badge } from "@/components/ui/badge";
 interface MeetingTasksPanelProps {
   tasks: MeetingTask[];
   onSelectTask?: (task: MeetingTask) => void;
+  onAddTask?: (task: Omit<MeetingTask, "id" | "created_at" | "updated_at">) => void;
+  onUpdateTask?: (id: string, updates: Partial<MeetingTask>) => void;
 }
 
 export const MeetingTasksPanel: React.FC<MeetingTasksPanelProps> = ({ 
   tasks,
-  onSelectTask 
+  onSelectTask,
+  onAddTask,
+  onUpdateTask
 }) => {
   if (!tasks || tasks.length === 0) {
     return (
