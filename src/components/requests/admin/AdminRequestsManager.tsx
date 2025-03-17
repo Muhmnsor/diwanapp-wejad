@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RequestsOverview } from "./RequestsOverview";
 import { useAllRequests } from "../hooks/useAllRequests";
 import { useAuthStore } from "@/store/refactored-auth";
@@ -83,28 +82,23 @@ export const AdminRequestsManager = () => {
   }
   
   return (
-    <div className="space-y-4">
-      <Tabs defaultValue="all-requests" className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="all-requests">جميع الطلبات</TabsTrigger>
-          <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="overview">
-          <RequestsOverview />
-        </TabsContent>
-        
-        <TabsContent value="all-requests">
-          <EnhancedRequestsTable 
-            requests={requests}
-            isLoading={isLoading}
-            onViewRequest={handleViewRequest}
-            onRefresh={refreshRequests}
-            filterByStatus={filterByStatus}
-            statusFilter={statusFilter}
-          />
-        </TabsContent>
-      </Tabs>
+    <div className="space-y-8">
+      <div>
+        <h2 className="text-2xl font-bold mb-4">نظرة عامة</h2>
+        <RequestsOverview />
+      </div>
+      
+      <div>
+        <h2 className="text-2xl font-bold mb-4">جميع الطلبات</h2>
+        <EnhancedRequestsTable 
+          requests={requests}
+          isLoading={isLoading}
+          onViewRequest={handleViewRequest}
+          onRefresh={refreshRequests}
+          filterByStatus={filterByStatus}
+          statusFilter={statusFilter}
+        />
+      </div>
     </div>
   );
 };
