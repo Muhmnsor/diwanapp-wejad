@@ -9,43 +9,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { useState } from "react";
 
 interface DeleteDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
   description: string;
-  onDelete: () => Promise<void> | void;
-  cancelText?: string;
-  confirmText?: string;
+  onDelete: () => void;
+  isDeleting?: boolean;
 }
 
-export function DeleteDialog({
+export const DeleteDialog = ({
   open,
   onOpenChange,
   title,
   description,
   onDelete,
-  cancelText = "إلغاء",
-  confirmText = "حذف",
-}: DeleteDialogProps) {
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    try {
-      await onDelete();
-    } catch (error) {
-      console.error("Error during delete operation:", error);
-    } finally {
-      setIsDeleting(false);
-      onOpenChange(false);
-    }
-  };
-
+  isDeleting = false,
+}: DeleteDialogProps) => {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent dir="rtl">
@@ -53,33 +34,20 @@ export function DeleteDialog({
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="flex-row-reverse justify-start gap-2">
-          <AlertDialogCancel asChild>
-            <Button variant="outline" disabled={isDeleting}>
-              {cancelText}
-            </Button>
-          </AlertDialogCancel>
-          <AlertDialogAction asChild>
-            <Button
-              variant="destructive"
-              onClick={(e) => {
-                e.preventDefault();
-                handleDelete();
-              }}
-              disabled={isDeleting}
-            >
-              {isDeleting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  جاري الحذف...
-                </>
-              ) : (
-                confirmText
-              )}
-            </Button>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isDeleting}>إلغاء</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={(e) => {
+              e.preventDefault();
+              onDelete();
+            }}
+            disabled={isDeleting}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {isDeleting ? "جاري الحذف..." : "حذف"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
-}
+};

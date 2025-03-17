@@ -8,6 +8,29 @@ export const useDeleteMeeting = () => {
   
   return useMutation({
     mutationFn: async (meetingId: string) => {
+      // Delete participants first
+      const { error: participantsError } = await supabase
+        .from('meeting_participants')
+        .delete()
+        .eq('meeting_id', meetingId);
+      
+      if (participantsError) {
+        console.error('Error deleting meeting participants:', participantsError);
+        throw participantsError;
+      }
+      
+      // Delete agenda items
+      const { error: agendaError } = await supabase
+        .from('meeting_agenda_items')
+        .delete()
+        .eq('meeting_id', meetingId);
+      
+      if (agendaError) {
+        console.error('Error deleting meeting agenda items:', agendaError);
+        throw agendaError;
+      }
+      
+      // Delete meeting
       const { error } = await supabase
         .from('meetings')
         .delete()
@@ -18,12 +41,11 @@ export const useDeleteMeeting = () => {
         throw error;
       }
       
-      return meetingId;
+      return { meetingId };
     },
-    onSuccess: (meetingId) => {
+    onSuccess: () => {
       toast.success('تم حذف الاجتماع بنجاح');
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
-      queryClient.invalidateQueries({ queryKey: ['meeting', meetingId] });
     },
     onError: (error) => {
       console.error('Error in meeting deletion:', error);

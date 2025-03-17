@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { ParticipantRole, AttendanceStatus } from "@/types/meeting";
 import { useAddMeetingParticipant } from "@/hooks/meetings/useAddMeetingParticipant";
+import { toast } from "sonner";
 
 interface AddParticipantDialogProps {
   open: boolean;
@@ -25,13 +26,38 @@ export const AddParticipantDialog = ({ open, onOpenChange, meetingId }: AddParti
   const [displayName, setDisplayName] = useState("");
   const [role, setRole] = useState<ParticipantRole>("member");
   const [attendanceStatus, setAttendanceStatus] = useState<AttendanceStatus>("pending");
+  const [errors, setErrors] = useState<{
+    email?: string;
+    displayName?: string;
+  }>({});
   
   const { mutate: addParticipant, isPending } = useAddMeetingParticipant();
+  
+  const validateForm = () => {
+    const newErrors: {email?: string; displayName?: string} = {};
+    let isValid = true;
+    
+    if (!email.trim()) {
+      newErrors.email = "البريد الإلكتروني مطلوب";
+      isValid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "صيغة البريد الإلكتروني غير صحيحة";
+      isValid = false;
+    }
+    
+    if (!displayName.trim()) {
+      newErrors.displayName = "الاسم مطلوب";
+      isValid = false;
+    }
+    
+    setErrors(newErrors);
+    return isValid;
+  };
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email.trim() || !displayName.trim()) return;
+    if (!validateForm()) return;
     
     addParticipant({
       meetingId,
@@ -43,8 +69,13 @@ export const AddParticipantDialog = ({ open, onOpenChange, meetingId }: AddParti
       }
     }, {
       onSuccess: () => {
+        toast.success("تمت إضافة المشارك بنجاح");
         resetForm();
         onOpenChange(false);
+      },
+      onError: (error) => {
+        console.error("Error adding participant:", error);
+        toast.error("حدث خطأ أثناء إضافة المشارك");
       }
     });
   };
@@ -54,10 +85,16 @@ export const AddParticipantDialog = ({ open, onOpenChange, meetingId }: AddParti
     setDisplayName("");
     setRole("member");
     setAttendanceStatus("pending");
+    setErrors({});
   };
   
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      if (!newOpen) {
+        resetForm();
+      }
+      onOpenChange(newOpen);
+    }}>
       <DialogContent className="sm:max-w-[425px]" dir="rtl">
         <DialogHeader>
           <DialogTitle>إضافة مشارك جديد</DialogTitle>
@@ -65,26 +102,36 @@ export const AddParticipantDialog = ({ open, onOpenChange, meetingId }: AddParti
         
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
           <div className="space-y-2">
-            <Label htmlFor="email">البريد الإلكتروني</Label>
+            <Label htmlFor="email">
+              البريد الإلكتروني <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="أدخل البريد الإلكتروني"
-              required
+              className={errors.email ? "border-destructive" : ""}
             />
+            {errors.email && (
+              <p className="text-destructive text-xs">{errors.email}</p>
+            )}
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="displayName">الاسم</Label>
+            <Label htmlFor="displayName">
+              الاسم <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="displayName"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="أدخل اسم المشارك"
-              required
+              className={errors.displayName ? "border-destructive" : ""}
             />
+            {errors.displayName && (
+              <p className="text-destructive text-xs">{errors.displayName}</p>
+            )}
           </div>
           
           <div className="space-y-2">
@@ -118,7 +165,12 @@ export const AddParticipantDialog = ({ open, onOpenChange, meetingId }: AddParti
           </div>
           
           <DialogFooter className="pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}
+            >
               إلغاء
             </Button>
             <Button type="submit" disabled={isPending}>

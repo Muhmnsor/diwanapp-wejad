@@ -1,115 +1,135 @@
 
 import { Meeting } from "@/types/meeting";
-import { Calendar, Clock, MapPin, Video, Users, Link } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { ar } from "date-fns/locale";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { 
+  CalendarClock, 
+  Clock, 
+  MapPin, 
+  Video, 
+  Users2, 
+  Calendar 
+} from "lucide-react";
 
 interface MeetingInfoProps {
   meeting: Meeting;
 }
 
 export const MeetingInfo = ({ meeting }: MeetingInfoProps) => {
-  const formatMeetingDate = (date: string) => {
-    try {
-      return format(parseISO(date), 'EEEE d MMMM yyyy', { locale: ar });
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return date;
-    }
+  const formattedDate = meeting.date ? format(new Date(meeting.date), 'PPP', { locale: ar }) : "غير محدد";
+  
+  const meetingTypeMap = {
+    board: 'مجلس إدارة',
+    department: 'قسم',
+    team: 'فريق',
+    committee: 'لجنة',
+    other: 'أخرى'
   };
   
-  const getMeetingTypeLabel = (type: string) => {
-    switch (type) {
-      case "board": return "مجلس إدارة";
-      case "department": return "قسم";
-      case "team": return "فريق";
-      case "committee": return "لجنة";
-      case "other": return "أخرى";
-      default: return "اجتماع";
-    }
+  const attendanceTypeMap = {
+    in_person: 'حضوري',
+    virtual: 'عن بعد',
+    hybrid: 'مدمج'
   };
-  
+
   return (
-    <div className="bg-muted/10 p-6 rounded-lg border mb-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="flex items-center gap-3">
-          <Calendar className="h-5 w-5 text-primary" />
-          <div>
-            <p className="text-sm text-muted-foreground">التاريخ</p>
-            <p className="font-medium">
-              {meeting.date ? formatMeetingDate(meeting.date) : 'غير محدد'}
-            </p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <Clock className="h-5 w-5 text-primary" />
-          <div>
-            <p className="text-sm text-muted-foreground">الوقت والمدة</p>
-            <p className="font-medium">
-              {meeting.start_time || 'غير محدد'} 
-              {meeting.duration ? ` (${meeting.duration} دقيقة)` : ''}
-            </p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <Users className="h-5 w-5 text-primary" />
-          <div>
-            <p className="text-sm text-muted-foreground">نوع الاجتماع</p>
-            <p className="font-medium">{getMeetingTypeLabel(meeting.meeting_type)}</p>
-          </div>
-        </div>
-        
-        {meeting.attendance_type === 'in_person' && meeting.location ? (
-          <div className="flex items-center gap-3">
-            <MapPin className="h-5 w-5 text-primary" />
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-medium flex items-center gap-2">
+            <CalendarClock className="h-5 w-5 text-primary" />
+            <span>الموعد والمدة</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div className="flex items-start gap-2">
+            <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground" />
             <div>
-              <p className="text-sm text-muted-foreground">المكان</p>
-              <p className="font-medium">{meeting.location}</p>
+              <p className="text-sm font-medium">التاريخ</p>
+              <p className="text-sm text-muted-foreground">{formattedDate}</p>
             </div>
           </div>
-        ) : meeting.attendance_type === 'virtual' && meeting.meeting_link ? (
-          <div className="flex items-center gap-3">
-            <Video className="h-5 w-5 text-primary" />
+          
+          <div className="flex items-start gap-2">
+            <Clock className="h-4 w-4 mt-0.5 text-muted-foreground" />
             <div>
-              <p className="text-sm text-muted-foreground">نوع الحضور</p>
-              <p className="font-medium">اجتماع افتراضي</p>
-              <a 
-                href={meeting.meeting_link} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-sm text-primary hover:underline flex items-center mt-1"
-              >
-                <Link className="h-3 w-3 mr-1" />
-                رابط الاجتماع
-              </a>
+              <p className="text-sm font-medium">الوقت والمدة</p>
+              <p className="text-sm text-muted-foreground">
+                {meeting.start_time || "غير محدد"} ({meeting.duration} دقيقة)
+              </p>
             </div>
           </div>
-        ) : meeting.attendance_type === 'hybrid' ? (
-          <div className="flex items-center gap-3">
-            <Users className="h-5 w-5 text-primary" />
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-medium flex items-center gap-2">
+            {meeting.attendance_type === "virtual" ? (
+              <Video className="h-5 w-5 text-primary" />
+            ) : (
+              <MapPin className="h-5 w-5 text-primary" />
+            )}
+            <span>المكان</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div className="flex items-start gap-2">
+            <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
             <div>
-              <p className="text-sm text-muted-foreground">نوع الحضور</p>
-              <p className="font-medium">اجتماع مختلط</p>
-              {meeting.location && (
-                <p className="text-sm mt-1">المكان: {meeting.location}</p>
-              )}
-              {meeting.meeting_link && (
-                <a 
-                  href={meeting.meeting_link} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline flex items-center mt-1"
-                >
-                  <Link className="h-3 w-3 mr-1" />
-                  رابط الاجتماع
-                </a>
-              )}
+              <p className="text-sm font-medium">نوع الحضور</p>
+              <p className="text-sm text-muted-foreground">
+                {attendanceTypeMap[meeting.attendance_type] || meeting.attendance_type}
+              </p>
             </div>
           </div>
-        ) : null}
-      </div>
+          
+          <div className="flex items-start gap-2">
+            {meeting.attendance_type === "virtual" ? (
+              <Video className="h-4 w-4 mt-0.5 text-muted-foreground" />
+            ) : (
+              <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
+            )}
+            <div>
+              <p className="text-sm font-medium">
+                {meeting.attendance_type === "virtual" ? "رابط الاجتماع" : "مكان الاجتماع"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {meeting.attendance_type === "virtual" 
+                  ? (meeting.meeting_link || "لا يوجد رابط") 
+                  : (meeting.location || "غير محدد")}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-medium flex items-center gap-2">
+            <Users2 className="h-5 w-5 text-primary" />
+            <span>نوع الاجتماع</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div className="flex items-start gap-2">
+            <Users2 className="h-4 w-4 mt-0.5 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium">تصنيف الاجتماع</p>
+              <p className="text-sm text-muted-foreground">
+                {meetingTypeMap[meeting.meeting_type as keyof typeof meetingTypeMap] || meeting.meeting_type}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

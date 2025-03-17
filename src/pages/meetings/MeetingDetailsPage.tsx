@@ -16,6 +16,8 @@ import { MeetingTasksList } from "@/components/meetings/tasks/MeetingTasksList";
 import { MeetingAttachmentsList } from "@/components/meetings/attachments/MeetingAttachmentsList";
 import { MeetingHeaderEnhanced } from "@/components/meetings/MeetingHeaderEnhanced";
 import { MeetingInfo } from "@/components/meetings/MeetingInfo";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const MeetingDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -51,9 +53,12 @@ const MeetingDetailsPage = () => {
       <div className="min-h-screen flex flex-col" dir="rtl">
         <AdminHeader />
         <div className="container mx-auto px-4 py-8 flex-grow">
-          <div className="text-center p-8 text-destructive">
-            <p>حدث خطأ أثناء تحميل تفاصيل الاجتماع</p>
-            <p className="text-sm mt-2">{meetingError?.message || "لم يتم العثور على الاجتماع"}</p>
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>خطأ</AlertTitle>
+            <AlertDescription>
+              حدث خطأ أثناء تحميل تفاصيل الاجتماع: {meetingError?.message || "لم يتم العثور على الاجتماع"}
+            </AlertDescription>
             <Button 
               variant="outline" 
               className="mt-4"
@@ -62,7 +67,7 @@ const MeetingDetailsPage = () => {
               <ArrowRight className="mr-2 h-4 w-4" />
               العودة إلى قائمة الاجتماعات
             </Button>
-          </div>
+          </Alert>
         </div>
         <Footer />
         <DeveloperToolbar />
@@ -75,10 +80,8 @@ const MeetingDetailsPage = () => {
       <AdminHeader />
       
       <div className="container mx-auto px-4 py-8 flex-grow">
-        {/* استخدام MeetingHeaderEnhanced */}
         <MeetingHeaderEnhanced meeting={meeting} />
         
-        {/* استخدام MeetingInfo */}
         <MeetingInfo meeting={meeting} />
         
         <Tabs defaultValue="participants" className="w-full">

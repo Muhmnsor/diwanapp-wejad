@@ -1,20 +1,21 @@
 
 import { Meeting } from "@/types/meeting";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, MapPin, Users, Video } from "lucide-react";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { format, parseISO } from "date-fns";
+import { CalendarClock, MapPin, Video, Users } from "lucide-react";
+import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 
 interface MeetingCardProps {
   meeting: Meeting;
-  onClick?: () => void;
+  onClick: () => void;
 }
 
 export const MeetingCard = ({ meeting, onClick }: MeetingCardProps) => {
-  // Status badge color based on meeting status
-  const getStatusColor = () => {
-    switch (meeting.meeting_status) {
+  const formattedDate = meeting.date ? format(new Date(meeting.date), 'PPP', { locale: ar }) : "غير محدد";
+  
+  const getStatusColor = (status?: string) => {
+    switch (status) {
       case "scheduled": return "bg-blue-100 text-blue-800";
       case "in_progress": return "bg-green-100 text-green-800";
       case "completed": return "bg-gray-100 text-gray-800";
@@ -23,87 +24,79 @@ export const MeetingCard = ({ meeting, onClick }: MeetingCardProps) => {
     }
   };
 
-  // Meeting type based on type
-  const getMeetingTypeBadge = () => {
-    switch (meeting.meeting_type) {
-      case "board": return "bg-purple-100 text-purple-800";
-      case "department": return "bg-indigo-100 text-indigo-800";
-      case "team": return "bg-teal-100 text-teal-800";
-      case "committee": return "bg-amber-100 text-amber-800";
-      case "other": return "bg-gray-100 text-gray-800";
-      default: return "bg-gray-100 text-gray-800";
+  const getStatusLabel = (status?: string) => {
+    switch (status) {
+      case "scheduled": return "مجدول";
+      case "in_progress": return "جاري";
+      case "completed": return "مكتمل";
+      case "cancelled": return "ملغي";
+      default: return status || "غير محدد";
     }
   };
-
-  const getMeetingTypeLabel = () => {
-    switch (meeting.meeting_type) {
+  
+  const getMeetingTypeLabel = (type?: string) => {
+    switch (type) {
       case "board": return "مجلس إدارة";
       case "department": return "قسم";
       case "team": return "فريق";
       case "committee": return "لجنة";
       case "other": return "أخرى";
-      default: return "اجتماع";
+      default: return type || "غير محدد";
     }
   };
-
-  const getStatusLabel = () => {
-    switch (meeting.meeting_status) {
-      case "scheduled": return "مجدول";
-      case "in_progress": return "جاري";
-      case "completed": return "مكتمل";
-      case "cancelled": return "ملغي";
-      default: return meeting.meeting_status;
-    }
-  };
-
+  
   return (
-    <Card 
-      className="cursor-pointer hover:shadow-md transition-shadow duration-200"
-      onClick={onClick}
-    >
+    <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-lg font-medium">{meeting.title}</CardTitle>
-          <Badge className={getStatusColor()}>{getStatusLabel()}</Badge>
-        </div>
-        <div className="flex flex-wrap gap-2 mt-2">
-          <Badge variant="outline" className={getMeetingTypeBadge()}>
-            {getMeetingTypeLabel()}
+          <CardTitle className="text-lg font-semibold">{meeting.title}</CardTitle>
+          <Badge className={getStatusColor(meeting.meeting_status)}>
+            {getStatusLabel(meeting.meeting_status)}
           </Badge>
         </div>
       </CardHeader>
-      <CardContent>
+      
+      <CardContent className="pt-0 pb-2">
         <div className="space-y-2 text-sm">
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <CalendarClock className="h-4 w-4 text-muted-foreground" />
+            <span>{formattedDate} - {meeting.start_time}</span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {meeting.attendance_type === "virtual" ? (
+              <Video className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+            )}
             <span>
-              {meeting.date ? 
-                format(parseISO(meeting.date), 'EEEE d MMMM yyyy', { locale: ar }) : 
-                'تاريخ غير محدد'}
+              {meeting.attendance_type === "virtual" ? (
+                "عن بعد"
+              ) : meeting.attendance_type === "hybrid" ? (
+                "حضوري وعن بعد"
+              ) : (
+                "حضوري"
+              )}
+              {meeting.location ? ` - ${meeting.location}` : ""}
             </span>
           </div>
+          
           <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span>{meeting.start_time} ({meeting.duration} دقيقة)</span>
+            <Users className="h-4 w-4 text-muted-foreground" />
+            <span>{getMeetingTypeLabel(meeting.meeting_type)}</span>
           </div>
-          {meeting.attendance_type === 'in_person' && meeting.location ? (
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-              <span>{meeting.location}</span>
-            </div>
-          ) : meeting.attendance_type === 'virtual' ? (
-            <div className="flex items-center gap-2">
-              <Video className="h-4 w-4 text-muted-foreground" />
-              <span>اجتماع افتراضي</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <span>اجتماع مختلط</span>
-            </div>
-          )}
         </div>
       </CardContent>
+      
+      <CardFooter>
+        <p className="text-xs text-muted-foreground mt-2">
+          {meeting.objectives ? (
+            <span>{meeting.objectives.substring(0, 100)}{meeting.objectives.length > 100 ? "..." : ""}</span>
+          ) : (
+            <span className="italic">لا يوجد وصف للاجتماع</span>
+          )}
+        </p>
+      </CardFooter>
     </Card>
   );
 };
