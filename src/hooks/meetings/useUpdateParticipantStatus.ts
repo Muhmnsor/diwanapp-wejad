@@ -1,27 +1,26 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { AttendanceStatus } from "@/types/meeting";
 
-interface UpdateParticipantStatusParams {
+interface UpdateStatusParams {
   participantId: string;
-  attendanceStatus: "pending" | "confirmed" | "attended" | "absent";
-  meetingId: string;
+  status: AttendanceStatus;
 }
 
-export const useUpdateParticipantStatus = () => {
+export const useUpdateParticipantStatus = (meetingId: string) => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ participantId, attendanceStatus, meetingId }: UpdateParticipantStatusParams) => {
+    mutationFn: async ({ participantId, status }: UpdateStatusParams) => {
       const { data, error } = await supabase
         .from('meeting_participants')
         .update({ 
-          attendance_status: attendanceStatus,
-          updated_at: new Date().toISOString()
+          attendance_status: status,
+          updated_at: new Date().toISOString() 
         })
         .eq('id', participantId)
-        .select('*')
+        .select()
         .single();
       
       if (error) {
@@ -31,13 +30,8 @@ export const useUpdateParticipantStatus = () => {
       
       return data;
     },
-    onSuccess: (_, variables) => {
-      toast.success('تم تحديث حالة المشارك بنجاح');
-      queryClient.invalidateQueries({ queryKey: ['meeting-participants', variables.meetingId] });
-    },
-    onError: (error) => {
-      console.error('Error in updating participant status:', error);
-      toast.error('حدث خطأ أثناء تحديث حالة المشارك');
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['meeting-participants', meetingId] });
     }
   });
 };

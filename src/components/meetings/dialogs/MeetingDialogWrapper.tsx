@@ -1,55 +1,57 @@
 
-import { useState, useEffect } from 'react';
-import { Meeting } from '@/types/meeting';
-import { EditMeetingDialog } from './EditMeetingDialog';
-import { useSelectAdapters } from '@/hooks/meetings/useSelectAdapters';
+import React, { useState } from "react";
+import { EditMeetingDialog } from "./EditMeetingDialog";
+import { Meeting, MeetingType, MeetingStatus, AttendanceType } from "@/types/meeting";
 
 interface MeetingDialogWrapperProps {
-  isOpen: boolean;
-  onClose: () => void;
-  meeting: Meeting | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  meeting: Meeting;
   onSave: (meeting: Meeting) => void;
 }
 
 export const MeetingDialogWrapper = ({
-  isOpen,
-  onClose,
+  open,
+  onOpenChange,
   meeting,
-  onSave
+  onSave,
 }: MeetingDialogWrapperProps) => {
-  // Use adapters to resolve type compatibility issues
-  const { 
-    createMeetingTypeAdapter,
-    createMeetingStatusAdapter, 
-    createAttendanceTypeAdapter 
-  } = useSelectAdapters();
-  
-  // Set up adapters with initial values from the meeting
-  const typeAdapter = createMeetingTypeAdapter(
-    (meeting?.meeting_type as "board" | "department" | "team" | "committee" | "other") || "team"
+  const [meetingTypeValue, setMeetingTypeValue] = useState<MeetingType>(
+    meeting?.meeting_type || "other"
   );
   
-  const statusAdapter = createMeetingStatusAdapter(
-    (meeting?.status as "scheduled" | "in_progress" | "completed" | "cancelled") || "scheduled"
+  const [meetingStatusValue, setMeetingStatusValue] = useState<MeetingStatus>(
+    meeting?.status || "scheduled"
   );
   
-  const attendanceAdapter = createAttendanceTypeAdapter(
-    (meeting?.attendance_type as "in_person" | "virtual" | "hybrid") || "in_person"
+  const [attendanceTypeValue, setAttendanceTypeValue] = useState<AttendanceType>(
+    meeting?.attendance_type || "in_person"
   );
-  
+
+  const handleMeetingTypeChange = (newValue: string) => {
+    setMeetingTypeValue(newValue as MeetingType);
+  };
+
+  const handleMeetingStatusChange = (newValue: string) => {
+    setMeetingStatusValue(newValue as MeetingStatus);
+  };
+
+  const handleAttendanceTypeChange = (newValue: string) => {
+    setAttendanceTypeValue(newValue as AttendanceType);
+  };
+
   return (
     <EditMeetingDialog
-      isOpen={isOpen}
-      onClose={onClose}
+      open={open}
+      onOpenChange={onOpenChange}
       meeting={meeting}
       onSave={onSave}
-      // Pass the adapter values and handlers
-      meetingTypeValue={typeAdapter.value}
-      onMeetingTypeChange={typeAdapter.onValueChange}
-      meetingStatusValue={statusAdapter.value}
-      onMeetingStatusChange={statusAdapter.onValueChange}
-      attendanceTypeValue={attendanceAdapter.value}
-      onAttendanceTypeChange={attendanceAdapter.onValueChange}
+      meetingTypeValue={meetingTypeValue}
+      meetingStatusValue={meetingStatusValue}
+      attendanceTypeValue={attendanceTypeValue}
+      onMeetingTypeChange={handleMeetingTypeChange}
+      onMeetingStatusChange={handleMeetingStatusChange}
+      onAttendanceTypeChange={handleAttendanceTypeChange}
     />
   );
 };

@@ -1,11 +1,26 @@
+
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
 interface WorkflowStepsConfigProps {
   workflowType: string | null | undefined;
+  requestTypeId?: string;
+  workflowId?: string;
+  initialSteps?: any[];
+  onWorkflowStepsUpdated?: (steps: any[]) => void;
+  onWorkflowSaved?: () => void;
+  standalone?: boolean;
 }
 
-export const WorkflowStepsConfig = ({ workflowType }: WorkflowStepsConfigProps) => {
+export const WorkflowStepsConfig = ({ 
+  workflowType,
+  requestTypeId,
+  workflowId,
+  initialSteps,
+  onWorkflowStepsUpdated,
+  onWorkflowSaved,
+  standalone 
+}: WorkflowStepsConfigProps) => {
   if (!workflowType) {
     return (
       <Alert variant="default">
@@ -18,5 +33,6 @@ export const WorkflowStepsConfig = ({ workflowType }: WorkflowStepsConfigProps) 
     );
   }
 
+  // Implementation for workflow steps config would go here
   return null;
 };

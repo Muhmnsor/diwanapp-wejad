@@ -1,80 +1,33 @@
 
-import { useState } from 'react';
+import { Dispatch, SetStateAction } from "react";
+import { MeetingType, MeetingStatus, AttendanceType } from "@/types/meeting";
 
-/**
- * A hook that provides type-safe adapters for Select components
- * to resolve type compatibility issues with specific string literal types
- */
-export const useSelectAdapters = () => {
-  /**
-   * Creates an adapter for meeting type select
-   */
-  const createMeetingTypeAdapter = (initialValue: "board" | "department" | "team" | "committee" | "other") => {
-    const [value, setValue] = useState<"board" | "department" | "team" | "committee" | "other">(initialValue);
-    
-    // Adapter function that handles the conversion safely
-    const onValueChange = (newValue: string) => {
-      if (newValue === "board" || 
-          newValue === "department" || 
-          newValue === "team" || 
-          newValue === "committee" || 
-          newValue === "other") {
-        setValue(newValue);
-      } else {
-        console.error(`Invalid meeting type value: ${newValue}`);
-        setValue("other");
-      }
-    };
-    
-    return { value, onValueChange };
+export interface TypeAdapters {
+  meetingTypeAdapter: (value: string) => void;
+  meetingStatusAdapter: (value: string) => void;
+  attendanceTypeAdapter: (value: string) => void;
+}
+
+export const useSelectAdapters = (
+  setMeetingType: Dispatch<SetStateAction<MeetingType>>,
+  setMeetingStatus: Dispatch<SetStateAction<MeetingStatus>>,
+  setAttendanceType: Dispatch<SetStateAction<AttendanceType>>
+): TypeAdapters => {
+  const meetingTypeAdapter = (value: string) => {
+    setMeetingType(value as MeetingType);
   };
-  
-  /**
-   * Creates an adapter for meeting status select
-   */
-  const createMeetingStatusAdapter = (initialValue: "scheduled" | "in_progress" | "completed" | "cancelled") => {
-    const [value, setValue] = useState<"scheduled" | "in_progress" | "completed" | "cancelled">(initialValue);
-    
-    // Adapter function that handles the conversion safely
-    const onValueChange = (newValue: string) => {
-      if (newValue === "scheduled" || 
-          newValue === "in_progress" || 
-          newValue === "completed" || 
-          newValue === "cancelled") {
-        setValue(newValue);
-      } else {
-        console.error(`Invalid meeting status value: ${newValue}`);
-        setValue("scheduled");
-      }
-    };
-    
-    return { value, onValueChange };
+
+  const meetingStatusAdapter = (value: string) => {
+    setMeetingStatus(value as MeetingStatus);
   };
-  
-  /**
-   * Creates an adapter for attendance type select
-   */
-  const createAttendanceTypeAdapter = (initialValue: "in_person" | "virtual" | "hybrid") => {
-    const [value, setValue] = useState<"in_person" | "virtual" | "hybrid">(initialValue);
-    
-    // Adapter function that handles the conversion safely
-    const onValueChange = (newValue: string) => {
-      if (newValue === "in_person" || 
-          newValue === "virtual" || 
-          newValue === "hybrid") {
-        setValue(newValue);
-      } else {
-        console.error(`Invalid attendance type value: ${newValue}`);
-        setValue("in_person");
-      }
-    };
-    
-    return { value, onValueChange };
+
+  const attendanceTypeAdapter = (value: string) => {
+    setAttendanceType(value as AttendanceType);
   };
-  
+
   return {
-    createMeetingTypeAdapter,
-    createMeetingStatusAdapter,
-    createAttendanceTypeAdapter
+    meetingTypeAdapter,
+    meetingStatusAdapter,
+    attendanceTypeAdapter,
   };
 };
