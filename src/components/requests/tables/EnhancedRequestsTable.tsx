@@ -29,15 +29,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface EnhancedRequestsTableProps {
   requests: Request[];
@@ -112,7 +103,15 @@ export const EnhancedRequestsTable = ({
     }
   }, [requests]);
   
-  // Handle filter change
+  // Status filter options
+  const statusOptions = [
+    { value: null, label: "جميع الحالات" },
+    { value: "pending", label: "قيد الانتظار" },
+    { value: "in_progress", label: "قيد التنفيذ" },
+    { value: "completed", label: "مكتمل" },
+    { value: "rejected", label: "مرفوض" },
+  ];
+
   const handleFilterChange = (value: string) => {
     filterByStatus(value === "all" ? null : value);
     setCurrentPage(1); // Reset to first page when filter changes
@@ -174,7 +173,7 @@ export const EnhancedRequestsTable = ({
         </div>
       ) : (
         <>
-          <ScrollArea className="h-[600px] rounded-md border">
+          <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -244,71 +243,49 @@ export const EnhancedRequestsTable = ({
                 ))}
               </TableBody>
             </Table>
-          </ScrollArea>
+          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <Pagination className="mt-4">
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious 
-                    href="#" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (currentPage > 1) goToPage(currentPage - 1);
-                    }}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-                
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  // Show pages around current page
-                  let pageNum;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
-                  
-                  return (
-                    <PaginationItem key={pageNum}>
-                      <PaginationLink 
-                        href="#" 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          goToPage(pageNum);
-                        }}
-                        isActive={currentPage === pageNum}
-                      >
-                        {pageNum}
-                      </PaginationLink>
-                    </PaginationItem>
-                  );
-                })}
-                
-                <PaginationItem>
-                  <PaginationNext 
-                    href="#" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (currentPage < totalPages) goToPage(currentPage + 1);
-                    }}
-                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
+            <div className="flex justify-center mt-4">
+              <div className="flex space-x-1 space-x-reverse">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  السابق
+                </Button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => goToPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  )
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  التالي
+                </Button>
+              </div>
+            </div>
           )}
-
-          <div className="mt-2 text-sm text-muted-foreground">
-            عرض {currentRequests.length} من إجمالي {requests.length} طلب
-          </div>
         </>
       )}
+
+      <div className="mt-2 text-sm text-muted-foreground">
+        عرض {currentRequests.length} من إجمالي {requests.length} طلب
+      </div>
       
       {/* Delete Dialog */}
       <DeleteRequestDialog

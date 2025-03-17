@@ -35,11 +35,6 @@ export interface WorkflowStep {
   step_order: number;
   instructions: string | null;
   created_at: string | null;
-  approver?: {
-    id: string;
-    display_name?: string;
-    email?: string;
-  };
 }
 
 export interface RequestWorkflow {
