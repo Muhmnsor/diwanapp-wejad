@@ -5,7 +5,7 @@ import React from 'react';
 // Create a type that matches what NewMeetingDialog expects (with optional title)
 export interface MeetingFormAgendaItem {
   order_number: number;
-  title?: string;
+  title: string; // Making title required
   description?: string;
 }
 
@@ -14,7 +14,7 @@ export function validateAndConvertAgendaItems(items: MeetingFormAgendaItem[]): O
   return items
     .filter(item => item.title && item.title.trim() !== '')
     .map((item, index) => ({
-      title: item.title || `Item ${index + 1}`, // Provide default title if missing
+      title: item.title, // Title is now required
       description: item.description,
       order_number: item.order_number || index + 1
     }));

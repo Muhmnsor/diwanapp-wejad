@@ -28,7 +28,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
     handleRejectClick,
     isCurrentApprover,
     hasSubmittedOpinion,
-    isRequester,
+    isRequester, // Make sure this exists in useRequestDetail
     refetch,
     isDiagnosing,
     diagnosticResult,
