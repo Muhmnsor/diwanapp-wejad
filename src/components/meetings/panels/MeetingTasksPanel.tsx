@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { MeetingTask } from '../types';
 import { 
   Card, 
   CardContent, 
@@ -22,7 +23,6 @@ import {
 import { format } from 'date-fns';
 import { NewTaskDialog } from '../dialogs/NewTaskDialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MeetingTask } from '../types';
 
 interface MeetingTasksPanelProps {
   tasks: MeetingTask[];

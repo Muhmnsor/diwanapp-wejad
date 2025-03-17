@@ -28,19 +28,13 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
     handleRejectClick,
     isCurrentApprover,
     hasSubmittedOpinion,
+    isRequester,
     refetch,
     isDiagnosing,
     diagnosticResult,
     handleDiagnoseWorkflow,
     handleFixWorkflow
   } = useRequestDetail(requestId);
-
-  // Add isRequester function that was missing
-  const isRequester = () => {
-    // Simple implementation - assuming we can determine from data
-    // In a real implementation, this would check the current user against the request creator
-    return false;
-  };
 
   if (isLoading) {
     return (
@@ -97,6 +91,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   console.log("Requester data:", requester);
   console.log("Step type:", stepType);
   console.log("Has submitted opinion:", hasSubmittedOpinion() ? "Yes" : "No");
+  console.log("Is requester:", isRequester() ? "Yes" : "No");
 
   // Helper function to handle async refetch and convert to Promise<void>
   const handleRefetch = async () => {
@@ -109,8 +104,8 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold">تفاصيل الطلب</h2>
           <div className="flex gap-2">
-            {/* Update DiagnoseWorkflowButton to only pass props it accepts */}
             <DiagnoseWorkflowButton 
+              requestId={requestId}
               onDiagnose={handleDiagnoseWorkflow}
               onFix={handleFixWorkflow}
               onSuccess={handleRefetch}

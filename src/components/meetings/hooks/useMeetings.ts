@@ -1,119 +1,105 @@
 
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Meeting, MeetingFormData } from '../types';
-import { useAuthStore } from '@/store/refactored-auth';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Meeting, MeetingFormData } from "../types";
+import { useAuthStore } from "@/store/authStore";
+import { toast } from "sonner";
 
 export const useMeetings = () => {
-  const [filter, setFilter] = useState<'all' | 'upcoming' | 'completed'>('all');
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
-  
-  const { data: meetings = [], isLoading, error } = useQuery({
-    queryKey: ['meetings', filter, user?.id],
+  const [filter, setFilter] = useState<'all' | 'upcoming' | 'completed'>('upcoming');
+
+  // Fetch all meetings the user can access
+  const { data: meetings = [], isLoading, error, refetch } = useQuery({
+    queryKey: ['meetings', filter],
     queryFn: async () => {
       if (!user) return [];
-      
+
       let query = supabase
         .from('meetings')
-        .select('*');
-      
-      // Filter based on status
+        .select(`
+          *,
+          meeting_participants!inner(user_id)
+        `)
+        .or(`created_by.eq.${user.id},meeting_participants.user_id.eq.${user.id}`);
+        
       if (filter === 'upcoming') {
         query = query.in('status', ['upcoming', 'in_progress']);
       } else if (filter === 'completed') {
         query = query.eq('status', 'completed');
       }
-      
-      // Get meetings created by the user or where the user is a participant
-      // Using proper OR syntax for PostgREST
-      query = query.or(`created_by.eq.${user.id},participants.cs.{${user.id}}`);
-      
-      const { data, error } = await query;
-      
+
+      const { data, error } = await query.order('date', { ascending: true });
+
       if (error) {
         console.error('Error fetching meetings:', error);
         throw error;
       }
-      
+
       return data as Meeting[];
     },
     enabled: !!user,
   });
 
-  // Add createMeeting mutation
+  // Create a new meeting
   const createMeetingMutation = useMutation({
-    mutationFn: async (formData: MeetingFormData) => {
-      if (!user) throw new Error('User not authenticated');
-      
-      // Prepare meeting data
-      const meetingData = {
-        title: formData.title,
-        description: formData.objectives || '',
-        meeting_type: formData.meeting_type,
-        date: formData.date,
-        start_time: formData.start_time,
-        end_time: calculateEndTime(formData.start_time, formData.duration),
-        duration: formData.duration,
-        location: formData.location || null,
-        meeting_link: formData.meeting_link || null,
-        attendance_type: formData.attendance_type,
-        objectives: formData.objectives || null,
-        status: 'upcoming',
-        created_by: user.id
-      };
-      
-      // Insert the meeting
+    mutationFn: async (meetingData: MeetingFormData) => {
+      if (!user) throw new Error('User must be logged in');
+
+      // First, create the meeting
       const { data: meeting, error: meetingError } = await supabase
         .from('meetings')
-        .insert(meetingData)
-        .select('*')
+        .insert({
+          title: meetingData.title,
+          meeting_type: meetingData.meeting_type,
+          date: meetingData.date,
+          start_time: meetingData.start_time,
+          duration: meetingData.duration,
+          attendance_type: meetingData.attendance_type,
+          location: meetingData.location,
+          meeting_link: meetingData.meeting_link,
+          objectives: meetingData.objectives,
+          created_by: user.id,
+          status: 'upcoming'
+        })
+        .select()
         .single();
 
       if (meetingError) throw meetingError;
-      
-      // Insert agenda items if provided
-      if (formData.agenda_items && formData.agenda_items.length > 0) {
-        const agendaItems = formData.agenda_items.map((item, index) => ({
-          meeting_id: meeting.id,
-          title: item.title,
-          description: item.description || null,
-          order_number: item.order_number || index + 1,
-          status: 'pending'
-        }));
-        
-        const { error: agendaError } = await supabase
-          .from('meeting_agenda_items')
-          .insert(agendaItems);
-        
-        if (agendaError) {
-          console.error('Error adding agenda items:', agendaError);
-          // Continue even if agenda items fail, we already have the meeting
-        }
-      }
-      
-      // Insert participants if provided
-      if (formData.participants && formData.participants.length > 0) {
-        const participants = formData.participants.map(p => ({
+
+      // Then add participants
+      if (meetingData.participants.length > 0) {
+        const participantsData = meetingData.participants.map(p => ({
           meeting_id: meeting.id,
           user_id: p.user_id,
-          role: p.role,
-          status: 'invited',
-          attendance_status: 'pending'
+          role: p.role
         }));
-        
+
         const { error: participantsError } = await supabase
           .from('meeting_participants')
-          .insert(participants);
-        
-        if (participantsError) {
-          console.error('Error adding participants:', participantsError);
-          // Continue even if participants fail, we already have the meeting
-        }
+          .insert(participantsData);
+
+        if (participantsError) throw participantsError;
       }
-      
+
+      // Add agenda items if provided
+      if (meetingData.agenda_items && meetingData.agenda_items.length > 0) {
+        const agendaItemsData = meetingData.agenda_items.map(item => ({
+          meeting_id: meeting.id,
+          title: item.title,
+          description: item.description,
+          order_number: item.order_number
+        }));
+
+        const { error: agendaError } = await supabase
+          .from('meeting_agenda_items')
+          .insert(agendaItemsData);
+
+        if (agendaError) throw agendaError;
+      }
+
       return meeting;
     },
     onSuccess: () => {
@@ -126,25 +112,62 @@ export const useMeetings = () => {
     }
   });
 
-  // Helper function to calculate end time from start time and duration
-  const calculateEndTime = (startTime: string, durationMinutes: number) => {
-    const [hours, minutes] = startTime.split(':').map(Number);
-    let endHours = hours + Math.floor((minutes + durationMinutes) / 60);
-    const endMinutes = (minutes + durationMinutes) % 60;
-    
-    // Handle day overflow
-    endHours = endHours % 24;
-    
-    return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
-  };
+  // Update a meeting
+  const updateMeetingMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string, data: Partial<Meeting> }) => {
+      const { data: meeting, error } = await supabase
+        .from('meetings')
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return meeting;
+    },
+    onSuccess: () => {
+      toast.success('تم تحديث الاجتماع بنجاح');
+      queryClient.invalidateQueries({ queryKey: ['meetings'] });
+    },
+    onError: (error) => {
+      console.error('Error updating meeting:', error);
+      toast.error('حدث خطأ أثناء تحديث الاجتماع');
+    }
+  });
+
+  // Delete a meeting
+  const deleteMeetingMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('meetings')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      toast.success('تم حذف الاجتماع بنجاح');
+      queryClient.invalidateQueries({ queryKey: ['meetings'] });
+    },
+    onError: (error) => {
+      console.error('Error deleting meeting:', error);
+      toast.error('حدث خطأ أثناء حذف الاجتماع');
+    }
+  });
 
   return {
     meetings,
     isLoading,
     error,
+    refetch,
     filter,
     setFilter,
     createMeeting: createMeetingMutation.mutate,
-    isCreating: createMeetingMutation.isPending
+    updateMeeting: updateMeetingMutation.mutate,
+    deleteMeeting: deleteMeetingMutation.mutate,
+    isCreating: createMeetingMutation.isPending,
+    isUpdating: updateMeetingMutation.isPending,
+    isDeleting: deleteMeetingMutation.isPending,
   };
 };
