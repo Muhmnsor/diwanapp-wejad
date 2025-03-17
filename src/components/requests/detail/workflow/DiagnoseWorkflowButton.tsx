@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Stethoscope, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface DiagnosticResult {
   isValid: boolean;

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useMeetingDetails } from '@/components/meetings/hooks/useMeetingDetails';
 import { useTaskUpdater } from '@/components/meetings/hooks/useTaskUpdater';
 import { MeetingAgendaPanel } from '@/components/meetings/panels/MeetingAgendaPanel';
@@ -8,6 +8,7 @@ import { MeetingParticipantsPanel } from '@/components/meetings/panels/MeetingPa
 import { MeetingMinutesPanel } from '@/components/meetings/panels/MeetingMinutesPanel';
 import { MeetingDecisionsPanel } from '@/components/meetings/panels/MeetingDecisionsPanel';
 import { format } from 'date-fns';
+import { useLocation } from 'react-router-dom';
 import { 
   Card, 
   CardContent, 
@@ -46,6 +47,10 @@ interface MeetingDetailsProps {
 }
 
 export const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meetingId }) => {
+  const location = useLocation();
+  const urlParams = new URLSearchParams(location.search);
+  const activeTab = urlParams.get('tab') || 'overview';
+  
   const { 
     meeting, 
     participants, 
@@ -114,6 +119,17 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meetingId }) => 
       case 'remote': return 'عن بعد';
       case 'hybrid': return 'هجين';
       default: return type;
+    }
+  };
+
+  // Map URL activeTab to the Tabs component value
+  const getTabsValue = () => {
+    switch (activeTab) {
+      case 'tasks': return 'tasks';
+      case 'participants': return 'participants';
+      case 'minutes': return 'minutes';
+      case 'decisions': return 'decisions';
+      default: return 'agenda'; // Default to agenda for 'overview' or unknown
     }
   };
 
@@ -195,15 +211,7 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meetingId }) => 
       
       <Separator />
       
-      <Tabs defaultValue="agenda" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="agenda">جدول الأعمال</TabsTrigger>
-          <TabsTrigger value="tasks">المهام</TabsTrigger>
-          <TabsTrigger value="participants">المشاركون</TabsTrigger>
-          <TabsTrigger value="minutes">المحضر</TabsTrigger>
-          <TabsTrigger value="decisions">القرارات</TabsTrigger>
-        </TabsList>
-        
+      <Tabs defaultValue={getTabsValue()} className="w-full">
         <TabsContent value="agenda">
           <MeetingAgendaPanel 
             agendaItems={agendaItems}
