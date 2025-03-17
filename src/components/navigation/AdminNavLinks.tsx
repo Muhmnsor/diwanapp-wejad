@@ -1,6 +1,6 @@
 
-import { Link, useLocation } from "react-router-dom";
-import { Grid, Calendar } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Grid } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -10,50 +10,23 @@ interface AdminNavLinksProps {
 }
 
 export const AdminNavLinks = ({ isActive, isMobile }: AdminNavLinksProps) => {
-  const location = useLocation();
-
-  // Enhanced isActive check specifically for meetings routes
-  const isMeetingsActive = () => {
-    return location.pathname.includes('/meetings');
-  };
-
   return (
-    <>
-      <Button
-        variant="outline"
-        size="sm"
-        asChild
-        className="flex items-center gap-2 text-sm border-gray-200 transition-colors duration-200 hover:bg-gray-100 hover:text-primary hover:border-primary/20"
+    <Button
+      variant="outline"
+      size="sm"
+      asChild
+      className="flex items-center gap-2 text-sm border-gray-200 transition-colors duration-200 hover:bg-gray-100 hover:text-primary hover:border-primary/20"
+    >
+      <Link
+        to="/admin/dashboard"
+        className={cn(
+          "flex items-center gap-2",
+          isActive("/admin/dashboard") ? "text-primary" : "text-muted-foreground"
+        )}
       >
-        <Link
-          to="/admin/dashboard"
-          className={cn(
-            "flex items-center gap-2",
-            isActive("/admin/dashboard") ? "text-primary" : "text-muted-foreground"
-          )}
-        >
-          <Grid className="h-4 w-4" />
-          {!isMobile && <span>التطبيقات</span>}
-        </Link>
-      </Button>
-
-      <Button
-        variant="outline"
-        size="sm"
-        asChild
-        className="flex items-center gap-2 text-sm border-gray-200 transition-colors duration-200 hover:bg-gray-100 hover:text-primary hover:border-primary/20"
-      >
-        <Link
-          to="/meetings"
-          className={cn(
-            "flex items-center gap-2",
-            isMeetingsActive() ? "text-primary" : "text-muted-foreground"
-          )}
-        >
-          <Calendar className="h-4 w-4" />
-          {!isMobile && <span>الاجتماعات</span>}
-        </Link>
-      </Button>
-    </>
+        <Grid className="h-4 w-4" />
+        {!isMobile && <span>التطبيقات</span>}
+      </Link>
+    </Button>
   );
 };

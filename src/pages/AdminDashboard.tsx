@@ -11,7 +11,7 @@ import { getAppsList } from "@/components/admin/dashboard/getAppsList";
 import { DeveloperToolbar } from "@/components/developer/DeveloperToolbar";
 import { useAuthStore } from "@/store/refactored-auth";
 import { AppItem } from "@/components/admin/dashboard/DashboardApps";
-import { Loader2, Calendar } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 const AdminDashboard = () => {
   const { data: userName, isLoading: isLoadingUser } = useUserName();
@@ -27,18 +27,7 @@ const AdminDashboard = () => {
         setIsLoadingApps(true);
         try {
           const appsList = await getAppsList(notificationCounts, user);
-          
-          // Add meetings app to the apps list
-          const meetingsApp: AppItem = {
-            title: "الاجتماعات",
-            description: "إدارة الاجتماعات ومحاضرها",
-            icon: Calendar,
-            path: "/meetings",
-            notifications: notificationCounts?.meetings || 0
-          };
-          
-          // Add the meetings app to the list
-          setApps([...appsList, meetingsApp]);
+          setApps(appsList);
         } catch (error) {
           console.error("Error fetching apps:", error);
         } finally {

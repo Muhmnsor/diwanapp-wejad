@@ -85,7 +85,6 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
     requester: requester
   };
 
-  // Debug info for workflow data
   console.log("Request workflow data:", workflow);
   console.log("Current step data:", currentStep);
   console.log("Workflow steps:", workflowSteps);
@@ -94,7 +93,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   console.log("Has submitted opinion:", hasSubmittedOpinion() ? "Yes" : "No");
   console.log("Is requester:", isRequester() ? "Yes" : "No");
 
-  // Helpers function to handle async refetch and convert to Promise<void>
+  // Helper function to handle async refetch and convert to Promise<void>
   const handleRefetch = async () => {
     await refetch();
   };
@@ -117,7 +116,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
             <RequestActionButtons 
               status={request.status}
               isCurrentApprover={isCurrentApprover()}
-              stepType={currentStep?.step_type || "decision"}
+              stepType={stepType}
               hasSubmittedOpinion={hasSubmittedOpinion()}
               isRequester={isRequester()}
               onApprove={handleApproveClick}
@@ -130,10 +129,10 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <RequestDetailsCard 
-              request={{...request, requester: requester}}
+              request={enhancedRequest}
               requestType={requestType}
-              approvals={approvals || []}
-              attachments={attachments || []}
+              approvals={approvals}
+              attachments={attachments}
             />
           </div>
 
@@ -143,7 +142,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
               currentStep={currentStep}
               requestId={requestId}
               requestStatus={request.status}
-              workflowSteps={workflowSteps || []}
+              workflowSteps={workflowSteps}
             />
           </div>
         </div>
@@ -152,7 +151,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
       <RequestApproveDialog
         requestId={requestId}
         stepId={request.current_step_id}
-        stepType={currentStep?.step_type || "decision"}
+        stepType={stepType}
         requesterId={request.requester_id}
         isOpen={isApproveDialogOpen}
         onOpenChange={(open) => {
@@ -164,7 +163,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
       <RequestRejectDialog
         requestId={requestId}
         stepId={request.current_step_id}
-        stepType={currentStep?.step_type || "decision"}
+        stepType={stepType}
         requesterId={request.requester_id}
         isOpen={isRejectDialogOpen}
         onOpenChange={(open) => {

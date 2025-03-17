@@ -13,12 +13,6 @@ export const Navigation = () => {
   console.log('Navigation - Current location:', location.pathname);
 
   const isActive = (path: string) => {
-    if (path === '/admin/dashboard') {
-      return location.pathname === '/admin/dashboard';
-    }
-    if (path === '/meetings') {
-      return location.pathname.startsWith('/meetings');
-    }
     return location.pathname === path;
   };
 

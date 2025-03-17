@@ -228,11 +228,9 @@ export const useRequestDetail = (requestId: string) => {
       } else if (result.issues?.length === 0) {
         toast.success("لا توجد مشاكل في سير العمل");
       }
-      return result;
     } catch (error) {
       console.error("Error diagnosing workflow:", error);
       toast.error("حدث خطأ أثناء تشخيص سير العمل");
-      return null;
     } finally {
       setIsDiagnosing(false);
     }
@@ -252,11 +250,9 @@ export const useRequestDetail = (requestId: string) => {
       } else {
         toast.error("فشل إصلاح سير العمل: " + result.error);
       }
-      return result;
     } catch (error) {
       console.error("Error fixing workflow:", error);
       toast.error("حدث خطأ أثناء إصلاح سير العمل");
-      return null;
     }
   };
 
