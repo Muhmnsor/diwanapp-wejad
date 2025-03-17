@@ -28,3 +28,19 @@ export interface CurrentStepDisplayProps {
   requestStatus?: string;
   isLoading: boolean;
 }
+
+export interface WorkflowStepItemProps {
+  step: WorkflowStep;
+  isCurrent: boolean;
+  isCompleted: boolean;
+}
+
+export interface DiagnoseWorkflowButtonProps {
+  requestId: string;
+  onDiagnose: () => Promise<any>;
+  onFix: () => Promise<any>;
+  onSuccess: () => Promise<void>;
+  isDiagnosing: boolean;
+  diagnosticResult: any | null;
+  className?: string;
+}

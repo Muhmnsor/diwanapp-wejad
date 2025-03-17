@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, InfoIcon } from "lucide-react";
+import { AlertCircle, InfoIcon, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/refactored-auth";
 
 interface RequestApproveDialogProps {
@@ -35,14 +35,26 @@ export const RequestApproveDialog = ({
   onOpenChange 
 }: RequestApproveDialogProps) => {
   const [comments, setComments] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   
   const isSelfApproval = user?.id === requesterId;
   const isOpinionStep = stepType === 'opinion';
   
+  // Reset error message when dialog opens/closes
+  const handleOpenChange = (open: boolean) => {
+    setErrorMessage(null);
+    if (!open) {
+      setComments(""); // Clear comments when closing
+    }
+    onOpenChange(open);
+  };
+  
   const approveMutation = useMutation({
     mutationFn: async () => {
+      setErrorMessage(null);
+      
       if (!stepId) {
         throw new Error("لا يمكن الموافقة على هذا الطلب لأنه لا يوجد خطوة حالية");
       }
@@ -56,24 +68,7 @@ export const RequestApproveDialog = ({
         throw new Error("لا يمكن الموافقة على طلبك الخاص إلا في حالة خطوات الرأي فقط");
       }
       
-      // SECURITY ENHANCEMENT: Verify that the current user is authorized approver
-      // The server will also verify this, this is a client-side check
-      const { data: stepData, error: stepError } = await supabase
-        .from('workflow_steps')
-        .select('approver_id, step_type')
-        .eq('id', stepId)
-        .single();
-        
-      if (stepError) {
-        console.error("Error checking step approver:", stepError);
-        throw new Error("حدث خطأ أثناء التحقق من صلاحية الموافقة");
-      }
-      
-      if (stepData.approver_id !== user?.id && !isOpinionStep) {
-        throw new Error("أنت لست المعتمد المخول للموافقة على هذه الخطوة");
-      }
-      
-      console.log(`Approving request: ${requestId}, step: ${stepId}, type: ${stepType}, comments: "${comments}"`);
+      console.log(`Starting approval for request: ${requestId}, step: ${stepId}, type: ${stepType}, comments: "${comments}"`);
       
       const metadata = {
         isSelfApproval,
@@ -86,23 +81,31 @@ export const RequestApproveDialog = ({
         }
       };
       
-      // Use the appropriate RPC call
-      const { data, error } = await supabase
-        .rpc('approve_request', { 
-          p_request_id: requestId,
-          p_step_id: stepId,
-          p_comments: comments || null,
-          p_metadata: metadata
-        });
-        
-      if (error) {
-        console.error("Error approving request:", error);
-        throw error;
-      }
-      
-      console.log("Approval result:", data);
-      
+      // Use the appropriate RPC call with proper error handling
       try {
+        console.log("Calling approve_request RPC...");
+        const { data, error } = await supabase
+          .rpc('approve_request', { 
+            p_request_id: requestId,
+            p_step_id: stepId,
+            p_comments: comments || null,
+            p_metadata: metadata
+          });
+          
+        if (error) {
+          console.error("Error from approve_request RPC:", error);
+          throw new Error(error.message || "حدث خطأ أثناء محاولة الموافقة على الطلب");
+        }
+        
+        console.log("Approval result:", data);
+        
+        if (!data || !data.success) {
+          const errorMsg = data?.message || "فشلت عملية الموافقة لسبب غير معروف";
+          console.error("Approval failed:", errorMsg);
+          throw new Error(errorMsg);
+        }
+        
+        // Only for successful operations, update the workflow step
         console.log("Step completed. Updating workflow to next step...");
         
         const { data: updateResult, error: updateError } = await supabase.functions.invoke('update-workflow-step', {
@@ -119,11 +122,12 @@ export const RequestApproveDialog = ({
         
         if (updateError) {
           console.error("Error updating workflow step:", updateError);
-          toast.warning("تم تسجيل رأيك ولكن هناك مشكلة في تحديث الخطوة التالية");
-        } else {
-          console.log("Workflow updated successfully:", updateResult);
+          throw new Error("تم تسجيل رأيك ولكن هناك مشكلة في تحديث الخطوة التالية");
         }
         
+        console.log("Workflow updated successfully:", updateResult);
+        
+        // Check if we need to run the fix-request-status function
         if (data && data.is_last_step) {
           console.log("This appears to be the last step. Running fix-request-status...");
           try {
@@ -140,16 +144,17 @@ export const RequestApproveDialog = ({
             console.error("Exception fixing request status:", fixError);
           }
         }
-      } catch (updateError) {
-        console.error("Exception updating workflow step:", updateError);
+        
+        return data;
+      } catch (error) {
+        console.error("Error in approve_request call:", error);
+        throw error;
       }
-      
-      return data;
     },
     onSuccess: (result) => {
       if (result && !result.success) {
+        setErrorMessage(result.message || "فشلت عملية الموافقة");
         toast.warning(result.message);
-        onOpenChange(false);
         return;
       }
       
@@ -158,15 +163,18 @@ export const RequestApproveDialog = ({
         : "تمت الموافقة على الطلب بنجاح";
       
       toast.success(successMessage);
-      onOpenChange(false);
-      setComments("");
       
+      // Only close the dialog after a successful submission
+      handleOpenChange(false);
+      
+      // Invalidate relevant queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['requests'] });
       queryClient.invalidateQueries({ queryKey: ['requests', 'incoming'] });
       queryClient.invalidateQueries({ queryKey: ['request-details', requestId] });
     },
-    onError: (error) => {
-      console.error("Error approving request:", error);
+    onError: (error: Error) => {
+      console.error("Error in approveMutation:", error);
+      setErrorMessage(error.message || "حدث خطأ أثناء الموافقة على الطلب");
       toast.error(`حدث خطأ أثناء الموافقة على الطلب: ${error.message}`);
     }
   });
@@ -174,6 +182,7 @@ export const RequestApproveDialog = ({
   const handleApprove = () => {
     // For opinion steps, ensure comments are provided
     if (isOpinionStep && (!comments || comments.trim() === '')) {
+      setErrorMessage("يجب إدخال رأيك للمتابعة");
       toast.error("يجب إدخال رأيك للمتابعة");
       return;
     }
@@ -182,7 +191,7 @@ export const RequestApproveDialog = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
@@ -215,6 +224,14 @@ export const RequestApproveDialog = ({
           </Alert>
         )}
         
+        {errorMessage && (
+          <Alert variant="destructive" className="my-2">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>خطأ</AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        )}
+        
         <div className="py-4">
           <label htmlFor="comments" className={`block text-sm font-medium mb-2 ${isOpinionStep ? 'text-primary' : ''}`}>
             {isOpinionStep ? 'رأيك (مطلوب) *' : 'التعليقات (اختياري)'}
@@ -235,7 +252,7 @@ export const RequestApproveDialog = ({
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
             إلغاء
           </Button>
           <Button 
@@ -243,7 +260,14 @@ export const RequestApproveDialog = ({
             disabled={approveMutation.isPending || (isSelfApproval && !isOpinionStep) || (isOpinionStep && !comments.trim())} 
             className="bg-green-600 hover:bg-green-700"
           >
-            {approveMutation.isPending ? "جاري المعالجة..." : isOpinionStep ? 'إرسال الرأي' : 'موافقة'}
+            {approveMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                جاري المعالجة...
+              </>
+            ) : (
+              isOpinionStep ? 'إرسال الرأي' : 'موافقة'
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

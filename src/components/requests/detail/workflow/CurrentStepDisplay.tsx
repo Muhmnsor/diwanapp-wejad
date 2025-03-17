@@ -1,69 +1,82 @@
 
-import React from 'react';
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { WorkflowStatusBadge } from "./WorkflowStatusBadge";
+import { AlertCircle, Check, X, MessageCircle, Loader2 } from "lucide-react";
 import { CurrentStepDisplayProps } from "./types";
-import { CheckCircle, AlertCircle, User, Clock } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-export const CurrentStepDisplay: React.FC<CurrentStepDisplayProps> = ({ 
-  currentStep,
+export const CurrentStepDisplay = ({ 
+  currentStep, 
   requestStatus,
-  isLoading = false
-}) => {
+  isLoading
+}: CurrentStepDisplayProps) => {
   if (isLoading) {
     return (
-      <div className="space-y-2">
-        <Skeleton className="h-5 w-32" />
-        <Skeleton className="h-20 w-full" />
+      <div className="flex justify-center items-center py-2">
+        <Loader2 className="h-5 w-5 animate-spin text-gray-400 mr-2" />
+        <span className="text-sm text-gray-500">جاري تحميل معلومات الخطوة الحالية...</span>
       </div>
     );
   }
-
-  // For completed requests, show a completion message regardless of currentStep
-  if (requestStatus === 'completed' || !currentStep) {
+  
+  if (requestStatus === "completed") {
     return (
-      <div className="text-center p-4 border rounded-md border-dashed">
-        <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
-        <p className="text-green-600 font-medium">
-          تم اكتمال جميع خطوات سير العمل
-        </p>
-      </div>
+      <Alert className="bg-green-50 border-green-200 text-green-800">
+        <Check className="h-4 w-4 text-green-600" />
+        <AlertTitle>مكتمل</AlertTitle>
+        <AlertDescription>تم إكمال هذا الطلب بنجاح</AlertDescription>
+      </Alert>
     );
   }
-
+  
+  if (requestStatus === "rejected") {
+    return (
+      <Alert className="bg-red-50 border-red-200 text-red-800">
+        <X className="h-4 w-4 text-red-600" />
+        <AlertTitle>مرفوض</AlertTitle>
+        <AlertDescription>تم رفض هذا الطلب</AlertDescription>
+      </Alert>
+    );
+  }
+  
+  if (requestStatus === "cancelled") {
+    return (
+      <Alert className="bg-gray-50 border-gray-200 text-gray-800">
+        <X className="h-4 w-4 text-gray-600" />
+        <AlertTitle>ملغي</AlertTitle>
+        <AlertDescription>تم إلغاء هذا الطلب</AlertDescription>
+      </Alert>
+    );
+  }
+  
+  if (!currentStep) {
+    return (
+      <Alert className="bg-amber-50 border-amber-200 text-amber-800">
+        <AlertCircle className="h-4 w-4 text-amber-600" />
+        <AlertTitle>غير محدد</AlertTitle>
+        <AlertDescription>لا توجد خطوة حالية محددة لهذا الطلب</AlertDescription>
+      </Alert>
+    );
+  }
+  
+  // Handle opinion steps differently
+  if (currentStep.step_type === 'opinion') {
+    return (
+      <Alert className="bg-blue-50 border-blue-200 text-blue-800">
+        <MessageCircle className="h-4 w-4 text-blue-600" />
+        <AlertTitle>خطوة إبداء رأي: {currentStep.step_name}</AlertTitle>
+        <AlertDescription>
+          هذه خطوة لجمع الآراء وليست إلزامية لاستمرار سير العمل
+        </AlertDescription>
+      </Alert>
+    );
+  }
+  
   return (
-    <Card>
-      <CardContent className="p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <h4 className="text-sm font-medium">الخطوة الحالية</h4>
-          {currentStep.step_type && (
-            <WorkflowStatusBadge status={currentStep.step_type} />
-          )}
-        </div>
-
-        <div className="bg-muted/50 p-3 rounded-md">
-          <h3 className="font-semibold mb-1">{currentStep.step_name}</h3>
-          
-          {currentStep.instructions && (
-            <p className="text-sm text-muted-foreground mb-2">
-              {currentStep.instructions}
-            </p>
-          )}
-          
-          <div className="flex flex-col space-y-1 mt-2 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <User className="h-3.5 w-3.5" />
-              <span>
-                {currentStep.step_type === 'opinion' ? 'المسؤول عن إبداء الرأي' :
-                 currentStep.step_type === 'decision' ? 'المسؤول عن القرار' :
-                 currentStep.step_type === 'notification' ? 'المسؤول عن الإشعار' :
-                 'المسؤول عن الموافقة'}
-              </span>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <Alert className="bg-amber-50 border-amber-200 text-amber-800">
+      <AlertCircle className="h-4 w-4 text-amber-600" />
+      <AlertTitle>في انتظار الموافقة</AlertTitle>
+      <AlertDescription>
+        الخطوة الحالية: {currentStep.step_name || "خطوة غير مسماة"}
+      </AlertDescription>
+    </Alert>
   );
 };
