@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { EditMeetingDialog } from "./EditMeetingDialog";
 import { Meeting, MeetingType, MeetingStatus, AttendanceType } from "@/types/meeting";
+import { useSelectAdapters } from "@/hooks/meetings/useSelectAdapters";
 
 interface MeetingDialogWrapperProps {
   open: boolean;
@@ -16,28 +17,39 @@ export const MeetingDialogWrapper = ({
   meeting,
   onSave,
 }: MeetingDialogWrapperProps) => {
+  // Initialize state with meeting values or defaults
   const [meetingTypeValue, setMeetingTypeValue] = useState<MeetingType>(
     meeting?.meeting_type || "other"
   );
   
   const [meetingStatusValue, setMeetingStatusValue] = useState<MeetingStatus>(
-    meeting?.status || "scheduled"
+    meeting?.status as MeetingStatus || "scheduled"
   );
   
   const [attendanceTypeValue, setAttendanceTypeValue] = useState<AttendanceType>(
     meeting?.attendance_type || "in_person"
   );
 
-  const handleMeetingTypeChange = (newValue: string) => {
-    setMeetingTypeValue(newValue as MeetingType);
-  };
+  // Use our type-safe adapters
+  const {
+    meetingTypeAdapter,
+    meetingStatusAdapter,
+    attendanceTypeAdapter
+  } = useSelectAdapters(
+    setMeetingTypeValue,
+    setMeetingStatusValue,
+    setAttendanceTypeValue
+  );
 
-  const handleMeetingStatusChange = (newValue: string) => {
-    setMeetingStatusValue(newValue as MeetingStatus);
-  };
-
-  const handleAttendanceTypeChange = (newValue: string) => {
-    setAttendanceTypeValue(newValue as AttendanceType);
+  // Pass modified meeting object with the updated fields to parent component
+  const handleSaveMeeting = (updatedMeeting: Meeting) => {
+    const finalMeeting = {
+      ...updatedMeeting,
+      meeting_type: meetingTypeValue,
+      status: meetingStatusValue,
+      attendance_type: attendanceTypeValue
+    };
+    onSave(finalMeeting);
   };
 
   return (
@@ -45,13 +57,13 @@ export const MeetingDialogWrapper = ({
       open={open}
       onOpenChange={onOpenChange}
       meeting={meeting}
-      onSave={onSave}
       meetingTypeValue={meetingTypeValue}
       meetingStatusValue={meetingStatusValue}
       attendanceTypeValue={attendanceTypeValue}
-      onMeetingTypeChange={handleMeetingTypeChange}
-      onMeetingStatusChange={handleMeetingStatusChange}
-      onAttendanceTypeChange={handleAttendanceTypeChange}
+      onMeetingTypeChange={meetingTypeAdapter}
+      onMeetingStatusChange={meetingStatusAdapter}
+      onAttendanceTypeChange={attendanceTypeAdapter}
+      onSaveMeeting={handleSaveMeeting}
     />
   );
 };
