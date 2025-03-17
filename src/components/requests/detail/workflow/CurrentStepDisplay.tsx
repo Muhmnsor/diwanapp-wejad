@@ -56,8 +56,8 @@ export const CurrentStepDisplay: React.FC<CurrentStepDisplayProps> = ({
               <User className="h-3.5 w-3.5" />
               <span>
                 {currentStep.step_type === 'opinion' ? 'المسؤول عن إبداء الرأي' :
-                 currentStep.step_type === 'review' ? 'المسؤول عن المراجعة' :
                  currentStep.step_type === 'decision' ? 'المسؤول عن القرار' :
+                 currentStep.step_type === 'notification' ? 'المسؤول عن الإشعار' :
                  'المسؤول عن الموافقة'}
               </span>
             </div>

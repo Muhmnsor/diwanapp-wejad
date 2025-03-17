@@ -28,7 +28,7 @@ export interface FormSchema {
 export interface WorkflowStep {
   id: string | null;
   step_name: string;
-  step_type: 'decision' | 'opinion' | 'notification';
+  step_type: 'decision' | 'opinion' | 'notification' | 'review';
   approver_id: string;
   is_required: boolean;
   workflow_id: string;

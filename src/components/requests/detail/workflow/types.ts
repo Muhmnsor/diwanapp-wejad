@@ -12,6 +12,12 @@ export interface WorkflowCardProps {
   requestStatus?: string;
 }
 
+export interface WorkflowStepItemProps {
+  step: WorkflowStep;
+  isCurrent: boolean;
+  isCompleted: boolean;
+}
+
 export interface CurrentStepDisplayProps {
   currentStep?: WorkflowStep | null;
   requestStatus?: string;
