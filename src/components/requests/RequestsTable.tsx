@@ -113,7 +113,7 @@ export const RequestsTable = ({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden" dir="rtl">
       <Table>
         <TableHeader>
           <TableRow>
