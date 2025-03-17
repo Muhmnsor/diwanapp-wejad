@@ -1,82 +1,108 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@/store/authStore";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthStore } from "@/store/refactored-auth";
 
 export interface NotificationCounts {
-  tasks: number;
   notifications: number;
-  ideas: number;
-  finance: number;
+  tasks: number;
+  approval_requests: number;
+  documents: number;
+  meetings: number;
+  [key: string]: number;
 }
 
 export const useNotificationCounts = () => {
   const { user } = useAuthStore();
 
   return useQuery({
-    queryKey: ['notification-counts'],
-    queryFn: async () => {
-      const { data: pendingPortfolioTasks, error: portfolioError } = await supabase
-        .from('portfolio_tasks')
-        .select('id', { count: 'exact' })
-        .eq('assigned_to', user?.id)
-        .neq('status', 'completed');
-
-      const { data: pendingRegularTasks, error: tasksError } = await supabase
-        .from('tasks')
-        .select('id', { count: 'exact' })
-        .eq('assigned_to', user?.id)
-        .neq('status', 'completed');
-
-      const { data: pendingSubtasks, error: subtasksError } = await supabase
-        .from('subtasks')
-        .select('id', { count: 'exact' })
-        .eq('assigned_to', user?.id)
-        .neq('status', 'completed');
-
-      if (portfolioError || tasksError || subtasksError) {
-        console.error("Error fetching tasks counts:", 
-          portfolioError || tasksError || subtasksError
-        );
+    queryKey: ['notification-counts', user?.id],
+    queryFn: async (): Promise<NotificationCounts> => {
+      if (!user) {
+        return {
+          notifications: 0,
+          tasks: 0,
+          approval_requests: 0,
+          documents: 0,
+          meetings: 0
+        };
       }
 
-      const totalPendingTasks = 
-        (pendingPortfolioTasks?.length || 0) + 
-        (pendingRegularTasks?.length || 0) + 
-        (pendingSubtasks?.length || 0);
+      try {
+        // Get unread notifications count
+        const { count: notificationsCount, error: notificationsError } = await supabase
+          .from('notifications')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('read', false);
 
-      const { data: unreadNotifications, error: notificationsError } = await supabase
-        .from('notifications')
-        .select('id', { count: 'exact' })
-        .eq('is_read', false)
-        .eq('user_id', user?.id);
+        if (notificationsError) {
+          throw notificationsError;
+        }
 
-      const { data: newIdeas, error: ideasError } = await supabase
-        .from('ideas')
-        .select('id', { count: 'exact' })
-        .eq('status', 'new');
+        // Get tasks count (you would customize this based on your schema)
+        const { count: tasksCount, error: tasksError } = await supabase
+          .from('tasks')
+          .select('*', { count: 'exact', head: true })
+          .eq('assignee_id', user.id)
+          .eq('status', 'pending');
 
-      const { data: pendingFinance, error: financeError } = await supabase
-        .from('financial_resources')
-        .select('id', { count: 'exact' })
-        .eq('status', 'pending');
+        if (tasksError) {
+          throw tasksError;
+        }
 
-      if (tasksError || notificationsError || ideasError || financeError) {
-        console.error("Error fetching notification counts:", tasksError || notificationsError || ideasError || financeError);
+        // Get approval requests count
+        const { count: approvalsCount, error: approvalsError } = await supabase
+          .from('request_approvals')
+          .select('*', { count: 'exact', head: true })
+          .eq('approver_id', user.id)
+          .eq('status', 'pending');
+
+        if (approvalsError) {
+          throw approvalsError;
+        }
+
+        // Get documents pending review count
+        const { count: documentsCount, error: documentsError } = await supabase
+          .from('documents')
+          .select('*', { count: 'exact', head: true })
+          .eq('reviewer_id', user.id)
+          .eq('status', 'pending_review');
+
+        if (documentsError) {
+          throw documentsError;
+        }
+
+        // Get meetings count that are upcoming and user is a participant
+        const { count: meetingsCount, error: meetingsError } = await supabase
+          .from('meeting_participants')
+          .select('meeting_id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .in('status', ['invited', 'confirmed']);
+
+        if (meetingsError) {
+          throw meetingsError;
+        }
+
+        return {
+          notifications: notificationsCount || 0,
+          tasks: tasksCount || 0,
+          approval_requests: approvalsCount || 0,
+          documents: documentsCount || 0,
+          meetings: meetingsCount || 0
+        };
+      } catch (error) {
+        console.error('Error fetching notification counts:', error);
+        return {
+          notifications: 0,
+          tasks: 0,
+          approval_requests: 0,
+          documents: 0,
+          meetings: 0
+        };
       }
-
-      return {
-        tasks: totalPendingTasks,
-        notifications: unreadNotifications?.length || 0,
-        ideas: newIdeas?.length || 0,
-        finance: pendingFinance?.length || 0,
-      };
     },
-    initialData: {
-      tasks: 0,
-      notifications: 0,
-      ideas: 0,
-      finance: 0
-    }
+    refetchInterval: 60000, // Refetch every minute
+    enabled: !!user,
   });
 };
