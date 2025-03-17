@@ -1,17 +1,21 @@
 
 import { WorkflowStep } from "../../types";
 
-export interface CurrentStepDisplayProps {
-  currentStep: WorkflowStep | null;
-  requestStatus?: 'pending' | 'in_progress' | 'completed' | 'rejected';
-  isLoading?: boolean;
+export interface WorkflowCardProps {
+  workflow?: { 
+    id: string; 
+    name?: string; 
+    description?: string; 
+  } | null;
+  currentStep?: WorkflowStep | null;
+  requestId: string;
+  requestStatus?: string;
 }
 
-export interface WorkflowCardProps {
-  workflow: any | null;
-  currentStep: WorkflowStep | null;
-  requestId: string;
-  requestStatus?: 'pending' | 'in_progress' | 'completed' | 'rejected';
+export interface CurrentStepDisplayProps {
+  currentStep?: WorkflowStep | null;
+  requestStatus?: string;
+  isLoading?: boolean;
 }
 
 export interface WorkflowCardDataHookResult {
@@ -25,19 +29,12 @@ export interface WorkflowCardDataHookResult {
   refreshWorkflowData: () => Promise<void>;
 }
 
-export interface WorkflowStepsListProps {
-  steps: WorkflowStep[];
-  currentStepIndex: number;
-  isLoading: boolean;
-  requestStatus?: 'pending' | 'in_progress' | 'completed' | 'rejected';
-}
-
-export interface WorkflowStepItemProps {
-  step: WorkflowStep;
-  isCurrent: boolean;
-  isCompleted: boolean;
-}
-
-export interface WorkflowStatusBadgeProps {
-  status: 'decision' | 'opinion' | 'approval' | 'review' | 'completed' | 'pending' | string;
+export interface DiagnoseWorkflowButtonProps {
+  requestId: string;
+  onDiagnose: () => Promise<void>;
+  onFix: () => Promise<void>;
+  onSuccess: () => Promise<void>;
+  isDiagnosing: boolean;
+  diagnosticResult: any | null;
+  className?: string;
 }
