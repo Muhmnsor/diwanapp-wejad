@@ -1,8 +1,11 @@
+
 import { Route } from "react-router-dom";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Settings from "@/pages/Settings";
 import AdminDashboard from "@/pages/AdminDashboard";
 import AdminMeetings from "@/pages/AdminMeetings";
+import MeetingsPage from "@/pages/meetings/MeetingsPage";
+import MeetingDetailsPage from "@/pages/meetings/MeetingDetailsPage";
 import Documents from "@/pages/Documents";
 import Tasks from "@/pages/Tasks";
 import TasksDashboard from "@/pages/TasksDashboard";
@@ -40,6 +43,24 @@ export const ProtectedRoutes = [
     element={
       <ProtectedRoute>
         <AdminMeetings />
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="admin-meetings-list"
+    path="/admin/meetings/list" 
+    element={
+      <ProtectedRoute>
+        <MeetingsPage />
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="admin-meeting-details"
+    path="/admin/meetings/:id" 
+    element={
+      <ProtectedRoute>
+        <MeetingDetailsPage />
       </ProtectedRoute>
     } 
   />,
