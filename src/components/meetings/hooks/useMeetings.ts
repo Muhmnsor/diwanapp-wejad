@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,11 +27,13 @@ export const useMeetings = () => {
           .from('meetings')
           .select(`
             *,
-            meeting_participants(user_id)
+            meeting_participants!inner(user_id)
           `);
         
-        // Apply user filter to show only meetings created by the user or where the user is a participant
-        query = query.or(`created_by.eq.${user.id},meeting_participants.user_id.eq.${user.id}`);
+        // Apply user filter - fix the previous incorrect syntax
+        if (user.id) {
+          query = query.or(`created_by.eq.${user.id},meeting_participants.user_id.eq.${user.id}`);
+        }
           
         // Apply additional filters based on the selected filter
         if (filter === 'upcoming') {
@@ -56,8 +57,8 @@ export const useMeetings = () => {
       }
     },
     enabled: !!user,
-    retry: 2, // Add retry for network failures
-    staleTime: 5 * 60 * 1000, // Cache data for 5 minutes
+    retry: 2,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Create a new meeting

@@ -1,10 +1,11 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
 import { MeetingDetails } from "@/components/MeetingDetails";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { SecondaryHeader } from "@/components/meetings/navigation/SecondaryHeader";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 const MeetingDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -32,7 +33,11 @@ const MeetingDetail = () => {
       <SecondaryHeader />
       
       <div className="container mx-auto px-4 py-8 flex-grow">
-        <MeetingDetails meetingId={id} />
+        <ErrorBoundary fallback={<p className="text-center py-8">حدث خطأ أثناء تحميل بيانات الاجتماع</p>}>
+          <Suspense fallback={<p className="text-center py-8">جاري التحميل...</p>}>
+            <MeetingDetails meetingId={id} />
+          </Suspense>
+        </ErrorBoundary>
       </div>
 
       <Footer />

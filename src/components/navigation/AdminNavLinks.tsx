@@ -1,5 +1,5 @@
 
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Grid, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,13 @@ interface AdminNavLinksProps {
 }
 
 export const AdminNavLinks = ({ isActive, isMobile }: AdminNavLinksProps) => {
+  const location = useLocation();
+
+  // Enhanced isActive check specifically for meetings routes
+  const isMeetingsActive = () => {
+    return location.pathname.includes('/meetings');
+  };
+
   return (
     <>
       <Button
@@ -40,7 +47,7 @@ export const AdminNavLinks = ({ isActive, isMobile }: AdminNavLinksProps) => {
           to="/meetings"
           className={cn(
             "flex items-center gap-2",
-            isActive("/meetings") ? "text-primary" : "text-muted-foreground"
+            isMeetingsActive() ? "text-primary" : "text-muted-foreground"
           )}
         >
           <Calendar className="h-4 w-4" />
