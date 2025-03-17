@@ -2,7 +2,6 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { MeetingDetails } from '@/components/meetings/MeetingDetails';
-import { MeetingDetailProps } from '@/components/meetings/types';
 
 const MeetingDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

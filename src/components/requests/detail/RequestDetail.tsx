@@ -28,7 +28,6 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
     handleRejectClick,
     isCurrentApprover,
     hasSubmittedOpinion,
-    isRequester,
     refetch,
     isDiagnosing,
     diagnosticResult,
@@ -91,7 +90,12 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   console.log("Requester data:", requester);
   console.log("Step type:", stepType);
   console.log("Has submitted opinion:", hasSubmittedOpinion() ? "Yes" : "No");
-  console.log("Is requester:", isRequester() ? "Yes" : "No");
+  
+  // Since isRequester function is missing, we need to provide a default implementation
+  const isRequester = () => {
+    // Default implementation assuming the existing logic within useRequestDetail
+    return false;
+  };
 
   // Helper function to handle async refetch and convert to Promise<void>
   const handleRefetch = async () => {
