@@ -7,24 +7,16 @@ interface TaskStatusBadgeProps {
 }
 
 export const TaskStatusBadge = ({ status }: TaskStatusBadgeProps) => {
-  const getStatusDetails = (status: TaskStatus) => {
-    switch (status) {
-      case "pending":
-        return { label: "قيد الانتظار", variant: "outline" as const };
-      case "in_progress":
-        return { label: "قيد التنفيذ", variant: "secondary" as const };
-      case "completed":
-        return { label: "مكتمل", variant: "default" as const };
-      case "cancelled":
-        return { label: "ملغي", variant: "destructive" as const };
-      default:
-        return { label: status, variant: "outline" as const };
-    }
-  };
-
-  const { label, variant } = getStatusDetails(status);
-
-  return (
-    <Badge variant={variant}>{label}</Badge>
-  );
+  switch (status) {
+    case "pending":
+      return <Badge className="bg-yellow-100 text-yellow-800">قيد الانتظار</Badge>;
+    case "in_progress":
+      return <Badge className="bg-blue-100 text-blue-800">قيد التنفيذ</Badge>;
+    case "completed":
+      return <Badge className="bg-green-100 text-green-800">مكتمل</Badge>;
+    case "cancelled":
+      return <Badge className="bg-red-100 text-red-800">ملغي</Badge>;
+    default:
+      return <Badge>{status}</Badge>;
+  }
 };

@@ -9,7 +9,18 @@ import { DeveloperToolbar } from "@/components/developer/DeveloperToolbar";
 
 const MeetingsPage = () => {
   const navigate = useNavigate();
-  const { data: meetings = [], isLoading, error, refetch } = useMeetings();
+  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
+  const [typeFilter, setTypeFilter] = useState<string | undefined>(undefined);
+  
+  const { data: meetings = [], isLoading, error, refetch } = useMeetings({
+    status: statusFilter,
+    type: typeFilter
+  });
+  
+  const handleFilterChange = (status?: string, type?: string) => {
+    setStatusFilter(status);
+    setTypeFilter(type);
+  };
   
   const handleCreateMeeting = () => {
     refetch();

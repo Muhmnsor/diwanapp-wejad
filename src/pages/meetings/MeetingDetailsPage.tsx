@@ -1,21 +1,21 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useMeetingDetails } from "@/hooks/meetings/useMeetingDetails";
 import { useMeetingParticipants } from "@/hooks/meetings/useMeetingParticipants";
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
 import { DeveloperToolbar } from "@/components/developer/DeveloperToolbar";
-import { Loader2, ArrowRight, Calendar, Clock, MapPin, Video, Users } from "lucide-react";
+import { Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format, parseISO } from "date-fns";
-import { ar } from "date-fns/locale";
 import { MeetingParticipantsList } from "@/components/meetings/participants/MeetingParticipantsList";
 import { MeetingAgendaList } from "@/components/meetings/agenda/MeetingAgendaList";
 import { MeetingDecisionsList } from "@/components/meetings/decisions/MeetingDecisionsList";
 import { MeetingMinutesList } from "@/components/meetings/minutes/MeetingMinutesList";
 import { MeetingTasksList } from "@/components/meetings/tasks/MeetingTasksList";
 import { MeetingAttachmentsList } from "@/components/meetings/attachments/MeetingAttachmentsList";
+import { MeetingHeader } from "@/components/meetings/MeetingHeader";
+import { MeetingInfo } from "@/components/meetings/MeetingInfo";
 
 const MeetingDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -31,26 +31,6 @@ const MeetingDetailsPage = () => {
     isLoading: isParticipantsLoading,
     error: participantsError
   } = useMeetingParticipants(id);
-
-  const getStatusColor = (status?: string) => {
-    switch (status) {
-      case "scheduled": return "bg-blue-100 text-blue-800";
-      case "in_progress": return "bg-green-100 text-green-800";
-      case "completed": return "bg-gray-100 text-gray-800";
-      case "cancelled": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getStatusLabel = (status?: string) => {
-    switch (status) {
-      case "scheduled": return "مجدول";
-      case "in_progress": return "جاري";
-      case "completed": return "مكتمل";
-      case "cancelled": return "ملغي";
-      default: return status || "غير محدد";
-    }
-  };
 
   if (isMeetingLoading) {
     return (
@@ -95,92 +75,11 @@ const MeetingDetailsPage = () => {
       <AdminHeader />
       
       <div className="container mx-auto px-4 py-8 flex-grow">
-        <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-2xl font-bold">{meeting.title}</h1>
-              <Badge className={getStatusColor(meeting.meeting_status)}>
-                {getStatusLabel(meeting.meeting_status)}
-              </Badge>
-            </div>
-            <p className="text-muted-foreground mt-2">
-              {meeting.objectives || "لا يوجد وصف للاجتماع"}
-            </p>
-          </div>
-          
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate("/admin/meetings/list")}>
-              <ArrowRight className="mr-2 h-4 w-4" />
-              العودة للقائمة
-            </Button>
-            <Button>
-              تعديل الاجتماع
-            </Button>
-          </div>
-        </div>
+        {/* استخدام MeetingHeader */}
+        <MeetingHeader meeting={meeting} />
         
-        <div className="bg-muted/10 p-6 rounded-lg border mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="flex items-center gap-3">
-              <Calendar className="h-5 w-5 text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground">التاريخ</p>
-                <p className="font-medium">
-                  {meeting.date ? 
-                    format(parseISO(meeting.date), 'EEEE d MMMM yyyy', { locale: ar }) : 
-                    'غير محدد'}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <Clock className="h-5 w-5 text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground">الوقت والمدة</p>
-                <p className="font-medium">
-                  {meeting.start_time || 'غير محدد'} 
-                  {meeting.duration ? ` (${meeting.duration} دقيقة)` : ''}
-                </p>
-              </div>
-            </div>
-            
-            {meeting.attendance_type === 'in_person' && meeting.location ? (
-              <div className="flex items-center gap-3">
-                <MapPin className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground">المكان</p>
-                  <p className="font-medium">{meeting.location}</p>
-                </div>
-              </div>
-            ) : meeting.attendance_type === 'virtual' ? (
-              <div className="flex items-center gap-3">
-                <Video className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground">نوع الحضور</p>
-                  <p className="font-medium">اجتماع افتراضي</p>
-                  {meeting.meeting_link && (
-                    <a 
-                      href={meeting.meeting_link} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline"
-                    >
-                      رابط الاجتماع
-                    </a>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3">
-                <Users className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground">نوع الحضور</p>
-                  <p className="font-medium">اجتماع مختلط</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        {/* استخدام MeetingInfo */}
+        <MeetingInfo meeting={meeting} />
         
         <Tabs defaultValue="participants" className="w-full">
           <TabsList className="w-full justify-start mb-6">

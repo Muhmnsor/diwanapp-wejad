@@ -21,11 +21,19 @@ export const MeetingsList = ({ meetings, isLoading, error, onCreate }: MeetingsL
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   
   const filteredMeetings = meetings.filter(meeting => {
     if (statusFilter && meeting.meeting_status !== statusFilter) return false;
     if (typeFilter && meeting.meeting_type !== typeFilter) return false;
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      return (
+        meeting.title.toLowerCase().includes(query) ||
+        (meeting.objectives && meeting.objectives.toLowerCase().includes(query))
+      );
+    }
     return true;
   });
   
@@ -67,6 +75,7 @@ export const MeetingsList = ({ meetings, isLoading, error, onCreate }: MeetingsL
       <MeetingsFilter 
         onStatusChange={setStatusFilter}
         onTypeChange={setTypeFilter}
+        onSearchChange={setSearchQuery}
       />
       
       {filteredMeetings.length === 0 ? (
