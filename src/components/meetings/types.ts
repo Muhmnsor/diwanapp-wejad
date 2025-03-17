@@ -128,18 +128,24 @@ export interface MeetingFormData {
 // Define component props interfaces
 export interface MeetingAgendaPanelProps {
   meetingId: string;
+  agendaItems?: MeetingAgendaItem[];
 }
 
 export interface MeetingParticipantsPanelProps {
   meetingId: string;
+  participants?: MeetingParticipant[];
 }
 
 export interface MeetingMinutesPanelProps {
   meetingId: string;
+  agendaItems?: MeetingAgendaItem[];
 }
 
 export interface MeetingDecisionsPanelProps {
   meetingId: string;
+  decisions?: MeetingDecision[];
+  agendaItems?: MeetingAgendaItem[];
+  onAddDecision?: any;
 }
 
 export interface MeetingDetailProps {
