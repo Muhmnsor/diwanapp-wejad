@@ -8,6 +8,7 @@ export interface NotificationCounts {
   notifications: number;
   ideas: number;
   finance: number;
+  meetings: number; // Added meetings count
 }
 
 export const useNotificationCounts = () => {
@@ -60,9 +61,18 @@ export const useNotificationCounts = () => {
         .from('financial_resources')
         .select('id', { count: 'exact' })
         .eq('status', 'pending');
+        
+      // Fetch pending meetings count where current user is a participant
+      const { data: pendingMeetings, error: meetingsError } = await supabase
+        .from('meetings')
+        .select('id', { count: 'exact' })
+        .eq('status', 'upcoming')
+        .or(`created_by.eq.${user?.id},meeting_participants.user_id.eq.${user?.id}`);
 
-      if (tasksError || notificationsError || ideasError || financeError) {
-        console.error("Error fetching notification counts:", tasksError || notificationsError || ideasError || financeError);
+      if (tasksError || notificationsError || ideasError || financeError || meetingsError) {
+        console.error("Error fetching notification counts:", 
+          tasksError || notificationsError || ideasError || financeError || meetingsError
+        );
       }
 
       return {
@@ -70,13 +80,15 @@ export const useNotificationCounts = () => {
         notifications: unreadNotifications?.length || 0,
         ideas: newIdeas?.length || 0,
         finance: pendingFinance?.length || 0,
+        meetings: pendingMeetings?.length || 0, // Added meetings count
       };
     },
     initialData: {
       tasks: 0,
       notifications: 0,
       ideas: 0,
-      finance: 0
+      finance: 0,
+      meetings: 0 // Added meetings count to initial data
     }
   });
 };
