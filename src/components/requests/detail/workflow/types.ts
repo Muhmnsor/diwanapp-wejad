@@ -1,17 +1,6 @@
 
 import { WorkflowStep } from "../../types";
 
-export interface WorkflowCardProps {
-  workflow?: {
-    id: string;
-    name?: string;
-    description?: string;
-  } | null;
-  currentStep?: WorkflowStep | null;
-  requestId: string;
-  requestStatus?: string;
-}
-
 export interface WorkflowCardDataHookResult {
   isLoading: boolean;
   error: Error | null;
@@ -21,26 +10,4 @@ export interface WorkflowCardDataHookResult {
   diagnoseWorkflow: () => Promise<any>;
   fixWorkflow: () => Promise<any>;
   refreshWorkflowData: () => Promise<void>;
-}
-
-export interface CurrentStepDisplayProps {
-  currentStep?: WorkflowStep | null;
-  requestStatus?: string;
-  isLoading: boolean;
-}
-
-export interface WorkflowStepItemProps {
-  step: WorkflowStep;
-  isCurrent: boolean;
-  isCompleted: boolean;
-}
-
-export interface DiagnoseWorkflowButtonProps {
-  requestId: string;
-  onDiagnose: () => Promise<any>;
-  onFix: () => Promise<any>;
-  onSuccess: () => Promise<void>;
-  isDiagnosing: boolean;
-  diagnosticResult: any | null;
-  className?: string;
 }

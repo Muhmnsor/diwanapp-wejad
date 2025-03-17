@@ -78,6 +78,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   const attachments = data.attachments || [];
   const requester = data.requester;
   const stepType = currentStep?.step_type || "decision";
+  const workflowSteps = data.workflow_steps || [];
 
   const enhancedRequest = {
     ...request,
@@ -86,6 +87,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
 
   console.log("Request workflow data:", workflow);
   console.log("Current step data:", currentStep);
+  console.log("Workflow steps:", workflowSteps);
   console.log("Requester data:", requester);
   console.log("Step type:", stepType);
   console.log("Has submitted opinion:", hasSubmittedOpinion() ? "Yes" : "No");
@@ -140,6 +142,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
               currentStep={currentStep}
               requestId={requestId}
               requestStatus={request.status}
+              workflowSteps={workflowSteps}
             />
           </div>
         </div>

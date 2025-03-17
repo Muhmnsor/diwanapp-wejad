@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -98,30 +99,33 @@ export const useRequestDetail = (requestId: string) => {
     const stepType = currentStep.step_type || 'decision';
     console.log("نوع الخطوة:", stepType);
     
-    if (stepType === 'opinion') {
-      console.log("هذه خطوة رأي ويمكن لأي مستخدم إبداء رأيه");
-      return true;
-    }
-    
+    // First check - is this user specifically assigned as the approver for this step?
     if (data.current_step.id && user.id === data.current_step.approver_id) {
-      console.log("المستخدم هو المعتمد المباشر للخطوة الحالية");
+      console.log("المستخدم هو المعتمد المخصص للخطوة الحالية");
       return true;
     }
     
+    // For opinion steps, check if there are other steps with the same step_order
+    // that have this user assigned as approver
+    if (stepType === 'opinion' && data.workflow && data.workflow.id) {
+      // Check if there's another concurrent step in the same workflow with the same order
+      // that has this user as the approver
+      const parallelSteps = data.workflow_steps?.filter(
+        (step: any) => 
+          step.workflow_id === data.workflow.id &&
+          step.step_order === currentStep.step_order &&
+          step.approver_id === user.id
+      );
+      
+      if (parallelSteps && parallelSteps.length > 0) {
+        console.log("المستخدم هو معتمد في خطوة موازية بنفس الترتيب:", parallelSteps);
+        return true;
+      }
+    }
+    
+    // Admin users can approve any request
     if (user.isAdmin) {
       console.log("المستخدم مدير ويمكنه الموافقة على الطلب");
-      return true;
-    }
-    
-    const pendingApprovals = data.approvals?.filter(
-      (approval: any) => 
-        approval.step_id === currentStep.id && 
-        approval.approver_id === user.id &&
-        approval.status === "pending"
-    );
-    
-    if (pendingApprovals && pendingApprovals.length > 0) {
-      console.log("المستخدم لديه موافقات معلقة للخطوة الحالية");
       return true;
     }
     
@@ -143,7 +147,7 @@ export const useRequestDetail = (requestId: string) => {
     console.log("Checking if user has submitted opinion:", {
       userId: user.id,
       stepId: currentStep.id,
-      approvals: approvals.filter(a => a.step_id === currentStep.id)
+      approvals: approvals.filter((a: any) => a.step_id === currentStep.id)
     });
     
     const hasSubmitted = approvals.some(
@@ -172,6 +176,12 @@ export const useRequestDetail = (requestId: string) => {
         toast.error("لا يمكنك إبداء رأي على طلبك الخاص");
         return;
       }
+      
+      // Additionally check if user is assigned to this opinion step
+      if (!isCurrentApprover() && !user?.isAdmin) {
+        toast.error("أنت غير مخصص لإبداء الرأي في هذه الخطوة");
+        return;
+      }
     }
     
     setIsApproveDialogOpen(true);
@@ -191,6 +201,12 @@ export const useRequestDetail = (requestId: string) => {
       
       if (isRequester()) {
         toast.error("لا يمكنك إبداء رأي على طلبك الخاص");
+        return;
+      }
+      
+      // Additionally check if user is assigned to this opinion step
+      if (!isCurrentApprover() && !user?.isAdmin) {
+        toast.error("أنت غير مخصص لإبداء الرأي في هذه الخطوة");
         return;
       }
     }

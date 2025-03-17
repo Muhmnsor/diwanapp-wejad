@@ -54,7 +54,7 @@ serve(async (req) => {
       );
     }
 
-    // Get the workflow steps to identify the next step
+    // Get the workflow steps to identify the next step - CRITICALLY IMPORTANT TO ORDER BY step_order
     const { data: workflowSteps, error: stepsError } = await supabase
       .from("workflow_steps")
       .select("*")
@@ -91,15 +91,55 @@ serve(async (req) => {
     }
 
     const currentStep = workflowSteps[currentStepIndex];
+    console.log("Current step:", currentStep);
+    
+    // Get the approvals for this request
+    const { data: approvals, error: approvalsError } = await supabase
+      .from("request_approvals")
+      .select("*")
+      .eq("request_id", requestId);
+      
+    if (approvalsError) {
+      console.error("Error fetching approvals:", approvalsError);
+      // Continue despite this error
+    }
+    
+    console.log("Current approvals:", approvals || []);
     
     // For opinion steps, we need to move to the next step regardless of approval or rejection
     // For decision steps, we only move to the next step on approval
     let shouldMoveToNextStep = false;
     let isLastStep = false;
     
+    // For opinion steps - only move to next step once ALL opinions have been collected
     if (currentStep.step_type === "opinion") {
-      console.log("This is an opinion step, moving to next step regardless of action");
-      shouldMoveToNextStep = true;
+      console.log("This is an opinion step");
+      
+      // Check if all required opinions have been collected
+      // For multiple opinions at same step (different users), ensure we have them all
+      const requiredApprovers = workflowSteps
+        .filter(step => step.step_order === currentStep.step_order)
+        .map(step => step.approver_id);
+        
+      console.log("Required approvers for this opinion step:", requiredApprovers);
+      
+      // Check if we have opinions from all required approvers
+      const hasAllOpinions = requiredApprovers.every(approverId => {
+        return approvals?.some(approval => 
+          approval.step_id === currentStepId && 
+          approval.approver_id === approverId
+        );
+      });
+      
+      console.log("Have all required opinions:", hasAllOpinions);
+      
+      // If we have all required opinions, move to next step
+      if (hasAllOpinions) {
+        shouldMoveToNextStep = true;
+      } else {
+        console.log("Waiting for additional opinions before moving to next step");
+        shouldMoveToNextStep = false;
+      }
     } else if (action === "approve" && currentStep.step_type === "decision") {
       console.log("This is an approved decision step, moving to next step");
       shouldMoveToNextStep = true;
@@ -108,19 +148,30 @@ serve(async (req) => {
     // Only attempt to find the next step if we should move to next step
     let nextStep = null;
     if (shouldMoveToNextStep) {
-      // Find the next step in the workflow (if any)
-      // For decision steps we need to find the next decision or notification step
-      // For opinion steps we just need the next step in order
-      const remainingSteps = workflowSteps.slice(currentStepIndex + 1);
+      // Get the current step_order to find the next step
+      const currentStepOrder = currentStep.step_order;
+      console.log("Current step order:", currentStepOrder);
       
-      if (currentStep.step_type === "decision") {
-        nextStep = remainingSteps.find(step => 
-          step.step_type === "decision" || step.step_type === "notification");
-      } else {
-        // For opinion steps, just get the next step regardless of type
-        nextStep = remainingSteps[0];
+      // Find next available step with a higher step_order
+      const nextSteps = workflowSteps
+        .filter(step => step.step_order > currentStepOrder)
+        .sort((a, b) => a.step_order - b.step_order);
+      
+      if (nextSteps.length > 0) {
+        // Get the next step_order value
+        const nextStepOrder = nextSteps[0].step_order;
+        console.log("Next step order:", nextStepOrder);
+        
+        // Get all steps at this order (could be multiple in parallel)
+        const nextOrderSteps = workflowSteps.filter(step => 
+          step.step_order === nextStepOrder
+        );
+        
+        // For now, just take the first one
+        nextStep = nextOrderSteps[0];
+        console.log("Moving to step:", nextStep);
       }
-
+      
       if (!nextStep) {
         console.log("No next step found, this is the last step");
         isLastStep = true;

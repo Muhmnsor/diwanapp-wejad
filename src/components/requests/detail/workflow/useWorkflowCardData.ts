@@ -32,7 +32,7 @@ export const useWorkflowCardData = (
       // Get workflow steps
       const { data: steps, error: stepsError } = await supabase
         .from('workflow_steps')
-        .select('*')
+        .select('*, approver:approver_id(*)')
         .eq('workflow_id', workflowId)
         .order('step_order', { ascending: true });
         
@@ -47,30 +47,73 @@ export const useWorkflowCardData = (
       // Get approved steps for this request to calculate progress
       const { data: approvals, error: approvalsError } = await supabase
         .from('request_approvals')
-        .select('step_id, status')
-        .eq('request_id', requestId)
-        .eq('status', 'approved');
+        .select('step_id, status, approver_id')
+        .eq('request_id', requestId);
         
       if (approvalsError) {
         console.error("Error fetching approvals:", approvalsError);
         // Continue without approvals data
       }
       
-      // Find current step index
-      const currentIndex = steps.findIndex(step => step.id === currentStepId);
-      setCurrentStepIndex(currentIndex !== -1 ? currentIndex : 0);
+      // Find current step index based on step order
+      const currentStep = steps.find(step => step.id === currentStepId);
+      const currentStepOrder = currentStep?.step_order || 0;
       
-      // Calculate completion percentage based on approved steps
-      // Only count decision steps for progress calculation
-      const decisionSteps = steps.filter(step => step.step_type === 'decision');
-      const approvedStepIds = approvals ? approvals.map(a => a.step_id) : [];
+      // Find the index based on order - if multiple steps have the same order, use the first one
+      const currentOrderIndex = steps
+        .filter((step, index, self) => 
+          // Filter unique step_order values
+          index === self.findIndex(s => s.step_order === step.step_order)
+        )
+        .findIndex(step => step.step_order === currentStepOrder);
+        
+      setCurrentStepIndex(currentOrderIndex !== -1 ? currentOrderIndex : 0);
       
-      const approvedDecisionSteps = decisionSteps.filter(step => 
-        approvedStepIds.includes(step.id)
-      );
+      // Calculate completion percentage based on completed steps and step ordering
+      // Group steps by step_order
+      const stepsByOrder: Record<number, WorkflowStep[]> = {};
+      steps.forEach(step => {
+        const order = step.step_order || 0;
+        if (!stepsByOrder[order]) {
+          stepsByOrder[order] = [];
+        }
+        stepsByOrder[order].push(step);
+      });
       
-      const progress = decisionSteps.length > 0
-        ? (approvedDecisionSteps.length / decisionSteps.length) * 100
+      // Consider a step_order complete if all required steps at that order are approved
+      const orderValues = Object.keys(stepsByOrder).map(k => parseInt(k)).sort((a, b) => a - b);
+      const totalOrders = orderValues.length;
+      
+      let completedOrders = 0;
+      
+      // Count completed orders
+      orderValues.forEach(order => {
+        const stepsAtThisOrder = stepsByOrder[order];
+        const decisionStepsAtThisOrder = stepsAtThisOrder.filter(step => 
+          step.step_type === 'decision'
+        );
+        
+        // If there are no decision steps at this order, it's just opinion steps
+        if (decisionStepsAtThisOrder.length === 0) {
+          completedOrders += 1;
+          return;
+        }
+        
+        // Check if all decision steps at this order are approved
+        const allDecisionStepsApproved = decisionStepsAtThisOrder.every(step => 
+          approvals?.some(
+            approval => approval.step_id === step.id && approval.status === 'approved'
+          )
+        );
+        
+        if (allDecisionStepsApproved) {
+          completedOrders += 1;
+        }
+      });
+      
+      // Calculate progress percentage
+      const progress = totalOrders > 0
+        ? (completedOrders / totalOrders) * 100
         : 0;
       
       setWorkflowSteps(steps);
