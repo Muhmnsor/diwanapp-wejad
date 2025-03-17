@@ -22,13 +22,15 @@ export const useTaskUpdater = (
 ): TaskUpdaterFunction => {
   // Return a function that converts parameters to match what the mutation expects
   return (id: string, updates: Partial<MeetingTask>) => {
-    // Extract status from updates (or default to 'pending' if not provided)
-    const status = updates.status || 'pending';
-    
-    // Call the updateTask function with the properly formatted parameters
-    updateTask({ 
-      id, 
-      status: status as MeetingTask['status']
-    });
+    // Only proceed if there's a status update
+    if (updates.status) {
+      // Call the updateTask function with the properly formatted parameters
+      updateTask({ 
+        id, 
+        status: updates.status
+      });
+    } else {
+      console.warn('Task update called without status change');
+    }
   };
 };

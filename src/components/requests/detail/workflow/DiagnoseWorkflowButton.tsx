@@ -1,27 +1,21 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Stethoscope, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Settings, AlertTriangle, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-
-interface DiagnosticResult {
-  isValid: boolean;
-  issues: string[];
-}
 
 interface DiagnoseWorkflowButtonProps {
   requestId: string;
-  onDiagnose: () => Promise<DiagnosticResult>;
-  onFix: () => Promise<void>;
+  onDiagnose: () => Promise<{ success: boolean }>;
+  onFix: () => Promise<{ success: boolean }>;
   onSuccess: () => Promise<void>;
   isDiagnosing: boolean;
-  diagnosticResult?: DiagnosticResult | null;
+  diagnosticResult: any;
   className?: string;
 }
 
-export const DiagnoseWorkflowButton: React.FC<DiagnoseWorkflowButtonProps> = ({
+export const DiagnoseWorkflowButton = ({
   requestId,
   onDiagnose,
   onFix,
@@ -29,107 +23,115 @@ export const DiagnoseWorkflowButton: React.FC<DiagnoseWorkflowButtonProps> = ({
   isDiagnosing,
   diagnosticResult,
   className
-}) => {
+}: DiagnoseWorkflowButtonProps) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [isFixing, setIsFixing] = useState(false);
-  
+
+  const handleDiagnose = async () => {
+    try {
+      const result = await onDiagnose();
+      if (result.success) {
+        toast.success("تم تشخيص سير العمل بنجاح");
+      }
+    } catch (error) {
+      console.error("Error diagnosing workflow:", error);
+      toast.error("حدث خطأ أثناء تشخيص سير العمل");
+    }
+  };
+
   const handleFix = async () => {
-    if (!diagnosticResult || diagnosticResult.isValid) return;
-    
     try {
       setIsFixing(true);
-      await onFix();
-      await onSuccess();
-      toast.success("تم إصلاح مشاكل سير العمل بنجاح");
+      const result = await onFix();
+      if (result.success) {
+        toast.success("تم إصلاح سير العمل بنجاح");
+        await onSuccess();
+        setIsOpen(false);
+      }
     } catch (error) {
       console.error("Error fixing workflow:", error);
-      toast.error("حدث خطأ أثناء محاولة إصلاح سير العمل");
+      toast.error("حدث خطأ أثناء إصلاح سير العمل");
     } finally {
       setIsFixing(false);
     }
   };
 
-  // If there's no diagnostic result yet, show the diagnose button
+  // If no diagnostic result yet, show diagnose button
   if (!diagnosticResult) {
     return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={onDiagnose}
-              disabled={isDiagnosing}
-              className={cn("gap-1", className)}
-            >
-              {isDiagnosing ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Stethoscope className="h-4 w-4" />
-              )}
-              <span className="hidden md:inline">فحص سير العمل</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>فحص سير العمل للتأكد من صحته</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleDiagnose}
+        disabled={isDiagnosing}
+        className={className}
+      >
+        {isDiagnosing ? (
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            جاري التشخيص...
+          </>
+        ) : (
+          <>
+            <Settings className="h-4 w-4 mr-2" />
+            تشخيص سير العمل
+          </>
+        )}
+      </Button>
     );
   }
 
-  // If diagnostic result shows the workflow is valid
-  if (diagnosticResult.isValid) {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant="outline"
-              size="sm"
-              className={cn("gap-1 border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800", className)}
-              onClick={onDiagnose}
-            >
-              <CheckCircle className="h-4 w-4" />
-              <span className="hidden md:inline">سير العمل صحيح</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>تم التحقق من سير العمل وهو صحيح</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  }
+  // If there are issues, show fix button
+  const hasIssues = diagnosticResult?.issues && diagnosticResult.issues.length > 0;
 
-  // If there are issues with the workflow
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button 
-            variant="outline"
-            size="sm"
-            className={cn("gap-1 border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800", className)}
-            onClick={handleFix}
-            disabled={isFixing}
-          >
-            {isFixing ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <AlertCircle className="h-4 w-4" />
-            )}
-            <span className="hidden md:inline">إصلاح المشاكل ({diagnosticResult.issues.length})</span>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-xs">
-          <p className="font-bold">المشاكل المكتشفة:</p>
-          <ul className="list-disc text-xs mt-1 mr-4">
-            {diagnosticResult.issues.map((issue, index) => (
-              <li key={index}>{issue}</li>
-            ))}
-          </ul>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant={hasIssues ? "destructive" : "outline"}
+          size="sm"
+          className={className}
+        >
+          {hasIssues ? (
+            <>
+              <AlertTriangle className="h-4 w-4 mr-2" />
+              مشاكل في سير العمل
+            </>
+          ) : (
+            <>
+              <Check className="h-4 w-4 mr-2" />
+              سير العمل سليم
+            </>
+          )}
+        </Button>
+      </PopoverTrigger>
+      
+      {hasIssues && (
+        <PopoverContent className="w-80">
+          <div className="space-y-4">
+            <div className="font-semibold">تم اكتشاف المشاكل التالية:</div>
+            <ul className="space-y-2 list-disc list-inside">
+              {diagnosticResult.issues.map((issue: any, index: number) => (
+                <li key={index} className="text-sm">{issue.message}</li>
+              ))}
+            </ul>
+            <Button
+              onClick={handleFix}
+              className="w-full"
+              disabled={isFixing}
+            >
+              {isFixing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  جاري الإصلاح...
+                </>
+              ) : (
+                "إصلاح المشاكل"
+              )}
+            </Button>
+          </div>
+        </PopoverContent>
+      )}
+    </Popover>
   );
 };
