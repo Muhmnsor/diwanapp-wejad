@@ -5,6 +5,7 @@ import { DebugTab } from "./tabs/DebugTab";
 import { PermissionsTab } from "./tabs/PermissionsTab";
 import { LogsTab } from "./tabs/LogsTab";
 import { CacheTab } from "./tabs/CacheTab";
+import { SmartCacheTab } from "./tabs/SmartCacheTab";
 import { PerformanceTab } from "./tabs/PerformanceTab";
 import { RoleMappingDebugTab } from "./tabs/RoleMappingDebugTab";
 import { DocumentationSection } from "./documentation/DocumentationSection";
@@ -36,13 +37,14 @@ export const DeveloperSettingsTabs = ({
 }: DeveloperSettingsTabsProps) => {
   return (
     <Tabs defaultValue="general" className="w-full" dir="rtl">
-      <TabsList className="mb-6 grid grid-cols-4 md:grid-cols-7 lg:grid-cols-8">
+      <TabsList className="mb-6 grid grid-cols-4 md:grid-cols-8 lg:grid-cols-9">
         <TabsTrigger value="general">عام</TabsTrigger>
         <TabsTrigger value="permissions">الصلاحيات</TabsTrigger>
         <TabsTrigger value="debug">التشخيص</TabsTrigger>
         <TabsTrigger value="roles">الأدوار</TabsTrigger>
         <TabsTrigger value="logs">السجلات</TabsTrigger>
         <TabsTrigger value="cache">التخزين المؤقت</TabsTrigger>
+        <TabsTrigger value="smart-cache">التخزين الذكي</TabsTrigger>
         <TabsTrigger value="performance">الأداء</TabsTrigger>
         <TabsTrigger value="docs">التوثيق</TabsTrigger>
       </TabsList>
@@ -75,6 +77,10 @@ export const DeveloperSettingsTabs = ({
       
       <TabsContent value="cache">
         <CacheTab settings={settings} />
+      </TabsContent>
+      
+      <TabsContent value="smart-cache">
+        <SmartCacheTab settings={settings} />
       </TabsContent>
       
       <TabsContent value="performance">

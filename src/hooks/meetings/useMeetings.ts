@@ -1,12 +1,15 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useSmartQuery } from "@/hooks/useSmartQuery";
 import { supabase } from "@/integrations/supabase/client";
 import { Meeting } from "@/types/meeting";
+import { useDeveloperStore } from "@/store/developerStore";
 
 export const useMeetings = (filters?: { status?: string; type?: string }) => {
-  return useQuery({
-    queryKey: ['meetings', filters],
-    queryFn: async () => {
+  const { settings } = useDeveloperStore();
+  
+  return useSmartQuery<Meeting[]>(
+    ['meetings', filters],
+    async () => {
       let query = supabase
         .from('meetings')
         .select('*');
@@ -31,6 +34,11 @@ export const useMeetings = (filters?: { status?: string; type?: string }) => {
       }
       
       return data as Meeting[];
+    },
+    {
+      category: 'dynamic',
+      useLocalCache: true,
+      localCacheTime: settings?.cache_time_minutes || 5,
     }
-  });
+  );
 };
