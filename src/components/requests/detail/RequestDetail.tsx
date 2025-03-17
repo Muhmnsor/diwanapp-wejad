@@ -28,13 +28,19 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
     handleRejectClick,
     isCurrentApprover,
     hasSubmittedOpinion,
-    isRequester,
+    user,
     refetch,
     isDiagnosing,
     diagnosticResult,
     handleDiagnoseWorkflow,
     handleFixWorkflow
   } = useRequestDetail(requestId);
+
+  // Define a local isRequester function if it's not provided by the hook
+  const isRequester = () => {
+    if (!data || !user || !data.request) return false;
+    return user.id === data.request.requester_id;
+  };
 
   if (isLoading) {
     return (
