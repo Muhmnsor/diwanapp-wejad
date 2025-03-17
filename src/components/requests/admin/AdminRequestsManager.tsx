@@ -8,7 +8,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedRequestsTable } from "../tables/EnhancedRequestsTable";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const AdminRequestsManager = () => {
   const { user } = useAuthStore();
@@ -83,7 +82,7 @@ export const AdminRequestsManager = () => {
   }
   
   return (
-    <div className="space-y-8" dir="rtl">
+    <div className="space-y-8">
       <div>
         <h2 className="text-2xl font-bold mb-4">نظرة عامة</h2>
         <RequestsOverview />
@@ -91,16 +90,14 @@ export const AdminRequestsManager = () => {
       
       <div>
         <h2 className="text-2xl font-bold mb-4">جميع الطلبات</h2>
-        <ScrollArea className="h-[500px] rounded-md border">
-          <EnhancedRequestsTable 
-            requests={requests}
-            isLoading={isLoading}
-            onViewRequest={handleViewRequest}
-            onRefresh={refreshRequests}
-            filterByStatus={filterByStatus}
-            statusFilter={statusFilter}
-          />
-        </ScrollArea>
+        <EnhancedRequestsTable 
+          requests={requests}
+          isLoading={isLoading}
+          onViewRequest={handleViewRequest}
+          onRefresh={refreshRequests}
+          filterByStatus={filterByStatus}
+          statusFilter={statusFilter}
+        />
       </div>
     </div>
   );

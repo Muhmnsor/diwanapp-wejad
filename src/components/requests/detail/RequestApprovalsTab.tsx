@@ -42,15 +42,15 @@ export const RequestApprovalsTab = ({ approvals }: RequestApprovalsTabProps) => 
   }
 
   return (
-    <Table dir="rtl">
+    <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="text-right">الخطوة</TableHead>
-          <TableHead className="text-right">نوع الخطوة</TableHead>
-          <TableHead className="text-right">المسؤول</TableHead>
-          <TableHead className="text-right">الحالة</TableHead>
-          <TableHead className="text-right">التعليقات</TableHead>
-          <TableHead className="text-right">تاريخ الإجراء</TableHead>
+          <TableHead>الخطوة</TableHead>
+          <TableHead>نوع الخطوة</TableHead>
+          <TableHead>المسؤول</TableHead>
+          <TableHead>الحالة</TableHead>
+          <TableHead>التعليقات</TableHead>
+          <TableHead>تاريخ الإجراء</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
