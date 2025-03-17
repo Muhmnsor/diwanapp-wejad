@@ -13,6 +13,8 @@ import Notifications from "@/pages/Notifications";
 import RequestsManagement from "@/pages/RequestsManagement";
 import React from "react";
 import DeveloperRoute from "@/components/DeveloperRoute";
+import Meetings from "@/pages/Meetings";
+import MeetingDetail from "@/pages/MeetingDetail";
 
 export const ProtectedRoutes = [
   <Route 
@@ -124,5 +126,26 @@ export const ProtectedRoutes = [
         <RequestsManagement />
       </ProtectedRoute>
     } 
-  />
+  />,
+  
+  <Route 
+    key="meetings"
+    path="/meetings" 
+    element={
+      <ProtectedRoute>
+        <Meetings />
+      </ProtectedRoute>
+    } 
+  />,
+  
+  <Route 
+    key="meeting-detail"
+    path="/meetings/:id" 
+    element={
+      <ProtectedRoute>
+        <MeetingDetail />
+      </ProtectedRoute>
+    } 
+  />,
+  
 ];
