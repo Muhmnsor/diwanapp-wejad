@@ -23,14 +23,16 @@ export const useMeetings = () => {
       console.log("Fetching meetings for user:", user.id, "with filter:", filter);
 
       try {
-        // Fixed query syntax using proper Supabase filter expressions
+        // Build the query with proper Supabase filter syntax
         let query = supabase
           .from('meetings')
           .select(`
             *,
             meeting_participants(user_id)
-          `)
-          .or(`created_by.eq.${user.id},meeting_participants.user_id.eq.${user.id}`);
+          `);
+        
+        // Apply user filter to show only meetings created by the user or where the user is a participant
+        query = query.or(`created_by.eq.${user.id},meeting_participants.user_id.eq.${user.id}`);
           
         // Apply additional filters based on the selected filter
         if (filter === 'upcoming') {

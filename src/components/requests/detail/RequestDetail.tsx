@@ -8,7 +8,6 @@ import { RequestRejectDialog } from "./RequestRejectDialog";
 import { useRequestDetail } from "./useRequestDetail";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { DiagnoseWorkflowButton } from "./workflow/DiagnoseWorkflowButton";
 
 interface RequestDetailProps {
   requestId: string;

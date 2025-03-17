@@ -2,20 +2,33 @@
 import { MeetingTask } from "../types";
 import { UseMutateFunction } from "@tanstack/react-query";
 
-// This utility function wraps the updateTask mutation to match the expected signature
-export const createTaskUpdater = (
-  updateTaskMutation: UseMutateFunction<any, Error, { id: string; status: MeetingTask['status'] }, unknown>
-): ((id: string, updates: Partial<MeetingTask>) => void) => {
-  return (id: string, updates: Partial<MeetingTask>) => {
-    if (updates.status) {
-      updateTaskMutation({ id, status: updates.status });
-    }
-  };
-};
+// Define the type of the update function returned by useMeetingDetails
+type UpdateTaskMutation = UseMutateFunction<
+  any, 
+  Error, 
+  { id: string; status: MeetingTask['status'] },
+  unknown
+>;
 
-// Hook to use the task updater
+// Define the type of the function expected by MeetingTasksPanel
+type TaskUpdaterFunction = (id: string, updates: Partial<MeetingTask>) => void;
+
+/**
+ * This hook adapts the task update mutation function to match 
+ * the signature expected by the MeetingTasksPanel component
+ */
 export const useTaskUpdater = (
-  updateTaskMutation: UseMutateFunction<any, Error, { id: string; status: MeetingTask['status'] }, unknown>
-): ((id: string, updates: Partial<MeetingTask>) => void) => {
-  return createTaskUpdater(updateTaskMutation);
+  updateTask: UpdateTaskMutation
+): TaskUpdaterFunction => {
+  // Return a function that converts parameters to match what the mutation expects
+  return (id: string, updates: Partial<MeetingTask>) => {
+    // Extract status from updates (or default to 'pending' if not provided)
+    const status = updates.status || 'pending';
+    
+    // Call the updateTask function with the properly formatted parameters
+    updateTask({ 
+      id, 
+      status: status as MeetingTask['status']
+    });
+  };
 };
