@@ -32,22 +32,6 @@ export const CurrentStepDisplay: React.FC<CurrentStepDisplayProps> = ({
     );
   }
 
-  // Determine the appropriate label based on the step type
-  const getResponsibleLabel = () => {
-    const stepType = currentStep.step_type?.toLowerCase();
-    switch(stepType) {
-      case 'opinion':
-        return "المسؤول عن إبداء الرأي";
-      case 'review':
-        return "المسؤول عن المراجعة";
-      case 'decision':
-        return "المسؤول عن القرار";
-      case 'approval':
-      default:
-        return "المسؤول عن الموافقة";
-    }
-  };
-
   return (
     <Card>
       <CardContent className="p-4 space-y-3">
@@ -71,7 +55,7 @@ export const CurrentStepDisplay: React.FC<CurrentStepDisplayProps> = ({
             <div className="flex items-center gap-1.5">
               <User className="h-3.5 w-3.5" />
               <span>
-                {getResponsibleLabel()}
+                المسؤول عن الموافقة
               </span>
             </div>
           </div>
