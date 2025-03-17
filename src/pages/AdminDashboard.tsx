@@ -11,56 +11,112 @@ import { getAppsList } from "@/components/admin/dashboard/getAppsList";
 import { DeveloperToolbar } from "@/components/developer/DeveloperToolbar";
 import { useAuthStore } from "@/store/refactored-auth";
 import { AppItem } from "@/components/admin/dashboard/DashboardApps";
-import { Loader2, Users } from "lucide-react";
+import { Loader2, Users, AlertCircle } from "lucide-react";
 import { useUserRoles } from "@/hooks/useUserRoles";
+import { Card } from "@/components/ui/card";
 
 const AdminDashboard = () => {
   const { data: userName, isLoading: isLoadingUser } = useUserName();
-  const { data: notificationCounts } = useNotificationCounts();
+  const { data: notificationCounts, isLoading: isLoadingNotifications, error: notificationsError } = useNotificationCounts();
   const { user } = useAuthStore();
-  const { hasAdminRole } = useUserRoles();
+  const { hasAdminRole, isLoading: isLoadingRoles } = useUserRoles();
   const [apps, setApps] = useState<AppItem[]>([]);
   const [isLoadingApps, setIsLoadingApps] = useState<boolean>(true);
+  const [appsError, setAppsError] = useState<Error | null>(null);
   
   // Fetch apps list when user or notification counts change
   useEffect(() => {
     const fetchApps = async () => {
-      if (user) {
-        setIsLoadingApps(true);
-        try {
-          // Fetch the original apps list from the getAppsList function
-          const appsList = await getAppsList(notificationCounts, user);
+      if (!user) {
+        console.log("User not available, skipping apps fetch");
+        setIsLoadingApps(false);
+        return;
+      }
+
+      if (!notificationCounts) {
+        console.log("Notification counts not available yet, skipping apps fetch");
+        return;
+      }
+
+      setIsLoadingApps(true);
+      setAppsError(null);
+      
+      try {
+        console.log("Fetching apps with user:", user.id, "and notification counts:", notificationCounts);
+        // Fetch the original apps list from the getAppsList function
+        const appsList = await getAppsList(notificationCounts, user);
+        
+        // Add the meetings app to the list if user has admin access
+        if (hasAdminRole) {
+          const meetingsApp: AppItem = {
+            title: "إدارة الاجتماعات",
+            icon: Users,
+            path: "/admin/meetings",
+            description: "إدارة جدول الاجتماعات والمشاركين والمحاضر",
+            notifications: notificationCounts?.meetings || 0,
+          };
           
-          // Add the meetings app to the list if user has admin access
-          if (hasAdminRole) {
-            const meetingsApp: AppItem = {
-              title: "إدارة الاجتماعات",
-              icon: Users,
-              path: "/admin/meetings",
-              description: "إدارة جدول الاجتماعات والمشاركين والمحاضر",
-              notifications: notificationCounts?.meetings || 0,
-            };
-            
-            // Check if meetings app already exists to avoid duplicates
-            const meetingsAppExists = appsList.some(app => app.path === "/admin/meetings");
-            
-            if (!meetingsAppExists) {
-              // Add the meetings app to the list
-              appsList.push(meetingsApp);
-            }
+          // Check if meetings app already exists to avoid duplicates
+          const meetingsAppExists = appsList.some(app => app.path === "/admin/meetings");
+          
+          if (!meetingsAppExists) {
+            // Add the meetings app to the list
+            appsList.push(meetingsApp);
           }
-          
-          setApps(appsList);
-        } catch (error) {
-          console.error("Error fetching apps:", error);
-        } finally {
-          setIsLoadingApps(false);
         }
+        
+        setApps(appsList);
+      } catch (error) {
+        console.error("Error fetching apps:", error);
+        setAppsError(error instanceof Error ? error : new Error("Failed to fetch apps"));
+      } finally {
+        setIsLoadingApps(false);
       }
     };
     
     fetchApps();
   }, [user, notificationCounts, hasAdminRole]);
+
+  // Determine if we're in a loading state
+  const isLoading = isLoadingUser || isLoadingNotifications || isLoadingApps || isLoadingRoles;
+
+  // Handle error states
+  const hasError = notificationsError || appsError;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col" dir="rtl">
+        <AdminHeader />
+        <div className="container mx-auto px-4 py-8 flex-grow flex justify-center items-center">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-lg">جاري تحميل البيانات...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <div className="min-h-screen flex flex-col" dir="rtl">
+        <AdminHeader />
+        <div className="container mx-auto px-4 py-8 flex-grow">
+          <Card className="p-8 max-w-lg mx-auto text-center">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-bold mb-2">حدث خطأ</h2>
+            <p className="text-gray-600 mb-4">حدث خطأ أثناء تحميل بيانات لوحة التحكم. يرجى تحديث الصفحة والمحاولة مرة أخرى.</p>
+            <p className="text-sm text-red-500">
+              {(notificationsError instanceof Error ? notificationsError.message : '') || 
+               (appsError instanceof Error ? appsError.message : '')}
+            </p>
+          </Card>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
@@ -69,20 +125,13 @@ const AdminDashboard = () => {
       <div className="container mx-auto px-4 py-8 flex-grow">
         <DashboardHeader 
           userName={userName} 
-          isLoading={isLoadingUser} 
+          isLoading={false} 
         />
         
-        {isLoadingApps ? (
-          <div className="flex justify-center items-center p-8">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="mr-2">جاري تحميل التطبيقات...</span>
-          </div>
-        ) : (
-          <DashboardApps apps={apps} />
-        )}
+        <DashboardApps apps={apps} />
 
         <DashboardNotifications 
-          notificationCount={notificationCounts.notifications} 
+          notificationCount={notificationCounts?.notifications || 0} 
         />
       </div>
 

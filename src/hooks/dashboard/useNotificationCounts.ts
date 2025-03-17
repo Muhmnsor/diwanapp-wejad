@@ -12,20 +12,25 @@ export interface NotificationCounts {
   [key: string]: number;
 }
 
+const defaultCounts: NotificationCounts = {
+  notifications: 0,
+  tasks: 0,
+  approval_requests: 0,
+  documents: 0,
+  meetings: 0
+};
+
 export const useNotificationCounts = () => {
   const { user } = useAuthStore();
 
   return useQuery({
     queryKey: ['notification-counts', user?.id],
     queryFn: async (): Promise<NotificationCounts> => {
+      console.log("Fetching notification counts for user:", user?.id);
+      
       if (!user) {
-        return {
-          notifications: 0,
-          tasks: 0,
-          approval_requests: 0,
-          documents: 0,
-          meetings: 0
-        };
+        console.log("No user found, returning default counts");
+        return defaultCounts;
       }
 
       try {
@@ -37,10 +42,11 @@ export const useNotificationCounts = () => {
           .eq('read', false);
 
         if (notificationsError) {
+          console.error("Error fetching notifications count:", notificationsError);
           throw notificationsError;
         }
 
-        // Get tasks count (you would customize this based on your schema)
+        // Get tasks count
         const { count: tasksCount, error: tasksError } = await supabase
           .from('tasks')
           .select('*', { count: 'exact', head: true })
@@ -48,6 +54,7 @@ export const useNotificationCounts = () => {
           .eq('status', 'pending');
 
         if (tasksError) {
+          console.error("Error fetching tasks count:", tasksError);
           throw tasksError;
         }
 
@@ -59,6 +66,7 @@ export const useNotificationCounts = () => {
           .eq('status', 'pending');
 
         if (approvalsError) {
+          console.error("Error fetching approvals count:", approvalsError);
           throw approvalsError;
         }
 
@@ -70,6 +78,7 @@ export const useNotificationCounts = () => {
           .eq('status', 'pending_review');
 
         if (documentsError) {
+          console.error("Error fetching documents count:", documentsError);
           throw documentsError;
         }
 
@@ -81,8 +90,17 @@ export const useNotificationCounts = () => {
           .in('status', ['invited', 'confirmed']);
 
         if (meetingsError) {
+          console.error("Error fetching meetings count:", meetingsError);
           throw meetingsError;
         }
+
+        console.log("Successfully fetched notification counts:", {
+          notifications: notificationsCount || 0,
+          tasks: tasksCount || 0,
+          approval_requests: approvalsCount || 0,
+          documents: documentsCount || 0,
+          meetings: meetingsCount || 0
+        });
 
         return {
           notifications: notificationsCount || 0,
@@ -93,16 +111,13 @@ export const useNotificationCounts = () => {
         };
       } catch (error) {
         console.error('Error fetching notification counts:', error);
-        return {
-          notifications: 0,
-          tasks: 0,
-          approval_requests: 0,
-          documents: 0,
-          meetings: 0
-        };
+        // Return default counts in case of error to prevent UI from breaking
+        return defaultCounts;
       }
     },
     refetchInterval: 60000, // Refetch every minute
-    enabled: !!user,
+    enabled: !!user, // Only run query if user exists
+    staleTime: 30000, // Consider data stale after 30 seconds
+    retry: 2, // Retry failed requests up to 2 times
   });
 };

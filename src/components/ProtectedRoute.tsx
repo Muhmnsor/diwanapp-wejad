@@ -4,6 +4,7 @@ import { useAuthStore } from "@/store/refactored-auth";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -13,6 +14,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, isAuthenticated, logout } = useAuthStore();
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
+  const [sessionChecked, setSessionChecked] = useState(false);
   
   useEffect(() => {
     console.log("ProtectedRoute: Setting up auth state listener");
@@ -20,35 +22,51 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     
     const checkSession = async () => {
       if (!isSubscribed) return;
-      setIsLoading(true);
-
+      
       try {
+        console.log("Checking session validity...");
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Session check error:', error);
-          if (error.message.includes('session_not_found') || 
-              error.message.includes('refresh_token_not_found') ||
-              error.message.includes('Invalid refresh token')) {
-            console.log('Invalid or expired session, logging out');
-            toast.error('انتهت صلاحية جلستك. الرجاء تسجيل الدخول مرة أخرى');
-            await logout();
+          if (isSubscribed) {
+            if (error.message.includes('session_not_found') || 
+                error.message.includes('refresh_token_not_found') ||
+                error.message.includes('Invalid refresh token')) {
+              console.log('Invalid or expired session, logging out');
+              toast.error('انتهت صلاحية جلستك. الرجاء تسجيل الدخول مرة أخرى');
+              await logout();
+            }
+            setIsLoading(false);
+            setSessionChecked(true);
           }
-        } else if (!session) {
+          return;
+        }
+
+        if (!session) {
           console.log('No active session found');
           if (isAuthenticated) {
             console.log('State shows authenticated but no session exists, logging out');
             await logout();
           }
+          if (isSubscribed) {
+            setIsLoading(false);
+            setSessionChecked(true);
+          }
+          return;
+        }
+        
+        console.log("Valid session found:", session.user.id);
+        if (isSubscribed) {
+          setIsLoading(false);
+          setSessionChecked(true);
         }
       } catch (error) {
         console.error('Error checking session:', error);
         if (isSubscribed) {
           await logout();
-        }
-      } finally {
-        if (isSubscribed) {
           setIsLoading(false);
+          setSessionChecked(true);
         }
       }
     };
@@ -64,17 +82,24 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
       if (event === 'SIGNED_OUT') {
         console.log('User signed out, redirecting to login');
-        await logout();
+        if (isSubscribed) {
+          await logout();
+          setIsLoading(false);
+          setSessionChecked(true);
+        }
       }
       
       if (event === 'SIGNED_IN') {
         console.log('User signed in');
-        // Don't need to do anything, the auth store will handle this
+        // The auth store will handle this, just update loading state
+        if (isSubscribed) {
+          setIsLoading(false);
+          setSessionChecked(true);
+        }
       }
-      
-      checkSession();
     });
 
+    // Check session on mount
     checkSession();
 
     return () => {
@@ -87,6 +112,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   console.log('Protected route check:', { 
     isAuthenticated, 
     user, 
+    sessionChecked,
     userIsAdmin: user?.isAdmin,
     userRole: user?.role,
     pathname: location.pathname,
@@ -94,10 +120,15 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   });
 
   // Show loading state while checking auth
-  if (isLoading) {
-    return <div className="flex items-center justify-center h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-    </div>;
+  if (isLoading || !sessionChecked) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-gray-600">جاري التحقق من صلاحية الجلسة...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
