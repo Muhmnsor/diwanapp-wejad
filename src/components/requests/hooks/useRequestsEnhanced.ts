@@ -17,7 +17,12 @@ export const useRequestsEnhanced = () => {
         p_user_id: (await supabase.auth.getSession()).data.session?.user.id
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching incoming requests:", error);
+        throw error;
+      }
+      
+      console.log("Fetched incoming requests:", data?.length || 0);
       return data || [];
     }
   });
@@ -98,7 +103,12 @@ export const useRequestsEnhanced = () => {
         p_metadata: metadata || {}
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error approving request:", error);
+        throw error;
+      }
+      
+      console.log("Approval result:", data);
       
       // After approval, call the edge function to progress the workflow if needed
       // This ensures the workflow always advances regardless of opinion/decision step type
@@ -127,6 +137,22 @@ export const useRequestsEnhanced = () => {
         console.error("Exception updating workflow step:", stepUpdateError);
       }
       
+      // After updating the workflow, run the fix-request-status function as a safety measure
+      try {
+        console.log("Running fix-request-status to ensure workflow integrity");
+        const { data: fixResult, error: fixError } = await supabase.functions.invoke('fix-request-status', {
+          body: { requestId }
+        });
+        
+        if (fixError) {
+          console.error("Error fixing request status:", fixError);
+        } else {
+          console.log("Fix request status result:", fixResult);
+        }
+      } catch (fixError) {
+        console.error("Exception fixing request status:", fixError);
+      }
+      
       return data;
     },
     onSuccess: (data) => {
@@ -135,6 +161,8 @@ export const useRequestsEnhanced = () => {
       
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['requests'] });
+      queryClient.invalidateQueries({ queryKey: ['requests', 'incoming'] });
+      queryClient.invalidateQueries({ queryKey: ['requests', 'outgoing'] });
       
       // Also invalidate any request details that might be showing
       queryClient.invalidateQueries({ queryKey: ['request-details'] });
@@ -193,11 +221,29 @@ export const useRequestsEnhanced = () => {
         }
       }
       
+      // Run the fix-request-status function as a safety measure
+      try {
+        console.log("Running fix-request-status after rejection to ensure workflow integrity");
+        const { data: fixResult, error: fixError } = await supabase.functions.invoke('fix-request-status', {
+          body: { requestId }
+        });
+        
+        if (fixError) {
+          console.error("Error fixing request status:", fixError);
+        } else {
+          console.log("Fix request status result:", fixResult);
+        }
+      } catch (fixError) {
+        console.error("Exception fixing request status:", fixError);
+      }
+      
       return data;
     },
     onSuccess: (data) => {
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['requests'] });
+      queryClient.invalidateQueries({ queryKey: ['requests', 'incoming'] });
+      queryClient.invalidateQueries({ queryKey: ['requests', 'outgoing'] });
       
       // Also invalidate any request details that might be showing
       queryClient.invalidateQueries({ queryKey: ['request-details'] });
@@ -212,6 +258,34 @@ export const useRequestsEnhanced = () => {
         queryClient.invalidateQueries({ queryKey: ['requests', 'outgoing'] }),
         queryClient.invalidateQueries({ queryKey: ['request-details'] })
       ]);
+      
+      // Force a diagnosis and fix for any stuck workflows
+      try {
+        const { data: allRequests, error } = await supabase
+          .from('requests')
+          .select('id, status')
+          .in('status', ['pending', 'in_progress']);
+          
+        if (!error && allRequests?.length > 0) {
+          console.log(`Checking ${allRequests.length} active requests for workflow issues`);
+          
+          // Run diagnosis on a sample of recent active requests
+          const recentRequests = allRequests.slice(0, Math.min(5, allRequests.length));
+          
+          for (const req of recentRequests) {
+            try {
+              await supabase.functions.invoke('fix-request-status', {
+                body: { requestId: req.id }
+              });
+            } catch (e) {
+              console.error(`Failed to fix request ${req.id}:`, e);
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Error checking for stuck workflows:", e);
+      }
+      
     } catch (error) {
       console.error('Error refreshing requests:', error);
       toast.error('حدث خطأ أثناء تحديث الطلبات');

@@ -18,6 +18,7 @@ import { useWorkflowCardData } from "./useWorkflowCardData";
 import { Progress } from "@/components/ui/progress";
 import { DiagnoseWorkflowButton } from "./DiagnoseWorkflowButton";
 import { CurrentStepDisplay } from "./CurrentStepDisplay";
+import { WorkflowDiagnosticButton } from "./WorkflowDiagnosticButton";
 
 export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({ 
   workflow, 
@@ -26,8 +27,6 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
   requestStatus = 'pending'
 }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isDiagnosing, setIsDiagnosing] = useState(false);
-  const [diagnosticResult, setDiagnosticResult] = useState<any>(null);
   
   const { 
     isLoading,
@@ -53,43 +52,6 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
     }
   };
 
-  const handleDiagnoseWorkflow = async () => {
-    setIsDiagnosing(true);
-    try {
-      const result = await diagnoseWorkflow();
-      setDiagnosticResult(result);
-      
-      if (!result?.success) {
-        toast.error("فشل تشخيص سير العمل: " + (result?.error || "خطأ غير معروف"));
-      } else if (result.issues?.length === 0) {
-        toast.success("لا توجد مشاكل في سير العمل");
-      }
-    } catch (error) {
-      console.error("Error diagnosing workflow:", error);
-      toast.error("حدث خطأ أثناء تشخيص سير العمل");
-    } finally {
-      setIsDiagnosing(false);
-    }
-  };
-  
-  const handleFixWorkflow = async () => {
-    try {
-      const result = await fixWorkflow();
-      console.log("Fix workflow result:", result);
-      
-      if (result?.success) {
-        toast.success("تم إصلاح سير العمل بنجاح");
-        refreshWorkflowData();
-        setDiagnosticResult(null);
-      } else {
-        toast.error("فشل إصلاح سير العمل: " + (result?.error || "خطأ غير معروف"));
-      }
-    } catch (error) {
-      console.error("Error fixing workflow:", error);
-      toast.error("حدث خطأ أثناء إصلاح سير العمل");
-    }
-  };
-
   // Determine if the workflow is completed
   const isWorkflowCompleted = requestStatus === 'completed' || (currentStepIndex === -1 && workflowSteps.length > 0);
 
@@ -98,14 +60,22 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
           <CardTitle className="text-lg font-bold">مسار سير العمل</CardTitle>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-          >
-            <RotateCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          </Button>
+          <div className="flex items-center gap-2">
+            <WorkflowDiagnosticButton 
+              requestId={requestId}
+              onRunDiagnostic={diagnoseWorkflow}
+              onFixWorkflow={fixWorkflow}
+              refreshData={refreshWorkflowData}
+            />
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+            >
+              <RotateCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
         </div>
         {workflow && (
           <div className="text-sm text-muted-foreground">
@@ -182,57 +152,7 @@ export const RequestWorkflowCard: React.FC<WorkflowCardProps> = ({
             </AlertDescription>
           </Alert>
         )}
-
-        {/* Better diagnostic results display */}
-        {diagnosticResult && !diagnosticResult.success && (
-          <Alert variant="warning" className="mt-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              {diagnosticResult.error || "هناك مشكلة في مسار سير العمل"}
-              {diagnosticResult.debug_info && (
-                <details className="mt-2">
-                  <summary className="text-xs cursor-pointer">عرض التفاصيل</summary>
-                  <pre className="text-xs mt-2 bg-muted p-2 rounded overflow-auto rtl">{JSON.stringify(diagnosticResult.debug_info, null, 2)}</pre>
-                </details>
-              )}
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        {diagnosticResult && diagnosticResult.success && diagnosticResult.issues && diagnosticResult.issues.length > 0 && (
-          <Alert variant="warning" className="mt-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              <div className="font-medium">تم اكتشاف مشاكل في مسار سير العمل:</div>
-              <ul className="list-disc list-inside mt-1 space-y-1">
-                {diagnosticResult.issues.map((issue: string, index: number) => (
-                  <li key={index} className="text-sm">{issue}</li>
-                ))}
-              </ul>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleFixWorkflow} 
-                className="mt-2"
-              >
-                إصلاح المشاكل
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
       </CardContent>
-      
-      <CardFooter className="pt-0 flex gap-2">
-        <DiagnoseWorkflowButton 
-          requestId={requestId} 
-          onDiagnose={handleDiagnoseWorkflow}
-          onFix={handleFixWorkflow}
-          onSuccess={refreshWorkflowData}
-          isDiagnosing={isDiagnosing}
-          diagnosticResult={diagnosticResult}
-          className="w-full" 
-        />
-      </CardFooter>
     </Card>
   );
 };

@@ -66,6 +66,13 @@ export const useWorkflowCardData = (
           ? steps.findIndex(step => step.id === currentStep.id)
           : -1;
           
+        console.log("Current step info:", { 
+          currentStepId: currentStep?.id,
+          foundIndex: index,
+          stepsCount: steps.length,
+          stepsIds: steps.map(s => s.id)
+        });
+        
         setCurrentStepIndex(index !== -1 ? index : -1);
         
         // Calculate progress percentage more accurately by counting approved steps
@@ -128,6 +135,7 @@ export const useWorkflowCardData = (
     if (!requestId) return null;
     
     try {
+      console.log("Running workflow diagnostics for request:", requestId);
       return await diagnoseRequestWorkflow(requestId);
     } catch (error) {
       console.error("Error diagnosing workflow:", error);
@@ -143,6 +151,7 @@ export const useWorkflowCardData = (
     if (!requestId) return null;
     
     try {
+      console.log("Fixing workflow for request:", requestId);
       return await fixRequestWorkflow(requestId);
     } catch (error) {
       console.error("Error fixing workflow:", error);
@@ -155,8 +164,9 @@ export const useWorkflowCardData = (
 
   // Function to refresh workflow data
   const refreshWorkflowData = useCallback(async () => {
+    console.log("Refreshing workflow data for request:", requestId);
     await refetch();
-  }, [refetch]);
+  }, [refetch, requestId]);
 
   return {
     isLoading,
