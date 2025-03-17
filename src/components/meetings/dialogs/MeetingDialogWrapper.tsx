@@ -16,7 +16,7 @@ export const MeetingDialogWrapper = ({
   meeting,
   onSave,
 }: MeetingDialogWrapperProps) => {
-  // EditMeetingDialog expects onSuccess instead of onSaveMeeting
+  // EditMeetingDialog expects onSuccess
   const handleSuccess = (updatedMeeting: Meeting) => {
     onSave({
       ...updatedMeeting,
