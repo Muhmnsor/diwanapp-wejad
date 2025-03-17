@@ -13,6 +13,9 @@ import { ar } from "date-fns/locale";
 import { MeetingParticipantsList } from "@/components/meetings/participants/MeetingParticipantsList";
 import { MeetingAgendaList } from "@/components/meetings/agenda/MeetingAgendaList";
 import { MeetingDecisionsList } from "@/components/meetings/decisions/MeetingDecisionsList";
+import { MeetingMinutesList } from "@/components/meetings/minutes/MeetingMinutesList";
+import { MeetingTasksList } from "@/components/meetings/tasks/MeetingTasksList";
+import { MeetingAttachmentsList } from "@/components/meetings/attachments/MeetingAttachmentsList";
 
 const MeetingDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -207,30 +210,15 @@ const MeetingDetailsPage = () => {
           </TabsContent>
           
           <TabsContent value="minutes">
-            <div className="bg-muted/20 p-8 rounded-lg border text-center">
-              <p>محاضر الاجتماع ستظهر هنا</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                سيتم إضافة مكون محاضر الاجتماع قريباً
-              </p>
-            </div>
+            <MeetingMinutesList meetingId={id} />
           </TabsContent>
           
           <TabsContent value="tasks">
-            <div className="bg-muted/20 p-8 rounded-lg border text-center">
-              <p>مهام الاجتماع ستظهر هنا</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                سيتم إضافة مكون مهام الاجتماع قريباً
-              </p>
-            </div>
+            <MeetingTasksList meetingId={id} />
           </TabsContent>
           
           <TabsContent value="attachments">
-            <div className="bg-muted/20 p-8 rounded-lg border text-center">
-              <p>مرفقات الاجتماع ستظهر هنا</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                سيتم إضافة مكون مرفقات الاجتماع قريباً
-              </p>
-            </div>
+            <MeetingAttachmentsList meetingId={id} />
           </TabsContent>
         </Tabs>
       </div>

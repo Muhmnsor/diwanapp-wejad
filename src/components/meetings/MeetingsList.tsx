@@ -8,6 +8,7 @@ import { Plus, Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { MeetingsFilter } from "./MeetingsFilter";
+import { CreateMeetingDialog } from "./dialogs/CreateMeetingDialog";
 
 interface MeetingsListProps {
   meetings: Meeting[];
@@ -20,6 +21,7 @@ export const MeetingsList = ({ meetings, isLoading, error, onCreate }: MeetingsL
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<string>('');
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   
   const filteredMeetings = meetings.filter(meeting => {
     if (statusFilter && meeting.meeting_status !== statusFilter) return false;
@@ -56,7 +58,7 @@ export const MeetingsList = ({ meetings, isLoading, error, onCreate }: MeetingsL
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">الاجتماعات</h1>
-        <Button onClick={onCreate}>
+        <Button onClick={() => setIsCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           اجتماع جديد
         </Button>
@@ -70,7 +72,7 @@ export const MeetingsList = ({ meetings, isLoading, error, onCreate }: MeetingsL
       {filteredMeetings.length === 0 ? (
         <div className="text-center py-12 bg-muted/20 rounded-lg border">
           <p className="text-muted-foreground">لا توجد اجتماعات للعرض</p>
-          <Button variant="outline" className="mt-4" onClick={onCreate}>
+          <Button variant="outline" className="mt-4" onClick={() => setIsCreateDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             إنشاء اجتماع جديد
           </Button>
@@ -86,6 +88,12 @@ export const MeetingsList = ({ meetings, isLoading, error, onCreate }: MeetingsL
           ))}
         </div>
       )}
+      
+      <CreateMeetingDialog 
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        onSuccess={onCreate}
+      />
     </div>
   );
 };

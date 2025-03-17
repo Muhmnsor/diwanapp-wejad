@@ -9,11 +9,10 @@ import { DeveloperToolbar } from "@/components/developer/DeveloperToolbar";
 
 const MeetingsPage = () => {
   const navigate = useNavigate();
-  const { data: meetings = [], isLoading, error } = useMeetings();
+  const { data: meetings = [], isLoading, error, refetch } = useMeetings();
   
   const handleCreateMeeting = () => {
-    // For now, navigate to a placeholder path
-    navigate("/admin/meetings/new");
+    refetch();
   };
 
   return (
