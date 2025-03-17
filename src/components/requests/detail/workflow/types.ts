@@ -2,26 +2,14 @@
 import { WorkflowStep } from "../../types";
 
 export interface WorkflowCardProps {
-  workflow?: { 
-    id: string; 
-    name?: string; 
-    description?: string; 
+  workflow?: {
+    id: string;
+    name?: string;
+    description?: string;
   } | null;
   currentStep?: WorkflowStep | null;
   requestId: string;
   requestStatus?: string;
-}
-
-export interface WorkflowStepItemProps {
-  step: WorkflowStep;
-  isCurrent: boolean;
-  isCompleted: boolean;
-}
-
-export interface CurrentStepDisplayProps {
-  currentStep?: WorkflowStep | null;
-  requestStatus?: string;
-  isLoading?: boolean;
 }
 
 export interface WorkflowCardDataHookResult {
@@ -35,12 +23,8 @@ export interface WorkflowCardDataHookResult {
   refreshWorkflowData: () => Promise<void>;
 }
 
-export interface DiagnoseWorkflowButtonProps {
-  requestId: string;
-  onDiagnose: () => Promise<void>;
-  onFix: () => Promise<void>;
-  onSuccess: () => Promise<void>;
-  isDiagnosing: boolean;
-  diagnosticResult: any | null;
-  className?: string;
+export interface CurrentStepDisplayProps {
+  currentStep?: WorkflowStep | null;
+  requestStatus?: string;
+  isLoading: boolean;
 }
