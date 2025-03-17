@@ -1,8 +1,9 @@
 
 import { useState } from "react";
 import { useMeetingTasks } from "@/hooks/meetings/useMeetingTasks";
+import { useUpdateTaskStatus } from "@/hooks/meetings/useUpdateMeetingTask";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, Clipboard, Check, X } from "lucide-react";
+import { Plus, Loader2, Clipboard, CheckCircle2, Edit, Trash2, XCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { 
@@ -16,6 +17,12 @@ import {
 import { format, parseISO } from "date-fns";
 import { ar } from "date-fns/locale";
 import { TaskStatusBadge } from "./TaskStatusBadge";
+import { AddTaskDialog } from "./AddTaskDialog";
+import { EditTaskDialog } from "./EditTaskDialog";
+import { DeleteDialog } from "@/components/ui/delete-dialog";
+import { MeetingTask } from "@/types/meeting";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MeetingTasksListProps {
   meetingId?: string;
@@ -23,12 +30,53 @@ interface MeetingTasksListProps {
 
 export const MeetingTasksList = ({ meetingId }: MeetingTasksListProps) => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<MeetingTask | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  
   const { 
     data: tasks = [], 
     isLoading, 
     error,
     refetch 
   } = useMeetingTasks(meetingId);
+  
+  const { updateStatus, isLoading: isStatusUpdating } = useUpdateTaskStatus();
+  
+  const handleMarkComplete = (taskId: string) => {
+    if (!meetingId) return;
+    updateStatus(taskId, meetingId, 'completed');
+  };
+  
+  const handleDelete = async (taskId: string) => {
+    if (!meetingId) return;
+    
+    try {
+      const { error } = await supabase
+        .from('meeting_tasks')
+        .delete()
+        .eq('id', taskId);
+      
+      if (error) throw error;
+      
+      toast.success('تم حذف المهمة بنجاح');
+      refetch();
+      setIsDeleteDialogOpen(false);
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      toast.error('حدث خطأ أثناء حذف المهمة');
+    }
+  };
+  
+  const openEditDialog = (task: MeetingTask) => {
+    setSelectedTask(task);
+    setIsEditDialogOpen(true);
+  };
+  
+  const openDeleteDialog = (task: MeetingTask) => {
+    setSelectedTask(task);
+    setIsDeleteDialogOpen(true);
+  };
   
   if (isLoading) {
     return (
@@ -103,7 +151,7 @@ export const MeetingTasksList = ({ meetingId }: MeetingTasksListProps) => {
                   </TableCell>
                   <TableCell>
                     {task.assigned_to ? (
-                      <span>اسم المسؤول</span> // سيتم استبداله لاحقاً بمعلومات المستخدم
+                      <span>{task.assigned_to}</span>
                     ) : (
                       <span className="text-muted-foreground text-sm">غير محدد</span>
                     )}
@@ -120,14 +168,31 @@ export const MeetingTasksList = ({ meetingId }: MeetingTasksListProps) => {
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-start gap-2">
-                      <Button variant="ghost" size="sm" className="text-green-600">
-                        <Check className="h-4 w-4" />
+                      {task.status !== 'completed' && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-green-600"
+                          onClick={() => handleMarkComplete(task.id)}
+                          disabled={isStatusUpdating}
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => openEditDialog(task)}
+                      >
+                        <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm">
-                        تعديل
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-destructive">
-                        <X className="h-4 w-4" />
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-destructive"
+                        onClick={() => openDeleteDialog(task)}
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>
@@ -138,7 +203,36 @@ export const MeetingTasksList = ({ meetingId }: MeetingTasksListProps) => {
         </div>
       )}
       
-      {/* Task dialog will be implemented later */}
+      {meetingId && (
+        <>
+          <AddTaskDialog 
+            open={isAddDialogOpen} 
+            onOpenChange={setIsAddDialogOpen}
+            meetingId={meetingId}
+            onSuccess={refetch}
+          />
+          
+          {selectedTask && (
+            <>
+              <EditTaskDialog
+                open={isEditDialogOpen}
+                onOpenChange={setIsEditDialogOpen}
+                task={selectedTask}
+                meetingId={meetingId}
+                onSuccess={refetch}
+              />
+              
+              <DeleteDialog
+                open={isDeleteDialogOpen}
+                onOpenChange={setIsDeleteDialogOpen}
+                title="حذف المهمة"
+                description="هل أنت متأكد من رغبتك في حذف هذه المهمة؟ لا يمكن التراجع عن هذا الإجراء."
+                onDelete={() => handleDelete(selectedTask.id)}
+              />
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 };
