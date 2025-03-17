@@ -1,225 +1,301 @@
-
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsHeaders } from "../_shared/cors.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.2";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+// Configure Supabase client
+const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
-  
+
   try {
-    // Initialize Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      { 
-        global: { 
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
-    );
-    
-    // Get the request body
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const body = await req.json();
     const { requestId, currentStepId, action, metadata } = body;
-    
-    if (!requestId || !currentStepId || !action) {
+
+    console.log(`Processing workflow update for request: ${requestId}, step: ${currentStepId}, action: ${action}`);
+
+    if (!requestId || !currentStepId) {
       return new Response(
-        JSON.stringify({ error: 'Missing required parameters' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        JSON.stringify({
+          success: false,
+          error: "Missing required parameters: requestId and currentStepId are required",
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        }
       );
     }
-    
-    console.log(`Processing workflow update for request ${requestId}, step ${currentStepId}, action ${action}`);
-    console.log("Metadata:", metadata);
-    
-    // Get request information
-    const { data: request, error: requestError } = await supabaseClient
-      .from('requests')
-      .select('*, workflow:workflow_id(*), current_step:current_step_id(*)')
-      .eq('id', requestId)
+
+    // Get the current request data to understand the workflow state
+    const { data: requestData, error: requestError } = await supabase
+      .from("requests")
+      .select("*, workflow:workflow_id(*)")
+      .eq("id", requestId)
       .single();
-      
+
     if (requestError) {
-      console.error("Error fetching request:", requestError);
+      console.error("Error fetching request data:", requestError);
       return new Response(
-        JSON.stringify({ error: `Error fetching request: ${requestError.message}` }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        JSON.stringify({
+          success: false,
+          error: `Failed to fetch request data: ${requestError.message}`,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500,
+        }
       );
     }
-    
-    // Get workflow steps
-    const { data: steps, error: stepsError } = await supabaseClient
-      .from('workflow_steps')
-      .select('*')
-      .eq('workflow_id', request.workflow_id)
-      .order('step_order', { ascending: true });
-      
+
+    // Get the workflow steps to identify the next step - CRITICALLY IMPORTANT TO ORDER BY step_order
+    const { data: workflowSteps, error: stepsError } = await supabase
+      .from("workflow_steps")
+      .select("*")
+      .eq("workflow_id", requestData.workflow_id)
+      .order("step_order", { ascending: true });
+
     if (stepsError) {
       console.error("Error fetching workflow steps:", stepsError);
       return new Response(
-        JSON.stringify({ error: `Error fetching workflow steps: ${stepsError.message}` }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        JSON.stringify({
+          success: false,
+          error: `Failed to fetch workflow steps: ${stepsError.message}`,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500,
+        }
       );
     }
-    
-    // Get current step details
-    const currentStep = steps.find(step => step.id === currentStepId);
-    if (!currentStep) {
+
+    // Find the current step and its index
+    const currentStepIndex = workflowSteps.findIndex(step => step.id === currentStepId);
+    if (currentStepIndex === -1) {
       return new Response(
-        JSON.stringify({ error: 'Current step not found in workflow' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        JSON.stringify({
+          success: false,
+          error: "Current step not found in workflow",
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        }
       );
     }
+
+    const currentStep = workflowSteps[currentStepIndex];
+    console.log("Current step:", currentStep);
     
-    let result;
+    // Get the approvals for this request
+    const { data: approvals, error: approvalsError } = await supabase
+      .from("request_approvals")
+      .select("*")
+      .eq("request_id", requestId);
+      
+    if (approvalsError) {
+      console.error("Error fetching approvals:", approvalsError);
+      // Continue despite this error
+    }
     
-    // Process based on action
-    if (action === 'approve') {
-      if (currentStep.step_type === 'opinion') {
-        // For opinion steps, don't change request status, just log
-        console.log("Opinion submitted. No status change required.");
-        result = { success: true, message: 'تم تسجيل الرأي بنجاح', action: 'opinion_submitted' };
+    console.log("Current approvals:", approvals || []);
+    
+    // For opinion steps, we need to move to the next step regardless of approval or rejection
+    // For decision steps, we only move to the next step on approval
+    let shouldMoveToNextStep = false;
+    let isLastStep = false;
+    
+    // For opinion steps - only move to next step once ALL opinions have been collected
+    if (currentStep.step_type === "opinion") {
+      console.log("This is an opinion step");
+      
+      // Check if all required opinions have been collected
+      // For multiple opinions at same step (different users), ensure we have them all
+      const requiredApprovers = workflowSteps
+        .filter(step => step.step_order === currentStep.step_order)
+        .map(step => step.approver_id);
+        
+      console.log("Required approvers for this opinion step:", requiredApprovers);
+      
+      // Check if we have opinions from all required approvers
+      const hasAllOpinions = requiredApprovers.every(approverId => {
+        return approvals?.some(approval => 
+          approval.step_id === currentStepId && 
+          approval.approver_id === approverId
+        );
+      });
+      
+      console.log("Have all required opinions:", hasAllOpinions);
+      
+      // If we have all required opinions, move to next step
+      if (hasAllOpinions) {
+        shouldMoveToNextStep = true;
       } else {
-        // For decision steps, update request status
-        const currentStepIndex = steps.findIndex(step => step.id === currentStepId);
-        const nextStep = steps.find((step, index) => 
-          index > currentStepIndex && 
-          step.step_type === 'decision' && 
-          step.is_required
+        console.log("Waiting for additional opinions before moving to next step");
+        shouldMoveToNextStep = false;
+      }
+    } else if (action === "approve" && currentStep.step_type === "decision") {
+      console.log("This is an approved decision step, moving to next step");
+      shouldMoveToNextStep = true;
+    }
+
+    // Only attempt to find the next step if we should move to next step
+    let nextStep = null;
+    if (shouldMoveToNextStep) {
+      // Get the current step_order to find the next step
+      const currentStepOrder = currentStep.step_order;
+      console.log("Current step order:", currentStepOrder);
+      
+      // Find next available step with a higher step_order
+      const nextSteps = workflowSteps
+        .filter(step => step.step_order > currentStepOrder)
+        .sort((a, b) => a.step_order - b.step_order);
+      
+      if (nextSteps.length > 0) {
+        // Get the next step_order value
+        const nextStepOrder = nextSteps[0].step_order;
+        console.log("Next step order:", nextStepOrder);
+        
+        // Get all steps at this order (could be multiple in parallel)
+        const nextOrderSteps = workflowSteps.filter(step => 
+          step.step_order === nextStepOrder
         );
         
-        if (nextStep) {
-          // Move to next step
-          const { data: updateData, error: updateError } = await supabaseClient
-            .from('requests')
-            .update({ 
-              current_step_id: nextStep.id, 
-              status: 'in_progress',
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', requestId)
-            .select();
-            
-          if (updateError) {
-            console.error("Error updating request to next step:", updateError);
-            return new Response(
-              JSON.stringify({ error: `Error updating request: ${updateError.message}` }),
-              { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-            );
-          }
-          
-          result = { 
-            success: true, 
-            message: 'تم الانتقال إلى الخطوة التالية', 
-            action: 'moved_to_next_step',
-            next_step: nextStep
-          };
-        } else {
-          // No more steps, mark as approved (previously was 'completed', now 'approved')
-          const { data: updateData, error: updateError } = await supabaseClient
-            .from('requests')
-            .update({ 
-              current_step_id: null, 
-              status: 'approved', // Changed from 'completed' to 'approved'
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', requestId)
-            .select();
-            
-          if (updateError) {
-            console.error("Error updating request to approved state:", updateError);
-            return new Response(
-              JSON.stringify({ error: `Error updating request: ${updateError.message}` }),
-              { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-            );
-          }
-          
-          result = { 
-            success: true, 
-            message: 'تمت الموافقة على الطلب بنجاح', 
-            action: 'request_approved'
-          };
-        }
+        // For now, just take the first one
+        nextStep = nextOrderSteps[0];
+        console.log("Moving to step:", nextStep);
       }
-    } else if (action === 'reject') {
-      if (currentStep.step_type === 'opinion') {
-        // For opinion steps, don't change request status
-        console.log("Opinion (rejection) submitted. No status change required.");
-        result = { success: true, message: 'تم تسجيل الرأي بنجاح', action: 'opinion_submitted' };
-      } else {
-        // For decision steps, mark as rejected
-        const { data: updateData, error: updateError } = await supabaseClient
-          .from('requests')
-          .update({ 
-            current_step_id: null, 
-            status: 'rejected',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', requestId)
-          .select();
-          
-        if (updateError) {
-          console.error("Error updating request to rejected state:", updateError);
-          return new Response(
-            JSON.stringify({ error: `Error updating request: ${updateError.message}` }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-          );
-        }
-        
-        result = { 
-          success: true, 
-          message: 'تم رفض الطلب', 
-          action: 'request_rejected'
-        };
+      
+      if (!nextStep) {
+        console.log("No next step found, this is the last step");
+        isLastStep = true;
       }
-    } else {
+    }
+
+    // Update the request status and current step
+    const updateData: any = {};
+    
+    if (shouldMoveToNextStep) {
+      if (isLastStep) {
+        // If this is the last step and it's approved, mark the request as approved (not completed)
+        if (action === "approve") {
+          updateData.status = "approved";
+          updateData.current_step_id = null;
+        } 
+        // If it's rejected, keep the status as is but don't change the step
+      } else if (nextStep) {
+        // Move to the next step
+        updateData.current_step_id = nextStep.id;
+        updateData.status = "in_progress";
+      }
+    } else if (action === "reject" && currentStep.step_type === "decision") {
+      // For rejected decision steps, mark the request as rejected
+      updateData.status = "rejected";
+      updateData.current_step_id = null;
+    }
+
+    // Only update if we have changes to make
+    if (Object.keys(updateData).length > 0) {
+      console.log("Updating request with:", updateData);
+      
+      const { data: updateResult, error: updateError } = await supabase
+        .from("requests")
+        .update(updateData)
+        .eq("id", requestId)
+        .select();
+
+      if (updateError) {
+        console.error("Error updating request:", updateError);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: `Failed to update request: ${updateError.message}`,
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 500,
+          }
+        );
+      }
+
+      // Log the workflow update for auditing
+      const { error: logError } = await supabase
+        .from("request_approval_logs")
+        .insert({
+          request_id: requestId,
+          step_id: currentStepId,
+          user_id: metadata?.userId || null,
+          action_type: `workflow_${action}`,
+          status: "success",
+          metadata: {
+            previous_status: requestData.status,
+            new_status: updateData.status || requestData.status,
+            previous_step_id: currentStepId,
+            new_step_id: updateData.current_step_id || null,
+            is_last_step: isLastStep,
+            timestamp: new Date().toISOString(),
+            client_metadata: metadata || {}
+          }
+        });
+
+      if (logError) {
+        console.error("Error logging workflow update:", logError);
+        // Continue despite log error - this shouldn't fail the operation
+      }
+
       return new Response(
-        JSON.stringify({ error: 'Invalid action specified' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        JSON.stringify({
+          success: true,
+          message: "Workflow updated successfully",
+          data: {
+            requestId,
+            previousStepId: currentStepId,
+            nextStepId: updateData.current_step_id,
+            status: updateData.status || requestData.status,
+            isLastStep
+          }
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    } else {
+      // No updates were needed
+      console.log("No updates needed for the request");
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "No workflow updates were needed",
+          data: {
+            requestId,
+            currentStepId,
+            status: requestData.status,
+            noChangesRequired: true
+          }
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
       );
     }
-    
-    // Log the workflow operation for audit
-    const { data: logData, error: logError } = await supabaseClient.rpc(
-      'log_workflow_operation',
-      { 
-        p_operation_type: `workflow_${action}`,
-        p_request_type_id: request.request_type_id,
-        p_workflow_id: request.workflow_id,
-        p_step_id: currentStepId,
-        p_request_data: { id: request.id, title: request.title },
-        p_response_data: result,
-        p_details: `Workflow update processed through edge function`
-      }
-    );
-    
-    if (logError) {
-      console.warn("Warning: Could not log workflow operation:", logError);
-    }
-    
-    // Return success response
-    return new Response(
-      JSON.stringify(result),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-    );
-    
   } catch (error) {
-    console.error("Unexpected error in process-workflow-update:", error.message);
-    
+    console.error("Unhandled error in process-workflow-update:", error);
     return new Response(
-      JSON.stringify({ error: `Unexpected error: ${error.message}` }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      JSON.stringify({
+        success: false,
+        error: `Unhandled error: ${error.message || "Unknown error"}`,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      }
     );
   }
 });

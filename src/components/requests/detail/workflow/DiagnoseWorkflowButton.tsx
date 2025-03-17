@@ -5,8 +5,8 @@ import {
   AlertTriangle, 
   CheckCircle, 
   Loader2, 
-  AlertCircle,
-  Settings
+  Tool, 
+  AlertCircle 
 } from 'lucide-react';
 import {
   Tooltip,
@@ -122,7 +122,7 @@ export const DiagnoseWorkflowButton = ({
               ) : hasIssues ? (
                 <AlertTriangle className="h-4 w-4 text-amber-500" />
               ) : (
-                <Settings className="h-4 w-4" />
+                <Tool className="h-4 w-4" />
               )}
               <span className="mr-2">تشخيص</span>
             </Button>
