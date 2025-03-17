@@ -30,6 +30,7 @@ export interface WorkflowStep {
   step_name: string;
   step_type: 'decision' | 'opinion' | 'notification' | 'review';
   approver_id: string;
+  approver_type?: string; // New field: can be 'user' or 'role'
   is_required: boolean;
   workflow_id: string;
   step_order: number;
