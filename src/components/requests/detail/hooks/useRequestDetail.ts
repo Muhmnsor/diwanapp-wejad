@@ -19,7 +19,7 @@ export const useRequestDetail = (requestId: string) => {
         .from('requests')
         .select(`
           *,
-          requester:requested_by(id, display_name, email),
+          requester:requester_id(id, display_name, email),
           request_type(*),
           request_status(*),
           current_assignee(id, display_name, email),
@@ -36,7 +36,7 @@ export const useRequestDetail = (requestId: string) => {
   
   // Check if the current user is the requester
   const isRequester = () => {
-    return !!data && !!user && data.requested_by === user.id;
+    return !!data && !!user && data.requester_id === user.id;
   };
   
   // Handle approve request

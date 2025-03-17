@@ -8,6 +8,7 @@ import { RequestRejectDialog } from "./RequestRejectDialog";
 import { useRequestDetail } from "./useRequestDetail";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { DiagnoseWorkflowButton } from "./workflow/DiagnoseWorkflowButton";
 
 interface RequestDetailProps {
   requestId: string;
@@ -27,7 +28,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
     handleRejectClick,
     isCurrentApprover,
     hasSubmittedOpinion,
-    isRequester, // Function to check if the current user is the requester
+    isRequester,
     refetch,
     isDiagnosing,
     diagnosticResult,
@@ -84,6 +85,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
     requester: requester
   };
 
+  // Debug info for workflow data
   console.log("Request workflow data:", workflow);
   console.log("Current step data:", currentStep);
   console.log("Workflow steps:", workflowSteps);
@@ -92,7 +94,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   console.log("Has submitted opinion:", hasSubmittedOpinion() ? "Yes" : "No");
   console.log("Is requester:", isRequester() ? "Yes" : "No");
 
-  // Helper function to handle async refetch and convert to Promise<void>
+  // Helpers function to handle async refetch and convert to Promise<void>
   const handleRefetch = async () => {
     await refetch();
   };
@@ -113,9 +115,9 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
               className="ml-2"
             />
             <RequestActionButtons 
-              status={data.request.status}
+              status={request.status}
               isCurrentApprover={isCurrentApprover()}
-              stepType={data.current_step?.step_type || "decision"}
+              stepType={currentStep?.step_type || "decision"}
               hasSubmittedOpinion={hasSubmittedOpinion()}
               isRequester={isRequester()}
               onApprove={handleApproveClick}
@@ -128,20 +130,20 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <RequestDetailsCard 
-              request={{...data.request, requester: data.requester}}
-              requestType={data.request_type}
-              approvals={data.approvals || []}
-              attachments={data.attachments || []}
+              request={{...request, requester: requester}}
+              requestType={requestType}
+              approvals={approvals || []}
+              attachments={attachments || []}
             />
           </div>
 
           <div className="lg:col-span-1">
             <RequestWorkflowCard 
-              workflow={data.workflow}
-              currentStep={data.current_step}
+              workflow={workflow}
+              currentStep={currentStep}
               requestId={requestId}
-              requestStatus={data.request.status}
-              workflowSteps={data.workflow_steps || []}
+              requestStatus={request.status}
+              workflowSteps={workflowSteps || []}
             />
           </div>
         </div>
@@ -149,9 +151,9 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
 
       <RequestApproveDialog
         requestId={requestId}
-        stepId={data.request.current_step_id}
-        stepType={data.current_step?.step_type || "decision"}
-        requesterId={data.request.requester_id}
+        stepId={request.current_step_id}
+        stepType={currentStep?.step_type || "decision"}
+        requesterId={request.requester_id}
         isOpen={isApproveDialogOpen}
         onOpenChange={(open) => {
           setIsApproveDialogOpen(open);
@@ -161,9 +163,9 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
 
       <RequestRejectDialog
         requestId={requestId}
-        stepId={data.request.current_step_id}
-        stepType={data.current_step?.step_type || "decision"}
-        requesterId={data.request.requester_id}
+        stepId={request.current_step_id}
+        stepType={currentStep?.step_type || "decision"}
+        requesterId={request.requester_id}
         isOpen={isRejectDialogOpen}
         onOpenChange={(open) => {
           setIsRejectDialogOpen(open);
