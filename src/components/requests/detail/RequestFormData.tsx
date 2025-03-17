@@ -11,7 +11,7 @@ interface RequestFormDataProps {
 export const RequestFormData = ({ formData, formSchema }: RequestFormDataProps) => {
   if (!formData || Object.keys(formData).length === 0) {
     return (
-      <div className="text-center py-4 text-muted-foreground" dir="rtl">
+      <div className="text-center py-4 text-muted-foreground">
         لا توجد بيانات مدخلة في هذا الطلب
       </div>
     );
@@ -54,13 +54,13 @@ export const RequestFormData = ({ formData, formSchema }: RequestFormDataProps) 
   };
 
   return (
-    <Card dir="rtl">
+    <Card>
       <CardContent className="p-4">
-        <h3 className="font-medium text-lg mb-4 text-right">بيانات الطلب</h3>
+        <h3 className="font-medium text-lg mb-4">بيانات الطلب</h3>
         <div className="space-y-3">
           {Object.entries(formData).map(([field, value]) => (
             <div key={field} className="py-2">
-              <div className="flex flex-col text-right">
+              <div className="flex flex-col">
                 <span className="text-sm font-medium text-muted-foreground mb-1">
                   {getFieldLabel(field)}
                 </span>

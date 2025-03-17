@@ -19,14 +19,14 @@ interface RequestAttachmentsTabProps {
 export const RequestAttachmentsTab = ({ attachments }: RequestAttachmentsTabProps) => {
   if (!attachments || attachments.length === 0) {
     return (
-      <div className="text-center py-8" dir="rtl">
+      <div className="text-center py-8">
         <p className="text-muted-foreground">لا توجد مرفقات</p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4" dir="rtl">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {attachments.map((attachment) => (
         <Card key={attachment.id}>
           <CardContent className="p-4">

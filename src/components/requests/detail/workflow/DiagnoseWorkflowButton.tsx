@@ -5,7 +5,7 @@ import {
   AlertTriangle, 
   CheckCircle, 
   Loader2, 
-  Wrench, 
+  Tool, 
   AlertCircle 
 } from 'lucide-react';
 import {
@@ -122,7 +122,7 @@ export const DiagnoseWorkflowButton = ({
               ) : hasIssues ? (
                 <AlertTriangle className="h-4 w-4 text-amber-500" />
               ) : (
-                <Wrench className="h-4 w-4" />
+                <Tool className="h-4 w-4" />
               )}
               <span className="mr-2">تشخيص</span>
             </Button>
@@ -202,4 +202,3 @@ export const DiagnoseWorkflowButton = ({
     </>
   );
 };
-
