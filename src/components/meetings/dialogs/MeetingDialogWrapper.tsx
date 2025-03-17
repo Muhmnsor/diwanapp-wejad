@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { EditMeetingDialog } from "./EditMeetingDialog";
-import { Meeting, MeetingType, MeetingStatus, AttendanceType } from "@/types/meeting";
+import { Meeting, MeetingType, MeetingStatus, AttendanceType, MeetingLifecycleStatus } from "@/types/meeting";
 import { useSelectAdapters } from "@/hooks/meetings/useSelectAdapters";
 
 interface MeetingDialogWrapperProps {
@@ -23,7 +23,7 @@ export const MeetingDialogWrapper = ({
   );
   
   const [meetingStatusValue, setMeetingStatusValue] = useState<MeetingStatus>(
-    meeting?.status as MeetingStatus || "scheduled"
+    meeting?.meeting_status as MeetingStatus || "scheduled"
   );
   
   const [attendanceTypeValue, setAttendanceTypeValue] = useState<AttendanceType>(
@@ -46,10 +46,23 @@ export const MeetingDialogWrapper = ({
     const finalMeeting = {
       ...updatedMeeting,
       meeting_type: meetingTypeValue,
-      status: meetingStatusValue,
-      attendance_type: attendanceTypeValue
+      meeting_status: meetingStatusValue, // Use meeting_status instead of status
+      attendance_type: attendanceTypeValue,
+      // Map meetingStatusValue to a compatible MeetingLifecycleStatus
+      status: mapMeetingStatusToLifecycleStatus(meetingStatusValue)
     };
     onSave(finalMeeting);
+  };
+  
+  // Helper function to map MeetingStatus to MeetingLifecycleStatus
+  const mapMeetingStatusToLifecycleStatus = (status: MeetingStatus): MeetingLifecycleStatus => {
+    switch (status) {
+      case "scheduled": return "upcoming";
+      case "in_progress": return "ongoing";
+      case "completed": return "completed";
+      case "cancelled": return "cancelled";
+      default: return "upcoming";
+    }
   };
 
   return (
@@ -57,12 +70,6 @@ export const MeetingDialogWrapper = ({
       open={open}
       onOpenChange={onOpenChange}
       meeting={meeting}
-      meetingTypeValue={meetingTypeValue}
-      meetingStatusValue={meetingStatusValue}
-      attendanceTypeValue={attendanceTypeValue}
-      onMeetingTypeChange={meetingTypeAdapter}
-      onMeetingStatusChange={meetingStatusAdapter}
-      onAttendanceTypeChange={attendanceTypeAdapter}
       onSaveMeeting={handleSaveMeeting}
     />
   );

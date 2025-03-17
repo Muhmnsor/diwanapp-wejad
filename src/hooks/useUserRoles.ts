@@ -38,11 +38,19 @@ export function useUserRoles() {
 
         // Check if any of the user's roles are admin-type roles
         const isAdmin = data.some(
-          (userRole) => 
-            userRole.roles?.name === "admin" || 
-            userRole.roles?.name === "app_admin" || 
-            userRole.roles?.name === "developer" ||
-            userRole.roles?.name === "meeting_manager"
+          (userRole) => {
+            // Make sure roles exists and has a name property
+            if (userRole.roles && typeof userRole.roles === 'object') {
+              const roleName = (userRole.roles as { name: string }).name;
+              return (
+                roleName === "admin" || 
+                roleName === "app_admin" || 
+                roleName === "developer" ||
+                roleName === "meeting_manager"
+              );
+            }
+            return false;
+          }
         );
 
         setHasAdminRole(isAdmin);

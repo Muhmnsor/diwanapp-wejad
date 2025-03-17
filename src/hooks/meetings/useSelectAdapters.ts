@@ -20,23 +20,29 @@ export const useSelectAdapters = (
   // These adapter functions safely convert string values from UI components
   // to the specific enum types required by the state setters
   const meetingTypeAdapter = (value: string) => {
-    // Validate that the value is a valid MeetingType before setting
+    // Safely convert string value to MeetingType before setting
     if (isMeetingType(value)) {
       setMeetingType(value);
+    } else {
+      console.warn(`Invalid meeting type value: ${value}`);
     }
   };
 
   const meetingStatusAdapter = (value: string) => {
-    // Validate that the value is a valid MeetingStatus before setting
+    // Safely convert string value to MeetingStatus before setting
     if (isMeetingStatus(value)) {
       setMeetingStatus(value);
+    } else {
+      console.warn(`Invalid meeting status value: ${value}`);
     }
   };
 
   const attendanceTypeAdapter = (value: string) => {
-    // Validate that the value is a valid AttendanceType before setting
+    // Safely convert string value to AttendanceType before setting
     if (isAttendanceType(value)) {
       setAttendanceType(value);
+    } else {
+      console.warn(`Invalid attendance type value: ${value}`);
     }
   };
 
