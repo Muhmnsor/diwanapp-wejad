@@ -4466,15 +4466,7 @@ export type Database = {
           step_type?: string
           workflow_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "workflow_steps_approver_id_fkey"
-            columns: ["approver_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       workflow_steps_backup: {
         Row: {
