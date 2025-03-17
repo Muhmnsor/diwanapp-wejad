@@ -2,6 +2,7 @@ import { Route } from "react-router-dom";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Settings from "@/pages/Settings";
 import AdminDashboard from "@/pages/AdminDashboard";
+import AdminMeetings from "@/pages/AdminMeetings";
 import Documents from "@/pages/Documents";
 import Tasks from "@/pages/Tasks";
 import TasksDashboard from "@/pages/TasksDashboard";
@@ -30,6 +31,15 @@ export const ProtectedRoutes = [
     element={
       <ProtectedRoute>
         <AdminDashboard />
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="admin-meetings"
+    path="/admin/meetings" 
+    element={
+      <ProtectedRoute>
+        <AdminMeetings />
       </ProtectedRoute>
     } 
   />,
