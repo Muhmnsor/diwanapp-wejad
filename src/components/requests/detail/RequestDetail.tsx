@@ -1,13 +1,13 @@
 
 import { Loader2 } from "lucide-react";
 import { RequestDetailsCard } from "./RequestDetailsCard";
+import { RequestWorkflowCard } from "./workflow/RequestWorkflowCard";
 import { RequestActionButtons } from "./RequestActionButtons";
 import { RequestApproveDialog } from "./RequestApproveDialog";
 import { RequestRejectDialog } from "./RequestRejectDialog";
 import { useRequestDetail } from "./useRequestDetail";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { RequestWorkflowCard } from "./workflow/RequestWorkflowCard";
 import { DiagnoseWorkflowButton } from "./workflow/DiagnoseWorkflowButton";
 
 interface RequestDetailProps {
