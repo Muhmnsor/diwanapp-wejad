@@ -96,8 +96,8 @@ export const WorkflowStepItem = ({ step, isCurrent, isCompleted }: WorkflowStepI
           <div className="text-sm">
             <div className="font-bold mb-1">{step.step_name}</div>
             <div className="text-xs text-gray-500">{getStepTypeText()}</div>
-            {step.description && (
-              <div className="mt-1 text-xs max-w-[200px]">{step.description}</div>
+            {step.instructions && (
+              <div className="mt-1 text-xs max-w-[200px]">{step.instructions}</div>
             )}
           </div>
         </TooltipContent>

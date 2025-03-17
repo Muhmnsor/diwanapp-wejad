@@ -91,6 +91,11 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   console.log("Has submitted opinion:", hasSubmittedOpinion() ? "Yes" : "No");
   console.log("Is requester:", isRequester() ? "Yes" : "No");
 
+  // Helper function to handle async refetch and convert to Promise<void>
+  const handleRefetch = async () => {
+    await refetch();
+  };
+
   return (
     <>
       <div className="space-y-6">
@@ -101,7 +106,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
               requestId={requestId}
               onDiagnose={handleDiagnoseWorkflow}
               onFix={handleFixWorkflow}
-              onSuccess={refetch}
+              onSuccess={handleRefetch}
               isDiagnosing={isDiagnosing}
               diagnosticResult={diagnosticResult}
               className="ml-2"
@@ -148,7 +153,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
         isOpen={isApproveDialogOpen}
         onOpenChange={(open) => {
           setIsApproveDialogOpen(open);
-          if (!open) refetch();
+          if (!open) handleRefetch();
         }}
       />
 
@@ -160,7 +165,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
         isOpen={isRejectDialogOpen}
         onOpenChange={(open) => {
           setIsRejectDialogOpen(open);
-          if (!open) refetch();
+          if (!open) handleRefetch();
         }}
       />
     </>
