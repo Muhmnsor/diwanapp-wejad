@@ -28,6 +28,7 @@ export const useMeetings = () => {
       }
       
       // Get meetings created by the user or where the user is a participant
+      // Fix: Using proper OR syntax for PostgREST
       query = query.or(`created_by.eq.${user.id},meeting_participants.user_id.eq.${user.id}`);
       
       const { data, error } = await query;
