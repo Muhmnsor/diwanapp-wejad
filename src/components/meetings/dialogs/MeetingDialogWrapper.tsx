@@ -1,8 +1,7 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { EditMeetingDialog } from "./EditMeetingDialog";
-import { Meeting, MeetingType, MeetingStatus, AttendanceType, MeetingLifecycleStatus } from "@/types/meeting";
-import { useSelectAdapters } from "@/hooks/meetings/useSelectAdapters";
+import { Meeting, MeetingLifecycleStatus } from "@/types/meeting";
 
 interface MeetingDialogWrapperProps {
   open: boolean;
@@ -17,45 +16,17 @@ export const MeetingDialogWrapper = ({
   meeting,
   onSave,
 }: MeetingDialogWrapperProps) => {
-  // Initialize state with meeting values or defaults
-  const [meetingTypeValue, setMeetingTypeValue] = useState<MeetingType>(
-    meeting?.meeting_type || "other"
-  );
-  
-  const [meetingStatusValue, setMeetingStatusValue] = useState<MeetingStatus>(
-    meeting?.meeting_status as MeetingStatus || "scheduled"
-  );
-  
-  const [attendanceTypeValue, setAttendanceTypeValue] = useState<AttendanceType>(
-    meeting?.attendance_type || "in_person"
-  );
-
-  // Use our type-safe adapters
-  const {
-    meetingTypeAdapter,
-    meetingStatusAdapter,
-    attendanceTypeAdapter
-  } = useSelectAdapters(
-    setMeetingTypeValue,
-    setMeetingStatusValue,
-    setAttendanceTypeValue
-  );
-
-  // Pass modified meeting object with the updated fields to parent component
-  const handleSaveMeeting = (updatedMeeting: Meeting) => {
-    const finalMeeting = {
+  // EditMeetingDialog expects onSuccess instead of onSaveMeeting
+  const handleSuccess = (updatedMeeting: Meeting) => {
+    onSave({
       ...updatedMeeting,
-      meeting_type: meetingTypeValue,
-      meeting_status: meetingStatusValue, // Use meeting_status instead of status
-      attendance_type: attendanceTypeValue,
-      // Map meetingStatusValue to a compatible MeetingLifecycleStatus
-      status: mapMeetingStatusToLifecycleStatus(meetingStatusValue)
-    };
-    onSave(finalMeeting);
+      // Ensure status is properly set based on meeting_status
+      status: mapMeetingStatusToLifecycleStatus(updatedMeeting.meeting_status)
+    });
   };
   
   // Helper function to map MeetingStatus to MeetingLifecycleStatus
-  const mapMeetingStatusToLifecycleStatus = (status: MeetingStatus): MeetingLifecycleStatus => {
+  const mapMeetingStatusToLifecycleStatus = (status: string): MeetingLifecycleStatus => {
     switch (status) {
       case "scheduled": return "upcoming";
       case "in_progress": return "ongoing";
@@ -70,7 +41,7 @@ export const MeetingDialogWrapper = ({
       open={open}
       onOpenChange={onOpenChange}
       meeting={meeting}
-      onSaveMeeting={handleSaveMeeting}
+      onSuccess={handleSuccess}
     />
   );
 };
