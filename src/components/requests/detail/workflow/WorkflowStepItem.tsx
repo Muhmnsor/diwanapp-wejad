@@ -96,7 +96,7 @@ export const WorkflowStepItem = ({ step, status, isCurrent }: WorkflowStepItemPr
           
           <div className="flex items-center">
             <span className={cn(
-              "text-xs py-0.5 px-1.5 rounded-full mr-1",
+              "text-xs py-0.5 px-1.5 rounded-full ml-1",
               getStepTypeBadgeClass()
             )}>
               {getStepTypeLabel()}

@@ -40,7 +40,7 @@ export const AdminRequestsManager = () => {
   // Only show admin content to admins
   if (!isAdmin) {
     return (
-      <div className="p-6 bg-red-50 rounded-lg">
+      <div className="p-6 bg-red-50 rounded-lg" dir="rtl">
         <h2 className="text-xl font-semibold text-red-600 mb-2">غير مصرح</h2>
         <p className="text-red-600">
           ليس لديك صلاحية الوصول إلى هذه الصفحة. يجب أن تكون مشرفًا للوصول إلى لوحة الإدارة.
@@ -62,7 +62,7 @@ export const AdminRequestsManager = () => {
   // Show error state if there's an error
   if (error) {
     return (
-      <Alert variant="destructive" className="mb-6">
+      <Alert variant="destructive" className="mb-6" dir="rtl">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>خطأ في تحميل البيانات</AlertTitle>
         <AlertDescription>
@@ -73,7 +73,7 @@ export const AdminRequestsManager = () => {
             className="mt-2" 
             onClick={refreshRequests}
           >
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <RefreshCw className="h-4 w-4 ml-2" />
             إعادة المحاولة
           </Button>
         </AlertDescription>
@@ -82,14 +82,14 @@ export const AdminRequestsManager = () => {
   }
   
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" dir="rtl">
       <div>
-        <h2 className="text-2xl font-bold mb-4">نظرة عامة</h2>
+        <h2 className="text-2xl font-bold mb-4 text-right">نظرة عامة</h2>
         <RequestsOverview />
       </div>
       
       <div>
-        <h2 className="text-2xl font-bold mb-4">جميع الطلبات</h2>
+        <h2 className="text-2xl font-bold mb-4 text-right">جميع الطلبات</h2>
         <EnhancedRequestsTable 
           requests={requests}
           isLoading={isLoading}

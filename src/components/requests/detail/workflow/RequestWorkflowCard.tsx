@@ -38,7 +38,7 @@ export const RequestWorkflowCard = ({
 
   if (error) {
     return (
-      <Card>
+      <Card dir="rtl">
         <CardHeader>
           <CardTitle>سير العمل</CardTitle>
           <CardDescription>حدث خطأ أثناء تحميل معلومات سير العمل</CardDescription>
@@ -101,7 +101,7 @@ export const RequestWorkflowCard = ({
   };
 
   return (
-    <Card>
+    <Card dir="rtl">
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
@@ -115,8 +115,8 @@ export const RequestWorkflowCard = ({
       <CardContent>
         {isLoading ? (
           <div className="flex justify-center items-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <span className="mr-2">جاري تحميل خطوات سير العمل...</span>
+            <Loader2 className="h-6 w-6 animate-spin text-primary ml-2" />
+            <span>جاري تحميل خطوات سير العمل...</span>
           </div>
         ) : (
           <div className="space-y-5">
@@ -171,28 +171,28 @@ const StatusBadge = ({ status }: { status: string }) => {
     case 'pending':
       return (
         <Badge variant="outline" className="border-amber-500 text-amber-500 flex items-center">
-          <Clock className="h-3 w-3 mr-1" />
+          <Clock className="h-3 w-3 ml-1" />
           في انتظار البدء
         </Badge>
       );
     case 'in_progress':
       return (
         <Badge variant="outline" className="border-blue-500 text-blue-500 flex items-center">
-          <HelpCircle className="h-3 w-3 mr-1" />
+          <HelpCircle className="h-3 w-3 ml-1" />
           قيد المعالجة
         </Badge>
       );
     case 'completed':
       return (
         <Badge variant="outline" className="border-green-500 text-green-500 flex items-center">
-          <CheckCircle className="h-3 w-3 mr-1" />
+          <CheckCircle className="h-3 w-3 ml-1" />
           مكتمل
         </Badge>
       );
     case 'rejected':
       return (
         <Badge variant="outline" className="border-red-500 text-red-500 flex items-center">
-          <XCircle className="h-3 w-3 mr-1" />
+          <XCircle className="h-3 w-3 ml-1" />
           مرفوض
         </Badge>
       );

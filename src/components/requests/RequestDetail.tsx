@@ -1,7 +1,7 @@
 
 import { Loader2 } from "lucide-react";
 import { RequestDetailsCard } from "./detail/RequestDetailsCard";
-import { RequestWorkflowCard } from "./detail/RequestWorkflowCard";
+import { RequestWorkflowCard } from "./detail/workflow/RequestWorkflowCard";
 import { RequestActionButtons } from "./detail/RequestActionButtons";
 import { RequestApproveDialog } from "./detail/RequestApproveDialog";
 import { RequestRejectDialog } from "./detail/RequestRejectDialog";
@@ -31,9 +31,9 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-48">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="mr-2">جاري تحميل تفاصيل الطلب...</span>
+      <div className="flex justify-center items-center h-48" dir="rtl">
+        <Loader2 className="h-8 w-8 animate-spin text-primary ml-2" />
+        <span>جاري تحميل تفاصيل الطلب...</span>
       </div>
     );
   }
@@ -41,7 +41,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   if (error) {
     console.error("Error loading request details:", error);
     return (
-      <Alert variant="destructive">
+      <Alert variant="destructive" dir="rtl">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>خطأ</AlertTitle>
         <AlertDescription>
@@ -53,7 +53,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
 
   if (!data || !data.request) {
     return (
-      <Alert>
+      <Alert dir="rtl">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>لم يتم العثور على الطلب</AlertTitle>
         <AlertDescription>
@@ -87,7 +87,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-6" dir="rtl">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold">تفاصيل الطلب</h2>
           <RequestActionButtons 

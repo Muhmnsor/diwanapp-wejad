@@ -36,7 +36,7 @@ interface ApprovalHistoryListProps {
 export const ApprovalHistoryList = ({ approvals }: ApprovalHistoryListProps) => {
   if (!approvals || approvals.length === 0) {
     return (
-      <div className="text-center py-4 text-muted-foreground">
+      <div className="text-center py-4 text-muted-foreground" dir="rtl">
         لا توجد سجلات موافقات لهذا الطلب
       </div>
     );
@@ -48,7 +48,7 @@ export const ApprovalHistoryList = ({ approvals }: ApprovalHistoryListProps) => 
   );
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" dir="rtl">
       {sortedApprovals.map((approval) => (
         <Card key={approval.id} className="border-r-4 overflow-hidden" 
           style={{ 

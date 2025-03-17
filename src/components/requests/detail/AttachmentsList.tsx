@@ -22,7 +22,7 @@ interface AttachmentsListProps {
 export const AttachmentsList: React.FC<AttachmentsListProps> = ({ attachments }) => {
   if (!attachments || attachments.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
+      <div className="text-center py-8 text-muted-foreground" dir="rtl">
         لا توجد مرفقات لهذا الطلب
       </div>
     );
@@ -51,14 +51,14 @@ export const AttachmentsList: React.FC<AttachmentsListProps> = ({ attachments })
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" dir="rtl">
       {attachments.map((attachment) => (
         <div
           key={attachment.id}
           className="flex items-center justify-between border rounded-md p-3 bg-card"
         >
           <div className="flex items-center">
-            <div className="p-2 bg-primary/10 rounded-md mr-3">
+            <div className="p-2 bg-primary/10 rounded-md ml-3">
               <FileText className="h-5 w-5 text-primary" />
             </div>
             <div>

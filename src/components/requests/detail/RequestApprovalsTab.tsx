@@ -35,29 +35,29 @@ interface RequestApprovalsTabProps {
 export const RequestApprovalsTab = ({ approvals }: RequestApprovalsTabProps) => {
   if (!approvals || approvals.length === 0) {
     return (
-      <div className="text-center py-8">
+      <div className="text-center py-8" dir="rtl">
         <p className="text-muted-foreground">لا توجد موافقات حتى الآن</p>
       </div>
     );
   }
 
   return (
-    <Table>
+    <Table dir="rtl">
       <TableHeader>
         <TableRow>
-          <TableHead>الخطوة</TableHead>
-          <TableHead>نوع الخطوة</TableHead>
-          <TableHead>المسؤول</TableHead>
-          <TableHead>الحالة</TableHead>
-          <TableHead>التعليقات</TableHead>
-          <TableHead>تاريخ الإجراء</TableHead>
+          <TableHead className="text-right">الخطوة</TableHead>
+          <TableHead className="text-right">نوع الخطوة</TableHead>
+          <TableHead className="text-right">المسؤول</TableHead>
+          <TableHead className="text-right">الحالة</TableHead>
+          <TableHead className="text-right">التعليقات</TableHead>
+          <TableHead className="text-right">تاريخ الإجراء</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {approvals.map((approval) => (
           <TableRow key={approval.id}>
-            <TableCell>{approval.step?.step_name || "خطوة غير معروفة"}</TableCell>
-            <TableCell>
+            <TableCell className="text-right">{approval.step?.step_name || "خطوة غير معروفة"}</TableCell>
+            <TableCell className="text-right">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger className="flex items-center">
@@ -74,18 +74,18 @@ export const RequestApprovalsTab = ({ approvals }: RequestApprovalsTabProps) => 
                 </Tooltip>
               </TooltipProvider>
             </TableCell>
-            <TableCell>
+            <TableCell className="text-right">
               {approval.approver?.display_name || approval.approver?.email || "غير معروف"}
             </TableCell>
-            <TableCell>
+            <TableCell className="text-right">
               {approval.status === "approved" ? 
                 <Badge variant="success">تمت الموافقة</Badge> : 
                 approval.status === "rejected" ?
                 <Badge variant="destructive">مرفوض</Badge> :
                 <Badge variant="outline">معلق</Badge>}
             </TableCell>
-            <TableCell>{approval.comments || "-"}</TableCell>
-            <TableCell>
+            <TableCell className="text-right">{approval.comments || "-"}</TableCell>
+            <TableCell className="text-right">
               {approval.approved_at ? format(new Date(approval.approved_at), "yyyy-MM-dd") : "-"}
             </TableCell>
           </TableRow>
