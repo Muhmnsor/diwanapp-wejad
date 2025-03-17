@@ -1,13 +1,17 @@
 
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, Grid } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
+import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { useUserName } from "@/hooks/dashboard/useUserName";
+import { Navigation } from "@/components/Navigation";
 
 export const AdminHeader = () => {
   const navigate = useNavigate();
   const { logout } = useAuthStore();
+  const { data: userName } = useUserName();
 
   const handleLogout = async () => {
     try {
@@ -34,7 +38,16 @@ export const AdminHeader = () => {
               onClick={() => navigate("/admin")}
             />
           </div>
+          
+          <div className="flex items-center justify-center gap-4">
+            <Navigation />
+            <NotificationBell />
+          </div>
+          
           <div className="flex items-center justify-center gap-4 md:justify-end">
+            <div className="text-sm font-medium">
+              مرحباً، {userName || 'المستخدم'}
+            </div>
             <Button
               variant="ghost"
               onClick={handleLogout}
