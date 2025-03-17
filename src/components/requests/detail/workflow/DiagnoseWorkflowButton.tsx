@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
   AlertTriangle, 
   CheckCircle, 
   Loader2, 
-  Tool, 
+  Wrench, 
   AlertCircle 
 } from 'lucide-react';
 import {
@@ -75,7 +74,6 @@ export const DiagnoseWorkflowButton = ({
     }
   };
   
-  // Helper to determine severity icon and color
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
       case 'high':
@@ -102,7 +100,6 @@ export const DiagnoseWorkflowButton = ({
     }
   };
   
-  // Only show if we have diagnostic data with issues
   const hasIssues = diagnosticResult?.data?.has_issues;
   
   return (
@@ -122,7 +119,7 @@ export const DiagnoseWorkflowButton = ({
               ) : hasIssues ? (
                 <AlertTriangle className="h-4 w-4 text-amber-500" />
               ) : (
-                <Tool className="h-4 w-4" />
+                <Wrench className="h-4 w-4" />
               )}
               <span className="mr-2">تشخيص</span>
             </Button>
