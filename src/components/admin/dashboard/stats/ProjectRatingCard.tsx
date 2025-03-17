@@ -1,87 +1,63 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Star } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Star } from "lucide-react";
 
 interface ProjectRatingCardProps {
   projectId: string;
 }
 
 export const ProjectRatingCard = ({ projectId }: ProjectRatingCardProps) => {
-  const { data: averageRating = 0 } = useQuery({
-    queryKey: ['project-average-rating', projectId],
+  const { data, isLoading } = useQuery({
+    queryKey: ['project-rating', projectId],
     queryFn: async () => {
-      console.log('Fetching average rating for project activities:', projectId);
+      // Get project feedback ratings
+      const { data: feedback, error } = await supabase
+        .from('project_feedback')
+        .select('overall_rating')
+        .eq('project_id', projectId);
       
-      // Get all activities for this project with their feedback
-      const { data: activities } = await supabase
-        .from('events')
-        .select(`
-          id,
-          activity_feedback (
-            overall_rating,
-            content_rating,
-            organization_rating,
-            presenter_rating
-          )
-        `)
-        .eq('project_id', projectId)
-        .eq('is_project_activity', true);
-
-      if (!activities?.length) {
-        console.log('No project activities found with feedback');
-        return 0;
+      if (error) {
+        console.error('Error fetching project ratings:', error);
+        throw error;
       }
-
-      let totalRating = 0;
-      let ratingCount = 0;
-
-      activities.forEach(activity => {
-        activity.activity_feedback.forEach((feedback: any) => {
-          const ratings = [
-            feedback.overall_rating,
-            feedback.content_rating,
-            feedback.organization_rating,
-            feedback.presenter_rating
-          ].filter(rating => rating !== null);
-
-          if (ratings.length > 0) {
-            totalRating += ratings.reduce((sum: number, rating: number) => sum + rating, 0);
-            ratingCount += ratings.length;
-          }
-        });
-      });
-
-      const average = ratingCount > 0 ? totalRating / ratingCount : 0;
-      console.log('Project activities average rating:', {
-        totalRating,
-        ratingCount,
-        average: average.toFixed(1)
-      });
-
-      return average;
+      
+      // Calculate average rating if there are any ratings
+      const validRatings = feedback?.filter(f => f.overall_rating !== null) || [];
+      const averageRating = validRatings.length > 0
+        ? validRatings.reduce((sum, item) => sum + (item.overall_rating || 0), 0) / validRatings.length
+        : 0;
+      
+      return {
+        averageRating: averageRating.toFixed(1),
+        ratingsCount: validRatings.length
+      };
     },
+    enabled: !!projectId
   });
-
-  const getRatingColor = (rating: number) => {
-    if (rating >= 4) return 'text-green-600';
-    if (rating >= 3) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
+  
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">متوسط تقييم أنشطة المشروع</CardTitle>
-        <Star className={`h-4 w-4 ${getRatingColor(averageRating)}`} />
+        <CardTitle className="text-sm font-medium">
+          متوسط تقييم المشروع
+        </CardTitle>
+        <Star className="h-4 w-4 text-yellow-500" />
       </CardHeader>
       <CardContent>
-        <div className={`text-2xl font-bold ${getRatingColor(averageRating)}`}>
-          {averageRating.toFixed(1)}
+        <div className="flex items-center justify-between">
+          <div className="text-2xl font-bold">
+            {isLoading ? '...' : data?.averageRating || '0.0'}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            من {isLoading ? '...' : data?.ratingsCount || 0} تقييم
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          متوسط تقييمات المستفيدين لأنشطة المشروع
+        <p className="text-xs text-muted-foreground mt-2">
+          {!data?.ratingsCount 
+            ? 'لم يتم تقييم المشروع بعد' 
+            : `تم تقييم المشروع بواسطة ${data.ratingsCount} مشارك`}
         </p>
       </CardContent>
     </Card>

@@ -1,12 +1,11 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AttendanceStatus, MeetingParticipant } from "@/types/meeting";
 import { toast } from "sonner";
 
 interface UpdateParticipantStatusParams {
   participantId: string;
-  attendanceStatus: AttendanceStatus;
+  attendanceStatus: "pending" | "confirmed" | "attended" | "absent";
   meetingId: string;
 }
 
@@ -22,7 +21,6 @@ export const useUpdateParticipantStatus = () => {
           updated_at: new Date().toISOString()
         })
         .eq('id', participantId)
-        .eq('meeting_id', meetingId)
         .select('*')
         .single();
       
@@ -31,7 +29,7 @@ export const useUpdateParticipantStatus = () => {
         throw error;
       }
       
-      return data as MeetingParticipant;
+      return data;
     },
     onSuccess: (_, variables) => {
       toast.success('تم تحديث حالة المشارك بنجاح');

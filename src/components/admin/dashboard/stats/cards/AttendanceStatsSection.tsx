@@ -1,4 +1,8 @@
-import { ActivityAttendanceCard } from "../ActivityAttendanceCard";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TrendingUp, TrendingDown } from "lucide-react";
+import { format } from "date-fns";
+import { ar } from "date-fns/locale";
 
 interface AttendanceStatsSectionProps {
   highestAttendance?: {
@@ -21,20 +25,75 @@ interface AttendanceStatsSectionProps {
 
 export const AttendanceStatsSection = ({
   highestAttendance,
-  lowestAttendance,
+  lowestAttendance
 }: AttendanceStatsSectionProps) => {
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), 'dd MMM yyyy', { locale: ar });
+    } catch (error) {
+      return dateString;
+    }
+  };
+
   return (
     <>
-      <ActivityAttendanceCard
-        type="highest"
-        title="أعلى نسبة حضور"
-        activity={highestAttendance}
-      />
-      <ActivityAttendanceCard
-        type="lowest"
-        title="أقل نسبة حضور"
-        activity={lowestAttendance}
-      />
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            أعلى نسبة حضور
+          </CardTitle>
+          <TrendingUp className="h-4 w-4 text-green-600" />
+        </CardHeader>
+        <CardContent>
+          {highestAttendance ? (
+            <>
+              <div className="text-xl font-bold mb-1">{highestAttendance.title}</div>
+              <div className="flex justify-between items-center">
+                <div className="text-sm">{formatDate(highestAttendance.date)}</div>
+                <div className="text-sm font-semibold text-green-600">
+                  {highestAttendance.attendanceRate.toFixed(0)}%
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                {highestAttendance.count} من أصل {highestAttendance.totalRegistrations} مسجل
+              </p>
+            </>
+          ) : (
+            <div className="text-sm text-muted-foreground">
+              لا توجد بيانات حضور حالياً
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            أدنى نسبة حضور
+          </CardTitle>
+          <TrendingDown className="h-4 w-4 text-red-600" />
+        </CardHeader>
+        <CardContent>
+          {lowestAttendance ? (
+            <>
+              <div className="text-xl font-bold mb-1">{lowestAttendance.title}</div>
+              <div className="flex justify-between items-center">
+                <div className="text-sm">{formatDate(lowestAttendance.date)}</div>
+                <div className="text-sm font-semibold text-red-600">
+                  {lowestAttendance.attendanceRate.toFixed(0)}%
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                {lowestAttendance.count} من أصل {lowestAttendance.totalRegistrations} مسجل
+              </p>
+            </>
+          ) : (
+            <div className="text-sm text-muted-foreground">
+              لا توجد بيانات حضور حالياً
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </>
   );
 };
