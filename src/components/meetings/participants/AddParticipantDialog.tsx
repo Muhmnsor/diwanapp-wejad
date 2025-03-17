@@ -1,50 +1,18 @@
 
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
+import { Label } from "@/components/ui/label";
+import { 
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Loader2 } from "lucide-react";
-
-const formSchema = z.object({
-  user_email: z.string().email({ message: "يرجى إدخال بريد إلكتروني صحيح" }),
-  user_display_name: z.string().min(2, { message: "يجب أن يتكون الاسم من حرفين على الأقل" }),
-  role: z.enum(["organizer", "presenter", "member", "guest"], { 
-    required_error: "يرجى اختيار دور المشارك" 
-  }),
-  attendance_status: z.enum(["pending", "confirmed", "attended", "absent"], { 
-    required_error: "يرجى اختيار حالة الحضور" 
-  }),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { ParticipantRole, AttendanceStatus } from "@/types/meeting";
+import { useAddMeetingParticipant } from "@/hooks/meetings/useAddMeetingParticipant";
 
 interface AddParticipantDialogProps {
   open: boolean;
@@ -52,163 +20,112 @@ interface AddParticipantDialogProps {
   meetingId: string;
 }
 
-export const AddParticipantDialog = ({ 
-  open, 
-  onOpenChange,
-  meetingId 
-}: AddParticipantDialogProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const queryClient = useQueryClient();
+export const AddParticipantDialog = ({ open, onOpenChange, meetingId }: AddParticipantDialogProps) => {
+  const [email, setEmail] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [role, setRole] = useState<ParticipantRole>("member");
+  const [attendanceStatus, setAttendanceStatus] = useState<AttendanceStatus>("pending");
   
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      user_email: "",
-      user_display_name: "",
-      role: "member",
-      attendance_status: "pending",
-    },
-  });
+  const { mutate: addParticipant, isPending } = useAddMeetingParticipant();
   
-  const onSubmit = async (data: FormValues) => {
-    if (!meetingId) {
-      toast.error("معرف الاجتماع غير محدد");
-      return;
-    }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     
-    setIsSubmitting(true);
+    if (!email.trim() || !displayName.trim()) return;
     
-    try {
-      const { error } = await supabase
-        .from('meeting_participants')
-        .insert([
-          {
-            meeting_id: meetingId,
-            user_email: data.user_email,
-            user_display_name: data.user_display_name,
-            role: data.role,
-            attendance_status: data.attendance_status,
-          }
-        ]);
-      
-      if (error) throw error;
-      
-      toast.success("تمت إضافة المشارك بنجاح");
-      queryClient.invalidateQueries({ queryKey: ['meeting-participants', meetingId] });
-      form.reset();
-      onOpenChange(false);
-    } catch (error: any) {
-      toast.error(`فشل إضافة المشارك: ${error.message}`);
-    } finally {
-      setIsSubmitting(false);
-    }
+    addParticipant({
+      meetingId,
+      participant: {
+        user_email: email,
+        user_display_name: displayName,
+        role,
+        attendance_status: attendanceStatus
+      }
+    }, {
+      onSuccess: () => {
+        resetForm();
+        onOpenChange(false);
+      }
+    });
+  };
+  
+  const resetForm = () => {
+    setEmail("");
+    setDisplayName("");
+    setRole("member");
+    setAttendanceStatus("pending");
   };
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px]" dir="rtl">
         <DialogHeader>
           <DialogTitle>إضافة مشارك جديد</DialogTitle>
-          <DialogDescription>
-            أدخل معلومات المشارك في الاجتماع
-          </DialogDescription>
         </DialogHeader>
         
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="user_email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>البريد الإلكتروني</FormLabel>
-                  <FormControl>
-                    <Input placeholder="أدخل البريد الإلكتروني" {...field} dir="ltr" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">البريد الإلكتروني</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="أدخل البريد الإلكتروني"
+              required
             />
-            
-            <FormField
-              control={form.control}
-              name="user_display_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>الاسم</FormLabel>
-                  <FormControl>
-                    <Input placeholder="أدخل اسم المشارك" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="displayName">الاسم</Label>
+            <Input
+              id="displayName"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="أدخل اسم المشارك"
+              required
             />
-            
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>الدور</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر دور المشارك" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="organizer">منظم</SelectItem>
-                      <SelectItem value="presenter">مقدم</SelectItem>
-                      <SelectItem value="member">عضو</SelectItem>
-                      <SelectItem value="guest">ضيف</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="attendance_status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>حالة الحضور</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر حالة الحضور" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="pending">قيد الإنتظار</SelectItem>
-                      <SelectItem value="confirmed">مؤكد</SelectItem>
-                      <SelectItem value="attended">حضر</SelectItem>
-                      <SelectItem value="absent">متغيب</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                إلغاء
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    جارِ الإضافة...
-                  </>
-                ) : (
-                  "إضافة المشارك"
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="role">دور المشارك</Label>
+            <Select value={role} onValueChange={(value) => setRole(value as ParticipantRole)}>
+              <SelectTrigger id="role">
+                <SelectValue placeholder="اختر دور المشارك" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="organizer">منظم</SelectItem>
+                <SelectItem value="presenter">مقدم</SelectItem>
+                <SelectItem value="member">عضو</SelectItem>
+                <SelectItem value="guest">ضيف</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="attendanceStatus">حالة الحضور</Label>
+            <Select value={attendanceStatus} onValueChange={(value) => setAttendanceStatus(value as AttendanceStatus)}>
+              <SelectTrigger id="attendanceStatus">
+                <SelectValue placeholder="اختر حالة الحضور" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pending">قيد الانتظار</SelectItem>
+                <SelectItem value="confirmed">مؤكد</SelectItem>
+                <SelectItem value="attended">حضر</SelectItem>
+                <SelectItem value="absent">متغيب</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <DialogFooter className="pt-4">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              إلغاء
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? "جاري الإضافة..." : "إضافة"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

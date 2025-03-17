@@ -12,7 +12,8 @@ export const useMeetingParticipants = (meetingId: string | undefined) => {
       const { data, error } = await supabase
         .from('meeting_participants')
         .select('*')
-        .eq('meeting_id', meetingId);
+        .eq('meeting_id', meetingId)
+        .order('role', { ascending: true });
       
       if (error) {
         console.error('Error fetching meeting participants:', error);

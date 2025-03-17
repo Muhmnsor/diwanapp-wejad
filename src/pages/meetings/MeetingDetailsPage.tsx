@@ -14,7 +14,7 @@ import { MeetingDecisionsList } from "@/components/meetings/decisions/MeetingDec
 import { MeetingMinutesList } from "@/components/meetings/minutes/MeetingMinutesList";
 import { MeetingTasksList } from "@/components/meetings/tasks/MeetingTasksList";
 import { MeetingAttachmentsList } from "@/components/meetings/attachments/MeetingAttachmentsList";
-import { MeetingHeader } from "@/components/meetings/MeetingHeader";
+import { MeetingHeaderEnhanced } from "@/components/meetings/MeetingHeaderEnhanced";
 import { MeetingInfo } from "@/components/meetings/MeetingInfo";
 
 const MeetingDetailsPage = () => {
@@ -75,8 +75,8 @@ const MeetingDetailsPage = () => {
       <AdminHeader />
       
       <div className="container mx-auto px-4 py-8 flex-grow">
-        {/* استخدام MeetingHeader */}
-        <MeetingHeader meeting={meeting} />
+        {/* استخدام MeetingHeaderEnhanced */}
+        <MeetingHeaderEnhanced meeting={meeting} />
         
         {/* استخدام MeetingInfo */}
         <MeetingInfo meeting={meeting} />
