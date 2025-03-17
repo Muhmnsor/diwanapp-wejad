@@ -32,7 +32,7 @@ export const useWorkflowCardData = (
       // Get workflow steps
       const { data: steps, error: stepsError } = await supabase
         .from('workflow_steps')
-        .select('*, approver:approver_id(*)')
+        .select('*, approver:approver_id(id, display_name, email)')
         .eq('workflow_id', workflowId)
         .order('step_order', { ascending: true });
         

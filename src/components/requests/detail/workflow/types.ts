@@ -11,9 +11,3 @@ export interface WorkflowCardDataHookResult {
   fixWorkflow: () => Promise<any>;
   refreshWorkflowData: () => Promise<void>;
 }
-
-export interface CurrentStepDisplayProps {
-  currentStep: any;
-  requestStatus: string;
-  isLoading?: boolean;
-}
