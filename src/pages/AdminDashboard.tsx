@@ -12,6 +12,7 @@ import { DeveloperToolbar } from "@/components/developer/DeveloperToolbar";
 import { useAuthStore } from "@/store/refactored-auth";
 import { AppItem } from "@/components/admin/dashboard/DashboardApps";
 import { Loader2 } from "lucide-react";
+import { getMeetingsAppCard, useMeetingsNotificationCount } from "@/components/meetings/utils/meetingsAppExtension";
 
 const AdminDashboard = () => {
   const { data: userName, isLoading: isLoadingUser } = useUserName();
@@ -19,6 +20,7 @@ const AdminDashboard = () => {
   const { user } = useAuthStore();
   const [apps, setApps] = useState<AppItem[]>([]);
   const [isLoadingApps, setIsLoadingApps] = useState<boolean>(true);
+  const meetingsCount = useMeetingsNotificationCount();
   
   // Fetch apps list when user or notification counts change
   useEffect(() => {
@@ -26,7 +28,21 @@ const AdminDashboard = () => {
       if (user) {
         setIsLoadingApps(true);
         try {
+          // Get standard apps
           const appsList = await getAppsList(notificationCounts, user);
+          
+          // Add meetings app if user is admin or has appropriate role
+          if (user.isAdmin || user.role === 'admin' || user.role === 'app_admin' || user.role === 'developer') {
+            const meetingsApp = getMeetingsAppCard();
+            // Update with real notification count
+            meetingsApp.notifications = meetingsCount;
+            
+            // Add to apps list if not already present
+            if (!appsList.some(app => app.path === '/meetings')) {
+              appsList.push(meetingsApp);
+            }
+          }
+          
           setApps(appsList);
         } catch (error) {
           console.error("Error fetching apps:", error);
@@ -37,7 +53,7 @@ const AdminDashboard = () => {
     };
     
     fetchApps();
-  }, [user, notificationCounts]);
+  }, [user, notificationCounts, meetingsCount]);
 
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
