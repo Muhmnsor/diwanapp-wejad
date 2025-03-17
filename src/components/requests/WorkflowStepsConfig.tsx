@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { WorkflowStep } from "./types";
 import { StepForm } from "./workflow/StepForm";
@@ -115,7 +114,7 @@ export const WorkflowStepsConfig = ({
       )}
       
       {workflowSteps.length > 0 && currentWorkflowId === 'temp-workflow-id' && (
-        <Alert variant="warning">
+        <Alert variant="default">
           <Info className="h-4 w-4" />
           <AlertDescription>
             تعمل حالياً في الوضع المؤقت. يجب حفظ الخطوات لإنشاء سير العمل في قاعدة البيانات.

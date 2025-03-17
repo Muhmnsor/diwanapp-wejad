@@ -1,11 +1,10 @@
-
 import { Loader2 } from "lucide-react";
 import { RequestDetailsCard } from "./RequestDetailsCard";
 import { RequestWorkflowCard } from "./workflow/RequestWorkflowCard";
 import { RequestActionButtons } from "./RequestActionButtons";
 import { RequestApproveDialog } from "./RequestApproveDialog";
 import { RequestRejectDialog } from "./RequestRejectDialog";
-import { useRequestDetail } from "./useRequestDetail";
+import { useRequestDetailEnhanced } from "@/hooks/meetings/useRequestDetailEnhanced";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { DiagnoseWorkflowButton } from "./workflow/DiagnoseWorkflowButton";
@@ -34,7 +33,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
     diagnosticResult,
     handleDiagnoseWorkflow,
     handleFixWorkflow
-  } = useRequestDetail(requestId);
+  } = useRequestDetailEnhanced(requestId);
 
   if (isLoading) {
     return (
@@ -93,7 +92,6 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   console.log("Has submitted opinion:", hasSubmittedOpinion() ? "Yes" : "No");
   console.log("Is requester:", isRequester() ? "Yes" : "No");
 
-  // Helper function to handle async refetch and convert to Promise<void>
   const handleRefetch = async () => {
     await refetch();
   };

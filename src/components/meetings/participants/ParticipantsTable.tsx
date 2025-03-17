@@ -1,155 +1,121 @@
 
 import { useState } from "react";
-import { MeetingParticipant, AttendanceStatus } from "@/types/meeting";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { Check, CheckCircle, Clock, X, MoreVertical, UserX, ChevronDown } from "lucide-react";
+import { TableRow, TableCell } from "@/components/ui/table";
 import { ParticipantRoleBadge } from "./ParticipantRoleBadge";
 import { ParticipantAttendanceBadge } from "./ParticipantAttendanceBadge";
+import { MeetingParticipant } from "@/types/meeting";
 import { useRemoveParticipant } from "@/hooks/meetings/useRemoveParticipant";
 import { useUpdateParticipantStatus } from "@/hooks/meetings/useUpdateParticipantStatus";
+import { toast } from "sonner";
 import { DeleteDialog } from "@/components/ui/delete-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { CheckIcon, MoreVertical, UserMinus, UserX } from "lucide-react";
 
-interface ParticipantsTableProps {
-  participants: MeetingParticipant[];
+interface ParticipantsTableRowProps {
+  participant: MeetingParticipant;
   meetingId: string;
+  canManageParticipants?: boolean;
 }
 
-export const ParticipantsTable = ({ participants, meetingId }: ParticipantsTableProps) => {
-  const [selectedParticipant, setSelectedParticipant] = useState<MeetingParticipant | null>(null);
+export const ParticipantsTableRow = ({
+  participant,
+  meetingId,
+  canManageParticipants = true,
+}: ParticipantsTableRowProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  
-  const { mutate: removeParticipant, isPending: isRemoving } = useRemoveParticipant();
+  const { removeParticipant, isRemoving } = useRemoveParticipant();
   const { mutate: updateStatus, isPending: isUpdating } = useUpdateParticipantStatus();
-  
-  const handleRemove = () => {
-    if (!selectedParticipant) return;
-    
-    removeParticipant({
-      meetingId,
-      participantId: selectedParticipant.id
-    }, {
-      onSuccess: () => {
-        setShowDeleteDialog(false);
-        setSelectedParticipant(null);
+
+  const handleDelete = async () => {
+    try {
+      await removeParticipant({
+        participantId: participant.id,
+        meetingId,
+      });
+      setShowDeleteDialog(false);
+      toast.success("تم حذف المشارك بنجاح");
+    } catch (error) {
+      console.error("Error removing participant:", error);
+      toast.error("حدث خطأ أثناء حذف المشارك");
+    }
+  };
+
+  const handleStatusChange = (status: "pending" | "confirmed" | "attended" | "absent") => {
+    updateStatus(
+      {
+        participantId: participant.id,
+        attendanceStatus: status,
+        meetingId,
+      },
+      {
+        onSuccess: () => {
+          const statusMessages = {
+            pending: "في انتظار التأكيد",
+            confirmed: "تم تأكيد الحضور",
+            attended: "حضر",
+            absent: "متغيب",
+          };
+          toast.success(`تم تحديث حالة المشارك إلى ${statusMessages[status]}`);
+        },
       }
-    });
+    );
   };
-  
-  const handleUpdateStatus = (participant: MeetingParticipant, status: AttendanceStatus) => {
-    updateStatus({
-      meetingId,
-      participantId: participant.id,
-      attendanceStatus: status
-    });
-  };
-  
+
   return (
     <>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>الاسم</TableHead>
-            <TableHead>البريد الإلكتروني</TableHead>
-            <TableHead>الدور</TableHead>
-            <TableHead>حالة الحضور</TableHead>
-            <TableHead className="w-[100px]">الإجراءات</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {participants.map((participant) => (
-            <TableRow key={participant.id}>
-              <TableCell className="font-medium">{participant.user_display_name || "غير محدد"}</TableCell>
-              <TableCell>{participant.user_email || "غير محدد"}</TableCell>
-              <TableCell>
-                <ParticipantRoleBadge role={participant.role} />
-              </TableCell>
-              <TableCell>
-                <ParticipantAttendanceBadge status={participant.attendance_status} />
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <span className="sr-only">فتح القائمة</span>
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" dir="rtl">
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setSelectedParticipant(participant);
-                          setShowDeleteDialog(true);
-                        }}
-                        className="text-destructive"
-                      >
-                        <UserX className="mr-2 h-4 w-4" />
-                        إزالة المشارك
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-8 flex items-center gap-1">
-                        <span>الحالة</span>
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" dir="rtl">
-                      <DropdownMenuItem
-                        onClick={() => handleUpdateStatus(participant, "pending")}
-                      >
-                        <Clock className="mr-2 h-4 w-4" />
-                        قيد الانتظار
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleUpdateStatus(participant, "confirmed")}
-                      >
-                        <Check className="mr-2 h-4 w-4" />
-                        مؤكد
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleUpdateStatus(participant, "attended")}
-                      >
-                        <CheckCircle className="mr-2 h-4 w-4" />
-                        حضر
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleUpdateStatus(participant, "absent")}
-                      >
-                        <X className="mr-2 h-4 w-4" />
-                        متغيب
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      
+      <TableRow key={participant.id}>
+        <TableCell className="font-medium">{participant.user?.name || participant.name || "مشارك"}</TableCell>
+        <TableCell>{participant.email}</TableCell>
+        <TableCell>
+          <ParticipantRoleBadge role={participant.role} />
+        </TableCell>
+        <TableCell>
+          <ParticipantAttendanceBadge status={participant.attendance_status} />
+        </TableCell>
+        {canManageParticipants && (
+          <TableCell className="text-right">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">فتح القائمة</span>
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleStatusChange("confirmed")}>
+                  <CheckIcon className="ml-2 h-4 w-4" />
+                  تأكيد الحضور
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusChange("attended")}>
+                  <CheckIcon className="ml-2 h-4 w-4" />
+                  تسجيل الحضور
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusChange("absent")}>
+                  <UserX className="ml-2 h-4 w-4" />
+                  تسجيل الغياب
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowDeleteDialog(true)}>
+                  <UserMinus className="ml-2 h-4 w-4" />
+                  حذف المشارك
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </TableCell>
+        )}
+      </TableRow>
+
       <DeleteDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
-        title="إزالة المشارك"
-        description={`هل أنت متأكد من رغبتك في إزالة المشارك ${selectedParticipant?.user_display_name || ''} من الاجتماع؟`}
-        onDelete={handleRemove}
+        title="حذف المشارك"
+        description={`هل أنت متأكد من حذف ${participant.name || participant.email || "هذا المشارك"}؟`}
+        onDelete={handleDelete}
         isDeleting={isRemoving}
       />
     </>
