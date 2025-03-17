@@ -32,6 +32,7 @@ export const useRequestDetail = (requestId: string) => {
           console.error("رسالة الخطأ:", error.message);
           console.error("تفاصيل الخطأ:", error.details);
           
+          // Check if this is an RLS policy issue
           if (error.code === 'PGRST301') {
             console.error("خطأ في سياسة RLS: ليس لديك صلاحية للوصول إلى هذا الطلب");
           }
@@ -41,6 +42,7 @@ export const useRequestDetail = (requestId: string) => {
         
         console.log("تم جلب تفاصيل الطلب بنجاح:", data);
         
+        // Add additional debug info
         if (!data.workflow || !data.workflow.id) {
           console.warn("بيانات سير العمل مفقودة أو غير مكتملة:", data.workflow);
         }
@@ -53,6 +55,7 @@ export const useRequestDetail = (requestId: string) => {
           console.warn("بيانات مقدم الطلب مفقودة أو غير مكتملة:", data.requester);
         }
 
+        // Detailed info about approvals
         if (data.approvals && data.approvals.length > 0) {
           console.log("عدد سجلات الموافقة:", data.approvals.length);
           console.log("تفاصيل أول سجل موافقة:", data.approvals[0]);
@@ -71,6 +74,7 @@ export const useRequestDetail = (requestId: string) => {
     refetchOnWindowFocus: false
   });
 
+  // Check if the current user is the requester
   const isRequester = () => {
     if (!data || !user || !data.request) return false;
     
@@ -80,7 +84,9 @@ export const useRequestDetail = (requestId: string) => {
     
     return user.id === data.request.requester_id;
   };
-
+  
+  // Updated logic: any authenticated user can participate in opinion steps,
+  // but decision steps still require proper authorization
   const isCurrentApprover = () => {
     if (!data || !user || !data.current_step) return false;
     
@@ -95,12 +101,15 @@ export const useRequestDetail = (requestId: string) => {
     
     console.log("معلومات الخطوة الحالية:", currentStep);
     
+    // Get step type
     const stepType = currentStep.step_type || 'decision';
     console.log("نوع الخطوة:", stepType);
     
+    // For opinion steps, always allow any authenticated user to participate
     if (stepType === 'opinion') {
-      console.log("هذه خطوة رأي ويمك�� لأي مستخدم إبداء رأيه");
+      console.log("هذه خطوة رأي ويمكن لأي مستخدم إبداء رأيه");
       
+      // Check if the user has already submitted their opinion
       const hasAlreadySubmitted = data.approvals?.some(
         (approval: any) => 
           approval.step_id === currentStep.id && 
@@ -115,16 +124,19 @@ export const useRequestDetail = (requestId: string) => {
       return true;
     }
     
+    // For decision steps, direct approver check
     if (data.current_step.id && user.id === data.current_step.approver_id) {
       console.log("المستخدم هو المعتمد المباشر للخطوة الحالية");
       return true;
     }
     
+    // Admin users can approve any request
     if (user.isAdmin) {
       console.log("المستخدم مدير ويمكنه الموافقة على الطلب");
       return true;
     }
     
+    // Check for pending approvals assigned to this user
     const pendingApprovals = data.approvals?.filter(
       (approval: any) => 
         approval.step_id === currentStep.id && 
@@ -141,6 +153,7 @@ export const useRequestDetail = (requestId: string) => {
     return false;
   };
 
+  // Check if the user has already submitted an opinion
   const hasSubmittedOpinion = () => {
     if (!data || !user || !data.current_step) return false;
     
@@ -149,8 +162,10 @@ export const useRequestDetail = (requestId: string) => {
     
     const stepType = currentStep.step_type || 'decision';
     
+    // Only applicable for opinion steps
     if (stepType !== 'opinion') return false;
     
+    // Add detailed logging
     const approvals = data.approvals || [];
     console.log("Checking if user has submitted opinion:", {
       userId: user.id,
@@ -174,6 +189,7 @@ export const useRequestDetail = (requestId: string) => {
       return;
     }
     
+    // For opinion steps, check if user has already submitted or is the requester
     if (data?.current_step?.step_type === 'opinion') {
       if (hasSubmittedOpinion()) {
         toast.error("لقد قمت بالفعل بإبداء رأيك على هذه الخطوة");
@@ -195,6 +211,7 @@ export const useRequestDetail = (requestId: string) => {
       return;
     }
     
+    // For opinion steps, check if user has already submitted or is the requester
     if (data?.current_step?.step_type === 'opinion') {
       if (hasSubmittedOpinion()) {
         toast.error("لقد قمت بالفعل بإبداء رأيك على هذه الخطوة");
@@ -209,7 +226,8 @@ export const useRequestDetail = (requestId: string) => {
     
     setIsRejectDialogOpen(true);
   };
-
+  
+  // Diagnostic functionality for admins only (kept separate from approval flow)
   const handleDiagnoseWorkflow = async () => {
     if (!requestId) return;
     
@@ -231,7 +249,7 @@ export const useRequestDetail = (requestId: string) => {
       setIsDiagnosing(false);
     }
   };
-
+  
   const handleFixWorkflow = async () => {
     if (!requestId) return;
     
