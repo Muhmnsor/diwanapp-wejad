@@ -86,6 +86,12 @@ export const useRequestDetail = (requestId: string) => {
     return { success: true };
   };
   
+  // Needed for compatibility with the other hook
+  const isCurrentApprover = () => false;
+  const hasSubmittedOpinion = () => false;
+  const handleApproveClick = () => setIsApproveDialogOpen(true);
+  const handleRejectClick = () => setIsRejectDialogOpen(true);
+  
   return {
     data,
     isLoading,
@@ -105,6 +111,12 @@ export const useRequestDetail = (requestId: string) => {
     diagnosticResult,
     handleDiagnoseWorkflow,
     handleFixWorkflow,
-    refetch
+    refetch,
+    // Added for compatibility with the other hook
+    isCurrentApprover,
+    hasSubmittedOpinion,
+    handleApproveClick,
+    handleRejectClick,
+    user
   };
 };

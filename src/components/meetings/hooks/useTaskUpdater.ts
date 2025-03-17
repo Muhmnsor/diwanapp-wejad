@@ -12,3 +12,10 @@ export const createTaskUpdater = (
     }
   };
 };
+
+// Hook to use the task updater
+export const useTaskUpdater = (
+  updateTaskMutation: UseMutateFunction<any, Error, { id: string; status: MeetingTask['status'] }, unknown>
+) => {
+  return createTaskUpdater(updateTaskMutation);
+};
