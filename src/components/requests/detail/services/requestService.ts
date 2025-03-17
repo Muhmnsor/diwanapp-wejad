@@ -71,14 +71,14 @@ export const debugWorkflowStatus = async (requestId: string) => {
     );
     
     // Check for completed requests without all required steps approved
-    if (requestData.status === 'completed' && approvedDecisionSteps.length < decisionSteps.length) {
-      issues.push('الطلب مكتمل ولكن لم يتم الموافقة على جميع خطوات القرار المطلوبة');
+    if (requestData.status === 'approved' && approvedDecisionSteps.length < decisionSteps.length) {
+      issues.push('الطلب معتمد ولكن لم يتم الموافقة على جميع خطوات القرار المطلوبة');
     }
     
     // Check for pending/in_progress requests with all required steps approved
     if ((requestData.status === 'pending' || requestData.status === 'in_progress') && 
         approvedDecisionSteps.length >= decisionSteps.length) {
-      issues.push('تمت الموافقة على جميع خطوات القرار ولكن الطلب لم يتم تحديثه إلى حالة مكتمل');
+      issues.push('تمت الموافقة على جميع خطوات القرار ولكن الطلب لم يتم تحديثه إلى حالة معتمد');
     }
     
     // Check if current step is after all approved steps
@@ -114,8 +114,13 @@ export const debugWorkflowStatus = async (requestId: string) => {
     }
     
     // Check for missing current_step_id in non-completed requests
-    if (requestData.status !== 'completed' && !requestData.current_step_id) {
-      issues.push('الطلب غير مكتمل ولكن لا توجد خطوة حالية محددة');
+    if (requestData.status !== 'approved' && requestData.status !== 'rejected' && !requestData.current_step_id) {
+      issues.push('الطلب غير معتمد ولكن لا توجد خطوة حالية محددة');
+    }
+    
+    // Check for legacy 'completed' status
+    if (requestData.status === 'completed') {
+      issues.push('الطلب يستخدم حالة "مكتمل" القديمة بدلاً من "معتمد"');
     }
     
     return {
@@ -124,6 +129,7 @@ export const debugWorkflowStatus = async (requestId: string) => {
       status: requestData.status,
       current_step_id: requestData.current_step_id,
       workflow_id: requestData.workflow_id,
+      has_issues: issues.length > 0,
       debug_info: {
         request: requestData,
         steps: steps,
