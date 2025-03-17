@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Users, User, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-interface MeetingParticipantsPanelProps {
+export interface MeetingParticipantsPanelProps {
   participants: MeetingParticipant[];
   onSelectParticipant?: (participant: MeetingParticipant) => void;
 }

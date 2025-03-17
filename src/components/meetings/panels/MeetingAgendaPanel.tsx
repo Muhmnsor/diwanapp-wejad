@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Clipboard, ClipboardList } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-interface MeetingAgendaPanelProps {
+export interface MeetingAgendaPanelProps {
   agendaItems: MeetingAgendaItem[];
   currentItemId?: string;
   onSelectItem?: (itemId: string) => void;

@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckSquare, User, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-interface MeetingDecisionsPanelProps {
+export interface MeetingDecisionsPanelProps {
   decisions: MeetingDecision[];
   agendaItems?: MeetingAgendaItem[];
   onSelectDecision?: (decision: MeetingDecision) => void;

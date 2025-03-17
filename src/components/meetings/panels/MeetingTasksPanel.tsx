@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckCircle, XCircle, Clock, ListTodo, User, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-interface MeetingTasksPanelProps {
+export interface MeetingTasksPanelProps {
   tasks: MeetingTask[];
   onSelectTask?: (task: MeetingTask) => void;
   onAddTask?: (task: Omit<MeetingTask, "id" | "created_at" | "updated_at">) => void;

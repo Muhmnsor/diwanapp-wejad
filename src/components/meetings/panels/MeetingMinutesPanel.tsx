@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileText, Edit, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-interface MeetingMinutesPanelProps {
+export interface MeetingMinutesPanelProps {
   minutes: MeetingMinutes | null;
   agendaItems?: MeetingAgendaItem[];
   onEdit?: () => void;
