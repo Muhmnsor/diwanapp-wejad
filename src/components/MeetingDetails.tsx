@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useMeetingDetails } from '@/components/meetings/hooks/useMeetingDetails';
 import { useTaskUpdater } from '@/components/meetings/hooks/useTaskUpdater';
 import { MeetingAgendaPanel } from '@/components/meetings/panels/MeetingAgendaPanel';
@@ -125,11 +125,12 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meetingId }) => 
   // Map URL activeTab to the Tabs component value
   const getTabsValue = () => {
     switch (activeTab) {
+      case 'overview': return 'agenda';
       case 'tasks': return 'tasks';
       case 'participants': return 'participants';
       case 'minutes': return 'minutes';
       case 'decisions': return 'decisions';
-      default: return 'agenda'; // Default to agenda for 'overview' or unknown
+      default: return 'agenda'; // Default to agenda
     }
   };
 

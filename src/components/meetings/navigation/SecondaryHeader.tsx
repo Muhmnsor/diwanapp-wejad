@@ -22,8 +22,21 @@ export const SecondaryHeader = () => {
   const activeTab = urlParams.get('tab') || 'overview';
   
   const handleTabChange = (value: string) => {
-    navigate(`/meetings/${meetingId}?tab=${value}`);
+    if (meetingId && meetingId !== 'meetings') {
+      navigate(`/meetings/${meetingId}?tab=${value}`);
+    }
   };
+  
+  // Don't show tabs if we're on the meetings list page
+  if (location.pathname === '/meetings') {
+    return (
+      <div className="w-full bg-white border-t py-3">
+        <div className="container mx-auto px-4">
+          <h2 className="text-xl font-semibold">إدارة الاجتماعات</h2>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="w-full bg-white border-t py-3">
