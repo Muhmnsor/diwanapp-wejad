@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useMeetingDetails } from "@/hooks/meetings/useMeetingDetails";
 import { useMeetingParticipants } from "@/hooks/meetings/useMeetingParticipants";
@@ -13,6 +12,7 @@ import { format, parseISO } from "date-fns";
 import { ar } from "date-fns/locale";
 import { MeetingParticipantsList } from "@/components/meetings/participants/MeetingParticipantsList";
 import { MeetingAgendaList } from "@/components/meetings/agenda/MeetingAgendaList";
+import { MeetingDecisionsList } from "@/components/meetings/decisions/MeetingDecisionsList";
 
 const MeetingDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -203,12 +203,7 @@ const MeetingDetailsPage = () => {
           </TabsContent>
           
           <TabsContent value="decisions">
-            <div className="bg-muted/20 p-8 rounded-lg border text-center">
-              <p>قرارات الاجتماع ستظهر هنا</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                سيتم إضافة مكون قرارات الاجتماع قريباً
-              </p>
-            </div>
+            <MeetingDecisionsList meetingId={id} />
           </TabsContent>
           
           <TabsContent value="minutes">
