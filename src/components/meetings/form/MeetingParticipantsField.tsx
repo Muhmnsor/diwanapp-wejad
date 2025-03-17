@@ -105,7 +105,7 @@ export const MeetingParticipantsField = ({ form }: MeetingParticipantsFieldProps
         </div>
       ) : (
         <div className="space-y-3">
-          {fields.map((field, index) => (
+          {fields.map((field: any, index) => (
             <div key={field.id} className="flex items-end gap-4 border p-3 rounded-md">
               <ParticipantFieldWrapper
                 form={form}

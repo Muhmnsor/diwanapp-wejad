@@ -1,5 +1,6 @@
 
 import { Meeting, MeetingAgendaItem, MeetingParticipant } from "@/components/meetings/types";
+import React from 'react';
 
 // Create a type that matches what NewMeetingDialog expects (with optional title)
 export interface MeetingFormAgendaItem {

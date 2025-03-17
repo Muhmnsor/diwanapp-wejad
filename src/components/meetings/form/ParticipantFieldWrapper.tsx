@@ -29,7 +29,7 @@ export const ParticipantFieldWrapper: React.FC<ParticipantFieldWrapperProps> = (
           </FormControl>
           {fieldState.error && (
             <FormMessage>
-              {String(formatFormError(fieldState.error))}
+              {formatFormError(fieldState.error)}
             </FormMessage>
           )}
         </FormItem>
