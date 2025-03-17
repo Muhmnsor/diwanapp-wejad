@@ -55,7 +55,7 @@ export interface Request {
   id: string;
   title: string;
   form_data: any;
-  status: 'pending' | 'in_progress' | 'completed' | 'rejected';
+  status: 'pending' | 'in_progress' | 'approved' | 'rejected'; // Updated from 'completed' to 'approved'
   priority: 'low' | 'medium' | 'high';
   requester_id: string;
   request_type_id: string;

@@ -1,16 +1,29 @@
 
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { AlertCircle, Activity } from "lucide-react";
+import { Button } from '@/components/ui/button';
 import { 
+  AlertTriangle, 
+  CheckCircle, 
+  Loader2, 
+  Tool, 
+  AlertCircle 
+} from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle, 
+  DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2 } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 interface DiagnoseWorkflowButtonProps {
@@ -19,11 +32,11 @@ interface DiagnoseWorkflowButtonProps {
   onFix: () => Promise<any>;
   onSuccess: () => Promise<void>;
   isDiagnosing: boolean;
-  diagnosticResult: any | null;
+  diagnosticResult: any;
   className?: string;
 }
 
-export const DiagnoseWorkflowButton: React.FC<DiagnoseWorkflowButtonProps> = ({
+export const DiagnoseWorkflowButton = ({
   requestId,
   onDiagnose,
   onFix,
@@ -31,153 +44,158 @@ export const DiagnoseWorkflowButton: React.FC<DiagnoseWorkflowButtonProps> = ({
   isDiagnosing,
   diagnosticResult,
   className
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
+}: DiagnoseWorkflowButtonProps) => {
   const [isFixing, setIsFixing] = useState(false);
-  const [fixResult, setFixResult] = useState<any>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   
-  const runDiagnostic = async () => {
+  const handleDiagnose = async () => {
     try {
       await onDiagnose();
-      if (!diagnosticResult?.issues?.length) {
-        toast.success("لا توجد مشاكل في سير العمل");
-      }
+      setIsDialogOpen(true);
     } catch (error) {
-      console.error("Error running diagnostic:", error);
-      toast.error("حدث خطأ أثناء تشخيص سير العمل");
+      toast.error(`فشل تشخيص سير العمل: ${error.message}`);
     }
   };
   
-  const fixWorkflow = async () => {
-    setIsFixing(true);
-    setFixResult(null);
-    
+  const handleFix = async () => {
     try {
+      setIsFixing(true);
       const result = await onFix();
-      setFixResult(result);
-      
       if (result?.success) {
-        toast.success("تم إصلاح سير العمل بنجاح");
+        toast.success("تم إصلاح مشكلات سير العمل بنجاح");
         await onSuccess();
+        setIsDialogOpen(false);
       } else {
-        toast.error("فشل إصلاح سير العمل");
+        toast.error(`فشل إصلاح سير العمل: ${result?.message || 'خطأ غير معروف'}`);
       }
     } catch (error) {
-      console.error("Error fixing workflow:", error);
-      toast.error("حدث خطأ أثناء إصلاح سير العمل");
+      toast.error(`فشل إصلاح سير العمل: ${error.message}`);
     } finally {
       setIsFixing(false);
     }
   };
   
-  const hasIssues = diagnosticResult?.issues?.length > 0;
+  // Helper to determine severity icon and color
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
+      case 'high':
+        return <AlertCircle className="h-4 w-4 text-red-500" />;
+      case 'medium':
+        return <AlertTriangle className="h-4 w-4 text-amber-500" />;
+      case 'low':
+        return <AlertTriangle className="h-4 w-4 text-blue-500" />;
+      default:
+        return <AlertTriangle className="h-4 w-4 text-gray-500" />;
+    }
+  };
+  
+  const getSeverityBadge = (severity: string) => {
+    switch (severity) {
+      case 'high':
+        return <Badge variant="destructive">عالية</Badge>;
+      case 'medium':
+        return <Badge variant="default" className="bg-amber-500">متوسطة</Badge>;
+      case 'low':
+        return <Badge variant="default" className="bg-blue-500">منخفضة</Badge>;
+      default:
+        return <Badge variant="outline">غير محددة</Badge>;
+    }
+  };
+  
+  // Only show if we have diagnostic data with issues
+  const hasIssues = diagnosticResult?.data?.has_issues;
   
   return (
     <>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => setIsOpen(true)}
-        className={`flex gap-1 items-center ${className || ''}`}
-      >
-        <Activity className="h-4 w-4" />
-        <span>تشخيص</span>
-      </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDiagnose}
+              disabled={isDiagnosing}
+              className={className}
+            >
+              {isDiagnosing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : hasIssues ? (
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+              ) : (
+                <Tool className="h-4 w-4" />
+              )}
+              <span className="mr-2">تشخيص</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>تشخيص وإصلاح مشكلات سير العمل</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-lg">
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>تشخيص مسار سير العمل</DialogTitle>
+            <DialogTitle>نتائج تشخيص سير العمل</DialogTitle>
             <DialogDescription>
-              يمكنك تشخيص وإصلاح المشاكل في مسار سير العمل للطلب
+              {hasIssues 
+                ? `تم العثور على ${diagnosticResult?.data?.issues.length} مشكلة في سير العمل` 
+                : "لم يتم العثور على مشكلات في سير العمل"}
             </DialogDescription>
           </DialogHeader>
           
-          <div className="py-4 space-y-4">
-            <div className="flex justify-between">
-              <Button
-                onClick={runDiagnostic}
-                disabled={isDiagnosing}
-                variant="outline"
-              >
-                {isDiagnosing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    جاري التشخيص...
-                  </>
-                ) : (
-                  <>
-                    <Activity className="mr-2 h-4 w-4" />
-                    تشخيص المسار
-                  </>
-                )}
-              </Button>
+          {hasIssues ? (
+            <div className="space-y-4 max-h-96 overflow-y-auto py-2">
+              {diagnosticResult?.data?.issues.map((issue: any, index: number) => (
+                <Alert key={index} variant={issue.severity === 'high' ? 'destructive' : 'default'}>
+                  {getSeverityIcon(issue.severity)}
+                  <AlertTitle className="flex items-center gap-2">
+                    مشكلة {getSeverityBadge(issue.severity)}
+                  </AlertTitle>
+                  <AlertDescription>
+                    {issue.message}
+                  </AlertDescription>
+                </Alert>
+              ))}
               
-              {hasIssues && (
-                <Button
-                  onClick={fixWorkflow}
-                  disabled={isFixing || !hasIssues}
-                  variant="default"
-                >
-                  {isFixing ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      جاري الإصلاح...
-                    </>
-                  ) : (
-                    <>
-                      <AlertCircle className="mr-2 h-4 w-4" />
-                      إصلاح المشاكل
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
-            
-            {diagnosticResult && (
-              <div className="mt-4 space-y-2">
-                <h4 className="text-sm font-medium">نتائج التشخيص:</h4>
-                
-                {diagnosticResult.issues?.length > 0 ? (
-                  <div className="bg-amber-50 border border-amber-200 rounded-md p-3 text-amber-800">
-                    <h5 className="font-medium mb-2">تم العثور على المشاكل التالية:</h5>
-                    <ul className="list-disc list-inside space-y-1">
-                      {diagnosticResult.issues.map((issue: string, i: number) => (
-                        <li key={i} className="text-sm">{issue}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : (
-                  <div className="bg-green-50 border border-green-200 rounded-md p-3 text-green-800">
-                    <p>لا توجد مشاكل في مسار سير العمل</p>
-                  </div>
-                )}
-                
-                <div className="bg-gray-50 border border-gray-200 rounded-md p-3 text-gray-800 text-sm mt-4">
-                  <h5 className="font-medium mb-2">معلومات إضافية:</h5>
-                  <ul className="space-y-1">
-                    <li><span className="font-medium">رقم الطلب:</span> {requestId}</li>
-                    <li><span className="font-medium">الحالة:</span> {diagnosticResult.status}</li>
-                    <li><span className="font-medium">الخطوات المكتملة:</span> {diagnosticResult.debug_info?.approved_decision_steps || 0} من {diagnosticResult.debug_info?.total_decision_steps || 0}</li>
+              {diagnosticResult?.data?.recommendations?.length > 0 && (
+                <div className="mt-4 border-t pt-4">
+                  <h4 className="text-sm font-semibold mb-2">التوصيات:</h4>
+                  <ul className="list-disc list-inside space-y-1">
+                    {diagnosticResult.data.recommendations.map((rec: any, index: number) => (
+                      <li key={index} className="text-sm">{rec.message}</li>
+                    ))}
                   </ul>
                 </div>
-                
-                {fixResult && (
-                  <div className={`border rounded-md p-3 mt-4 ${
-                    fixResult.success 
-                      ? "bg-green-50 border-green-200 text-green-800" 
-                      : "bg-red-50 border-red-200 text-red-800"
-                  }`}>
-                    <h5 className="font-medium mb-2">نتيجة الإصلاح:</h5>
-                    <p>{fixResult.result?.message || fixResult.message || "تم الإصلاح بنجاح"}</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          ) : (
+            <div className="py-6 flex flex-col items-center justify-center">
+              <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
+              <p className="text-center text-sm">سير العمل في حالة جيدة ولا توجد مشكلات تم اكتشافها.</p>
+            </div>
+          )}
           
           <DialogFooter>
-            <Button onClick={() => setIsOpen(false)}>إغلاق</Button>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              إغلاق
+            </Button>
+            {hasIssues && (
+              <Button 
+                onClick={handleFix} 
+                disabled={isFixing}
+                className="bg-amber-600 hover:bg-amber-700"
+              >
+                {isFixing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                    جاري الإصلاح...
+                  </>
+                ) : (
+                  <>إصلاح المشكلات</>
+                )}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

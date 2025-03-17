@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.2";
@@ -183,9 +182,9 @@ serve(async (req) => {
     
     if (shouldMoveToNextStep) {
       if (isLastStep) {
-        // If this is the last step and it's approved, mark the request as completed
+        // If this is the last step and it's approved, mark the request as approved (not completed)
         if (action === "approve") {
-          updateData.status = "completed";
+          updateData.status = "approved";
           updateData.current_step_id = null;
         } 
         // If it's rejected, keep the status as is but don't change the step

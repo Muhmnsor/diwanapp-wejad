@@ -15,6 +15,8 @@ export const RequestStatusBadge = ({ status }: RequestStatusBadgeProps) => {
       return <Badge variant="default">قيد المعالجة</Badge>;
     case 'approved':
       return <Badge variant="success">تمت الموافقة</Badge>;
+    case 'completed': // Handle legacy 'completed' status as 'approved'
+      return <Badge variant="success">تمت الموافقة</Badge>;
     case 'rejected':
       return <Badge variant="destructive">مرفوض</Badge>;
     case 'cancelled':

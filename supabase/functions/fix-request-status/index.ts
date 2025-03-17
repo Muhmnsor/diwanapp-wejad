@@ -9,7 +9,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+};
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -30,7 +31,7 @@ serve(async (req) => {
     // Initialize Supabase client with auth context from the request
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       {
         global: { headers: { Authorization: req.headers.get('Authorization')! } },
         auth: { persistSession: false }
@@ -94,9 +95,8 @@ serve(async (req) => {
 
     console.log("Fix request status result:", data);
     
-    // If current_step_id is not null but request is completed,
-    // verify it was set to null in the fix
-    if (requestData.status === 'completed' && requestData.current_step_id) {
+    // If current_step_id is not null but request is approved, verified it was set to null in the fix
+    if ((requestData.status === 'approved' || requestData.status === 'completed') && requestData.current_step_id) {
       // Get the updated request state
       const { data: updatedRequestData, error: updatedRequestError } = await supabaseClient
         .from('requests')
@@ -105,20 +105,20 @@ serve(async (req) => {
         .single();
         
       if (!updatedRequestError && updatedRequestData.current_step_id) {
-        console.warn("Request is still marked as completed but has a current_step_id.");
-        console.log("Forcing removal of current_step_id for completed request...");
+        console.warn("Request is still marked as approved/completed but has a current_step_id.");
+        console.log("Forcing removal of current_step_id for approved/completed request...");
         
         // Force removal of current_step_id
         const { data: updateResult, error: updateError } = await supabaseClient
           .from('requests')
           .update({ current_step_id: null, updated_at: new Date() })
           .eq('id', requestId)
-          .eq('status', 'completed');
+          .or(`status.eq.approved,status.eq.completed`);
           
         if (updateError) {
           console.error("Error updating request to remove current_step_id:", updateError);
         } else {
-          console.log("Successfully removed current_step_id from completed request");
+          console.log("Successfully removed current_step_id from approved/completed request");
           data.additional_fixes = { removed_current_step_id: true };
         }
       }
@@ -163,19 +163,38 @@ serve(async (req) => {
           const { data: updateResult, error: updateError } = await supabaseClient
             .from('requests')
             .update({ 
-              status: 'completed', 
+              status: 'approved', 
               current_step_id: null,
               updated_at: new Date()
             })
             .eq('id', requestId);
             
           if (updateError) {
-            console.error("Error updating request to completed:", updateError);
+            console.error("Error updating request to approved:", updateError);
           } else {
-            console.log("Successfully marked request as completed");
-            data.additional_fixes = { ...(data.additional_fixes || {}), forced_completion: true };
+            console.log("Successfully marked request as approved");
+            data.additional_fixes = { ...(data.additional_fixes || {}), forced_approval: true };
           }
         }
+      }
+    }
+    
+    // Update any 'completed' status to 'approved' to maintain consistency
+    if (requestData.status === 'completed') {
+      const { data: updateResult, error: updateError } = await supabaseClient
+        .from('requests')
+        .update({ 
+          status: 'approved', 
+          updated_at: new Date()
+        })
+        .eq('id', requestId)
+        .eq('status', 'completed');
+        
+      if (updateError) {
+        console.error("Error updating request from completed to approved:", updateError);
+      } else if (updateResult) {
+        console.log("Successfully updated request from completed to approved");
+        data.additional_fixes = { ...(data.additional_fixes || {}), completed_to_approved: true };
       }
     }
 
