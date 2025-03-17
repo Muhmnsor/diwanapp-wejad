@@ -11,7 +11,8 @@ import {
   Plus,
   Search,
   Filter,
-  XCircle
+  XCircle,
+  RefreshCw
 } from 'lucide-react';
 import {
   Card,
@@ -34,11 +35,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { NewMeetingDialog } from './dialogs/NewMeetingDialog';
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const MeetingsList = () => {
-  const { meetings, isLoading, error, filter, setFilter } = useMeetings();
+  const { meetings, isLoading, error, filter, setFilter, refetch } = useMeetings();
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewMeetingDialog, setShowNewMeetingDialog] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
   const navigate = useNavigate();
 
   // Log component render and data state for debugging
@@ -90,6 +93,15 @@ export const MeetingsList = () => {
     navigate(`/meetings/${meetingId}`);
   };
 
+  const handleRetry = async () => {
+    setIsRetrying(true);
+    try {
+      await refetch();
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
   // Error state component
   if (error) {
     return (
@@ -106,14 +118,25 @@ export const MeetingsList = () => {
           <XCircle className="h-12 w-12 mx-auto text-red-500 mb-4" />
           <CardTitle className="mb-2">حدث خطأ</CardTitle>
           <CardDescription className="text-red-700">
-            تعذر تحميل الاجتماعات. يرجى المحاولة مرة أخرى لاحقاً.
+            تعذر تحميل الاجتماعات. {error.message || 'يرجى المحاولة مرة أخرى لاحقاً.'}
           </CardDescription>
           <Button 
             variant="outline" 
             className="mt-4"
-            onClick={() => window.location.reload()}
+            onClick={handleRetry}
+            disabled={isRetrying}
           >
-            إعادة المحاولة
+            {isRetrying ? (
+              <>
+                <RefreshCw className="h-4 w-4 ml-2 animate-spin" />
+                جاري المحاولة...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4 ml-2" />
+                إعادة المحاولة
+              </>
+            )}
           </Button>
         </Card>
 
@@ -136,11 +159,23 @@ export const MeetingsList = () => {
             اجتماع جديد
           </Button>
         </div>
-        <div className="flex justify-center items-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-gray-500">جاري تحميل الاجتماعات...</p>
-          </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="overflow-hidden">
+              <CardHeader className="pb-2">
+                <Skeleton className="h-6 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-1/2" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     );

@@ -5,7 +5,7 @@ import React from 'react';
 // Create a type that matches what NewMeetingDialog expects (with optional title)
 export interface MeetingFormAgendaItem {
   order_number: number;
-  title?: string; // Making title optional to match what NewMeetingDialog sends
+  title?: string; // Title is optional in form state
   description?: string;
 }
 

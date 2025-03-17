@@ -206,7 +206,7 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meetingId }) => 
         
         <TabsContent value="agenda">
           <MeetingAgendaPanel 
-            agendaItems={agendaItems} 
+            agendaItems={agendaItems}
           />
         </TabsContent>
         
@@ -220,7 +220,7 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meetingId }) => 
         
         <TabsContent value="participants">
           <MeetingParticipantsPanel 
-            participants={participants} 
+            participants={participants}
           />
         </TabsContent>
         

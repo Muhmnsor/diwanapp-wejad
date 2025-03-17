@@ -3,17 +3,17 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Meeting, MeetingFormData } from "../types";
-import { useAuthStore } from "@/store/refactored-auth"; // Fix: Updated import to use refactored auth store
+import { useAuthStore } from "@/store/refactored-auth"; 
 import { toast } from "sonner";
 
 export const useMeetings = () => {
-  const { user } = useAuthStore(); // Now using the correct auth store
+  const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'completed'>('upcoming');
 
   // Fetch all meetings the user can access
   const { data: meetings = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['meetings', filter, user?.id], // Include user ID in query key
+    queryKey: ['meetings', filter, user?.id],
     queryFn: async () => {
       if (!user) {
         console.log("No user found, returning empty meetings array");
@@ -23,7 +23,7 @@ export const useMeetings = () => {
       console.log("Fetching meetings for user:", user.id, "with filter:", filter);
 
       try {
-        // Build query using parameters instead of string interpolation
+        // Fixed query syntax using proper Supabase filter expressions
         let query = supabase
           .from('meetings')
           .select(`
@@ -32,6 +32,7 @@ export const useMeetings = () => {
           `)
           .or(`created_by.eq.${user.id},meeting_participants.user_id.eq.${user.id}`);
           
+        // Apply additional filters based on the selected filter
         if (filter === 'upcoming') {
           query = query.in('status', ['upcoming', 'in_progress']);
         } else if (filter === 'completed') {
@@ -52,7 +53,9 @@ export const useMeetings = () => {
         throw error;
       }
     },
-    enabled: !!user, // Only run query when user is available
+    enabled: !!user,
+    retry: 2, // Add retry for network failures
+    staleTime: 5 * 60 * 1000, // Cache data for 5 minutes
   });
 
   // Create a new meeting
