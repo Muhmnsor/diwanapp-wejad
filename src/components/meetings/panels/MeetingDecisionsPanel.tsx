@@ -1,11 +1,12 @@
 
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Lightbulb, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Lightbulb, CheckCircle, Clock, AlertCircle, Plus } from 'lucide-react';
 import { MeetingDecision } from '../types';
+import { Button } from '@/components/ui/button';
 
 interface MeetingDecisionsPanelProps {
   meetingId: string;
@@ -76,7 +77,7 @@ export const MeetingDecisionsPanel = ({ meetingId }: MeetingDecisionsPanelProps)
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>قرارات الاجتماع</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

@@ -50,6 +50,7 @@ export interface MeetingParticipant {
   user_id: string;
   role: string;
   status: string;
+  attendance_status: string;
   created_at: string;
   user: {
     display_name?: string;

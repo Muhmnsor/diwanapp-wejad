@@ -104,8 +104,8 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold">تفاصيل الطلب</h2>
           <div className="flex gap-2">
+            {/* Update DiagnoseWorkflowButton to only pass props it accepts */}
             <DiagnoseWorkflowButton 
-              requestId={requestId}
               onDiagnose={handleDiagnoseWorkflow}
               onFix={handleFixWorkflow}
               onSuccess={handleRefetch}

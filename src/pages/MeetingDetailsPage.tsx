@@ -3,7 +3,11 @@ import React from 'react';
 import { useParams } from 'react-router-dom';
 import { MeetingDetails } from '@/components/meetings/MeetingDetails';
 
-const MeetingDetailsPage = () => {
+interface MeetingDetailsPageProps {
+  // This component doesn't need props as it gets the ID from URL params
+}
+
+const MeetingDetailsPage: React.FC<MeetingDetailsPageProps> = () => {
   const { id } = useParams<{ id: string }>();
   
   if (!id) {

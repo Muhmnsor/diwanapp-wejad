@@ -51,6 +51,21 @@ export const MeetingParticipantsPanel = ({ meetingId }: MeetingParticipantsPanel
     }
   };
 
+  const getAttendanceStatusBadge = (attendance_status: string) => {
+    switch (attendance_status) {
+      case 'present':
+        return <Badge className="bg-green-100 text-green-800 border-green-200">حاضر</Badge>;
+      case 'absent':
+        return <Badge className="bg-red-100 text-red-800 border-red-200">غائب</Badge>;
+      case 'late':
+        return <Badge className="bg-orange-100 text-orange-800 border-orange-200">متأخر</Badge>;
+      case 'excused':
+        return <Badge className="bg-blue-100 text-blue-800 border-blue-200">معذور</Badge>;
+      default:
+        return <Badge className="bg-gray-100 text-gray-800 border-gray-200">غير مسجل</Badge>;
+    }
+  };
+
   const getRoleBadge = (role: string) => {
     switch (role) {
       case 'organizer':
@@ -92,6 +107,7 @@ export const MeetingParticipantsPanel = ({ meetingId }: MeetingParticipantsPanel
                 <div className="flex gap-2">
                   {getRoleBadge(participant.role)}
                   {getStatusBadge(participant.status)}
+                  {participant.attendance_status && getAttendanceStatusBadge(participant.attendance_status)}
                 </div>
               </div>
             ))}
