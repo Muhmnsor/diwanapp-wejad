@@ -19,6 +19,7 @@ export interface DiagnoseWorkflowButtonProps {
   isDiagnosing: boolean;
   diagnosticResult: any;
   className?: string;
+  requestId?: string; // Make requestId optional
 }
 
 export const DiagnoseWorkflowButton: React.FC<DiagnoseWorkflowButtonProps> = ({
@@ -27,7 +28,8 @@ export const DiagnoseWorkflowButton: React.FC<DiagnoseWorkflowButtonProps> = ({
   onSuccess,
   isDiagnosing,
   diagnosticResult,
-  className
+  className,
+  requestId
 }) => {
   const [isFixing, setIsFixing] = useState(false);
 

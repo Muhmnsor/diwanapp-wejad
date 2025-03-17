@@ -16,6 +16,7 @@ export interface Meeting {
   created_at: string;
   created_by: string;
   updated_at?: string;
+  agenda_items?: MeetingAgendaItem[];
 }
 
 export interface MeetingAgendaItem {
@@ -122,4 +123,25 @@ export interface MeetingFormData {
     description?: string;
     order_number: number;
   }>;
+}
+
+// Define component props interfaces
+export interface MeetingAgendaPanelProps {
+  meetingId: string;
+}
+
+export interface MeetingParticipantsPanelProps {
+  meetingId: string;
+}
+
+export interface MeetingMinutesPanelProps {
+  meetingId: string;
+}
+
+export interface MeetingDecisionsPanelProps {
+  meetingId: string;
+}
+
+export interface MeetingDetailProps {
+  meetingId: string;
 }
