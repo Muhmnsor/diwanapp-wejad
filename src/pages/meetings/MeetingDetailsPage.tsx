@@ -18,6 +18,7 @@ import { MeetingHeaderEnhanced } from "@/components/meetings/MeetingHeaderEnhanc
 import { MeetingInfo } from "@/components/meetings/MeetingInfo";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { MeetingsNavHeader } from "@/components/meetings/MeetingsNavHeader";
 
 const MeetingDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -38,6 +39,7 @@ const MeetingDetailsPage = () => {
     return (
       <div className="min-h-screen flex flex-col" dir="rtl">
         <AdminHeader />
+        <MeetingsNavHeader meetingId={id} />
         <div className="container mx-auto px-4 py-8 flex-grow flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
           <span>جاري تحميل تفاصيل الاجتماع...</span>
@@ -52,6 +54,7 @@ const MeetingDetailsPage = () => {
     return (
       <div className="min-h-screen flex flex-col" dir="rtl">
         <AdminHeader />
+        <MeetingsNavHeader />
         <div className="container mx-auto px-4 py-8 flex-grow">
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
@@ -78,6 +81,7 @@ const MeetingDetailsPage = () => {
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
       <AdminHeader />
+      <MeetingsNavHeader meetingId={id} />
       
       <div className="container mx-auto px-4 py-8 flex-grow">
         <MeetingHeaderEnhanced meeting={meeting} />

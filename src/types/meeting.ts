@@ -104,4 +104,4 @@ export interface MeetingTask {
 }
 
 export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
-export type TaskType = 'action_item' | 'follow_up' | 'decision' | 'other';
+export type TaskType = 'preparation' | 'execution' | 'follow_up' | 'action_item' | 'decision' | 'other';

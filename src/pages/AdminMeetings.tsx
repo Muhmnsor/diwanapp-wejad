@@ -7,6 +7,7 @@ import { DeveloperToolbar } from "@/components/developer/DeveloperToolbar";
 import { Calendar, CalendarClock, ClipboardList, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { MeetingsNavHeader } from "@/components/meetings/MeetingsNavHeader";
 
 const AdminMeetings = () => {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ const AdminMeetings = () => {
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
       <AdminHeader />
+      <MeetingsNavHeader />
       
       <div className="container mx-auto px-4 py-8 flex-grow">
         <div className="flex justify-between items-center mb-6">
