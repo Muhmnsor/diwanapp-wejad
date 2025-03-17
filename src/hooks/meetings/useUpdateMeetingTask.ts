@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MeetingTask, TaskStatus } from "@/types/meeting";
 import { toast } from "sonner";
+import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
 
 export interface UpdateTaskData {
   id: string;
@@ -12,9 +13,10 @@ export interface UpdateTaskData {
 
 export const useUpdateMeetingTask = () => {
   const queryClient = useQueryClient();
+  const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
   
   return useMutation({
-    mutationFn: async ({ id, updates }: UpdateTaskData) => {
+    mutationFn: async ({ id, updates, meeting_id }: UpdateTaskData & { meeting_id: string }) => {
       const { data, error } = await supabase
         .from('meeting_tasks')
         .update({
@@ -28,6 +30,36 @@ export const useUpdateMeetingTask = () => {
       if (error) {
         console.error('Error updating task:', error);
         throw error;
+      }
+      
+      // If assigned_to has been updated, send a notification
+      if (updates.assigned_to) {
+        try {
+          // Get current user info
+          const { data: { user } } = await supabase.auth.getUser();
+
+          if (user) {
+            // Get user's display name or email
+            const { data: creatorProfile } = await supabase
+              .from('profiles')
+              .select('display_name, email')
+              .eq('id', user.id)
+              .single();
+
+            const creatorName = creatorProfile?.display_name || creatorProfile?.email || user.email || 'مستخدم';
+
+            // Send the notification
+            await sendTaskAssignmentNotification({
+              taskId: id,
+              taskTitle: data.title,
+              assignedUserId: updates.assigned_to,
+              assignedByUserId: user.id,
+              assignedByUserName: creatorName
+            });
+          }
+        } catch (notifyError) {
+          console.error('Error sending task assignment notification:', notifyError);
+        }
       }
       
       return data as MeetingTask;

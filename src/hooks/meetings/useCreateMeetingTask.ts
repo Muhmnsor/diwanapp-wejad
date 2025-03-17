@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MeetingTask } from "@/types/meeting";
 import { toast } from "sonner";
+import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
 
 export interface CreateTaskData {
   meeting_id: string;
@@ -15,6 +16,7 @@ export interface CreateTaskData {
 
 export const useCreateMeetingTask = () => {
   const queryClient = useQueryClient();
+  const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
   
   return useMutation({
     mutationFn: async (taskData: CreateTaskData) => {
@@ -30,6 +32,36 @@ export const useCreateMeetingTask = () => {
       if (error) {
         console.error('Error creating task:', error);
         throw error;
+      }
+      
+      // Send notification if task is assigned to someone
+      if (taskData.assigned_to) {
+        try {
+          // Get current user info
+          const { data: { user } } = await supabase.auth.getUser();
+
+          if (user) {
+            // Get user's display name or email
+            const { data: creatorProfile } = await supabase
+              .from('profiles')
+              .select('display_name, email')
+              .eq('id', user.id)
+              .single();
+
+            const creatorName = creatorProfile?.display_name || creatorProfile?.email || user.email || 'مستخدم';
+
+            // Send the notification
+            await sendTaskAssignmentNotification({
+              taskId: data.id,
+              taskTitle: taskData.title,
+              assignedUserId: taskData.assigned_to,
+              assignedByUserId: user.id,
+              assignedByUserName: creatorName
+            });
+          }
+        } catch (notifyError) {
+          console.error('Error sending task assignment notification:', notifyError);
+        }
       }
       
       return data as MeetingTask;
