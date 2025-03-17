@@ -2,19 +2,19 @@
 import { Meeting, MeetingAgendaItem, MeetingParticipant } from "@/components/meetings/types";
 import React from 'react';
 
-// Create a type that matches what NewMeetingDialog expects (with required title)
+// Create a type that matches what NewMeetingDialog expects (with optional title)
 export interface MeetingFormAgendaItem {
   order_number: number;
-  title: string; // Making title required
+  title?: string; // Making title optional to match what NewMeetingDialog sends
   description?: string;
 }
 
 // Create a type adapter that enforces title is required when saving to database
 export function validateAndConvertAgendaItems(items: MeetingFormAgendaItem[]): Omit<MeetingAgendaItem, 'id' | 'meeting_id' | 'created_at' | 'updated_at'>[] {
   return items
-    .filter(item => item.title && item.title.trim() !== '')
+    .filter(item => item.title && item.title.trim() !== '') // Filter out items without title
     .map((item, index) => ({
-      title: item.title, // Title is now required
+      title: item.title as string, // Cast to string since we've filtered out nulls/undefined
       description: item.description,
       order_number: item.order_number || index + 1
     }));
