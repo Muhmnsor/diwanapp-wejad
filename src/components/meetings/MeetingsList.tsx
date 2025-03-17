@@ -10,7 +10,8 @@ import {
   AlertCircle,
   Plus,
   Search,
-  Filter
+  Filter,
+  XCircle
 } from 'lucide-react';
 import {
   Card,
@@ -29,16 +30,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { NewMeetingDialog } from './dialogs/NewMeetingDialog';
 
 export const MeetingsList = () => {
-  const { meetings, isLoading, filter, setFilter } = useMeetings();
+  const { meetings, isLoading, error, filter, setFilter } = useMeetings();
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewMeetingDialog, setShowNewMeetingDialog] = useState(false);
   const navigate = useNavigate();
+
+  // Log component render and data state for debugging
+  useEffect(() => {
+    console.log("MeetingsList rendered with:", { 
+      isLoading, 
+      hasError: !!error, 
+      meetingsCount: meetings?.length || 0,
+      filter 
+    });
+    
+    if (error) {
+      console.error("Meetings list error:", error);
+    }
+  }, [meetings, isLoading, error, filter]);
 
   const filteredMeetings = meetings.filter(meeting => 
     meeting.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -75,8 +90,60 @@ export const MeetingsList = () => {
     navigate(`/meetings/${meetingId}`);
   };
 
+  // Error state component
+  if (error) {
+    return (
+      <div className="space-y-4" dir="rtl">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold">الاجتماعات</h2>
+          <Button onClick={() => setShowNewMeetingDialog(true)}>
+            <Plus className="h-4 w-4 ml-2" />
+            اجتماع جديد
+          </Button>
+        </div>
+        
+        <Card className="p-8 text-center bg-red-50">
+          <XCircle className="h-12 w-12 mx-auto text-red-500 mb-4" />
+          <CardTitle className="mb-2">حدث خطأ</CardTitle>
+          <CardDescription className="text-red-700">
+            تعذر تحميل الاجتماعات. يرجى المحاولة مرة أخرى لاحقاً.
+          </CardDescription>
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            onClick={() => window.location.reload()}
+          >
+            إعادة المحاولة
+          </Button>
+        </Card>
+
+        <NewMeetingDialog 
+          open={showNewMeetingDialog} 
+          onOpenChange={setShowNewMeetingDialog} 
+        />
+      </div>
+    );
+  }
+
+  // Loading state with better feedback
   if (isLoading) {
-    return <div className="flex justify-center items-center h-64">جاري التحميل...</div>;
+    return (
+      <div className="space-y-4" dir="rtl">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold">الاجتماعات</h2>
+          <Button disabled>
+            <Plus className="h-4 w-4 ml-2" />
+            اجتماع جديد
+          </Button>
+        </div>
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-gray-500">جاري تحميل الاجتماعات...</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
