@@ -16,6 +16,6 @@ export const createTaskUpdater = (
 // Hook to use the task updater
 export const useTaskUpdater = (
   updateTaskMutation: UseMutateFunction<any, Error, { id: string; status: MeetingTask['status'] }, unknown>
-) => {
+): ((id: string, updates: Partial<MeetingTask>) => void) => {
   return createTaskUpdater(updateTaskMutation);
 };

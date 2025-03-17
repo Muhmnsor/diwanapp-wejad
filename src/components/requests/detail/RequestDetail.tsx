@@ -28,7 +28,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
     handleRejectClick,
     isCurrentApprover,
     hasSubmittedOpinion,
-    isRequester, // Now properly included in the component props
+    isRequester, // Function to check if the current user is the requester
     refetch,
     isDiagnosing,
     diagnosticResult,
