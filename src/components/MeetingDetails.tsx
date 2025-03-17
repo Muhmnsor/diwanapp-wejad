@@ -16,19 +16,12 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
-import { 
   Calendar, 
   Clock, 
   MapPin, 
   Link, 
   Users, 
   Target, 
-  BadgeInfo, 
   Loader2
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -122,15 +115,38 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meetingId }) => 
     }
   };
 
-  // Map URL activeTab to the Tabs component value
-  const getTabsValue = () => {
+  // Render the active tab content based on URL parameter
+  const renderActiveTabContent = () => {
     switch (activeTab) {
-      case 'overview': return 'agenda';
-      case 'tasks': return 'tasks';
-      case 'participants': return 'participants';
-      case 'minutes': return 'minutes';
-      case 'decisions': return 'decisions';
-      default: return 'agenda'; // Default to agenda
+      case 'overview':
+        return <MeetingAgendaPanel agendaItems={agendaItems} />;
+      case 'tasks':
+        return (
+          <MeetingTasksPanel 
+            tasks={tasks} 
+            onUpdateTask={handleUpdateTask}
+            onAddTask={addTask}
+          />
+        );
+      case 'participants':
+        return <MeetingParticipantsPanel participants={participants} />;
+      case 'minutes':
+        return (
+          <MeetingMinutesPanel 
+            agendaItems={agendaItems}
+            minutes={null}
+          />
+        );
+      case 'decisions':
+        return (
+          <MeetingDecisionsPanel 
+            decisions={decisions}
+            agendaItems={agendaItems}
+            onAddDecision={addDecision}
+          />
+        );
+      default:
+        return <MeetingAgendaPanel agendaItems={agendaItems} />;
     }
   };
 
@@ -212,42 +228,7 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meetingId }) => 
       
       <Separator />
       
-      <Tabs defaultValue={getTabsValue()} className="w-full">
-        <TabsContent value="agenda">
-          <MeetingAgendaPanel 
-            agendaItems={agendaItems}
-          />
-        </TabsContent>
-        
-        <TabsContent value="tasks">
-          <MeetingTasksPanel 
-            tasks={tasks} 
-            onUpdateTask={handleUpdateTask}
-            onAddTask={addTask}
-          />
-        </TabsContent>
-        
-        <TabsContent value="participants">
-          <MeetingParticipantsPanel 
-            participants={participants}
-          />
-        </TabsContent>
-        
-        <TabsContent value="minutes">
-          <MeetingMinutesPanel 
-            agendaItems={agendaItems}
-            minutes={null}
-          />
-        </TabsContent>
-        
-        <TabsContent value="decisions">
-          <MeetingDecisionsPanel 
-            decisions={decisions}
-            agendaItems={agendaItems}
-            onAddDecision={addDecision}
-          />
-        </TabsContent>
-      </Tabs>
+      {renderActiveTabContent()}
     </div>
   );
 };
