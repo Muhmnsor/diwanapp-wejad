@@ -2,7 +2,7 @@
 import React from 'react';
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
-import { MeetingDetails } from "@/components/meetings/MeetingDetails";
+import { MeetingDetails } from "@/components/MeetingDetails";
 import { useParams } from "react-router-dom";
 
 const MeetingDetail = () => {

@@ -1,12 +1,12 @@
 
 import React from 'react';
-import { useMeetingDetails } from './hooks/useMeetingDetails';
-import { useTaskUpdater } from './hooks/useTaskUpdater';
-import { MeetingAgendaPanel } from './panels/MeetingAgendaPanel';
-import { MeetingTasksPanel } from './panels/MeetingTasksPanel';
-import { MeetingParticipantsPanel } from './panels/MeetingParticipantsPanel';
-import { MeetingMinutesPanel } from './panels/MeetingMinutesPanel';
-import { MeetingDecisionsPanel } from './panels/MeetingDecisionsPanel';
+import { useMeetingDetails } from '@/components/meetings/hooks/useMeetingDetails';
+import { useTaskUpdater } from '@/components/meetings/hooks/useTaskUpdater';
+import { MeetingAgendaPanel } from '@/components/meetings/panels/MeetingAgendaPanel';
+import { MeetingTasksPanel } from '@/components/meetings/panels/MeetingTasksPanel';
+import { MeetingParticipantsPanel } from '@/components/meetings/panels/MeetingParticipantsPanel';
+import { MeetingMinutesPanel } from '@/components/meetings/panels/MeetingMinutesPanel';
+import { MeetingDecisionsPanel } from '@/components/meetings/panels/MeetingDecisionsPanel';
 import { format } from 'date-fns';
 import { 
   Card, 
@@ -27,11 +27,18 @@ import {
   Link, 
   Users, 
   Target, 
-  BadgeInfo
+  BadgeInfo, 
+  Loader2
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { LoadingSpinner } from '@/components/ui/spinner';
+
+// Create a spinner component
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center">
+    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+  </div>
+);
 
 // Define props interface for the component
 interface MeetingDetailsProps {
@@ -208,6 +215,7 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meetingId }) => 
             tasks={tasks} 
             onUpdateTask={handleUpdateTask}
             onAddTask={addTask}
+            meetingId={meetingId}
           />
         </TabsContent>
         
@@ -219,7 +227,6 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meetingId }) => 
         
         <TabsContent value="minutes">
           <MeetingMinutesPanel 
-            minutes={null}
             agendaItems={agendaItems}
           />
         </TabsContent>
