@@ -1,67 +1,51 @@
 
-import { useLocation, Link } from "react-router-dom";
-import { 
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger
-} from "@/components/ui/navigation-menu";
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
+import { Link, useParams } from "react-router-dom";
+import { CalendarRange, FolderKanban, List, ListFilter, Plus } from "lucide-react";
+import { useState } from "react";
+import { MeetingDialogWrapper } from "./dialogs/MeetingDialogWrapper";
 
-export const MeetingsNavHeader = () => {
-  const location = useLocation();
-  const currentPath = location.pathname;
+interface MeetingsNavHeaderProps {
+  meetingId?: string;
+}
+
+export const MeetingsNavHeader = ({ meetingId }: MeetingsNavHeaderProps) => {
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   
   return (
-    <div className="border-b sticky top-16 z-30 w-full bg-background">
-      <NavigationMenu dir="rtl" className="mx-auto">
-        <NavigationMenuList className="px-4 py-2">
-          <NavigationMenuItem>
-            <Link
-              to="/admin/meetings"
-              className={cn(
-                buttonVariants({ variant: "ghost" }),
-                "text-base font-medium transition-colors hover:text-primary",
-                (currentPath === "/admin/meetings" || currentPath.startsWith("/admin/meetings/folder/")) ?
-                  "text-primary" : "text-muted-foreground"
-              )}
-            >
+    <div className="border-b" dir="rtl">
+      <div className="container flex h-16 items-center px-4">
+        <div className="flex items-center space-x-4 space-x-reverse">
+          <Link to="/admin/meetings">
+            <Button variant="ghost" size="sm" className="font-bold">
+              <FolderKanban className="h-4 w-4 mr-2" />
               المجلدات
-            </Link>
-          </NavigationMenuItem>
-          
-          <NavigationMenuItem>
-            <Link
-              to="/admin/meetings/list"
-              className={cn(
-                buttonVariants({ variant: "ghost" }),
-                "text-base font-medium transition-colors hover:text-primary",
-                currentPath === "/admin/meetings/list" ?
-                  "text-primary" : "text-muted-foreground"
-              )}
-            >
-              كل الاجتماعات
-            </Link>
-          </NavigationMenuItem>
-          
-          <NavigationMenuItem>
-            <Link
-              to="/admin/meetings/calendar"
-              className={cn(
-                buttonVariants({ variant: "ghost" }),
-                "text-base font-medium transition-colors hover:text-primary",
-                currentPath === "/admin/meetings/calendar" ?
-                  "text-primary" : "text-muted-foreground"
-              )}
-            >
-              التقويم
-            </Link>
-          </NavigationMenuItem>
-        </NavigationMenuList>
-      </NavigationMenu>
+            </Button>
+          </Link>
+          <Link to="/admin/meetings/list">
+            <Button variant="ghost" size="sm" className="font-bold">
+              <List className="h-4 w-4 mr-2" />
+              الاجتماعات
+            </Button>
+          </Link>
+        </div>
+        
+        <div className="ml-auto flex items-center space-x-4 space-x-reverse">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsCreateDialogOpen(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            اجتماع جديد
+          </Button>
+        </div>
+      </div>
+      
+      <MeetingDialogWrapper 
+        open={isCreateDialogOpen} 
+        onOpenChange={setIsCreateDialogOpen}
+      />
     </div>
   );
 };

@@ -39,7 +39,8 @@ export const AddTaskDialog = ({
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
-  const [taskType, setTaskType] = useState<TaskType>("action_item");
+  // Use only the task types that are supported in the backend
+  const [taskType, setTaskType] = useState<"action_item" | "follow_up" | "decision" | "other">("action_item");
   
   const { mutate: createTask, isPending } = useCreateMeetingTask();
   
@@ -108,8 +109,8 @@ export const AddTaskDialog = ({
               <Select 
                 value={taskType} 
                 onValueChange={(value) => {
-                  // Type guard to ensure we only set valid TaskType values
-                  if (isValidTaskType(value)) {
+                  // Only accept the limited allowed task types
+                  if (value === "action_item" || value === "follow_up" || value === "decision" || value === "other") {
                     setTaskType(value);
                   }
                 }}
@@ -118,8 +119,6 @@ export const AddTaskDialog = ({
                   <SelectValue placeholder="اختر نوع المهمة" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="preparation">التحضير</SelectItem>
-                  <SelectItem value="execution">التنفيذ</SelectItem>
                   <SelectItem value="follow_up">المتابعة</SelectItem>
                   <SelectItem value="action_item">إجراءات</SelectItem>
                   <SelectItem value="decision">قرار</SelectItem>
@@ -174,8 +173,3 @@ export const AddTaskDialog = ({
     </Dialog>
   );
 };
-
-// Type guard for TaskType validation
-function isValidTaskType(value: string): value is TaskType {
-  return ['preparation', 'execution', 'follow_up', 'action_item', 'decision', 'other'].includes(value);
-}

@@ -1,8 +1,8 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Meeting } from "@/types/meeting";
 import { toast } from "sonner";
+import { MeetingWithFolder } from "@/types/meetingFolders";
 
 export interface CreateMeetingData {
   title: string;
@@ -46,7 +46,7 @@ export const useCreateMeetingWithFolder = () => {
         throw error;
       }
       
-      return data as Meeting;
+      return data as MeetingWithFolder;
     },
     onSuccess: (data) => {
       toast.success('تم إنشاء الاجتماع بنجاح');
