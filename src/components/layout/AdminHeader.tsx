@@ -50,8 +50,8 @@ export const AdminHeader = () => {
             <Button
               variant="outline"
               size="sm"
-              className="flex items-center gap-2 text-sm border-gray-200 transition-colors"
               onClick={() => navigate("/admin/dashboard")}
+              className="flex items-center gap-2 text-sm border-gray-200 transition-colors duration-200 hover:bg-gray-100"
             >
               <Grid className="h-4 w-4 text-primary" />
               <span className="hidden md:inline">التطبيقات</span>
@@ -62,11 +62,12 @@ export const AdminHeader = () => {
             
             {/* Logout Button */}
             <Button
-              variant="ghost"
+              variant="outline"
+              size="sm"
               onClick={handleLogout}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 text-sm border-gray-200 transition-colors duration-200 hover:bg-gray-100 hover:text-red-600 hover:border-red-200"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-4 w-4 text-primary" />
               <span className="hidden md:inline">تسجيل الخروج</span>
             </Button>
           </div>
