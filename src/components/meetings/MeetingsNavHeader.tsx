@@ -1,16 +1,18 @@
 
 import { Button } from "@/components/ui/button";
 import { Link, useParams } from "react-router-dom";
-import { CalendarRange, FolderKanban, List, ListFilter, Plus } from "lucide-react";
+import { FolderKanban, List, Plus } from "lucide-react";
 import { useState } from "react";
 import { MeetingDialogWrapper } from "./dialogs/MeetingDialogWrapper";
 
 interface MeetingsNavHeaderProps {
   meetingId?: string;
+  showCreateButton?: boolean;
 }
 
-export const MeetingsNavHeader = ({ meetingId }: MeetingsNavHeaderProps) => {
+export const MeetingsNavHeader = ({ meetingId, showCreateButton = true }: MeetingsNavHeaderProps) => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const { id: folderId } = useParams<{ id: string }>();
   
   return (
     <div className="border-b" dir="rtl">
@@ -30,21 +32,24 @@ export const MeetingsNavHeader = ({ meetingId }: MeetingsNavHeaderProps) => {
           </Link>
         </div>
         
-        <div className="ml-auto flex items-center space-x-4 space-x-reverse">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsCreateDialogOpen(true)}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            اجتماع جديد
-          </Button>
-        </div>
+        {showCreateButton && (
+          <div className="ml-auto flex items-center space-x-4 space-x-reverse">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsCreateDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              اجتماع جديد
+            </Button>
+          </div>
+        )}
       </div>
       
       <MeetingDialogWrapper 
         open={isCreateDialogOpen} 
         onOpenChange={setIsCreateDialogOpen}
+        folderId={folderId}
       />
     </div>
   );

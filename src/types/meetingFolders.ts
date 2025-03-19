@@ -9,7 +9,6 @@ export interface MeetingFolder {
   updated_at: string;
 }
 
-// Create a proper interface that doesn't reference an undefined type
 export interface MeetingWithFolder {
   id: string;
   title: string;
@@ -27,4 +26,5 @@ export interface MeetingWithFolder {
   attendance_type: string;
   status: string;
   folder_id?: string;
+  folder?: MeetingFolder;
 }

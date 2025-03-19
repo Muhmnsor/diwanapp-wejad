@@ -29,6 +29,8 @@ export const useCreateMeetingWithFolder = () => {
         throw new Error("يجب تسجيل الدخول لإنشاء اجتماع");
       }
       
+      console.log("Creating meeting with data:", meetingData);
+      
       const { data, error } = await supabase
         .from('meetings')
         .insert([{
@@ -36,7 +38,7 @@ export const useCreateMeetingWithFolder = () => {
           created_by: user.id,
           meeting_status: 'scheduled',
           status: 'upcoming',
-          folder_id: meetingData.folder_id // Include folder_id
+          folder_id: meetingData.folder_id // Make sure folder_id is included
         }])
         .select('*')
         .single();
@@ -46,6 +48,7 @@ export const useCreateMeetingWithFolder = () => {
         throw error;
       }
       
+      console.log("Meeting created successfully:", data);
       return data as MeetingWithFolder;
     },
     onSuccess: (data) => {
