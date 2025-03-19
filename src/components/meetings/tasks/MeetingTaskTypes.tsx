@@ -119,8 +119,8 @@ export const MeetingTaskTypes = ({
       </Card>
       
       <AddTaskDialog 
-        isOpen={isAddTaskOpen} 
-        onClose={() => setIsAddTaskOpen(false)} 
+        open={isAddTaskOpen} 
+        onOpenChange={setIsAddTaskOpen} 
         meetingId={meetingId as string} 
       />
     </>

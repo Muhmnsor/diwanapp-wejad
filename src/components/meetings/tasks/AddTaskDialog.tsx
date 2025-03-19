@@ -39,7 +39,7 @@ export const AddTaskDialog = ({
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
-  const [taskType, setTaskType] = useState<TaskType>("action_item");
+  const [taskType, setTaskType] = useState<"action_item" | "follow_up" | "decision" | "other">("action_item");
   
   const { mutate: createTask, isPending } = useCreateMeetingTask();
   
@@ -105,7 +105,7 @@ export const AddTaskDialog = ({
             
             <div className="space-y-2">
               <Label htmlFor="taskType">نوع المهمة</Label>
-              <Select value={taskType} onValueChange={(value) => setTaskType(value as TaskType)}>
+              <Select value={taskType} onValueChange={(value: "action_item" | "follow_up" | "decision" | "other") => setTaskType(value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="اختر نوع المهمة" />
                 </SelectTrigger>

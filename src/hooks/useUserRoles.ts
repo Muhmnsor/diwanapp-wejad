@@ -42,7 +42,7 @@ export function useUserRoles() {
             // Make sure roles exists and has a name property
             if (userRole.roles && typeof userRole.roles === 'object') {
               // Access the name property safely after type check
-              const roleName = userRole.roles.name as string;
+              const roleName = userRole.roles.name;
               return (
                 roleName === "admin" || 
                 roleName === "app_admin" || 
