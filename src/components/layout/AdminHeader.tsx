@@ -1,13 +1,17 @@
 
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { Grid, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { useUserName } from "@/hooks/dashboard/useUserName";
+import { cn } from "@/lib/utils";
 
 export const AdminHeader = () => {
   const navigate = useNavigate();
   const { logout } = useAuthStore();
+  const { data: userName, isLoading: isUserNameLoading } = useUserName();
 
   const handleLogout = async () => {
     try {
@@ -34,14 +38,36 @@ export const AdminHeader = () => {
               onClick={() => navigate("/admin")}
             />
           </div>
-          <div className="flex items-center justify-center gap-4 md:justify-end">
+          
+          <div className="flex items-center justify-center md:justify-end gap-4">
+            {/* User Greeting */}
+            <div className="hidden md:block text-right">
+              <p className="text-sm text-muted-foreground">مرحباً بك،</p>
+              <p className="font-medium">{isUserNameLoading ? "..." : userName}</p>
+            </div>
+            
+            {/* Apps Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 text-sm border-gray-200 transition-colors"
+              onClick={() => navigate("/admin/dashboard")}
+            >
+              <Grid className="h-4 w-4 text-primary" />
+              <span className="hidden md:inline">التطبيقات</span>
+            </Button>
+            
+            {/* Notification Bell */}
+            <NotificationBell />
+            
+            {/* Logout Button */}
             <Button
               variant="ghost"
               onClick={handleLogout}
               className="flex items-center gap-2"
             >
               <LogOut className="h-4 w-4" />
-              <span>تسجيل الخروج</span>
+              <span className="hidden md:inline">تسجيل الخروج</span>
             </Button>
           </div>
         </div>
