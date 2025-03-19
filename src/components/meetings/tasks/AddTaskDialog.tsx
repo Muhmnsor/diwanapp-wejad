@@ -39,7 +39,7 @@ export const AddTaskDialog = ({
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
-  const [taskType, setTaskType] = useState<"action_item" | "follow_up" | "decision" | "other">("action_item");
+  const [taskType, setTaskType] = useState<TaskType>("action_item");
   
   const { mutate: createTask, isPending } = useCreateMeetingTask();
   
@@ -105,13 +105,23 @@ export const AddTaskDialog = ({
             
             <div className="space-y-2">
               <Label htmlFor="taskType">نوع المهمة</Label>
-              <Select value={taskType} onValueChange={(value: "action_item" | "follow_up" | "decision" | "other") => setTaskType(value)}>
+              <Select 
+                value={taskType} 
+                onValueChange={(value) => {
+                  // Type guard to ensure we only set valid TaskType values
+                  if (isValidTaskType(value)) {
+                    setTaskType(value);
+                  }
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="اختر نوع المهمة" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="action_item">إجراء</SelectItem>
-                  <SelectItem value="follow_up">متابعة</SelectItem>
+                  <SelectItem value="preparation">التحضير</SelectItem>
+                  <SelectItem value="execution">التنفيذ</SelectItem>
+                  <SelectItem value="follow_up">المتابعة</SelectItem>
+                  <SelectItem value="action_item">إجراءات</SelectItem>
                   <SelectItem value="decision">قرار</SelectItem>
                   <SelectItem value="other">أخرى</SelectItem>
                 </SelectContent>
@@ -164,3 +174,8 @@ export const AddTaskDialog = ({
     </Dialog>
   );
 };
+
+// Type guard for TaskType validation
+function isValidTaskType(value: string): value is TaskType {
+  return ['preparation', 'execution', 'follow_up', 'action_item', 'decision', 'other'].includes(value);
+}

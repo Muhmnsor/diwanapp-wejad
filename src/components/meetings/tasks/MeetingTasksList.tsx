@@ -36,7 +36,7 @@ export const MeetingTasksList = ({ meetingId }: MeetingTasksListProps) => {
       category: 'dynamic',
       useLocalCache: true,
       enabled: !!meetingId,
-      onSettled: () => setIsTasksFetched(true)
+      onSuccess: () => setIsTasksFetched(true)
     }
   );
   
