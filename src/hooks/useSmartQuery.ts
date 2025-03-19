@@ -9,6 +9,7 @@ interface SmartQueryOptions<TData, TError> extends Omit<UseQueryOptions<TData, T
   useLocalCache?: boolean;
   localCacheTime?: number; // minutes
   forceFresh?: boolean;
+  onSuccess?: (data: TData) => void;
 }
 
 export function useSmartQuery<TData, TError = Error>(
@@ -17,7 +18,7 @@ export function useSmartQuery<TData, TError = Error>(
   options: SmartQueryOptions<TData, TError>
 ): UseQueryResult<TData, TError> {
   const { settings: devSettings } = useDeveloperStore();
-  const { category, useLocalCache = false, localCacheTime = 60, forceFresh = false, ...restOptions } = options;
+  const { category, useLocalCache = false, localCacheTime = 60, forceFresh = false, onSuccess, ...restOptions } = options;
   
   const cacheKey = queryKey.join('.');
   const localData = useLocalCache ? getFromLocalCache(cacheKey) : null;
@@ -51,7 +52,8 @@ export function useSmartQuery<TData, TError = Error>(
     refetchOnMount: cacheSettings.refetchOnMount,
     refetchOnReconnect: cacheSettings.refetchOnReconnect,
     refetchInterval: cacheSettings.refetchInterval,
-    ...restOptions
+    ...restOptions,
+    onSuccess: onSuccess as any // Type casting to make it compatible
   });
   
   // Track cache hits
