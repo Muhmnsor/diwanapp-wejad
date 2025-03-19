@@ -1,47 +1,47 @@
 
-import React from "react";
-import { EditMeetingDialog } from "./EditMeetingDialog";
-import { Meeting, MeetingLifecycleStatus } from "@/types/meeting";
+import React, { useState } from "react";
+import { useParams } from "react-router-dom";
+import { CreateMeetingDialog } from "./CreateMeetingDialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface MeetingDialogWrapperProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  meeting: Meeting;
-  onSave: (meeting: Meeting) => void;
+  onSuccess?: () => void;
+  folderId?: string;
 }
 
 export const MeetingDialogWrapper = ({
   open,
   onOpenChange,
-  meeting,
-  onSave,
+  onSuccess,
+  folderId
 }: MeetingDialogWrapperProps) => {
-  // EditMeetingDialog expects onSuccess with meeting parameter
-  const handleSuccess = (updatedMeeting: Meeting) => {
-    onSave({
-      ...updatedMeeting,
-      // Ensure status is properly set based on meeting_status
-      status: mapMeetingStatusToLifecycleStatus(updatedMeeting.meeting_status)
-    });
-  };
+  const queryClient = useQueryClient();
+  const { id: routeFolderId } = useParams<{ id: string }>();
   
-  // Helper function to map MeetingStatus to MeetingLifecycleStatus
-  const mapMeetingStatusToLifecycleStatus = (status: string): MeetingLifecycleStatus => {
-    switch (status) {
-      case "scheduled": return "upcoming";
-      case "in_progress": return "ongoing";
-      case "completed": return "completed";
-      case "cancelled": return "cancelled";
-      default: return "upcoming";
+  // Use either the prop folderId or the route parameter
+  const effectiveFolderId = folderId || routeFolderId;
+  
+  // Wrap the original onSuccess to also invalidate folder-specific queries
+  const handleSuccess = () => {
+    if (effectiveFolderId) {
+      queryClient.invalidateQueries({ queryKey: ['folder-meetings', effectiveFolderId] });
+    }
+    queryClient.invalidateQueries({ queryKey: ['meetings-count'] });
+    
+    // Call the original onSuccess if provided
+    if (onSuccess) {
+      onSuccess();
     }
   };
 
   return (
-    <EditMeetingDialog
+    <CreateMeetingDialog
       open={open}
       onOpenChange={onOpenChange}
-      meeting={meeting}
       onSuccess={handleSuccess}
+      // The folder ID will be handled in our custom hook
     />
   );
 };

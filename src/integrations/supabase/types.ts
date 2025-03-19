@@ -1659,6 +1659,36 @@ export type Database = {
           },
         ]
       }
+      meeting_folders: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       meeting_minutes: {
         Row: {
           content: string | null
@@ -1833,6 +1863,7 @@ export type Database = {
           created_by: string
           date: string
           duration: number
+          folder_id: string | null
           id: string
           location: string | null
           meeting_link: string | null
@@ -1850,6 +1881,7 @@ export type Database = {
           created_by: string
           date: string
           duration: number
+          folder_id?: string | null
           id?: string
           location?: string | null
           meeting_link?: string | null
@@ -1867,6 +1899,7 @@ export type Database = {
           created_by?: string
           date?: string
           duration?: number
+          folder_id?: string | null
           id?: string
           location?: string | null
           meeting_link?: string | null
@@ -1878,7 +1911,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "meetings_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_folders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notification_logs: {
         Row: {
