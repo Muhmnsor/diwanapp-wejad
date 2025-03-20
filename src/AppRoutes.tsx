@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "@/store/refactored-auth";
 import { MainRoutes } from "./routes/MainRoutes";
@@ -9,6 +8,7 @@ import { DeveloperRoutes } from "./routes/DeveloperRoutes";
 import { DeveloperToolbar } from "./components/developer/DeveloperToolbar";
 import { useEffect, useState } from "react";
 import { isDeveloper } from "./utils/developer/roleManagement";
+import UpdateProfile from "./pages/UpdateProfile";
 
 const AppRoutes = () => {
   const { isAuthenticated, user } = useAuthStore();
@@ -50,6 +50,7 @@ const AppRoutes = () => {
         {TaskRoutes}
         {DeveloperRoutes}
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="/update-profile" element={<UpdateProfile />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       
