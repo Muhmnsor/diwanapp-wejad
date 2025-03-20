@@ -18,7 +18,7 @@ const MeetingsPage = () => {
   };
   
   return (
-    <div className="min-h-screen flex flex-col" dir="rtl">
+    <div className="min-h-screen flex flex-col rtl" dir="rtl">
       <AdminHeader />
       
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">

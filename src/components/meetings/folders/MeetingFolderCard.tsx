@@ -59,7 +59,7 @@ export const MeetingFolderCard: React.FC<MeetingFolderCardProps> = ({
   const folderColor = getFolderColor(name);
 
   return (
-    <Card className="hover:shadow-md transition-all">
+    <Card className="hover:shadow-md transition-all text-right">
       <CardHeader className="pb-2">
         <div className="flex items-center gap-2">
           <div className={`p-2 rounded-md ${folderColor}`}>
@@ -82,7 +82,7 @@ export const MeetingFolderCard: React.FC<MeetingFolderCardProps> = ({
                 <span>{_count.meetings}</span>
               </div>
             </HoverCardTrigger>
-            <HoverCardContent align="end" className="w-fit p-2">
+            <HoverCardContent align="end" className="w-fit p-2 text-right">
               <span className="text-xs">عدد الاجتماعات: {_count.meetings}</span>
             </HoverCardContent>
           </HoverCard>
@@ -94,7 +94,7 @@ export const MeetingFolderCard: React.FC<MeetingFolderCardProps> = ({
                 <span>{_count.members}</span>
               </div>
             </HoverCardTrigger>
-            <HoverCardContent align="end" className="w-fit p-2">
+            <HoverCardContent align="end" className="w-fit p-2 text-right">
               <span className="text-xs">عدد الأعضاء: {_count.members}</span>
             </HoverCardContent>
           </HoverCard>
@@ -107,7 +107,7 @@ export const MeetingFolderCard: React.FC<MeetingFolderCardProps> = ({
                 </Badge>
               </div>
             </HoverCardTrigger>
-            <HoverCardContent align="end" className="w-fit p-2">
+            <HoverCardContent align="end" className="w-fit p-2 text-right">
               <span className="text-xs">تم الإنشاء بواسطة: {creatorName}</span>
               <br />
               <span className="text-xs">تاريخ الإنشاء: {createdDate}</span>

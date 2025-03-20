@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export const AllMeetingsTab = () => {
   return (
-    <Card>
+    <Card className="rtl text-right">
       <CardHeader>
         <CardTitle>جميع الاجتماعات</CardTitle>
         <CardDescription>عرض وإدارة جميع الاجتماعات في النظام</CardDescription>

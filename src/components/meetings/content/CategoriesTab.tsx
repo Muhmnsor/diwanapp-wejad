@@ -17,8 +17,8 @@ export const CategoriesTab = () => {
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+    <Card className="rtl text-right">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div>
           <CardTitle>تصنيفات الاجتماعات</CardTitle>
           <CardDescription>تنظيم الاجتماعات حسب التصنيف</CardDescription>

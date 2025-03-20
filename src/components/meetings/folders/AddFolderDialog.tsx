@@ -81,7 +81,7 @@ export const AddFolderDialog = ({ open, onOpenChange, onSuccess }: AddFolderDial
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] rtl text-right" dir="rtl">
         <DialogHeader>
           <DialogTitle>إضافة تصنيف جديد</DialogTitle>
           <DialogDescription>
@@ -120,7 +120,7 @@ export const AddFolderDialog = ({ open, onOpenChange, onSuccess }: AddFolderDial
                 </FormItem>
               )}
             />
-            <DialogFooter>
+            <DialogFooter className="flex justify-start sm:justify-start">
               <Button type="submit" disabled={isPending}>
                 {isPending ? "جاري الإنشاء..." : "إنشاء التصنيف"}
               </Button>

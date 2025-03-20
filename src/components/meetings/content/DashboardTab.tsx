@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export const DashboardTab = () => {
   return (
-    <Card>
+    <Card className="rtl text-right">
       <CardHeader>
         <CardTitle>لوحة معلومات الاجتماعات</CardTitle>
         <CardDescription>عرض إحصائيات ومعلومات الاجتماعات</CardDescription>
