@@ -18,11 +18,6 @@ interface MeetingFolder {
   };
 }
 
-interface MeetingCount {
-  folder_id: string;
-  count: number;
-}
-
 export const useMeetingFolders = (refreshTrigger: number = 0) => {
   return useQuery({
     queryKey: ['meetingFolders', refreshTrigger],
@@ -40,23 +35,18 @@ export const useMeetingFolders = (refreshTrigger: number = 0) => {
       // For each folder, count meetings and members
       const folderIds = folderData.map(folder => folder.id);
       
-      // Count meetings in each folder using the RPC function
-      let meetingCountMap = new Map();
-      try {
-        const { data: meetingCounts, error: meetingError } = await supabase
-          .rpc('count_meetings_by_folder') as { data: MeetingCount[] | null, error: any };
-        
-        if (meetingError) {
-          console.error('Error fetching meeting counts:', meetingError);
-        } else if (meetingCounts) {
-          // Create a map of folder_id to count
-          meetingCounts.forEach(item => {
-            meetingCountMap.set(item.folder_id, item.count);
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching meeting counts:', error);
-      }
+      // Count meetings in each folder
+      const { data: meetingCounts, error: meetingError } = await supabase
+        .from('count_meetings_by_folder')
+        .select('*');
+      
+      if (meetingError) throw meetingError;
+      
+      // Get meeting counts by folder
+      const meetingCountMap = new Map();
+      meetingCounts?.forEach(item => {
+        meetingCountMap.set(item.folder_id, item.count);
+      });
       
       // Count members in each folder
       const { data: memberCounts, error: memberError } = await supabase
@@ -64,15 +54,13 @@ export const useMeetingFolders = (refreshTrigger: number = 0) => {
         .select('folder_id')
         .in('folder_id', folderIds);
       
-      if (memberError) {
-        console.error('Error fetching member counts:', memberError);
-      }
+      if (memberError) throw memberError;
       
       // Process member counts to create a map
       const memberCountMap = new Map();
       if (memberCounts) {
         // Group by folder_id and count
-        const folderMemberCounts: Record<string, number> = {};
+        const folderMemberCounts = {};
         memberCounts.forEach(item => {
           if (!folderMemberCounts[item.folder_id]) {
             folderMemberCounts[item.folder_id] = 0;
@@ -94,8 +82,6 @@ export const useMeetingFolders = (refreshTrigger: number = 0) => {
           members: memberCountMap.get(folder.id) || 0
         }
       })) as MeetingFolder[];
-    },
-    retry: 1,
-    retryDelay: 1000
+    }
   });
 };
