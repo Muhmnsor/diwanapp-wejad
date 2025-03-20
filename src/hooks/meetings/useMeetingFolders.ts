@@ -1,6 +1,8 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useSmartQuery } from "@/hooks/useSmartQuery";
 import { supabase } from "@/integrations/supabase/client";
+import { MeetingFolder } from "@/types/meetingFolders";
+import { useDeveloperStore } from "@/store/developerStore";
 
 export interface MeetingFolder {
   id: string;
@@ -13,9 +15,11 @@ export interface MeetingFolder {
 }
 
 export const useMeetingFolders = () => {
-  return useQuery({
-    queryKey: ['meeting-folders'],
-    queryFn: async () => {
+  const { settings } = useDeveloperStore();
+  
+  return useSmartQuery<MeetingFolder[]>(
+    ['meeting-folders'],
+    async () => {
       const { data, error } = await supabase
         .from('meeting_folders')
         .select('*')
@@ -27,6 +31,11 @@ export const useMeetingFolders = () => {
       }
       
       return data as MeetingFolder[];
+    },
+    {
+      category: 'reference',
+      useLocalCache: true,
+      localCacheTime: settings?.cache_time_minutes || 60
     }
-  });
+  );
 };

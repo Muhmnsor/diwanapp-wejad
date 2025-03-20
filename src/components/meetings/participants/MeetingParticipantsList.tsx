@@ -1,33 +1,28 @@
 
-import { useState } from "react";
 import { MeetingParticipant } from "@/types/meeting";
 import { Button } from "@/components/ui/button";
-import { Loader2, UserPlus, UserX, Check, X } from "lucide-react";
+import { Plus, Loader2, Users } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { AddParticipantDialog } from "./AddParticipantDialog";
-import { ParticipantsTable } from "./ParticipantsTable";
 import { EmptyState } from "@/components/ui/empty-state";
 
 interface MeetingParticipantsListProps {
   participants: MeetingParticipant[];
   isLoading: boolean;
   error: Error | null;
-  meetingId: string | undefined;
+  meetingId?: string;
 }
 
 export const MeetingParticipantsList = ({ 
   participants, 
   isLoading, 
   error,
-  meetingId 
+  meetingId
 }: MeetingParticipantsListProps) => {
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-40">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary ml-2" />
         <span>جاري تحميل المشاركين...</span>
       </div>
     );
@@ -39,43 +34,39 @@ export const MeetingParticipantsList = ({
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>خطأ</AlertTitle>
         <AlertDescription>
-          حدث خطأ أثناء تحميل قائمة المشاركين: {error.message}
+          حدث خطأ أثناء تحميل المشاركين: {error.message}
         </AlertDescription>
       </Alert>
     );
   }
   
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">المشاركون</h2>
-        <Button 
-          onClick={() => setIsAddDialogOpen(true)}
-          className="gap-2"
-        >
-          <UserPlus className="h-4 w-4" />
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
           إضافة مشارك
         </Button>
       </div>
       
       {participants.length === 0 ? (
-        <EmptyState 
+        <EmptyState
           title="لا يوجد مشاركون"
-          description="لم يتم إضافة أي مشاركين إلى هذا الاجتماع بعد."
-          icon={<UserPlus className="h-10 w-10 text-muted-foreground" />}
+          description="لم تتم إضافة أي مشاركين لهذا الاجتماع بعد"
+          icon={<Users className="h-8 w-8" />}
           action={
-            <Button onClick={() => setIsAddDialogOpen(true)}>إضافة مشارك</Button>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              إضافة مشارك
+            </Button>
           }
         />
       ) : (
-        <ParticipantsTable participants={participants} meetingId={meetingId!} />
+        <div className="rounded-md border">
+          <div className="p-4">قائمة المشاركين (سيتم تنفيذها لاحقًا)</div>
+        </div>
       )}
-      
-      <AddParticipantDialog 
-        open={isAddDialogOpen} 
-        onOpenChange={setIsAddDialogOpen} 
-        meetingId={meetingId!}
-      />
     </div>
   );
 };

@@ -5,9 +5,10 @@ import { useMeetingFolders } from "@/hooks/meetings/useMeetingFolders";
 import { useMeetingsCount } from "@/hooks/meetings/useMeetingsCount";
 import { MeetingFolderCard } from "./MeetingFolderCard";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, FolderKanban } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export const MeetingFoldersGrid = () => {
   const navigate = useNavigate();
@@ -51,9 +52,11 @@ export const MeetingFoldersGrid = () => {
       </div>
       
       {folders.length === 0 ? (
-        <div className="text-center py-12 bg-muted/20 rounded-lg border">
-          <p className="text-muted-foreground">لا توجد مجلدات للعرض</p>
-        </div>
+        <EmptyState
+          title="لا توجد مجلدات"
+          description="لم يتم إنشاء أي مجلدات للاجتماعات بعد"
+          icon={<FolderKanban className="h-8 w-8" />}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {folders.map((folder) => (

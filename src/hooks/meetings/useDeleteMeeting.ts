@@ -43,9 +43,23 @@ export const useDeleteMeeting = () => {
       
       return { meetingId };
     },
-    onSuccess: () => {
+    onSuccess: (_, meetingId) => {
       toast.success('تم حذف الاجتماع بنجاح');
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
+      queryClient.invalidateQueries({ queryKey: ['folder-meetings'] });
+      
+      // Find the folder ID for this meeting from the cache
+      const meetings = queryClient.getQueryData<any[]>(['meetings']);
+      const meeting = meetings?.find(m => m.id === meetingId);
+      
+      if (meeting?.folder_id) {
+        queryClient.invalidateQueries({ 
+          queryKey: ['folder-meetings', meeting.folder_id] 
+        });
+      }
+      
+      // Invalidate meetings count
+      queryClient.invalidateQueries({ queryKey: ['meetings-count'] });
     },
     onError: (error) => {
       console.error('Error in meeting deletion:', error);

@@ -4,7 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Meeting } from "@/types/meeting";
 import { useDeveloperStore } from "@/store/developerStore";
 
-export const useMeetings = (filters?: { status?: string; type?: string }) => {
+interface MeetingsFilters {
+  status?: string;
+  type?: string;
+}
+
+export const useMeetings = (filters?: MeetingsFilters) => {
   const { settings } = useDeveloperStore();
   
   return useSmartQuery<Meeting[]>(
@@ -38,7 +43,7 @@ export const useMeetings = (filters?: { status?: string; type?: string }) => {
     {
       category: 'dynamic',
       useLocalCache: true,
-      localCacheTime: settings?.cache_time_minutes || 5,
+      localCacheTime: settings?.cache_time_minutes || 5
     }
   );
 };

@@ -2,7 +2,7 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
-import { MeetingFolder } from "@/hooks/meetings/useMeetingFolders";
+import { MeetingFolder } from "@/types/meetingFolders";
 import { getFolderIcon } from "./folderIcons";
 
 interface MeetingFolderCardProps {

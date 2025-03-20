@@ -1,13 +1,16 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useSmartQuery } from "@/hooks/useSmartQuery";
 import { supabase } from "@/integrations/supabase/client";
-import { MeetingFolder } from "./useMeetingFolders";
+import { MeetingFolder } from "@/types/meetingFolders";
+import { useDeveloperStore } from "@/store/developerStore";
 
 export const useMeetingFolder = (folderId: string | undefined) => {
-  return useQuery({
-    queryKey: ['meeting-folder', folderId],
-    queryFn: async () => {
-      if (!folderId) throw new Error("Folder ID is required");
+  const { settings } = useDeveloperStore();
+  
+  return useSmartQuery<MeetingFolder>(
+    ['meeting-folder', folderId],
+    async () => {
+      if (!folderId) throw new Error('Folder ID is required');
       
       const { data, error } = await supabase
         .from('meeting_folders')
@@ -22,6 +25,11 @@ export const useMeetingFolder = (folderId: string | undefined) => {
       
       return data as MeetingFolder;
     },
-    enabled: !!folderId
-  });
+    {
+      category: 'reference',
+      useLocalCache: true,
+      localCacheTime: settings?.cache_time_minutes || 60,
+      enabled: !!folderId
+    }
+  );
 };

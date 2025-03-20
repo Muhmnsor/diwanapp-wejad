@@ -1,19 +1,22 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useSmartQuery } from "@/hooks/useSmartQuery";
 import { supabase } from "@/integrations/supabase/client";
 import { MeetingParticipant } from "@/types/meeting";
+import { useDeveloperStore } from "@/store/developerStore";
 
 export const useMeetingParticipants = (meetingId: string | undefined) => {
-  return useQuery({
-    queryKey: ['meeting-participants', meetingId],
-    queryFn: async () => {
-      if (!meetingId) throw new Error("Meeting ID is required");
+  const { settings } = useDeveloperStore();
+  
+  return useSmartQuery<MeetingParticipant[]>(
+    ['meeting-participants', meetingId],
+    async () => {
+      if (!meetingId) return [];
       
       const { data, error } = await supabase
         .from('meeting_participants')
         .select('*')
         .eq('meeting_id', meetingId)
-        .order('role', { ascending: true });
+        .order('created_at');
       
       if (error) {
         console.error('Error fetching meeting participants:', error);
@@ -22,6 +25,11 @@ export const useMeetingParticipants = (meetingId: string | undefined) => {
       
       return data as MeetingParticipant[];
     },
-    enabled: !!meetingId
-  });
+    {
+      category: 'dynamic',
+      useLocalCache: true,
+      localCacheTime: settings?.cache_time_minutes || 5,
+      enabled: !!meetingId
+    }
+  );
 };

@@ -1,9 +1,10 @@
-import { Route, Navigate } from "react-router-dom";
+
+import { Route } from "react-router-dom";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import AdminMeetings from "@/pages/AdminMeetings";
 import MeetingFoldersPage from "@/pages/meetings/MeetingFoldersPage";
 import MeetingFolderPage from "@/pages/meetings/MeetingFolderPage";
 import MeetingsPage from "@/pages/meetings/MeetingsPage";
+import MeetingDetailsPage from "@/pages/meetings/MeetingDetailsPage";
 
 export const MeetingRoutes = [
   <Route
@@ -33,5 +34,13 @@ export const MeetingRoutes = [
     }
     key="meetings-list"
   />,
-  // This keeps existing routes like meeting details
+  <Route
+    path="/admin/meetings/:id"
+    element={
+      <ProtectedRoute>
+        <MeetingDetailsPage />
+      </ProtectedRoute>
+    }
+    key="meeting-details"
+  />
 ];

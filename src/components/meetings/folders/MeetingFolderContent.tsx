@@ -1,87 +1,54 @@
 
-import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMeetingFolder } from "@/hooks/meetings/useMeetingFolder";
 import { useFolderMeetings } from "@/hooks/meetings/useFolderMeetings";
-import { Loader2, ArrowLeft, Plus } from "lucide-react";
+import { MeetingsList } from "@/components/meetings/MeetingsList";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { MeetingsTable } from "./MeetingsTable";
-import { MeetingDialogWrapper } from "../dialogs/MeetingDialogWrapper";
 import { getFolderIcon } from "./folderIcons";
 
 export const MeetingFolderContent = () => {
-  const { id: folderId } = useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
-  const [typeFilter, setTypeFilter] = useState<string | undefined>(undefined);
   
   const { 
     data: folder, 
     isLoading: isFolderLoading, 
     error: folderError 
-  } = useMeetingFolder(folderId);
+  } = useMeetingFolder(id);
   
-  const { 
-    data: meetings = [], 
-    isLoading: isMeetingsLoading, 
-    error: meetingsError,
-    refetch 
-  } = useFolderMeetings(folderId, {
-    status: statusFilter,
-    type: typeFilter
-  });
-  
-  const handleBackClick = () => {
-    navigate('/admin/meetings');
-  };
-  
-  const handleCreateSuccess = () => {
-    refetch();
-  };
-  
-  const handleMeetingClick = (meetingId: string) => {
-    navigate(`/admin/meetings/${meetingId}`);
-  };
+  const {
+    data: meetings = [],
+    isLoading: isMeetingsLoading,
+    error: meetingsError
+  } = useFolderMeetings(id);
   
   if (isFolderLoading) {
     return (
       <div className="flex justify-center items-center h-60">
         <Loader2 className="h-8 w-8 animate-spin text-primary ml-2" />
-        <span>جاري تحميل البيانات...</span>
+        <span>جاري تحميل المجلد...</span>
       </div>
     );
   }
   
-  if (folderError) {
+  if (folderError || !folder) {
     return (
       <Alert variant="destructive" className="mb-6">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>خطأ</AlertTitle>
         <AlertDescription>
-          حدث خطأ أثناء تحميل بيانات المجلد: {folderError.message}
+          حدث خطأ أثناء تحميل المجلد: {folderError?.message || "المجلد غير موجود"}
         </AlertDescription>
-        <Button variant="outline" className="mt-4" onClick={handleBackClick}>
-          <ArrowLeft className="h-4 w-4 ml-2" />
-          العودة للمجلدات
-        </Button>
-      </Alert>
-    );
-  }
-  
-  if (!folder) {
-    return (
-      <Alert variant="destructive" className="mb-6">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>خطأ</AlertTitle>
-        <AlertDescription>
-          المجلد غير موجود
-        </AlertDescription>
-        <Button variant="outline" className="mt-4" onClick={handleBackClick}>
-          <ArrowLeft className="h-4 w-4 ml-2" />
-          العودة للمجلدات
+        <Button 
+          variant="outline" 
+          className="mt-4"
+          onClick={() => navigate("/admin/meetings")}
+        >
+          <ArrowRight className="mr-2 h-4 w-4" />
+          العودة إلى المجلدات
         </Button>
       </Alert>
     );
@@ -91,44 +58,33 @@ export const MeetingFolderContent = () => {
   
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="icon" onClick={handleBackClick}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          
-          <div className="flex items-center gap-3">
-            <div className="bg-primary/10 p-2 rounded-lg">
-              <IconComponent className="h-6 w-6 text-primary" />
-            </div>
-            <h1 className="text-2xl font-bold">{folder.name}</h1>
-          </div>
-        </div>
-        
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="ml-2 h-4 w-4" />
-          اجتماع جديد
+      <div className="flex items-center gap-3 mb-6">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => navigate("/admin/meetings")}
+        >
+          <ArrowRight className="h-4 w-4 ml-1" />
+          العودة
         </Button>
+        
+        <div className="flex items-center">
+          <div className="bg-primary/10 p-2 rounded-lg mr-2">
+            <IconComponent className="h-6 w-6 text-primary" />
+          </div>
+          <h1 className="text-2xl font-bold">{folder.name}</h1>
+        </div>
       </div>
       
       {folder.description && (
         <p className="text-muted-foreground mb-6">{folder.description}</p>
       )}
       
-      <MeetingsTable 
-        meetings={meetings}
-        isLoading={isMeetingsLoading}
-        error={meetingsError as Error}
-        onMeetingClick={handleMeetingClick}
-        onStatusFilterChange={setStatusFilter}
-        onTypeFilterChange={setTypeFilter}
-      />
-      
-      <MeetingDialogWrapper
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        onSuccess={handleCreateSuccess}
-        folderId={folderId}
+      <MeetingsList 
+        meetings={meetings} 
+        isLoading={isMeetingsLoading} 
+        error={meetingsError as Error} 
+        folderId={id}
       />
     </div>
   );
