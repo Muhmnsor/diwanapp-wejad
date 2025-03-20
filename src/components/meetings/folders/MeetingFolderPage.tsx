@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Folder, Edit, Trash, Users } from "lucide-react";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { useMeetingFolder } from "@/hooks/meetings/useMeetingFolder";
-import { MeetingsTable } from "./MeetingsTable";
+import { MeetingsList } from "@/components/meetings/MeetingsList";
 import { EditFolderDialog } from "./EditFolderDialog";
 import { DeleteFolderDialog } from "./DeleteFolderDialog";
 import { FolderMembersDialog } from "./FolderMembersDialog";
+import { useMeetings } from "@/hooks/meetings/useMeetings";
 
 export const MeetingFolderPage = () => {
   const { folderId } = useParams<{ folderId: string }>();
@@ -17,6 +18,7 @@ export const MeetingFolderPage = () => {
   const { hasAdminRole } = useUserRoles();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { data: folder, isLoading, error } = useMeetingFolder(folderId as string, refreshTrigger);
+  const { data: meetings, isLoading: isLoadingMeetings, error: meetingsError } = useMeetings(folderId, refreshTrigger);
   
   // Dialog states
   const [isEditFolderOpen, setIsEditFolderOpen] = useState(false);
@@ -109,7 +111,13 @@ export const MeetingFolderPage = () => {
         <CardContent>
           <div className="mt-6">
             <h2 className="text-lg font-semibold mb-4">الاجتماعات في هذا التصنيف</h2>
-            <MeetingsTable folderId={folderId as string} />
+            <MeetingsList 
+              meetings={meetings || []} 
+              isLoading={isLoadingMeetings} 
+              error={meetingsError} 
+              folderId={folderId}
+              onCreate={refreshFolder}
+            />
           </div>
         </CardContent>
       </Card>
