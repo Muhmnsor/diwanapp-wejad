@@ -2,45 +2,55 @@
 export interface Meeting {
   id: string;
   title: string;
-  meeting_type: string;
+  description?: string;
   date: string;
   start_time: string;
   duration: number;
-  location?: string;
-  meeting_link?: string;
-  objectives?: string;
-  attendance_type: string;
-  meeting_status: string;
+  location: string;
+  location_url?: string;
+  meeting_status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+  attendance_type: AttendanceType;
+  meeting_type: MeetingType;
+  creator_id: string;
   folder_id?: string;
-  created_at?: string;
-  updated_at?: string;
+  created_at: string;
+  updated_at: string;
+  creator?: {
+    display_name: string;
+  };
+  folder?: {
+    name: string;
+  };
+  objectives?: string;
+  agenda?: string;
 }
 
-export type MeetingStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
-
 export type MeetingType = 'board' | 'department' | 'team' | 'committee' | 'other';
+export type AttendanceType = 'in_person' | 'remote' | 'hybrid';
 
-export type AttendanceType = 'in_person' | 'virtual' | 'hybrid';
-
-export type ParticipantRole = 'organizer' | 'presenter' | 'member' | 'guest';
-
-export type AttendanceStatus = 'pending' | 'confirmed' | 'attended' | 'absent';
-
-export type TaskType = 'action_item' | 'follow_up' | 'decision' | 'other';
-
-export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
-
-export type DecisionStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
-
-export interface MeetingTask {
+export interface MeetingParticipant {
   id: string;
   meeting_id: string;
-  title: string;
-  description?: string;
-  due_date?: string;
-  assigned_to?: string;
-  task_type: TaskType;
-  status: TaskStatus;
-  created_at?: string;
-  updated_at?: string;
+  user_id?: string;
+  user_email?: string;
+  user_display_name: string;
+  user_phone?: string;
+  role: 'chairman' | 'member' | 'secretary' | 'viewer';
+  attendance_status: 'pending' | 'attended' | 'excused' | 'absent';
+  is_external: boolean;
+  notification_sent: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MeetingAttachment {
+  id: string;
+  meeting_id: string;
+  file_name: string;
+  file_path: string;
+  file_type?: string;
+  file_size?: number;
+  uploaded_by?: string;
+  created_at: string;
+  updated_at: string;
 }
