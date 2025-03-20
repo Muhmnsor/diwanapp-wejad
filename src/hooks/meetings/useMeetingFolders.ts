@@ -35,10 +35,9 @@ export const useMeetingFolders = (refreshTrigger: number = 0) => {
       // For each folder, count meetings and members
       const folderIds = folderData.map(folder => folder.id);
       
-      // Count meetings in each folder
+      // Count meetings in each folder - properly call the function using rpc
       const { data: meetingCounts, error: meetingError } = await supabase
-        .from('count_meetings_by_folder')
-        .select('*');
+        .rpc('count_meetings_by_folder');
       
       if (meetingError) throw meetingError;
       

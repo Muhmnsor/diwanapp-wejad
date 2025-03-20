@@ -1496,6 +1496,48 @@ export type Database = {
         }
         Relationships: []
       }
+      meeting_folder_members: {
+        Row: {
+          created_at: string | null
+          folder_id: string
+          id: string
+          role: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          folder_id: string
+          id?: string
+          role?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          folder_id?: string
+          id?: string
+          role?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_folder_members_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_folders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_folder_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meeting_folders: {
         Row: {
           created_at: string | null
