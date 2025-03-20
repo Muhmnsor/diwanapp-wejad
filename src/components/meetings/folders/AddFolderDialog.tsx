@@ -50,9 +50,14 @@ export const AddFolderDialog = ({ open, onOpenChange, onSuccess }: AddFolderDial
 
   const { mutate: createFolder, isPending } = useMutation({
     mutationFn: async (values: FormValues) => {
+      // Get current user's ID to set as creator
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      
       const { data, error } = await supabase.from("meeting_folders").insert({
         name: values.name,
         description: values.description || null,
+        created_by: userData.user?.id
       }).select();
 
       if (error) throw error;

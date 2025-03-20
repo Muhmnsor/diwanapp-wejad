@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,7 +75,7 @@ export const FolderMembersDialog = ({
         id,
         user_id,
         role,
-        profile:user_id(display_name, email)
+        profile:profiles!user_id(display_name, email)
       `)
       .eq("folder_id", folder.id);
 
