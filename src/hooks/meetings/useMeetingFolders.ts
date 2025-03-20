@@ -11,7 +11,7 @@ interface MeetingFolder {
   updated_at: string;
   creator: {
     display_name: string;
-  };
+  } | null;
   _count: {
     meetings: number;
     members: number;
@@ -24,7 +24,7 @@ export const useMeetingFolders = (refreshTrigger: number = 0) => {
     queryFn: async () => {
       console.log("Fetching meeting folders...");
       
-      // Use a single optimized query with counts
+      // Use a LEFT JOIN instead of an inner join to handle null creator cases
       const { data, error } = await supabase
         .from('meeting_folders')
         .select(`

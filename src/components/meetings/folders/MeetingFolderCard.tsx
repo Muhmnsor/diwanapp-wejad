@@ -15,7 +15,7 @@ interface MeetingFolder {
   updated_at: string;
   creator: {
     display_name: string;
-  };
+  } | null;
   _count: {
     meetings: number;
     members: number;
@@ -37,6 +37,7 @@ export const MeetingFolderCard: React.FC<MeetingFolderCardProps> = ({
 }) => {
   const { name, description, creator, _count, created_at } = folder;
   const createdDate = new Date(created_at).toLocaleDateString('ar-SA');
+  const creatorName = creator?.display_name || 'مستخدم غير معروف';
   
   // Get a color based on the first letter of the folder name
   const getFolderColor = (name: string) => {
@@ -102,12 +103,12 @@ export const MeetingFolderCard: React.FC<MeetingFolderCardProps> = ({
             <HoverCardTrigger asChild>
               <div className="flex items-center gap-1 text-sm text-gray-500">
                 <Badge variant="outline" className="h-5 px-2 text-xs">
-                  {creator.display_name}
+                  {creatorName}
                 </Badge>
               </div>
             </HoverCardTrigger>
             <HoverCardContent className="w-fit p-2">
-              <span className="text-xs">تم الإنشاء بواسطة: {creator.display_name}</span>
+              <span className="text-xs">تم الإنشاء بواسطة: {creatorName}</span>
               <br />
               <span className="text-xs">تاريخ الإنشاء: {createdDate}</span>
             </HoverCardContent>
