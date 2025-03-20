@@ -1,4 +1,3 @@
-
 import { Route } from "react-router-dom";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Settings from "@/pages/Settings";
@@ -14,6 +13,7 @@ import Notifications from "@/pages/Notifications";
 import RequestsManagement from "@/pages/RequestsManagement";
 import React from "react";
 import DeveloperRoute from "@/components/DeveloperRoute";
+import MeetingsPage from "@/pages/meetings/MeetingsPage";
 
 export const ProtectedRoutes = [
   <Route 
@@ -31,6 +31,15 @@ export const ProtectedRoutes = [
     element={
       <ProtectedRoute>
         <AdminDashboard />
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="admin-meetings"
+    path="/admin/meetings" 
+    element={
+      <ProtectedRoute>
+        <MeetingsPage />
       </ProtectedRoute>
     } 
   />,

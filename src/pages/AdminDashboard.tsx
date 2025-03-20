@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -24,7 +23,6 @@ const AdminDashboard = () => {
   const [isLoadingApps, setIsLoadingApps] = useState<boolean>(true);
   const [appsError, setAppsError] = useState<Error | null>(null);
   
-  // Fetch apps list when user or notification counts change
   useEffect(() => {
     const fetchApps = async () => {
       if (!user) {
@@ -43,10 +41,8 @@ const AdminDashboard = () => {
       
       try {
         console.log("Fetching apps with user:", user.id, "and notification counts:", notificationCounts);
-        // Fetch the original apps list from the getAppsList function
         const appsList = await getAppsList(notificationCounts, user);
         
-        // Add the meetings app to the list if user has admin access
         if (hasAdminRole) {
           const meetingsApp: AppItem = {
             title: "إدارة الاجتماعات",
@@ -56,11 +52,9 @@ const AdminDashboard = () => {
             notifications: notificationCounts?.meetings || 0,
           };
           
-          // Check if meetings app already exists to avoid duplicates
           const meetingsAppExists = appsList.some(app => app.path === "/admin/meetings");
           
           if (!meetingsAppExists) {
-            // Add the meetings app to the list
             appsList.push(meetingsApp);
           }
         }
@@ -77,10 +71,8 @@ const AdminDashboard = () => {
     fetchApps();
   }, [user, notificationCounts, hasAdminRole]);
 
-  // Determine if we're in a loading state
   const isLoading = isLoadingUser || isLoadingNotifications || isLoadingApps || isLoadingRoles;
 
-  // Handle error states
   const hasError = notificationsError || appsError;
 
   if (isLoading) {
