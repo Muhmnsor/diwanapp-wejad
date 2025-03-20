@@ -56,6 +56,7 @@ export const AddTaskDialog = ({
       due_date: dueDate || undefined,
       assigned_to: assignedTo || undefined,
       task_type: taskType,
+      status: "pending" // Adding the required status field with a default value
     }, {
       onSuccess: () => {
         resetForm();
