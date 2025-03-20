@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -57,7 +56,16 @@ export const FolderMembersDialog = ({
 }: FolderMembersDialogProps) => {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const { hasAdminRole } = useUserRoles();
-  const isCreator = supabase.auth.getUser().then(({ data }) => data.user?.id === folder.created_by);
+  const [isCreator, setIsCreator] = useState(false);
+  
+  useEffect(() => {
+    const checkCreator = async () => {
+      const { data } = await supabase.auth.getUser();
+      setIsCreator(data.user?.id === folder.created_by);
+    };
+    
+    checkCreator();
+  }, [folder.created_by]);
 
   const fetchMembers = async () => {
     const { data, error } = await supabase
@@ -72,7 +80,6 @@ export const FolderMembersDialog = ({
 
     if (error) throw error;
     
-    // Transform the data to match the Member interface
     return data.map((item: any) => ({
       id: item.id,
       user_id: item.user_id,

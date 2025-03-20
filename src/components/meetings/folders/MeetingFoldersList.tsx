@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,12 +57,12 @@ export const MeetingFoldersList = ({ refreshTrigger = 0, onSuccess }: MeetingFol
   const [folderForMembers, setFolderForMembers] = useState<MeetingFolder | null>(null);
 
   const fetchFolders = async () => {
-    // Fetch folders with meeting counts and first few members
+    // Fetch folders with proper join to profiles table for creator information
     const { data: folderData, error: folderError } = await supabase
       .from('meeting_folders')
       .select(`
         *,
-        creator:created_by(display_name)
+        creator:profiles!meeting_folders_created_by_fkey(display_name)
       `);
 
     if (folderError) throw folderError;
