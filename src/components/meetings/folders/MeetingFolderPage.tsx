@@ -71,15 +71,31 @@ export const MeetingFolderPage = () => {
     <div className="min-h-screen flex flex-col rtl" dir="rtl">
       <AdminHeader />
       
-      <div className="container mx-auto px-4 py-6 flex-grow">
-        <div className="flex items-center mb-4">
-          <Button variant="outline" onClick={handleGoBack} className="ml-4">
-            <ArrowLeft className="h-4 w-4 ml-2" />
-            العودة
-          </Button>
-          <h1 className="text-2xl font-bold">تصنيف: {folder.name}</h1>
+      {/* Secondary Header - replacing the current header content */}
+      <div className="w-full border-b bg-white">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <Button variant="ghost" onClick={handleGoBack} className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              العودة
+            </Button>
+            
+            <div className="text-center font-medium text-lg">
+              <span className="flex items-center gap-2">
+                <Folder className="h-5 w-5 text-primary/70" />
+                تصنيف: {folder.name}
+              </span>
+            </div>
+            
+            <Button onClick={() => setIsCreateMeetingOpen(true)}>
+              <Plus className="h-4 w-4 ml-2" />
+              اجتماع جديد
+            </Button>
+          </div>
         </div>
-        
+      </div>
+      
+      <div className="container mx-auto px-4 py-6 flex-grow">
         <Card className="rtl text-right">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <div>
@@ -127,10 +143,6 @@ export const MeetingFolderPage = () => {
             <div className="mt-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold">الاجتماعات في هذا التصنيف</h2>
-                <Button onClick={() => setIsCreateMeetingOpen(true)}>
-                  <Plus className="h-4 w-4 ml-2" />
-                  اجتماع جديد
-                </Button>
               </div>
               <MeetingsList 
                 meetings={meetings || []} 
