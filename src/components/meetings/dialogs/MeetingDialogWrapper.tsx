@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { useParams } from "react-router-dom";
 import { CreateMeetingDialog } from "./CreateMeetingDialog";
 import { useQueryClient } from "@tanstack/react-query";
@@ -25,11 +25,10 @@ export const MeetingDialogWrapper = ({
   // Use either the prop folderId or the route parameter
   const effectiveFolderId = folderId || routeFolderId;
   
-  // Pass a custom onSubmit function to the dialog that will use our hook with folder ID
-  const handleSubmit = (meetingData: any) => {
+  const handleCreateMeeting = (formData: any) => {
     createMeeting(
       { 
-        ...meetingData, 
+        ...formData, 
         folder_id: effectiveFolderId 
       },
       {
@@ -45,6 +44,9 @@ export const MeetingDialogWrapper = ({
           if (onSuccess) {
             onSuccess();
           }
+          
+          // Close the dialog
+          onOpenChange(false);
         }
       }
     );
@@ -54,8 +56,9 @@ export const MeetingDialogWrapper = ({
     <CreateMeetingDialog
       open={open}
       onOpenChange={onOpenChange}
-      onSubmit={handleSubmit}
-      isSubmitting={isPending}
+      isPending={isPending}
+      folderId={effectiveFolderId}
+      onCreateMeeting={handleCreateMeeting}
     />
   );
 };

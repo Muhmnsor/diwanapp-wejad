@@ -42,12 +42,12 @@ export function useUserRoles() {
             // Make sure roles exists and has a name property
             if (userRole.roles && typeof userRole.roles === 'object') {
               // Access the name property safely after type check
-              const roleName = (userRole.roles as { name: string }).name;
+              const roleName = userRole.roles as unknown as { name: string };
               return (
-                roleName === "admin" || 
-                roleName === "app_admin" || 
-                roleName === "developer" ||
-                roleName === "meeting_manager"
+                roleName.name === "admin" || 
+                roleName.name === "app_admin" || 
+                roleName.name === "developer" ||
+                roleName.name === "meeting_manager"
               );
             }
             return false;
