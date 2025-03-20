@@ -95,7 +95,7 @@ export const MeetingsList = ({
   if (error) {
     return (
       <Alert variant="destructive" className="mb-6">
-        <AlertCircle className="h-4 w-4" />
+        <AlertCircle className="h-4 w-4 ml-2" />
         <AlertTitle>خطأ</AlertTitle>
         <AlertDescription>
           حدث خطأ أثناء تحميل الاجتماعات: {error.message}
@@ -109,7 +109,7 @@ export const MeetingsList = ({
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">الاجتماعات</h2>
         <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-4 w-4 ml-2" />
           اجتماع جديد
         </Button>
       </div>
@@ -121,7 +121,7 @@ export const MeetingsList = ({
           icon={<CalendarClock className="h-8 w-8" />}
           action={
             <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 ml-2" />
               إنشاء اجتماع
             </Button>
           }
@@ -131,13 +131,13 @@ export const MeetingsList = ({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>العنوان</TableHead>
-                <TableHead>النوع</TableHead>
-                <TableHead>التاريخ</TableHead>
-                <TableHead>الوقت</TableHead>
-                <TableHead>المدة</TableHead>
-                <TableHead>الحالة</TableHead>
-                <TableHead className="text-left">الإجراءات</TableHead>
+                <TableHead className="text-right">العنوان</TableHead>
+                <TableHead className="text-right">النوع</TableHead>
+                <TableHead className="text-right">التاريخ</TableHead>
+                <TableHead className="text-right">الوقت</TableHead>
+                <TableHead className="text-right">المدة</TableHead>
+                <TableHead className="text-right">الحالة</TableHead>
+                <TableHead className="text-right">الإجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -147,29 +147,29 @@ export const MeetingsList = ({
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => navigate(`/admin/meetings/${meeting.id}`)}
                 >
-                  <TableCell className="font-medium">{meeting.title}</TableCell>
-                  <TableCell>
+                  <TableCell className="font-medium text-right">{meeting.title}</TableCell>
+                  <TableCell className="text-right">
                     {meeting.meeting_type === 'board' && 'مجلس إدارة'}
                     {meeting.meeting_type === 'department' && 'قسم'}
                     {meeting.meeting_type === 'team' && 'فريق'}
                     {meeting.meeting_type === 'committee' && 'لجنة'}
                     {meeting.meeting_type === 'other' && 'أخرى'}
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end">
+                      <Calendar className="h-4 w-4 ml-2 text-muted-foreground" />
                       {formatDate(meeting.date)}
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center">
-                      <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end">
+                      <Clock className="h-4 w-4 ml-2 text-muted-foreground" />
                       {formatTime(meeting.start_time)}
                     </div>
                   </TableCell>
-                  <TableCell>{formatDuration(meeting.duration)}</TableCell>
-                  <TableCell>{getMeetingStatusBadge(meeting.meeting_status)}</TableCell>
-                  <TableCell>
+                  <TableCell className="text-right">{formatDuration(meeting.duration)}</TableCell>
+                  <TableCell className="text-right">{getMeetingStatusBadge(meeting.meeting_status)}</TableCell>
+                  <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button 
@@ -187,6 +187,7 @@ export const MeetingsList = ({
                             e.stopPropagation();
                             navigate(`/admin/meetings/${meeting.id}`);
                           }}
+                          className="text-right"
                         >
                           عرض التفاصيل
                         </DropdownMenuItem>
@@ -195,12 +196,13 @@ export const MeetingsList = ({
                             e.stopPropagation();
                             // Handle edit
                           }}
+                          className="text-right"
                         >
                           <Pencil className="h-4 w-4 ml-2" />
                           تعديل
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          className="text-red-600"
+                          className="text-red-600 text-right"
                           onClick={(e) => {
                             e.stopPropagation();
                             setMeetingToDelete(meeting.id);

@@ -78,11 +78,11 @@ export const MeetingFolderCard: React.FC<MeetingFolderCardProps> = ({
           <HoverCard>
             <HoverCardTrigger asChild>
               <div className="flex items-center gap-1 text-sm text-gray-500">
-                <Calendar className="h-4 w-4 text-primary/70" />
+                <Calendar className="h-4 w-4 ml-1 text-primary/70" />
                 <span>{_count.meetings}</span>
               </div>
             </HoverCardTrigger>
-            <HoverCardContent className="w-fit p-2">
+            <HoverCardContent align="end" className="w-fit p-2">
               <span className="text-xs">عدد الاجتماعات: {_count.meetings}</span>
             </HoverCardContent>
           </HoverCard>
@@ -90,11 +90,11 @@ export const MeetingFolderCard: React.FC<MeetingFolderCardProps> = ({
           <HoverCard>
             <HoverCardTrigger asChild>
               <div className="flex items-center gap-1 text-sm text-gray-500">
-                <Users className="h-4 w-4 text-primary/70" />
+                <Users className="h-4 w-4 ml-1 text-primary/70" />
                 <span>{_count.members}</span>
               </div>
             </HoverCardTrigger>
-            <HoverCardContent className="w-fit p-2">
+            <HoverCardContent align="end" className="w-fit p-2">
               <span className="text-xs">عدد الأعضاء: {_count.members}</span>
             </HoverCardContent>
           </HoverCard>
@@ -107,7 +107,7 @@ export const MeetingFolderCard: React.FC<MeetingFolderCardProps> = ({
                 </Badge>
               </div>
             </HoverCardTrigger>
-            <HoverCardContent className="w-fit p-2">
+            <HoverCardContent align="end" className="w-fit p-2">
               <span className="text-xs">تم الإنشاء بواسطة: {creatorName}</span>
               <br />
               <span className="text-xs">تاريخ الإنشاء: {createdDate}</span>
@@ -123,7 +123,7 @@ export const MeetingFolderCard: React.FC<MeetingFolderCardProps> = ({
           className="text-xs"
           onClick={() => onManageMembers?.(folder)}
         >
-          <Users className="h-3 w-3 mr-1" />
+          <Users className="h-3 w-3 ml-1" />
           الأعضاء
         </Button>
         

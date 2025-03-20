@@ -1,6 +1,5 @@
 
 import React from "react";
-import { MeetingFoldersList } from "../folders/MeetingFoldersList";
 import { useMeetingFolders } from "@/hooks/meetings/useMeetingFolders";
 import { MeetingFolderCard } from "./MeetingFolderCard";
 
@@ -20,7 +19,7 @@ export const MeetingFoldersContainer = ({
   }
   
   if (error) {
-    return <div className="text-destructive p-4">حدث خطأ أثناء تحميل التصنيفات</div>;
+    return <div className="text-destructive p-4 text-right">حدث خطأ أثناء تحميل التصنيفات</div>;
   }
   
   if (!data || data.length === 0) {
