@@ -1,18 +1,47 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { MeetingFoldersList } from "../folders/MeetingFoldersList";
+import { AddFolderDialog } from "../folders/AddFolderDialog";
+import { useUserRoles } from "@/hooks/useUserRoles";
 
 export const CategoriesTab = () => {
+  const [isAddFolderOpen, setIsAddFolderOpen] = useState(false);
+  const { hasAdminRole } = useUserRoles();
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const refreshFolders = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>تصنيفات الاجتماعات</CardTitle>
-        <CardDescription>تنظيم الاجتماعات حسب التصنيف</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>تصنيفات الاجتماعات</CardTitle>
+          <CardDescription>تنظيم الاجتماعات حسب التصنيف</CardDescription>
+        </div>
+        <Button 
+          onClick={() => setIsAddFolderOpen(true)}
+          disabled={!hasAdminRole}
+        >
+          <Plus className="h-4 w-4 ml-2" />
+          إضافة تصنيف جديد
+        </Button>
       </CardHeader>
       <CardContent>
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">المحتوى قيد التطوير</p>
-        </div>
+        <MeetingFoldersList 
+          refreshTrigger={refreshTrigger} 
+          onSuccess={refreshFolders} 
+        />
+        
+        <AddFolderDialog 
+          open={isAddFolderOpen} 
+          onOpenChange={setIsAddFolderOpen}
+          onSuccess={refreshFolders}
+        />
       </CardContent>
     </Card>
   );

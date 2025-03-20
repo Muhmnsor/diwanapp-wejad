@@ -1,20 +1,36 @@
 
-import { ReactNode } from "react";
+import React from "react";
+import { cn } from "@/lib/utils";
 
-interface EmptyStateProps {
+interface EmptyStateProps extends React.HTMLAttributes<HTMLDivElement> {
   title: string;
   description?: string;
-  icon?: ReactNode;
-  action?: ReactNode;
+  icon?: React.ReactNode;
+  action?: React.ReactNode;
 }
 
-export function EmptyState({ title, description, icon, action }: EmptyStateProps) {
+export const EmptyState = ({
+  title,
+  description,
+  icon,
+  action,
+  className,
+  ...props
+}: EmptyStateProps) => {
   return (
-    <div className="flex flex-col items-center justify-center p-8 text-center border rounded-lg bg-muted/20 space-y-4">
-      {icon && <div className="p-3 rounded-full bg-muted/30">{icon}</div>}
-      <h3 className="text-lg font-medium">{title}</h3>
-      {description && <p className="text-muted-foreground">{description}</p>}
-      {action && <div className="mt-2">{action}</div>}
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center py-12 text-center",
+        className
+      )}
+      {...props}
+    >
+      {icon && <div className="mx-auto mb-4 text-muted-foreground">{icon}</div>}
+      <h3 className="text-lg font-semibold">{title}</h3>
+      {description && (
+        <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+      )}
+      {action && <div className="mt-6">{action}</div>}
     </div>
   );
-}
+};
