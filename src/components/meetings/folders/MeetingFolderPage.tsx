@@ -1,9 +1,9 @@
 
 import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Folder, Edit, Trash, Users, Plus } from "lucide-react";
+import { ArrowLeft, Folder, Edit, Trash, Users, Plus, LayoutDashboard, FolderKanban, ListTodo } from "lucide-react";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { useMeetingFolder } from "@/hooks/meetings/useMeetingFolder";
 import { MeetingsList } from "@/components/meetings/MeetingsList";
@@ -14,14 +14,17 @@ import { useMeetings } from "@/hooks/meetings/useMeetings";
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
 import { MeetingDialogWrapper } from "@/components/meetings/dialogs/MeetingDialogWrapper";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const MeetingFolderPage = () => {
   const { folderId } = useParams<{ folderId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { hasAdminRole } = useUserRoles();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { data: folder, isLoading, error } = useMeetingFolder(folderId as string, refreshTrigger);
   const { data: meetings, isLoading: isLoadingMeetings, error: meetingsError } = useMeetings(folderId, refreshTrigger);
+  const [activeTab, setActiveTab] = useState("folder");
   
   // Dialog states
   const [isEditFolderOpen, setIsEditFolderOpen] = useState(false);
@@ -35,6 +38,16 @@ export const MeetingFolderPage = () => {
   
   const handleGoBack = () => {
     navigate("/admin/meetings");
+  };
+  
+  const handleTabChange = (tab: string) => {
+    if (tab === "dashboard") {
+      navigate("/admin/meetings");
+    } else if (tab === "categories") {
+      navigate("/admin/meetings", { state: { activeTab: "categories" } });
+    } else if (tab === "all-meetings" && hasAdminRole) {
+      navigate("/admin/meetings", { state: { activeTab: "all-meetings" } });
+    }
   };
   
   if (isLoading) {
@@ -71,78 +84,109 @@ export const MeetingFolderPage = () => {
     <div className="min-h-screen flex flex-col rtl" dir="rtl">
       <AdminHeader />
       
-      <div className="container mx-auto px-4 py-6 flex-grow">
-        <div className="flex items-center mb-4">
-          <Button variant="outline" onClick={handleGoBack} className="ml-4">
-            <ArrowLeft className="h-4 w-4 ml-2" />
-            العودة
-          </Button>
-          <h1 className="text-2xl font-bold">تصنيف: {folder.name}</h1>
-        </div>
-        
-        <Card className="rtl text-right">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div>
-              <CardTitle className="py-[9px]">
-                <div className="flex items-center gap-2">
-                  <Folder className="h-5 w-5 text-primary/70" />
-                  <span>{folder.name}</span>
-                </div>
-              </CardTitle>
-              {folder.description && (
-                <CardDescription>{folder.description}</CardDescription>
-              )}
-            </div>
-            
-            <div className="flex gap-2">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <div className="w-full bg-white border-t py-0">
+          <div className="flex justify-center">
+            <TabsList className="flex justify-center border-b rounded-none bg-white">
+              <TabsTrigger value="dashboard" className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium">
+                <LayoutDashboard className="h-4 w-4 ml-1" />
+                لوحة المعلومات
+              </TabsTrigger>
+              
+              <TabsTrigger value="categories" className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium">
+                <FolderKanban className="h-4 w-4 ml-1" />
+                تصنيف الاجتماعات
+              </TabsTrigger>
+              
               {hasAdminRole && (
-                <>
-                  <Button onClick={() => setIsEditFolderOpen(true)} variant="outline" size="sm">
-                    <Edit className="h-4 w-4 ml-1" />
-                    تعديل
-                  </Button>
-                  <Button 
-                    onClick={() => setIsMembersFolderOpen(true)} 
-                    variant="outline" 
-                    size="sm"
-                  >
-                    <Users className="h-4 w-4 ml-1" />
-                    الأعضاء
-                  </Button>
-                  <Button 
-                    onClick={() => setIsDeleteFolderOpen(true)} 
-                    variant="outline" 
-                    size="sm"
-                    className="text-destructive border-destructive hover:bg-destructive/10"
-                  >
-                    <Trash className="h-4 w-4 ml-1" />
-                    حذف
-                  </Button>
-                </>
+                <TabsTrigger value="all-meetings" className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium">
+                  <ListTodo className="h-4 w-4 ml-1" />
+                  كل الاجتماعات
+                </TabsTrigger>
               )}
+            </TabsList>
+          </div>
+        </div>
+      
+        <div className="container mx-auto px-4 py-6 flex-grow">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <Button variant="outline" onClick={handleGoBack} className="ml-4">
+                <ArrowLeft className="h-4 w-4 ml-2" />
+                العودة
+              </Button>
+              <h1 className="text-2xl font-bold">تصنيف: {folder.name}</h1>
             </div>
-          </CardHeader>
+            <Button onClick={() => setIsCreateMeetingOpen(true)}>
+              <Plus className="h-4 w-4 ml-2" />
+              اجتماع جديد
+            </Button>
+          </div>
           
-          <CardContent>
-            <div className="mt-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold">الاجتماعات في هذا التصنيف</h2>
-                <Button onClick={() => setIsCreateMeetingOpen(true)}>
-                  <Plus className="h-4 w-4 ml-2" />
-                  اجتماع جديد
-                </Button>
+          <Card className="rtl text-right">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div>
+                <CardTitle className="py-[9px]">
+                  <div className="flex items-center gap-2">
+                    <Folder className="h-5 w-5 text-primary/70" />
+                    <span>{folder.name}</span>
+                  </div>
+                </CardTitle>
+                {folder.description && (
+                  <CardDescription>{folder.description}</CardDescription>
+                )}
               </div>
-              <MeetingsList 
-                meetings={meetings || []} 
-                isLoading={isLoadingMeetings} 
-                error={meetingsError} 
-                folderId={folderId}
-                onCreate={refreshFolder}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              
+              <div className="flex gap-2">
+                {hasAdminRole && (
+                  <>
+                    <Button onClick={() => setIsEditFolderOpen(true)} variant="outline" size="sm">
+                      <Edit className="h-4 w-4 ml-1" />
+                      تعديل
+                    </Button>
+                    <Button 
+                      onClick={() => setIsMembersFolderOpen(true)} 
+                      variant="outline" 
+                      size="sm"
+                    >
+                      <Users className="h-4 w-4 ml-1" />
+                      الأعضاء
+                    </Button>
+                    <Button 
+                      onClick={() => setIsDeleteFolderOpen(true)} 
+                      variant="outline" 
+                      size="sm"
+                      className="text-destructive border-destructive hover:bg-destructive/10"
+                    >
+                      <Trash className="h-4 w-4 ml-1" />
+                      حذف
+                    </Button>
+                  </>
+                )}
+              </div>
+            </CardHeader>
+            
+            <CardContent>
+              <div className="mt-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-semibold">الاجتماعات في هذا التصنيف</h2>
+                  <Button onClick={() => setIsCreateMeetingOpen(true)}>
+                    <Plus className="h-4 w-4 ml-2" />
+                    اجتماع جديد
+                  </Button>
+                </div>
+                <MeetingsList 
+                  meetings={meetings || []} 
+                  isLoading={isLoadingMeetings} 
+                  error={meetingsError} 
+                  folderId={folderId}
+                  onCreate={refreshFolder}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </Tabs>
       
       <Footer />
       
