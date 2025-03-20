@@ -2,6 +2,7 @@
 import React from "react";
 import { MeetingFoldersList } from "../folders/MeetingFoldersList";
 import { useMeetingFolders } from "@/hooks/meetings/useMeetingFolders";
+import { MeetingFolderCard } from "./MeetingFolderCard";
 
 interface MeetingFoldersContainerProps {
   refreshTrigger: number;
@@ -14,15 +15,29 @@ export const MeetingFoldersContainer = ({
 }: MeetingFoldersContainerProps) => {
   const { data, isLoading, error } = useMeetingFolders(refreshTrigger);
   
-  // Pass the data from our optimized hook to the protected component
-  // The MeetingFoldersList component likely expects the direct data prop, not "folders"
+  if (isLoading) {
+    return <div className="flex justify-center p-8">جاري تحميل التصنيفات...</div>;
+  }
+  
+  if (error) {
+    return <div className="text-destructive p-4">حدث خطأ أثناء تحميل التصنيفات</div>;
+  }
+  
+  if (!data || data.length === 0) {
+    return <div className="text-muted-foreground text-center p-8">لا توجد تصنيفات حالياً</div>;
+  }
+  
   return (
-    <MeetingFoldersList
-      data={data}
-      isLoading={isLoading}
-      error={error}
-      refreshTrigger={refreshTrigger}
-      onSuccess={onSuccess}
-    />
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+      {data.map(folder => (
+        <MeetingFolderCard 
+          key={folder.id} 
+          folder={folder}
+          onEdit={() => console.log('تعديل', folder.name)}
+          onDelete={() => console.log('حذف', folder.name)}
+          onManageMembers={() => console.log('إدارة الأعضاء', folder.name)}
+        />
+      ))}
+    </div>
   );
 };
