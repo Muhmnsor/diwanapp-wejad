@@ -85,7 +85,7 @@ export const MeetingFoldersList = ({ refreshTrigger = 0, onSuccess }: MeetingFol
     // Count members in each folder
     const { data: memberCounts, error: memberError } = await supabase
       .from('meeting_folder_members')
-      .select('folder_id, count(*)', { count: 'exact' })
+      .select('folder_id')
       .in('folder_id', folderIds);
     
     if (memberError) throw memberError;
