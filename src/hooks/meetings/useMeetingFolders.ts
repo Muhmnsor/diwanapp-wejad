@@ -35,7 +35,7 @@ export const useMeetingFolders = (refreshTrigger: number = 0) => {
       // For each folder, count meetings and members
       const folderIds = folderData.map(folder => folder.id);
       
-      // Count meetings in each folder using the updated RPC function
+      // Count meetings in each folder using RPC function
       let meetingCountMap = new Map();
       try {
         const { data: meetingCounts, error: meetingError } = await supabase
@@ -44,8 +44,7 @@ export const useMeetingFolders = (refreshTrigger: number = 0) => {
         if (meetingError) {
           console.error('Error fetching meeting counts:', meetingError);
         } else if (meetingCounts) {
-          // Create a map of folder_id to count
-          meetingCounts.forEach(item => {
+          meetingCounts.forEach((item: { folder_id: string; count: number }) => {
             meetingCountMap.set(item.folder_id, item.count);
           });
         }
