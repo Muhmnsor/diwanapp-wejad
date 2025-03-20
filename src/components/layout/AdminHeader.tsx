@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Grid, LogOut } from "lucide-react";
+import { Grid, LogOut, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
@@ -55,6 +55,17 @@ export const AdminHeader = () => {
             >
               <Grid className="h-4 w-4 text-primary" />
               <span className="hidden md:inline">التطبيقات</span>
+            </Button>
+            
+            {/* Profile Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/update-profile")}
+              className="flex items-center gap-2 text-sm border-gray-200 transition-colors duration-200 hover:bg-gray-100"
+            >
+              <User className="h-4 w-4 text-primary" />
+              <span className="hidden md:inline">الملف الشخصي</span>
             </Button>
             
             {/* Notification Bell */}
