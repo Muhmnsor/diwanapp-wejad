@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,8 @@ import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
 import { MeetingDialogWrapper } from "@/components/meetings/dialogs/MeetingDialogWrapper";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Meeting } from "@/types/meeting";
+
 export const MeetingFolderPage = () => {
   const {
     folderId
@@ -32,11 +35,33 @@ export const MeetingFolderPage = () => {
     error
   } = useMeetingFolder(folderId as string, refreshTrigger);
   const {
-    data: meetings,
+    data: meetingsData,
     isLoading: isLoadingMeetings,
     error: meetingsError
   } = useMeetings(folderId, refreshTrigger);
   const [activeTab, setActiveTab] = useState("folder");
+
+  // Process meetings to ensure that objectives and agenda are always strings
+  // This fixes the issues with MeetingsTable which expects these to be strings
+  const meetings = useMemo(() => {
+    if (!meetingsData) return [];
+    
+    return meetingsData.map(meeting => {
+      const processedMeeting = { ...meeting };
+      
+      // Convert objectives array to string if needed
+      if (Array.isArray(processedMeeting.objectives)) {
+        processedMeeting.objectives = processedMeeting.objectives.join(', ');
+      }
+      
+      // Convert agenda array to string if needed
+      if (Array.isArray(processedMeeting.agenda)) {
+        processedMeeting.agenda = processedMeeting.agenda.join(', ');
+      }
+      
+      return processedMeeting;
+    });
+  }, [meetingsData]);
 
   // Dialog states
   const [isEditFolderOpen, setIsEditFolderOpen] = useState(false);
@@ -157,7 +182,7 @@ export const MeetingFolderPage = () => {
                     اجتماع جديد
                   </Button>
                 </div>
-                <MeetingsList meetings={meetings || []} isLoading={isLoadingMeetings} error={meetingsError} folderId={folderId} onCreate={refreshFolder} />
+                <MeetingsList meetings={meetings} isLoading={isLoadingMeetings} error={meetingsError} folderId={folderId} onCreate={refreshFolder} />
               </div>
             </CardContent>
           </Card>
