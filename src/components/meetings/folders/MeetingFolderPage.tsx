@@ -14,8 +14,6 @@ import { useMeetings } from "@/hooks/meetings/useMeetings";
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
 import { MeetingDialogWrapper } from "@/components/meetings/dialogs/MeetingDialogWrapper";
-import { TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, FolderKanban, ListTodo } from "lucide-react";
 
 export const MeetingFolderPage = () => {
   const { folderId } = useParams<{ folderId: string }>();
@@ -43,15 +41,6 @@ export const MeetingFolderPage = () => {
     return (
       <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
-        <div className="w-full bg-white border-t py-0">
-          <div className="flex justify-center">
-            <TabsList className="flex justify-center border-b rounded-none bg-white">
-              <TabsTrigger disabled value="loading" className="flex items-center gap-2 px-3 py-1.5">
-                جاري تحميل التصنيف...
-              </TabsTrigger>
-            </TabsList>
-          </div>
-        </div>
         <div className="flex justify-center p-8 flex-grow">
           <div className="text-center">
             <span className="block mb-2">جاري تحميل التصنيف...</span>
@@ -66,16 +55,6 @@ export const MeetingFolderPage = () => {
     return (
       <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
-        <div className="w-full bg-white border-t py-0">
-          <div className="flex justify-center">
-            <TabsList className="flex justify-center border-b rounded-none bg-white">
-              <TabsTrigger disabled value="error" className="flex items-center gap-2 px-3 py-1.5">
-                <ArrowLeft className="h-4 w-4 ml-1" />
-                حدث خطأ
-              </TabsTrigger>
-            </TabsList>
-          </div>
-        </div>
         <div className="text-destructive p-4 text-right container mx-auto flex-grow">
           <Button variant="outline" onClick={handleGoBack} className="mb-4">
             <ArrowLeft className="h-4 w-4 ml-2" />
@@ -92,34 +71,15 @@ export const MeetingFolderPage = () => {
     <div className="min-h-screen flex flex-col rtl" dir="rtl">
       <AdminHeader />
       
-      <div className="w-full bg-white border-t py-0">
-        <div className="flex justify-center">
-          <TabsList className="flex justify-center border-b rounded-none bg-white">
-            <TabsTrigger 
-              value="folder" 
-              className="flex items-center gap-2 px-3 py-1.5 text-gray-600 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium"
-            >
-              <Button variant="outline" onClick={handleGoBack} size="sm" className="ml-2">
-                <ArrowLeft className="h-4 w-4 ml-1" />
-                العودة
-              </Button>
-              <FolderKanban className="h-4 w-4 ml-1" />
-              تصنيف: {folder.name}
-            </TabsTrigger>
-            
-            <TabsTrigger 
-              value="create-meeting" 
-              className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
-              onClick={() => setIsCreateMeetingOpen(true)}
-            >
-              <Plus className="h-4 w-4 ml-1" />
-              اجتماع جديد
-            </TabsTrigger>
-          </TabsList>
-        </div>
-      </div>
-      
       <div className="container mx-auto px-4 py-6 flex-grow">
+        <div className="flex items-center mb-4">
+          <Button variant="outline" onClick={handleGoBack} className="ml-4">
+            <ArrowLeft className="h-4 w-4 ml-2" />
+            العودة
+          </Button>
+          <h1 className="text-2xl font-bold">تصنيف: {folder.name}</h1>
+        </div>
+        
         <Card className="rtl text-right">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <div>
