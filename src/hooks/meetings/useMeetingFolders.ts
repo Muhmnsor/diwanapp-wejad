@@ -35,7 +35,7 @@ export const useMeetingFolders = (refreshTrigger: number = 0) => {
       // For each folder, count meetings and members
       const folderIds = folderData.map(folder => folder.id);
       
-      // Count meetings in each folder using the count_meetings_by_folder function
+      // Count meetings in each folder using the updated RPC function
       let meetingCountMap = new Map();
       try {
         const { data: meetingCounts, error: meetingError } = await supabase
