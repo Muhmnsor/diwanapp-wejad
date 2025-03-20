@@ -17,9 +17,12 @@ export const useDeleteMeeting = () => {
       
       return meetingId;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast.success("تم حذف الاجتماع بنجاح");
+      // Invalidate meetings queries
       queryClient.invalidateQueries({ queryKey: ['meetings'] });
+      // Also invalidate the count in folders
+      queryClient.invalidateQueries({ queryKey: ['meetingFolders'] });
     },
     onError: (error) => {
       console.error("Error deleting meeting:", error);

@@ -1,9 +1,6 @@
 
 import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -11,18 +8,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -30,8 +17,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2 } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
+
+interface User {
+  id: string;
+  display_name: string;
+  email: string;
+}
 
 interface AddMemberDialogProps {
   open: boolean;
@@ -40,201 +35,158 @@ interface AddMemberDialogProps {
   onSuccess?: () => void;
 }
 
-const formSchema = z.object({
-  user_id: z.string().uuid("يرجى اختيار مستخدم صالح"),
-  role: z.enum(["viewer", "editor"]),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
-interface User {
-  id: string;
-  display_name: string;
-  email: string;
-}
-
 export const AddMemberDialog = ({
   open,
   onOpenChange,
   folderId,
   onSuccess,
 }: AddMemberDialogProps) => {
-  const [searchQuery, setSearchQuery] = useState("");
-  
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      role: "viewer",
-    },
-  });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [role, setRole] = useState<"viewer" | "editor">("viewer");
 
-  const fetchUsers = async () => {
-    if (!searchQuery || searchQuery.length < 2) return [];
-    
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, display_name, email")
-      .or(`display_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
-      .limit(10);
-
-    if (error) throw error;
-    return data;
-  };
-
-  const { data: users, isLoading: isSearching, refetch } = useQuery({
-    queryKey: ["searchUsers", searchQuery],
-    queryFn: fetchUsers,
-    enabled: searchQuery.length >= 2,
-  });
-
-  const { mutate: addMember, isPending } = useMutation({
-    mutationFn: async (values: FormValues) => {
-      // Check if member already exists
-      const { data: existingMember, error: checkError } = await supabase
-        .from("meeting_folder_members")
-        .select("id")
-        .eq("folder_id", folderId)
-        .eq("user_id", values.user_id)
-        .single();
-
-      if (checkError && checkError.code !== "PGRST116") throw checkError;
-      
-      if (existingMember) {
-        throw new Error("هذا المستخدم عضو بالفعل في هذا التصنيف");
-      }
-
+  // Fetch users for dropdown
+  const { data: users, isLoading } = useQuery({
+    queryKey: ["profiles", searchTerm],
+    queryFn: async () => {
       const { data, error } = await supabase
-        .from("meeting_folder_members")
-        .insert({
-          folder_id: folderId,
-          user_id: values.user_id,
-          role: values.role,
-        })
-        .select();
+        .from("profiles")
+        .select("id, display_name, email")
+        .ilike("display_name", `%${searchTerm}%`)
+        .order("display_name", { ascending: true })
+        .limit(10);
 
       if (error) throw error;
+      return data as User[];
+    },
+    enabled: open,
+  });
+
+  // Add member mutation
+  const { mutate: addMember, isPending } = useMutation({
+    mutationFn: async () => {
+      if (!selectedUser) {
+        throw new Error("يرجى اختيار مستخدم");
+      }
+
+      const { data, error } = await supabase.from("meeting_folder_members").insert({
+        folder_id: folderId,
+        user_id: selectedUser,
+        role: role,
+      }).select();
+
+      if (error) {
+        if (error.code === "23505") {
+          throw new Error("هذا المستخدم عضو بالفعل في هذا التصنيف");
+        }
+        throw error;
+      }
+      
       return data;
     },
     onSuccess: () => {
       toast.success("تمت إضافة العضو بنجاح");
-      form.reset();
+      resetForm();
       onOpenChange(false);
       if (onSuccess) onSuccess();
     },
     onError: (error) => {
-      toast.error(`حدث خطأ أثناء إضافة العضو: ${error.message}`);
+      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء إضافة العضو");
     },
   });
 
-  const onSubmit = (values: FormValues) => {
-    addMember(values);
+  const resetForm = () => {
+    setSearchTerm("");
+    setSelectedUser(null);
+    setRole("viewer");
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    if (e.target.value.length >= 2) {
-      refetch();
-    }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    addMember();
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(value) => {
+      if (!value) resetForm();
+      onOpenChange(value);
+    }}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>إضافة عضو جديد</DialogTitle>
-          <DialogDescription>
-            أضف عضوًا جديدًا للوصول إلى تصنيف الاجتماعات
-          </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="relative">
-              <Input
-                placeholder="ابحث عن مستخدم بالاسم أو البريد الإلكتروني"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                className="pr-10"
-              />
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                {isSearching ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                ) : (
-                  <Search className="h-4 w-4 text-muted-foreground" />
-                )}
-              </div>
-            </div>
 
-            {searchQuery.length >= 2 && (
-              <div className="border rounded-md max-h-40 overflow-y-auto">
-                {isSearching ? (
-                  <div className="flex justify-center items-center h-20">
-                    <Loader2 className="h-4 w-4 animate-spin text-primary ml-2" />
-                    <span className="text-sm">جار البحث...</span>
-                  </div>
-                ) : users && users.length > 0 ? (
-                  <div className="p-1">
-                    {users.map((user: User) => (
-                      <div
-                        key={user.id}
-                        className="p-2 hover:bg-muted rounded-sm cursor-pointer"
-                        onClick={() => form.setValue("user_id", user.id)}
-                      >
-                        <div className="font-medium">{user.display_name || "مستخدم"}</div>
-                        <div className="text-sm text-muted-foreground">{user.email}</div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex justify-center items-center h-20">
-                    <span className="text-sm text-muted-foreground">لا توجد نتائج</span>
-                  </div>
-                )}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="user">المستخدم</Label>
+            <Input
+              id="user-search"
+              placeholder="ابحث عن مستخدم..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="mb-2"
+            />
+            
+            {isLoading ? (
+              <div className="flex items-center justify-center py-2">
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
               </div>
+            ) : (
+              <Select value={selectedUser || ""} onValueChange={setSelectedUser}>
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر مستخدم..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {users && users.length > 0 ? (
+                    users.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.display_name} ({user.email})
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-results" disabled>
+                      لا توجد نتائج للبحث
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
             )}
+          </div>
 
-            <FormField
-              control={form.control}
-              name="user_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>المستخدم المحدد</FormLabel>
-                  <FormControl>
-                    <Input readOnly {...field} placeholder="لم يتم تحديد مستخدم" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+          <div className="space-y-2">
+            <Label htmlFor="role">الدور</Label>
+            <Select value={role} onValueChange={(value) => setRole(value as "viewer" | "editor")}>
+              <SelectTrigger>
+                <SelectValue placeholder="اختر الدور..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="viewer">مشاهد</SelectItem>
+                <SelectItem value="editor">محرر</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <DialogFooter className="mt-4">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}
+            >
+              إلغاء
+            </Button>
+            <Button type="submit" disabled={!selectedUser || isPending}>
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  جاري الإضافة...
+                </>
+              ) : (
+                "إضافة"
               )}
-            />
-
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>الدور</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر الدور" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="viewer">مشاهد</SelectItem>
-                      <SelectItem value="editor">محرر</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter>
-              <Button type="submit" disabled={isPending}>
-                {isPending ? "جاري الإضافة..." : "إضافة العضو"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

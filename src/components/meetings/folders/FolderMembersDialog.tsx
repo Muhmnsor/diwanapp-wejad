@@ -86,8 +86,8 @@ export const FolderMembersDialog = ({
       user_id: item.user_id,
       role: item.role,
       profile: {
-        display_name: item.profile?.[0]?.display_name || "مستخدم",
-        email: item.profile?.[0]?.email || "-"
+        display_name: item.profile?.display_name || "مستخدم",
+        email: item.profile?.email || "-"
       }
     }));
   };
