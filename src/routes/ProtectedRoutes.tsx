@@ -14,6 +14,7 @@ import RequestsManagement from "@/pages/RequestsManagement";
 import React from "react";
 import DeveloperRoute from "@/components/DeveloperRoute";
 import MeetingsPage from "@/pages/meetings/MeetingsPage";
+import MeetingFolderPage from "@/components/meetings/folders/MeetingFolderPage";
 
 export const ProtectedRoutes = [
   <Route 
@@ -40,6 +41,15 @@ export const ProtectedRoutes = [
     element={
       <ProtectedRoute>
         <MeetingsPage />
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="admin-meetings-folder"
+    path="/admin/meetings/folders/:folderId" 
+    element={
+      <ProtectedRoute>
+        <MeetingFolderPage />
       </ProtectedRoute>
     } 
   />,

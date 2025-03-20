@@ -62,9 +62,9 @@ export const MeetingFoldersContainer = ({
           <MeetingFolderCard 
             key={folder.id} 
             folder={folder}
-            onEdit={() => handleEditFolder(folder)}
-            onDelete={() => handleDeleteFolder(folder)}
-            onManageMembers={() => handleManageMembers(folder)}
+            onEdit={handleEditFolder}
+            onDelete={handleDeleteFolder}
+            onManageMembers={handleManageMembers}
           />
         ))}
       </div>

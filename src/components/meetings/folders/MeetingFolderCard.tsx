@@ -1,5 +1,6 @@
 
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Folder, Users, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +36,7 @@ export const MeetingFolderCard: React.FC<MeetingFolderCardProps> = ({
   onDelete,
   onManageMembers
 }) => {
+  const navigate = useNavigate();
   const { name, description, creator, _count, created_at } = folder;
   const createdDate = new Date(created_at).toLocaleDateString('ar-SA');
   const creatorName = creator?.display_name || 'مستخدم غير معروف';
@@ -57,9 +59,19 @@ export const MeetingFolderCard: React.FC<MeetingFolderCardProps> = ({
   };
   
   const folderColor = getFolderColor(name);
+  
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Only navigate if the click was directly on the card, not on a button
+    if (!(e.target as HTMLElement).closest('button')) {
+      navigate(`/admin/meetings/folders/${folder.id}`);
+    }
+  };
 
   return (
-    <Card className="hover:shadow-md transition-all text-right">
+    <Card 
+      className="hover:shadow-md transition-all text-right cursor-pointer hover:border-primary/50"
+      onClick={handleCardClick}
+    >
       <CardHeader className="pb-2">
         <div className="flex items-center gap-2">
           <div className={`p-2 rounded-md ${folderColor}`}>
@@ -121,7 +133,10 @@ export const MeetingFolderCard: React.FC<MeetingFolderCardProps> = ({
           variant="outline"
           size="sm"
           className="text-xs"
-          onClick={() => onManageMembers?.(folder)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onManageMembers?.(folder);
+          }}
         >
           <Users className="h-3 w-3 ml-1" />
           الأعضاء
@@ -132,7 +147,10 @@ export const MeetingFolderCard: React.FC<MeetingFolderCardProps> = ({
             variant="outline"
             size="sm"
             className="text-xs"
-            onClick={() => onEdit?.(folder)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit?.(folder);
+            }}
           >
             تعديل
           </Button>
@@ -141,7 +159,10 @@ export const MeetingFolderCard: React.FC<MeetingFolderCardProps> = ({
             variant="outline"
             size="sm"
             className="text-xs text-destructive border-destructive hover:bg-destructive/10"
-            onClick={() => onDelete?.(folder)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete?.(folder);
+            }}
           >
             حذف
           </Button>
