@@ -1514,7 +1514,7 @@ export type Database = {
           icon?: string | null
           id?: string
           name: string
-          type: string
+          type?: string
           updated_at?: string | null
         }
         Update: {

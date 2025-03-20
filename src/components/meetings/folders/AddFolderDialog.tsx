@@ -57,7 +57,8 @@ export const AddFolderDialog = ({ open, onOpenChange, onSuccess }: AddFolderDial
       const { data, error } = await supabase.from("meeting_folders").insert({
         name: values.name,
         description: values.description || null,
-        created_by: userData.user?.id
+        created_by: userData.user?.id,
+        type: 'meeting' // Explicitly set the type to 'meeting'
       }).select();
 
       if (error) throw error;
