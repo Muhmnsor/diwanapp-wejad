@@ -12,12 +12,13 @@ export const MeetingFoldersContainer = ({
   refreshTrigger, 
   onSuccess 
 }: MeetingFoldersContainerProps) => {
-  const { data: folders, isLoading, error } = useMeetingFolders(refreshTrigger);
+  const { data, isLoading, error } = useMeetingFolders(refreshTrigger);
   
   // Pass the data from our optimized hook to the protected component
+  // The MeetingFoldersList component likely expects the direct data prop, not "folders"
   return (
     <MeetingFoldersList
-      folders={folders}
+      data={data}
       isLoading={isLoading}
       error={error}
       refreshTrigger={refreshTrigger}
