@@ -16,9 +16,18 @@ const MeetingsPage = () => {
     <div className="min-h-screen flex flex-col" dir="rtl">
       <AdminHeader />
       
+      <div className="w-full bg-white py-6 border-t border-b">
+        <div className="container mx-auto px-4">
+          <h1 className="text-2xl font-bold tracking-tight">إدارة الاجتماعات</h1>
+          <p className="text-muted-foreground">
+            إدارة ومتابعة الاجتماعات والمهام والقرارات
+          </p>
+        </div>
+      </div>
+      
+      <MeetingsHeader hasAdminRole={hasAdminRole} />
+      
       <Tabs defaultValue="dashboard" className="w-full">
-        <MeetingsHeader hasAdminRole={hasAdminRole} />
-        
         <div className="container mx-auto px-4 py-6 flex-grow">
           <MeetingsTabsContent hasAdminRole={hasAdminRole} />
         </div>

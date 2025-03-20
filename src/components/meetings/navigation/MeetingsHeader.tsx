@@ -21,32 +21,32 @@ export const MeetingsHeader = ({ hasAdminRole }: MeetingsHeaderProps) => {
 
   return (
     <div className="w-full bg-white border-t py-3">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col gap-4 mb-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">إدارة الاجتماعات</h1>
-            <p className="text-muted-foreground">
-              إدارة ومتابعة الاجتماعات والمهام والقرارات
-            </p>
-          </div>
-        </div>
-        
-        <Tabs defaultValue="dashboard" value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="w-full md:w-auto justify-start">
-            <TabsTrigger value="dashboard" className="flex items-center gap-2">
+      <div className="flex justify-center">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <TabsList className="flex justify-center border-b rounded-none bg-white">
+            <TabsTrigger 
+              value="dashboard" 
+              className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium"
+            >
               <LayoutDashboard className="h-4 w-4" />
-              <span>لوحة المعلومات</span>
+              لوحة المعلومات
             </TabsTrigger>
             
-            <TabsTrigger value="categories" className="flex items-center gap-2">
+            <TabsTrigger 
+              value="categories" 
+              className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium"
+            >
               <FolderKanban className="h-4 w-4" />
-              <span>تصنيف الاجتماعات</span>
+              تصنيف الاجتماعات
             </TabsTrigger>
             
             {hasAdminRole && (
-              <TabsTrigger value="all-meetings" className="flex items-center gap-2">
+              <TabsTrigger 
+                value="all-meetings" 
+                className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium"
+              >
                 <ListTodo className="h-4 w-4" />
-                <span>كل الاجتماعات</span>
+                كل الاجتماعات
               </TabsTrigger>
             )}
           </TabsList>
