@@ -35,18 +35,23 @@ export const useMeetingFolders = (refreshTrigger: number = 0) => {
       // For each folder, count meetings and members
       const folderIds = folderData.map(folder => folder.id);
       
-      // Count meetings in each folder
-      const { data: meetingCounts, error: meetingError } = await supabase
-        .from('count_meetings_by_folder')
-        .select('*');
-      
-      if (meetingError) throw meetingError;
-      
-      // Get meeting counts by folder
-      const meetingCountMap = new Map();
-      meetingCounts?.forEach(item => {
-        meetingCountMap.set(item.folder_id, item.count);
-      });
+      // Count meetings in each folder using the count_meetings_by_folder function
+      let meetingCountMap = new Map();
+      try {
+        const { data: meetingCounts, error: meetingError } = await supabase
+          .rpc('count_meetings_by_folder');
+        
+        if (meetingError) {
+          console.error('Error fetching meeting counts:', meetingError);
+        } else if (meetingCounts) {
+          // Create a map of folder_id to count
+          meetingCounts.forEach(item => {
+            meetingCountMap.set(item.folder_id, item.count);
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching meeting counts:', error);
+      }
       
       // Count members in each folder
       const { data: memberCounts, error: memberError } = await supabase
@@ -54,7 +59,9 @@ export const useMeetingFolders = (refreshTrigger: number = 0) => {
         .select('folder_id')
         .in('folder_id', folderIds);
       
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error('Error fetching member counts:', memberError);
+      }
       
       // Process member counts to create a map
       const memberCountMap = new Map();
@@ -82,6 +89,8 @@ export const useMeetingFolders = (refreshTrigger: number = 0) => {
           members: memberCountMap.get(folder.id) || 0
         }
       })) as MeetingFolder[];
-    }
+    },
+    retry: 1,
+    retryDelay: 1000
   });
 };
