@@ -71,7 +71,17 @@ export const FolderMembersDialog = ({
       .eq("folder_id", folder.id);
 
     if (error) throw error;
-    return data;
+    
+    // Transform the data to match the Member interface
+    return data.map((item: any) => ({
+      id: item.id,
+      user_id: item.user_id,
+      role: item.role,
+      profile: {
+        display_name: item.profile?.[0]?.display_name || "مستخدم",
+        email: item.profile?.[0]?.email || "-"
+      }
+    }));
   };
 
   const { data: members, isLoading, error, refetch } = useQuery({

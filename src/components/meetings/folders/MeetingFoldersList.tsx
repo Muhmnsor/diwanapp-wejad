@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -86,17 +85,28 @@ export const MeetingFoldersList = ({ refreshTrigger = 0, onSuccess }: MeetingFol
     // Count members in each folder
     const { data: memberCounts, error: memberError } = await supabase
       .from('meeting_folder_members')
-      .select('folder_id, count')
-      .eq('folder_id', folderIds)
-      .group('folder_id');
+      .select('folder_id, count(*)', { count: 'exact' })
+      .in('folder_id', folderIds);
     
     if (memberError) throw memberError;
     
-    // Get member counts by folder
+    // Process member counts to create a map
     const memberCountMap = new Map();
-    memberCounts?.forEach(item => {
-      memberCountMap.set(item.folder_id, item.count);
-    });
+    if (memberCounts) {
+      // Group by folder_id and count
+      const folderMemberCounts = {};
+      memberCounts.forEach(item => {
+        if (!folderMemberCounts[item.folder_id]) {
+          folderMemberCounts[item.folder_id] = 0;
+        }
+        folderMemberCounts[item.folder_id]++;
+      });
+      
+      // Convert to map
+      Object.entries(folderMemberCounts).forEach(([folderId, count]) => {
+        memberCountMap.set(folderId, count);
+      });
+    }
     
     // Combine data
     return folderData.map(folder => ({
