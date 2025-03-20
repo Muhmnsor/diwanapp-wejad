@@ -1,17 +1,7 @@
 
-import { useMutation } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useDeleteMeetingFolder } from "@/hooks/meetings/useDeleteMeetingFolder";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { DeleteDialog } from "@/components/ui/delete-dialog";
 
 interface DeleteFolderDialogProps {
   open: boolean;
@@ -26,51 +16,28 @@ export const DeleteFolderDialog = ({
   folderId,
   onSuccess,
 }: DeleteFolderDialogProps) => {
-  const { mutate: deleteFolder, isPending } = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase
-        .from("meeting_folders")
-        .delete()
-        .eq("id", folderId);
+  const { mutate: deleteFolder, isPending } = useDeleteMeetingFolder();
 
-      if (error) throw error;
-      return true;
-    },
-    onSuccess: () => {
-      toast.success("تم حذف التصنيف بنجاح");
-      onOpenChange(false);
-      if (onSuccess) onSuccess();
-    },
-    onError: (error) => {
-      toast.error(`حدث خطأ أثناء حذف التصنيف: ${error.message}`);
-    },
-  });
-
-  const handleDelete = (e: React.MouseEvent) => {
-    e.preventDefault();
-    deleteFolder();
+  const handleDelete = () => {
+    deleteFolder(folderId, {
+      onSuccess: () => {
+        onOpenChange(false);
+        if (onSuccess) onSuccess();
+      },
+      onError: (error) => {
+        toast.error(`حدث خطأ أثناء حذف التصنيف: ${error.message}`);
+      }
+    });
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent dir="rtl">
-        <AlertDialogHeader>
-          <AlertDialogTitle>حذف التصنيف</AlertDialogTitle>
-          <AlertDialogDescription>
-            هل أنت متأكد من رغبتك في حذف هذا التصنيف؟ ستبقى الاجتماعات المرتبطة به ولكن سيتم إزالة ارتباطها بهذا التصنيف.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>إلغاء</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleDelete}
-            disabled={isPending}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            {isPending ? "جاري الحذف..." : "حذف"}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <DeleteDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="حذف التصنيف"
+      description="هل أنت متأكد من رغبتك في حذف هذا التصنيف؟ ستبقى الاجتماعات المرتبطة به ولكن سيتم إزالة ارتباطها بهذا التصنيف."
+      onDelete={handleDelete}
+      isDeleting={isPending}
+    />
   );
 };
