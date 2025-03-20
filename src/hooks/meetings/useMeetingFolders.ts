@@ -18,6 +18,11 @@ interface MeetingFolder {
   };
 }
 
+interface MeetingCount {
+  folder_id: string;
+  count: number;
+}
+
 export const useMeetingFolders = (refreshTrigger: number = 0) => {
   return useQuery({
     queryKey: ['meetingFolders', refreshTrigger],
@@ -35,11 +40,11 @@ export const useMeetingFolders = (refreshTrigger: number = 0) => {
       // For each folder, count meetings and members
       const folderIds = folderData.map(folder => folder.id);
       
-      // Count meetings in each folder using the updated RPC function
+      // Count meetings in each folder using the RPC function
       let meetingCountMap = new Map();
       try {
         const { data: meetingCounts, error: meetingError } = await supabase
-          .rpc('count_meetings_by_folder');
+          .rpc('count_meetings_by_folder') as { data: MeetingCount[] | null, error: any };
         
         if (meetingError) {
           console.error('Error fetching meeting counts:', meetingError);
@@ -67,7 +72,7 @@ export const useMeetingFolders = (refreshTrigger: number = 0) => {
       const memberCountMap = new Map();
       if (memberCounts) {
         // Group by folder_id and count
-        const folderMemberCounts = {};
+        const folderMemberCounts: Record<string, number> = {};
         memberCounts.forEach(item => {
           if (!folderMemberCounts[item.folder_id]) {
             folderMemberCounts[item.folder_id] = 0;
