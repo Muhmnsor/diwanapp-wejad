@@ -16,12 +16,13 @@ const MeetingsPage = () => {
     <div className="min-h-screen flex flex-col" dir="rtl">
       <AdminHeader />
       
-      <div className="container mx-auto px-4 py-6 flex-grow">
-        <Tabs defaultValue="dashboard">
-          <MeetingsHeader hasAdminRole={hasAdminRole} />
+      <Tabs defaultValue="dashboard" className="w-full">
+        <MeetingsHeader hasAdminRole={hasAdminRole} />
+        
+        <div className="container mx-auto px-4 py-6 flex-grow">
           <MeetingsTabsContent hasAdminRole={hasAdminRole} />
-        </Tabs>
-      </div>
+        </div>
+      </Tabs>
       
       <Footer />
     </div>

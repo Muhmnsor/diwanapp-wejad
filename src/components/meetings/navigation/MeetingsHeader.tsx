@@ -20,17 +20,17 @@ export const MeetingsHeader = ({ hasAdminRole }: MeetingsHeaderProps) => {
   };
 
   return (
-    <div className="mb-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">إدارة الاجتماعات</h1>
-          <p className="text-muted-foreground">
-            إدارة ومتابعة الاجتماعات والمهام والقرارات
-          </p>
+    <div className="w-full bg-white border-t py-3">
+      <div className="container mx-auto px-4">
+        <div className="flex flex-col gap-4 mb-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">إدارة الاجتماعات</h1>
+            <p className="text-muted-foreground">
+              إدارة ومتابعة الاجتماعات والمهام والقرارات
+            </p>
+          </div>
         </div>
-      </div>
-      
-      <div className="mt-6">
+        
         <Tabs defaultValue="dashboard" value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="w-full md:w-auto justify-start">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
@@ -51,12 +51,6 @@ export const MeetingsHeader = ({ hasAdminRole }: MeetingsHeaderProps) => {
             )}
           </TabsList>
         </Tabs>
-      </div>
-      
-      <div className="mt-4 border-t pt-4">
-        <p className="text-sm text-muted-foreground">
-          هذه الميزة قيد التطوير - سيتم إضافة المحتوى لكل تبويب قريباً
-        </p>
       </div>
     </div>
   );
