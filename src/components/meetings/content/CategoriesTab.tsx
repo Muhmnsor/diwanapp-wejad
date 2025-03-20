@@ -3,9 +3,9 @@ import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { MeetingFoldersList } from "../folders/MeetingFoldersList";
 import { AddFolderDialog } from "../folders/AddFolderDialog";
 import { useUserRoles } from "@/hooks/useUserRoles";
+import { MeetingFoldersContainer } from "../folders/MeetingFoldersContainer";
 
 export const CategoriesTab = () => {
   const [isAddFolderOpen, setIsAddFolderOpen] = useState(false);
@@ -32,7 +32,7 @@ export const CategoriesTab = () => {
         </Button>
       </CardHeader>
       <CardContent>
-        <MeetingFoldersList 
+        <MeetingFoldersContainer 
           refreshTrigger={refreshTrigger} 
           onSuccess={refreshFolders} 
         />
