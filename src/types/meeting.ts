@@ -21,8 +21,8 @@ export interface Meeting {
   folder?: {
     name: string;
   };
-  objectives?: string;
-  agenda?: string;
+  objectives?: string[] | string; // Can be array or string for backward compatibility
+  agenda?: string[] | string; // Can be array or string for backward compatibility
 }
 
 export type MeetingType = 'board' | 'department' | 'team' | 'committee' | 'other';
@@ -53,4 +53,20 @@ export interface MeetingAttachment {
   uploaded_by?: string;
   created_at: string;
   updated_at: string;
+}
+
+// Create a specific type for meeting form data
+export interface MeetingFormData {
+  title: string;
+  description?: string;
+  date: string;
+  start_time: string;
+  duration: number;
+  location: string;
+  location_url?: string;
+  meeting_status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+  attendance_type: AttendanceType;
+  folder_id?: string;
+  objectives: string[]; // Array for ordered list
+  agenda: string[]; // Array for ordered list
 }
