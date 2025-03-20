@@ -30,15 +30,10 @@ export const useUserName = () => {
         
         console.log("تم جلب بيانات الملف الشخصي:", profile);
         
-        // Check if display_name is null, empty, or the same as email
-        if (!profile?.display_name || 
-            profile.display_name.trim() === "" || 
-            profile.display_name === profile.email || 
-            profile.display_name.includes('@')) {
-          // Use the portion of email before @ as fallback
-          return user?.email?.split('@')[0] || "المستخدم";
-        } else {
+        if (profile?.display_name) {
           return profile.display_name;
+        } else {
+          return user?.email?.split('@')[0] || "المستخدم";
         }
       } catch (error) {
         console.error("خطأ غير متوقع أثناء جلب اسم المستخدم:", error);
