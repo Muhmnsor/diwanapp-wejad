@@ -28,13 +28,12 @@ export const MeetingTasksSection = ({ meetingId }: MeetingTasksSectionProps) => 
         </Button>
       </div>
 
-      <TasksList 
-        meetingId={meetingId} 
-        tasks={tasks || []} 
-        isLoading={isLoading} 
-        error={error}
-        onTasksChange={refetch}
-      />
+      {tasks && (
+        <TasksList 
+          meetingId={meetingId}
+          onTasksChange={refetch}
+        />
+      )}
 
       <AddTaskDialog 
         meetingId={meetingId}
