@@ -36,6 +36,4 @@ export interface Task {
   dependency_type?: DependencyType;
   // Required deliverables flag
   requires_deliverable?: boolean;
-  // Meeting ID for tasks associated with a meeting
-  meeting_id?: string | null;
 }

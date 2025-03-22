@@ -3,7 +3,6 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useMeetingAgendaItems, MeetingAgendaItem } from '@/hooks/meetings/useMeetingAgendaItems';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ListChecks } from 'lucide-react';
 
 interface MeetingAgendaItemsProps {
   meetingId: string;
@@ -16,7 +15,7 @@ export const MeetingAgendaItems: React.FC<MeetingAgendaItemsProps> = ({ meetingI
 
   if (isLoading) {
     return (
-      <Card className="h-full">
+      <Card className="mb-6">
         <CardHeader className="pb-3">
           <CardTitle>جدول الأعمال</CardTitle>
         </CardHeader>
@@ -34,7 +33,7 @@ export const MeetingAgendaItems: React.FC<MeetingAgendaItemsProps> = ({ meetingI
   if (error) {
     console.error('Error fetching meeting agenda items:', error);
     return (
-      <Card className="h-full">
+      <Card className="mb-6">
         <CardHeader className="pb-3">
           <CardTitle>جدول الأعمال</CardTitle>
         </CardHeader>
@@ -47,12 +46,9 @@ export const MeetingAgendaItems: React.FC<MeetingAgendaItemsProps> = ({ meetingI
 
   if (!agendaItems || agendaItems.length === 0) {
     return (
-      <Card className="h-full">
+      <Card className="mb-6">
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2">
-            <ListChecks className="h-5 w-5" />
-            جدول الأعمال
-          </CardTitle>
+          <CardTitle>جدول الأعمال</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-gray-500">لا توجد بنود في جدول الأعمال</p>
@@ -62,12 +58,9 @@ export const MeetingAgendaItems: React.FC<MeetingAgendaItemsProps> = ({ meetingI
   }
 
   return (
-    <Card className="h-full">
+    <Card className="mb-6">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2">
-          <ListChecks className="h-5 w-5" />
-          جدول الأعمال
-        </CardTitle>
+        <CardTitle>جدول الأعمال</CardTitle>
       </CardHeader>
       <CardContent>
         <ol className="list-decimal list-inside space-y-2">

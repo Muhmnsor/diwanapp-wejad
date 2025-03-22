@@ -14,14 +14,13 @@ import { MeetingTasksSection } from "@/components/meetings/tasks/MeetingTasksSec
 import { DeleteMeetingDialog } from "@/components/meetings/dialogs/DeleteMeetingDialog";
 import { EditMeetingDialog } from "@/components/meetings/dialogs/EditMeetingDialog";
 import { AddParticipantDialog } from "@/components/meetings/participants/AddParticipantDialog";
-import { MeetingMinutes } from "@/components/meetings/content/MeetingMinutes";
 
 export const MeetingDetailsPage = () => {
   const { meetingId } = useParams<{ meetingId: string }>();
   const navigate = useNavigate();
   const { data: meeting, isLoading, error, refetch } = useMeeting(meetingId as string);
   
-  const [activeTab, setActiveTab] = useState("tasks");
+  const [activeTab, setActiveTab] = useState("agenda");
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);
@@ -32,10 +31,6 @@ export const MeetingDetailsPage = () => {
     } else {
       navigate("/admin/meetings");
     }
-  };
-  
-  const handleDeleteSuccess = () => {
-    navigate("/admin/meetings");
   };
 
   if (isLoading) {
@@ -128,27 +123,32 @@ export const MeetingDetailsPage = () => {
               </Button>
             </div>
           </div>
-
-          {/* الأهداف وجدول الأعمال */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <MeetingObjectives meetingId={meetingId as string} />
-            <MeetingAgendaItems meetingId={meetingId as string} />
-          </div>
           
-          {/* المهام ومحضر الاجتماع */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
+              <TabsTrigger value="agenda">جدول الأعمال</TabsTrigger>
+              <TabsTrigger value="objectives">الأهداف</TabsTrigger>
               <TabsTrigger value="tasks">المهام</TabsTrigger>
-              <TabsTrigger value="minutes">محضر الاجتماع</TabsTrigger>
+              <TabsTrigger value="decisions">القرارات</TabsTrigger>
               <TabsTrigger value="attachments">المرفقات</TabsTrigger>
             </TabsList>
+            
+            <TabsContent value="agenda">
+              <MeetingAgendaItems meetingId={meetingId as string} />
+            </TabsContent>
+            
+            <TabsContent value="objectives">
+              <MeetingObjectives meetingId={meetingId as string} />
+            </TabsContent>
             
             <TabsContent value="tasks">
               <MeetingTasksSection meetingId={meetingId as string} />
             </TabsContent>
             
-            <TabsContent value="minutes">
-              <MeetingMinutes meetingId={meetingId as string} />
+            <TabsContent value="decisions">
+              <div className="py-4 text-center text-muted-foreground">
+                سيتم إضافة قرارات الاجتماع قريباً
+              </div>
             </TabsContent>
             
             <TabsContent value="attachments">
@@ -173,7 +173,7 @@ export const MeetingDetailsPage = () => {
         meetingId={meeting.id}
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
-        onSuccess={handleDeleteSuccess}
+        onSuccess={() => handleGoBack()}
       />
       
       <AddParticipantDialog

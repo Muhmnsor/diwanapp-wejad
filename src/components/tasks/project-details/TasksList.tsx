@@ -15,24 +15,12 @@ import { EditTaskDialog } from "./EditTaskDialog";
 interface TasksListProps {
   projectId?: string | undefined;
   isWorkspace?: boolean;
-  hideAddButton?: boolean;
-  meetingId?: string;
-  externalTasks?: Task[];
-  isLoading?: boolean;
-  error?: Error | null;
-  onTasksChange?: () => void;
 }
 
-export const TasksList = ({ 
-  projectId, 
-  isWorkspace = false, 
-  hideAddButton = false,
-  meetingId,
-  externalTasks,
-  isLoading: externalLoading,
-  error: externalError,
-  onTasksChange
-}: TasksListProps) => {
+// Re-export Task interface for backward compatibility
+export type { Task };
+
+export const TasksList = ({ projectId, isWorkspace = false }: TasksListProps) => {
   const {
     tasks,
     isLoading,
@@ -46,15 +34,8 @@ export const TasksList = ({
     handleStatusChange,
     fetchTasks,
     isGeneral,
-    deleteTask,
-    error
-  } = useTasksList({
-    projectId, 
-    isWorkspace, 
-    externalTasks,
-    externalLoading,
-    externalError
-  });
+    deleteTask
+  } = useTasksList(projectId, isWorkspace);
 
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -75,25 +56,14 @@ export const TasksList = ({
   const handleDeleteTask = async (taskId: string) => {
     try {
       await deleteTask(taskId);
-      if (onTasksChange) {
-        onTasksChange();
-      }
     } catch (error) {
       console.error("Error deleting task:", error);
     }
   };
 
-  const handleTaskDataChanged = () => {
-    fetchTasks();
-    // Also call the external onTasksChange handler if provided
-    if (onTasksChange) {
-      onTasksChange();
-    }
-  };
-
   return (
     <>
-      {!isGeneral && !isWorkspace && !meetingId && (
+      {!isGeneral && !isWorkspace && (
         <ProjectStages 
           projectId={projectId} 
           onStagesChange={handleStagesChange} 
@@ -102,11 +72,7 @@ export const TasksList = ({
       
       <Card className="border shadow-sm">
         <CardHeader className="pb-0">
-          <TasksHeader 
-            onAddTask={() => setIsAddDialogOpen(true)} 
-            isGeneral={isGeneral}
-            hideAddButton={hideAddButton}
-          />
+          <TasksHeader onAddTask={() => setIsAddDialogOpen(true)} isGeneral={isGeneral} />
         </CardHeader>
         
         <CardContent className="pt-4">
@@ -133,19 +99,16 @@ export const TasksList = ({
         </CardContent>
       </Card>
       
-      {!hideAddButton && (
-        <AddTaskDialog
-          open={isAddDialogOpen}
-          onOpenChange={setIsAddDialogOpen}
-          projectId={projectId || ""}
-          projectStages={projectStages}
-          onTaskAdded={handleTaskDataChanged}
-          projectMembers={projectMembers}
-          isGeneral={isGeneral}
-          isWorkspace={isWorkspace}
-          meetingId={meetingId}
-        />
-      )}
+      <AddTaskDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        projectId={projectId || ""}
+        projectStages={projectStages}
+        onTaskAdded={fetchTasks}
+        projectMembers={projectMembers}
+        isGeneral={isGeneral}
+        isWorkspace={isWorkspace}
+      />
 
       {/* Dialog for editing tasks */}
       {editingTask && (
@@ -155,7 +118,7 @@ export const TasksList = ({
           task={editingTask}
           projectStages={projectStages}
           projectMembers={projectMembers}
-          onTaskUpdated={handleTaskDataChanged}
+          onTaskUpdated={fetchTasks}
         />
       )}
     </>
