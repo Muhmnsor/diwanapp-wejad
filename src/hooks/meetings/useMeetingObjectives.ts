@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-interface MeetingObjective {
+export interface MeetingObjective {
   id: string;
   meeting_id: string;
   content: string;

@@ -15,7 +15,7 @@ interface Objective {
   order_number: number;
 }
 
-interface CreateMeetingData {
+export interface CreateMeetingData {
   title: string;
   date: string;
   start_time: string;
@@ -34,7 +34,7 @@ export const useCreateMeeting = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuthStore();
 
-  const createMeeting = async (data: CreateMeetingData): Promise<Meeting | null> => {
+  const createMeeting = async (meetingData: Partial<CreateMeetingData> & { folder_id: string; agenda_items: AgendaItem[]; objectives: Objective[] }): Promise<Meeting | null> => {
     setIsLoading(true);
     
     try {
@@ -43,8 +43,8 @@ export const useCreateMeeting = () => {
       }
 
       // Ensure required fields are provided
-      if (!data.title || !data.date || !data.start_time || !data.duration || 
-          !data.attendance_type || !data.meeting_status || !data.folder_id) {
+      if (!meetingData.title || !meetingData.date || !meetingData.start_time || !meetingData.duration || 
+          !meetingData.attendance_type || !meetingData.meeting_status) {
         throw new Error('يرجى استكمال جميع الحقول المطلوبة');
       }
       
@@ -52,15 +52,15 @@ export const useCreateMeeting = () => {
       const { data: meeting, error } = await supabase
         .from('meetings')
         .insert({
-          title: data.title,
-          date: data.date,
-          start_time: data.start_time,
-          duration: data.duration,
-          location: data.location,
-          meeting_link: data.meeting_link,
-          attendance_type: data.attendance_type,
-          meeting_status: data.meeting_status,
-          folder_id: data.folder_id,
+          title: meetingData.title,
+          date: meetingData.date,
+          start_time: meetingData.start_time,
+          duration: meetingData.duration,
+          location: meetingData.location,
+          meeting_link: meetingData.meeting_link,
+          attendance_type: meetingData.attendance_type,
+          meeting_status: meetingData.meeting_status,
+          folder_id: meetingData.folder_id,
           meeting_type: 'other', // Default value since we're not using this field
           created_by: user.id, // Add the user ID for row-level security
         })
@@ -75,8 +75,8 @@ export const useCreateMeeting = () => {
       if (!meeting) throw new Error('فشل إنشاء الاجتماع');
       
       // 2. Insert agenda items
-      if (data.agenda_items.length > 0) {
-        const agendaItemsToInsert = data.agenda_items.map(item => ({
+      if (meetingData.agenda_items.length > 0) {
+        const agendaItemsToInsert = meetingData.agenda_items.map(item => ({
           meeting_id: meeting.id,
           content: item.content,
           order_number: item.order_number,
@@ -94,8 +94,8 @@ export const useCreateMeeting = () => {
       }
       
       // 3. Insert objectives
-      if (data.objectives.length > 0) {
-        const objectivesToInsert = data.objectives.map(objective => ({
+      if (meetingData.objectives.length > 0) {
+        const objectivesToInsert = meetingData.objectives.map(objective => ({
           meeting_id: meeting.id,
           content: objective.content,
           order_number: objective.order_number,
