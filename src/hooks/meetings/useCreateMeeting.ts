@@ -74,41 +74,49 @@ export const useCreateMeeting = () => {
       
       if (!meeting) throw new Error('فشل إنشاء الاجتماع');
       
-      // 2. Insert agenda items
-      if (meetingData.agenda_items.length > 0) {
-        const agendaItemsToInsert = meetingData.agenda_items.map(item => ({
-          meeting_id: meeting.id,
-          content: item.content,
-          order_number: item.order_number,
-          created_by: user.id
-        }));
+      // 2. Filter out empty agenda items and insert the valid ones
+      if (meetingData.agenda_items && meetingData.agenda_items.length > 0) {
+        const validAgendaItems = meetingData.agenda_items.filter(item => item.content.trim() !== '');
         
-        const { error: agendaError } = await supabase
-          .from('meeting_agenda_items')
-          .insert(agendaItemsToInsert);
-        
-        if (agendaError) {
-          console.error('Error inserting agenda items:', agendaError);
-          throw new Error(`فشل إضافة بنود جدول الأعمال: ${agendaError.message}`);
+        if (validAgendaItems.length > 0) {
+          const agendaItemsToInsert = validAgendaItems.map(item => ({
+            meeting_id: meeting.id,
+            content: item.content.trim(),
+            order_number: item.order_number,
+            created_by: user.id
+          }));
+          
+          const { error: agendaError } = await supabase
+            .from('meeting_agenda_items')
+            .insert(agendaItemsToInsert);
+          
+          if (agendaError) {
+            console.error('Error inserting agenda items:', agendaError);
+            throw new Error(`فشل إضافة بنود جدول الأعمال: ${agendaError.message}`);
+          }
         }
       }
       
-      // 3. Insert objectives
-      if (meetingData.objectives.length > 0) {
-        const objectivesToInsert = meetingData.objectives.map(objective => ({
-          meeting_id: meeting.id,
-          content: objective.content,
-          order_number: objective.order_number,
-          created_by: user.id
-        }));
+      // 3. Filter out empty objectives and insert the valid ones
+      if (meetingData.objectives && meetingData.objectives.length > 0) {
+        const validObjectives = meetingData.objectives.filter(objective => objective.content.trim() !== '');
         
-        const { error: objectivesError } = await supabase
-          .from('meeting_objectives')
-          .insert(objectivesToInsert);
-        
-        if (objectivesError) {
-          console.error('Error inserting objectives:', objectivesError);
-          throw new Error(`فشل إضافة أهداف الاجتماع: ${objectivesError.message}`);
+        if (validObjectives.length > 0) {
+          const objectivesToInsert = validObjectives.map(objective => ({
+            meeting_id: meeting.id,
+            content: objective.content.trim(),
+            order_number: objective.order_number,
+            created_by: user.id
+          }));
+          
+          const { error: objectivesError } = await supabase
+            .from('meeting_objectives')
+            .insert(objectivesToInsert);
+          
+          if (objectivesError) {
+            console.error('Error inserting objectives:', objectivesError);
+            throw new Error(`فشل إضافة أهداف الاجتماع: ${objectivesError.message}`);
+          }
         }
       }
       
