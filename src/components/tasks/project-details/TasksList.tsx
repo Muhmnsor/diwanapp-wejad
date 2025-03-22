@@ -133,6 +133,7 @@ export const TasksList = ({
           projectMembers={projectMembers}
           isGeneral={isGeneral}
           isWorkspace={isWorkspace}
+          meetingId={meetingId}
         />
       )}
 

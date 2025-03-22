@@ -18,9 +18,10 @@ interface DeleteMeetingDialogProps {
   meetingId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void; // Make this prop optional
 }
 
-export const DeleteMeetingDialog = ({ meetingId, open, onOpenChange }: DeleteMeetingDialogProps) => {
+export const DeleteMeetingDialog = ({ meetingId, open, onOpenChange, onSuccess }: DeleteMeetingDialogProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
 
@@ -55,8 +56,13 @@ export const DeleteMeetingDialog = ({ meetingId, open, onOpenChange }: DeleteMee
 
       toast.success("تم حذف الاجتماع بنجاح");
       
-      // Navigate back to meetings list
-      navigate('/meetings');
+      // Call onSuccess if provided
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        // Navigate back to meetings list if no onSuccess handler
+        navigate('/meetings');
+      }
     } catch (error) {
       console.error("Error in delete meeting process:", error);
       toast.error("حدث خطأ أثناء حذف الاجتماع");

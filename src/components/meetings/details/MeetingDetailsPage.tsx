@@ -173,7 +173,6 @@ export const MeetingDetailsPage = () => {
         meetingId={meeting.id}
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
-        onSuccess={() => handleGoBack()}
       />
       
       <AddParticipantDialog

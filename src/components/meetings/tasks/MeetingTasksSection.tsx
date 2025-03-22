@@ -62,6 +62,7 @@ export const MeetingTasksSection = ({ meetingId }: MeetingTasksSectionProps) => 
         onTasksChange={() => refetch()}
         hideAddButton={true}
         externalTasks={tasks}
+        meetingId={meetingId}
       />
 
       <AddTaskDialog 
