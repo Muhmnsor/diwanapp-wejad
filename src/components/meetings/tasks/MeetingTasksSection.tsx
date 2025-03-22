@@ -1,10 +1,10 @@
 
 import { useState } from "react";
-import { TasksList } from "@/components/meetings/content";
 import { useMeetingTasks } from "@/hooks/meetings/useMeetingTasks";
 import { AddTaskDialog } from "./AddTaskDialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { TasksList } from "@/components/meetings/content";
 
 interface MeetingTasksSectionProps {
   meetingId: string;
@@ -28,11 +28,9 @@ export const MeetingTasksSection = ({ meetingId }: MeetingTasksSectionProps) => 
         </Button>
       </div>
 
+      {/* Pass only the props that TasksList accepts */}
       <TasksList 
-        meetingId={meetingId} 
-        tasks={tasks || []} 
-        isLoading={isLoading} 
-        error={error}
+        meetingId={meetingId}
         onTasksChange={refetch}
       />
 

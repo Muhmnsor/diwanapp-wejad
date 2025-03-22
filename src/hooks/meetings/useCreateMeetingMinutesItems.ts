@@ -32,13 +32,17 @@ export const useCreateMeetingMinutesItems = () => {
         return existingItems;
       }
       
+      // Get the current user ID
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id;
+      
       // Prepare items to insert
       const items = agendaItems.map((item, index) => ({
         meeting_id: meetingId,
         agenda_item_id: item.id,
         content: '',
         order_number: index + 1,
-        created_by: (await supabase.auth.getUser()).data.user?.id
+        created_by: userId
       }));
       
       const { data, error } = await supabase

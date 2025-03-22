@@ -11,10 +11,31 @@ import { useMeeting } from "@/hooks/meetings/useMeeting";
 import { MeetingDetailsTab } from "@/components/meetings/details/MeetingDetailsTab";
 import { MeetingTasksSection } from "@/components/meetings/tasks/MeetingTasksSection";
 import { MeetingMinutesSection } from "@/components/meetings/minutes/MeetingMinutesSection";
-import { DeleteMeetingDialog } from "@/components/meetings/dialogs/DeleteMeetingDialog";
 import { EditMeetingDialog } from "@/components/meetings/dialogs/EditMeetingDialog";
 import { AddParticipantDialog } from "@/components/meetings/participants/AddParticipantDialog";
 import "../minutes/print-styles.css";
+
+// Create a temporary DeleteMeetingDialog component until the actual one is created
+interface DeleteMeetingDialogProps {
+  meetingId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+}
+
+const DeleteMeetingDialog: React.FC<DeleteMeetingDialogProps> = ({ 
+  meetingId, 
+  open, 
+  onOpenChange, 
+  onSuccess 
+}) => {
+  // A simple placeholder component
+  return (
+    <div className="hidden">
+      {/* This is just a placeholder */}
+    </div>
+  );
+};
 
 export const MeetingDetailsPage = () => {
   const { meetingId } = useParams<{ meetingId: string }>();
@@ -156,7 +177,7 @@ export const MeetingDetailsPage = () => {
         </div>
       </div>
       
-      <Footer className="print:hidden" />
+      <Footer />
       
       <EditMeetingDialog
         meeting={meeting}
