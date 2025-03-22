@@ -15,7 +15,7 @@ export const MeetingMinutesContent: React.FC<MeetingMinutesContentProps> = ({
   meetingId 
 }) => {
   const { data: agendaItems, isLoading: isLoadingAgenda } = useMeetingAgendaItems(meetingId);
-  const { data: minutes, isLoading: isLoadingMinutes } = useMeetingMinutes(meetingId);
+  const { data, isLoading: isLoadingMinutes } = useMeetingMinutes(meetingId);
 
   const handlePrint = () => {
     window.print();

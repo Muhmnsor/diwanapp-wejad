@@ -36,7 +36,28 @@ export const useMeetingMinutes = (meetingId: string) => {
       }
       
       console.log('Fetched minutes:', data);
-      return data as MeetingMinutes[];
+      
+      // Convert the data to our expected format
+      const minutesArray = data as MeetingMinutes[];
+      
+      // Find the general meeting minutes (not associated with an agenda item)
+      const generalMinutes = minutesArray.find(m => !m.agenda_item_id || m.agenda_item_id === null);
+      
+      // If no general minutes exist, create a placeholder with default values
+      const processedData = generalMinutes || {
+        id: '',
+        meeting_id: meetingId,
+        content: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        attendees: []
+      };
+      
+      // Also provide the full array for finding agenda-specific minutes
+      return {
+        minutes: processedData,
+        minutesItems: minutesArray
+      };
     },
     enabled: !!meetingId,
   });

@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useMeetingMinutes, MeetingMinutes } from "@/hooks/meetings/useMeetingMinutes";
+import { useMeetingMinutes } from "@/hooks/meetings/useMeetingMinutes";
 import { MeetingAgendaItem } from "@/hooks/meetings/useMeetingAgendaItems";
 
 interface MeetingMinutesItemsListProps {
@@ -13,7 +13,7 @@ export const MeetingMinutesItemsList: React.FC<MeetingMinutesItemsListProps> = (
   meetingId,
   agendaItems
 }) => {
-  const { data: minutes, isLoading } = useMeetingMinutes(meetingId);
+  const { data, isLoading } = useMeetingMinutes(meetingId);
 
   if (isLoading) {
     return (
@@ -27,7 +27,7 @@ export const MeetingMinutesItemsList: React.FC<MeetingMinutesItemsListProps> = (
     <div className="space-y-6 text-right" dir="rtl">
       {agendaItems.map((item) => {
         // Find the minutes item that corresponds to this agenda item
-        const itemMinutes = minutes?.find(min => min.agenda_item_id === item.id);
+        const itemMinutes = data?.minutesItems?.find(min => min.agenda_item_id === item.id);
         
         return (
           <Card key={item.id} className="overflow-hidden">
