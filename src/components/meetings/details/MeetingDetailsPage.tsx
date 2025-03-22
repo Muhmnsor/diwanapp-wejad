@@ -20,7 +20,7 @@ export const MeetingDetailsPage = () => {
   const navigate = useNavigate();
   const { data: meeting, isLoading, error, refetch } = useMeeting(meetingId as string);
   
-  const [activeTab, setActiveTab] = useState("agenda");
+  const [activeTab, setActiveTab] = useState("tasks");
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);
@@ -124,22 +124,23 @@ export const MeetingDetailsPage = () => {
             </div>
           </div>
           
+          {/* عرض الأهداف وجدول الأعمال في صفحة واحدة */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <MeetingObjectives meetingId={meetingId as string} />
+            </div>
+            <div>
+              <MeetingAgendaItems meetingId={meetingId as string} />
+            </div>
+          </div>
+          
+          {/* Tabs للمهام والقرارات والمرفقات */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
-              <TabsTrigger value="agenda">جدول الأعمال</TabsTrigger>
-              <TabsTrigger value="objectives">الأهداف</TabsTrigger>
               <TabsTrigger value="tasks">المهام</TabsTrigger>
               <TabsTrigger value="decisions">القرارات</TabsTrigger>
               <TabsTrigger value="attachments">المرفقات</TabsTrigger>
             </TabsList>
-            
-            <TabsContent value="agenda">
-              <MeetingAgendaItems meetingId={meetingId as string} />
-            </TabsContent>
-            
-            <TabsContent value="objectives">
-              <MeetingObjectives meetingId={meetingId as string} />
-            </TabsContent>
             
             <TabsContent value="tasks">
               <MeetingTasksSection meetingId={meetingId as string} />

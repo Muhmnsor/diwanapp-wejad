@@ -30,7 +30,6 @@ export const MeetingTasksSection = ({ meetingId }: MeetingTasksSectionProps) => 
 
       <TasksList 
         meetingId={meetingId} 
-        tasks={tasks || []} 
         isLoading={isLoading} 
         error={error}
         onTasksChange={refetch}
