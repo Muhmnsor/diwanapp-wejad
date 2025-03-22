@@ -13,7 +13,7 @@ export const useMeeting = (meetingId: string) => {
         .from('meetings')
         .select(`
           *,
-          folder:meeting_folders(name)
+          folder:meeting_folders(id, name)
         `)
         .eq('id', meetingId)
         .single();
@@ -23,8 +23,16 @@ export const useMeeting = (meetingId: string) => {
         throw error;
       }
 
-      console.log(`Retrieved meeting details:`, data);
-      return data as Meeting;
+      // Transform folder data for easy access
+      const meeting = {
+        ...data,
+        folder_name: data.folder ? 
+          (typeof data.folder === 'object' ? data.folder.name : null) 
+          : null
+      };
+
+      console.log(`Retrieved meeting details:`, meeting);
+      return meeting as Meeting;
     },
     enabled: !!meetingId,
   });
