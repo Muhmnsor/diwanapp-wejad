@@ -16,6 +16,7 @@ interface AddTaskDialogProps {
   projectMembers: ProjectMember[];
   isGeneral?: boolean;
   isWorkspace?: boolean;
+  meetingId?: string;
 }
 
 export const AddTaskDialog = ({
@@ -26,7 +27,8 @@ export const AddTaskDialog = ({
   onTaskAdded,
   projectMembers,
   isGeneral = false,
-  isWorkspace = false
+  isWorkspace = false,
+  meetingId
 }: AddTaskDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -65,7 +67,9 @@ export const AddTaskDialog = ({
         stage_id: isGeneral || isWorkspace ? null : formData.stageId,
         // Set category for general tasks
         category: isGeneral ? formData.category : null,
-        requires_deliverable: formData.requiresDeliverable || false
+        requires_deliverable: formData.requiresDeliverable || false,
+        // Add meeting_id if provided
+        meeting_id: meetingId || null
       };
       
       console.log("Inserting task with data:", taskData);

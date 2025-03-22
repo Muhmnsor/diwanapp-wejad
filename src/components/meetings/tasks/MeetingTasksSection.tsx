@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { TasksList } from "@/components/meetings/content";
+import { TasksList } from "@/components/tasks/project-details";
 import { useMeetingTasks } from "@/hooks/meetings/useMeetingTasks";
 import { AddTaskDialog } from "./AddTaskDialog";
 import { Button } from "@/components/ui/button";
@@ -29,11 +29,11 @@ export const MeetingTasksSection = ({ meetingId }: MeetingTasksSectionProps) => 
       </div>
 
       <TasksList 
-        meetingId={meetingId} 
+        meetingId={meetingId}
         tasks={tasks || []} 
         isLoading={isLoading} 
-        error={error}
-        onTasksChange={refetch}
+        error={error instanceof Error ? error : null}
+        onTasksChange={() => refetch()}
         hideAddButton={true} // Hide the add button in TasksList to avoid duplication
       />
 
