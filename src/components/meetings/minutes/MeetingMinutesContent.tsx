@@ -6,7 +6,6 @@ import { Printer } from "lucide-react";
 import { useMeetingAgendaItems } from "@/hooks/meetings/useMeetingAgendaItems";
 import { MeetingMinutesItemsList } from "./MeetingMinutesItemsList";
 import { useMeetingMinutes } from "@/hooks/meetings/useMeetingMinutes";
-import { useUpdateMeetingMinutes } from "@/hooks/meetings/useUpdateMeetingMinutes";
 
 interface MeetingMinutesContentProps {
   meetingId: string;

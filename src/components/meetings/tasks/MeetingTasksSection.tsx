@@ -6,7 +6,7 @@ import { Plus } from "lucide-react";
 import { useMeetingTasks } from "@/hooks/meetings/useMeetingTasks";
 import { TasksList } from "@/components/tasks/TasksList";
 import { useState } from "react";
-import { AddTaskDialog } from "@/components/tasks/AddTaskDialog";
+import { AddTaskDialog } from "@/components/meetings/tasks/AddTaskDialog";
 
 interface MeetingTasksSectionProps {
   meetingId: string;
@@ -31,13 +31,11 @@ export const MeetingTasksSection: React.FC<MeetingTasksSectionProps> = ({ meetin
           <CardTitle>قائمة المهام</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="text-center py-4">جاري تحميل المهام...</div>
-          ) : error ? (
-            <div className="text-center py-4 text-destructive">حدث خطأ أثناء تحميل المهام</div>
-          ) : (
-            <TasksList />
-          )}
+          <TasksList 
+            tasks={tasks} 
+            isLoading={isLoading} 
+            error={error} 
+          />
         </CardContent>
       </Card>
 

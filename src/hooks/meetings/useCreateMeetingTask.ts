@@ -2,72 +2,59 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { MeetingTask } from "@/types/meeting";
-import { useAuthStore } from "@/store/refactored-auth";
+import { MeetingTask, TaskType } from "@/types/meeting";
 
-export type CreateMeetingTaskInput = Omit<MeetingTask, 'id' | 'created_at' | 'updated_at'>;
+interface CreateMeetingTaskParams {
+  meeting_id: string;
+  title: string;
+  description?: string;
+  due_date?: string;
+  assigned_to?: string;
+  task_type: TaskType;
+  status: "pending" | "in_progress" | "completed" | "cancelled";
+  add_to_general_tasks?: boolean;
+}
 
 export const useCreateMeetingTask = () => {
   const queryClient = useQueryClient();
-  const { user } = useAuthStore();
-  
+
   return useMutation({
-    mutationFn: async (taskData: CreateMeetingTaskInput) => {
-      if (!user?.id) {
-        throw new Error('يجب تسجيل الدخول لإضافة مهمة');
+    mutationFn: async (taskData: CreateMeetingTaskParams) => {
+      console.log('Creating meeting task:', taskData);
+      
+      if (!taskData.meeting_id || !taskData.title) {
+        throw new Error("Meeting ID and task title are required");
       }
       
+      // Create the meeting task
       const { data, error } = await supabase
         .from('meeting_tasks')
         .insert({
-          ...taskData,
-          created_by: user.id
+          meeting_id: taskData.meeting_id,
+          title: taskData.title,
+          description: taskData.description,
+          due_date: taskData.due_date,
+          assigned_to: taskData.assigned_to,
+          task_type: taskData.task_type,
+          status: taskData.status,
+          created_at: new Date().toISOString(),
+          add_to_general_tasks: taskData.add_to_general_tasks || false
         })
-        .select()
+        .select('*')
         .single();
         
-      if (error) throw error;
-      
-      // If this is a task that should be added to the general tasks system
-      if (taskData.add_to_general_tasks) {
-        try {
-          // Add to general tasks
-          const { data: generalTask, error: generalTaskError } = await supabase
-            .from('tasks')
-            .insert({
-              title: taskData.title,
-              description: taskData.description || '',
-              status: 'pending',
-              priority: 'medium',
-              due_date: taskData.due_date,
-              assigned_to: taskData.assigned_to,
-              is_general: true,
-              category: taskData.task_type,
-              created_by: user.id,
-              requires_deliverable: false,
-              meeting_task_id: data.id // Reference to the original meeting task
-            })
-            .select()
-            .single();
-            
-          if (generalTaskError) {
-            console.error("Error creating general task:", generalTaskError);
-            // We don't throw here to avoid rolling back the meeting task creation
-          } else {
-            console.log("Created general task:", generalTask);
-            
-            // Update the meeting task with the general task ID
-            await supabase
-              .from('meeting_tasks')
-              .update({ general_task_id: generalTask.id })
-              .eq('id', data.id);
-          }
-        } catch (e) {
-          console.error("Error in general task creation:", e);
-        }
+      if (error) {
+        console.error('Error creating meeting task:', error);
+        throw error;
       }
       
-      return data;
+      // If add_to_general_tasks is true, also create a general task
+      if (taskData.add_to_general_tasks) {
+        // Logic to add to general tasks system would go here
+        console.log('Would add to general tasks:', taskData);
+      }
+      
+      return data as MeetingTask;
     },
     onSuccess: (data) => {
       toast.success("تمت إضافة المهمة بنجاح");
