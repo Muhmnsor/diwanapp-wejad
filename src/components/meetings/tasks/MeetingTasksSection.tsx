@@ -1,12 +1,12 @@
 
 import { useState } from "react";
 import { useMeetingTasks } from "@/hooks/meetings/useMeetingTasks";
-import { AddTaskDialog } from "./AddTaskDialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Task } from "@/components/tasks/types/task";
 import { MeetingTask } from "@/types/meeting";
 import { TasksList } from "@/components/tasks/project-details";
+import { AddTaskDialog } from "@/components/tasks/project-details/AddTaskDialog";
 
 interface MeetingTasksSectionProps {
   meetingId: string;
@@ -65,11 +65,16 @@ export const MeetingTasksSection = ({ meetingId }: MeetingTasksSectionProps) => 
         meetingId={meetingId}
       />
 
+      {/* Add Task Dialog */}
       <AddTaskDialog 
-        meetingId={meetingId}
         open={isAddTaskOpen}
         onOpenChange={setIsAddTaskOpen}
-        onSuccess={handleTaskAdded}
+        projectId=""
+        projectStages={[]}
+        onTaskAdded={handleTaskAdded}
+        projectMembers={[]}
+        isGeneral={false}
+        meetingId={meetingId}
       />
     </div>
   );

@@ -9,6 +9,7 @@ export interface UseTaskFormProps {
   isGeneral?: boolean;
   onTaskAdded?: () => void;
   onTaskUpdated?: () => void;
+  meetingId?: string; // إضافة خاصية meetingId
   initialValues?: {
     title: string;
     description: string;
@@ -28,7 +29,8 @@ export const useTaskForm = ({
   onTaskAdded,
   onTaskUpdated,
   initialValues,
-  taskId
+  taskId,
+  meetingId // إضافة هذه الخاصية هنا
 }: UseTaskFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,7 +65,8 @@ export const useTaskForm = ({
         category: isGeneral ? formData.category : null,
         workspace_id: null, // Will be set based on project or general workspace
         created_by: userId,
-        requires_deliverable: formData.requiresDeliverable || false
+        requires_deliverable: formData.requiresDeliverable || false,
+        meeting_id: meetingId || null // إضافة معرف الاجتماع
       };
 
       console.log("Task data to insert:", taskData);
@@ -115,6 +118,27 @@ export const useTaskForm = ({
               file.name,
               file.type
             );
+          }
+        }
+        
+        // إذا كان هذا مهمة اجتماع، أضف أيضًا إلى جدول مهام الاجتماع
+        if (meetingId) {
+          try {
+            await supabase
+              .from("meeting_tasks")
+              .insert({
+                meeting_id: meetingId,
+                title: formData.title,
+                description: formData.description || "",
+                due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
+                assigned_to: formData.assignedTo,
+                status: "pending",
+                task_type: "action_item",
+                created_by: userId,
+                general_task_id: result.id
+              });
+          } catch (err) {
+            console.error("Error creating meeting task reference:", err);
           }
         }
         

@@ -1,191 +1,174 @@
 
-import { useTasksFetching } from "./useTasksFetching";
-import { useTaskStatusManagement } from "./useTaskStatusManagement";
-import { useTasksState } from "./useTasksState";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
 import { toast } from "sonner";
 import { Task } from "../types/task";
 
-export const useTasksList = (
-  projectId?: string | undefined, 
-  isWorkspace: boolean = false,
-  externalTasks?: Task[],
-  externalLoading?: boolean,
-  externalError?: Error | null
-) => {
-  // Hook for handling UI state
-  const {
-    activeTab,
-    setActiveTab,
-    isAddDialogOpen,
-    setIsAddDialogOpen,
-    projectStages,
-    handleStagesChange
-  } = useTasksState();
+// تحديث التوقيع لاستخدام كائن الخيارات بدلاً من الوسيطات المتعددة
+interface UseTasksListOptions {
+  projectId?: string;
+  isWorkspace?: boolean;
+  externalTasks?: Task[];
+  externalLoading?: boolean;
+  externalError?: Error | null;
+}
 
-  // Hook for fetching tasks
-  const {
-    tasks,
-    isLoading,
-    tasksByStage,
-    setTasks,
-    setTasksByStage,
-    fetchTasks
-  } = useTasksFetching(projectId, isWorkspace, externalTasks, externalLoading, externalError);
+export const useTasksList = ({
+  projectId,
+  isWorkspace = false,
+  externalTasks,
+  externalLoading,
+  externalError
+}: UseTasksListOptions = {}) => {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("all");
+  const [error, setError] = useState<Error | null>(null);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [projectStages, setProjectStages] = useState<{ id: string; name: string }[]>([]);
+  const [tasksByStage, setTasksByStage] = useState<{ [key: string]: Task[] }>({});
 
-  // Hook for task status management
-  const { handleStatusChange } = useTaskStatusManagement(
-    projectId,
-    tasks,
-    setTasks,
-    tasksByStage,
-    setTasksByStage
-  );
+  const isGeneral = !projectId && !isWorkspace;
 
-  // Update task function
-  const updateTask = async (taskId: string, updateData: Partial<Task>) => {
+  const fetchProjectStages = async () => {
+    if (!projectId) return;
+
     try {
-      console.log("Updating task:", taskId, updateData);
-      
-      const { error } = await supabase
-        .from('tasks')
-        .update(updateData)
-        .eq('id', taskId);
-        
+      const { data, error } = await supabase
+        .from("project_stages")
+        .select("id, name")
+        .eq("project_id", projectId)
+        .order("order", { ascending: true });
+
       if (error) throw error;
-      
-      // Update the tasks list with the updated task
-      setTasks(prevTasks => 
-        prevTasks.map(task => 
-          task.id === taskId ? { ...task, ...updateData } : task
-        )
-      );
-      
-      toast.success("تم تحديث المهمة بنجاح");
-      return true;
+      setProjectStages(data || []);
     } catch (error) {
-      console.error("Error updating task:", error);
-      toast.error("حدث خطأ أثناء تحديث المهمة");
-      throw error;
+      console.error("Error fetching project stages:", error);
+      setError(error as Error);
     }
   };
 
-  // Delete task function
+  const fetchTasks = async () => {
+    // If external tasks are provided, use them instead of fetching
+    if (externalTasks) {
+      setTasks(externalTasks);
+      setIsLoading(externalLoading || false);
+      setError(externalError || null);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    try {
+      let query = supabase.from("tasks").select("*");
+
+      if (isGeneral) {
+        query = query.eq("is_general", true);
+      } else if (projectId) {
+        query = query.eq("project_id", projectId);
+      } else if (isWorkspace) {
+        // Handle workspace-specific query if needed
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setTasks(data as Task[]);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      setError(error as Error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleStagesChange = () => {
+    fetchProjectStages();
+  };
+
+  const handleStatusChange = async (taskId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .update({ status: newStatus })
+        .eq("id", taskId);
+
+      if (error) throw error;
+
+      // Update local state
+      setTasks(prevTasks =>
+        prevTasks.map(task =>
+          task.id === taskId ? { ...task, status: newStatus } : task
+        )
+      );
+
+      toast.success("تم تحديث حالة المهمة بنجاح");
+    } catch (error) {
+      console.error("Error updating task status:", error);
+      toast.error("حدث خطأ أثناء تحديث حالة المهمة");
+    }
+  };
+
   const deleteTask = async (taskId: string) => {
     try {
-      console.log("Deleting task:", taskId);
+      // Check if this is a meeting task
+      const task = tasks.find(t => t.id === taskId);
       
-      // 1. حذف المهام الفرعية المرتبطة بالمهمة - التحقق من وجود البيانات في كلا الجدولين
-      // Check both subtasks tables
-      const { error: subtasksError } = await supabase
-        .from('subtasks')
-        .delete()
-        .eq('task_id', taskId);
-      
-      if (subtasksError) {
-        console.error("Error deleting subtasks:", subtasksError);
-        // نستمر في الحذف حتى لو فشل حذف المهام الفرعية
+      // If it's a meeting task, also delete from meeting_tasks table
+      if (task?.meeting_id) {
+        const { error: meetingTaskError } = await supabase
+          .from("meeting_tasks")
+          .delete()
+          .eq("id", task.meeting_id);
+          
+        if (meetingTaskError) {
+          console.error("Error deleting meeting task:", meetingTaskError);
+        }
       }
       
-      // Also try task_subtasks table
-      const { error: taskSubtasksError } = await supabase
-        .from('task_subtasks')
+      // Delete the task
+      const { error } = await supabase
+        .from("tasks")
         .delete()
-        .eq('parent_task_id', taskId);
-      
-      if (taskSubtasksError) {
-        console.error("Error deleting task_subtasks:", taskSubtasksError);
-        // نستمر في الحذف حتى لو فشل حذف المهام الفرعية
-      }
-      
-      // 2. حذف المرفقات
-      const { error: attachmentsError } = await supabase
-        .from('task_attachments')
-        .delete()
-        .eq('task_id', taskId);
-        
-      if (attachmentsError) {
-        console.error("Error deleting task attachments:", attachmentsError);
-        // نستمر في الحذف حتى لو فشل حذف المرفقات
-      }
-      
-      const { error: portfolioAttachmentsError } = await supabase
-        .from('portfolio_task_attachments')
-        .delete()
-        .eq('task_id', taskId);
-        
-      if (portfolioAttachmentsError) {
-        console.error("Error deleting portfolio attachments:", portfolioAttachmentsError);
-        // نستمر في الحذف حتى لو فشل حذف مرفقات المحفظة
-      }
-      
-      // 3. حذف نماذج المهمة
-      const { error: templatesError } = await supabase
-        .from('task_templates')
-        .delete()
-        .eq('task_id', taskId);
-        
-      if (templatesError) {
-        console.error("Error deleting templates:", templatesError);
-        // نستمر في الحذف حتى لو فشل حذف النماذج
-      }
-      
-      // 4. حذف تعليقات المهمة
-      const { error: commentsError } = await supabase
-        .from('task_comments')
-        .delete()
-        .eq('task_id', taskId);
-        
-      if (commentsError) {
-        console.error("Error deleting comments:", commentsError);
-        // نستمر في الحذف حتى لو فشل حذف التعليقات
-      }
-      
-      // Also try unified_task_comments table
-      const { error: unifiedCommentsError } = await supabase
-        .from('unified_task_comments')
-        .delete()
-        .eq('task_id', taskId)
-        .eq('task_table', 'tasks');
-        
-      if (unifiedCommentsError) {
-        console.error("Error deleting unified comments:", unifiedCommentsError);
-        // نستمر في الحذف حتى لو فشل حذف التعليقات الموحدة
-      }
-      
-      // 5. حذف المرفقات من جدول task_discussion_attachments
-      const { error: discussionAttachmentsError } = await supabase
-        .from('task_discussion_attachments')
-        .delete()
-        .eq('task_id', taskId)
-        .eq('task_table', 'tasks');
-        
-      if (discussionAttachmentsError) {
-        console.error("Error deleting discussion attachments:", discussionAttachmentsError);
-        // نستمر في الحذف حتى لو فشل حذف مرفقات المناقشة
-      }
-      
-      // 6. حذف المهمة نفسها
-      let { error } = await supabase
-        .from('tasks')
-        .delete()
-        .eq('id', taskId);
-        
+        .eq("id", taskId);
+
       if (error) throw error;
-      
-      // بدلاً من تحديث الحالة المحلية فقط، نقوم بإعادة تحميل البيانات
-      // لضمان تحديث كل من tasks و tasksByStage
-      await fetchTasks();
-      
+
+      // Update local state
+      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
       toast.success("تم حذف المهمة بنجاح");
-      return true;
     } catch (error) {
       console.error("Error deleting task:", error);
       toast.error("حدث خطأ أثناء حذف المهمة");
       throw error;
     }
   };
+
+  useEffect(() => {
+    if (externalTasks) {
+      setTasks(externalTasks);
+      setIsLoading(externalLoading || false);
+      setError(externalError || null);
+    } else {
+      fetchTasks();
+    }
+    
+    if (projectId) {
+      fetchProjectStages();
+    }
+  }, [projectId, isWorkspace, externalTasks, externalLoading, externalError]);
+
+  // Group tasks by stage
+  useEffect(() => {
+    if (!projectId || projectStages.length === 0) return;
+
+    const grouped = projectStages.reduce((acc, stage) => {
+      acc[stage.id] = tasks.filter(task => task.stage_id === stage.id);
+      return acc;
+    }, {} as { [key: string]: Task[] });
+
+    setTasksByStage(grouped);
+  }, [tasks, projectStages, projectId]);
 
   return {
     tasks,
@@ -199,8 +182,8 @@ export const useTasksList = (
     tasksByStage,
     handleStatusChange,
     fetchTasks,
-    isGeneral: !projectId,
+    isGeneral,
     deleteTask,
-    updateTask
+    error
   };
 };

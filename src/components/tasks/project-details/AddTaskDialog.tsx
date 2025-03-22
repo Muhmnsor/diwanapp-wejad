@@ -16,7 +16,7 @@ export interface AddTaskDialogProps {
   projectMembers: ProjectMember[];
   isGeneral?: boolean;
   isWorkspace?: boolean;
-  meetingId?: string; // Added meetingId prop
+  meetingId?: string; // Add meetingId prop
 }
 
 export const AddTaskDialog = ({ 
@@ -28,7 +28,7 @@ export const AddTaskDialog = ({
   projectMembers,
   isGeneral = false,
   isWorkspace = false,
-  meetingId // Add meetingId to props
+  meetingId // Use meetingId prop
 }: AddTaskDialogProps) => {
   const { isSubmitting, error, handleSubmit } = useTaskForm({
     projectId,
@@ -41,7 +41,9 @@ export const AddTaskDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{isGeneral ? "إضافة مهمة عامة" : meetingId ? "إضافة مهمة للاجتماع" : "إضافة مهمة جديدة"}</DialogTitle>
+          <DialogTitle>
+            {isGeneral ? "إضافة مهمة عامة" : meetingId ? "إضافة مهمة للاجتماع" : "إضافة مهمة جديدة"}
+          </DialogTitle>
         </DialogHeader>
         
         <TaskForm
