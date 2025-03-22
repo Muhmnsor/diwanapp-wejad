@@ -7,7 +7,7 @@ import { ParticipantRole, AttendanceStatus } from "@/types/meeting";
 interface ParticipantInput {
   user_id?: string;
   user_email?: string;
-  user_display_name: string;
+  user_display_name?: string; // Changed from required to optional
   user_phone?: string;
   role: ParticipantRole;
   attendance_status: AttendanceStatus;
@@ -24,11 +24,19 @@ export const useAddMeetingParticipant = () => {
   
   return useMutation({
     mutationFn: async ({ meetingId, participant }: AddParticipantParams) => {
+      // Ensure user_display_name has a default value if it's not provided
+      const participantData = {
+        ...participant,
+        user_display_name: participant.user_display_name || 
+                           participant.user_email?.split('@')[0] || 
+                           'مشارك'
+      };
+
       const { data, error } = await supabase
         .from('meeting_participants')
         .insert({
           meeting_id: meetingId,
-          ...participant
+          ...participantData
         })
         .select()
         .single();
