@@ -9,6 +9,7 @@ interface MeetingAgendaItem {
   order_number: number;
   created_at: string;
   updated_at: string;
+  created_by?: string;
 }
 
 export const useMeetingAgendaItems = (meetingId: string) => {
