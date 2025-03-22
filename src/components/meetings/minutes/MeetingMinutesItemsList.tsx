@@ -26,8 +26,8 @@ export const MeetingMinutesItemsList: React.FC<MeetingMinutesItemsListProps> = (
   return (
     <div className="space-y-6 text-right" dir="rtl">
       {agendaItems.map((item) => {
-        // Check if the minutes object exists and has agenda_item_id that matches
-        const itemMinutes = minutes && item.id === minutes.agenda_item_id ? minutes : null;
+        // Find the minutes item that corresponds to this agenda item
+        const itemMinutes = minutes?.find(min => min.agenda_item_id === item.id);
         
         return (
           <Card key={item.id} className="overflow-hidden">
