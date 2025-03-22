@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 export interface MeetingMinutes {
   id: string;
   meeting_id: string;
-  content: string;
+  agenda_item_id?: string | null;
+  content: string | null;
   created_at: string;
   updated_at: string;
   created_by?: string;
@@ -27,20 +28,15 @@ export const useMeetingMinutes = (meetingId: string) => {
       const { data, error } = await supabase
         .from('meeting_minutes')
         .select('*')
-        .eq('meeting_id', meetingId)
-        .single();
+        .eq('meeting_id', meetingId);
         
       if (error) {
-        // If the error is because no rows were returned, return null
-        if (error.code === 'PGRST116') {
-          return null;
-        }
         console.error('Error fetching meeting minutes:', error);
         throw error;
       }
       
       console.log('Fetched minutes:', data);
-      return data as MeetingMinutes;
+      return data as MeetingMinutes[];
     },
     enabled: !!meetingId,
   });
