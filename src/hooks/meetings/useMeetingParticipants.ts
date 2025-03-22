@@ -1,32 +1,33 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { MeetingParticipant } from "@/types/meeting";
 
-export const useMeetingParticipants = (meetingId: string, refreshTrigger: number = 0) => {
+interface MeetingParticipant {
+  id: string;
+  meeting_id: string;
+  user_id: string;
+  user_email: string;
+  user_display_name: string;
+  role: string;
+  attendance_status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export const useMeetingParticipants = (meetingId: string) => {
   return useQuery({
-    queryKey: ['meeting-participants', meetingId, refreshTrigger],
-    queryFn: async (): Promise<MeetingParticipant[]> => {
-      console.log(`Fetching participants for meeting: ${meetingId}`);
-      
-      if (!meetingId) {
-        return [];
-      }
-      
+    queryKey: ['meeting-participants', meetingId],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('meeting_participants')
         .select('*')
         .eq('meeting_id', meetingId)
         .order('created_at', { ascending: true });
+        
+      if (error) throw error;
       
-      if (error) {
-        console.error("Error fetching meeting participants:", error);
-        throw error;
-      }
-
-      console.log(`Retrieved ${data.length} participants`);
       return data as MeetingParticipant[];
     },
-    enabled: Boolean(meetingId)
+    enabled: !!meetingId,
   });
 };
