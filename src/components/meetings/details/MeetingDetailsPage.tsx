@@ -35,9 +35,9 @@ export const MeetingDetailsPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col rtl" dir="rtl">
+      <div className="min-h-screen flex flex-col" dir="rtl">
         <AdminHeader />
-        <div className="container mx-auto px-4 py-8 flex-grow">
+        <div className="container mx-auto px-4 py-8 flex-grow text-right">
           <div className="text-center py-12">جاري تحميل تفاصيل الاجتماع...</div>
         </div>
         <Footer />
@@ -47,14 +47,14 @@ export const MeetingDetailsPage = () => {
 
   if (error || !meeting) {
     return (
-      <div className="min-h-screen flex flex-col rtl" dir="rtl">
+      <div className="min-h-screen flex flex-col" dir="rtl">
         <AdminHeader />
-        <div className="container mx-auto px-4 py-8 flex-grow">
-          <Button variant="outline" onClick={handleGoBack} className="mb-4">
+        <div className="container mx-auto px-4 py-8 flex-grow text-right">
+          <Button variant="outline" onClick={handleGoBack} className="mb-4 flex items-center">
             <ArrowLeft className="h-4 w-4 ml-2" />
             العودة
           </Button>
-          <div className="text-destructive py-4">
+          <div className="text-destructive py-4 text-right">
             {error ? `حدث خطأ: ${error.message}` : "الاجتماع غير موجود"}
           </div>
         </div>
@@ -67,31 +67,52 @@ export const MeetingDetailsPage = () => {
   const formattedDate = format(meetingDate, "EEEE d MMMM yyyy", { locale: ar });
 
   return (
-    <div className="min-h-screen flex flex-col rtl" dir="rtl">
+    <div className="min-h-screen flex flex-col" dir="rtl">
       <AdminHeader />
       
       <div className="container mx-auto px-4 py-6 flex-grow">
         <div className="flex items-center mb-4 print:hidden">
-          <Button variant="outline" onClick={handleGoBack} className="ml-4">
+          <Button variant="outline" onClick={handleGoBack} className="ml-4 flex items-center">
             <ArrowLeft className="h-4 w-4 ml-2" />
             العودة
           </Button>
-          <h1 className="text-2xl font-bold">{meeting.title}</h1>
+          <h1 className="text-2xl font-bold text-right">
+            {meeting.title}
+          </h1>
         </div>
         
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="bg-white rounded-lg shadow p-6 mb-6 text-right">
           <div className="flex justify-between items-start mb-6 print:hidden">
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setIsParticipantsOpen(true)} className="flex items-center">
+                <Users className="h-4 w-4 ml-2" />
+                المشاركون
+              </Button>
+              <Button variant="outline" onClick={() => setIsEditOpen(true)} className="flex items-center">
+                <Edit className="h-4 w-4 ml-2" />
+                تعديل
+              </Button>
+              <Button 
+                variant="outline" 
+                className="text-destructive hover:bg-destructive/10 border-destructive flex items-center"
+                onClick={() => setIsDeleteOpen(true)}
+              >
+                <Trash className="h-4 w-4 ml-2" />
+                حذف
+              </Button>
+            </div>
+            
             <div>
-              <h2 className="text-xl font-semibold mb-2">{meeting.title}</h2>
-              <div className="flex items-center text-muted-foreground mb-1">
-                <Calendar className="h-4 w-4 ml-2" />
+              <h2 className="text-xl font-semibold mb-2 text-right">{meeting.title}</h2>
+              <div className="flex items-center text-muted-foreground mb-1 flex-row-reverse justify-end">
                 <span>{formattedDate}</span>
+                <Calendar className="h-4 w-4 ml-2 mr-2" />
                 <span className="mx-2">|</span>
                 <span>{meeting.start_time}</span>
                 <span className="mx-2">|</span>
                 <span>{meeting.duration} دقيقة</span>
               </div>
-              <div className="text-muted-foreground">
+              <div className="text-muted-foreground text-right">
                 {meeting.location && (
                   <div className="mb-1">المكان: {meeting.location}</div>
                 )}
@@ -103,29 +124,10 @@ export const MeetingDetailsPage = () => {
                 )}
               </div>
             </div>
-            
-            <div className="flex space-x-2 space-x-reverse">
-              <Button variant="outline" onClick={() => setIsParticipantsOpen(true)}>
-                <Users className="h-4 w-4 ml-2" />
-                المشاركون
-              </Button>
-              <Button variant="outline" onClick={() => setIsEditOpen(true)}>
-                <Edit className="h-4 w-4 ml-2" />
-                تعديل
-              </Button>
-              <Button 
-                variant="outline" 
-                className="text-destructive hover:bg-destructive/10 border-destructive"
-                onClick={() => setIsDeleteOpen(true)}
-              >
-                <Trash className="h-4 w-4 ml-2" />
-                حذف
-              </Button>
-            </div>
           </div>
           
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="print:hidden">
-            <TabsList className="mb-4">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="print:hidden" dir="rtl">
+            <TabsList className="mb-4 justify-start">
               <TabsTrigger value="details">التفاصيل</TabsTrigger>
               <TabsTrigger value="tasks">مهام الاجتماع</TabsTrigger>
               <TabsTrigger value="minutes">محضر الاجتماع</TabsTrigger>
@@ -144,7 +146,7 @@ export const MeetingDetailsPage = () => {
             </TabsContent>
           </Tabs>
           
-          <div className="hidden print:block">
+          <div className="hidden print:block text-right">
             <div className="text-center mb-6">
               <h1 className="text-2xl font-bold">{meeting.title}</h1>
               <p className="text-gray-600">{formattedDate} | {meeting.start_time} | {meeting.duration} دقيقة</p>

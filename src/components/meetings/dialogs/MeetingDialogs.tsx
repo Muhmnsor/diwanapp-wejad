@@ -1,14 +1,31 @@
 
 import React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { useMutation } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { Meeting } from "@/types/meeting";
+import { Loader2 } from "lucide-react";
+import { useDeleteMeeting } from "@/hooks/meetings/useDeleteMeeting";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 
-// Delete Meeting Dialog Component
-export interface DeleteMeetingDialogProps {
+// Delete Meeting Dialog
+interface DeleteMeetingDialogProps {
   meetingId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -19,67 +36,50 @@ export const DeleteMeetingDialog: React.FC<DeleteMeetingDialogProps> = ({
   meetingId,
   open,
   onOpenChange,
-  onSuccess
+  onSuccess,
 }) => {
-  const navigate = useNavigate();
-  
-  const { mutate: deleteMeeting, isPending } = useMutation({
-    mutationFn: async () => {
-      // Delete the meeting
-      const { error } = await supabase
-        .from('meetings')
-        .delete()
-        .eq('id', meetingId);
-      
-      if (error) throw error;
-      return true;
-    },
-    onSuccess: () => {
+  const { mutateAsync: deleteMeeting, isPending } = useDeleteMeeting();
+
+  const handleDelete = async () => {
+    try {
+      await deleteMeeting(meetingId);
       toast.success("تم حذف الاجتماع بنجاح");
       onOpenChange(false);
-      if (onSuccess) {
-        onSuccess();
-      }
-    },
-    onError: (error) => {
-      console.error("Error deleting meeting:", error);
+      if (onSuccess) onSuccess();
+    } catch (error) {
       toast.error("حدث خطأ أثناء حذف الاجتماع");
+      console.error("Error deleting meeting:", error);
     }
-  });
-
-  const handleDelete = () => {
-    deleteMeeting();
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>حذف الاجتماع</DialogTitle>
-          <DialogDescription>
-            هل أنت متأكد من رغبتك في حذف هذا الاجتماع؟ هذا الإجراء لا يمكن التراجع عنه.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="flex flex-row justify-between sm:justify-between mt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            إلغاء
-          </Button>
-          <Button 
-            variant="destructive" 
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent dir="rtl">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-right">هل أنت متأكد من حذف هذا الاجتماع؟</AlertDialogTitle>
+          <AlertDialogDescription className="text-right">
+            سيتم حذف الاجتماع وجميع المهام والمحاضر المرتبطة به بشكل نهائي. لا يمكن التراجع عن هذا الإجراء.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="flex flex-row-reverse justify-start gap-2">
+          <AlertDialogCancel>إلغاء</AlertDialogCancel>
+          <AlertDialogAction
             onClick={handleDelete}
             disabled={isPending}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isPending ? "جاري الحذف..." : "حذف الاجتماع"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            {isPending && <Loader2 className="h-4 w-4 ml-2 animate-spin" />}
+            حذف الاجتماع
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
 
-// Edit Meeting Dialog Component
-export interface EditMeetingDialogProps {
-  meeting: any;
+// Edit Meeting Dialog (Stub)
+interface EditMeetingDialogProps {
+  meeting: Meeting;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
@@ -89,47 +89,24 @@ export const EditMeetingDialog: React.FC<EditMeetingDialogProps> = ({
   meeting,
   open,
   onOpenChange,
-  onSuccess
+  onSuccess,
 }) => {
-  // This is a simplified version - in a real application you would implement 
-  // the full form similar to what's likely in the protected component
-  const { mutate: updateMeeting, isPending } = useMutation({
-    mutationFn: async (data: any) => {
-      const { error } = await supabase
-        .from('meetings')
-        .update(data)
-        .eq('id', meeting.id);
-      
-      if (error) throw error;
-      return true;
-    },
-    onSuccess: () => {
-      toast.success("تم تحديث الاجتماع بنجاح");
-      onOpenChange(false);
-      if (onSuccess) {
-        onSuccess();
-      }
-    },
-    onError: (error) => {
-      console.error("Error updating meeting:", error);
-      toast.error("حدث خطأ أثناء تحديث الاجتماع");
-    }
-  });
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px]" dir="rtl">
         <DialogHeader>
-          <DialogTitle>تعديل الاجتماع</DialogTitle>
-          <DialogDescription>
-            تعديل تفاصيل الاجتماع
+          <DialogTitle className="text-right">تعديل الاجتماع</DialogTitle>
+          <DialogDescription className="text-right">
+            قم بتعديل تفاصيل الاجتماع أدناه
           </DialogDescription>
         </DialogHeader>
-        <div className="mt-4">
-          <p className="text-center py-4">واجهة تعديل الاجتماع ستتوفر قريبًا</p>
+        <div className="py-4 text-right">
+          تنفيذ وظيفة تعديل الاجتماع قيد التطوير.
         </div>
-        <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>
+        <DialogFooter className="flex flex-row-reverse justify-start gap-2">
+          <Button
+            onClick={() => onOpenChange(false)}
+          >
             إغلاق
           </Button>
         </DialogFooter>
@@ -138,34 +115,34 @@ export const EditMeetingDialog: React.FC<EditMeetingDialogProps> = ({
   );
 };
 
-// Add Participant Dialog Component
-export interface AddParticipantDialogProps {
+// Add Participant Dialog
+interface AddParticipantDialogProps {
   meetingId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: () => void;
 }
 
 export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
   meetingId,
   open,
   onOpenChange,
-  onSuccess
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px]" dir="rtl">
         <DialogHeader>
-          <DialogTitle>إضافة مشاركين</DialogTitle>
-          <DialogDescription>
-            إضافة مشاركين للاجتماع
+          <DialogTitle className="text-right">إدارة المشاركين</DialogTitle>
+          <DialogDescription className="text-right">
+            قم بإضافة أو إزالة المشاركين في هذا الاجتماع
           </DialogDescription>
         </DialogHeader>
-        <div className="mt-4">
-          <p className="text-center py-4">واجهة إضافة المشاركين ستتوفر قريبًا</p>
+        <div className="py-4 text-right">
+          تنفيذ وظيفة إدارة المشاركين قيد التطوير.
         </div>
-        <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>
+        <DialogFooter className="flex flex-row-reverse justify-start gap-2">
+          <Button
+            onClick={() => onOpenChange(false)}
+          >
             إغلاق
           </Button>
         </DialogFooter>

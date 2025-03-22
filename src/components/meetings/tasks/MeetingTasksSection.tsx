@@ -17,13 +17,13 @@ export const MeetingTasksSection: React.FC<MeetingTasksSectionProps> = ({ meetin
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 text-right">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">مهام الاجتماع</h3>
-        <Button size="sm" onClick={() => setIsAddTaskOpen(true)}>
+        <Button size="sm" onClick={() => setIsAddTaskOpen(true)} className="flex items-center">
           <Plus className="h-4 w-4 ml-2" />
           إضافة مهمة
         </Button>
+        <h3 className="text-lg font-semibold">مهام الاجتماع</h3>
       </div>
 
       <Card>
@@ -35,6 +35,7 @@ export const MeetingTasksSection: React.FC<MeetingTasksSectionProps> = ({ meetin
             tasks={tasks} 
             isLoading={isLoading} 
             error={error} 
+            onTasksChange={refetch}
           />
         </CardContent>
       </Card>

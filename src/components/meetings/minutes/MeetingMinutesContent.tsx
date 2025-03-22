@@ -22,13 +22,13 @@ export const MeetingMinutesContent: React.FC<MeetingMinutesContentProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-right">
       <div className="flex justify-between items-center print:hidden">
-        <h3 className="text-lg font-semibold">محضر الاجتماع</h3>
-        <Button variant="outline" onClick={handlePrint}>
+        <Button variant="outline" onClick={handlePrint} className="flex items-center">
           <Printer className="h-4 w-4 ml-2" />
           طباعة المحضر
         </Button>
+        <h3 className="text-lg font-semibold">محضر الاجتماع</h3>
       </div>
 
       {agendaItems && agendaItems.length > 0 ? (
@@ -39,7 +39,7 @@ export const MeetingMinutesContent: React.FC<MeetingMinutesContentProps> = ({
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>محضر الاجتماع</CardTitle>
+            <CardTitle className="text-right">محضر الاجتماع</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-center py-4 text-gray-500">

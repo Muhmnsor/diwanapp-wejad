@@ -13,7 +13,7 @@ interface TasksListProps {
   onTasksChange?: () => void;
 }
 
-export const TasksList = ({ tasks, isLoading, error }: TasksListProps) => {
+export const TasksList = ({ tasks, isLoading, error, onTasksChange }: TasksListProps) => {
   if (isLoading) {
     return (
       <div className="text-center py-4 text-muted-foreground">
@@ -39,21 +39,21 @@ export const TasksList = ({ tasks, isLoading, error }: TasksListProps) => {
   }
 
   return (
-    <Table>
+    <Table dir="rtl">
       <TableHeader>
         <TableRow>
-          <TableHead>عنوان المهمة</TableHead>
-          <TableHead>النوع</TableHead>
-          <TableHead>تاريخ الاستحقاق</TableHead>
-          <TableHead>الحالة</TableHead>
-          <TableHead>المسؤول</TableHead>
+          <TableHead className="text-right">عنوان المهمة</TableHead>
+          <TableHead className="text-right">النوع</TableHead>
+          <TableHead className="text-right">تاريخ الاستحقاق</TableHead>
+          <TableHead className="text-right">الحالة</TableHead>
+          <TableHead className="text-right">المسؤول</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {tasks.map((task) => (
           <TableRow key={task.id}>
-            <TableCell className="font-medium">{task.title}</TableCell>
-            <TableCell>
+            <TableCell className="font-medium text-right">{task.title}</TableCell>
+            <TableCell className="text-right">
               {task.task_type === 'action_item' && <Badge variant="outline">إجراء</Badge>}
               {task.task_type === 'follow_up' && <Badge variant="outline">متابعة</Badge>}
               {task.task_type === 'decision' && <Badge variant="outline">قرار</Badge>}
@@ -61,16 +61,16 @@ export const TasksList = ({ tasks, isLoading, error }: TasksListProps) => {
               {task.task_type === 'execution' && <Badge variant="outline">تنفيذية</Badge>}
               {task.task_type === 'other' && <Badge variant="outline">أخرى</Badge>}
             </TableCell>
-            <TableCell>
+            <TableCell className="text-right">
               {task.due_date ? format(new Date(task.due_date), 'dd/MM/yyyy', { locale: ar }) : '-'}
             </TableCell>
-            <TableCell>
+            <TableCell className="text-right">
               {task.status === 'pending' && <Badge variant="outline" className="bg-yellow-50 text-yellow-700 hover:bg-yellow-50">قيد الانتظار</Badge>}
               {task.status === 'in_progress' && <Badge variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-50">قيد التنفيذ</Badge>}
               {task.status === 'completed' && <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">مكتملة</Badge>}
               {task.status === 'cancelled' && <Badge variant="outline" className="bg-red-50 text-red-700 hover:bg-red-50">ملغاة</Badge>}
             </TableCell>
-            <TableCell>{task.assigned_to || '-'}</TableCell>
+            <TableCell className="text-right">{task.assigned_to || '-'}</TableCell>
           </TableRow>
         ))}
       </TableBody>

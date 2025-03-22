@@ -1,74 +1,117 @@
 
 @media print {
-  /* Hide elements not needed for printing */
-  .print\:hidden {
+  /* عام */
+  body {
+    font-family: 'Noto Kufi Arabic', sans-serif;
+    background: white;
+    color: black;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* إخفاء العناصر غير الضرورية */
+  header, 
+  nav, 
+  button, 
+  .print:hidden, 
+  .no-print {
     display: none !important;
   }
-  
-  /* Show elements that should only appear when printing */
-  .hidden.print\:block {
+
+  /* تنسيق الصفحة */
+  @page {
+    margin: 1.5cm;
+    size: A4;
+  }
+
+  /* تنسيق المحتوى المطبوع */
+  .print-content {
     display: block !important;
+    page-break-inside: avoid;
   }
-  
-  /* Basic print styling */
-  body {
-    background-color: white;
-    font-size: 12pt;
-    color: black;
+
+  /* التنسيق العام للنص */
+  h1, h2, h3, h4, h5, h6, p, span, div {
+    color: black !important;
+    text-align: right !important;
   }
-  
-  /* General layout */
-  .container {
-    width: 100%;
-    max-width: none;
-    padding: 0;
-    margin: 0;
-  }
-  
-  /* Headers and text */
+
+  /* العناوين */
   h1 {
-    font-size: 18pt;
-    margin-bottom: 1rem;
+    font-size: 24pt;
+    margin-bottom: 0.5cm;
   }
-  
+
   h2 {
-    font-size: 16pt;
-    margin-bottom: 0.75rem;
+    font-size: 18pt;
+    margin-bottom: 0.3cm;
   }
-  
+
   h3 {
     font-size: 14pt;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.2cm;
   }
-  
-  p {
-    margin-bottom: 0.5rem;
+
+  /* النص العادي */
+  p, span, div {
+    font-size: 12pt;
+    line-height: 1.5;
   }
-  
-  /* Cards */
-  .rounded-lg {
-    border-radius: 0 !important;
-  }
-  
-  .shadow {
-    box-shadow: none !important;
-  }
-  
-  .bg-white {
-    background-color: transparent !important;
-  }
-  
-  /* Add page breaks */
-  .page-break-after {
-    page-break-after: always;
-  }
-  
-  .page-break-before {
-    page-break-before: always;
-  }
-  
-  /* Avoid breaking inside elements */
-  .avoid-break-inside {
+
+  /* الجداول */
+  table {
+    width: 100%;
+    border-collapse: collapse;
     page-break-inside: avoid;
+  }
+
+  table, th, td {
+    border: 1px solid black;
+    padding: 0.2cm;
+    text-align: right;
+  }
+
+  th {
+    background-color: #f2f2f2 !important;
+    font-weight: bold;
+  }
+
+  /* البطاقات */
+  .card {
+    border: 1px solid #ddd;
+    margin-bottom: 0.5cm;
+    page-break-inside: avoid;
+  }
+
+  .card-header {
+    background-color: #f2f2f2 !important;
+    padding: 0.2cm;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .card-content {
+    padding: 0.3cm;
+  }
+
+  /* قواعد خاصة بمحضر الاجتماع */
+  .meeting-header {
+    margin-bottom: 1cm;
+    text-align: center;
+    page-break-after: avoid;
+  }
+
+  .meeting-section {
+    margin-bottom: 0.5cm;
+    page-break-inside: avoid;
+  }
+
+  .meeting-section h3 {
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 0.1cm;
+  }
+
+  /* الفواصل الصفحية */
+  .page-break {
+    page-break-before: always;
   }
 }
