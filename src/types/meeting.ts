@@ -31,7 +31,7 @@ export type ParticipantRole = 'organizer' | 'presenter' | 'member' | 'guest';
 
 export type AttendanceStatus = 'pending' | 'confirmed' | 'attended' | 'absent';
 
-export type TaskType = 'action_item' | 'follow_up' | 'decision' | 'other';
+export type TaskType = 'action_item' | 'follow_up' | 'decision' | 'other' | 'preparation' | 'execution' | 'follow_up';
 
 export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 
@@ -48,4 +48,7 @@ export interface MeetingTask {
   status: TaskStatus;
   created_at?: string;
   updated_at?: string;
+  created_by?: string;
+  general_task_id?: string;
+  add_to_general_tasks?: boolean;
 }

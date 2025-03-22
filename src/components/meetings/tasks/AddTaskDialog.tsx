@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { TaskType } from "@/types/meeting";
 import { Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface AddTaskDialogProps {
   meetingId?: string;
@@ -39,8 +40,8 @@ export const AddTaskDialog = ({
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
-  // Use only the task types that are supported in the backend
-  const [taskType, setTaskType] = useState<"action_item" | "follow_up" | "decision" | "other">("action_item");
+  const [taskType, setTaskType] = useState<TaskType>("action_item");
+  const [addToGeneralTasks, setAddToGeneralTasks] = useState(false);
   
   const { mutate: createTask, isPending } = useCreateMeetingTask();
   
@@ -56,7 +57,8 @@ export const AddTaskDialog = ({
       due_date: dueDate || undefined,
       assigned_to: assignedTo || undefined,
       task_type: taskType,
-      status: "pending" // Adding the required status field with a default value
+      status: "pending",
+      add_to_general_tasks: addToGeneralTasks
     }, {
       onSuccess: () => {
         resetForm();
@@ -72,6 +74,7 @@ export const AddTaskDialog = ({
     setDueDate("");
     setAssignedTo("");
     setTaskType("action_item");
+    setAddToGeneralTasks(false);
   };
   
   return (
@@ -110,18 +113,17 @@ export const AddTaskDialog = ({
               <Select 
                 value={taskType} 
                 onValueChange={(value) => {
-                  // Only accept the limited allowed task types
-                  if (value === "action_item" || value === "follow_up" || value === "decision" || value === "other") {
-                    setTaskType(value);
-                  }
+                  setTaskType(value as TaskType);
                 }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="اختر نوع المهمة" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="follow_up">المتابعة</SelectItem>
-                  <SelectItem value="action_item">إجراءات</SelectItem>
+                  <SelectItem value="preparation">تحضيرية</SelectItem>
+                  <SelectItem value="execution">تنفيذية</SelectItem>
+                  <SelectItem value="follow_up">متابعة</SelectItem>
+                  <SelectItem value="action_item">إجراء</SelectItem>
                   <SelectItem value="decision">قرار</SelectItem>
                   <SelectItem value="other">أخرى</SelectItem>
                 </SelectContent>
@@ -146,6 +148,17 @@ export const AddTaskDialog = ({
                 onChange={(e) => setAssignedTo(e.target.value)}
                 placeholder="أدخل اسم أو معرف المسؤول"
               />
+            </div>
+            
+            <div className="flex items-center space-x-2 space-x-reverse">
+              <Checkbox 
+                id="addToTasks" 
+                checked={addToGeneralTasks}
+                onCheckedChange={(checked) => setAddToGeneralTasks(checked === true)}
+              />
+              <Label htmlFor="addToTasks" className="text-sm font-normal cursor-pointer">
+                إضافة المهمة إلى نظام المهام العام
+              </Label>
             </div>
           </div>
           
