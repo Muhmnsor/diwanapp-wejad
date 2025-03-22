@@ -6,15 +6,20 @@ import { EditFolderDialog } from "./EditFolderDialog";
 import { DeleteFolderDialog } from "./DeleteFolderDialog";
 import { FolderMembersDialog } from "./FolderMembersDialog";
 import { useUserRoles } from "@/hooks/useUserRoles";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Button } from "@/components/ui/button";
+import { Folder, Plus } from "lucide-react";
 
 interface MeetingFoldersContainerProps {
   refreshTrigger: number;
   onSuccess?: () => void;
+  onAddFolder?: () => void;
 }
 
 export const MeetingFoldersContainer = ({ 
   refreshTrigger, 
-  onSuccess 
+  onSuccess,
+  onAddFolder
 }: MeetingFoldersContainerProps) => {
   const { data, isLoading, error } = useMeetingFolders(refreshTrigger);
   const { hasAdminRole } = useUserRoles();
@@ -52,7 +57,19 @@ export const MeetingFoldersContainer = ({
   }
   
   if (!data || data.length === 0) {
-    return <div className="text-muted-foreground text-center p-8">لا توجد تصنيفات حالياً</div>;
+    return (
+      <EmptyState
+        icon={<Folder className="h-10 w-10 opacity-50" />}
+        title="لا توجد تصنيفات"
+        description="قم بإنشاء أول تصنيف للاجتماعات للبدء في تنظيم الاجتماعات"
+        action={
+          <Button onClick={onAddFolder}>
+            <Plus className="h-4 w-4 ml-2" />
+            إضافة تصنيف جديد
+          </Button>
+        }
+      />
+    );
   }
   
   return (

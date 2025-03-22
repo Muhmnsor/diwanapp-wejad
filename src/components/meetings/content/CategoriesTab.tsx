@@ -15,6 +15,10 @@ export const CategoriesTab = () => {
   const refreshFolders = () => {
     setRefreshTrigger(prev => prev + 1);
   };
+
+  const handleOpenAddFolder = () => {
+    setIsAddFolderOpen(true);
+  };
   
   return (
     <Card className="rtl text-right">
@@ -23,7 +27,7 @@ export const CategoriesTab = () => {
           <CardTitle className="py-[9px]">تصنيفات الاجتماعات</CardTitle>
           <CardDescription>تنظيم الاجتماعات حسب التصنيف</CardDescription>
         </div>
-        <Button onClick={() => setIsAddFolderOpen(true)} disabled={!hasAdminRole}>
+        <Button onClick={() => setIsAddFolderOpen(true)}>
           <Plus className="h-4 w-4 ml-2" />
           إضافة تصنيف جديد
         </Button>
@@ -31,7 +35,8 @@ export const CategoriesTab = () => {
       <CardContent>
         <MeetingFoldersContainer 
           refreshTrigger={refreshTrigger} 
-          onSuccess={refreshFolders} 
+          onSuccess={refreshFolders}
+          onAddFolder={handleOpenAddFolder} 
         />
         
         <AddFolderDialog 
