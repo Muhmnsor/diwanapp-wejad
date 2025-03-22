@@ -34,6 +34,7 @@ export const MeetingTasksSection = ({ meetingId }: MeetingTasksSectionProps) => 
         isLoading={isLoading} 
         error={error}
         onTasksChange={refetch}
+        hideAddButton={true} // Hide the add button in TasksList to avoid duplication
       />
 
       <AddTaskDialog 
