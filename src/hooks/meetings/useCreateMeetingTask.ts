@@ -17,6 +17,8 @@ export const useCreateMeetingTask = () => {
         throw new Error('يجب تسجيل الدخول لإضافة مهمة');
       }
       
+      console.log("Creating meeting task with data:", taskData);
+      
       const { data, error } = await supabase
         .from('meeting_tasks')
         .insert({
@@ -26,11 +28,18 @@ export const useCreateMeetingTask = () => {
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error in meeting task creation:", error);
+        throw error;
+      }
+      
+      console.log("Successfully created meeting task:", data);
       
       // If this is a task that should be added to the general tasks system
       if (taskData.add_to_general_tasks) {
         try {
+          console.log("Adding task to general tasks system");
+          
           // Add to general tasks
           const { data: generalTask, error: generalTaskError } = await supabase
             .from('tasks')
@@ -40,7 +49,7 @@ export const useCreateMeetingTask = () => {
               status: 'pending',
               priority: 'medium',
               due_date: taskData.due_date,
-              assigned_to: taskData.assigned_to,
+              assigned_to: user.id, // Use the current user ID for assigned_to to match UUID type
               is_general: true,
               category: taskData.task_type,
               created_by: user.id,

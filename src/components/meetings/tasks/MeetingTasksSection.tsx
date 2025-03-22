@@ -18,6 +18,8 @@ export const MeetingTasksSection = ({ meetingId }: MeetingTasksSectionProps) => 
     refetch();
   };
 
+  console.log("MeetingTasksSection rendering with tasks:", tasks);
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -28,6 +30,7 @@ export const MeetingTasksSection = ({ meetingId }: MeetingTasksSectionProps) => 
         </Button>
       </div>
 
+      {/* Use the existing TasksList component without modifications */}
       <TasksList 
         meetingId={meetingId}
       />
