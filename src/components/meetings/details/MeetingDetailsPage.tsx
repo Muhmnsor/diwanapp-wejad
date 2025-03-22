@@ -20,8 +20,7 @@ export const MeetingDetailsPage = () => {
   const navigate = useNavigate();
   const { data: meeting, isLoading, error, refetch } = useMeeting(meetingId as string);
   
-  // Change default tab to "tasks" instead of "agenda"
-  const [activeTab, setActiveTab] = useState("tasks");
+  const [activeTab, setActiveTab] = useState("agenda");
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);

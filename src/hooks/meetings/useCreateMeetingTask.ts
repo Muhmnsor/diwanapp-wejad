@@ -5,9 +5,7 @@ import { toast } from "sonner";
 import { MeetingTask } from "@/types/meeting";
 import { useAuthStore } from "@/store/refactored-auth";
 
-export type CreateMeetingTaskInput = Omit<MeetingTask, 'id' | 'created_at' | 'updated_at'> & {
-  requires_deliverable?: boolean;
-};
+export type CreateMeetingTaskInput = Omit<MeetingTask, 'id' | 'created_at' | 'updated_at'>;
 
 export const useCreateMeetingTask = () => {
   const queryClient = useQueryClient();
@@ -19,9 +17,6 @@ export const useCreateMeetingTask = () => {
         throw new Error('يجب تسجيل الدخول لإضافة مهمة');
       }
       
-      console.log("Creating meeting task with data:", taskData);
-      
-      // Create the meeting task
       const { data, error } = await supabase
         .from('meeting_tasks')
         .insert({
@@ -31,32 +26,11 @@ export const useCreateMeetingTask = () => {
         .select()
         .single();
         
-      if (error) {
-        console.error("Error in meeting task creation:", error);
-        throw error;
-      }
-      
-      console.log("Successfully created meeting task:", data);
+      if (error) throw error;
       
       // If this is a task that should be added to the general tasks system
       if (taskData.add_to_general_tasks) {
         try {
-          console.log("Adding task to general tasks system");
-          
-          // The assigned_to field in tasks table expects a UUID
-          // If assigned_to is not provided or not a valid UUID, use the current user's ID
-          let assignedToUuid = user.id;
-          
-          if (taskData.assigned_to) {
-            // Check if assigned_to is already a UUID
-            const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-            if (uuidPattern.test(taskData.assigned_to)) {
-              assignedToUuid = taskData.assigned_to;
-            } else {
-              console.log("assigned_to is not a UUID, using current user ID instead");
-            }
-          }
-          
           // Add to general tasks
           const { data: generalTask, error: generalTaskError } = await supabase
             .from('tasks')
@@ -66,11 +40,11 @@ export const useCreateMeetingTask = () => {
               status: 'pending',
               priority: 'medium',
               due_date: taskData.due_date,
-              assigned_to: assignedToUuid, // Use the UUID
+              assigned_to: taskData.assigned_to,
               is_general: true,
               category: taskData.task_type,
               created_by: user.id,
-              requires_deliverable: taskData.requires_deliverable || false,
+              requires_deliverable: false,
               meeting_task_id: data.id // Reference to the original meeting task
             })
             .select()

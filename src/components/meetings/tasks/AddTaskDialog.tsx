@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useCreateMeetingTask } from "@/hooks/meetings/useCreateMeetingTask";
 import {
   Dialog,
@@ -22,8 +22,6 @@ import {
 import { TaskType } from "@/types/meeting";
 import { Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useAuthStore } from "@/store/refactored-auth";
-import { toast } from "sonner";
 
 interface AddTaskDialogProps {
   meetingId?: string;
@@ -46,39 +44,11 @@ export const AddTaskDialog = ({
   const [addToGeneralTasks, setAddToGeneralTasks] = useState(false);
   
   const { mutate: createTask, isPending } = useCreateMeetingTask();
-  const { user } = useAuthStore();
-  
-  // Reset form when dialog opens
-  useEffect(() => {
-    if (open) {
-      console.log("AddTaskDialog opened with meetingId:", meetingId);
-    }
-  }, [open, meetingId]);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!meetingId) {
-      console.error("Missing meetingId for task creation");
-      toast.error("خطأ: معرّف الاجتماع مفقود");
-      return;
-    }
-    
-    if (!title.trim()) {
-      toast.error("يرجى إدخال عنوان المهمة");
-      return;
-    }
-    
-    console.log("Submitting task with data:", {
-      meeting_id: meetingId,
-      title,
-      description,
-      due_date: dueDate,
-      assigned_to: assignedTo,
-      task_type: taskType,
-      add_to_general_tasks: addToGeneralTasks,
-      created_by: user?.id
-    });
+    if (!meetingId) return;
     
     createTask({
       meeting_id: meetingId,
@@ -91,15 +61,9 @@ export const AddTaskDialog = ({
       add_to_general_tasks: addToGeneralTasks
     }, {
       onSuccess: () => {
-        console.log("Task created successfully, resetting form");
-        toast.success("تمت إضافة المهمة بنجاح");
         resetForm();
         onOpenChange(false);
-        if (onSuccess) onSuccess();
-      },
-      onError: (error) => {
-        console.error("Error creating task:", error);
-        toast.error("حدث خطأ أثناء إضافة المهمة");
+        onSuccess?.();
       }
     });
   };
@@ -114,13 +78,7 @@ export const AddTaskDialog = ({
   };
   
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => {
-      console.log("Dialog onOpenChange called with:", isOpen);
-      if (!isOpen) {
-        resetForm();
-      }
-      onOpenChange(isOpen);
-    }}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]" dir="rtl">
         <form onSubmit={handleSubmit}>
           <DialogHeader>

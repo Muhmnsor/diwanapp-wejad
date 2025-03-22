@@ -51,5 +51,4 @@ export interface MeetingTask {
   created_by?: string;
   general_task_id?: string;
   add_to_general_tasks?: boolean;
-  requires_deliverable?: boolean;
 }

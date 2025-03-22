@@ -29,7 +29,5 @@ export const useMeetingTasks = (meetingId: string) => {
       return data as MeetingTask[];
     },
     enabled: !!meetingId,
-    staleTime: 30000, // 30 seconds
-    retry: 1, // Retry once if query fails
   });
 };

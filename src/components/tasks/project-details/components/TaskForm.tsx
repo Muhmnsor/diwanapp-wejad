@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { TaskTitleField } from "./TaskTitleField";
 import { TaskDescriptionField } from "./TaskDescriptionField";
@@ -23,15 +22,12 @@ export interface TaskFormProps {
     assignedTo: string | null;
     attachment?: File[] | null;
     category: string;
-    requiresDeliverable?: boolean;
   }) => Promise<void>;
   isSubmitting: boolean;
   projectStages: { id: string; name: string }[];
   projectMembers: ProjectMember[];
   attachment?: File[] | null;
   setAttachment?: (files: File[] | null) => void;
-  isGeneral?: boolean;
-  onCancel?: () => void;
 }
 
 export const TaskForm = ({ 
@@ -40,9 +36,7 @@ export const TaskForm = ({
   projectStages,
   projectMembers,
   attachment,
-  setAttachment,
-  isGeneral,
-  onCancel
+  setAttachment
 }: TaskFormProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -52,7 +46,6 @@ export const TaskForm = ({
   const [assignedTo, setAssignedTo] = useState<string | null>(null);
   const [localAttachment, setLocalAttachment] = useState<File[] | null>(null);
   const [category, setCategory] = useState("");
-  const [requiresDeliverable, setRequiresDeliverable] = useState(false);
 
   const fileAttachment = attachment !== undefined ? attachment : localAttachment;
   const setFileAttachment = setAttachment || setLocalAttachment;
@@ -77,13 +70,8 @@ export const TaskForm = ({
       stageId,
       assignedTo,
       attachment: fileAttachment,
-      category,
-      requiresDeliverable
+      category
     });
-  };
-
-  const handleCancelClick = () => {
-    if (onCancel) onCancel();
   };
 
   return (
@@ -112,21 +100,7 @@ export const TaskForm = ({
       
       <TaskCategoryField category={category} setCategory={setCategory} />
       
-      <div className="flex items-center space-x-2 space-x-reverse">
-        <Checkbox 
-          id="requiresDeliverable" 
-          checked={requiresDeliverable}
-          onCheckedChange={(checked) => setRequiresDeliverable(checked === true)}
-        />
-        <Label htmlFor="requiresDeliverable" className="text-sm font-normal cursor-pointer">
-          تتطلب هذه المهمة تسليم ملفات
-        </Label>
-      </div>
-      
-      <TaskFormActions 
-        isSubmitting={isSubmitting} 
-        onCancel={handleCancelClick}
-      />
+      <TaskFormActions isSubmitting={isSubmitting} onCancel={() => console.log("Form cancelled")} />
     </form>
   );
 };
