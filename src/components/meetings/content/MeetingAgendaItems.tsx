@@ -11,6 +11,8 @@ interface MeetingAgendaItemsProps {
 export const MeetingAgendaItems: React.FC<MeetingAgendaItemsProps> = ({ meetingId }) => {
   const { data: agendaItems, isLoading, error } = useMeetingAgendaItems(meetingId);
 
+  console.log('Meeting agenda items:', agendaItems, 'for meeting ID:', meetingId);
+
   if (isLoading) {
     return (
       <Card className="mb-6">

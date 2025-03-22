@@ -39,14 +39,18 @@ export const useCreateMeeting = () => {
     
     try {
       if (!user?.id) {
+        toast.error('يجب تسجيل الدخول لإنشاء اجتماع');
         throw new Error('يجب تسجيل الدخول لإنشاء اجتماع');
       }
 
       // Ensure required fields are provided
       if (!meetingData.title || !meetingData.date || !meetingData.start_time || !meetingData.duration || 
           !meetingData.attendance_type || !meetingData.meeting_status) {
+        toast.error('يرجى استكمال جميع الحقول المطلوبة');
         throw new Error('يرجى استكمال جميع الحقول المطلوبة');
       }
+      
+      console.log('Creating meeting with data:', meetingData);
       
       // 1. Insert meeting record with user ID
       const { data: meeting, error } = await supabase
@@ -69,16 +73,24 @@ export const useCreateMeeting = () => {
       
       if (error) {
         console.error('Error creating meeting:', error);
+        toast.error(`فشل إنشاء الاجتماع: ${error.message || error.details || 'خطأ غير معروف'}`);
         throw new Error(`فشل إنشاء الاجتماع: ${error.message || error.details || 'خطأ غير معروف'}`);
       }
       
-      if (!meeting) throw new Error('فشل إنشاء الاجتماع');
+      if (!meeting) {
+        toast.error('فشل إنشاء الاجتماع');
+        throw new Error('فشل إنشاء الاجتماع');
+      }
+      
+      console.log('Meeting created successfully:', meeting);
       
       // 2. Filter out empty agenda items and insert the valid ones
       if (meetingData.agenda_items && meetingData.agenda_items.length > 0) {
-        const validAgendaItems = meetingData.agenda_items.filter(item => item.content.trim() !== '');
+        const validAgendaItems = meetingData.agenda_items.filter(item => item.content && item.content.trim() !== '');
         
         if (validAgendaItems.length > 0) {
+          console.log('Inserting agenda items:', validAgendaItems);
+          
           const agendaItemsToInsert = validAgendaItems.map(item => ({
             meeting_id: meeting.id,
             content: item.content.trim(),
@@ -92,16 +104,23 @@ export const useCreateMeeting = () => {
           
           if (agendaError) {
             console.error('Error inserting agenda items:', agendaError);
-            throw new Error(`فشل إضافة بنود جدول الأعمال: ${agendaError.message}`);
+            toast.error(`فشل إضافة بنود جدول الأعمال: ${agendaError.message}`);
+            // We don't throw here to still return the meeting even if agenda items fail
+          } else {
+            console.log('Agenda items inserted successfully');
           }
+        } else {
+          console.log('No valid agenda items to insert');
         }
       }
       
       // 3. Filter out empty objectives and insert the valid ones
       if (meetingData.objectives && meetingData.objectives.length > 0) {
-        const validObjectives = meetingData.objectives.filter(objective => objective.content.trim() !== '');
+        const validObjectives = meetingData.objectives.filter(objective => objective.content && objective.content.trim() !== '');
         
         if (validObjectives.length > 0) {
+          console.log('Inserting objectives:', validObjectives);
+          
           const objectivesToInsert = validObjectives.map(objective => ({
             meeting_id: meeting.id,
             content: objective.content.trim(),
@@ -115,8 +134,13 @@ export const useCreateMeeting = () => {
           
           if (objectivesError) {
             console.error('Error inserting objectives:', objectivesError);
-            throw new Error(`فشل إضافة أهداف الاجتماع: ${objectivesError.message}`);
+            toast.error(`فشل إضافة أهداف الاجتماع: ${objectivesError.message}`);
+            // We don't throw here to still return the meeting even if objectives fail
+          } else {
+            console.log('Objectives inserted successfully');
           }
+        } else {
+          console.log('No valid objectives to insert');
         }
       }
       

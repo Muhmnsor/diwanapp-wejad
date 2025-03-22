@@ -11,6 +11,8 @@ interface MeetingObjectivesProps {
 export const MeetingObjectives: React.FC<MeetingObjectivesProps> = ({ meetingId }) => {
   const { data: objectives, isLoading, error } = useMeetingObjectives(meetingId);
 
+  console.log('Meeting objectives:', objectives, 'for meeting ID:', meetingId);
+
   if (isLoading) {
     return (
       <Card className="mb-6">
