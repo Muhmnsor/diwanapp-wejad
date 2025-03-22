@@ -1649,6 +1649,54 @@ export type Database = {
           },
         ]
       }
+      meeting_tasks: {
+        Row: {
+          add_to_general_tasks: boolean | null
+          assigned_to: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          general_task_id: string | null
+          id: string
+          meeting_id: string
+          status: string
+          task_type: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          add_to_general_tasks?: boolean | null
+          assigned_to?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          general_task_id?: string | null
+          id?: string
+          meeting_id: string
+          status?: string
+          task_type: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          add_to_general_tasks?: boolean | null
+          assigned_to?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          general_task_id?: string | null
+          id?: string
+          meeting_id?: string
+          status?: string
+          task_type?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       meeting_users: {
         Row: {
           created_at: string | null
