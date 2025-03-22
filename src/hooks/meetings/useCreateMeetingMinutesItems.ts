@@ -1,60 +1,92 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { MeetingAgendaItem } from "./useMeetingAgendaItems";
+import { toast } from "sonner";
 
-interface CreateMeetingMinutesItemsParams {
-  meetingId: string;
-  agendaItems: MeetingAgendaItem[];
+interface MeetingMinutesItem {
+  meeting_id: string;
+  agenda_item_id: string;
+  content: string;
 }
 
 export const useCreateMeetingMinutesItems = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async (params: CreateMeetingMinutesItemsParams) => {
-      const { meetingId, agendaItems } = params;
+  const { mutate, isPending, isSuccess, isError, error } = useMutation({
+    mutationFn: async (items: MeetingMinutesItem[]) => {
+      if (!items.length) {
+        throw new Error("No items to create");
+      }
+
+      // First check if minutes already exist for these agenda items
+      const existingMinutesPromises = items.map((item) => {
+        return supabase
+          .from('meeting_minutes')
+          .select('id')
+          .eq('meeting_id', item.meeting_id)
+          .eq('agenda_item_id', item.agenda_item_id)
+          .single();
+      });
+
+      const existingResults = await Promise.all(existingMinutesPromises);
       
-      // Check if meeting minutes items already exist for this meeting
-      const { data: existingItems, error: checkError } = await supabase
-        .from('meeting_minutes_items')
-        .select('id')
-        .eq('meeting_id', meetingId);
+      // Prepare updates and inserts
+      const updates: MeetingMinutesItem[] = [];
+      const inserts: MeetingMinutesItem[] = [];
       
-      if (checkError) {
-        console.error('Error checking existing minutes items:', checkError);
-        throw checkError;
+      existingResults.forEach((result, index) => {
+        if (result.data) {
+          // Update existing item
+          updates.push({
+            ...items[index],
+            id: result.data.id
+          } as any);
+        } else {
+          // Insert new item
+          inserts.push(items[index]);
+        }
+      });
+      
+      // Process updates
+      if (updates.length > 0) {
+        const { error: updateError } = await supabase
+          .from('meeting_minutes')
+          .upsert(updates);
+          
+        if (updateError) throw updateError;
       }
       
-      // If items already exist, don't create new ones
-      if (existingItems && existingItems.length > 0) {
-        console.log('Meeting minutes items already exist for this meeting');
-        return existingItems;
+      // Process inserts
+      if (inserts.length > 0) {
+        const { error: insertError } = await supabase
+          .from('meeting_minutes')
+          .insert(inserts);
+          
+        if (insertError) throw insertError;
       }
       
-      // Prepare items to insert
-      const items = agendaItems.map((item, index) => ({
-        meeting_id: meetingId,
-        agenda_item_id: item.id,
-        content: '',
-        order_number: index + 1,
-        created_by: (await supabase.auth.getUser()).data.user?.id
-      }));
-      
-      const { data, error } = await supabase
-        .from('meeting_minutes_items')
-        .insert(items)
-        .select();
-      
-      if (error) {
-        console.error('Error creating meeting minutes items:', error);
-        throw error;
-      }
-      
-      return data;
+      return true;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['meeting-minutes-items', variables.meetingId] });
+      toast.success("تم حفظ المحضر بنجاح");
+      
+      if (variables.length > 0) {
+        queryClient.invalidateQueries({ 
+          queryKey: ['meeting-minutes', variables[0].meeting_id] 
+        });
+      }
+    },
+    onError: (error) => {
+      console.error("Error saving meeting minutes:", error);
+      toast.error("حدث خطأ أثناء حفظ المحضر");
     }
   });
+
+  return {
+    createMinutesItems: mutate,
+    isPending,
+    isSuccess,
+    isError,
+    error
+  };
 };

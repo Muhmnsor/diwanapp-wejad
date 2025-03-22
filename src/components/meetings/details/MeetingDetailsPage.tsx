@@ -12,9 +12,7 @@ import { useMeeting } from "@/hooks/meetings/useMeeting";
 import { MeetingDetailsTab } from "@/components/meetings/details/MeetingDetailsTab";
 import { MeetingTasksSection } from "@/components/meetings/tasks/MeetingTasksSection";
 import { MeetingMinutesContent } from "@/components/meetings/minutes/MeetingMinutesContent";
-import { DeleteMeetingDialog } from "@/components/meetings/dialogs/DeleteMeetingDialog";
-import { EditMeetingDialog } from "@/components/meetings/dialogs/EditMeetingDialog";
-import { AddParticipantDialog } from "@/components/meetings/participants/AddParticipantDialog";
+import { DeleteMeetingDialog, EditMeetingDialog, AddParticipantDialog } from "@/components/meetings/dialogs/MeetingDialogs";
 import "../minutes/print-styles.css";
 
 export const MeetingDetailsPage = () => {
@@ -157,7 +155,7 @@ export const MeetingDetailsPage = () => {
         </div>
       </div>
       
-      <Footer className="print:hidden" />
+      <Footer />
       
       <EditMeetingDialog
         meeting={meeting}

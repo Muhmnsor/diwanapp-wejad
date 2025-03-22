@@ -1,10 +1,18 @@
 
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MeetingAgendaItem } from "@/hooks/meetings/useMeetingAgendaItems";
-import { useMeetingMinutesItems } from "@/hooks/meetings/useMeetingMinutesItems";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Save } from "lucide-react";
 import { useCreateMeetingMinutesItems } from "@/hooks/meetings/useCreateMeetingMinutesItems";
-import { MeetingMinutesItemEditor } from "./MeetingMinutesItemEditor";
+import { useMeetingMinutes } from "@/hooks/meetings/useMeetingMinutes";
+
+interface MeetingAgendaItem {
+  id: string;
+  title: string;
+  description?: string;
+  meeting_id: string;
+}
 
 interface MeetingMinutesItemsListProps {
   meetingId: string;
@@ -15,78 +23,79 @@ export const MeetingMinutesItemsList: React.FC<MeetingMinutesItemsListProps> = (
   meetingId, 
   agendaItems 
 }) => {
-  const { data: minutesItems, isLoading, error } = useMeetingMinutesItems(meetingId);
-  const createMinutesItemsMutation = useCreateMeetingMinutesItems();
-
-  // Create minutes items for each agenda item if they don't exist
-  useEffect(() => {
-    if (agendaItems && agendaItems.length > 0 && !isLoading && !minutesItems?.length) {
-      createMinutesItemsMutation.mutate({
-        meetingId,
-        agendaItems
+  const { data: existingMinutes, isLoading } = useMeetingMinutes(meetingId);
+  const { createMinutesItems, isPending } = useCreateMeetingMinutesItems();
+  
+  // Initialize minutes content state
+  const [minutesContent, setMinutesContent] = useState<Record<string, string>>(() => {
+    const initialContent: Record<string, string> = {};
+    
+    // If there are existing minutes, use them to initialize the state
+    if (existingMinutes) {
+      existingMinutes.forEach(minute => {
+        initialContent[minute.agenda_item_id] = minute.content;
       });
     }
-  }, [agendaItems, isLoading, minutesItems, meetingId, createMinutesItemsMutation]);
-
-  if (isLoading || createMinutesItemsMutation.isPending) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>محاضر البنود</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-4">جاري تحميل محاضر البنود...</div>
-        </CardContent>
-      </Card>
-    );
+    
+    return initialContent;
+  });
+  
+  const handleContentChange = (agendaItemId: string, content: string) => {
+    setMinutesContent(prev => ({
+      ...prev,
+      [agendaItemId]: content
+    }));
+  };
+  
+  const handleSaveMinutes = () => {
+    const items = agendaItems.map(item => ({
+      meeting_id: meetingId,
+      agenda_item_id: item.id,
+      content: minutesContent[item.id] || ''
+    }));
+    
+    createMinutesItems(items);
+  };
+  
+  if (isLoading) {
+    return <div className="text-center py-4">جاري تحميل المحضر...</div>;
   }
-
-  if (error) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>محاضر البنود</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-red-500">حدث خطأ أثناء تحميل محاضر البنود</div>
-        </CardContent>
-      </Card>
-    );
-  }
-
+  
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>محاضر بنود الاجتماع</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          {minutesItems && minutesItems.length > 0 ? (
-            minutesItems.map((minutesItem, index) => {
-              // Find the corresponding agenda item
-              const agendaItem = agendaItems.find(item => item.id === minutesItem.agenda_item_id);
-              
-              return (
-                <div key={minutesItem.id} className="border-b pb-6 last:border-b-0 last:pb-0">
-                  <div className="flex items-start mb-2">
-                    <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-primary text-white ml-2">
-                      {index + 1}
-                    </div>
-                    <h3 className="text-lg font-semibold">
-                      {agendaItem?.content || `البند #${index + 1}`}
-                    </h3>
-                  </div>
-                  <MeetingMinutesItemEditor minutesItem={minutesItem} />
-                </div>
-              );
-            })
-          ) : (
-            <div className="text-center py-4 text-gray-500">
-              لا توجد محاضر لبنود الاجتماع بعد.
+    <div className="space-y-6">
+      <div className="flex justify-end print:hidden">
+        <Button 
+          onClick={handleSaveMinutes}
+          disabled={isPending}
+        >
+          <Save className="h-4 w-4 ml-2" />
+          {isPending ? "جاري الحفظ..." : "حفظ المحضر"}
+        </Button>
+      </div>
+      
+      {agendaItems.map(item => (
+        <Card key={item.id} className="overflow-hidden">
+          <CardHeader className="bg-muted/30 pb-3">
+            <CardTitle className="text-lg">{item.title}</CardTitle>
+            {item.description && (
+              <p className="text-sm text-muted-foreground">{item.description}</p>
+            )}
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="print:hidden">
+              <Textarea
+                placeholder="أدخل محضر الاجتماع لهذا البند..."
+                value={minutesContent[item.id] || ''}
+                onChange={(e) => handleContentChange(item.id, e.target.value)}
+                className="min-h-[150px] resize-none"
+              />
             </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+            <div className="hidden print:block whitespace-pre-wrap">
+              {minutesContent[item.id] || 'لا يوجد محتوى'}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 };

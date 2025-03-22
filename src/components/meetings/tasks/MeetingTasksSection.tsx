@@ -1,46 +1,51 @@
 
-import { useState } from "react";
-import { TasksList } from "@/components/meetings/content";
-import { useMeetingTasks } from "@/hooks/meetings/useMeetingTasks";
-import { AddTaskDialog } from "./AddTaskDialog";
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { useMeetingTasks } from "@/hooks/meetings/useMeetingTasks";
+import { TasksList } from "@/components/tasks/TasksList";
+import { useState } from "react";
+import { AddTaskDialog } from "@/components/tasks/AddTaskDialog";
 
 interface MeetingTasksSectionProps {
   meetingId: string;
 }
 
-export const MeetingTasksSection = ({ meetingId }: MeetingTasksSectionProps) => {
-  const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
+export const MeetingTasksSection: React.FC<MeetingTasksSectionProps> = ({ meetingId }) => {
   const { data: tasks, isLoading, error, refetch } = useMeetingTasks(meetingId);
-
-  const handleTaskAdded = () => {
-    refetch();
-  };
+  const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">المهام</h3>
-        <Button onClick={() => setIsAddTaskOpen(true)} className="rtl">
+        <h3 className="text-lg font-semibold">مهام الاجتماع</h3>
+        <Button size="sm" onClick={() => setIsAddTaskOpen(true)}>
           <Plus className="h-4 w-4 ml-2" />
-          إضافة مهمة جديدة
+          إضافة مهمة
         </Button>
       </div>
 
-      <TasksList 
-        meetingId={meetingId} 
-        tasks={tasks || []} 
-        isLoading={isLoading} 
-        error={error}
-        onTasksChange={refetch}
-      />
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle>قائمة المهام</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center py-4">جاري تحميل المهام...</div>
+          ) : error ? (
+            <div className="text-center py-4 text-destructive">حدث خطأ أثناء تحميل المهام</div>
+          ) : (
+            <TasksList />
+          )}
+        </CardContent>
+      </Card>
 
-      <AddTaskDialog 
-        meetingId={meetingId}
+      <AddTaskDialog
         open={isAddTaskOpen}
         onOpenChange={setIsAddTaskOpen}
-        onSuccess={handleTaskAdded}
+        meetingId={meetingId}
+        onSuccess={refetch}
       />
     </div>
   );

@@ -1,77 +1,74 @@
 
 @media print {
-  /* Hide navigation, headers, buttons and other UI elements */
-  .print-hide,
-  nav,
-  header,
-  footer,
-  .print-hidden,
-  [aria-label="Tabs"] {
+  /* Hide elements not needed for printing */
+  .print\:hidden {
     display: none !important;
   }
-
-  /* Full width container */
-  .container {
-    max-width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
+  
+  /* Show elements that should only appear when printing */
+  .hidden.print\:block {
+    display: block !important;
   }
-
-  /* Reset text color and background */
+  
+  /* Basic print styling */
   body {
-    color: black !important;
-    background: white !important;
+    background-color: white;
+    font-size: 12pt;
+    color: black;
   }
-
-  /* Adjust card styles for print */
-  .card,
-  [class*="card"] {
-    border: 1px solid #ddd !important;
+  
+  /* General layout */
+  .container {
+    width: 100%;
+    max-width: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  /* Headers and text */
+  h1 {
+    font-size: 18pt;
+    margin-bottom: 1rem;
+  }
+  
+  h2 {
+    font-size: 16pt;
+    margin-bottom: 0.75rem;
+  }
+  
+  h3 {
+    font-size: 14pt;
+    margin-bottom: 0.5rem;
+  }
+  
+  p {
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Cards */
+  .rounded-lg {
+    border-radius: 0 !important;
+  }
+  
+  .shadow {
     box-shadow: none !important;
-    break-inside: avoid !important;
-    margin-bottom: 1rem !important;
   }
-
-  /* Ensure good spacing */
-  h1, h2, h3, h4, h5, h6 {
-    page-break-after: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  p, li {
-    orphans: 3 !important;
-    widows: 3 !important;
-  }
-
-  /* Add page breaks where needed */
-  .page-break-before {
-    page-break-before: always !important;
-  }
-
-  .page-break-after {
-    page-break-after: always !important;
-  }
-
-  /* Remove background colors from UI elements */
-  [class*="bg-"] {
+  
+  .bg-white {
     background-color: transparent !important;
   }
-
-  /* Ensure text is readable */
-  * {
-    font-size: 12pt !important;
-    line-height: 1.4 !important;
+  
+  /* Add page breaks */
+  .page-break-after {
+    page-break-after: always;
   }
-
-  h1 {
-    font-size: 18pt !important;
+  
+  .page-break-before {
+    page-break-before: always;
   }
-
-  h2 {
-    font-size: 16pt !important;
-  }
-
-  h3 {
-    font-size: 14pt !important;
+  
+  /* Avoid breaking inside elements */
+  .avoid-break-inside {
+    page-break-inside: avoid;
   }
 }
