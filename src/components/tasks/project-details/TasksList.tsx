@@ -15,12 +15,19 @@ import { EditTaskDialog } from "./EditTaskDialog";
 interface TasksListProps {
   projectId?: string | undefined;
   isWorkspace?: boolean;
+  hideAddButton?: boolean;
+  meetingId?: string;
 }
 
 // Re-export Task interface for backward compatibility
 export type { Task };
 
-export const TasksList = ({ projectId, isWorkspace = false }: TasksListProps) => {
+export const TasksList = ({ 
+  projectId, 
+  isWorkspace = false, 
+  hideAddButton = false,
+  meetingId
+}: TasksListProps) => {
   const {
     tasks,
     isLoading,
@@ -72,7 +79,11 @@ export const TasksList = ({ projectId, isWorkspace = false }: TasksListProps) =>
       
       <Card className="border shadow-sm">
         <CardHeader className="pb-0">
-          <TasksHeader onAddTask={() => setIsAddDialogOpen(true)} isGeneral={isGeneral} />
+          <TasksHeader 
+            onAddTask={() => setIsAddDialogOpen(true)} 
+            isGeneral={isGeneral}
+            hideAddButton={hideAddButton} 
+          />
         </CardHeader>
         
         <CardContent className="pt-4">
@@ -99,16 +110,18 @@ export const TasksList = ({ projectId, isWorkspace = false }: TasksListProps) =>
         </CardContent>
       </Card>
       
-      <AddTaskDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        projectId={projectId || ""}
-        projectStages={projectStages}
-        onTaskAdded={fetchTasks}
-        projectMembers={projectMembers}
-        isGeneral={isGeneral}
-        isWorkspace={isWorkspace}
-      />
+      {!hideAddButton && (
+        <AddTaskDialog
+          open={isAddDialogOpen}
+          onOpenChange={setIsAddDialogOpen}
+          projectId={projectId || ""}
+          projectStages={projectStages}
+          onTaskAdded={fetchTasks}
+          projectMembers={projectMembers}
+          isGeneral={isGeneral}
+          isWorkspace={isWorkspace}
+        />
+      )}
 
       {/* Dialog for editing tasks */}
       {editingTask && (

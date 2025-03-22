@@ -23,9 +23,9 @@ export const MeetingTaskForm = ({
   
   const { mutate: createTask, isPending } = useCreateMeetingTask();
   
-  // For the ProjectMember type compatibility
+  // For the ProjectMember type compatibility - adding id to match the type
   const dummyMembers = [
-    { user_id: "", user_name: "يرجى تحديد المسؤول" }
+    { id: "", user_id: "", user_name: "يرجى تحديد المسؤول" }
   ];
   
   // For stages compatibility
@@ -75,7 +75,8 @@ export const MeetingTaskForm = ({
       assigned_to: formData.assignedTo || undefined,
       task_type: taskType,
       status: "pending",
-      add_to_general_tasks: addToGeneralTasks
+      add_to_general_tasks: addToGeneralTasks,
+      requires_deliverable: formData.requiresDeliverable
     }, {
       onSuccess: () => {
         console.log("Meeting task created successfully");
@@ -89,6 +90,10 @@ export const MeetingTaskForm = ({
     });
   };
 
+  const handleCancel = () => {
+    if (onCancel) onCancel();
+  };
+
   return (
     <div className="meeting-task-form">
       <TaskForm
@@ -97,6 +102,7 @@ export const MeetingTaskForm = ({
         projectStages={meetingTaskStages}
         projectMembers={dummyMembers}
         isGeneral={true}
+        onCancel={handleCancel}
       />
     </div>
   );
