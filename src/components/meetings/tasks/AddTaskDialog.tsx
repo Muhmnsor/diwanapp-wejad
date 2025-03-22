@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCreateMeetingTask } from "@/hooks/meetings/useCreateMeetingTask";
 import {
   Dialog,
@@ -22,6 +21,7 @@ import {
 import { TaskType } from "@/types/meeting";
 import { Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useAuthStore } from "@/store/refactored-auth";
 
 interface AddTaskDialogProps {
   meetingId?: string;
@@ -44,11 +44,31 @@ export const AddTaskDialog = ({
   const [addToGeneralTasks, setAddToGeneralTasks] = useState(false);
   
   const { mutate: createTask, isPending } = useCreateMeetingTask();
+  const { user } = useAuthStore();
+  
+  useEffect(() => {
+    console.log("AddTaskDialog open state changed:", open);
+    console.log("Meeting ID:", meetingId);
+  }, [open, meetingId]);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!meetingId) return;
+    if (!meetingId) {
+      console.error("Missing meetingId for task creation");
+      return;
+    }
+    
+    console.log("Submitting task with data:", {
+      meeting_id: meetingId,
+      title,
+      description,
+      due_date: dueDate,
+      assigned_to: assignedTo,
+      task_type: taskType,
+      add_to_general_tasks: addToGeneralTasks,
+      current_user: user?.id
+    });
     
     createTask({
       meeting_id: meetingId,
@@ -61,9 +81,13 @@ export const AddTaskDialog = ({
       add_to_general_tasks: addToGeneralTasks
     }, {
       onSuccess: () => {
+        console.log("Task created successfully, resetting form");
         resetForm();
         onOpenChange(false);
         if (onSuccess) onSuccess();
+      },
+      onError: (error) => {
+        console.error("Error creating task:", error);
       }
     });
   };
@@ -78,7 +102,10 @@ export const AddTaskDialog = ({
   };
   
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      console.log("Dialog onOpenChange called with:", isOpen);
+      onOpenChange(isOpen);
+    }}>
       <DialogContent className="sm:max-w-[500px]" dir="rtl">
         <form onSubmit={handleSubmit}>
           <DialogHeader>

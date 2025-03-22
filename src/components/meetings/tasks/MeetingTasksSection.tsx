@@ -19,22 +19,29 @@ export const MeetingTasksSection = ({ meetingId }: MeetingTasksSectionProps) => 
   };
 
   console.log("MeetingTasksSection rendering with tasks:", tasks);
+  console.log("Is Add Task Dialog Open:", isAddTaskOpen);
+
+  const handleAddTaskClick = () => {
+    console.log("Add Task button clicked");
+    setIsAddTaskOpen(true);
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">المهام</h3>
-        <Button onClick={() => setIsAddTaskOpen(true)} className="rtl">
+        <Button onClick={handleAddTaskClick} className="rtl">
           <Plus className="h-4 w-4 ml-2" />
           إضافة مهمة جديدة
         </Button>
       </div>
 
-      {/* Use the existing TasksList component without modifications */}
+      {/* Display the tasks list but don't include another Add Task button */}
       <TasksList 
         meetingId={meetingId}
       />
 
+      {/* Ensure the dialog is correctly configured with the meetingId */}
       <AddTaskDialog 
         meetingId={meetingId}
         open={isAddTaskOpen}
