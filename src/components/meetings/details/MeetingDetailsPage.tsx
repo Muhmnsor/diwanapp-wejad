@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,7 +11,7 @@ import { ar } from "date-fns/locale";
 import { useMeeting } from "@/hooks/meetings/useMeeting";
 import { MeetingDetailsTab } from "@/components/meetings/details/MeetingDetailsTab";
 import { MeetingTasksSection } from "@/components/meetings/tasks/MeetingTasksSection";
-import { MeetingMinutesSection } from "@/components/meetings/minutes/MeetingMinutesSection";
+import { MeetingMinutesContent } from "@/components/meetings/minutes/MeetingMinutesContent";
 import { DeleteMeetingDialog } from "@/components/meetings/dialogs/DeleteMeetingDialog";
 import { EditMeetingDialog } from "@/components/meetings/dialogs/EditMeetingDialog";
 import { AddParticipantDialog } from "@/components/meetings/participants/AddParticipantDialog";
@@ -141,7 +142,7 @@ export const MeetingDetailsPage = () => {
             </TabsContent>
             
             <TabsContent value="minutes">
-              <MeetingMinutesSection meetingId={meetingId as string} />
+              <MeetingMinutesContent meetingId={meetingId as string} />
             </TabsContent>
           </Tabs>
           
@@ -151,7 +152,7 @@ export const MeetingDetailsPage = () => {
               <p className="text-gray-600">{formattedDate} | {meeting.start_time} | {meeting.duration} دقيقة</p>
               {meeting.location && <p className="text-gray-600">المكان: {meeting.location}</p>}
             </div>
-            <MeetingMinutesSection meetingId={meetingId as string} />
+            <MeetingMinutesContent meetingId={meetingId as string} />
           </div>
         </div>
       </div>
