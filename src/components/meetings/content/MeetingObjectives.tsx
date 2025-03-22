@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useMeetingObjectives, MeetingObjective } from '@/hooks/meetings/useMeetingObjectives';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Target } from 'lucide-react';
 
 interface MeetingObjectivesProps {
   meetingId: string;
@@ -15,7 +16,7 @@ export const MeetingObjectives: React.FC<MeetingObjectivesProps> = ({ meetingId 
 
   if (isLoading) {
     return (
-      <Card className="mb-6">
+      <Card className="h-full">
         <CardHeader className="pb-3">
           <CardTitle>أهداف الاجتماع</CardTitle>
         </CardHeader>
@@ -33,7 +34,7 @@ export const MeetingObjectives: React.FC<MeetingObjectivesProps> = ({ meetingId 
   if (error) {
     console.error('Error fetching meeting objectives:', error);
     return (
-      <Card className="mb-6">
+      <Card className="h-full">
         <CardHeader className="pb-3">
           <CardTitle>أهداف الاجتماع</CardTitle>
         </CardHeader>
@@ -46,9 +47,12 @@ export const MeetingObjectives: React.FC<MeetingObjectivesProps> = ({ meetingId 
 
   if (!objectives || objectives.length === 0) {
     return (
-      <Card className="mb-6">
+      <Card className="h-full">
         <CardHeader className="pb-3">
-          <CardTitle>أهداف الاجتماع</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="h-5 w-5" />
+            أهداف الاجتماع
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-gray-500">لا توجد أهداف محددة لهذا الاجتماع</p>
@@ -58,9 +62,12 @@ export const MeetingObjectives: React.FC<MeetingObjectivesProps> = ({ meetingId 
   }
 
   return (
-    <Card className="mb-6">
+    <Card className="h-full">
       <CardHeader className="pb-3">
-        <CardTitle>أهداف الاجتماع</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Target className="h-5 w-5" />
+          أهداف الاجتماع
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <ol className="list-decimal list-inside space-y-2">
