@@ -9,6 +9,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface DeleteDialogProps {
   open: boolean;
@@ -29,23 +31,29 @@ export const DeleteDialog = ({
 }: DeleteDialogProps) => {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent dir="rtl">
+      <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
+          <AlertDialogDescription>
+            {description}
+          </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>إلغاء</AlertDialogCancel>
-          <AlertDialogAction 
-            onClick={(e) => {
-              e.preventDefault();
-              onDelete();
-            }}
+          <AlertDialogCancel>إلغاء</AlertDialogCancel>
+          <Button 
+            variant="destructive" 
+            onClick={onDelete}
             disabled={isDeleting}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isDeleting ? "جاري الحذف..." : "حذف"}
-          </AlertDialogAction>
+            {isDeleting ? (
+              <>
+                <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                جاري الحذف...
+              </>
+            ) : (
+              "نعم، قم بالحذف"
+            )}
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

@@ -5,10 +5,13 @@ import { toast } from "sonner";
 import { ParticipantRole, AttendanceStatus } from "@/types/meeting";
 
 interface ParticipantInput {
-  user_email: string;
+  user_id?: string;
+  user_email?: string;
   user_display_name: string;
+  user_phone?: string;
   role: ParticipantRole;
   attendance_status: AttendanceStatus;
+  is_external: boolean;
 }
 
 interface AddParticipantParams {

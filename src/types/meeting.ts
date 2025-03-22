@@ -27,6 +27,8 @@ export interface Meeting {
 
 export type MeetingType = 'board' | 'department' | 'team' | 'committee' | 'other';
 export type AttendanceType = 'in_person' | 'remote' | 'hybrid';
+export type ParticipantRole = 'chairman' | 'member' | 'secretary' | 'viewer';
+export type AttendanceStatus = 'pending' | 'attended' | 'excused' | 'absent';
 
 export interface MeetingParticipant {
   id: string;
@@ -35,8 +37,8 @@ export interface MeetingParticipant {
   user_email?: string;
   user_display_name: string;
   user_phone?: string;
-  role: 'chairman' | 'member' | 'secretary' | 'viewer';
-  attendance_status: 'pending' | 'attended' | 'excused' | 'absent';
+  role: ParticipantRole;
+  attendance_status: AttendanceStatus;
   is_external: boolean;
   notification_sent: boolean;
   created_at: string;
