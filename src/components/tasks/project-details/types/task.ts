@@ -2,19 +2,32 @@
 export interface Task {
   id: string;
   title: string;
-  description: string | null;
-  status: string;
-  priority: string;
-  due_date: string | null;
-  assigned_to: string | null;
+  description?: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'delayed';
+  priority: 'low' | 'medium' | 'high';
+  due_date?: string;
   created_at: string;
+  created_by?: string;
+  assigned_to?: string;
+  assignee_name?: string;
+  workspace_id?: string;
   project_id?: string;
   stage_id?: string;
-  is_general?: boolean;
-  workspace_id?: string | null;
-  category?: string | null;
-  created_by?: string;
-  updated_at?: string;
+  category?: string;
   requires_deliverable?: boolean;
-  meeting_id?: string; // إضافة معرف الاجتماع
+  is_recurring?: boolean;
+  recurring_id?: string;
+  meeting_id?: string; // Added meeting_id property
+}
+
+export interface Subtask {
+  id: string;
+  task_id: string;
+  title: string;
+  status: 'pending' | 'completed';
+  created_at: string;
+  created_by?: string;
+  assigned_to?: string;
+  assignee_name?: string;
+  due_date?: string;
 }

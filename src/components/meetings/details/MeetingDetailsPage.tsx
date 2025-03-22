@@ -32,6 +32,10 @@ export const MeetingDetailsPage = () => {
       navigate("/admin/meetings");
     }
   };
+  
+  const handleDeleteSuccess = () => {
+    navigate("/admin/meetings");
+  };
 
   if (isLoading) {
     return (
@@ -173,6 +177,7 @@ export const MeetingDetailsPage = () => {
         meetingId={meeting.id}
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
+        onSuccess={handleDeleteSuccess}
       />
       
       <AddParticipantDialog

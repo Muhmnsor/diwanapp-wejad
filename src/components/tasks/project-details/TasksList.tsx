@@ -46,7 +46,8 @@ export const TasksList = ({
     handleStatusChange,
     fetchTasks,
     isGeneral,
-    deleteTask
+    deleteTask,
+    error
   } = useTasksList({
     projectId, 
     isWorkspace, 
@@ -74,6 +75,9 @@ export const TasksList = ({
   const handleDeleteTask = async (taskId: string) => {
     try {
       await deleteTask(taskId);
+      if (onTasksChange) {
+        onTasksChange();
+      }
     } catch (error) {
       console.error("Error deleting task:", error);
     }
@@ -89,7 +93,7 @@ export const TasksList = ({
 
   return (
     <>
-      {!isGeneral && !isWorkspace && (
+      {!isGeneral && !isWorkspace && !meetingId && (
         <ProjectStages 
           projectId={projectId} 
           onStagesChange={handleStagesChange} 

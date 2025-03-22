@@ -28,7 +28,7 @@ export const useTasksList = ({
   const [projectStages, setProjectStages] = useState<{ id: string; name: string }[]>([]);
   const [tasksByStage, setTasksByStage] = useState<{ [key: string]: Task[] }>({});
 
-  const isGeneral = !projectId && !isWorkspace;
+  const isGeneral = !projectId && !isWorkspace && !externalTasks;
 
   const fetchProjectStages = async () => {
     if (!projectId) return;
@@ -88,6 +88,20 @@ export const useTasksList = ({
 
   const handleStatusChange = async (taskId: string, newStatus: string) => {
     try {
+      // If this is a meeting task (from externalTasks)
+      const taskToUpdate = tasks.find(t => t.id === taskId);
+      
+      if (taskToUpdate?.meeting_id) {
+        // Update meeting task status
+        const { error: meetingTaskError } = await supabase
+          .from("meeting_tasks")
+          .update({ status: newStatus })
+          .eq("id", taskToUpdate.meeting_id);
+          
+        if (meetingTaskError) throw meetingTaskError;
+      }
+      
+      // Always update tasks table
       const { error } = await supabase
         .from("tasks")
         .update({ status: newStatus })
