@@ -1496,6 +1496,41 @@ export type Database = {
         }
         Relationships: []
       }
+      meeting_agenda_items: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          meeting_id: string
+          order_number: number
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          meeting_id: string
+          order_number: number
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          meeting_id?: string
+          order_number?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_agenda_items_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meeting_folder_members: {
         Row: {
           created_at: string | null
@@ -1575,6 +1610,41 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_objectives: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          meeting_id: string
+          order_number: number
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          meeting_id: string
+          order_number: number
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          meeting_id?: string
+          order_number?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_objectives_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
             referencedColumns: ["id"]
           },
         ]

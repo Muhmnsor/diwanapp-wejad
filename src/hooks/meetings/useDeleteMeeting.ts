@@ -1,32 +1,30 @@
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useMutation } from "@tanstack/react-query";
 
 export const useDeleteMeeting = () => {
-  const queryClient = useQueryClient();
-  
   return useMutation({
     mutationFn: async (meetingId: string) => {
+      console.log(`Deleting meeting: ${meetingId}`);
+      
       const { error } = await supabase
         .from('meetings')
         .delete()
         .eq('id', meetingId);
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error deleting meeting:", error);
+        throw error;
+      }
       
-      return meetingId;
-    },
-    onSuccess: (_, variables) => {
-      toast.success("تم حذف الاجتماع بنجاح");
-      // Invalidate meetings queries
-      queryClient.invalidateQueries({ queryKey: ['meetings'] });
-      // Also invalidate the count in folders
-      queryClient.invalidateQueries({ queryKey: ['meetingFolders'] });
+      toast.success('تم حذف الاجتماع بنجاح');
+      return true;
     },
     onError: (error) => {
-      console.error("Error deleting meeting:", error);
-      toast.error("حدث خطأ أثناء حذف الاجتماع");
+      console.error("Error in delete mutation:", error);
+      toast.error('فشل في حذف الاجتماع');
     }
   });
 };
