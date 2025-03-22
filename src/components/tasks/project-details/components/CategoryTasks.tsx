@@ -69,8 +69,8 @@ export const CategoryTasks = ({
     if (!date) return "غير محدد";
     
     try {
-      // Use our utility formatter that displays in Gregorian format (dd/MM/yyyy)
-      return formatDateUtility(date, "غير محدد");
+      // Fix: Use formatDateUtility with just one argument
+      return formatDateUtility(date);
     } catch (e) {
       return "تاريخ غير صالح";
     }

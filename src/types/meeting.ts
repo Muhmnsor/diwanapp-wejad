@@ -12,8 +12,13 @@ export interface Meeting {
   attendance_type: string;
   meeting_status: string;
   folder_id?: string;
+  folder_name?: string; // Add folder_name property to fix error in MeetingDetailsPage
   created_at?: string;
   updated_at?: string;
+  folder?: {
+    id: string;
+    name: string;
+  };
 }
 
 export type MeetingStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
