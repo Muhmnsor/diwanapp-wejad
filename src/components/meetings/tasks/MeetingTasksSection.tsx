@@ -15,14 +15,15 @@ export const MeetingTasksSection = ({ meetingId }: MeetingTasksSectionProps) => 
   const { data: tasks, isLoading, error, refetch } = useMeetingTasks(meetingId);
 
   const handleTaskAdded = () => {
+    console.log("Task added successfully, refreshing task list");
     refetch();
   };
 
-  console.log("MeetingTasksSection rendering with tasks:", tasks);
-  console.log("Is Add Task Dialog Open:", isAddTaskOpen);
+  console.log("MeetingTasksSection rendering with meetingId:", meetingId);
+  console.log("Add Task Dialog state:", isAddTaskOpen);
 
   const handleAddTaskClick = () => {
-    console.log("Add Task button clicked");
+    console.log("Add Task button clicked in MeetingTasksSection");
     setIsAddTaskOpen(true);
   };
 
@@ -36,12 +37,23 @@ export const MeetingTasksSection = ({ meetingId }: MeetingTasksSectionProps) => 
         </Button>
       </div>
 
-      {/* Display the tasks list but don't include another Add Task button */}
-      <TasksList 
-        meetingId={meetingId}
-      />
+      {/* Display tasks list */}
+      {isLoading ? (
+        <div className="py-4 text-center">جاري تحميل المهام...</div>
+      ) : error ? (
+        <div className="py-4 text-center text-red-500">حدث خطأ أثناء تحميل المهام</div>
+      ) : tasks && tasks.length > 0 ? (
+        <TasksList 
+          meetingId={meetingId}
+          hideAddButton={true} // Pass prop to hide the add button in TasksList
+        />
+      ) : (
+        <div className="py-6 text-center text-muted-foreground border rounded-md">
+          لا توجد مهام لهذا الاجتماع. انقر على "إضافة مهمة جديدة" لإضافة المهام.
+        </div>
+      )}
 
-      {/* Ensure the dialog is correctly configured with the meetingId */}
+      {/* The dialog component */}
       <AddTaskDialog 
         meetingId={meetingId}
         open={isAddTaskOpen}

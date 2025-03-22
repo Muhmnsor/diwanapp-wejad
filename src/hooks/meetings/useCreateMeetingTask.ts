@@ -19,6 +19,7 @@ export const useCreateMeetingTask = () => {
       
       console.log("Creating meeting task with data:", taskData);
       
+      // Create the meeting task
       const { data, error } = await supabase
         .from('meeting_tasks')
         .insert({
@@ -40,6 +41,20 @@ export const useCreateMeetingTask = () => {
         try {
           console.log("Adding task to general tasks system");
           
+          // The assigned_to field in tasks table expects a UUID
+          // If assigned_to is not provided or not a valid UUID, use the current user's ID
+          let assignedToUuid = user.id;
+          
+          if (taskData.assigned_to) {
+            // Check if assigned_to is already a UUID
+            const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            if (uuidPattern.test(taskData.assigned_to)) {
+              assignedToUuid = taskData.assigned_to;
+            } else {
+              console.log("assigned_to is not a UUID, using current user ID instead");
+            }
+          }
+          
           // Add to general tasks
           const { data: generalTask, error: generalTaskError } = await supabase
             .from('tasks')
@@ -49,7 +64,7 @@ export const useCreateMeetingTask = () => {
               status: 'pending',
               priority: 'medium',
               due_date: taskData.due_date,
-              assigned_to: user.id, // Use the current user ID for assigned_to to match UUID type
+              assigned_to: assignedToUuid, // Use the UUID
               is_general: true,
               category: taskData.task_type,
               created_by: user.id,

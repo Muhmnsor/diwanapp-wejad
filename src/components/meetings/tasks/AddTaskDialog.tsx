@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useCreateMeetingTask } from "@/hooks/meetings/useCreateMeetingTask";
 import {
@@ -22,6 +23,7 @@ import { TaskType } from "@/types/meeting";
 import { Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuthStore } from "@/store/refactored-auth";
+import { toast } from "sonner";
 
 interface AddTaskDialogProps {
   meetingId?: string;
@@ -46,9 +48,11 @@ export const AddTaskDialog = ({
   const { mutate: createTask, isPending } = useCreateMeetingTask();
   const { user } = useAuthStore();
   
+  // Reset form when dialog opens
   useEffect(() => {
-    console.log("AddTaskDialog open state changed:", open);
-    console.log("Meeting ID:", meetingId);
+    if (open) {
+      console.log("AddTaskDialog opened with meetingId:", meetingId);
+    }
   }, [open, meetingId]);
   
   const handleSubmit = (e: React.FormEvent) => {
@@ -56,6 +60,12 @@ export const AddTaskDialog = ({
     
     if (!meetingId) {
       console.error("Missing meetingId for task creation");
+      toast.error("خطأ: معرّف الاجتماع مفقود");
+      return;
+    }
+    
+    if (!title.trim()) {
+      toast.error("يرجى إدخال عنوان المهمة");
       return;
     }
     
@@ -67,7 +77,7 @@ export const AddTaskDialog = ({
       assigned_to: assignedTo,
       task_type: taskType,
       add_to_general_tasks: addToGeneralTasks,
-      current_user: user?.id
+      created_by: user?.id
     });
     
     createTask({
@@ -82,12 +92,14 @@ export const AddTaskDialog = ({
     }, {
       onSuccess: () => {
         console.log("Task created successfully, resetting form");
+        toast.success("تمت إضافة المهمة بنجاح");
         resetForm();
         onOpenChange(false);
         if (onSuccess) onSuccess();
       },
       onError: (error) => {
         console.error("Error creating task:", error);
+        toast.error("حدث خطأ أثناء إضافة المهمة");
       }
     });
   };
@@ -104,6 +116,9 @@ export const AddTaskDialog = ({
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
       console.log("Dialog onOpenChange called with:", isOpen);
+      if (!isOpen) {
+        resetForm();
+      }
       onOpenChange(isOpen);
     }}>
       <DialogContent className="sm:max-w-[500px]" dir="rtl">
