@@ -11,7 +11,7 @@ import { ar } from "date-fns/locale";
 import { useMeeting } from "@/hooks/meetings/useMeeting";
 import { MeetingObjectives, MeetingAgendaItems } from "@/components/meetings/content";
 import { MeetingTasksSection } from "@/components/meetings/tasks/MeetingTasksSection";
-import { DeleteMeetingDialog } from "@/components/meetings/folders/DeleteFolderDialog";
+import { DeleteMeetingDialog } from "@/components/meetings/dialogs/DeleteMeetingDialog";
 import { EditMeetingDialog } from "@/components/meetings/dialogs/EditMeetingDialog";
 import { AddParticipantDialog } from "@/components/meetings/participants/AddParticipantDialog";
 
