@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,6 +14,7 @@ import { MeetingMinutesSection } from "@/components/meetings/minutes/MeetingMinu
 import { DeleteMeetingDialog } from "@/components/meetings/dialogs/DeleteMeetingDialog";
 import { EditMeetingDialog } from "@/components/meetings/dialogs/EditMeetingDialog";
 import { AddParticipantDialog } from "@/components/meetings/participants/AddParticipantDialog";
+import "../minutes/print-styles.css";
 
 export const MeetingDetailsPage = () => {
   const { meetingId } = useParams<{ meetingId: string }>();
@@ -72,7 +72,7 @@ export const MeetingDetailsPage = () => {
       <AdminHeader />
       
       <div className="container mx-auto px-4 py-6 flex-grow">
-        <div className="flex items-center mb-4">
+        <div className="flex items-center mb-4 print:hidden">
           <Button variant="outline" onClick={handleGoBack} className="ml-4">
             <ArrowLeft className="h-4 w-4 ml-2" />
             العودة
@@ -81,7 +81,7 @@ export const MeetingDetailsPage = () => {
         </div>
         
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="flex justify-between items-start mb-6">
+          <div className="flex justify-between items-start mb-6 print:hidden">
             <div>
               <h2 className="text-xl font-semibold mb-2">{meeting.title}</h2>
               <div className="flex items-center text-muted-foreground mb-1">
@@ -125,7 +125,7 @@ export const MeetingDetailsPage = () => {
             </div>
           </div>
           
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="print:hidden">
             <TabsList className="mb-4">
               <TabsTrigger value="details">التفاصيل</TabsTrigger>
               <TabsTrigger value="tasks">مهام الاجتماع</TabsTrigger>
@@ -144,10 +144,19 @@ export const MeetingDetailsPage = () => {
               <MeetingMinutesSection meetingId={meetingId as string} />
             </TabsContent>
           </Tabs>
+          
+          <div className="hidden print:block">
+            <div className="text-center mb-6">
+              <h1 className="text-2xl font-bold">{meeting.title}</h1>
+              <p className="text-gray-600">{formattedDate} | {meeting.start_time} | {meeting.duration} دقيقة</p>
+              {meeting.location && <p className="text-gray-600">المكان: {meeting.location}</p>}
+            </div>
+            <MeetingMinutesSection meetingId={meetingId as string} />
+          </div>
         </div>
       </div>
       
-      <Footer />
+      <Footer className="print:hidden" />
       
       <EditMeetingDialog
         meeting={meeting}

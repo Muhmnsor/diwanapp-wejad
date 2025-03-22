@@ -10,6 +10,7 @@ export interface MeetingMinutes {
   updated_at: string;
   created_by?: string;
   updated_by?: string;
+  attendees?: string[];
 }
 
 export const useMeetingMinutes = (meetingId: string) => {
