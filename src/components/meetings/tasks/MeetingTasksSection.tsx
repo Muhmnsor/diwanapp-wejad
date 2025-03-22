@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { TasksList } from "@/components/meetings/content";
 import { useMeetingTasks } from "@/hooks/meetings/useMeetingTasks";
-import { AddTaskDialog } from "./AddTaskDialog";
+import { EnhancedAddTaskDialog } from "./EnhancedAddTaskDialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
@@ -53,8 +53,8 @@ export const MeetingTasksSection = ({ meetingId }: MeetingTasksSectionProps) => 
         </div>
       )}
 
-      {/* The dialog component */}
-      <AddTaskDialog 
+      {/* The enhanced dialog component */}
+      <EnhancedAddTaskDialog 
         meetingId={meetingId}
         open={isAddTaskOpen}
         onOpenChange={setIsAddTaskOpen}

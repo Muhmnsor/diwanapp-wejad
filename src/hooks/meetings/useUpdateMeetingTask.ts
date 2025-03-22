@@ -35,6 +35,8 @@ export const useUpdateMeetingTask = () => {
           if (updates.status) generalTaskUpdates.status = updates.status;
           if (updates.due_date) generalTaskUpdates.due_date = updates.due_date;
           if (updates.assigned_to) generalTaskUpdates.assigned_to = updates.assigned_to;
+          if (updates.requires_deliverable !== undefined) 
+            generalTaskUpdates.requires_deliverable = updates.requires_deliverable;
           
           if (Object.keys(generalTaskUpdates).length > 0) {
             const { error: generalTaskError } = await supabase

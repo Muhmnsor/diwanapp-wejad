@@ -5,7 +5,9 @@ import { toast } from "sonner";
 import { MeetingTask } from "@/types/meeting";
 import { useAuthStore } from "@/store/refactored-auth";
 
-export type CreateMeetingTaskInput = Omit<MeetingTask, 'id' | 'created_at' | 'updated_at'>;
+export type CreateMeetingTaskInput = Omit<MeetingTask, 'id' | 'created_at' | 'updated_at'> & {
+  requires_deliverable?: boolean;
+};
 
 export const useCreateMeetingTask = () => {
   const queryClient = useQueryClient();
@@ -68,7 +70,7 @@ export const useCreateMeetingTask = () => {
               is_general: true,
               category: taskData.task_type,
               created_by: user.id,
-              requires_deliverable: false,
+              requires_deliverable: taskData.requires_deliverable || false,
               meeting_task_id: data.id // Reference to the original meeting task
             })
             .select()
