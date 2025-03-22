@@ -17,21 +17,18 @@ interface TasksListProps {
   isWorkspace?: boolean;
   hideAddButton?: boolean;
   meetingId?: string;
-  tasks?: Task[];
+  externalTasks?: Task[];
   isLoading?: boolean;
   error?: Error | null;
   onTasksChange?: () => void;
 }
-
-// Re-export Task interface for backward compatibility
-export type { Task };
 
 export const TasksList = ({ 
   projectId, 
   isWorkspace = false, 
   hideAddButton = false,
   meetingId,
-  tasks: externalTasks,
+  externalTasks,
   isLoading: externalLoading,
   error: externalError,
   onTasksChange
@@ -136,7 +133,6 @@ export const TasksList = ({
           projectMembers={projectMembers}
           isGeneral={isGeneral}
           isWorkspace={isWorkspace}
-          meetingId={meetingId}
         />
       )}
 
