@@ -63,7 +63,7 @@ export const AddTaskDialog = ({
       onSuccess: () => {
         resetForm();
         onOpenChange(false);
-        onSuccess?.();
+        if (onSuccess) onSuccess();
       }
     });
   };
