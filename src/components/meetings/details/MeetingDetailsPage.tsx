@@ -9,8 +9,9 @@ import { ArrowLeft, Calendar, Edit, Trash, Users } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { useMeeting } from "@/hooks/meetings/useMeeting";
-import { MeetingObjectives, MeetingAgendaItems } from "@/components/meetings/content";
+import { MeetingDetailsTab } from "@/components/meetings/details/MeetingDetailsTab";
 import { MeetingTasksSection } from "@/components/meetings/tasks/MeetingTasksSection";
+import { MeetingMinutesSection } from "@/components/meetings/minutes/MeetingMinutesSection";
 import { DeleteMeetingDialog } from "@/components/meetings/dialogs/DeleteMeetingDialog";
 import { EditMeetingDialog } from "@/components/meetings/dialogs/EditMeetingDialog";
 import { AddParticipantDialog } from "@/components/meetings/participants/AddParticipantDialog";
@@ -20,7 +21,7 @@ export const MeetingDetailsPage = () => {
   const navigate = useNavigate();
   const { data: meeting, isLoading, error, refetch } = useMeeting(meetingId as string);
   
-  const [activeTab, setActiveTab] = useState("agenda");
+  const [activeTab, setActiveTab] = useState("details");
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);
@@ -126,35 +127,21 @@ export const MeetingDetailsPage = () => {
           
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
-              <TabsTrigger value="agenda">جدول الأعمال</TabsTrigger>
-              <TabsTrigger value="objectives">الأهداف</TabsTrigger>
-              <TabsTrigger value="tasks">المهام</TabsTrigger>
-              <TabsTrigger value="decisions">القرارات</TabsTrigger>
-              <TabsTrigger value="attachments">المرفقات</TabsTrigger>
+              <TabsTrigger value="details">التفاصيل</TabsTrigger>
+              <TabsTrigger value="tasks">مهام الاجتماع</TabsTrigger>
+              <TabsTrigger value="minutes">محضر الاجتماع</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="agenda">
-              <MeetingAgendaItems meetingId={meetingId as string} />
-            </TabsContent>
-            
-            <TabsContent value="objectives">
-              <MeetingObjectives meetingId={meetingId as string} />
+            <TabsContent value="details">
+              <MeetingDetailsTab meetingId={meetingId as string} />
             </TabsContent>
             
             <TabsContent value="tasks">
               <MeetingTasksSection meetingId={meetingId as string} />
             </TabsContent>
             
-            <TabsContent value="decisions">
-              <div className="py-4 text-center text-muted-foreground">
-                سيتم إضافة قرارات الاجتماع قريباً
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="attachments">
-              <div className="py-4 text-center text-muted-foreground">
-                سيتم إضافة مرفقات الاجتماع قريباً
-              </div>
+            <TabsContent value="minutes">
+              <MeetingMinutesSection meetingId={meetingId as string} />
             </TabsContent>
           </Tabs>
         </div>

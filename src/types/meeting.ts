@@ -1,4 +1,3 @@
-
 export interface Meeting {
   id: string;
   title: string;
@@ -12,7 +11,7 @@ export interface Meeting {
   attendance_type: string;
   meeting_status: string;
   folder_id?: string;
-  folder_name?: string; // Add folder_name property to fix error in MeetingDetailsPage
+  folder_name?: string;
   created_at?: string;
   updated_at?: string;
   folder?: {
@@ -51,4 +50,14 @@ export interface MeetingTask {
   created_by?: string;
   general_task_id?: string;
   add_to_general_tasks?: boolean;
+}
+
+export interface MeetingMinutes {
+  id: string;
+  meeting_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
+  updated_by?: string;
 }
