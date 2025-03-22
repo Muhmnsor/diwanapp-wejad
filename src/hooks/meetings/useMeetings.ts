@@ -13,7 +13,6 @@ export const useMeetings = (folderId?: string, refreshTrigger: number = 0) => {
         .from('meetings')
         .select(`
           *,
-          creator:profiles(display_name),
           folder:meeting_folders(name)
         `)
         .order('date', { ascending: false });
