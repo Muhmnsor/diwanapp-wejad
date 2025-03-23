@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { MessageCircle } from "lucide-react";
 import { TaskComment } from "../../types/taskComment";
@@ -40,27 +39,39 @@ export const TaskDiscussionContent = ({ task, newComment }: TaskDiscussionConten
       // تحديد جدول المهام المناسب بناءً على نوع المهمة
       let taskTable = '';
       
-      // Check if the task exists in the tasks table
-      const { data: regularTaskCheck, error: regularTaskError } = await supabase
-        .from('tasks')
+      // First check for meeting tasks
+      const { data: meetingTaskCheck, error: meetingTaskError } = await supabase
+        .from('meeting_tasks')
         .select('id')
         .eq('id', task.id)
         .single();
         
-      if (!regularTaskError && regularTaskCheck) {
-        taskTable = 'tasks';
-        console.log("Task found in tasks table");
+      if (!meetingTaskError && meetingTaskCheck) {
+        taskTable = 'meeting_tasks';
+        console.log("Task found in meeting_tasks table");
       } else {
-        // If not in regular tasks, check portfolio_tasks
-        const { data: portfolioTaskCheck, error: portfolioTaskError } = await supabase
-          .from('portfolio_tasks')
+        // Check if the task exists in the tasks table
+        const { data: regularTaskCheck, error: regularTaskError } = await supabase
+          .from('tasks')
           .select('id')
           .eq('id', task.id)
           .single();
           
-        if (!portfolioTaskError && portfolioTaskCheck) {
-          taskTable = 'portfolio_tasks';
-          console.log("Task found in portfolio_tasks table");
+        if (!regularTaskError && regularTaskCheck) {
+          taskTable = 'tasks';
+          console.log("Task found in tasks table");
+        } else {
+          // If not in regular tasks, check portfolio_tasks
+          const { data: portfolioTaskCheck, error: portfolioTaskError } = await supabase
+            .from('portfolio_tasks')
+            .select('id')
+            .eq('id', task.id)
+            .single();
+            
+          if (!portfolioTaskError && portfolioTaskCheck) {
+            taskTable = 'portfolio_tasks';
+            console.log("Task found in portfolio_tasks table");
+          }
         }
       }
       

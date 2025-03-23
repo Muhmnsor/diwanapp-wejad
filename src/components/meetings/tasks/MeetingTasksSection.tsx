@@ -4,21 +4,63 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useMeetingTasks } from "@/hooks/meetings/useMeetingTasks";
-import { TasksList } from "@/components/tasks/TasksList";
 import { useState } from "react";
 import { CustomEnhancedTaskDialog } from "./CustomEnhancedTaskDialog";
+import { Task } from "@/components/tasks/types/task";
+import { MeetingTask } from "@/types/meeting";
+import { TasksList } from "@/components/tasks/TasksList";
 
 interface MeetingTasksSectionProps {
   meetingId: string;
 }
 
+// Adapter function to convert MeetingTask to Task format
+const adaptMeetingTaskToTask = (meetingTask: MeetingTask): Task => {
+  return {
+    id: meetingTask.id,
+    title: meetingTask.title,
+    description: meetingTask.description || null,
+    status: meetingTask.status,
+    priority: meetingTask.priority,
+    due_date: meetingTask.due_date || null,
+    assigned_to: meetingTask.assigned_to || null,
+    created_at: meetingTask.created_at || new Date().toISOString(),
+    is_general: false,
+    requires_deliverable: meetingTask.requires_deliverable,
+    project_id: null,
+    project_name: null
+  };
+};
+
 export const MeetingTasksSection: React.FC<MeetingTasksSectionProps> = ({ meetingId }) => {
   const { data: tasks, isLoading, error, refetch } = useMeetingTasks(meetingId);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const handleOpenDialog = () => {
     setIsAddTaskOpen(true);
   };
+
+  // Handle task status changes
+  const handleStatusChange = async (taskId: string, status: string) => {
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      
+      const { error } = await supabase
+        .from('meeting_tasks')
+        .update({ status })
+        .eq('id', taskId);
+        
+      if (error) throw error;
+      
+      refetch();
+    } catch (error) {
+      console.error('Error updating task status:', error);
+    }
+  };
+
+  // Convert meeting tasks to Task format for TasksList component
+  const adaptedTasks = tasks ? tasks.map(adaptMeetingTaskToTask) : [];
 
   return (
     <div className="space-y-4">
@@ -36,11 +78,12 @@ export const MeetingTasksSection: React.FC<MeetingTasksSectionProps> = ({ meetin
         </CardHeader>
         <CardContent>
           <TasksList 
-            tasks={tasks} 
+            tasks={adaptedTasks} 
             isLoading={isLoading} 
             error={error} 
             onTasksChange={refetch}
             meetingId={meetingId}
+            onStatusChange={handleStatusChange}
           />
         </CardContent>
       </Card>
