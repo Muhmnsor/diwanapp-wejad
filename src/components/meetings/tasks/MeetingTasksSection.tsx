@@ -21,7 +21,7 @@ export const MeetingTasksSection: React.FC<MeetingTasksSectionProps> = ({ meetin
   };
 
   return (
-    <div className="space-y-4 text-right">
+    <div className="space-y-4">
       <div className="flex justify-between items-center">
         <Button size="sm" onClick={handleOpenDialog} className="flex items-center">
           <Plus className="h-4 w-4 ml-2" />
@@ -40,6 +40,7 @@ export const MeetingTasksSection: React.FC<MeetingTasksSectionProps> = ({ meetin
             isLoading={isLoading} 
             error={error} 
             onTasksChange={refetch}
+            meetingId={meetingId}
           />
         </CardContent>
       </Card>
