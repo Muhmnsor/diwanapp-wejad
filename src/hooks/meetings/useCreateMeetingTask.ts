@@ -2,9 +2,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Task } from "@/types/meeting";
+import { MeetingTask } from "@/types/meeting";
 
-type CreateMeetingTaskInput = Omit<Task, 'id' | 'created_at' | 'updated_at'>;
+type CreateMeetingTaskInput = Omit<MeetingTask, 'id' | 'created_at' | 'updated_at'>;
 
 export const useCreateMeetingTask = () => {
   const queryClient = useQueryClient();
@@ -12,11 +12,8 @@ export const useCreateMeetingTask = () => {
   return useMutation({
     mutationFn: async (taskData: CreateMeetingTaskInput) => {
       const { data, error } = await supabase
-        .from('tasks')
-        .insert({
-          ...taskData,
-          category: 'meeting',
-        })
+        .from('meeting_tasks')
+        .insert(taskData)
         .select()
         .single();
         
@@ -26,7 +23,7 @@ export const useCreateMeetingTask = () => {
     },
     onSuccess: (data) => {
       toast.success("تمت إضافة المهمة بنجاح");
-      queryClient.invalidateQueries({ queryKey: ['tasks', 'meeting', data.meeting_id] });
+      queryClient.invalidateQueries({ queryKey: ['meeting-tasks', data.meeting_id] });
     },
     onError: (error) => {
       console.error("Error creating meeting task:", error);
