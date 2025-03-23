@@ -118,10 +118,8 @@ export const EditTaskDialog = ({
                   <SelectValue placeholder="اختر نوع المهمة" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="preparation">تحضيرية</SelectItem>
-                  <SelectItem value="execution">تنفيذية</SelectItem>
-                  <SelectItem value="follow_up">متابعة</SelectItem>
                   <SelectItem value="action_item">إجراء</SelectItem>
+                  <SelectItem value="follow_up">متابعة</SelectItem>
                   <SelectItem value="decision">قرار</SelectItem>
                   <SelectItem value="other">أخرى</SelectItem>
                 </SelectContent>

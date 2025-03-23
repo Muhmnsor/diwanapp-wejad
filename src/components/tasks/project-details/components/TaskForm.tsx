@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { TaskTitleField } from "./TaskTitleField";
 import { TaskDescriptionField } from "./TaskDescriptionField";
@@ -97,7 +96,6 @@ export const TaskForm = ({
       <TaskAttachmentField
         attachment={fileAttachment}
         setAttachment={setFileAttachment}
-        category={category}
       />
       
       <TaskCategoryField category={category} setCategory={setCategory} />

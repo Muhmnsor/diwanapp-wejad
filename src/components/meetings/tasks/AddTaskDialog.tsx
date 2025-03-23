@@ -1,22 +1,15 @@
 
-import React from "react";
+import { useState } from "react";
+import { useCreateMeetingTask } from "@/hooks/meetings/useCreateMeetingTask";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -26,215 +19,157 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useForm } from "react-hook-form";
-import { useCreateMeetingTask } from "@/hooks/meetings/useCreateMeetingTask";
 import { TaskType } from "@/types/meeting";
+import { Loader2 } from "lucide-react";
 
 interface AddTaskDialogProps {
+  meetingId?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  meetingId: string;
   onSuccess?: () => void;
 }
 
-type TaskFormValues = {
-  title: string;
-  description?: string;
-  due_date?: string;
-  assigned_to?: string;
-  task_type: TaskType;
-  status: "pending" | "in_progress" | "completed" | "cancelled";
-  add_to_general_tasks?: boolean;
-};
-
-export const AddTaskDialog: React.FC<AddTaskDialogProps> = ({
-  open,
+export const AddTaskDialog = ({ 
+  meetingId, 
+  open, 
   onOpenChange,
-  meetingId,
-  onSuccess,
-}) => {
-  const { mutateAsync: createTask, isPending } = useCreateMeetingTask();
-
-  const form = useForm<TaskFormValues>({
-    defaultValues: {
-      title: "",
-      description: "",
-      task_type: "action_item",
-      status: "pending",
-      add_to_general_tasks: false,
-    },
-  });
-
-  const onSubmit = async (values: TaskFormValues) => {
-    try {
-      await createTask({
-        meeting_id: meetingId,
-        title: values.title,
-        description: values.description,
-        due_date: values.due_date,
-        assigned_to: values.assigned_to,
-        task_type: values.task_type,
-        status: values.status,
-        add_to_general_tasks: values.add_to_general_tasks,
-      });
-      
-      form.reset();
-      onOpenChange(false);
-      if (onSuccess) onSuccess();
-    } catch (error) {
-      console.error("Failed to create task:", error);
-    }
+  onSuccess 
+}: AddTaskDialogProps) => {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [assignedTo, setAssignedTo] = useState("");
+  // Use only the task types that are supported in the backend
+  const [taskType, setTaskType] = useState<"action_item" | "follow_up" | "decision" | "other">("action_item");
+  
+  const { mutate: createTask, isPending } = useCreateMeetingTask();
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!meetingId) return;
+    
+    createTask({
+      meeting_id: meetingId,
+      title,
+      description: description || undefined,
+      due_date: dueDate || undefined,
+      assigned_to: assignedTo || undefined,
+      task_type: taskType,
+      status: "pending" // Adding the required status field with a default value
+    }, {
+      onSuccess: () => {
+        resetForm();
+        onOpenChange(false);
+        onSuccess?.();
+      }
+    });
   };
-
+  
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setDueDate("");
+    setAssignedTo("");
+    setTaskType("action_item");
+  };
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]" dir="rtl">
-        <DialogHeader>
-          <DialogTitle className="text-right">إضافة مهمة جديدة</DialogTitle>
-          <DialogDescription className="text-right">
-            أضف مهمة جديدة مرتبطة بهذا الاجتماع
-          </DialogDescription>
-        </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem className="text-right">
-                  <FormLabel>عنوان المهمة</FormLabel>
-                  <FormControl>
-                    <Input {...field} className="text-right" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem className="text-right">
-                  <FormLabel>وصف المهمة</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      className="min-h-[100px] text-right"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="task_type"
-                render={({ field }) => (
-                  <FormItem className="text-right">
-                    <FormLabel>نوع المهمة</FormLabel>
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر نوع المهمة" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="action_item">إجراء</SelectItem>
-                        <SelectItem value="follow_up">متابعة</SelectItem>
-                        <SelectItem value="decision">قرار</SelectItem>
-                        <SelectItem value="preparation">تحضيرية</SelectItem>
-                        <SelectItem value="execution">تنفيذية</SelectItem>
-                        <SelectItem value="other">أخرى</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem className="text-right">
-                    <FormLabel>الحالة</FormLabel>
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر حالة المهمة" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="pending">قيد الانتظار</SelectItem>
-                        <SelectItem value="in_progress">قيد التنفيذ</SelectItem>
-                        <SelectItem value="completed">مكتملة</SelectItem>
-                        <SelectItem value="cancelled">ملغاة</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>إضافة مهمة جديدة</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">عنوان المهمة *</Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="أدخل عنوان المهمة"
+                required
               />
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="due_date"
-                render={({ field }) => (
-                  <FormItem className="text-right">
-                    <FormLabel>تاريخ الاستحقاق</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                        className="text-right"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="assigned_to"
-                render={({ field }) => (
-                  <FormItem className="text-right">
-                    <FormLabel>المسؤول</FormLabel>
-                    <FormControl>
-                      <Input {...field} className="text-right" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            
+            <div className="space-y-2">
+              <Label htmlFor="description">وصف المهمة</Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="أدخل وصف المهمة (اختياري)"
+                rows={3}
               />
             </div>
-
-            <DialogFooter className="mt-6 flex flex-row-reverse justify-start gap-2">
-              <Button type="submit" disabled={isPending}>
-                {isPending ? "جاري الإضافة..." : "إضافة المهمة"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
+            
+            <div className="space-y-2">
+              <Label htmlFor="taskType">نوع المهمة</Label>
+              <Select 
+                value={taskType} 
+                onValueChange={(value) => {
+                  // Only accept the limited allowed task types
+                  if (value === "action_item" || value === "follow_up" || value === "decision" || value === "other") {
+                    setTaskType(value);
+                  }
+                }}
               >
-                إلغاء
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر نوع المهمة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="follow_up">المتابعة</SelectItem>
+                  <SelectItem value="action_item">إجراءات</SelectItem>
+                  <SelectItem value="decision">قرار</SelectItem>
+                  <SelectItem value="other">أخرى</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="dueDate">تاريخ الاستحقاق</Label>
+              <Input
+                id="dueDate"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="assignedTo">المسؤول عن التنفيذ</Label>
+              <Input
+                id="assignedTo"
+                value={assignedTo}
+                onChange={(e) => setAssignedTo(e.target.value)}
+                placeholder="أدخل اسم أو معرف المسؤول"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter className="flex justify-start gap-2">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}
+            >
+              إلغاء
+            </Button>
+            <Button type="submit" disabled={!title || isPending}>
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  جاري الإضافة...
+                </>
+              ) : (
+                'إضافة المهمة'
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

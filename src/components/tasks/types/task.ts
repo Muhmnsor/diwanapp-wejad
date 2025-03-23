@@ -36,6 +36,4 @@ export interface Task {
   dependency_type?: DependencyType;
   // Required deliverables flag
   requires_deliverable?: boolean;
-  // Reference to the linked general task or meeting task
-  general_task_id?: string;
 }

@@ -14,9 +14,7 @@ export const useUpdateMeetingTask = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, updates, meeting_id }: UpdateMeetingTaskParams) => {
-      console.log("Updating meeting task:", id, updates);
-      
+    mutationFn: async ({ id, updates }: UpdateMeetingTaskParams) => {
       const { data, error } = await supabase
         .from('meeting_tasks')
         .update(updates)
@@ -26,46 +24,11 @@ export const useUpdateMeetingTask = () => {
         
       if (error) throw error;
       
-      // If this task has a general_task_id, update the general task as well
-      if (data.general_task_id) {
-        try {
-          const generalTaskUpdates: Record<string, any> = {};
-          
-          // Map relevant fields to the general task
-          if (updates.title) generalTaskUpdates.title = updates.title;
-          if (updates.description) generalTaskUpdates.description = updates.description;
-          if (updates.status) generalTaskUpdates.status = updates.status;
-          if (updates.due_date) generalTaskUpdates.due_date = updates.due_date;
-          if (updates.assigned_to) generalTaskUpdates.assigned_to = updates.assigned_to;
-          if (updates.priority) generalTaskUpdates.priority = updates.priority;
-          
-          if (Object.keys(generalTaskUpdates).length > 0) {
-            console.log("Also updating general task:", data.general_task_id, generalTaskUpdates);
-            const { error: generalTaskError } = await supabase
-              .from('tasks')
-              .update(generalTaskUpdates)
-              .eq('id', data.general_task_id);
-              
-            if (generalTaskError) {
-              console.error("Error updating general task:", generalTaskError);
-            }
-          }
-        } catch (e) {
-          console.error("Error updating general task:", e);
-        }
-      }
-      
       return data;
     },
     onSuccess: (data) => {
       toast.success("تم تحديث المهمة بنجاح");
       queryClient.invalidateQueries({ queryKey: ['meeting-tasks', data.meeting_id] });
-      
-      // Also invalidate general tasks queries if this task has a general task link
-      if (data.general_task_id) {
-        queryClient.invalidateQueries({ queryKey: ['tasks'] });
-        queryClient.invalidateQueries({ queryKey: ['general-tasks'] });
-      }
     },
     onError: (error) => {
       console.error("Error updating meeting task:", error);

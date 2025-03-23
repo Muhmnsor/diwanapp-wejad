@@ -78,22 +78,6 @@ export const TaskCommentForm = ({
         }
       }
       
-      // Check for a meeting task
-      let actualTaskTable = taskTable;
-      if (task && !taskTable) {
-        // If no specific table is provided, try to detect the appropriate table
-        const { data: meetingTaskCheck, error: meetingTaskError } = await supabase
-          .from('meeting_tasks')
-          .select('id')
-          .eq('id', actualTaskId)
-          .single();
-          
-        if (!meetingTaskError && meetingTaskCheck) {
-          actualTaskTable = 'meeting_tasks';
-          console.log("Task found in meeting_tasks table");
-        }
-      }
-      
       // إضافة التعليق إلى قاعدة البيانات
       const { data, error } = await supabase
         .from("unified_task_comments")
@@ -103,7 +87,7 @@ export const TaskCommentForm = ({
           attachment_url: attachmentUrl,
           attachment_name: attachmentFileName,
           attachment_type: attachmentType,
-          task_table: actualTaskTable
+          task_table: taskTable
         })
         .select()
         .single();

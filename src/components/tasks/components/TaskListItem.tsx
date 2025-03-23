@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Task } from "../types/task";
 import { TaskHeader } from "./header/TaskHeader";
@@ -12,9 +11,6 @@ import { FileUploadDialog } from "./dialogs/FileUploadDialog";
 import { TaskTemplatesDialog } from "./dialogs/TaskTemplatesDialog";
 import { EditTaskDialog } from "../project-details/EditTaskDialog";
 import { TaskDependenciesDialog } from "../project-details/components/dependencies/TaskDependenciesDialog";
-import { toast } from "sonner";
-import { useSyncTaskStatus } from "@/hooks/tasks/useSyncTaskStatus";
-import { supabase } from "@/integrations/supabase/client";
 
 interface TaskListItemProps {
   task: Task;
@@ -68,60 +64,6 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
     };
   };
 
-  // Helper function to handle deleting a task with all linked tasks
-  const handleTaskDelete = async (taskId: string) => {
-    if (!onDelete) return;
-    
-    // Check if this is a general task with linked meeting tasks
-    if (task.is_general) {
-      try {
-        // Check for linked meeting tasks
-        const { data: meetingTasks } = await supabase
-          .from('meeting_tasks')
-          .select('id, meeting_id')
-          .eq('general_task_id', taskId);
-          
-        if (meetingTasks && meetingTasks.length > 0) {
-          const confirmMessage = `هذه المهمة مرتبطة بـ ${meetingTasks.length} مهمة اجتماع. هل تريد حذفها جميعًا؟`;
-          
-          if (confirm(confirmMessage)) {
-            // Delete all linked meeting tasks first
-            for (const meetingTask of meetingTasks) {
-              const { error } = await supabase
-                .from('meeting_tasks')
-                .delete()
-                .eq('id', meetingTask.id);
-                
-              if (error) {
-                console.error("Error deleting linked meeting task:", error);
-              }
-            }
-            
-            // Then delete the general task
-            onDelete(taskId);
-            toast.success("تم حذف المهمة والمهام المرتبطة بها");
-          }
-        } else {
-          // No linked tasks, confirm normal deletion
-          if (confirm("هل أنت متأكد من رغبتك في حذف هذه المهمة؟")) {
-            onDelete(taskId);
-          }
-        }
-      } catch (error) {
-        console.error("Error checking for linked tasks:", error);
-        // Fallback to regular delete
-        if (confirm("هل أنت متأكد من رغبتك في حذف هذه المهمة؟")) {
-          onDelete(taskId);
-        }
-      }
-    } else {
-      // Regular task deletion
-      if (confirm("هل أنت متأكد من رغبتك في حذف هذه المهمة؟")) {
-        onDelete(taskId);
-      }
-    }
-  };
-
   return (
     <div className={`bg-card hover:bg-accent/5 border rounded-lg p-4 transition-colors ${task.is_general ? 'bg-gradient-to-br from-[#f1f5fd] to-[#f5f9ff]' : ''}`}>
       <div className="flex justify-between items-start">
@@ -153,7 +95,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
         onOpenAttachments={() => setIsAttachmentDialogOpen(true)}
         onOpenTemplates={() => setIsTemplatesDialogOpen(true)}
         onStatusChange={handleStatusChange}
-        onDelete={onDelete ? () => handleTaskDelete(task.id) : undefined}
+        onDelete={onDelete}
         onEdit={handleEditTask}
         taskId={task.id}
         isGeneral={task.is_general}

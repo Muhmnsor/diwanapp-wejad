@@ -1,4 +1,3 @@
-
 import { Route } from "react-router-dom";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Settings from "@/pages/Settings";
@@ -16,7 +15,7 @@ import React from "react";
 import DeveloperRoute from "@/components/DeveloperRoute";
 import MeetingsPage from "@/pages/meetings/MeetingsPage";
 import MeetingFolderPage from "@/components/meetings/folders/MeetingFolderPage";
-import { MeetingDetailsPage } from "@/components/meetings/details/MeetingDetailsPage";
+import MeetingDetailsPage from "@/pages/meetings/MeetingDetailsPage";
 
 export const ProtectedRoutes = [
   <Route 
