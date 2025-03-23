@@ -8,6 +8,7 @@ import { MeetingTask } from "@/types/meeting";
 import { FileText } from "lucide-react";
 import { MeetingTaskTemplatesDialog } from "@/components/meetings/tasks/MeetingTaskTemplatesDialog";
 import { Button } from "@/components/ui/button";
+import { UserNameDisplay } from "@/components/meetings/tasks/UserNameDisplay";
 
 interface TasksListProps {
   tasks?: MeetingTask[];
@@ -83,7 +84,9 @@ export const TasksList = ({ tasks, isLoading, error, onTasksChange }: TasksListP
                 {task.status === 'completed' && <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">مكتملة</Badge>}
                 {task.status === 'cancelled' && <Badge variant="outline" className="bg-red-50 text-red-700 hover:bg-red-50">ملغاة</Badge>}
               </TableCell>
-              <TableCell className="text-right">{task.assigned_to || '-'}</TableCell>
+              <TableCell className="text-right">
+                {task.assigned_to ? <UserNameDisplay userId={task.assigned_to} /> : '-'}
+              </TableCell>
               <TableCell>
                 <Button 
                   variant="ghost" 
