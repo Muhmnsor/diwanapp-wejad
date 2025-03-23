@@ -4,6 +4,8 @@ import { TasksList as BaseTasksList } from "@/components/tasks/TasksList";
 import { Task } from "@/components/tasks/types/task";
 import { TaskDialogsProvider } from "@/components/tasks/components/dialogs/TaskDialogsProvider";
 import { MeetingTask } from "@/types/meeting";
+import { Button } from "@/components/ui/button";
+import { MessageCircle } from "lucide-react";
 
 interface MeetingTasksListProps {
   tasks: Task[];
@@ -24,6 +26,26 @@ export const MeetingTasksList: React.FC<MeetingTasksListProps> = ({
 }) => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
+  const handleOpenDiscussion = (task: Task) => {
+    setSelectedTask(task);
+  };
+
+  const renderTaskActions = (task: Task) => {
+    return (
+      <div className="flex space-x-2 mt-2">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+          onClick={() => handleOpenDiscussion(task)}
+        >
+          <MessageCircle className="h-3.5 w-3.5" />
+          مناقشة
+        </Button>
+      </div>
+    );
+  };
+
   return (
     <>
       <BaseTasksList 
@@ -33,6 +55,7 @@ export const MeetingTasksList: React.FC<MeetingTasksListProps> = ({
         onTasksChange={onTasksChange}
         meetingId={meetingId}
         onStatusChange={onStatusChange}
+        renderTaskActions={renderTaskActions}
       />
       
       {selectedTask && (
@@ -40,6 +63,7 @@ export const MeetingTasksList: React.FC<MeetingTasksListProps> = ({
           task={selectedTask}
           onStatusChange={onStatusChange}
           onTaskUpdated={onTasksChange}
+          initialDialog="discussion"
         />
       )}
     </>

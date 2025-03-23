@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Task } from "../../types/task";
 import { TaskDiscussionDialog } from "../TaskDiscussionDialog";
 import { TaskAttachmentDialog } from "../dialogs/TaskAttachmentDialog";
@@ -13,15 +13,28 @@ interface TaskDialogsProviderProps {
   task: Task;
   onStatusChange: (taskId: string, status: string) => void;
   onTaskUpdated?: () => void;
+  initialDialog?: "discussion" | "attachments" | "upload" | "templates" | "edit" | "dependencies";
 }
 
-export const TaskDialogsProvider = ({ task, onStatusChange, onTaskUpdated }: TaskDialogsProviderProps) => {
-  const [showDiscussion, setShowDiscussion] = useState(false);
-  const [isAttachmentDialogOpen, setIsAttachmentDialogOpen] = useState(false);
-  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-  const [isTemplatesDialogOpen, setIsTemplatesDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [showDependencies, setShowDependencies] = useState(false);
+export const TaskDialogsProvider = ({ 
+  task, 
+  onStatusChange, 
+  onTaskUpdated,
+  initialDialog 
+}: TaskDialogsProviderProps) => {
+  const [showDiscussion, setShowDiscussion] = useState(initialDialog === "discussion");
+  const [isAttachmentDialogOpen, setIsAttachmentDialogOpen] = useState(initialDialog === "attachments");
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(initialDialog === "upload");
+  const [isTemplatesDialogOpen, setIsTemplatesDialogOpen] = useState(initialDialog === "templates");
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(initialDialog === "edit");
+  const [showDependencies, setShowDependencies] = useState(initialDialog === "dependencies");
+
+  // Update dialog state when the task changes
+  useEffect(() => {
+    if (initialDialog === "discussion") {
+      setShowDiscussion(true);
+    }
+  }, [task.id, initialDialog]);
 
   const adaptTaskForEditDialog = (): ProjectTask => {
     return {
