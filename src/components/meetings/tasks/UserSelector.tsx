@@ -8,6 +8,8 @@ interface UserSelectorProps {
   value: string;
   onChange: (value: string) => void;
   meetingId: string;
+  label?: string;
+  placeholder?: string;
 }
 
 // The wrapper component that ensures context is available
@@ -20,7 +22,12 @@ export const UserSelector: React.FC<UserSelectorProps> = (props) => {
 };
 
 // The inner component that uses the context
-const UserSelectorInner: React.FC<UserSelectorProps> = ({ value, onChange }) => {
+const UserSelectorInner: React.FC<UserSelectorProps> = ({ 
+  value, 
+  onChange, 
+  label = "المسؤول",
+  placeholder = "اختر المسؤول" 
+}) => {
   const { participants, users, isLoadingParticipants, isLoadingUsers } = useMeetingTasksContext();
 
   // Combine participants and users, removing duplicates by id
@@ -35,22 +42,25 @@ const UserSelectorInner: React.FC<UserSelectorProps> = ({ value, onChange }) => 
   }, [participants, users]);
 
   return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-full">
-        <SelectValue placeholder="اختر المسؤول" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="unassigned">غير محدد</SelectItem>
-        {isLoadingParticipants || isLoadingUsers ? (
-          <SelectItem value="loading" disabled>جاري التحميل...</SelectItem>
-        ) : (
-          allUsers.map(user => (
-            <SelectItem key={user.id} value={user.id}>
-              {user.name}
-            </SelectItem>
-          ))
-        )}
-      </SelectContent>
-    </Select>
+    <div className="space-y-2">
+      {label && <Label>{label}</Label>}
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="unassigned">غير محدد</SelectItem>
+          {isLoadingParticipants || isLoadingUsers ? (
+            <SelectItem value="loading" disabled>جاري التحميل...</SelectItem>
+          ) : (
+            allUsers.map(user => (
+              <SelectItem key={user.id} value={user.id}>
+                {user.name}
+              </SelectItem>
+            ))
+          )}
+        </SelectContent>
+      </Select>
+    </div>
   );
 };

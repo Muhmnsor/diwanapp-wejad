@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { TasksList as BaseTasksList } from "@/components/tasks/TasksList";
 import { Task } from "@/components/tasks/types/task";
 import { TaskDialogsProvider } from "@/components/tasks/components/dialogs/TaskDialogsProvider";
+import { MeetingTask } from "@/types/meeting";
 
 interface MeetingTasksListProps {
   tasks: Task[];

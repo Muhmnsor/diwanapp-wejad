@@ -8,7 +8,7 @@ import { useState } from "react";
 import { CustomEnhancedTaskDialog } from "./CustomEnhancedTaskDialog";
 import { Task } from "@/components/tasks/types/task";
 import { MeetingTask } from "@/types/meeting";
-import { TasksList } from "@/components/tasks/TasksList";
+import { MeetingTasksList } from "./MeetingTasksList";
 
 interface MeetingTasksSectionProps {
   meetingId: string;
@@ -26,7 +26,7 @@ const adaptMeetingTaskToTask = (meetingTask: MeetingTask): Task => {
     assigned_to: meetingTask.assigned_to || null,
     created_at: meetingTask.created_at || new Date().toISOString(),
     is_general: false,
-    requires_deliverable: meetingTask.requires_deliverable,
+    requires_deliverable: meetingTask.requires_deliverable || false,
     project_id: null,
     project_name: null
   };
@@ -77,7 +77,7 @@ export const MeetingTasksSection: React.FC<MeetingTasksSectionProps> = ({ meetin
           <CardTitle>قائمة المهام</CardTitle>
         </CardHeader>
         <CardContent>
-          <TasksList 
+          <MeetingTasksList 
             tasks={adaptedTasks} 
             isLoading={isLoading} 
             error={error} 
