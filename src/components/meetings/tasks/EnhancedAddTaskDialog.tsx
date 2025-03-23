@@ -33,7 +33,7 @@ export const EnhancedAddTaskDialog = ({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
-  const [assignedTo, setAssignedTo] = useState("");
+  const [assignedTo, setAssignedTo] = useState("unassigned");
   const [taskType, setTaskType] = useState<TaskType>("action_item");
   const [priority, setPriority] = useState<"high" | "medium" | "low">("medium");
   
@@ -50,7 +50,7 @@ export const EnhancedAddTaskDialog = ({
         title,
         description: description || undefined,
         due_date: dueDate || undefined,
-        assigned_to: assignedTo || undefined,
+        assigned_to: assignedTo !== "unassigned" ? assignedTo : undefined,
         task_type: taskType,
         status: "pending",
         add_to_general_tasks: false,
@@ -60,6 +60,7 @@ export const EnhancedAddTaskDialog = ({
       resetForm();
       onOpenChange(false);
       onSuccess?.();
+      toast.success("تمت إضافة المهمة بنجاح");
     } catch (error: any) {
       console.error("Error adding task:", error);
       toast.error("حدث خطأ أثناء إضافة المهمة");
@@ -70,7 +71,7 @@ export const EnhancedAddTaskDialog = ({
     setTitle("");
     setDescription("");
     setDueDate("");
-    setAssignedTo("");
+    setAssignedTo("unassigned");
     setTaskType("action_item");
     setPriority("medium");
   };

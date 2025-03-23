@@ -54,7 +54,7 @@ export const UserSelector: React.FC<UserSelectorProps> = ({
             </SelectItem>
           ) : (
             <>
-              <SelectItem value="">-- اختر المسؤول --</SelectItem>
+              <SelectItem value="unassigned">-- اختر المسؤول --</SelectItem>
               
               {participants && participants.length > 0 && (
                 <>
