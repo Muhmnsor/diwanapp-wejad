@@ -58,7 +58,7 @@ export const MeetingTasksList: React.FC<MeetingTasksListProps> = ({
       created_by: undefined,
       task_type: "action_item", // Default
       requires_deliverable: task.requires_deliverable || false,
-      general_task_id: undefined
+      general_task_id: task.general_task_id
     };
   };
 
@@ -73,10 +73,25 @@ export const MeetingTasksList: React.FC<MeetingTasksListProps> = ({
   };
 
   const handleDeleteTask = (taskId: string) => {
-    if (confirm("هل أنت متأكد من رغبتك في حذف هذه المهمة؟")) {
+    // Find the task to get its general_task_id if it exists
+    const task = tasks.find(t => t.id === taskId);
+    
+    if (!task) {
+      toast.error("لم يتم العثور على بيانات المهمة");
+      return;
+    }
+    
+    // Ask for confirmation, and specifically mention if we'll delete a linked general task
+    const confirmMessage = task.general_task_id 
+      ? "هل أنت متأكد من رغبتك في حذف هذه المهمة؟ سيتم أيضًا حذف المهمة المرتبطة في قائمة المهام العامة."
+      : "هل أنت متأكد من رغبتك في حذف هذه المهمة؟";
+    
+    if (confirm(confirmMessage)) {
       deleteTask({ 
         id: taskId, 
-        meeting_id: meetingId 
+        meeting_id: meetingId,
+        general_task_id: task.general_task_id,
+        deleteGeneralTask: true // Always delete linked general task when deleting a meeting task
       }, {
         onSuccess: () => {
           onTasksChange();

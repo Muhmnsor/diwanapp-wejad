@@ -14,17 +14,44 @@ export const useDeleteMeetingTask = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, meeting_id, general_task_id, deleteGeneralTask }: DeleteMeetingTaskParams) => {
+    mutationFn: async ({ id, meeting_id, general_task_id, deleteGeneralTask = false }: DeleteMeetingTaskParams) => {
+      console.log("Deleting meeting task:", id, "with general task:", general_task_id, "deleteGeneralTask:", deleteGeneralTask);
+      
       // If there's a linked general task and the user wants to delete it too
       if (general_task_id && deleteGeneralTask) {
-        const { error: generalTaskError } = await supabase
-          .from('tasks')
-          .delete()
-          .eq('id', general_task_id);
+        console.log("Also deleting linked general task:", general_task_id);
+        
+        // First, check if this general task has other linked meeting tasks
+        const { data: otherMeetingTasks, error: checkError } = await supabase
+          .from('meeting_tasks')
+          .select('id')
+          .eq('general_task_id', general_task_id)
+          .neq('id', id); // Exclude the current meeting task
           
-        if (generalTaskError) {
-          console.error("Error deleting general task:", generalTaskError);
-          // Continue to delete meeting task even if general task deletion fails
+        if (checkError) {
+          console.error("Error checking for other linked meeting tasks:", checkError);
+        }
+        
+        // If this is the only meeting task linked to this general task, or we're explicitly deleting the general task
+        if (!checkError && (!otherMeetingTasks || otherMeetingTasks.length === 0)) {
+          // Delete the general task
+          const { error: generalTaskError } = await supabase
+            .from('tasks')
+            .delete()
+            .eq('id', general_task_id);
+            
+          if (generalTaskError) {
+            console.error("Error deleting general task:", generalTaskError);
+            // Continue to delete meeting task even if general task deletion fails
+          } else {
+            console.log("Successfully deleted linked general task:", general_task_id);
+            
+            // Invalidate general tasks queries
+            queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            queryClient.invalidateQueries({ queryKey: ['general-tasks'] });
+          }
+        } else {
+          console.log("Not deleting general task as it still has other linked meeting tasks");
         }
       }
       
@@ -35,6 +62,8 @@ export const useDeleteMeetingTask = () => {
         .eq('id', id);
         
       if (error) throw error;
+      
+      console.log("Successfully deleted meeting task:", id);
       
       return { id, meeting_id };
     },
