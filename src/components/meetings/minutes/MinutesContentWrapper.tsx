@@ -16,11 +16,5 @@ export const MinutesContentWrapper: React.FC<MinutesContentWrapperProps> = ({
   // Adapt the data to the format expected by components
   const adaptedData = adaptMinutesData(minutesQuery.data);
   
-  // Replace the original data with the adapted data
-  const wrappedQuery = {
-    ...minutesQuery,
-    data: adaptedData
-  };
-  
-  return <MeetingMinutesContent query={wrappedQuery} meetingId={meetingId} />;
+  return <MeetingMinutesContent meetingId={meetingId} />;
 };
