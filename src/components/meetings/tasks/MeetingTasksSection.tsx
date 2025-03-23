@@ -9,6 +9,8 @@ import { CustomEnhancedTaskDialog } from "./CustomEnhancedTaskDialog";
 import { Task } from "@/components/tasks/types/task";
 import { MeetingTask } from "@/types/meeting";
 import { MeetingTasksList } from "./MeetingTasksList";
+import { useUpdateMeetingTask } from "@/hooks/meetings/useUpdateMeetingTask";
+import { toast } from "sonner";
 
 interface MeetingTasksSectionProps {
   meetingId: string;
@@ -28,33 +30,47 @@ const adaptMeetingTaskToTask = (meetingTask: MeetingTask): Task => {
     is_general: false,
     requires_deliverable: meetingTask.requires_deliverable || false,
     project_id: null,
-    project_name: null
+    project_name: null,
+    assigned_user_name: meetingTask.assigned_user_name,
+    general_task_id: meetingTask.general_task_id
   };
 };
 
 export const MeetingTasksSection: React.FC<MeetingTasksSectionProps> = ({ meetingId }) => {
   const { data: tasks, isLoading, error, refetch } = useMeetingTasks(meetingId);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
+  const { mutate: updateMeetingTask } = useUpdateMeetingTask();
 
   const handleOpenDialog = () => {
     setIsAddTaskOpen(true);
   };
 
-  // Handle task status changes
+  // Enhanced handler for task status changes with bidirectional sync
   const handleStatusChange = async (taskId: string, status: string) => {
     try {
-      const { supabase } = await import('@/integrations/supabase/client');
+      const task = tasks?.find(t => t.id === taskId);
+      if (!task) {
+        throw new Error("Task not found");
+      }
       
-      const { error } = await supabase
-        .from('meeting_tasks')
-        .update({ status })
-        .eq('id', taskId);
-        
-      if (error) throw error;
-      
-      refetch();
+      // Use the updateMeetingTask hook to handle bidirectional sync
+      updateMeetingTask({
+        id: taskId,
+        meeting_id: meetingId,
+        updates: { status: status as any }
+      }, {
+        onSuccess: () => {
+          // The hook will handle bidirectional sync and cache invalidation
+          console.log("Successfully updated task status with sync");
+        },
+        onError: (error) => {
+          console.error("Error updating task status:", error);
+          toast.error("حدث خطأ أثناء تحديث حالة المهمة");
+        }
+      });
     } catch (error) {
       console.error('Error updating task status:', error);
+      toast.error("حدث خطأ أثناء تحديث حالة المهمة");
     }
   };
 
