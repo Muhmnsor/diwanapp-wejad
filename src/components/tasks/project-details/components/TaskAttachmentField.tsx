@@ -1,95 +1,71 @@
 
-import { useState } from "react";
+import React from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Paperclip, X, FileDown } from "lucide-react";
-import { toast } from "sonner";
+import { Paperclip, X } from "lucide-react";
 
 interface TaskAttachmentFieldProps {
   attachment: File[] | null;
-  setAttachment: (file: File[] | null) => void;
-  category?: 'creator' | 'assignee' | 'comment' | 'template';
+  setAttachment: (files: File[] | null) => void;
+  category: string;
+  label?: string;
 }
 
-export const TaskAttachmentField = ({ 
-  attachment, 
-  setAttachment, 
-  category = 'template' 
-}: TaskAttachmentFieldProps) => {
+export const TaskAttachmentField: React.FC<TaskAttachmentFieldProps> = ({
+  attachment,
+  setAttachment,
+  category,
+  label = "إرفاق نماذج"
+}) => {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      const selectedFile = files[0];
-      if (selectedFile.size > 5 * 1024 * 1024) { // 5MB limit
-        toast.error("حجم الملف كبير جدًا. الحد الأقصى 5 ميجابايت");
-        return;
-      }
-      
-      console.log(`Adding new template file with category: ${category}`);
-      
-      // Add new file to existing files array with category metadata
-      const fileWithMetadata = Object.assign(selectedFile, { 
-        category,
-        attachment_category: category // Add this explicit property for consistent database storage
-      });
-      
-      console.log("File with metadata:", fileWithMetadata);
-      
-      const updatedAttachments = attachment ? [...attachment, fileWithMetadata] : [fileWithMetadata];
-      setAttachment(updatedAttachments);
-    }
-    
-    // Clear input value to allow selecting the same file again
-    if (e.target.value) {
-      e.target.value = '';
+    if (e.target.files && e.target.files.length > 0) {
+      const filesArray = Array.from(e.target.files);
+      setAttachment(filesArray);
     }
   };
 
-  const handleRemoveFile = (index: number) => {
-    if (attachment) {
-      const updatedAttachments = [...attachment];
-      updatedAttachments.splice(index, 1);
-      setAttachment(updatedAttachments.length > 0 ? updatedAttachments : null);
+  const handleRemoveFile = () => {
+    setAttachment(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
-
-  const labelText = "نماذج المهمة";
-  const buttonText = "إضافة نموذج";
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="attachment">{labelText}</Label>
+      <Label htmlFor={`attachment-${category}`}>{label}</Label>
       <div className="flex flex-col gap-2">
-        <div className="flex items-center">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={() => document.getElementById("attachment")?.click()} 
-            className="relative"
-          >
-            <FileDown className="h-4 w-4 ml-2" />
-            {buttonText}
-          </Button>
-          <input
-            type="file"
-            id="attachment"
-            className="hidden"
-            onChange={handleFileChange}
-            accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-          />
-        </div>
-        
+        <input
+          type="file"
+          id={`attachment-${category}`}
+          ref={fileInputRef}
+          className="hidden"
+          onChange={handleFileChange}
+          multiple
+        />
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full justify-start"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <Paperclip className="h-4 w-4 ml-2" />
+          {label}
+        </Button>
+
         {attachment && attachment.length > 0 && (
-          <div className="mt-2 space-y-2">
+          <div className="mt-2">
             {attachment.map((file, index) => (
-              <div key={index} className="flex items-center gap-2 p-2 border rounded-md bg-gray-50 break-all">
-                <span className="flex-1 truncate text-sm">{file.name}</span>
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => handleRemoveFile(index)} 
-                  className="h-7 w-7 p-0 flex-shrink-0"
+              <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md mb-1">
+                <span className="text-sm truncate">{file.name}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                  onClick={handleRemoveFile}
                 >
                   <X className="h-4 w-4" />
                 </Button>
