@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-interface MeetingParticipant {
+export interface MeetingParticipant {
   id: string;
   meeting_id: string;
   user_id: string;
@@ -11,20 +11,25 @@ interface MeetingParticipant {
   role: string;
   attendance_status: string;
   created_at: string;
-  updated_at: string;
 }
 
 export const useMeetingParticipants = (meetingId: string) => {
   return useQuery({
     queryKey: ['meeting-participants', meetingId],
     queryFn: async () => {
+      if (!meetingId) {
+        throw new Error('Meeting ID is required to fetch participants');
+      }
+      
       const { data, error } = await supabase
         .from('meeting_participants')
         .select('*')
-        .eq('meeting_id', meetingId)
-        .order('created_at', { ascending: true });
+        .eq('meeting_id', meetingId);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching meeting participants:', error);
+        throw error;
+      }
       
       return data as MeetingParticipant[];
     },

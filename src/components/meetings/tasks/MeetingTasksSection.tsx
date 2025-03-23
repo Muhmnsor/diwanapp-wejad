@@ -7,8 +7,6 @@ import { useMeetingTasks } from "@/hooks/meetings/useMeetingTasks";
 import { TasksList } from "@/components/tasks/TasksList";
 import { useState } from "react";
 import { CustomAddTaskDialog } from "@/components/meetings/tasks/CustomAddTaskDialog";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 
 interface MeetingTasksSectionProps {
   meetingId: string;
@@ -17,36 +15,6 @@ interface MeetingTasksSectionProps {
 export const MeetingTasksSection: React.FC<MeetingTasksSectionProps> = ({ meetingId }) => {
   const { data: tasks, isLoading, error, refetch } = useMeetingTasks(meetingId);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
-  
-  // Fetch meeting participants to use as potential assignees
-  const { data: participants } = useQuery({
-    queryKey: ['meeting-participants', meetingId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('meeting_participants')
-        .select('user_id, user_display_name, user_email')
-        .eq('meeting_id', meetingId);
-        
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!meetingId,
-  });
-
-  // Fetch all active users from profiles
-  const { data: users } = useQuery({
-    queryKey: ["users-list"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, email, display_name")
-        .eq("is_active", true)
-        .order("display_name", { ascending: true });
-
-      if (error) throw error;
-      return data;
-    },
-  });
 
   return (
     <div className="space-y-4 text-right">
@@ -77,8 +45,6 @@ export const MeetingTasksSection: React.FC<MeetingTasksSectionProps> = ({ meetin
         onOpenChange={setIsAddTaskOpen}
         meetingId={meetingId}
         onSuccess={refetch}
-        users={users || []}
-        participants={participants || []}
       />
     </div>
   );
