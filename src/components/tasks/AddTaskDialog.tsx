@@ -41,6 +41,7 @@ export const AddTaskDialog = ({
   const [dueDate, setDueDate] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
   const [taskType, setTaskType] = useState<TaskType>("action_item");
+  const [priority, setPriority] = useState<"high" | "medium" | "low">("medium");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,7 +60,9 @@ export const AddTaskDialog = ({
         assigned_to: assignedTo || undefined,
         task_type: taskType,
         status: "pending",
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        priority: priority,
+        add_to_general_tasks: false
       });
       
       if (error) throw error;
@@ -82,6 +85,7 @@ export const AddTaskDialog = ({
     setDueDate("");
     setAssignedTo("");
     setTaskType("action_item");
+    setPriority("medium");
   };
   
   return (
@@ -133,6 +137,25 @@ export const AddTaskDialog = ({
                   <SelectItem value="action_item">إجراء</SelectItem>
                   <SelectItem value="decision">قرار</SelectItem>
                   <SelectItem value="other">أخرى</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="priority">الأولوية</Label>
+              <Select 
+                value={priority} 
+                onValueChange={(value) => {
+                  setPriority(value as "high" | "medium" | "low");
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر أولوية المهمة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high">عالية</SelectItem>
+                  <SelectItem value="medium">متوسطة</SelectItem>
+                  <SelectItem value="low">منخفضة</SelectItem>
                 </SelectContent>
               </Select>
             </div>
