@@ -2,7 +2,12 @@
 // If the file doesn't exist, create it with the following content
 export type TaskStatus = "pending" | "in_progress" | "completed" | "cancelled";
 export type TaskPriority = "low" | "medium" | "high";
-export type TaskType = "action_item" | "follow_up" | "decision" | "preparation" | "execution";
+export type TaskType = "action_item" | "follow_up" | "decision" | "preparation" | "execution" | "other";
+export type AttendanceType = "in_person" | "remote" | "hybrid";
+export type MeetingType = "regular" | "executive" | "emergency" | "other";
+export type ParticipantRole = "attendee" | "organizer" | "presenter" | "secretary" | "observer";
+export type AttendanceStatus = "present" | "absent" | "late" | "excused";
+export type DecisionStatus = "approved" | "rejected" | "pending" | "deferred";
 
 export interface MeetingTask {
   id: string;
@@ -34,8 +39,12 @@ export interface Meeting {
   meeting_status: string;
   meeting_type: string;
   folder_id: string;
+  folder_name?: string;
   created_by: string;
   created_at: string;
+  updated_at?: string;
+  objectives?: { id: string; content: string; order_number: number }[];
+  folder?: any;
 }
 
 export interface MeetingMinutes {
