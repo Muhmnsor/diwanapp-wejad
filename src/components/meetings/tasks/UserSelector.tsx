@@ -35,25 +35,22 @@ const UserSelectorInner: React.FC<UserSelectorProps> = ({ value, onChange }) => 
   }, [participants, users]);
 
   return (
-    <div className="space-y-2">
-      <Label htmlFor="assignedTo">المسؤول عن التنفيذ</Label>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="اختر المسؤول" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="unassigned">غير محدد</SelectItem>
-          {isLoadingParticipants || isLoadingUsers ? (
-            <SelectItem value="loading" disabled>جاري التحميل...</SelectItem>
-          ) : (
-            allUsers.map(user => (
-              <SelectItem key={user.id} value={user.id}>
-                {user.name}
-              </SelectItem>
-            ))
-          )}
-        </SelectContent>
-      </Select>
-    </div>
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="w-full">
+        <SelectValue placeholder="اختر المسؤول" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="unassigned">غير محدد</SelectItem>
+        {isLoadingParticipants || isLoadingUsers ? (
+          <SelectItem value="loading" disabled>جاري التحميل...</SelectItem>
+        ) : (
+          allUsers.map(user => (
+            <SelectItem key={user.id} value={user.id}>
+              {user.name}
+            </SelectItem>
+          ))
+        )}
+      </SelectContent>
+    </Select>
   );
 };
