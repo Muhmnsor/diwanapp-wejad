@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MeetingTask, TaskType, TaskStatus } from "@/types/meeting";
 
-interface CreateMeetingTaskParams {
+export interface CreateMeetingTaskParams {
   meeting_id: string;
   title: string;
   description?: string;

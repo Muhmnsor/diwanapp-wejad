@@ -22,5 +22,5 @@ export const MinutesContentWrapper: React.FC<MinutesContentWrapperProps> = ({
     data: adaptedData
   };
   
-  return <MeetingMinutesContent meetingId={meetingId} />;
+  return <MeetingMinutesContent query={wrappedQuery} meetingId={meetingId} />;
 };

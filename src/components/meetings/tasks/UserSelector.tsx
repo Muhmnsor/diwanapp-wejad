@@ -1,7 +1,8 @@
 
 import React from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useMeetingParticipants } from "@/hooks/meetings/useMeetingParticipants";
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { User } from "@/components/users/types";
 
@@ -21,19 +22,7 @@ export const UserSelector: React.FC<UserSelectorProps> = ({
   placeholder = "اختر المتكلف"
 }) => {
   // Fetch meeting participants to use as potential assignees
-  const { data: participants, isLoading: isLoadingParticipants } = useQuery({
-    queryKey: ['meeting-participants', meetingId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('meeting_participants')
-        .select('user_id, user_display_name, user_email')
-        .eq('meeting_id', meetingId);
-        
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!meetingId,
-  });
+  const { data: participants, isLoading: isLoadingParticipants } = useMeetingParticipants(meetingId || '');
 
   // Fetch all active users from profiles
   const { data: users, isLoading: isLoadingUsers } = useQuery({
