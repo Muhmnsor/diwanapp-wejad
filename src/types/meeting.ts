@@ -1,4 +1,3 @@
-
 export interface Meeting {
   id: string;
   title: string;
@@ -37,7 +36,7 @@ export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 
 export type DecisionStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 
-export interface MeetingTask {
+export interface Task {
   id: string;
   meeting_id: string;
   title: string;
@@ -46,6 +45,7 @@ export interface MeetingTask {
   assigned_to?: string;
   task_type: TaskType;
   status: TaskStatus;
+  category?: string;
   created_at?: string;
   updated_at?: string;
 }

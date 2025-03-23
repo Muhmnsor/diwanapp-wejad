@@ -19,12 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MeetingTask, TaskStatus, TaskType } from "@/types/meeting";
+import { Task, TaskStatus, TaskType } from "@/types/meeting";
 import { Loader2 } from "lucide-react";
 
 interface EditTaskDialogProps {
   meetingId: string;
-  task: MeetingTask;
+  task: Task;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;

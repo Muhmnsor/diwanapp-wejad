@@ -2,12 +2,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { MeetingTask } from "@/types/meeting";
+import { Task } from "@/types/meeting";
 
 interface UpdateMeetingTaskParams {
   id: string;
   meeting_id: string;
-  updates: Partial<MeetingTask>;
+  updates: Partial<Task>;
 }
 
 export const useUpdateMeetingTask = () => {
@@ -16,7 +16,7 @@ export const useUpdateMeetingTask = () => {
   return useMutation({
     mutationFn: async ({ id, updates }: UpdateMeetingTaskParams) => {
       const { data, error } = await supabase
-        .from('meeting_tasks')
+        .from('tasks')
         .update(updates)
         .eq('id', id)
         .select()
@@ -28,7 +28,7 @@ export const useUpdateMeetingTask = () => {
     },
     onSuccess: (data) => {
       toast.success("تم تحديث المهمة بنجاح");
-      queryClient.invalidateQueries({ queryKey: ['meeting-tasks', data.meeting_id] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'meeting', data.meeting_id] });
     },
     onError: (error) => {
       console.error("Error updating meeting task:", error);
