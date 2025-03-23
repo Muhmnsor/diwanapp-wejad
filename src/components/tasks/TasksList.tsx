@@ -9,41 +9,21 @@ import { FileText } from "lucide-react";
 import { MeetingTaskTemplatesDialog } from "@/components/meetings/tasks/MeetingTaskTemplatesDialog";
 import { Button } from "@/components/ui/button";
 import { UserNameDisplay } from "@/components/meetings/tasks/UserNameDisplay";
-import { MeetingTaskItem } from "@/components/meetings/tasks/MeetingTaskItem";
 
 interface TasksListProps {
   tasks?: MeetingTask[];
   isLoading?: boolean;
   error?: Error | null;
   onTasksChange?: () => void;
-  viewMode?: "table" | "card";
 }
 
-export const TasksList = ({ 
-  tasks, 
-  isLoading, 
-  error, 
-  onTasksChange,
-  viewMode = "card" // Default to card view
-}: TasksListProps) => {
+export const TasksList = ({ tasks, isLoading, error, onTasksChange }: TasksListProps) => {
   const [selectedTask, setSelectedTask] = useState<MeetingTask | null>(null);
   const [isTemplatesDialogOpen, setIsTemplatesDialogOpen] = useState(false);
 
   const handleViewTemplates = (task: MeetingTask) => {
     setSelectedTask(task);
     setIsTemplatesDialogOpen(true);
-  };
-
-  const handleDeleteTask = (taskId: string) => {
-    // For now, just log - implement actual deletion later
-    console.log("Delete task:", taskId);
-    // If implemented, would call onTasksChange to refresh the list
-    if (onTasksChange) onTasksChange();
-  };
-
-  const handleEditTask = (task: MeetingTask) => {
-    // For now, just log - implement actual editing later
-    console.log("Edit task:", task);
   };
 
   if (isLoading) {
@@ -70,24 +50,6 @@ export const TasksList = ({
     );
   }
 
-  // Card view (new style)
-  if (viewMode === "card") {
-    return (
-      <div className="space-y-4">
-        {tasks.map((task) => (
-          <MeetingTaskItem
-            key={task.id}
-            task={task}
-            onDelete={handleDeleteTask}
-            onEdit={handleEditTask}
-            onRefresh={onTasksChange}
-          />
-        ))}
-      </div>
-    );
-  }
-
-  // Table view (original style)
   return (
     <>
       <Table dir="rtl">
