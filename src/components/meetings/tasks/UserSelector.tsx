@@ -1,83 +1,56 @@
 
 import React from "react";
-import { useMeetingParticipants } from "@/hooks/meetings/useMeetingParticipants";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useMeetingTasksContext, MeetingTasksProvider } from "@/contexts/meetings/MeetingTasksContext";
 
 interface UserSelectorProps {
   value: string;
   onChange: (value: string) => void;
-  meetingId?: string;
-  label?: string;
-  placeholder?: string;
+  meetingId: string;
 }
 
-export const UserSelector: React.FC<UserSelectorProps> = ({
-  value,
-  onChange,
-  meetingId,
-  label = "المسؤول عن التنفيذ",
-  placeholder = "اختر المسؤول عن التنفيذ"
-}) => {
-  // Fetch meeting participants to use as potential assignees
-  const { data: participants, isLoading: isLoadingParticipants } = useMeetingParticipants(meetingId || '');
+// The wrapper component that ensures context is available
+export const UserSelector: React.FC<UserSelectorProps> = (props) => {
+  return (
+    <MeetingTasksProvider meetingId={props.meetingId}>
+      <UserSelectorInner {...props} />
+    </MeetingTasksProvider>
+  );
+};
 
-  // Fetch all active users from profiles
-  const { data: users, isLoading: isLoadingUsers } = useQuery({
-    queryKey: ["users-list"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, email, display_name")
-        .eq("is_active", true)
-        .order("display_name", { ascending: true });
+// The inner component that uses the context
+const UserSelectorInner: React.FC<UserSelectorProps> = ({ value, onChange }) => {
+  const { participants, users, isLoadingParticipants, isLoadingUsers } = useMeetingTasksContext();
 
-      if (error) throw error;
-      return data;
-    },
-  });
-  
-  const isLoading = isLoadingParticipants || isLoadingUsers;
+  // Combine participants and users, removing duplicates by id
+  const allUsers = React.useMemo(() => {
+    const participantIds = new Set(participants.map(p => p.user_id));
+    const nonParticipantUsers = users.filter(u => !participantIds.has(u.id));
+    
+    return [
+      ...participants.map(p => ({ id: p.user_id, name: p.user?.display_name || p.user?.email || p.user_id })),
+      ...nonParticipantUsers.map(u => ({ id: u.id, name: u.display_name || u.email }))
+    ];
+  }, [participants, users]);
 
   return (
     <div className="space-y-2">
-      {label && <label className="block text-sm font-medium text-right">{label}</label>}
+      <Label htmlFor="assignedTo">المسؤول عن التنفيذ</Label>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger className="w-full">
-          <SelectValue placeholder={placeholder} />
+          <SelectValue placeholder="اختر المسؤول" />
         </SelectTrigger>
         <SelectContent>
-          {isLoading ? (
-            <SelectItem value="loading" disabled>
-              جاري التحميل...
-            </SelectItem>
+          <SelectItem value="unassigned">غير محدد</SelectItem>
+          {isLoadingParticipants || isLoadingUsers ? (
+            <SelectItem value="loading" disabled>جاري التحميل...</SelectItem>
           ) : (
-            <>
-              <SelectItem value="unassigned">-- اختر المسؤول --</SelectItem>
-              
-              {participants && participants.length > 0 && (
-                <>
-                  <div className="px-2 py-1.5 text-sm font-semibold">المشاركون في الاجتماع</div>
-                  {participants.map((participant) => (
-                    <SelectItem key={participant.user_id} value={participant.user_id}>
-                      {participant.user_display_name || participant.user_email}
-                    </SelectItem>
-                  ))}
-                </>
-              )}
-              
-              {users && users.length > 0 && (
-                <>
-                  <div className="px-2 py-1.5 text-sm font-semibold">جميع المستخدمين</div>
-                  {users.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.display_name || user.email}
-                    </SelectItem>
-                  ))}
-                </>
-              )}
-            </>
+            allUsers.map(user => (
+              <SelectItem key={user.id} value={user.id}>
+                {user.name}
+              </SelectItem>
+            ))
           )}
         </SelectContent>
       </Select>

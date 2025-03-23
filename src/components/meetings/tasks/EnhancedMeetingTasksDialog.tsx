@@ -11,12 +11,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
+import { Label } from "@/components/ui/label";
 import { useCreateMeetingTask } from "@/hooks/meetings/useCreateMeetingTask";
 import { TaskType, TaskStatus } from "@/types/meeting";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { UserSelector } from "./UserSelector";
 import { TaskAttachmentField } from "@/components/tasks/project-details/components/TaskAttachmentField";
 
@@ -125,10 +124,11 @@ export const EnhancedMeetingTasksDialog: React.FC<EnhancedMeetingTasksDialogProp
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="dueDate">تاريخ الاستحقاق</Label>
-              <DatePicker
+              <Input 
+                id="dueDate"
+                type="date"
                 value={dueDate}
-                onChange={setDueDate}
-                placeholder="اختر تاريخ الاستحقاق"
+                onChange={(e) => setDueDate(e.target.value)}
               />
             </div>
 
