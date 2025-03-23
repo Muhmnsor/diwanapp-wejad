@@ -2,7 +2,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { MeetingTask, TaskType } from "@/types/meeting";
+import { MeetingTask, TaskType, TaskStatus } from "@/types/meeting";
 
 interface CreateMeetingTaskParams {
   meeting_id: string;
@@ -11,8 +11,10 @@ interface CreateMeetingTaskParams {
   due_date?: string;
   assigned_to?: string;
   task_type: TaskType;
-  status: "pending" | "in_progress" | "completed" | "cancelled";
+  status: TaskStatus;
   add_to_general_tasks?: boolean;
+  requires_deliverable?: boolean;
+  priority: "high" | "medium" | "low";
 }
 
 export const useCreateMeetingTask = () => {
@@ -38,7 +40,9 @@ export const useCreateMeetingTask = () => {
           task_type: taskData.task_type,
           status: taskData.status,
           created_at: new Date().toISOString(),
-          add_to_general_tasks: taskData.add_to_general_tasks || false
+          add_to_general_tasks: taskData.add_to_general_tasks || false,
+          requires_deliverable: taskData.requires_deliverable || false,
+          priority: taskData.priority || "medium"
         })
         .select('*')
         .single();
@@ -50,8 +54,32 @@ export const useCreateMeetingTask = () => {
       
       // If add_to_general_tasks is true, also create a general task
       if (taskData.add_to_general_tasks) {
-        // Logic to add to general tasks system would go here
-        console.log('Would add to general tasks:', taskData);
+        try {
+          const { error: generalTaskError } = await supabase
+            .from('tasks')
+            .insert({
+              title: taskData.title,
+              description: taskData.description,
+              due_date: taskData.due_date,
+              assigned_to: taskData.assigned_to,
+              status: taskData.status,
+              priority: taskData.priority,
+              is_general: true,
+              requires_deliverable: taskData.requires_deliverable,
+              category: taskData.task_type === 'action_item' ? 'إجراء' : 
+                      taskData.task_type === 'follow_up' ? 'متابعة' : 
+                      taskData.task_type === 'decision' ? 'قرار' : 
+                      taskData.task_type === 'preparation' ? 'تحضيرية' : 
+                      taskData.task_type === 'execution' ? 'تنفيذية' : 'أخرى'
+            });
+            
+          if (generalTaskError) {
+            console.error('Error creating general task:', generalTaskError);
+            // Don't block the main task creation if general task fails
+          }
+        } catch (generalTaskCreateError) {
+          console.error('Exception creating general task:', generalTaskCreateError);
+        }
       }
       
       return data as MeetingTask;

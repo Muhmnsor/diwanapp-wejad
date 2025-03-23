@@ -1,3 +1,4 @@
+
 export interface Meeting {
   id: string;
   title: string;
@@ -45,11 +46,13 @@ export interface MeetingTask {
   assigned_to?: string;
   task_type: TaskType;
   status: TaskStatus;
+  priority: 'high' | 'medium' | 'low';
   created_at?: string;
   updated_at?: string;
   created_by?: string;
   general_task_id?: string;
   add_to_general_tasks?: boolean;
+  requires_deliverable?: boolean;
 }
 
 export interface MeetingMinutes {
