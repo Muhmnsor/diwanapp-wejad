@@ -15,31 +15,15 @@ import { EditTaskDialog } from "./EditTaskDialog";
 interface TasksListProps {
   projectId?: string | undefined;
   isWorkspace?: boolean;
-  // New props for customization
-  customTasks?: Task[];
-  customLoading?: boolean;
-  customError?: any;
-  customRefetch?: () => void;
-  customRenderTaskActions?: (task: Task) => React.ReactNode;
-  onCustomStatusChange?: (taskId: string, status: string) => Promise<void>;
 }
 
 // Re-export Task interface for backward compatibility
 export type { Task };
 
-export const TasksList = ({ 
-  projectId, 
-  isWorkspace = false,
-  customTasks,
-  customLoading,
-  customError,
-  customRefetch,
-  customRenderTaskActions,
-  onCustomStatusChange
-}: TasksListProps) => {
+export const TasksList = ({ projectId, isWorkspace = false }: TasksListProps) => {
   const {
-    tasks: fetchedTasks,
-    isLoading: fetchedLoading,
+    tasks,
+    isLoading,
     activeTab,
     setActiveTab,
     isAddDialogOpen,
@@ -47,25 +31,11 @@ export const TasksList = ({
     projectStages,
     handleStagesChange,
     tasksByStage,
-    handleStatusChange: defaultHandleStatusChange,
+    handleStatusChange,
     fetchTasks,
     isGeneral,
     deleteTask
   } = useTasksList(projectId, isWorkspace);
-
-  // Use custom values if provided, otherwise use the fetched ones
-  const tasks = customTasks || fetchedTasks;
-  const isLoading = customLoading !== undefined ? customLoading : fetchedLoading;
-  const error = customError;
-  const refetch = customRefetch || fetchTasks;
-
-  // Status change handler - use custom handler if provided
-  const handleStatusChange = async (taskId: string, status: string) => {
-    if (onCustomStatusChange) {
-      return onCustomStatusChange(taskId, status);
-    }
-    return defaultHandleStatusChange(taskId, status);
-  };
 
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -93,7 +63,7 @@ export const TasksList = ({
 
   return (
     <>
-      {!isGeneral && !isWorkspace && !customTasks && (
+      {!isGeneral && !isWorkspace && (
         <ProjectStages 
           projectId={projectId} 
           onStagesChange={handleStagesChange} 
@@ -125,26 +95,23 @@ export const TasksList = ({
             isGeneral={isGeneral}
             onEditTask={handleEditTask}
             onDeleteTask={handleDeleteTask}
-            customRenderTaskActions={customRenderTaskActions}
           />
         </CardContent>
       </Card>
       
-      {!customTasks && (
-        <AddTaskDialog
-          open={isAddDialogOpen}
-          onOpenChange={setIsAddDialogOpen}
-          projectId={projectId || ""}
-          projectStages={projectStages}
-          onTaskAdded={fetchTasks}
-          projectMembers={projectMembers}
-          isGeneral={isGeneral}
-          isWorkspace={isWorkspace}
-        />
-      )}
+      <AddTaskDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        projectId={projectId || ""}
+        projectStages={projectStages}
+        onTaskAdded={fetchTasks}
+        projectMembers={projectMembers}
+        isGeneral={isGeneral}
+        isWorkspace={isWorkspace}
+      />
 
       {/* Dialog for editing tasks */}
-      {editingTask && !customTasks && (
+      {editingTask && (
         <EditTaskDialog
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
