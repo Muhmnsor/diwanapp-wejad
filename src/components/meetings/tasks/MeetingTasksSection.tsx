@@ -4,9 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useMeetingTasks } from "@/hooks/meetings/useMeetingTasks";
+import { TasksList } from "@/components/tasks/TasksList";
 import { useState } from "react";
 import { EnhancedMeetingTasksDialog } from "./EnhancedMeetingTasksDialog";
-import { MeetingTasksList } from "./MeetingTasksList";
 
 interface MeetingTasksSectionProps {
   meetingId: string;
@@ -31,12 +31,11 @@ export const MeetingTasksSection: React.FC<MeetingTasksSectionProps> = ({ meetin
           <CardTitle>قائمة المهام</CardTitle>
         </CardHeader>
         <CardContent>
-          <MeetingTasksList 
+          <TasksList 
             tasks={tasks} 
             isLoading={isLoading} 
             error={error} 
             onTasksChange={refetch}
-            meetingId={meetingId}
           />
         </CardContent>
       </Card>
