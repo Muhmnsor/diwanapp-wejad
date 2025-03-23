@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import { TaskType } from "@/types/meeting";
 import { useCreateMeetingTask } from "@/hooks/meetings/useCreateMeetingTask";
 import { UserSelector } from "./UserSelector";
+import { Checkbox } from "@/components/ui/checkbox";
+import { TaskAttachmentField } from "@/components/tasks/project-details/components/TaskAttachmentField";
 
 interface EnhancedAddTaskDialogProps {
   meetingId?: string;
@@ -36,6 +38,9 @@ export const EnhancedAddTaskDialog = ({
   const [assignedTo, setAssignedTo] = useState("unassigned");
   const [taskType, setTaskType] = useState<TaskType>("action_item");
   const [priority, setPriority] = useState<"high" | "medium" | "low">("medium");
+  const [templates, setTemplates] = useState<File[] | null>(null);
+  const [requiresDeliverable, setRequiresDeliverable] = useState(false);
+  const [addToGeneralTasks, setAddToGeneralTasks] = useState(false);
   
   const createTask = useCreateMeetingTask();
   
@@ -53,7 +58,8 @@ export const EnhancedAddTaskDialog = ({
         assigned_to: assignedTo !== "unassigned" ? assignedTo : undefined,
         task_type: taskType,
         status: "pending",
-        add_to_general_tasks: false,
+        add_to_general_tasks: addToGeneralTasks,
+        requires_deliverable: requiresDeliverable,
         priority: priority,
       });
       
@@ -74,6 +80,9 @@ export const EnhancedAddTaskDialog = ({
     setAssignedTo("unassigned");
     setTaskType("action_item");
     setPriority("medium");
+    setTemplates(null);
+    setRequiresDeliverable(false);
+    setAddToGeneralTasks(false);
   };
   
   return (
@@ -165,6 +174,40 @@ export const EnhancedAddTaskDialog = ({
               label="المسؤول عن التنفيذ"
               placeholder="اختر المسؤول عن التنفيذ"
             />
+
+            <TaskAttachmentField
+              attachment={templates}
+              setAttachment={setTemplates}
+              category="template"
+            />
+            
+            <div className="flex items-center space-x-2 space-x-reverse mt-4">
+              <Checkbox 
+                id="requiresDeliverable" 
+                checked={requiresDeliverable}
+                onCheckedChange={(checked) => setRequiresDeliverable(!!checked)}
+              />
+              <Label 
+                htmlFor="requiresDeliverable" 
+                className="text-sm font-medium leading-none cursor-pointer"
+              >
+                إلزامية مستلمات
+              </Label>
+            </div>
+            
+            <div className="flex items-center space-x-2 space-x-reverse">
+              <Checkbox 
+                id="addToGeneralTasks" 
+                checked={addToGeneralTasks}
+                onCheckedChange={(checked) => setAddToGeneralTasks(!!checked)}
+              />
+              <Label 
+                htmlFor="addToGeneralTasks" 
+                className="text-sm font-medium leading-none cursor-pointer"
+              >
+                إضافة المهمة للمهام العامة
+              </Label>
+            </div>
           </div>
           
           <DialogFooter className="flex justify-start gap-2">
