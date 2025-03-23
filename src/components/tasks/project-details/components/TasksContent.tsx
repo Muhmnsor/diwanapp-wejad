@@ -1,28 +1,29 @@
 
-import { Skeleton } from "@/components/ui/skeleton";
+import React from "react";
 import { Task } from "../types/task";
-import { TasksStageGroup } from "./TasksStageGroup";
-import { TaskCard } from "./TaskCard";
-import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
-import { TaskItem } from "./TaskItem";
+import { StageType } from "../types/stage";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ProjectTaskItem } from "./ProjectTaskItem";
+import { StageTasks } from "./StageTasks";
 
 interface TasksContentProps {
   isLoading: boolean;
   activeTab: string;
   filteredTasks: Task[];
-  projectStages: { id: string; name: string }[];
-  tasksByStage: Record<string, Task[]>;
-  getStatusBadge: (status: string) => JSX.Element;
-  getPriorityBadge: (priority: string | null) => JSX.Element | null;
+  projectStages: StageType[];
+  tasksByStage: { [key: string]: Task[] };
+  getStatusBadge: (status: string) => React.ReactElement;
+  getPriorityBadge: (priority: string | null) => React.ReactElement | null;
   formatDate: (date: string | null) => string;
-  onStatusChange: (taskId: string, newStatus: string) => void;
-  projectId?: string | undefined;
+  onStatusChange: (taskId: string, status: string) => Promise<void>;
+  projectId?: string;
   isGeneral?: boolean;
-  onEditTask?: (task: Task) => void;
-  onDeleteTask?: (taskId: string) => void;
+  onEditTask: (task: Task) => void;
+  onDeleteTask: (taskId: string) => Promise<void>;
+  customRenderTaskActions?: (task: Task) => React.ReactNode;
 }
 
-export const TasksContent = ({
+export const TasksContent = ({ 
   isLoading,
   activeTab,
   filteredTasks,
@@ -35,86 +36,70 @@ export const TasksContent = ({
   projectId,
   isGeneral,
   onEditTask,
-  onDeleteTask
+  onDeleteTask,
+  customRenderTaskActions
 }: TasksContentProps) => {
+  // Loading state
   if (isLoading) {
     return (
-      <div className="space-y-3" dir="rtl">
-        {[...Array(3)].map((_, index) => (
-          <Skeleton key={index} className="h-24 w-full" />
+      <div className="mt-4 space-y-4">
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-24 w-full rounded-md" />
         ))}
       </div>
     );
   }
 
+  // Empty state
   if (filteredTasks.length === 0) {
     return (
-      <div className="text-center py-8 bg-gray-50 rounded-md border" dir="rtl">
-        <p className="text-gray-500">لا توجد مهام {activeTab !== "all" && "بهذه الحالة"}</p>
+      <div className="mt-8 text-center">
+        <p className="text-muted-foreground">لا توجد مهام {activeTab !== "all" ? `بحالة ${activeTab}` : ""}</p>
       </div>
     );
   }
 
-  // إذا كان التبويب النشط هو "الكل" وليست مهام عامة، فسنعرض المهام مقسمة حسب المراحل
-  if (activeTab === "all" && projectStages.length > 0 && !isGeneral) {
-    return (
-      <div className="space-y-6" dir="rtl">
-        {projectStages.map(stage => (
-          <TasksStageGroup
+  // If we have stages and we're not filtering by status, show tasks by stage
+  const showByStages = projectStages.length > 0 && activeTab === "all" && !isGeneral;
+
+  return (
+    <div className="mt-4 space-y-4">
+      {showByStages ? (
+        // Tasks grouped by stage
+        projectStages.map((stage) => (
+          <StageTasks
             key={stage.id}
             stage={stage}
             tasks={tasksByStage[stage.id] || []}
-            activeTab={activeTab}
             getStatusBadge={getStatusBadge}
             getPriorityBadge={getPriorityBadge}
             formatDate={formatDate}
             onStatusChange={onStatusChange}
-            projectId={projectId || ''}
-            onEdit={onEditTask}
-            onDelete={onDeleteTask}
+            projectId={projectId}
+            onEditTask={onEditTask}
+            onDeleteTask={onDeleteTask}
+            customRenderTaskActions={customRenderTaskActions}
           />
-        ))}
-      </div>
-    );
-  }
-
-  // عرض المهام كقائمة بدون تقسيم للتبويبات الأخرى أو المهام العامة
-  return (
-    <div className="space-y-6" dir="rtl">
-      <div className="bg-white rounded-md shadow-sm overflow-hidden border">
-        <div className="p-4 bg-gray-50 border-b">
-          <h3 className="font-medium">{isGeneral ? "المهام العامة" : "المهام"}</h3>
+        ))
+      ) : (
+        // Simple task list
+        <div className="space-y-3">
+          {filteredTasks.map((task) => (
+            <ProjectTaskItem
+              key={task.id}
+              task={task}
+              getStatusBadge={getStatusBadge}
+              getPriorityBadge={getPriorityBadge}
+              formatDate={formatDate}
+              onStatusChange={onStatusChange}
+              projectId={projectId}
+              onEditTask={onEditTask}
+              onDeleteTask={onDeleteTask}
+              customRenderTaskActions={customRenderTaskActions}
+            />
+          ))}
         </div>
-        <div className="border rounded-md overflow-hidden">
-          <Table dir="rtl">
-            <TableHeader>
-              <TableRow>
-                <TableHead>المهمة</TableHead>
-                <TableHead>الحالة</TableHead>
-                <TableHead>الأولوية</TableHead>
-                <TableHead>المكلف</TableHead>
-                <TableHead>تاريخ الاستحقاق</TableHead>
-                <TableHead>الإجراءات</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTasks.map(task => (
-                <TaskItem
-                  key={task.id}
-                  task={task}
-                  getStatusBadge={getStatusBadge}
-                  getPriorityBadge={getPriorityBadge}
-                  formatDate={formatDate}
-                  onStatusChange={onStatusChange}
-                  projectId={projectId || ''}
-                  onEdit={onEditTask}
-                  onDelete={onDeleteTask}
-                />
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
