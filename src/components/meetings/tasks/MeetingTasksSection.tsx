@@ -6,7 +6,7 @@ import { Plus } from "lucide-react";
 import { useMeetingTasks } from "@/hooks/meetings/useMeetingTasks";
 import { TasksList } from "@/components/tasks/TasksList";
 import { useState } from "react";
-import { MeetingTasksDialogWithTemplates } from "./MeetingTasksDialogWithTemplates";
+import { EnhancedTaskCreationDialog } from "./EnhancedTaskCreationDialog";
 
 interface MeetingTasksSectionProps {
   meetingId: string;
@@ -44,7 +44,7 @@ export const MeetingTasksSection: React.FC<MeetingTasksSectionProps> = ({ meetin
         </CardContent>
       </Card>
 
-      <MeetingTasksDialogWithTemplates
+      <EnhancedTaskCreationDialog
         open={isAddTaskOpen}
         onOpenChange={setIsAddTaskOpen}
         meetingId={meetingId}
