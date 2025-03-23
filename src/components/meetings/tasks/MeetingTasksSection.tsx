@@ -35,7 +35,6 @@ const adaptMeetingTaskToTask = (meetingTask: MeetingTask): Task => {
 export const MeetingTasksSection: React.FC<MeetingTasksSectionProps> = ({ meetingId }) => {
   const { data: tasks, isLoading, error, refetch } = useMeetingTasks(meetingId);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const handleOpenDialog = () => {
     setIsAddTaskOpen(true);
