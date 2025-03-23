@@ -21,7 +21,7 @@ const adaptMeetingTaskToTask = (meetingTask: MeetingTask): Task => {
     title: meetingTask.title,
     description: meetingTask.description || null,
     status: meetingTask.status,
-    priority: meetingTask.priority,
+    priority: meetingTask.priority || "medium", // Ensure priority is set
     due_date: meetingTask.due_date || null,
     assigned_to: meetingTask.assigned_to || null,
     created_at: meetingTask.created_at || new Date().toISOString(),

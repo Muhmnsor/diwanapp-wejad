@@ -9,12 +9,14 @@ export interface TaskAttachmentFieldProps {
   attachment: File[] | null;
   setAttachment: (files: File[] | null) => void;
   category?: string;
+  label?: string;
 }
 
 export const TaskAttachmentField: React.FC<TaskAttachmentFieldProps> = ({ 
   attachment, 
   setAttachment,
-  category 
+  category,
+  label = "المرفقات"
 }) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -38,7 +40,7 @@ export const TaskAttachmentField: React.FC<TaskAttachmentFieldProps> = ({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="attachment">المرفقات</Label>
+      <Label htmlFor="attachment">{label}</Label>
       
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">

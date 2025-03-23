@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { MeetingTask } from "@/types/meeting";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
