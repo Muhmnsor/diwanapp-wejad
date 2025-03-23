@@ -82,6 +82,12 @@ export const EnhancedMeetingTasksDialog: React.FC<EnhancedMeetingTasksDialogProp
           if (onSuccess) {
             onSuccess();
           }
+          // Add toast to confirm to the user that the task was saved
+          toast.success("تم إضافة المهمة بنجاح");
+        },
+        onError: (error) => {
+          console.error("Error creating task:", error);
+          toast.error("حدث خطأ أثناء إضافة المهمة");
         },
       }
     );
@@ -172,12 +178,14 @@ export const EnhancedMeetingTasksDialog: React.FC<EnhancedMeetingTasksDialogProp
             </div>
           </div>
 
-          <TaskAttachmentField
-            attachment={attachment}
-            setAttachment={setAttachment}
-            category="meeting-task"
-            label="إرفاق ملف"
-          />
+          {attachment && (
+            <TaskAttachmentField
+              attachment={attachment}
+              setAttachment={setAttachment}
+              category="meeting-task"
+              label="إرفاق ملف"
+            />
+          )}
 
           <div className="flex flex-col space-y-2">
             <div className="flex items-center space-x-2 space-x-reverse">

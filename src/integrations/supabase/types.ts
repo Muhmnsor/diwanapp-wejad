@@ -1741,6 +1741,50 @@ export type Database = {
           },
         ]
       }
+      meeting_participants: {
+        Row: {
+          attendance_status: string | null
+          created_at: string | null
+          id: string
+          meeting_id: string
+          role: string | null
+          updated_at: string | null
+          user_display_name: string | null
+          user_email: string | null
+          user_id: string
+        }
+        Insert: {
+          attendance_status?: string | null
+          created_at?: string | null
+          id?: string
+          meeting_id: string
+          role?: string | null
+          updated_at?: string | null
+          user_display_name?: string | null
+          user_email?: string | null
+          user_id: string
+        }
+        Update: {
+          attendance_status?: string | null
+          created_at?: string | null
+          id?: string
+          meeting_id?: string
+          role?: string | null
+          updated_at?: string | null
+          user_display_name?: string | null
+          user_email?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_participants_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meeting_tasks: {
         Row: {
           add_to_general_tasks: boolean | null
@@ -1752,6 +1796,8 @@ export type Database = {
           general_task_id: string | null
           id: string
           meeting_id: string
+          priority: string
+          requires_deliverable: boolean | null
           status: string
           task_type: string
           title: string
@@ -1767,6 +1813,8 @@ export type Database = {
           general_task_id?: string | null
           id?: string
           meeting_id: string
+          priority?: string
+          requires_deliverable?: boolean | null
           status?: string
           task_type: string
           title: string
@@ -1782,6 +1830,8 @@ export type Database = {
           general_task_id?: string | null
           id?: string
           meeting_id?: string
+          priority?: string
+          requires_deliverable?: boolean | null
           status?: string
           task_type?: string
           title?: string
