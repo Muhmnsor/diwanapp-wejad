@@ -11,11 +11,11 @@ export const adaptMinutesData = (data: any) => {
   // Make sure we have the right properties that MeetingMinutesSection expects
   const adaptedData = {
     ...data,
-    content: data.minutes?.content,
+    content: data.minutes?.content || "",
     attendees: data.minutes?.attendees || [],
     minutes: {
       ...data.minutes,
-      content: data.minutes?.content,
+      content: data.minutes?.content || "",
       attendees: data.minutes?.attendees || []
     },
     minutesItems: data.minutesItems || []

@@ -4,7 +4,6 @@ import { useMeetingParticipants } from "@/hooks/meetings/useMeetingParticipants"
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User } from "@/components/users/types";
 
 interface UserSelectorProps {
   value: string;
@@ -18,8 +17,8 @@ export const UserSelector: React.FC<UserSelectorProps> = ({
   value,
   onChange,
   meetingId,
-  label = "المتكلف",
-  placeholder = "اختر المتكلف"
+  label = "المسؤول عن التنفيذ",
+  placeholder = "اختر المسؤول عن التنفيذ"
 }) => {
   // Fetch meeting participants to use as potential assignees
   const { data: participants, isLoading: isLoadingParticipants } = useMeetingParticipants(meetingId || '');
@@ -55,7 +54,7 @@ export const UserSelector: React.FC<UserSelectorProps> = ({
             </SelectItem>
           ) : (
             <>
-              <SelectItem value="">-- اختر المتكلف --</SelectItem>
+              <SelectItem value="">-- اختر المسؤول --</SelectItem>
               
               {participants && participants.length > 0 && (
                 <>
