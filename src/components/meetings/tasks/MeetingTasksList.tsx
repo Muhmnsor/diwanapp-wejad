@@ -1,14 +1,22 @@
 
 import React, { useState } from "react";
-import { TasksList } from "@/components/tasks/project-details/TasksList";
 import { Task } from "@/components/tasks/types/task";
 import { MeetingTask } from "@/types/meeting";
 import { EditTaskDialog } from "./EditTaskDialog";
 import { Button } from "@/components/ui/button";
-import { PencilIcon, Trash2Icon } from "lucide-react";
+import { PencilIcon, Trash2Icon, MessageSquare, FileText } from "lucide-react";
 import { useDeleteMeetingTask } from "@/hooks/meetings/useDeleteMeetingTask";
 import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { getStatusBadge, getPriorityBadge, formatDueDate } from "@/components/tasks/utils/taskFormatters";
+import { TaskDialogsProvider } from "@/components/tasks/components/dialogs/TaskDialogsProvider";
 
 interface MeetingTasksListProps {
   tasks: Task[];
@@ -91,86 +99,82 @@ export const MeetingTasksList: React.FC<MeetingTasksListProps> = ({
     return <div className="py-4 text-center text-gray-500">لا توجد مهام للاجتماع حتى الآن</div>;
   }
 
-  // Render our custom tasks list
+  // Render our tasks in a table format
   return (
     <>
-      <div className="space-y-4">
-        {tasks.map(task => (
-          <Card key={task.id} className="overflow-hidden">
-            <CardContent className="p-4">
-              <div className="flex justify-between items-start gap-4">
-                <div className="flex-1">
-                  <h3 className="font-medium mb-1">{task.title}</h3>
+      <div className="border rounded-md overflow-hidden">
+        <Table dir="rtl">
+          <TableHeader>
+            <TableRow>
+              <TableHead>المهمة</TableHead>
+              <TableHead>الحالة</TableHead>
+              <TableHead>الأولوية</TableHead>
+              <TableHead>المكلف</TableHead>
+              <TableHead>تاريخ الاستحقاق</TableHead>
+              <TableHead>الإجراءات</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {tasks.map(task => (
+              <TableRow key={task.id}>
+                <TableCell>
+                  <div className="font-medium">{task.title}</div>
                   {task.description && (
-                    <p className="text-sm text-gray-600 mb-2">{task.description}</p>
+                    <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                      {task.description}
+                    </div>
                   )}
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    <span className={`px-2 py-0.5 rounded-full text-xs ${
-                      task.status === 'completed' ? 'bg-green-100 text-green-800' : 
-                      task.status === 'in_progress' ? 'bg-blue-100 text-blue-800' : 
-                      task.status === 'cancelled' ? 'bg-red-100 text-red-800' : 
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {task.status === 'completed' ? 'مكتملة' : 
-                       task.status === 'in_progress' ? 'قيد التنفيذ' : 
-                       task.status === 'cancelled' ? 'ملغية' : 'قيد الانتظار'}
-                    </span>
+                </TableCell>
+                <TableCell>
+                  {getStatusBadge(task.status)}
+                </TableCell>
+                <TableCell>
+                  {task.priority ? getPriorityBadge(task.priority) : null}
+                </TableCell>
+                <TableCell>
+                  {task.assigned_user_name || task.assigned_to || "غير محدد"}
+                </TableCell>
+                <TableCell>
+                  {task.due_date ? formatDueDate(task.due_date) : "غير محدد"}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <select 
+                      value={task.status}
+                      onChange={(e) => onStatusChange(task.id, e.target.value)}
+                      className="text-sm border rounded px-2 py-1"
+                    >
+                      <option value="pending">قيد الانتظار</option>
+                      <option value="in_progress">قيد التنفيذ</option>
+                      <option value="completed">مكتملة</option>
+                      <option value="cancelled">ملغية</option>
+                    </select>
                     
-                    {task.priority && (
-                      <span className={`px-2 py-0.5 rounded-full text-xs ${
-                        task.priority === 'high' ? 'bg-red-100 text-red-800' : 
-                        task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' : 
-                        'bg-green-100 text-green-800'
-                      }`}>
-                        {task.priority === 'high' ? 'أولوية عالية' : 
-                         task.priority === 'medium' ? 'أولوية متوسطة' : 'أولوية منخفضة'}
-                      </span>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEditTask(task.id)}
+                      className="h-8 w-8"
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                      <span className="sr-only">تعديل</span>
+                    </Button>
                     
-                    {task.due_date && (
-                      <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-800">
-                        تاريخ الاستحقاق: {new Date(task.due_date).toLocaleDateString('ar-SA')}
-                      </span>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteTask(task.id)}
+                      className="h-8 w-8 text-red-500 hover:text-red-600"
+                    >
+                      <Trash2Icon className="h-4 w-4" />
+                      <span className="sr-only">حذف</span>
+                    </Button>
                   </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <select 
-                    value={task.status}
-                    onChange={(e) => onStatusChange(task.id, e.target.value)}
-                    className="text-sm border rounded px-2 py-1"
-                  >
-                    <option value="pending">قيد الانتظار</option>
-                    <option value="in_progress">قيد التنفيذ</option>
-                    <option value="completed">مكتملة</option>
-                    <option value="cancelled">ملغية</option>
-                  </select>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEditTask(task.id)}
-                    className="h-8 px-2"
-                  >
-                    <PencilIcon className="h-4 w-4" />
-                    <span className="sr-only">تعديل</span>
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDeleteTask(task.id)}
-                    className="h-8 px-2 text-red-500 hover:text-red-600 hover:bg-red-50"
-                  >
-                    <Trash2Icon className="h-4 w-4" />
-                    <span className="sr-only">حذف</span>
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
       
       {selectedTask && (
