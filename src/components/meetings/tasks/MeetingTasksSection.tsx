@@ -16,10 +16,14 @@ export const MeetingTasksSection: React.FC<MeetingTasksSectionProps> = ({ meetin
   const { data: tasks, isLoading, error, refetch } = useMeetingTasks(meetingId);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
 
+  const handleOpenDialog = () => {
+    setIsAddTaskOpen(true);
+  };
+
   return (
     <div className="space-y-4 text-right">
       <div className="flex justify-between items-center">
-        <Button size="sm" onClick={() => setIsAddTaskOpen(true)} className="flex items-center">
+        <Button size="sm" onClick={handleOpenDialog} className="flex items-center">
           <Plus className="h-4 w-4 ml-2" />
           إضافة مهمة
         </Button>

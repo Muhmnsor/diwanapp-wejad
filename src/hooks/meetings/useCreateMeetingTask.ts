@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MeetingTask, TaskType, TaskStatus } from "@/types/meeting";
+import { uploadAttachment, saveAttachmentReference } from "@/components/tasks/services/uploadService";
 
 export interface CreateMeetingTaskParams {
   meeting_id: string;
@@ -15,6 +16,7 @@ export interface CreateMeetingTaskParams {
   add_to_general_tasks?: boolean;
   requires_deliverable?: boolean;
   priority: "high" | "medium" | "low";
+  templates?: File[] | null;
 }
 
 export const useCreateMeetingTask = () => {
@@ -52,10 +54,49 @@ export const useCreateMeetingTask = () => {
         throw error;
       }
       
+      // Handle template uploads if provided
+      if (taskData.templates && taskData.templates.length > 0) {
+        try {
+          for (const file of taskData.templates) {
+            // Upload the file
+            const uploadResult = await uploadAttachment(file, 'template');
+            
+            if (uploadResult.error) {
+              console.error('Error uploading template:', uploadResult.error);
+              continue;
+            }
+            
+            // Save reference to the file in unified_task_attachments
+            await saveAttachmentReference(
+              data.id,
+              uploadResult.url,
+              file.name,
+              file.type,
+              'template'
+            );
+            
+            // Also save in task_templates for compatibility
+            await supabase
+              .from('task_templates')
+              .insert({
+                task_id: data.id,
+                task_table: 'meeting_tasks',
+                file_url: uploadResult.url,
+                file_name: file.name,
+                file_type: file.type,
+                created_by: (await supabase.auth.getUser()).data.user?.id
+              });
+          }
+        } catch (uploadError) {
+          console.error('Error handling template uploads:', uploadError);
+          // Don't throw here, as we still want to return the created task
+        }
+      }
+      
       // If add_to_general_tasks is true, also create a general task
       if (taskData.add_to_general_tasks) {
         try {
-          const { error: generalTaskError } = await supabase
+          const { data: generalTaskData, error: generalTaskError } = await supabase
             .from('tasks')
             .insert({
               title: taskData.title,
@@ -71,11 +112,36 @@ export const useCreateMeetingTask = () => {
                       taskData.task_type === 'decision' ? 'قرار' : 
                       taskData.task_type === 'preparation' ? 'تحضيرية' : 
                       taskData.task_type === 'execution' ? 'تنفيذية' : 'أخرى'
-            });
+            })
+            .select('id')
+            .single();
             
           if (generalTaskError) {
             console.error('Error creating general task:', generalTaskError);
-            // Don't block the main task creation if general task fails
+          } else if (generalTaskData && taskData.templates && taskData.templates.length > 0) {
+            // If templates were provided, also copy them to the general task
+            for (const file of taskData.templates) {
+              const uploadResult = await uploadAttachment(file, 'template');
+              
+              if (uploadResult.error) {
+                console.error('Error uploading template for general task:', uploadResult.error);
+                continue;
+              }
+              
+              await saveAttachmentReference(
+                generalTaskData.id,
+                uploadResult.url,
+                file.name,
+                file.type,
+                'template'
+              );
+            }
+            
+            // Update the meeting task with the general task ID
+            await supabase
+              .from('meeting_tasks')
+              .update({ general_task_id: generalTaskData.id })
+              .eq('id', data.id);
           }
         } catch (generalTaskCreateError) {
           console.error('Exception creating general task:', generalTaskCreateError);
