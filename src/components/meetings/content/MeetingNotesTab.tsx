@@ -11,8 +11,8 @@ interface MeetingNotesTabProps {
 
 export const MeetingNotesTab = ({ meetingId }: MeetingNotesTabProps) => {
   return (
-    <Tabs defaultValue="details" className="w-full">
-      <TabsList className="mb-4">
+    <Tabs defaultValue="details" className="w-full" dir="rtl">
+      <TabsList className="mb-4 justify-start">
         <TabsTrigger value="details">التفاصيل</TabsTrigger>
         <TabsTrigger value="tasks">المهام</TabsTrigger>
         <TabsTrigger value="minutes">المحضر</TabsTrigger>

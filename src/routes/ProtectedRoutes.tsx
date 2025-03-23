@@ -16,6 +16,7 @@ import DeveloperRoute from "@/components/DeveloperRoute";
 import MeetingsPage from "@/pages/meetings/MeetingsPage";
 import MeetingFolderPage from "@/components/meetings/folders/MeetingFolderPage";
 import MeetingDetailsPage from "@/pages/meetings/MeetingDetailsPage";
+import MeetingNotesPage from "@/pages/meetings/MeetingNotesPage";
 
 export const ProtectedRoutes = [
   <Route 
@@ -60,6 +61,15 @@ export const ProtectedRoutes = [
     element={
       <ProtectedRoute>
         <MeetingDetailsPage />
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="admin-meeting-notes"
+    path="/admin/meetings/:meetingId/notes" 
+    element={
+      <ProtectedRoute>
+        <MeetingNotesPage />
       </ProtectedRoute>
     } 
   />,
