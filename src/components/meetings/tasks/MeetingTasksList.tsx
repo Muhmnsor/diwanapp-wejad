@@ -4,6 +4,8 @@ import { TasksList as BaseTasksList } from "@/components/tasks/TasksList";
 import { Task } from "@/components/tasks/types/task";
 import { TaskDialogsProvider } from "@/components/tasks/components/dialogs/TaskDialogsProvider";
 import { MeetingTask } from "@/types/meeting";
+import { MeetingTaskItem } from "./MeetingTaskItem";
+import { Table, TableHeader, TableBody, TableRow, TableHead } from "@/components/ui/table";
 
 interface MeetingTasksListProps {
   tasks: Task[];
@@ -24,16 +26,43 @@ export const MeetingTasksList: React.FC<MeetingTasksListProps> = ({
 }) => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
+  if (isLoading) {
+    return <div className="text-center py-4">جاري تحميل المهام...</div>;
+  }
+
+  if (error) {
+    return <div className="text-destructive py-4">حدث خطأ أثناء تحميل المهام: {error.message}</div>;
+  }
+
+  if (tasks.length === 0) {
+    return <div className="text-center py-4 text-muted-foreground">لا توجد مهام لهذا الاجتماع بعد</div>;
+  }
+
   return (
     <>
-      <BaseTasksList 
-        tasks={tasks} 
-        isLoading={isLoading} 
-        error={error} 
-        onTasksChange={onTasksChange}
-        meetingId={meetingId}
-        onStatusChange={onStatusChange}
-      />
+      <div className="rounded-md border">
+        <Table dir="rtl">
+          <TableHeader>
+            <TableRow>
+              <TableHead>المهمة</TableHead>
+              <TableHead>الحالة</TableHead>
+              <TableHead>مسند إلى</TableHead>
+              <TableHead>تاريخ الاستحقاق</TableHead>
+              <TableHead>تاريخ الإنشاء</TableHead>
+              <TableHead>الإجراءات</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {tasks.map((task) => (
+              <MeetingTaskItem 
+                key={task.id} 
+                task={task} 
+                onStatusChange={onStatusChange} 
+              />
+            ))}
+          </TableBody>
+        </Table>
+      </div>
       
       {selectedTask && (
         <TaskDialogsProvider 
