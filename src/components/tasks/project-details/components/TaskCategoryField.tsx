@@ -5,10 +5,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 interface TaskCategoryFieldProps {
   category: string;
   setCategory: (value: string) => void;
+  isMeetingTask?: boolean;
 }
 
-export const TaskCategoryField = ({ category, setCategory }: TaskCategoryFieldProps) => {
-  const categories = [
+export const TaskCategoryField = ({ category, setCategory, isMeetingTask = false }: TaskCategoryFieldProps) => {
+  const generalCategories = [
     { value: "إدارية", label: "إدارية" },
     { value: "تقنية", label: "تقنية" },
     { value: "مالية", label: "مالية" },
@@ -16,6 +17,14 @@ export const TaskCategoryField = ({ category, setCategory }: TaskCategoryFieldPr
     { value: "تسويقية", label: "تسويقية" },
     { value: "أخرى", label: "أخرى" }
   ];
+
+  const meetingCategories = [
+    { value: "تحضيرية", label: "تحضيرية" },
+    { value: "تنفيذية", label: "تنفيذية" },
+    { value: "الحاقية", label: "الحاقية" }
+  ];
+
+  const categories = isMeetingTask ? meetingCategories : generalCategories;
 
   return (
     <div className="space-y-2">

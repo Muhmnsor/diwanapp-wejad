@@ -47,7 +47,7 @@ export const EditTaskDialog = ({
     priority: task.priority || 'medium',
     stageId: task.stage_id || projectStages[0]?.id || '',
     assignedTo: task.assigned_to,
-    category: task.category || 'إدارية',
+    category: task.category || (task.meeting_id ? 'تحضيرية' : 'إدارية'),
     requiresDeliverable: task.requires_deliverable || false
   };
 
@@ -81,6 +81,7 @@ export const EditTaskDialog = ({
           isGeneral={task.is_general || !!meetingId}
           initialValues={initialValues}
           isEditMode={true}
+          meetingId={meetingId || task.meeting_id}
         />
       </DialogContent>
     </Dialog>

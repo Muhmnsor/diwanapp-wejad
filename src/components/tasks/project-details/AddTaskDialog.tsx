@@ -67,6 +67,7 @@ export const AddTaskDialog = ({
           projectStages={projectStages}
           projectMembers={projectMembers}
           isGeneral={isGeneral || !!meetingId}
+          meetingId={meetingId}
         />
       </DialogContent>
     </Dialog>

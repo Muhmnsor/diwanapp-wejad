@@ -53,6 +53,14 @@ export const useTaskForm = ({
       const user = await supabase.auth.getUser();
       const userId = user.data.user?.id;
 
+      // For meeting tasks, use specific categories
+      let taskType = null;
+      if (meetingId) {
+        taskType = 'meeting_task';
+      } else if (isGeneral) {
+        taskType = 'general_task';
+      }
+
       const taskData = {
         title: formData.title,
         description: formData.description || "",
@@ -67,7 +75,7 @@ export const useTaskForm = ({
         created_by: userId,
         requires_deliverable: formData.requiresDeliverable || false,
         meeting_id: meetingId || null, // Add the meeting_id field
-        task_type: meetingId ? 'meeting_task' : null // Identify tasks created from meetings
+        task_type: taskType // Identify tasks created from meetings with the specific type
       };
 
       console.log("Task data to insert:", taskData);
