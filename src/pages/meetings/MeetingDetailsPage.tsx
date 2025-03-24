@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AdminHeader } from "@/components/layout/AdminHeader";
@@ -11,7 +10,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Edit, Trash } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { MeetingDetailsTabs } from "@/components/meetings/content/MeetingDetailsTabs";
-
 const MeetingDetailsPage = () => {
   const {
     meetingId
@@ -29,16 +27,13 @@ const MeetingDetailsPage = () => {
     mutate: deleteMeeting,
     isPending: isDeleting
   } = useDeleteMeeting();
-  
   const handleBack = () => {
     navigate(-1);
   };
-  
   const handleEdit = () => {
     // Edit functionality will be implemented later
     console.log('Edit meeting:', meetingId);
   };
-  
   const handleDelete = () => {
     if (meetingId) {
       deleteMeeting(meetingId, {
@@ -49,7 +44,6 @@ const MeetingDetailsPage = () => {
       });
     }
   };
-  
   if (isMeetingLoading) {
     return <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
@@ -69,7 +63,6 @@ const MeetingDetailsPage = () => {
         <Footer />
       </div>;
   }
-  
   if (meetingError || !meeting) {
     return <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
@@ -85,7 +78,6 @@ const MeetingDetailsPage = () => {
         <Footer />
       </div>;
   }
-  
   return <div className="min-h-screen flex flex-col rtl" dir="rtl">
       <AdminHeader />
       
@@ -99,6 +91,8 @@ const MeetingDetailsPage = () => {
             </Button>
             <h1 className="text-2xl font-bold">{meeting.title}</h1>
           </div>
+          
+          
         </div>
         
         {/* Meeting status badge */}
@@ -108,7 +102,7 @@ const MeetingDetailsPage = () => {
           </Badge>
           
           <Badge className="mr-2 bg-gray-100 text-gray-800 hover:bg-gray-200">
-            {meeting.meeting_type === 'regular' ? 'اعتيادي' : meeting.meeting_type === 'special' ? 'غير اعتيادي' : meeting.meeting_type === 'board' ? 'مجلس إدارة' : meeting.meeting_type === 'department' ? 'قسم' : meeting.meeting_type === 'team' ? 'فريق عمل' : meeting.meeting_type === 'committee' ? 'لجنة' : 'أخرى'}
+            {meeting.meeting_type === 'board' ? 'مجلس إدارة' : meeting.meeting_type === 'department' ? 'قسم' : meeting.meeting_type === 'team' ? 'فريق عمل' : meeting.meeting_type === 'committee' ? 'لجنة' : 'أخرى'}
           </Badge>
         </div>
         
@@ -119,5 +113,4 @@ const MeetingDetailsPage = () => {
       <Footer />
     </div>;
 };
-
 export default MeetingDetailsPage;
