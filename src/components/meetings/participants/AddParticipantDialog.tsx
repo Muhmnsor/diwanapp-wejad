@@ -19,10 +19,9 @@ interface AddParticipantDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   meetingId: string;
-  onSuccess?: () => void; // Add the missing prop with optional flag
 }
 
-export const AddParticipantDialog = ({ open, onOpenChange, meetingId, onSuccess }: AddParticipantDialogProps) => {
+export const AddParticipantDialog = ({ open, onOpenChange, meetingId }: AddParticipantDialogProps) => {
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [role, setRole] = useState<ParticipantRole>("member");
@@ -73,10 +72,6 @@ export const AddParticipantDialog = ({ open, onOpenChange, meetingId, onSuccess 
         toast.success("تمت إضافة المشارك بنجاح");
         resetForm();
         onOpenChange(false);
-        // Call the onSuccess callback if provided
-        if (onSuccess) {
-          onSuccess();
-        }
       },
       onError: (error) => {
         console.error("Error adding participant:", error);

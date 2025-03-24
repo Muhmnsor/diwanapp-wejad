@@ -1,52 +1,46 @@
 
-import { format, parseISO } from "date-fns";
-import { ar } from "date-fns/locale";
-
-export const formatDate = (date: string | Date): string => {
+export const parseDate = (dateStr: string | null | undefined): Date | null => {
+  if (!dateStr) return null;
   try {
-    const parsedDate = typeof date === 'string' ? parseISO(date) : date;
-    return format(parsedDate, 'dd MMMM yyyy', { locale: ar });
-  } catch (error) {
-    console.error('Error formatting date:', error);
-    return String(date);
-  }
-};
-
-export const formatDateTime = (date: string | Date, timeStr?: string): string => {
-  try {
-    const parsedDate = typeof date === 'string' ? parseISO(date) : date;
-    const formattedDate = format(parsedDate, 'dd MMMM yyyy', { locale: ar });
-    
-    return timeStr ? `${formattedDate} - ${timeStr}` : formattedDate;
-  } catch (error) {
-    console.error('Error formatting date and time:', error);
-    return String(date);
-  }
-};
-
-// Add new functions for the missing exports
-export const parseDate = (dateString: string): Date | null => {
-  try {
-    if (!dateString) return null;
-    return new Date(dateString);
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      console.log('Invalid date string:', dateStr);
+      return null;
+    }
+    return date;
   } catch (error) {
     console.error('Error parsing date:', error);
     return null;
   }
 };
 
-export const getEventDateTime = (dateStr: string, timeStr?: string): Date => {
+export const getEventDateTime = (date: string, time: string = '00:00'): Date => {
+  const [hours, minutes] = time ? time.split(':').map(Number) : [0, 0];
+  const eventDate = new Date(date);
+  eventDate.setHours(hours, minutes, 0, 0);
+  
+  console.log('Creating event date from:', { date, time, result: eventDate });
+  return eventDate;
+};
+
+// تعديل دالة formatDate لتعرض التاريخ بالميلادي والوقت بنظام 12 ساعة
+export const formatDate = (dateString: string): string => {
+  if (!dateString) return '';
+  
   try {
-    const date = new Date(dateStr);
-    
-    if (timeStr) {
-      const [hours, minutes] = timeStr.split(':').map(Number);
-      date.setHours(hours || 0, minutes || 0, 0);
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return dateString;
     }
     
-    return date;
+    // عرض التاريخ بالتقويم الميلادي بتنسيق اليوم/الشهر/السنة
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${day}/${month}/${year}`;
   } catch (error) {
-    console.error('Error creating event date time:', error);
-    return new Date();
+    console.error('Error formatting date:', error);
+    return dateString;
   }
 };
