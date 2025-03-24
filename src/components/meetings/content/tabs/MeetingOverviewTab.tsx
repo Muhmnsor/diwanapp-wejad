@@ -2,11 +2,12 @@
 import React from "react";
 import { Meeting } from "@/types/meeting";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarDays, Clock, MapPin, Link2, Users } from "lucide-react";
+import { CalendarDays, Clock, MapPin, Link2, Users, Folder, Type } from "lucide-react";
 import { formatDateArabic } from "@/utils/formatters";
 import { useMeetingObjectives } from "@/hooks/meetings/useMeetingObjectives";
 import { useMeetingAgendaItems } from "@/hooks/meetings/useMeetingAgendaItems";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatTime12Hour } from "@/utils/dateUtils";
 
 interface MeetingOverviewTabProps {
   meeting: Meeting;
@@ -20,65 +21,129 @@ export const MeetingOverviewTab: React.FC<MeetingOverviewTabProps> = ({
   const { data: objectives, isLoading: isLoadingObjectives } = useMeetingObjectives(meetingId);
   const { data: agendaItems, isLoading: isLoadingAgenda } = useMeetingAgendaItems(meetingId);
 
+  // Map meeting types to Arabic names
+  const getMeetingTypeArabic = (type: string): string => {
+    switch (type) {
+      case "board": return "مجلس إدارة";
+      case "department": return "قسم";
+      case "team": return "فريق عمل";
+      case "committee": return "لجنة";
+      default: return "أخرى";
+    }
+  };
+
+  // Map attendance types to Arabic names
+  const getAttendanceTypeArabic = (type: string): string => {
+    switch (type) {
+      case "in_person": return "حضوري";
+      case "virtual": return "عن بعد";
+      case "hybrid": return "مختلط";
+      default: return type;
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* Meeting Details Section */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle>تفاصيل الاجتماع</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-2 text-gray-600">
-            <CalendarDays className="h-5 w-5" />
-            <span>التاريخ: {formatDateArabic(meeting.date)}</span>
-          </div>
-          <div className="flex items-center gap-2 text-gray-600">
-            <Clock className="h-5 w-5" />
-            <span>
-              الوقت: {meeting.start_time} (المدة: {meeting.duration} دقيقة)
-            </span>
-          </div>
-          {meeting.location && (
-            <div className="flex items-center gap-2 text-gray-600">
-              <MapPin className="h-5 w-5" />
-              <span>المكان: {meeting.location}</span>
+      {/* Meeting Details Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Date & Time Card */}
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-md transition-shadow duration-300">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center text-blue-700">
+              <CalendarDays className="h-5 w-5 mr-2 text-blue-500" />
+              التاريخ والوقت
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex items-center text-gray-700">
+                <CalendarDays className="h-4 w-4 ml-2 text-blue-500" />
+                <span>التاريخ: {formatDateArabic(meeting.date)}</span>
+              </div>
+              <div className="flex items-center text-gray-700">
+                <Clock className="h-4 w-4 ml-2 text-blue-500" />
+                <span>
+                  الوقت: {formatTime12Hour(meeting.start_time)} (المدة: {meeting.duration} دقيقة)
+                </span>
+              </div>
             </div>
-          )}
-          {meeting.meeting_link && (
-            <div className="flex items-center gap-2 text-gray-600">
-              <Link2 className="h-5 w-5" />
-              <span>
-                رابط الاجتماع:{" "}
+          </CardContent>
+        </Card>
+
+        {/* Location Card */}
+        <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200 hover:shadow-md transition-shadow duration-300">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center text-amber-700">
+              <MapPin className="h-5 w-5 mr-2 text-amber-500" />
+              المكان
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {meeting.location ? (
+              <div className="flex items-center text-gray-700">
+                <MapPin className="h-4 w-4 ml-2 text-amber-500" />
+                <span>{meeting.location}</span>
+              </div>
+            ) : (
+              <span className="text-gray-500">لم يتم تحديد المكان</span>
+            )}
+            
+            {meeting.meeting_link && (
+              <div className="flex items-center text-gray-700 mt-2">
+                <Link2 className="h-4 w-4 ml-2 text-amber-500" />
                 <a
                   href={meeting.meeting_link}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:underline"
                 >
-                  {meeting.meeting_link}
+                  رابط الاجتماع
                 </a>
-              </span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Meeting Type Card */}
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-md transition-shadow duration-300">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center text-purple-700">
+              <Type className="h-5 w-5 mr-2 text-purple-500" />
+              نوع الاجتماع
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center text-gray-700">
+              <Type className="h-4 w-4 ml-2 text-purple-500" />
+              <span>{getMeetingTypeArabic(meeting.meeting_type)}</span>
             </div>
-          )}
-          <div className="flex items-center gap-2 text-gray-600">
-            <Users className="h-5 w-5" />
-            <span>
-              نوع الحضور:{" "}
-              {meeting.attendance_type === "in_person"
-                ? "حضوري"
-                : meeting.attendance_type === "virtual"
-                ? "عن بعد"
-                : "مختلط"}
-            </span>
-          </div>
-          {meeting.folder_name && (
-            <div className="mt-4 p-3 bg-gray-50 rounded-md">
-              <span className="font-medium">المجلد: </span>
-              {meeting.folder_name}
+            <div className="flex items-center text-gray-700 mt-2">
+              <Users className="h-4 w-4 ml-2 text-purple-500" />
+              <span>نوع الحضور: {getAttendanceTypeArabic(meeting.attendance_type)}</span>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        {/* Folder Card */}
+        {(meeting.folder_name || meeting.folder) && (
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-md transition-shadow duration-300">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center text-green-700">
+                <Folder className="h-5 w-5 mr-2 text-green-500" />
+                المجلد
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center text-gray-700">
+                <Folder className="h-4 w-4 ml-2 text-green-500" />
+                <span>
+                  {meeting.folder_name || (meeting.folder && meeting.folder.name) || "غير محدد"}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* Objectives Section */}
       <Card>
