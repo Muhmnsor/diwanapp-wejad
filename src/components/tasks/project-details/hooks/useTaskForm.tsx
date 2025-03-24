@@ -20,6 +20,7 @@ export interface UseTaskFormProps {
     requiresDeliverable?: boolean;
   };
   taskId?: string;
+  meetingId?: string;
 }
 
 export const useTaskForm = ({
@@ -28,7 +29,8 @@ export const useTaskForm = ({
   onTaskAdded,
   onTaskUpdated,
   initialValues,
-  taskId
+  taskId,
+  meetingId
 }: UseTaskFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,11 +61,13 @@ export const useTaskForm = ({
         assigned_to: formData.assignedTo,
         project_id: isGeneral ? null : projectId,
         stage_id: isGeneral ? null : formData.stageId,
-        is_general: isGeneral,
-        category: isGeneral ? formData.category : null,
+        is_general: isGeneral && !meetingId, // It's a general task if isGeneral is true and meetingId is not provided
+        category: isGeneral || meetingId ? formData.category : null,
         workspace_id: null, // Will be set based on project or general workspace
         created_by: userId,
-        requires_deliverable: formData.requiresDeliverable || false
+        requires_deliverable: formData.requiresDeliverable || false,
+        meeting_id: meetingId || null, // Add the meeting_id field
+        task_type: meetingId ? 'meeting_task' : null // Identify tasks created from meetings
       };
 
       console.log("Task data to insert:", taskData);

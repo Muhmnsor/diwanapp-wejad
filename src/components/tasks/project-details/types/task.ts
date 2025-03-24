@@ -17,6 +17,9 @@ export interface Task {
   // Properties for general tasks
   category?: string | null;
   is_general?: boolean;
+  // Meeting related properties
+  meeting_id?: string | null;
+  task_type?: string | null;
   // Properties for templates and attachments
   attachment_url?: string | null;
   form_template?: string | null;

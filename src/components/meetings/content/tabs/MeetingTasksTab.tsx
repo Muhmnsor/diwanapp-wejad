@@ -1,35 +1,130 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, ClipboardList } from "lucide-react";
+import { PlusCircle, ClipboardList, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Task } from "@/components/tasks/project-details/types/task";
+import { ProjectTasksList } from "@/components/tasks/project-details/ProjectTasksList";
+import { useTasksList } from "@/components/tasks/project-details/hooks/useTasksList";
+import { useAuthStore } from "@/store/authStore";
+import { toast } from "sonner";
 
 interface MeetingTasksTabProps {
   meetingId: string;
 }
 
 export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [meetingTasks, setMeetingTasks] = useState<Task[]>([]);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const { user } = useAuthStore();
+  
+  // Fetch meeting-related tasks from the tasks table
+  const fetchMeetingTasks = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*, profiles:assigned_to(display_name, email)')
+        .eq('meeting_id', meetingId)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error("Error fetching meeting tasks:", error);
+        toast.error("حدث خطأ أثناء تحميل مهام الاجتماع");
+        return;
+      }
+      
+      const tasksWithAssigneeNames = data.map(task => ({
+        ...task,
+        assigned_user_name: task.profiles?.display_name || task.profiles?.email || 'غير محدد'
+      }));
+      
+      setMeetingTasks(tasksWithAssigneeNames);
+    } catch (err) {
+      console.error("Error in fetchMeetingTasks:", err);
+      toast.error("حدث خطأ أثناء تحميل مهام الاجتماع");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  useEffect(() => {
+    if (meetingId) {
+      fetchMeetingTasks();
+    }
+  }, [meetingId]);
+  
+  const handleAddTask = () => {
+    setIsAddDialogOpen(true);
+  };
+  
+  // If we have no tasks yet, show the empty state
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+          <CardTitle>مهام الاجتماع</CardTitle>
+          <Button variant="outline" size="sm" onClick={handleAddTask}>
+            <PlusCircle className="h-4 w-4 ml-1" />
+            إضافة مهمة
+          </Button>
+        </CardHeader>
+        <CardContent className="flex justify-center items-center py-10">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  if (meetingTasks.length === 0) {
+    return (
+      <Card>
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+          <CardTitle>مهام الاجتماع</CardTitle>
+          <Button variant="outline" size="sm" onClick={handleAddTask}>
+            <PlusCircle className="h-4 w-4 ml-1" />
+            إضافة مهمة
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8" dir="rtl">
+            <ClipboardList className="h-12 w-12 mx-auto text-gray-400 mb-3" />
+            <h3 className="text-lg font-medium mb-2">مهام الاجتماع</h3>
+            <p className="text-gray-500 mb-6">
+              يمكنك إضافة وإدارة المهام المرتبطة بهذا الاجتماع.
+              ستظهر هذه المهام أيضًا في صفحة المهام العامة.
+            </p>
+            <Button variant="outline" onClick={handleAddTask}>
+              <PlusCircle className="h-4 w-4 ml-1" />
+              إضافة مهمة جديدة
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // If we have tasks, use the ProjectTasksList component to show them
   return (
     <Card>
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle>مهام الاجتماع</CardTitle>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={handleAddTask}>
           <PlusCircle className="h-4 w-4 ml-1" />
           إضافة مهمة
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="text-center py-8" dir="rtl">
-          <ClipboardList className="h-12 w-12 mx-auto text-gray-400 mb-3" />
-          <h3 className="text-lg font-medium mb-2">مهام الاجتماع</h3>
-          <p className="text-gray-500 mb-6">
-            ستتمكن قريباً من إضافة وإدارة المهام المرتبطة بهذا الاجتماع
-            وربطها مع نظام إدارة المهام.
-          </p>
-          <Button variant="outline" disabled>
-            <PlusCircle className="h-4 w-4 ml-1" />
-            إضافة مهمة جديدة
-          </Button>
+        <div className="mb-4">
+          <ProjectTasksList 
+            tasks={meetingTasks} 
+            onTaskAdded={fetchMeetingTasks} 
+            onTaskUpdated={fetchMeetingTasks}
+            meetingId={meetingId}
+            isGeneral={true}
+          />
         </div>
       </CardContent>
     </Card>
