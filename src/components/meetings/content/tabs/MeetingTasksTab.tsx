@@ -137,6 +137,18 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
             </Button>
           </div>
         </CardContent>
+        
+        <AddTaskDialog
+          open={isAddDialogOpen}
+          onOpenChange={setIsAddDialogOpen}
+          projectId=""
+          projectStages={[]}
+          onTaskAdded={fetchMeetingTasks}
+          projectMembers={[]}
+          isGeneral={true}
+          meetingId={meetingId}
+          isWorkspace={false}
+        />
       </Card>
     );
   }

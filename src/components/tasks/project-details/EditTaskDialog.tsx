@@ -3,8 +3,10 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TaskForm } from "./TaskForm";
 import { Task } from "./types/task";
-import { ProjectMember } from "./types/projectMember";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { useTaskForm } from "./hooks/useTaskForm";
+import { ProjectMember } from "./types/projectMember";
 
 interface EditTaskDialogProps {
   open: boolean;
@@ -25,44 +27,40 @@ export const EditTaskDialog = ({
   onTaskUpdated,
   meetingId
 }: EditTaskDialogProps) => {
-  // Format the due date to a string that the form expects
-  const formatDateForInput = (dueDateString: string | null) => {
-    if (!dueDateString) return "";
-    const date = new Date(dueDateString);
-    return date.toISOString().split('T')[0]; // Format as "YYYY-MM-DD"
+  // تحويل التاريخ إلى الصيغة المطلوبة لحقل التاريخ (YYYY-MM-DD)
+  const formatDateForInput = (dateString: string | null) => {
+    if (!dateString) return '';
+    
+    try {
+      const date = new Date(dateString);
+      return date.toISOString().split('T')[0];
+    } catch (e) {
+      return '';
+    }
   };
 
+  // تحضير القيم الأولية من المهمة المحددة
   const initialValues = {
-    title: task.title || "",
-    description: task.description || "",
-    dueDate: task.due_date ? formatDateForInput(task.due_date) : "",
-    priority: task.priority || "medium",
-    stageId: task.stage_id || "",
+    title: task.title,
+    description: task.description || '',
+    dueDate: formatDateForInput(task.due_date),
+    priority: task.priority || 'medium',
+    stageId: task.stage_id || projectStages[0]?.id || '',
     assignedTo: task.assigned_to,
-    category: task.category || "إدارية",
+    category: task.category || 'إدارية',
     requiresDeliverable: task.requires_deliverable || false
   };
 
   const { isSubmitting, error, handleSubmit } = useTaskForm({
     projectId: task.project_id || undefined,
-    isGeneral: task.is_general || false,
+    isGeneral: task.is_general || !!meetingId,
     onTaskUpdated,
     initialValues,
     taskId: task.id,
     meetingId
   });
 
-  const onSubmit = async (formData: {
-    title: string;
-    description: string;
-    dueDate: string;
-    priority: string;
-    stageId: string;
-    assignedTo: string | null;
-    templates?: File[] | null;
-    category?: string;
-    requiresDeliverable?: boolean;
-  }) => {
+  const onSubmit = async (formData: any) => {
     await handleSubmit(formData);
     onOpenChange(false);
   };
@@ -71,7 +69,9 @@ export const EditTaskDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>تعديل المهمة</DialogTitle>
+          <DialogTitle>
+            {meetingId ? "تعديل مهمة اجتماع" : task.is_general ? "تعديل مهمة عامة" : "تعديل مهمة المشروع"}
+          </DialogTitle>
         </DialogHeader>
         <TaskForm
           onSubmit={onSubmit}
