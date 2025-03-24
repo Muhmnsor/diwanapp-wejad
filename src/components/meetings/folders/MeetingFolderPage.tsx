@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -96,6 +97,10 @@ export const MeetingFolderPage = () => {
             
             <div className="flex gap-2">
               {hasAdminRole && <>
+                  <Button onClick={() => setIsCreateMeetingOpen(true)} variant="default" size="sm">
+                    <Plus className="h-4 w-4 ml-1" />
+                    إضافة اجتماع
+                  </Button>
                   
                   <Button onClick={() => setIsMembersFolderOpen(true)} variant="outline" size="sm">
                     <Users className="h-4 w-4 ml-1" />

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AdminHeader } from "@/components/layout/AdminHeader";
@@ -95,14 +96,14 @@ const MeetingDetailsPage = () => {
           
         </div>
         
-        {/* Meeting status badge */}
+        {/* Meeting status and type badges */}
         <div className="mb-6">
           <Badge className={meeting.meeting_status === 'completed' ? 'bg-green-100 text-green-800 hover:bg-green-200' : meeting.meeting_status === 'in_progress' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' : meeting.meeting_status === 'cancelled' ? 'bg-red-100 text-red-800 hover:bg-red-200' : 'bg-amber-100 text-amber-800 hover:bg-amber-200'}>
             {meeting.meeting_status === 'completed' ? 'مكتمل' : meeting.meeting_status === 'in_progress' ? 'جاري حالياً' : meeting.meeting_status === 'cancelled' ? 'ملغي' : 'قادم'}
           </Badge>
           
           <Badge className="mr-2 bg-gray-100 text-gray-800 hover:bg-gray-200">
-            {meeting.meeting_type === 'board' ? 'مجلس إدارة' : meeting.meeting_type === 'department' ? 'قسم' : meeting.meeting_type === 'team' ? 'فريق عمل' : meeting.meeting_type === 'committee' ? 'لجنة' : 'أخرى'}
+            {meeting.meeting_type === 'regular' ? 'اعتيادي' : meeting.meeting_type === 'special' ? 'استثنائي' : meeting.meeting_type === 'board' ? 'مجلس إدارة' : meeting.meeting_type === 'department' ? 'قسم' : meeting.meeting_type === 'team' ? 'فريق عمل' : meeting.meeting_type === 'committee' ? 'لجنة' : 'آخر'}
           </Badge>
         </div>
         
