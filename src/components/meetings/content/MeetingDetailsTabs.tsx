@@ -31,7 +31,7 @@ export const MeetingDetailsTabs: React.FC<MeetingDetailsTabsProps> = ({
       className="w-full mt-4"
       dir="rtl"
     >
-      <TabsList className="flex flex-row-reverse w-full mb-6">
+      <TabsList className="flex w-full mb-6">
         <TabsTrigger value="overview" className="text-sm">النظرة العامة</TabsTrigger>
         <TabsTrigger value="participants" className="text-sm">المشاركون</TabsTrigger>
         <TabsTrigger value="tasks" className="text-sm">المهام</TabsTrigger>
