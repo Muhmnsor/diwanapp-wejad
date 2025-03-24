@@ -4446,11 +4446,13 @@ export type Database = {
           due_date: string | null
           id: string
           is_general: boolean | null
+          meeting_id: string | null
           priority: string | null
           project_id: string | null
           requires_deliverable: boolean | null
           stage_id: string | null
           status: string | null
+          task_type: string | null
           title: string
           updated_at: string | null
           workspace_id: string | null
@@ -4465,11 +4467,13 @@ export type Database = {
           due_date?: string | null
           id?: string
           is_general?: boolean | null
+          meeting_id?: string | null
           priority?: string | null
           project_id?: string | null
           requires_deliverable?: boolean | null
           stage_id?: string | null
           status?: string | null
+          task_type?: string | null
           title: string
           updated_at?: string | null
           workspace_id?: string | null
@@ -4484,16 +4488,26 @@ export type Database = {
           due_date?: string | null
           id?: string
           is_general?: boolean | null
+          meeting_id?: string | null
           priority?: string | null
           project_id?: string | null
           requires_deliverable?: boolean | null
           stage_id?: string | null
           status?: string | null
+          task_type?: string | null
           title?: string
           updated_at?: string | null
           workspace_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tasks_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       unified_task_attachments: {
         Row: {

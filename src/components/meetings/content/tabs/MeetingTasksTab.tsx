@@ -9,6 +9,7 @@ import { ProjectTasksList } from "@/components/tasks/project-details/ProjectTask
 import { useTasksList } from "@/components/tasks/project-details/hooks/useTasksList";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
+import { AddTaskDialog } from "@/components/tasks/project-details/AddTaskDialog";
 
 interface MeetingTasksTabProps {
   meetingId: string;
@@ -42,10 +43,10 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
       }));
       
       setMeetingTasks(tasksWithAssigneeNames);
+      setIsLoading(false);
     } catch (err) {
       console.error("Error in fetchMeetingTasks:", err);
       toast.error("حدث خطأ أثناء تحميل مهام الاجتماع");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -60,7 +61,7 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
     setIsAddDialogOpen(true);
   };
   
-  // If we have no tasks yet, show the empty state
+  // If we're still loading, show a loading indicator
   if (isLoading) {
     return (
       <Card>
@@ -78,6 +79,7 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
     );
   }
   
+  // If we have no tasks yet, show the empty state
   if (meetingTasks.length === 0) {
     return (
       <Card>
@@ -127,6 +129,18 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
           />
         </div>
       </CardContent>
+      
+      <AddTaskDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        projectId=""
+        projectStages={[]}
+        onTaskAdded={fetchMeetingTasks}
+        projectMembers={[]}
+        isGeneral={true}
+        meetingId={meetingId}
+        isWorkspace={false}
+      />
     </Card>
   );
 };

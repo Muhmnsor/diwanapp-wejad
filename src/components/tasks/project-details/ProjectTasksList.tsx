@@ -145,6 +145,7 @@ export const ProjectTasksList = ({
         projectMembers={projectMembers}
         isGeneral={isGeneral}
         meetingId={meetingId}
+        isWorkspace={false}
       />
 
       {/* Dialog for editing tasks */}
