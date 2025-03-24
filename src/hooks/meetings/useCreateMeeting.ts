@@ -24,7 +24,6 @@ export interface CreateMeetingData {
   meeting_link?: string;
   attendance_type: string;
   meeting_status: string;
-  meeting_type: string; // Add meeting_type field
   folder_id: string;
   agenda_items: AgendaItem[];
   objectives: Objective[];
@@ -66,7 +65,7 @@ export const useCreateMeeting = () => {
           attendance_type: meetingData.attendance_type,
           meeting_status: meetingData.meeting_status,
           folder_id: meetingData.folder_id,
-          meeting_type: meetingData.meeting_type || 'regular', // Use provided meeting_type or default to 'regular'
+          meeting_type: 'other', // Default value since we're not using this field
           created_by: user.id, // Add the user ID for row-level security
         })
         .select('*')

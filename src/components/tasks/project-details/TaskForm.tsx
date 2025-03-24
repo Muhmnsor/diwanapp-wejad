@@ -40,7 +40,6 @@ export interface TaskFormProps {
     requiresDeliverable?: boolean;
   };
   isEditMode?: boolean;
-  meetingId?: string;
 }
 
 export const TaskForm = ({ 
@@ -50,8 +49,7 @@ export const TaskForm = ({
   projectMembers,
   isGeneral,
   initialValues,
-  isEditMode = false,
-  meetingId
+  isEditMode = false
 }: TaskFormProps) => {
   const [title, setTitle] = useState(initialValues?.title || "");
   const [description, setDescription] = useState(initialValues?.description || "");
@@ -60,11 +58,8 @@ export const TaskForm = ({
   const [stageId, setStageId] = useState(initialValues?.stageId || "");
   const [assignedTo, setAssignedTo] = useState<string | null>(initialValues?.assignedTo || null);
   const [templates, setTemplates] = useState<File[] | null>(null);
-  const [category, setCategory] = useState<string>(initialValues?.category || (meetingId ? "تحضيرية" : "إدارية"));
+  const [category, setCategory] = useState<string>(initialValues?.category || "إدارية");
   const [requiresDeliverable, setRequiresDeliverable] = useState<boolean>(initialValues?.requiresDeliverable || false);
-  
-  // Check if this is a meeting task
-  const isMeetingTask = !!meetingId;
   
   useEffect(() => {
     if (projectStages.length > 0 && !stageId) {
@@ -116,11 +111,7 @@ export const TaskForm = ({
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {isGeneral ? (
-          <TaskCategoryField 
-            category={category} 
-            setCategory={setCategory} 
-            isMeetingTask={isMeetingTask} 
-          />
+          <TaskCategoryField category={category} setCategory={setCategory} />
         ) : (
           <TaskStageField stageId={stageId} setStageId={setStageId} projectStages={projectStages} />
         )}
