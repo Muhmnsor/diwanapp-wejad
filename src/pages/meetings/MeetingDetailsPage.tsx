@@ -97,48 +97,10 @@ const MeetingDetailsPage = () => {
       
       <div className="container mx-auto px-4 py-8 flex-grow">
         {/* Header with back button and title */}
-        <div className="flex flex-wrap justify-between items-center mb-8">
-          <div className="flex items-center mb-4 md:mb-0">
-            <Button variant="ghost" size="sm" onClick={handleBack} className="ml-4">
-              <ArrowLeft className="h-4 w-4 ml-2" />
-              عودة
-            </Button>
-            <h1 className="text-2xl font-bold">{meeting.title}</h1>
-          </div>
-          
-          <div className="flex space-x-2 space-x-reverse">
-            <Button variant="outline" size="sm" onClick={handleEdit} className="ml-2">
-              <Edit className="h-4 w-4 ml-2" />
-              تعديل
-            </Button>
-            
-            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm">
-                  <Trash className="h-4 w-4 ml-2" />
-                  حذف
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="rtl text-right">
-                <AlertDialogHeader>
-                  <AlertDialogTitle>هل أنت متأكد من حذف هذا الاجتماع؟</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    سيتم حذف الاجتماع وجميع بيانات جدول الأعمال والأهداف المرتبطة به بشكل نهائي.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter className="flex-row-reverse">
-                  <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
-                    {isDeleting ? 'جاري الحذف...' : 'حذف'}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </div>
+        
         
         {/* Meeting status badge */}
-        <div className="mb-6">
+        <div className="mb-15">
           <Badge className={meeting.meeting_status === 'completed' ? 'bg-green-100 text-green-800 hover:bg-green-200' : meeting.meeting_status === 'in_progress' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' : meeting.meeting_status === 'cancelled' ? 'bg-red-100 text-red-800 hover:bg-red-200' : 'bg-amber-100 text-amber-800 hover:bg-amber-200'}>
             {meeting.meeting_status === 'completed' ? 'مكتمل' : meeting.meeting_status === 'in_progress' ? 'جاري حالياً' : meeting.meeting_status === 'cancelled' ? 'ملغي' : 'قادم'}
           </Badge>
