@@ -1,144 +1,116 @@
 
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ParticipantRole, AttendanceStatus } from "@/types/meeting";
-import { useAddMeetingParticipant } from "@/hooks/meetings/useAddMeetingParticipant";
-import { toast } from "sonner";
+import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-interface AddParticipantDialogProps {
+export interface AddParticipantDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   meetingId: string;
+  onSuccess: () => void;
 }
 
-export const AddParticipantDialog = ({ open, onOpenChange, meetingId }: AddParticipantDialogProps) => {
-  const [email, setEmail] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [role, setRole] = useState<ParticipantRole>("member");
-  const [attendanceStatus, setAttendanceStatus] = useState<AttendanceStatus>("pending");
-  const [errors, setErrors] = useState<{
-    email?: string;
-    displayName?: string;
-  }>({});
-  
-  const { mutate: addParticipant, isPending } = useAddMeetingParticipant();
-  
-  const validateForm = () => {
-    const newErrors: {email?: string; displayName?: string} = {};
-    let isValid = true;
-    
-    if (!email.trim()) {
-      newErrors.email = "البريد الإلكتروني مطلوب";
-      isValid = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = "صيغة البريد الإلكتروني غير صحيحة";
-      isValid = false;
-    }
-    
-    if (!displayName.trim()) {
-      newErrors.displayName = "الاسم مطلوب";
-      isValid = false;
-    }
-    
-    setErrors(newErrors);
-    return isValid;
-  };
-  
-  const handleSubmit = (e: React.FormEvent) => {
+export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
+  open,
+  onOpenChange,
+  meetingId,
+  onSuccess,
+}) => {
+  const [email, setEmail] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [role, setRole] = useState('member');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    if (!email || !displayName || !role) {
+      toast.error('يرجى ملء جميع الحقول المطلوبة');
+      return;
+    }
     
-    addParticipant({
-      meetingId,
-      participant: {
-        user_email: email,
-        user_display_name: displayName,
-        role,
-        attendance_status: attendanceStatus
+    setIsSubmitting(true);
+    
+    try {
+      // Get the current user to set as the creator
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+      
+      // Insert the new participant
+      const { data, error } = await supabase
+        .from('meeting_participants')
+        .insert({
+          meeting_id: meetingId,
+          user_email: email,
+          user_display_name: displayName,
+          role: role,
+          attendance_status: 'pending',
+          created_by: userId
+        });
+        
+      if (error) {
+        console.error('Error adding participant:', error);
+        toast.error('حدث خطأ أثناء إضافة المشارك');
+        return;
       }
-    }, {
-      onSuccess: () => {
-        toast.success("تمت إضافة المشارك بنجاح");
-        resetForm();
-        onOpenChange(false);
-      },
-      onError: (error) => {
-        console.error("Error adding participant:", error);
-        toast.error("حدث خطأ أثناء إضافة المشارك");
-      }
-    });
-  };
-  
-  const resetForm = () => {
-    setEmail("");
-    setDisplayName("");
-    setRole("member");
-    setAttendanceStatus("pending");
-    setErrors({});
+      
+      toast.success('تمت إضافة المشارك بنجاح');
+      onSuccess();
+      onOpenChange(false);
+      
+      // Reset form
+      setEmail('');
+      setDisplayName('');
+      setRole('member');
+    } catch (error) {
+      console.error('Exception adding participant:', error);
+      toast.error('حدث خطأ غير متوقع');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   return (
-    <Dialog open={open} onOpenChange={(newOpen) => {
-      if (!newOpen) {
-        resetForm();
-      }
-      onOpenChange(newOpen);
-    }}>
-      <DialogContent className="sm:max-w-[425px]" dir="rtl">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>إضافة مشارك جديد</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <Label htmlFor="email">
-              البريد الإلكتروني <span className="text-destructive">*</span>
-            </Label>
+            <Label htmlFor="email">البريد الإلكتروني</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="أدخل البريد الإلكتروني"
-              className={errors.email ? "border-destructive" : ""}
+              placeholder="example@domain.com"
+              required
             />
-            {errors.email && (
-              <p className="text-destructive text-xs">{errors.email}</p>
-            )}
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="displayName">
-              الاسم <span className="text-destructive">*</span>
-            </Label>
+            <Label htmlFor="displayName">الاسم</Label>
             <Input
               id="displayName"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="أدخل اسم المشارك"
-              className={errors.displayName ? "border-destructive" : ""}
+              placeholder="اسم المشارك"
+              required
             />
-            {errors.displayName && (
-              <p className="text-destructive text-xs">{errors.displayName}</p>
-            )}
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="role">دور المشارك</Label>
-            <Select value={role} onValueChange={(value) => setRole(value as ParticipantRole)}>
+            <Label htmlFor="role">الدور</Label>
+            <Select value={role} onValueChange={setRole}>
               <SelectTrigger id="role">
-                <SelectValue placeholder="اختر دور المشارك" />
+                <SelectValue placeholder="اختر الدور" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="organizer">منظم</SelectItem>
@@ -149,32 +121,17 @@ export const AddParticipantDialog = ({ open, onOpenChange, meetingId }: AddParti
             </Select>
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="attendanceStatus">حالة الحضور</Label>
-            <Select value={attendanceStatus} onValueChange={(value) => setAttendanceStatus(value as AttendanceStatus)}>
-              <SelectTrigger id="attendanceStatus">
-                <SelectValue placeholder="اختر حالة الحضور" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">قيد الانتظار</SelectItem>
-                <SelectItem value="confirmed">مؤكد</SelectItem>
-                <SelectItem value="attended">حضر</SelectItem>
-                <SelectItem value="absent">متغيب</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <DialogFooter className="pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
+          <DialogFooter className="mt-6">
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => onOpenChange(false)}
-              disabled={isPending}
+              disabled={isSubmitting}
             >
               إلغاء
             </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "جاري الإضافة..." : "إضافة"}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'جاري الإضافة...' : 'إضافة المشارك'}
             </Button>
           </DialogFooter>
         </form>

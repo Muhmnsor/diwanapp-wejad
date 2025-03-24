@@ -1,20 +1,17 @@
+
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useMeeting } from "@/hooks/meetings/useMeeting";
-import { useMeetingAgendaItems } from "@/hooks/meetings/useMeetingAgendaItems";
-import { useMeetingObjectives } from "@/hooks/meetings/useMeetingObjectives";
 import { useDeleteMeeting } from "@/hooks/meetings/useDeleteMeeting";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarDays, Clock, MapPin, Link2, Users, ArrowLeft, Edit, Trash } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
-import { formatDateArabic } from "@/utils/formatters";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowLeft, Edit, Trash } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { MeetingDetailsTabs } from "@/components/meetings/content/MeetingDetailsTabs";
+
 const MeetingDetailsPage = () => {
   const {
     meetingId
@@ -22,7 +19,6 @@ const MeetingDetailsPage = () => {
     meetingId: string;
   }>();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("details");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const {
     data: meeting,
@@ -30,24 +26,19 @@ const MeetingDetailsPage = () => {
     error: meetingError
   } = useMeeting(meetingId || '');
   const {
-    data: agendaItems,
-    isLoading: isAgendaLoading
-  } = useMeetingAgendaItems(meetingId || '');
-  const {
-    data: objectives,
-    isLoading: isObjectivesLoading
-  } = useMeetingObjectives(meetingId || '');
-  const {
     mutate: deleteMeeting,
     isPending: isDeleting
   } = useDeleteMeeting();
+
   const handleBack = () => {
     navigate(-1);
   };
+
   const handleEdit = () => {
     // Edit functionality will be implemented later
     console.log('Edit meeting:', meetingId);
   };
+
   const handleDelete = () => {
     if (meetingId) {
       deleteMeeting(meetingId, {
@@ -58,6 +49,7 @@ const MeetingDetailsPage = () => {
       });
     }
   };
+
   if (isMeetingLoading) {
     return <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
@@ -77,6 +69,7 @@ const MeetingDetailsPage = () => {
         <Footer />
       </div>;
   }
+
   if (meetingError || !meeting) {
     return <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
@@ -92,30 +85,77 @@ const MeetingDetailsPage = () => {
         <Footer />
       </div>;
   }
+
   return <div className="min-h-screen flex flex-col rtl" dir="rtl">
       <AdminHeader />
       
       <div className="container mx-auto px-4 py-8 flex-grow">
         {/* Header with back button and title */}
-        
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+          <div className="flex items-center">
+            <Button variant="ghost" size="sm" onClick={handleBack} className="ml-4">
+              <ArrowLeft className="h-4 w-4 ml-2" />
+              عودة
+            </Button>
+            <h1 className="text-2xl font-bold">{meeting.title}</h1>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleEdit}>
+              <Edit className="h-4 w-4 ml-2" />
+              تعديل
+            </Button>
+            
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm">
+                  <Trash className="h-4 w-4 ml-2" />
+                  حذف
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>هل أنت متأكد من حذف هذا الاجتماع؟</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    سيتم حذف جميع البيانات المتعلقة بالاجتماع ولا يمكن التراجع عن هذا الإجراء.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    {isDeleting ? 'جاري الحذف...' : 'تأكيد الحذف'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
         
         {/* Meeting status badge */}
-        <div className="mb-15">
-          <Badge className={meeting.meeting_status === 'completed' ? 'bg-green-100 text-green-800 hover:bg-green-200' : meeting.meeting_status === 'in_progress' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' : meeting.meeting_status === 'cancelled' ? 'bg-red-100 text-red-800 hover:bg-red-200' : 'bg-amber-100 text-amber-800 hover:bg-amber-200'}>
-            {meeting.meeting_status === 'completed' ? 'مكتمل' : meeting.meeting_status === 'in_progress' ? 'جاري حالياً' : meeting.meeting_status === 'cancelled' ? 'ملغي' : 'قادم'}
+        <div className="mb-6">
+          <Badge className={
+            meeting.meeting_status === 'completed' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
+            meeting.meeting_status === 'in_progress' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
+            meeting.meeting_status === 'cancelled' ? 'bg-red-100 text-red-800 hover:bg-red-200' :
+            'bg-amber-100 text-amber-800 hover:bg-amber-200'
+          }>
+            {meeting.meeting_status === 'completed' ? 'مكتمل' :
+             meeting.meeting_status === 'in_progress' ? 'جاري حالياً' :
+             meeting.meeting_status === 'cancelled' ? 'ملغي' :
+             'قادم'}
+          </Badge>
+          
+          <Badge className="mr-2 bg-gray-100 text-gray-800 hover:bg-gray-200">
+            {meeting.meeting_type === 'board' ? 'مجلس إدارة' :
+             meeting.meeting_type === 'department' ? 'قسم' :
+             meeting.meeting_type === 'team' ? 'فريق عمل' :
+             meeting.meeting_type === 'committee' ? 'لجنة' :
+             'أخرى'}
           </Badge>
         </div>
         
-        {/* Main content */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Left column for meeting details */}
-          <div className="md:col-span-2">
-            
-          </div>
-          
-          {/* Right column for additional info */}
-          
-        </div>
+        {/* Main content with tabs */}
+        <MeetingDetailsTabs meeting={meeting} meetingId={meetingId || ''} />
       </div>
       
       <Footer />
