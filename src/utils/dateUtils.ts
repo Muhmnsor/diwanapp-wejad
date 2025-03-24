@@ -23,3 +23,30 @@ export const formatDateTime = (date: string | Date, timeStr?: string): string =>
     return String(date);
   }
 };
+
+// Add new functions for the missing exports
+export const parseDate = (dateString: string): Date | null => {
+  try {
+    if (!dateString) return null;
+    return new Date(dateString);
+  } catch (error) {
+    console.error('Error parsing date:', error);
+    return null;
+  }
+};
+
+export const getEventDateTime = (dateStr: string, timeStr?: string): Date => {
+  try {
+    const date = new Date(dateStr);
+    
+    if (timeStr) {
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      date.setHours(hours || 0, minutes || 0, 0);
+    }
+    
+    return date;
+  } catch (error) {
+    console.error('Error creating event date time:', error);
+    return new Date();
+  }
+};

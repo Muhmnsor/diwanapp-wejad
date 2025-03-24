@@ -1,6 +1,6 @@
 import { Event } from "@/store/eventStore";
 import { EventStatus } from "@/types/eventStatus";
-import { getEventDateTime } from "./dateUtils";
+import { getEventDateTime } from "@/utils/dateUtils";
 import { getStatusConfig } from "./eventStatusConfig";
 
 export const arabicToEnglishNum = (str: string) => {
