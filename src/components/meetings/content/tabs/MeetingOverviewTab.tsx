@@ -7,7 +7,6 @@ import { formatDateArabic } from "@/utils/formatters";
 import { useMeetingObjectives } from "@/hooks/meetings/useMeetingObjectives";
 import { useMeetingAgendaItems } from "@/hooks/meetings/useMeetingAgendaItems";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatTime12Hour } from "@/utils/dateUtils";
 
 interface MeetingOverviewTabProps {
   meeting: Meeting;
@@ -39,6 +38,27 @@ export const MeetingOverviewTab: React.FC<MeetingOverviewTabProps> = ({
       case "virtual": return "عن بعد";
       case "hybrid": return "مختلط";
       default: return type;
+    }
+  };
+
+  // Format time to 12-hour format
+  const formatTime12Hour = (timeString: string): string => {
+    if (!timeString) return "";
+    
+    try {
+      const [hours, minutes] = timeString.split(':').map(Number);
+      const date = new Date();
+      date.setHours(hours);
+      date.setMinutes(minutes);
+      
+      return date.toLocaleTimeString('ar-SA', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return timeString;
     }
   };
 
