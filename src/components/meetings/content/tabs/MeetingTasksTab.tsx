@@ -27,22 +27,55 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
     try {
       const { data, error } = await supabase
         .from('tasks')
-        .select('*, profiles:assigned_to(display_name, email)')
+        .select('*')
         .eq('meeting_id', meetingId)
         .order('created_at', { ascending: false });
       
       if (error) {
         console.error("Error fetching meeting tasks:", error);
         toast.error("حدث خطأ أثناء تحميل مهام الاجتماع");
+        setIsLoading(false);
         return;
       }
       
-      const tasksWithAssigneeNames = data.map(task => ({
+      // Process the tasks with assigned user info
+      const tasksWithAssigneeInfo = data.map(task => ({
         ...task,
-        assigned_user_name: task.profiles?.display_name || task.profiles?.email || 'غير محدد'
+        assigned_user_name: 'غير محدد' // Default value
       }));
       
-      setMeetingTasks(tasksWithAssigneeNames);
+      // Try to get assigned user names if we have assigned users
+      const userIds = data
+        .filter(task => task.assigned_to)
+        .map(task => task.assigned_to);
+      
+      if (userIds.length > 0) {
+        try {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, display_name, email')
+            .in('id', userIds);
+          
+          if (profiles && profiles.length > 0) {
+            // Create a map of user IDs to names
+            const userMap = profiles.reduce((map, profile) => {
+              map[profile.id] = profile.display_name || profile.email;
+              return map;
+            }, {});
+            
+            // Update tasks with user names
+            tasksWithAssigneeInfo.forEach(task => {
+              if (task.assigned_to && userMap[task.assigned_to]) {
+                task.assigned_user_name = userMap[task.assigned_to];
+              }
+            });
+          }
+        } catch (err) {
+          console.error("Error fetching user profiles:", err);
+        }
+      }
+      
+      setMeetingTasks(tasksWithAssigneeInfo);
       setIsLoading(false);
     } catch (err) {
       console.error("Error in fetchMeetingTasks:", err);
