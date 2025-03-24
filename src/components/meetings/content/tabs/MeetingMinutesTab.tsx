@@ -16,7 +16,7 @@ export const MeetingMinutesTab: React.FC<MeetingMinutesTabProps> = ({ meetingId 
         <CardTitle>محضر الاجتماع</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-4" dir="rtl">
           <div className="text-center py-4">
             <FileText className="h-12 w-12 mx-auto text-gray-400 mb-3" />
             <h3 className="text-lg font-medium mb-2">إعداد محضر الاجتماع</h3>
@@ -28,41 +28,41 @@ export const MeetingMinutesTab: React.FC<MeetingMinutesTabProps> = ({ meetingId 
 
           <div className="space-y-4">
             <div>
-              <label htmlFor="minutes-content" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="minutes-content" className="block text-sm font-medium text-gray-700 mb-1 text-right">
                 محتوى المحضر
               </label>
               <Textarea
                 id="minutes-content"
                 placeholder="اكتب محضر الاجتماع هنا..."
-                className="resize-y min-h-[200px]"
+                className="resize-y min-h-[200px] text-right"
               />
             </div>
 
             <div>
-              <label htmlFor="minutes-decisions" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="minutes-decisions" className="block text-sm font-medium text-gray-700 mb-1 text-right">
                 القرارات المتخذة
               </label>
               <Textarea
                 id="minutes-decisions"
                 placeholder="اكتب القرارات المتخذة خلال الاجتماع..."
-                className="resize-y min-h-[150px]"
+                className="resize-y min-h-[150px] text-right"
               />
             </div>
 
             <div>
-              <label htmlFor="minutes-notes" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="minutes-notes" className="block text-sm font-medium text-gray-700 mb-1 text-right">
                 ملاحظات إضافية
               </label>
               <Textarea
                 id="minutes-notes"
                 placeholder="أي ملاحظات إضافية..."
-                className="resize-y"
+                className="resize-y text-right"
               />
             </div>
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-end pt-4">
+      <CardFooter className="flex justify-start pt-4" dir="rtl">
         <Button variant="outline" className="ml-2">
           معاينة
         </Button>
