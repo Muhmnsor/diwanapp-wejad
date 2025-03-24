@@ -23,7 +23,7 @@ export interface Meeting {
 
 export type MeetingStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
 
-export type MeetingType = 'board' | 'department' | 'team' | 'committee' | 'other';
+export type MeetingType = 'regular' | 'special' | 'board' | 'department' | 'team' | 'committee' | 'other';
 
 export type AttendanceType = 'in_person' | 'virtual' | 'hybrid';
 
@@ -31,7 +31,7 @@ export type ParticipantRole = 'organizer' | 'presenter' | 'member' | 'guest';
 
 export type AttendanceStatus = 'pending' | 'confirmed' | 'attended' | 'absent';
 
-export type TaskType = 'action_item' | 'follow_up' | 'decision' | 'other';
+export type TaskType = 'preparatory' | 'execution' | 'follow_up' | 'action_item' | 'follow_up' | 'decision' | 'other';
 
 export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 

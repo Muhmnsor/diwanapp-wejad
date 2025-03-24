@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import { useMeetings } from "@/hooks/meetings/useMeetings";
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
 import { MeetingDialogWrapper } from "@/components/meetings/dialogs/MeetingDialogWrapper";
+
 export const MeetingFolderPage = () => {
   const {
     folderId
@@ -40,12 +42,15 @@ export const MeetingFolderPage = () => {
   const [isDeleteFolderOpen, setIsDeleteFolderOpen] = useState(false);
   const [isMembersFolderOpen, setIsMembersFolderOpen] = useState(false);
   const [isCreateMeetingOpen, setIsCreateMeetingOpen] = useState(false);
+  
   const refreshFolder = () => {
     setRefreshTrigger(prev => prev + 1);
   };
+  
   const handleGoBack = () => {
     navigate("/admin/meetings");
   };
+  
   if (isLoading) {
     return <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
@@ -57,6 +62,7 @@ export const MeetingFolderPage = () => {
         <Footer />
       </div>;
   }
+  
   if (error || !folder) {
     return <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
@@ -70,6 +76,7 @@ export const MeetingFolderPage = () => {
         <Footer />
       </div>;
   }
+  
   return <div className="min-h-screen flex flex-col rtl" dir="rtl">
       <AdminHeader />
       
@@ -96,19 +103,21 @@ export const MeetingFolderPage = () => {
             
             <div className="flex gap-2">
               {hasAdminRole && <>
-                  
                   <Button onClick={() => setIsMembersFolderOpen(true)} variant="outline" size="sm">
                     <Users className="h-4 w-4 ml-1" />
                     الأعضاء
                   </Button>
                   
+                  <Button onClick={() => setIsCreateMeetingOpen(true)} variant="default" size="sm">
+                    <Plus className="h-4 w-4 ml-1" />
+                    إضافة اجتماع
+                  </Button>
                 </>}
             </div>
           </CardHeader>
           
           <CardContent>
             <div className="mt-6">
-              
               <MeetingsList meetings={meetings || []} isLoading={isLoadingMeetings} error={meetingsError} folderId={folderId} onCreate={refreshFolder} />
             </div>
           </CardContent>
@@ -127,4 +136,5 @@ export const MeetingFolderPage = () => {
       <MeetingDialogWrapper open={isCreateMeetingOpen} onOpenChange={setIsCreateMeetingOpen} onSuccess={refreshFolder} folderId={folderId} />
     </div>;
 };
+
 export default MeetingFolderPage;
