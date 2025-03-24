@@ -47,9 +47,7 @@ export const MeetingMinutes: React.FC<MeetingMinutesProps> = ({ meetingId }) => 
     );
   }
   
-  // Fix the error by checking for the specific error code correctly
-  if (error && !(error as any).code === 'PGRST116') is throwing the TypeScript error.
-  // The correct way to check:
+  // Check if there's an error, but ignore the "no rows" error code PGRST116
   if (error && (error as any).code !== 'PGRST116') {
     return (
       <div className="text-red-500 p-4">
