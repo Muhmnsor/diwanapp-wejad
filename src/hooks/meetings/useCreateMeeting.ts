@@ -94,8 +94,7 @@ export const useCreateMeeting = () => {
           const agendaItemsToInsert = validAgendaItems.map(item => ({
             meeting_id: meeting.id,
             content: item.content.trim(),
-            order_number: item.order_number,
-            created_by: user.id
+            order_number: item.order_number
           }));
           
           const { error: agendaError } = await supabase
@@ -124,8 +123,7 @@ export const useCreateMeeting = () => {
           const objectivesToInsert = validObjectives.map(objective => ({
             meeting_id: meeting.id,
             content: objective.content.trim(),
-            order_number: objective.order_number,
-            created_by: user.id
+            order_number: objective.order_number
           }));
           
           const { error: objectivesError } = await supabase
