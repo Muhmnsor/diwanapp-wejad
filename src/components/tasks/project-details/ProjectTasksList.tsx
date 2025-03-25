@@ -22,6 +22,7 @@ interface ProjectTasksListProps {
   onTaskUpdated?: () => void;
   meetingId?: string;
   isGeneral?: boolean;
+  hideTasksHeader?: boolean; // إضافة خاصية جديدة للتحكم في ظهور زر إضافة المهمة
 }
 
 // Re-export Task interface for backward compatibility
@@ -35,7 +36,8 @@ export const ProjectTasksList = ({
   onTaskAdded,
   onTaskUpdated,
   meetingId,
-  isGeneral = false
+  isGeneral = false,
+  hideTasksHeader = false // قيمة افتراضية false
 }: ProjectTasksListProps) => {
   const {
     tasks: fetchedTasks,
@@ -106,7 +108,11 @@ export const ProjectTasksList = ({
       
       <Card className="border shadow-sm">
         <CardHeader className="pb-0">
-          <TasksHeader onAddTask={() => setIsAddDialogOpen(true)} isGeneral={isGeneral} />
+          <TasksHeader 
+            onAddTask={() => setIsAddDialogOpen(true)} 
+            isGeneral={isGeneral}
+            hideAddButton={hideTasksHeader} // تمرير الخاصية الجديدة
+          />
         </CardHeader>
         
         <CardContent className="pt-4">
