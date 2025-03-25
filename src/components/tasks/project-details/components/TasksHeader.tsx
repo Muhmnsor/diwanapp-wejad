@@ -7,18 +7,16 @@ interface TasksHeaderProps {
   isGeneral?: boolean;
 }
 
-export const TasksHeader = ({
-  onAddTask,
-  isGeneral = false
-}: TasksHeaderProps) => {
+export const TasksHeader = ({ onAddTask, isGeneral }: TasksHeaderProps) => {
   return (
-    <div className="flex items-center justify-between mb-6">
-      <h2 className="text-xl font-semibold">
-        {isGeneral ? 'المهام العامة' : 'المهام'}
-      </h2>
-      <Button onClick={onAddTask} className="shadow-sm hover:shadow-md transition-shadow">
-        <Plus className="h-4 w-4 mr-2" />
-        إضافة مهمة
+    <div className="flex justify-between items-center">
+      <h2 className="text-xl font-bold">{isGeneral ? "المهام العامة" : "المهام"}</h2>
+      <Button 
+        size="sm" 
+        className="gap-1"
+        onClick={onAddTask}
+      >
+        <Plus className="h-4 w-4" /> إضافة مهمة {isGeneral ? "عامة" : ""}
       </Button>
     </div>
   );
