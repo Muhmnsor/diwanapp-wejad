@@ -23,7 +23,7 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
 }) => {
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [role, setRole] = useState('member');
+  const [role, setRole] = useState('عضو');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,7 +66,7 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
       // Reset form
       setEmail('');
       setDisplayName('');
-      setRole('member');
+      setRole('عضو');
     } catch (error) {
       console.error('Exception adding participant:', error);
       toast.error('حدث خطأ غير متوقع');
@@ -113,10 +113,10 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
                 <SelectValue placeholder="اختر الدور" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="organizer">منظم</SelectItem>
-                <SelectItem value="presenter">مقدم</SelectItem>
-                <SelectItem value="member">عضو</SelectItem>
-                <SelectItem value="guest">ضيف</SelectItem>
+                <SelectItem value="رئيس">رئيس</SelectItem>
+                <SelectItem value="عضو">عضو</SelectItem>
+                <SelectItem value="مقرر">مقرر</SelectItem>
+                <SelectItem value="ضيف">ضيف</SelectItem>
               </SelectContent>
             </Select>
           </div>
