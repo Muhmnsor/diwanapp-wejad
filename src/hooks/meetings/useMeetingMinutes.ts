@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -29,14 +28,12 @@ export const useMeetingMinutes = (meetingId: string) => {
         
       if (error && error.code !== 'PGSQL_ERROR') {
         console.error('Error fetching meeting minutes:', error);
-        // If no minutes exist yet, return an empty object with the meeting ID
         if (error.code === 'PGSQL_ERROR' || error.message.includes('No rows found')) {
           return { meeting_id: meetingId, agenda_notes: {} } as MeetingMinutes;
         }
         throw error;
       }
       
-      // Parse agenda notes if they exist in string format
       if (data && data.agenda_notes && typeof data.agenda_notes === 'string') {
         try {
           data.agenda_notes = JSON.parse(data.agenda_notes);
@@ -58,13 +55,11 @@ export const useSaveMeetingMinutes = () => {
   
   return useMutation({
     mutationFn: async (minutes: MeetingMinutes) => {
-      // Ensure we have an author ID from the current user
       if (user?.id && !minutes.author_id) {
         minutes.author_id = user.id;
         minutes.author_name = user.display_name || user.email;
       }
 
-      // Convert agenda_notes to string if it's an object
       const minutesToSave = { 
         ...minutes,
         agenda_notes: typeof minutes.agenda_notes === 'object' 
@@ -73,7 +68,6 @@ export const useSaveMeetingMinutes = () => {
         updated_at: new Date().toISOString()
       };
       
-      // Check if minutes already exist
       const { data: existingMinutes } = await supabase
         .from('meeting_minutes')
         .select('id')
@@ -81,7 +75,6 @@ export const useSaveMeetingMinutes = () => {
         .single();
       
       if (existingMinutes?.id) {
-        // Update existing minutes
         const { data, error } = await supabase
           .from('meeting_minutes')
           .update(minutesToSave)
@@ -92,7 +85,6 @@ export const useSaveMeetingMinutes = () => {
         if (error) throw error;
         return data;
       } else {
-        // Insert new minutes
         const { data, error } = await supabase
           .from('meeting_minutes')
           .insert({ ...minutesToSave, created_at: new Date().toISOString() })
