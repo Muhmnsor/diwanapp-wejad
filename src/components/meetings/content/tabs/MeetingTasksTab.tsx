@@ -6,7 +6,6 @@ import { PlusCircle, ClipboardList, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/tasks/project-details/types/task";
 import { ProjectTasksList } from "@/components/tasks/project-details/ProjectTasksList";
-import { useTasksList } from "@/components/tasks/project-details/hooks/useTasksList";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
 import { AddTaskDialog } from "@/components/tasks/project-details/AddTaskDialog";

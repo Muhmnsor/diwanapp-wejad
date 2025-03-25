@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, UserPlus, Mail, User, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { AddParticipantDialog } from '../participants/AddParticipantDialog';
 import { ParticipantRole } from '@/types/meeting';
+import { MeetingParticipantRoleBadge } from '../participants/MeetingParticipantRoleBadge';
 
 interface MeetingParticipantsProps {
   meetingId: string;
@@ -46,42 +47,6 @@ export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetin
         return (
           <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200">
             <AlertCircle className="w-3 h-3 mr-1" /> معلق
-          </Badge>
-        );
-    }
-  };
-
-  // Function to render the appropriate badge for the role
-  const renderRole = (role: string) => {
-    switch (role) {
-      case 'chairman':
-        return (
-          <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-200">
-            رئيس الاجتماع
-          </Badge>
-        );
-      case 'secretary':
-        return (
-          <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">
-            مقرر
-          </Badge>
-        );
-      case 'member':
-        return (
-          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">
-            عضو
-          </Badge>
-        );
-      case 'observer':
-        return (
-          <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200">
-            مراقب
-          </Badge>
-        );
-      default:
-        return (
-          <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200">
-            {role}
           </Badge>
         );
     }
@@ -157,7 +122,7 @@ export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetin
                       </div>
                     </div>
                     <div className="flex space-x-2 space-x-reverse">
-                      {renderRole(participant.role)}
+                      <MeetingParticipantRoleBadge role={participant.role as ParticipantRole} />
                       {renderAttendanceStatus(participant.attendance_status)}
                     </div>
                   </div>

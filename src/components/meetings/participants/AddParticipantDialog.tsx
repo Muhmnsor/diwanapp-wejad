@@ -10,6 +10,7 @@ import { useAddMeetingParticipant } from '@/hooks/meetings/useAddMeetingParticip
 import { AttendanceStatus, ParticipantRole } from '@/types/meeting';
 import { supabase } from '@/integrations/supabase/client';
 import { useParticipantRoles } from '@/hooks/meetings/useParticipantRoles';
+import { useMeetingRoles } from '@/hooks/meetings/useMeetingRoles';
 
 export interface AddParticipantDialogProps {
   open: boolean;
@@ -29,6 +30,7 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
   const [role, setRole] = useState<ParticipantRole>('member');
   const { mutate: addParticipant, isPending: isSubmitting } = useAddMeetingParticipant();
   const { availableRoles } = useParticipantRoles(meetingId);
+  const { getRoleLabel } = useMeetingRoles();
 
   // Reset role selection if current role is not available
   useEffect(() => {
@@ -82,16 +84,6 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
     } catch (error) {
       console.error('Exception adding participant:', error);
       toast.error('حدث خطأ غير متوقع');
-    }
-  };
-
-  const getRoleLabel = (roleValue: ParticipantRole): string => {
-    switch (roleValue) {
-      case 'chairman': return 'رئيس الاجتماع';
-      case 'secretary': return 'مقرر';
-      case 'member': return 'عضو';
-      case 'observer': return 'مراقب';
-      default: return roleValue;
     }
   };
   

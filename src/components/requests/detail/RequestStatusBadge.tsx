@@ -2,8 +2,10 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 
+export type RequestStatus = 'pending' | 'approved' | 'rejected';
+
 interface RequestStatusBadgeProps {
-  status: 'pending' | 'approved' | 'rejected';
+  status: RequestStatus;
 }
 
 export const RequestStatusBadge: React.FC<RequestStatusBadgeProps> = ({ status }) => {
