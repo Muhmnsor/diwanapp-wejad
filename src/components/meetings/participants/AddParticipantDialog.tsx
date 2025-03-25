@@ -70,6 +70,12 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
           setEmail('');
           setDisplayName('');
           setRole('member');
+          
+          toast.success('تمت إضافة المشارك بنجاح');
+        },
+        onError: (error) => {
+          console.error('Error adding participant:', error);
+          toast.error('حدث خطأ أثناء إضافة المشارك');
         }
       });
       
