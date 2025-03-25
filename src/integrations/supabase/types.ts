@@ -1747,7 +1747,9 @@ export type Database = {
           created_at: string | null
           id: string
           meeting_id: string
+          phone: string | null
           role: string | null
+          title: string | null
           updated_at: string | null
           user_display_name: string | null
           user_email: string | null
@@ -1758,7 +1760,9 @@ export type Database = {
           created_at?: string | null
           id?: string
           meeting_id: string
+          phone?: string | null
           role?: string | null
+          title?: string | null
           updated_at?: string | null
           user_display_name?: string | null
           user_email?: string | null
@@ -1769,7 +1773,9 @@ export type Database = {
           created_at?: string | null
           id?: string
           meeting_id?: string
+          phone?: string | null
           role?: string | null
+          title?: string | null
           updated_at?: string | null
           user_display_name?: string | null
           user_email?: string | null
