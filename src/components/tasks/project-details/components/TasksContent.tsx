@@ -34,7 +34,7 @@ export const TasksContent = ({
   formatDate,
   onStatusChange,
   projectId,
-  isGeneral,
+  isGeneral = false,
   onEditTask,
   onDeleteTask
 }: TasksContentProps) => {
