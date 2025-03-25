@@ -5,13 +5,14 @@ import { Plus } from "lucide-react";
 interface TasksHeaderProps {
   onAddTask: () => void;
   isGeneral?: boolean;
-  hideAddButton?: boolean; // أضفنا هذه الخاصية للتحكم في ظهور زر الإضافة
+  hideAddButton?: boolean; // خاصية للتحكم في ظهور زر الإضافة
+  hideTitle?: boolean; // خاصية جديدة للتحكم في ظهور العنوان
 }
 
-export const TasksHeader = ({ onAddTask, isGeneral, hideAddButton }: TasksHeaderProps) => {
+export const TasksHeader = ({ onAddTask, isGeneral, hideAddButton, hideTitle }: TasksHeaderProps) => {
   return (
     <div className="flex justify-between items-center">
-      <h2 className="text-xl font-bold">{isGeneral ? "المهام العامة" : "المهام"}</h2>
+      {!hideTitle && <h2 className="text-xl font-bold">{isGeneral ? "المهام العامة" : "المهام"}</h2>}
       {!hideAddButton && (
         <Button 
           size="sm" 

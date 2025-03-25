@@ -173,7 +173,8 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
             onTaskUpdated={fetchMeetingTasks}
             meetingId={meetingId}
             isGeneral={true}
-            hideTasksHeader={true} // إضافة خاصية جديدة لإخفاء زر إضافة المهمة في TasksHeader
+            hideTasksHeader={true} // إخفاء زر إضافة المهمة في TasksHeader
+            hideTasksTitle={true} // إخفاء عنوان المهام العامة
           />
         </div>
       </CardContent>

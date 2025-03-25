@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ProjectStages } from "./ProjectStages";
@@ -22,10 +21,10 @@ interface ProjectTasksListProps {
   onTaskUpdated?: () => void;
   meetingId?: string;
   isGeneral?: boolean;
-  hideTasksHeader?: boolean; // إضافة خاصية جديدة للتحكم في ظهور زر إضافة المهمة
+  hideTasksHeader?: boolean;
+  hideTasksTitle?: boolean;
 }
 
-// Re-export Task interface for backward compatibility
 export type { Task };
 
 export const ProjectTasksList = ({ 
@@ -37,7 +36,8 @@ export const ProjectTasksList = ({
   onTaskUpdated,
   meetingId,
   isGeneral = false,
-  hideTasksHeader = false // قيمة افتراضية false
+  hideTasksHeader = false,
+  hideTasksTitle = false
 }: ProjectTasksListProps) => {
   const {
     tasks: fetchedTasks,
@@ -57,21 +57,16 @@ export const ProjectTasksList = ({
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  // Use external project members if provided, otherwise fetch them
   const { projectMembers: fetchedMembers } = useProjectMembers(
     externalProjectMembers ? undefined : projectId
   );
   
-  // Use external tasks if provided, otherwise use fetched tasks
   const tasks = externalTasks || fetchedTasks;
   
-  // Use either external members or fetched members
   const projectMembers = externalProjectMembers || fetchedMembers;
 
-  // Use external stages if provided, otherwise use the ones from useTasksList
   const stages = externalStages || projectStages;
 
-  // Refetch tasks when external inputs change
   useEffect(() => {
     if (!externalTasks) {
       fetchTasks();
@@ -111,7 +106,8 @@ export const ProjectTasksList = ({
           <TasksHeader 
             onAddTask={() => setIsAddDialogOpen(true)} 
             isGeneral={isGeneral}
-            hideAddButton={hideTasksHeader} // تمرير الخاصية الجديدة
+            hideAddButton={hideTasksHeader}
+            hideTitle={hideTasksTitle}
           />
         </CardHeader>
         
@@ -154,7 +150,6 @@ export const ProjectTasksList = ({
         isWorkspace={false}
       />
 
-      {/* Dialog for editing tasks */}
       {editingTask && (
         <EditTaskDialog
           open={isEditDialogOpen}
