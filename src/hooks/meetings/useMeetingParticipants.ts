@@ -1,18 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
-interface MeetingParticipant {
-  id: string;
-  meeting_id: string;
-  user_id: string;
-  user_email: string;
-  user_display_name: string;
-  role: string;
-  attendance_status: string;
-  created_at: string;
-  updated_at: string;
-}
+import { MeetingParticipant } from "@/types/meeting";
 
 export const useMeetingParticipants = (meetingId: string) => {
   return useQuery({

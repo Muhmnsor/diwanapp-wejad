@@ -49,3 +49,16 @@ export interface MeetingTask {
   created_at?: string;
   updated_at?: string;
 }
+
+// Define a standardized MeetingParticipant interface to use across the application
+export interface MeetingParticipant {
+  id: string;
+  meeting_id: string;
+  user_id: string;
+  user_email: string;
+  user_display_name: string;
+  role: string;
+  attendance_status: string;
+  created_at?: string;
+  updated_at?: string;
+}
