@@ -19,8 +19,12 @@ export const useDeleteMeetingParticipant = () => {
     },
     onSuccess: (_, participantId) => {
       toast.success("تم حذف المشارك بنجاح");
-      // We invalidate the query to refresh the data
-      queryClient.invalidateQueries({ queryKey: ['meeting-participants'] });
+      
+      // We use a more general approach to invalidate all meeting-participants queries
+      // This ensures all queries that fetch meeting participants are refreshed
+      queryClient.invalidateQueries({
+        queryKey: ['meeting-participants']
+      });
     },
     onError: (error) => {
       console.error("Error deleting participant:", error);

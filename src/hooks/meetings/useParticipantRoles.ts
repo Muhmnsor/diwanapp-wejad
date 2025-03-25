@@ -25,7 +25,7 @@ export const useParticipantRoles = (meetingId: string) => {
         const allRoles = getAllRoles();
         
         // Check which roles are already assigned (we only allow one chairman and one secretary)
-        const assignedRoles = participants.map(p => p.role);
+        const assignedRoles = participants?.map(p => p.role) || [];
         const hasChairman = assignedRoles.includes('chairman');
         const hasSecretary = assignedRoles.includes('secretary');
         
