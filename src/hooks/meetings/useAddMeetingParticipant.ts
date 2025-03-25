@@ -11,6 +11,8 @@ interface ParticipantInput {
   user_display_name: string;
   role: ParticipantRole;
   attendance_status: AttendanceStatus;
+  title?: string; // Added: participant's organizational title
+  phone?: string; // Added: participant's phone number
 }
 
 interface AddParticipantParams {

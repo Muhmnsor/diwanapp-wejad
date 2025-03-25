@@ -1,4 +1,3 @@
-
 export interface Meeting {
   id: string;
   title: string;
@@ -59,6 +58,8 @@ export interface MeetingParticipant {
   user_display_name: string;
   role: string;
   attendance_status: string;
+  title?: string; // Added: participant's organizational title
+  phone?: string; // Added: participant's phone number
   created_at?: string;
   updated_at?: string;
 }

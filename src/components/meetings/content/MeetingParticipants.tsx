@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useMeetingParticipants } from '@/hooks/meetings/useMeetingParticipants';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, UserPlus, Mail, User, CheckCircle, XCircle, AlertCircle, Trash } from 'lucide-react';
+import { Plus, UserPlus, Mail, User, CheckCircle, XCircle, AlertCircle, Trash, Phone, Briefcase } from 'lucide-react';
 import { AddParticipantDialog } from '../participants/AddParticipantDialog';
 import { ParticipantRole } from '@/types/meeting';
 import { MeetingParticipantRoleBadge } from '../participants/MeetingParticipantRoleBadge';
@@ -140,10 +140,26 @@ export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetin
                       <h4 className="font-medium text-gray-900">
                         {participant.user_display_name || 'مشارك'}
                       </h4>
-                      <div className="flex items-center text-gray-500">
+                      <div className="flex items-center text-gray-500 space-y-1">
                         <Mail className="h-4 w-4 mr-1" />
                         {participant.user_email}
                       </div>
+                      
+                      {/* Added: Display title if exists */}
+                      {participant.title && (
+                        <div className="flex items-center text-gray-500">
+                          <Briefcase className="h-4 w-4 mr-1" />
+                          {participant.title}
+                        </div>
+                      )}
+                      
+                      {/* Added: Display phone if exists */}
+                      {participant.phone && (
+                        <div className="flex items-center text-gray-500">
+                          <Phone className="h-4 w-4 mr-1" />
+                          {participant.phone}
+                        </div>
+                      )}
                     </div>
                     <div className="flex space-x-2 space-x-reverse">
                       <MeetingParticipantRoleBadge role={participant.role as ParticipantRole} />

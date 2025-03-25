@@ -27,6 +27,8 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
 }) => {
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [title, setTitle] = useState(''); // Added: title state
+  const [phone, setPhone] = useState(''); // Added: phone state
   const [role, setRole] = useState<ParticipantRole>('member');
   const { mutate: addParticipant, isPending: isSubmitting } = useAddMeetingParticipant();
   const { availableRoles } = useParticipantRoles(meetingId);
@@ -39,11 +41,23 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
     }
   }, [open, availableRoles, role]);
 
+  // Added: Phone validation function
+  const validatePhone = (value: string): boolean => {
+    // Ensure phone starts with 05 and has 10 digits total
+    return /^05\d{8}$/.test(value);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !displayName || !role) {
       toast.error('يرجى ملء جميع الحقول المطلوبة');
+      return;
+    }
+
+    // Added: Phone validation
+    if (phone && !validatePhone(phone)) {
+      toast.error('رقم الجوال يجب أن يبدأ بـ 05 ويتكون من 10 أرقام');
       return;
     }
     
@@ -60,6 +74,8 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
           user_display_name: displayName,
           role: role,
           attendance_status: 'pending' as AttendanceStatus,
+          title, // Added: title field
+          phone, // Added: phone field
           // If this participant is a registered user with this email, we should ideally
           // look up their ID. For now, we use a placeholder UUID that will be generated in the hook.
         }
@@ -71,6 +87,8 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
           // Reset form
           setEmail('');
           setDisplayName('');
+          setTitle('');
+          setPhone('');
           setRole('member');
           
           toast.success('تمت إضافة المشارك بنجاح');
@@ -116,6 +134,36 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
               placeholder="اسم المشارك"
               required
             />
+          </div>
+          
+          {/* Added: Title field */}
+          <div className="space-y-2">
+            <Label htmlFor="title">الصفة</Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="المسمى الوظيفي أو الصفة"
+            />
+          </div>
+          
+          {/* Added: Phone field */}
+          <div className="space-y-2">
+            <Label htmlFor="phone">رقم الجوال</Label>
+            <Input
+              id="phone"
+              value={phone}
+              onChange={(e) => {
+                // Ensure only numbers are entered and starts with 05
+                const value = e.target.value;
+                if (/^\d*$/.test(value) && value.length <= 10) {
+                  setPhone(value);
+                }
+              }}
+              placeholder="05xxxxxxxx"
+              inputMode="numeric"
+            />
+            <p className="text-xs text-muted-foreground">يجب أن يبدأ بـ 05 ويتكون من 10 أرقام</p>
           </div>
           
           <div className="space-y-2">
