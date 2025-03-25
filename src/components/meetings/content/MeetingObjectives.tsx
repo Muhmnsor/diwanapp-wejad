@@ -16,10 +16,10 @@ export const MeetingObjectives: React.FC<MeetingObjectivesProps> = ({ meetingId 
 
   if (isLoading) {
     return (
-      <Card className="mb-6 shadow-md hover:shadow-lg transition-shadow">
-        <CardHeader className="pb-3 bg-gradient-to-r from-purple-50 to-indigo-50">
+      <Card className="mb-6 shadow-md hover:shadow-lg transition-all duration-300">
+        <CardHeader className="pb-3 bg-gradient-to-r from-purple-100 to-indigo-100">
           <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-primary" />
+            <Target className="h-5 w-5 text-primary animate-pulse" />
             أهداف الاجتماع
           </CardTitle>
         </CardHeader>
@@ -38,7 +38,7 @@ export const MeetingObjectives: React.FC<MeetingObjectivesProps> = ({ meetingId 
     console.error('Error fetching meeting objectives:', error);
     return (
       <Card className="mb-6 shadow-md border-red-100">
-        <CardHeader className="pb-3 bg-gradient-to-r from-red-50 to-rose-50">
+        <CardHeader className="pb-3 bg-gradient-to-r from-red-100 to-rose-100">
           <CardTitle className="flex items-center gap-2">
             <Target className="h-5 w-5 text-red-500" />
             أهداف الاجتماع
@@ -53,8 +53,8 @@ export const MeetingObjectives: React.FC<MeetingObjectivesProps> = ({ meetingId 
 
   if (!objectives || objectives.length === 0) {
     return (
-      <Card className="mb-6 shadow-md">
-        <CardHeader className="pb-3 bg-gradient-to-r from-purple-50 to-indigo-50">
+      <Card className="mb-6 shadow-md hover:shadow-lg transition-all duration-300">
+        <CardHeader className="pb-3 bg-gradient-to-r from-purple-100 to-indigo-100">
           <CardTitle className="flex items-center gap-2">
             <Target className="h-5 w-5 text-primary" />
             أهداف الاجتماع
@@ -68,18 +68,20 @@ export const MeetingObjectives: React.FC<MeetingObjectivesProps> = ({ meetingId 
   }
 
   return (
-    <Card className="mb-6 shadow-md hover:shadow-lg transition-shadow">
-      <CardHeader className="pb-3 bg-gradient-to-r from-purple-50 to-indigo-50">
+    <Card className="mb-6 shadow-md hover:shadow-lg transition-all duration-300">
+      <CardHeader className="pb-3 bg-gradient-to-r from-purple-100 to-indigo-100">
         <CardTitle className="flex items-center gap-2">
           <Target className="h-5 w-5 text-primary" />
           أهداف الاجتماع
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <ol className="list-decimal list-inside space-y-3">
+        <ol className="list-decimal list-inside space-y-3 rtl">
           {objectives.map((objective: MeetingObjective) => (
-            <li key={objective.id} className="py-2 px-4 bg-white rounded-md border border-gray-100 shadow-sm hover:shadow-md transition-shadow text-gray-800">
-              {objective.content}
+            <li key={objective.id} className="group py-2 px-4 bg-white rounded-md border border-gray-100 shadow-sm hover:shadow-md hover:border-indigo-100 transition-all duration-200 text-gray-800">
+              <div className="flex items-start">
+                <span className="ml-2 rtl:mr-2 font-medium text-indigo-700">{objective.content}</span>
+              </div>
             </li>
           ))}
         </ol>

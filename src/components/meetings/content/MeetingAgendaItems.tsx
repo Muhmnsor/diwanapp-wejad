@@ -16,10 +16,10 @@ export const MeetingAgendaItems: React.FC<MeetingAgendaItemsProps> = ({ meetingI
 
   if (isLoading) {
     return (
-      <Card className="mb-6 shadow-md hover:shadow-lg transition-shadow">
-        <CardHeader className="pb-3 bg-gradient-to-r from-emerald-50 to-teal-50">
+      <Card className="mb-6 shadow-md hover:shadow-lg transition-all duration-300">
+        <CardHeader className="pb-3 bg-gradient-to-r from-emerald-100 to-teal-100">
           <CardTitle className="flex items-center gap-2">
-            <ClipboardList className="h-5 w-5 text-primary" />
+            <ClipboardList className="h-5 w-5 text-primary animate-pulse" />
             جدول الأعمال
           </CardTitle>
         </CardHeader>
@@ -38,7 +38,7 @@ export const MeetingAgendaItems: React.FC<MeetingAgendaItemsProps> = ({ meetingI
     console.error('Error fetching meeting agenda items:', error);
     return (
       <Card className="mb-6 shadow-md border-red-100">
-        <CardHeader className="pb-3 bg-gradient-to-r from-red-50 to-rose-50">
+        <CardHeader className="pb-3 bg-gradient-to-r from-red-100 to-rose-100">
           <CardTitle className="flex items-center gap-2">
             <ClipboardList className="h-5 w-5 text-red-500" />
             جدول الأعمال
@@ -53,8 +53,8 @@ export const MeetingAgendaItems: React.FC<MeetingAgendaItemsProps> = ({ meetingI
 
   if (!agendaItems || agendaItems.length === 0) {
     return (
-      <Card className="mb-6 shadow-md">
-        <CardHeader className="pb-3 bg-gradient-to-r from-emerald-50 to-teal-50">
+      <Card className="mb-6 shadow-md hover:shadow-lg transition-all duration-300">
+        <CardHeader className="pb-3 bg-gradient-to-r from-emerald-100 to-teal-100">
           <CardTitle className="flex items-center gap-2">
             <ClipboardList className="h-5 w-5 text-primary" />
             جدول الأعمال
@@ -68,18 +68,20 @@ export const MeetingAgendaItems: React.FC<MeetingAgendaItemsProps> = ({ meetingI
   }
 
   return (
-    <Card className="mb-6 shadow-md hover:shadow-lg transition-shadow">
-      <CardHeader className="pb-3 bg-gradient-to-r from-emerald-50 to-teal-50">
+    <Card className="mb-6 shadow-md hover:shadow-lg transition-all duration-300">
+      <CardHeader className="pb-3 bg-gradient-to-r from-emerald-100 to-teal-100">
         <CardTitle className="flex items-center gap-2">
           <ClipboardList className="h-5 w-5 text-primary" />
           جدول الأعمال
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <ol className="list-decimal list-inside space-y-3">
+        <ol className="list-decimal list-inside space-y-3 rtl">
           {agendaItems.map((item: MeetingAgendaItem) => (
-            <li key={item.id} className="py-2 px-4 bg-white rounded-md border border-gray-100 shadow-sm hover:shadow-md transition-shadow text-gray-800">
-              {item.content}
+            <li key={item.id} className="group py-2 px-4 bg-white rounded-md border border-gray-100 shadow-sm hover:shadow-md hover:border-teal-100 transition-all duration-200 text-gray-800">
+              <div className="flex items-start">
+                <span className="ml-2 rtl:mr-2 font-medium text-teal-700">{item.content}</span>
+              </div>
             </li>
           ))}
         </ol>
