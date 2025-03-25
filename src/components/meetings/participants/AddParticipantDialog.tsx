@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAddMeetingParticipant } from '@/hooks/meetings/useAddMeetingParticipant';
+import { AttendanceStatus, ParticipantRole } from '@/types/meeting';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface AddParticipantDialogProps {
   open: boolean;
@@ -23,8 +25,8 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
 }) => {
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [role, setRole] = useState('member');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [role, setRole] = useState<ParticipantRole>('member');
+  const { mutate: addParticipant, isPending: isSubmitting } = useAddMeetingParticipant();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,44 +36,37 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
       return;
     }
     
-    setIsSubmitting(true);
-    
     try {
       // Get the current user to set as the creator
       const { data: userData } = await supabase.auth.getUser();
-      const userId = userData?.user?.id;
+      const creatorId = userData?.user?.id;
       
-      // Insert the new participant
-      const { data, error } = await supabase
-        .from('meeting_participants')
-        .insert({
-          meeting_id: meetingId,
+      // Add the participant using the hook
+      addParticipant({
+        meetingId,
+        participant: {
           user_email: email,
           user_display_name: displayName,
           role: role,
-          attendance_status: 'pending',
-          created_by: userId
-        });
-        
-      if (error) {
-        console.error('Error adding participant:', error);
-        toast.error('حدث خطأ أثناء إضافة المشارك');
-        return;
-      }
+          attendance_status: 'pending' as AttendanceStatus,
+          // If this participant is a registered user with this email, we should ideally
+          // look up their ID. For now, we use a placeholder UUID that will be generated in the hook.
+        }
+      }, {
+        onSuccess: () => {
+          onSuccess();
+          onOpenChange(false);
+          
+          // Reset form
+          setEmail('');
+          setDisplayName('');
+          setRole('member');
+        }
+      });
       
-      toast.success('تمت إضافة المشارك بنجاح');
-      onSuccess();
-      onOpenChange(false);
-      
-      // Reset form
-      setEmail('');
-      setDisplayName('');
-      setRole('member');
     } catch (error) {
       console.error('Exception adding participant:', error);
       toast.error('حدث خطأ غير متوقع');
-    } finally {
-      setIsSubmitting(false);
     }
   };
   
@@ -108,7 +103,7 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
           
           <div className="space-y-2">
             <Label htmlFor="role">الدور</Label>
-            <Select value={role} onValueChange={setRole}>
+            <Select value={role} onValueChange={(value) => setRole(value as ParticipantRole)}>
               <SelectTrigger id="role">
                 <SelectValue placeholder="اختر الدور" />
               </SelectTrigger>
