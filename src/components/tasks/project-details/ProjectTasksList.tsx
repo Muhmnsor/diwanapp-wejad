@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ProjectStages } from "./ProjectStages";
@@ -56,8 +57,7 @@ export const ProjectTasksList = ({
 
   // Use external project members if provided, otherwise fetch them
   const { projectMembers: fetchedMembers } = useProjectMembers(
-    externalProjectMembers ? undefined : projectId,
-    true
+    externalProjectMembers ? undefined : projectId
   );
   
   // Use external tasks if provided, otherwise use fetched tasks
