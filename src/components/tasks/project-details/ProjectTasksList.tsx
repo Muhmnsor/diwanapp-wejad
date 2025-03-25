@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ProjectStages } from "./ProjectStages";
@@ -21,21 +22,21 @@ interface ProjectTasksListProps {
   onTaskUpdated?: () => void;
   meetingId?: string;
   isGeneral?: boolean;
-  isWorkspace?: boolean;
 }
 
 // Re-export Task interface for backward compatibility
 export type { Task };
 
-export const ProjectTasksList: React.FC<ProjectTasksListProps> = ({ 
-  tasks, 
-  onTaskAdded, 
-  onTaskUpdated,
+export const ProjectTasksList = ({ 
   projectId,
+  projectMembers: externalProjectMembers,
+  stages: externalStages,
+  tasks: externalTasks,
+  onTaskAdded,
+  onTaskUpdated,
   meetingId,
-  isGeneral = false,
-  isWorkspace
-}) => {
+  isGeneral = false
+}: ProjectTasksListProps) => {
   const {
     tasks: fetchedTasks,
     isLoading,
@@ -144,7 +145,7 @@ export const ProjectTasksList: React.FC<ProjectTasksListProps> = ({
         projectMembers={projectMembers}
         isGeneral={isGeneral}
         meetingId={meetingId}
-        isWorkspace={isWorkspace}
+        isWorkspace={false}
       />
 
       {/* Dialog for editing tasks */}
