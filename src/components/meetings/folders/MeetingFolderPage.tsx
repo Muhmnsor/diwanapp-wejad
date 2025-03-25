@@ -94,22 +94,7 @@ export const MeetingFolderPage = () => {
               {folder.description && <CardDescription>{folder.description}</CardDescription>}
             </div>
             
-            <div className="flex gap-2">
-              {hasAdminRole && <>
-                  <Button onClick={() => setIsEditFolderOpen(true)} variant="outline" size="sm">
-                    <Edit className="h-4 w-4 ml-1" />
-                    تعديل
-                  </Button>
-                  <Button onClick={() => setIsMembersFolderOpen(true)} variant="outline" size="sm">
-                    <Users className="h-4 w-4 ml-1" />
-                    الأعضاء
-                  </Button>
-                  <Button onClick={() => setIsDeleteFolderOpen(true)} variant="outline" size="sm" className="text-destructive border-destructive hover:bg-destructive/10">
-                    <Trash className="h-4 w-4 ml-1" />
-                    حذف
-                  </Button>
-                </>}
-            </div>
+            
           </CardHeader>
           
           <CardContent>
