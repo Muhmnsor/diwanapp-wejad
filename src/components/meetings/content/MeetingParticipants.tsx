@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useMeetingParticipants } from '@/hooks/meetings/useMeetingParticipants';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, UserPlus, Mail, User, CheckCircle, XCircle, AlertCircle, Trash, Phone, Briefcase } from 'lucide-react';
-import { AddParticipantDialog } from '../participants/AddParticipantDialog';
+import { ParticipantDialogBridge } from '../participants/ParticipantDialogBridge';
 import { ParticipantRole } from '@/types/meeting';
 import { MeetingParticipantRoleBadge } from '../participants/MeetingParticipantRoleBadge';
 import { useDeleteMeetingParticipant } from '@/hooks/meetings/useDeleteMeetingParticipant';
@@ -18,7 +17,6 @@ interface MeetingParticipantsProps {
 
 export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetingId }) => {
   const { data: participants, isLoading, error, refetch } = useMeetingParticipants(meetingId);
-  const [isAddParticipantOpen, setIsAddParticipantOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedParticipantId, setSelectedParticipantId] = useState<string | null>(null);
   const [selectedParticipantName, setSelectedParticipantName] = useState<string>('');
@@ -46,7 +44,6 @@ export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetin
     }
   };
 
-  // Function to render the appropriate badge for the attendance status
   const renderAttendanceStatus = (status: string) => {
     switch (status) {
       case 'confirmed':
@@ -112,24 +109,25 @@ export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetin
       <Card className="mb-6">
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle>المشاركون ({participants?.length || 0})</CardTitle>
-          <Button variant="outline" size="sm" onClick={() => setIsAddParticipantOpen(true)}>
-            <UserPlus className="h-4 w-4 mr-1" />
-            إضافة مشارك
-          </Button>
+          <ParticipantDialogBridge
+            meetingId={meetingId}
+            onSuccess={handleAddParticipantSuccess}
+          />
         </CardHeader>
         <CardContent>
           {!participants || participants.length === 0 ? (
             <div className="text-center py-8">
               <User className="h-12 w-12 mx-auto text-gray-400 mb-3" />
               <p className="text-gray-500">لا يوجد مشاركون في هذا الاجتماع</p>
-              <Button 
-                className="mt-4" 
-                variant="outline" 
-                onClick={() => setIsAddParticipantOpen(true)}
+              <ParticipantDialogBridge
+                meetingId={meetingId}
+                onSuccess={handleAddParticipantSuccess}
+                buttonVariant="outline"
+                className="mt-4"
               >
                 <Plus className="h-4 w-4 mr-1" />
                 إضافة مشارك
-              </Button>
+              </ParticipantDialogBridge>
             </div>
           ) : (
             <div className="space-y-4">
@@ -145,7 +143,6 @@ export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetin
                         {participant.user_email}
                       </div>
                       
-                      {/* Added: Display title if exists */}
                       {participant.title && (
                         <div className="flex items-center text-gray-500">
                           <Briefcase className="h-4 w-4 mr-1" />
@@ -153,7 +150,6 @@ export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetin
                         </div>
                       )}
                       
-                      {/* Added: Display phone if exists */}
                       {participant.phone && (
                         <div className="flex items-center text-gray-500">
                           <Phone className="h-4 w-4 mr-1" />
@@ -180,13 +176,6 @@ export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetin
           )}
         </CardContent>
       </Card>
-
-      <AddParticipantDialog
-        open={isAddParticipantOpen}
-        onOpenChange={setIsAddParticipantOpen}
-        meetingId={meetingId}
-        onSuccess={handleAddParticipantSuccess}
-      />
 
       <DeleteDialog
         open={isDeleteDialogOpen}
