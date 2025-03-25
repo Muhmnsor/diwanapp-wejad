@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { UserPlus } from 'lucide-react';
 import { AddParticipantDialog } from './AddParticipantDialog';
+import { useParticipantDialog } from '@/hooks/meetings/useParticipantDialog';
 
 interface ParticipantDialogBridgeProps {
   meetingId: string;
@@ -25,20 +26,23 @@ export const ParticipantDialogBridge: React.FC<ParticipantDialogBridgeProps> = (
   className,
   children
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const handleSuccess = () => {
-    if (onSuccess) {
-      onSuccess();
-    }
-  };
+  const {
+    isOpen,
+    isPending,
+    openDialog,
+    closeDialog,
+    handleAddParticipant
+  } = useParticipantDialog({ 
+    meetingId, 
+    onSuccess 
+  });
 
   return (
     <>
       <Button 
         variant={buttonVariant} 
         size={buttonSize} 
-        onClick={() => setIsOpen(true)}
+        onClick={openDialog}
         className={className}
       >
         {children || (
@@ -51,9 +55,11 @@ export const ParticipantDialogBridge: React.FC<ParticipantDialogBridgeProps> = (
       
       <AddParticipantDialog
         open={isOpen}
-        onOpenChange={setIsOpen}
+        onOpenChange={closeDialog}
         meetingId={meetingId}
-        onSuccess={handleSuccess}
+        onSuccess={onSuccess}
+        onSubmit={handleAddParticipant}
+        isPending={isPending}
       />
     </>
   );

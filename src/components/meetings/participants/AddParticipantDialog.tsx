@@ -16,7 +16,15 @@ export interface AddParticipantDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   meetingId: string;
-  onSuccess: () => void;
+  onSuccess?: () => void;
+  onSubmit?: (participantData: {
+    user_email: string;
+    user_display_name: string;
+    role: ParticipantRole;
+    title?: string;
+    phone?: string;
+  }) => void;
+  isPending?: boolean;
 }
 
 export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
@@ -24,15 +32,19 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
   onOpenChange,
   meetingId,
   onSuccess,
+  onSubmit,
+  isPending: externalIsPending,
 }) => {
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [title, setTitle] = useState(''); // Added: title state
   const [phone, setPhone] = useState(''); // Added: phone state
   const [role, setRole] = useState<ParticipantRole>('member');
-  const { mutate: addParticipant, isPending: isSubmitting } = useAddMeetingParticipant();
+  const { mutate: addParticipant, isPending: internalIsPending } = useAddMeetingParticipant();
   const { availableRoles } = useParticipantRoles(meetingId);
   const { getRoleLabel } = useMeetingRoles();
+  
+  const isPending = externalIsPending !== undefined ? externalIsPending : internalIsPending;
 
   // Reset role selection if current role is not available
   useEffect(() => {
@@ -40,6 +52,17 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
       setRole(availableRoles[0]);
     }
   }, [open, availableRoles, role]);
+
+  // Reset form when dialog opens
+  useEffect(() => {
+    if (open) {
+      setEmail('');
+      setDisplayName('');
+      setTitle('');
+      setPhone('');
+      setRole('member');
+    }
+  }, [open]);
 
   // Added: Phone validation function
   const validatePhone = (value: string): boolean => {
@@ -58,6 +81,18 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
     // Added: Phone validation
     if (phone && !validatePhone(phone)) {
       toast.error('رقم الجوال يجب أن يبدأ بـ 05 ويتكون من 10 أرقام');
+      return;
+    }
+    
+    // If an external submit handler is provided, use it
+    if (onSubmit) {
+      onSubmit({
+        user_email: email,
+        user_display_name: displayName,
+        role,
+        title,
+        phone
+      });
       return;
     }
     
@@ -81,7 +116,7 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
         }
       }, {
         onSuccess: () => {
-          onSuccess();
+          if (onSuccess) onSuccess();
           onOpenChange(false);
           
           // Reset form
@@ -187,12 +222,12 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
+              disabled={isPending}
             >
               إلغاء
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'جاري الإضافة...' : 'إضافة المشارك'}
+            <Button type="submit" disabled={isPending}>
+              {isPending ? 'جاري الإضافة...' : 'إضافة المشارك'}
             </Button>
           </DialogFooter>
         </form>
