@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useMeetingParticipants } from '@/hooks/meetings/useMeetingParticipants';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, UserPlus, Mail, User, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Plus, UserPlus, Mail, User, CheckCircle, XCircle, AlertCircle, Trash } from 'lucide-react';
 import { AddParticipantDialog } from '../participants/AddParticipantDialog';
 import { ParticipantRole } from '@/types/meeting';
 import { MeetingParticipantRoleBadge } from '../participants/MeetingParticipantRoleBadge';
+import { useDeleteMeetingParticipant } from '@/hooks/meetings/useDeleteMeetingParticipant';
+import { DeleteDialog } from '@/components/ui/delete-dialog';
 
 interface MeetingParticipantsProps {
   meetingId: string;
@@ -17,9 +19,31 @@ interface MeetingParticipantsProps {
 export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetingId }) => {
   const { data: participants, isLoading, error, refetch } = useMeetingParticipants(meetingId);
   const [isAddParticipantOpen, setIsAddParticipantOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedParticipantId, setSelectedParticipantId] = useState<string | null>(null);
+  const [selectedParticipantName, setSelectedParticipantName] = useState<string>('');
+  
+  const { mutate: deleteParticipant, isPending: isDeleting } = useDeleteMeetingParticipant();
 
   const handleAddParticipantSuccess = () => {
     refetch();
+  };
+
+  const handleDeleteClick = (participantId: string, participantName: string) => {
+    setSelectedParticipantId(participantId);
+    setSelectedParticipantName(participantName);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (selectedParticipantId) {
+      deleteParticipant(selectedParticipantId, {
+        onSuccess: () => {
+          setIsDeleteDialogOpen(false);
+          refetch();
+        }
+      });
+    }
   };
 
   // Function to render the appropriate badge for the attendance status
@@ -124,6 +148,14 @@ export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetin
                     <div className="flex space-x-2 space-x-reverse">
                       <MeetingParticipantRoleBadge role={participant.role as ParticipantRole} />
                       {renderAttendanceStatus(participant.attendance_status)}
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                        onClick={() => handleDeleteClick(participant.id, participant.user_display_name)}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -138,6 +170,15 @@ export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetin
         onOpenChange={setIsAddParticipantOpen}
         meetingId={meetingId}
         onSuccess={handleAddParticipantSuccess}
+      />
+
+      <DeleteDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="حذف مشارك"
+        description={`هل أنت متأكد من رغبتك في حذف "${selectedParticipantName}" من المشاركين؟ لا يمكن التراجع عن هذا الإجراء.`}
+        onDelete={handleConfirmDelete}
+        isDeleting={isDeleting}
       />
     </>
   );

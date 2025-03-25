@@ -1,61 +1,53 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ParticipantRole } from "@/types/meeting";
-
-interface MeetingParticipant {
-  id: string;
-  meeting_id: string;
-  user_id: string;
-  user_email: string;
-  user_display_name: string;
-  role: ParticipantRole;
-  attendance_status: string;
-  created_at: string;
-  updated_at: string;
-}
+import { useMeetingRoles } from "./useMeetingRoles";
 
 export const useParticipantRoles = (meetingId: string) => {
-  const { data: participants = [], ...rest } = useQuery({
-    queryKey: ['meeting-participants', meetingId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('meeting_participants')
-        .select('*')
-        .eq('meeting_id', meetingId)
-        .order('created_at', { ascending: true });
-        
-      if (error) throw error;
+  const [availableRoles, setAvailableRoles] = useState<ParticipantRole[]>([]);
+  const { getAllRoles } = useMeetingRoles();
+  
+  useEffect(() => {
+    const fetchRoles = async () => {
+      if (!meetingId) return;
       
-      return data as MeetingParticipant[];
-    },
-    enabled: !!meetingId,
-  });
-
-  const hasChairman = participants.some(p => p.role === 'chairman');
-  const hasSecretary = participants.some(p => p.role === 'secretary');
-  
-  const availableRoles: ParticipantRole[] = ['member', 'observer'];
-  
-  if (!hasChairman) {
-    availableRoles.unshift('chairman');
-  }
-  
-  if (!hasSecretary) {
-    // If there's no secretary, add it before member (after chairman if exists)
-    const chairmanIndex = availableRoles.indexOf('chairman');
-    if (chairmanIndex >= 0) {
-      availableRoles.splice(chairmanIndex + 1, 0, 'secretary');
-    } else {
-      availableRoles.unshift('secretary');
-    }
-  }
+      try {
+        // Get all assigned roles for this meeting
+        const { data: participants, error } = await supabase
+          .from('meeting_participants')
+          .select('role')
+          .eq('meeting_id', meetingId);
+          
+        if (error) throw error;
+        
+        // Get the complete list of possible roles
+        const allRoles = getAllRoles();
+        
+        // Check which roles are already assigned (we only allow one chairman and one secretary)
+        const assignedRoles = participants.map(p => p.role);
+        const hasChairman = assignedRoles.includes('chairman');
+        const hasSecretary = assignedRoles.includes('secretary');
+        
+        // Filter available roles based on what's already assigned
+        const filtered = allRoles.filter(role => {
+          if (role === 'chairman' && hasChairman) return false;
+          if (role === 'secretary' && hasSecretary) return false;
+          return true;
+        });
+        
+        setAvailableRoles(filtered);
+      } catch (error) {
+        console.error('Error fetching available roles:', error);
+        // Fallback to all roles if there's an error
+        setAvailableRoles(getAllRoles());
+      }
+    };
+    
+    fetchRoles();
+  }, [meetingId, getAllRoles]);
   
   return {
-    participants,
-    hasChairman,
-    hasSecretary,
-    availableRoles,
-    ...rest
+    availableRoles
   };
 };
