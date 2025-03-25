@@ -152,7 +152,7 @@ export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetin
                         variant="ghost" 
                         size="sm"
                         className="text-red-500 hover:bg-red-50 hover:text-red-600"
-                        onClick={() => handleDeleteClick(participant.id, participant.user_display_name)}
+                        onClick={() => handleDeleteClick(participant.id, participant.user_display_name || 'مشارك')}
                       >
                         <Trash className="h-4 w-4" />
                       </Button>
