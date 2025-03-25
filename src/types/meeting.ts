@@ -27,7 +27,7 @@ export type MeetingType = 'board' | 'department' | 'team' | 'committee' | 'other
 
 export type AttendanceType = 'in_person' | 'virtual' | 'hybrid';
 
-export type ParticipantRole = 'organizer' | 'presenter' | 'member' | 'guest';
+export type ParticipantRole = 'chairman' | 'secretary' | 'member' | 'observer';
 
 export type AttendanceStatus = 'pending' | 'confirmed' | 'attended' | 'absent';
 

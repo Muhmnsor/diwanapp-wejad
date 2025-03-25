@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useMeetingParticipants } from '@/hooks/meetings/useMeetingParticipants';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, UserPlus, Mail, User, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, UserPlus, Mail, User, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { AddParticipantDialog } from '../participants/AddParticipantDialog';
+import { ParticipantRole } from '@/types/meeting';
 
 interface MeetingParticipantsProps {
   meetingId: string;
@@ -44,7 +45,7 @@ export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetin
       default:
         return (
           <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200">
-            معلق
+            <AlertCircle className="w-3 h-3 mr-1" /> معلق
           </Badge>
         );
     }
@@ -53,16 +54,16 @@ export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetin
   // Function to render the appropriate badge for the role
   const renderRole = (role: string) => {
     switch (role) {
-      case 'organizer':
+      case 'chairman':
         return (
           <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-200">
-            منظم
+            رئيس الاجتماع
           </Badge>
         );
-      case 'presenter':
+      case 'secretary':
         return (
           <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">
-            مقدم
+            مقرر
           </Badge>
         );
       case 'member':
@@ -71,10 +72,10 @@ export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetin
             عضو
           </Badge>
         );
-      case 'guest':
+      case 'observer':
         return (
           <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200">
-            ضيف
+            مراقب
           </Badge>
         );
       default:

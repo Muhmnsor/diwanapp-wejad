@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { useAddMeetingParticipant } from '@/hooks/meetings/useAddMeetingParticipant';
 import { AttendanceStatus, ParticipantRole } from '@/types/meeting';
 import { supabase } from '@/integrations/supabase/client';
+import { useParticipantRoles } from '@/hooks/meetings/useParticipantRoles';
 
 export interface AddParticipantDialogProps {
   open: boolean;
@@ -27,6 +28,14 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
   const [displayName, setDisplayName] = useState('');
   const [role, setRole] = useState<ParticipantRole>('member');
   const { mutate: addParticipant, isPending: isSubmitting } = useAddMeetingParticipant();
+  const { availableRoles } = useParticipantRoles(meetingId);
+
+  // Reset role selection if current role is not available
+  useEffect(() => {
+    if (open && availableRoles.length > 0 && !availableRoles.includes(role)) {
+      setRole(availableRoles[0]);
+    }
+  }, [open, availableRoles, role]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,6 +78,16 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
       toast.error('حدث خطأ غير متوقع');
     }
   };
+
+  const getRoleLabel = (roleValue: ParticipantRole): string => {
+    switch (roleValue) {
+      case 'chairman': return 'رئيس الاجتماع';
+      case 'secretary': return 'مقرر';
+      case 'member': return 'عضو';
+      case 'observer': return 'مراقب';
+      default: return roleValue;
+    }
+  };
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -108,10 +127,11 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
                 <SelectValue placeholder="اختر الدور" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="organizer">منظم</SelectItem>
-                <SelectItem value="presenter">مقدم</SelectItem>
-                <SelectItem value="member">عضو</SelectItem>
-                <SelectItem value="guest">ضيف</SelectItem>
+                {availableRoles.map((availableRole) => (
+                  <SelectItem key={availableRole} value={availableRole}>
+                    {getRoleLabel(availableRole)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
