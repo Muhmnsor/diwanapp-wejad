@@ -7,6 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { v4 as uuidv4 } from 'uuid';
+import { useAddMeetingParticipant } from '@/hooks/meetings/useAddMeetingParticipant';
+import { ParticipantRole, AttendanceStatus } from '@/types/meeting';
 
 export interface AddParticipantDialogProps {
   open: boolean;
@@ -23,8 +26,9 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
 }) => {
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [role, setRole] = useState('عضو');
+  const [role, setRole] = useState<ParticipantRole>('عضو');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const addParticipantMutation = useAddMeetingParticipant();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,34 +43,39 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
     try {
       // Get the current user to set as the creator
       const { data: userData } = await supabase.auth.getUser();
-      const userId = userData?.user?.id;
+      const creatorId = userData?.user?.id;
       
-      // Insert the new participant
-      const { data, error } = await supabase
-        .from('meeting_participants')
-        .insert({
-          meeting_id: meetingId,
+      // Generate a UUID for the user_id field since it's required
+      // This would typically be a reference to an actual user, but for external participants
+      // we'll generate a unique ID
+      const externalUserId = uuidv4();
+      
+      // Use the mutation from the hook
+      addParticipantMutation.mutate({
+        meetingId,
+        participant: {
+          user_id: externalUserId,
           user_email: email,
           user_display_name: displayName,
           role: role,
           attendance_status: 'pending',
-          created_by: userId
-        });
-        
-      if (error) {
-        console.error('Error adding participant:', error);
-        toast.error('حدث خطأ أثناء إضافة المشارك');
-        return;
-      }
-      
-      toast.success('تمت إضافة المشارك بنجاح');
-      onSuccess();
-      onOpenChange(false);
-      
-      // Reset form
-      setEmail('');
-      setDisplayName('');
-      setRole('عضو');
+          created_by: creatorId
+        }
+      }, {
+        onSuccess: () => {
+          onSuccess();
+          onOpenChange(false);
+          
+          // Reset form
+          setEmail('');
+          setDisplayName('');
+          setRole('عضو');
+        },
+        onError: (error) => {
+          console.error('Error adding participant:', error);
+          toast.error('حدث خطأ أثناء إضافة المشارك');
+        }
+      });
     } catch (error) {
       console.error('Exception adding participant:', error);
       toast.error('حدث خطأ غير متوقع');
@@ -108,7 +117,7 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
           
           <div className="space-y-2">
             <Label htmlFor="role">الدور</Label>
-            <Select value={role} onValueChange={setRole}>
+            <Select value={role} onValueChange={(value) => setRole(value as ParticipantRole)}>
               <SelectTrigger id="role">
                 <SelectValue placeholder="اختر الدور" />
               </SelectTrigger>
@@ -130,8 +139,8 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
             >
               إلغاء
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'جاري الإضافة...' : 'إضافة المشارك'}
+            <Button type="submit" disabled={isSubmitting || addParticipantMutation.isPending}>
+              {isSubmitting || addParticipantMutation.isPending ? 'جاري الإضافة...' : 'إضافة المشارك'}
             </Button>
           </DialogFooter>
         </form>

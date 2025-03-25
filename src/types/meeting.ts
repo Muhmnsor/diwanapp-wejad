@@ -27,7 +27,7 @@ export type MeetingType = 'board' | 'department' | 'team' | 'committee' | 'other
 
 export type AttendanceType = 'in_person' | 'virtual' | 'hybrid';
 
-export type ParticipantRole = 'organizer' | 'presenter' | 'member' | 'guest';
+export type ParticipantRole = 'رئيس' | 'عضو' | 'مقرر' | 'ضيف';
 
 export type AttendanceStatus = 'pending' | 'confirmed' | 'attended' | 'absent';
 
@@ -48,4 +48,18 @@ export interface MeetingTask {
   status: TaskStatus;
   created_at?: string;
   updated_at?: string;
+}
+
+// أضافة واجهة جديدة للمشاركين
+export interface MeetingParticipant {
+  id: string;
+  meeting_id: string;
+  user_id: string;
+  user_email: string;
+  user_display_name: string;
+  role: ParticipantRole;
+  attendance_status: AttendanceStatus;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: string;
 }
