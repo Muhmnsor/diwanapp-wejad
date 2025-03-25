@@ -25,6 +25,8 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
   const fetchMeetingTasks = async () => {
     setIsLoading(true);
     try {
+      console.log("Fetching meeting tasks for meeting ID:", meetingId);
+      
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
@@ -75,6 +77,7 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
         }
       }
       
+      console.log("Retrieved meeting tasks:", tasksWithAssigneeInfo);
       setMeetingTasks(tasksWithAssigneeInfo);
       setIsLoading(false);
     } catch (err) {

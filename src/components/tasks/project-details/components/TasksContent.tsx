@@ -1,3 +1,4 @@
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { Task } from "../types/task";
 import { TasksStageGroup } from "./TasksStageGroup";
@@ -58,7 +59,6 @@ export const TasksContent = ({
   // عرض المهام كقائمة بدون تقسيم للتبويبات الأخرى أو المهام العامة
   return <div className="space-y-6" dir="rtl">
       <div className="bg-white rounded-md shadow-sm overflow-hidden border">
-        
         <div className="border rounded-md overflow-hidden">
           <Table dir="rtl">
             <TableHeader>
