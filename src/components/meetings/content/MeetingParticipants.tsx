@@ -113,7 +113,11 @@ export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetin
           <ParticipantDialogBridge
             meetingId={meetingId}
             onSuccess={handleAddParticipantSuccess}
-          />
+            buttonVariant="outline"
+          >
+            <UserPlus className="h-4 w-4 ml-2" />
+            إضافة مشارك
+          </ParticipantDialogBridge>
         </CardHeader>
         <CardContent>
           {!participants || participants.length === 0 ? (
@@ -126,7 +130,7 @@ export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetin
                 buttonVariant="outline"
                 className="mt-4"
               >
-                <Plus className="h-4 w-4 mr-1" />
+                <Plus className="h-4 w-4 ml-2" />
                 إضافة مشارك
               </ParticipantDialogBridge>
             </div>
