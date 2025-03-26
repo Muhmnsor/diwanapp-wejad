@@ -1,4 +1,3 @@
-
 export interface Meeting {
   id: string;
   title: string;
@@ -12,7 +11,7 @@ export interface Meeting {
   attendance_type: string;
   meeting_status: string;
   folder_id?: string;
-  folder_name?: string; // Add folder_name property to fix error in MeetingDetailsPage
+  folder_name?: string;
   created_at?: string;
   updated_at?: string;
   folder?: {
@@ -52,7 +51,6 @@ export interface MeetingTask {
   updated_at?: string;
 }
 
-// Define a standardized MeetingParticipant interface to use across the application
 export interface MeetingParticipant {
   id: string;
   meeting_id: string;
@@ -61,8 +59,8 @@ export interface MeetingParticipant {
   user_display_name: string;
   role: string;
   attendance_status: string;
-  title?: string; // Added: participant's organizational title
-  phone?: string; // Added: participant's phone number
+  title?: string;
+  phone?: string;
   created_at?: string;
   updated_at?: string;
 }

@@ -139,7 +139,7 @@ export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetin
                       <h4 className="font-medium text-gray-900">
                         {participant.user_display_name || 'مشارك'}
                       </h4>
-                      <div className="flex items-center text-gray-500 space-y-1">
+                      <div className="flex items-center text-gray-500">
                         <Mail className="h-4 w-4 mr-1" />
                         {participant.user_email}
                       </div>
