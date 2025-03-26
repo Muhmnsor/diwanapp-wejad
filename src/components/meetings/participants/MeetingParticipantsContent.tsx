@@ -45,10 +45,18 @@ export const MeetingParticipantsContent: React.FC<MeetingParticipantsContentProp
 
   const handleDeleteConfirm = () => {
     if (participantToDelete) {
+      console.log('Deleting participant:', participantToDelete.id);
+      
       deleteParticipant(participantToDelete.id, {
         onSuccess: () => {
           setDeleteDialogOpen(false);
           setParticipantToDelete(null);
+          toast.success('تم حذف المشارك بنجاح');
+          queryClient.invalidateQueries({ queryKey: ['meeting-participants', meetingId] });
+        },
+        onError: (error) => {
+          console.error('Error deleting participant:', error);
+          toast.error('حدث خطأ أثناء حذف المشارك');
         }
       });
     }
