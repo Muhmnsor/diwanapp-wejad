@@ -2,7 +2,7 @@
 import { ParticipantRole } from '@/types/meeting';
 
 export const useMeetingRoles = () => {
-  // Translates role values to Arabic display text
+  // ترجمة قيم الأدوار إلى النص العربي المعروض
   const getRoleLabel = (role: ParticipantRole): string => {
     switch (role) {
       case 'chairman':
@@ -18,12 +18,12 @@ export const useMeetingRoles = () => {
     }
   };
 
-  // Gets the available roles for dropdown selection
+  // الحصول على جميع الأدوار المتاحة لقائمة الاختيار
   const getAllRoles = (): ParticipantRole[] => {
     return ['chairman', 'secretary', 'member', 'observer'];
   };
 
-  // Provides object mapping of roles for use in components
+  // توفير تخطيط كائن للأدوار للاستخدام في المكونات
   const getRoleOptions = () => {
     return getAllRoles().map(role => ({
       value: role,

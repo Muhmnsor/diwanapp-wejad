@@ -37,8 +37,8 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
 }) => {
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [title, setTitle] = useState(''); // Added: title state
-  const [phone, setPhone] = useState(''); // Added: phone state
+  const [title, setTitle] = useState('');
+  const [phone, setPhone] = useState('');
   const [role, setRole] = useState<ParticipantRole>('member');
   const { mutate: addParticipant, isPending: internalIsPending } = useAddMeetingParticipant();
   const { availableRoles } = useParticipantRoles(meetingId);
@@ -46,14 +46,14 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
   
   const isPending = externalIsPending !== undefined ? externalIsPending : internalIsPending;
 
-  // Reset role selection if current role is not available
+  // إعادة تعيين اختيار الدور إذا كان الدور الحالي غير متاح
   useEffect(() => {
     if (open && availableRoles.length > 0 && !availableRoles.includes(role)) {
       setRole(availableRoles[0]);
     }
   }, [open, availableRoles, role]);
 
-  // Reset form when dialog opens
+  // إعادة تعيين النموذج عند فتح الحوار
   useEffect(() => {
     if (open) {
       setEmail('');
@@ -64,9 +64,9 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
     }
   }, [open]);
 
-  // Added: Phone validation function
+  // وظيفة التحقق من صحة رقم الجوال
   const validatePhone = (value: string): boolean => {
-    // Ensure phone starts with 05 and has 10 digits total
+    // تأكد من أن الهاتف يبدأ بـ 05 وله 10 أرقام في المجموع
     return /^05\d{8}$/.test(value);
   };
 
@@ -78,13 +78,13 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
       return;
     }
 
-    // Added: Phone validation
+    // التحقق من صحة رقم الجوال
     if (phone && !validatePhone(phone)) {
       toast.error('رقم الجوال يجب أن يبدأ بـ 05 ويتكون من 10 أرقام');
       return;
     }
     
-    // If an external submit handler is provided, use it
+    // إذا تم توفير معالج إرسال خارجي، استخدمه
     if (onSubmit) {
       onSubmit({
         user_email: email,
@@ -97,11 +97,11 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
     }
     
     try {
-      // Get the current user to set as the creator
+      // الحصول على المستخدم الحالي لتعيينه كمنشئ
       const { data: userData } = await supabase.auth.getUser();
       const creatorId = userData?.user?.id;
       
-      // Add the participant using the hook
+      // إضافة المشارك باستخدام الهوك
       addParticipant({
         meetingId,
         participant: {
@@ -109,17 +109,17 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
           user_display_name: displayName,
           role: role,
           attendance_status: 'pending' as AttendanceStatus,
-          title, // Added: title field
-          phone, // Added: phone field
-          // If this participant is a registered user with this email, we should ideally
-          // look up their ID. For now, we use a placeholder UUID that will be generated in the hook.
+          title,
+          phone,
+          // إذا كان هذا المشارك مستخدم مسجل بهذا البريد الإلكتروني، فيجب علينا مثاليًا
+          // البحث عن معرفه. في الوقت الحالي، نستخدم معرف UUID سيتم إنشاؤه في الهوك.
         }
       }, {
         onSuccess: () => {
           if (onSuccess) onSuccess();
           onOpenChange(false);
           
-          // Reset form
+          // إعادة تعيين النموذج
           setEmail('');
           setDisplayName('');
           setTitle('');
@@ -171,7 +171,6 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
             />
           </div>
           
-          {/* Added: Title field */}
           <div className="space-y-2">
             <Label htmlFor="title">الصفة</Label>
             <Input
@@ -182,14 +181,13 @@ export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
             />
           </div>
           
-          {/* Added: Phone field */}
           <div className="space-y-2">
             <Label htmlFor="phone">رقم الجوال</Label>
             <Input
               id="phone"
               value={phone}
               onChange={(e) => {
-                // Ensure only numbers are entered and starts with 05
+                // التأكد من إدخال الأرقام فقط وتبدأ بـ 05
                 const value = e.target.value;
                 if (/^\d*$/.test(value) && value.length <= 10) {
                   setPhone(value);

@@ -15,8 +15,8 @@ interface ParticipantDialogBridgeProps {
 }
 
 /**
- * A bridge component that provides a button to open the AddParticipantDialog
- * This component is designed to work with the MeetingParticipantsTab without modifying it
+ * مكون جسر يوفر زرًا لفتح حوار AddParticipantDialog
+ * تم تصميم هذا المكون للعمل مع MeetingParticipantsTab دون تعديله
  */
 export const ParticipantDialogBridge: React.FC<ParticipantDialogBridgeProps> = ({
   meetingId,

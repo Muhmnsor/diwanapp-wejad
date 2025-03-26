@@ -13,7 +13,7 @@ export const useParticipantRoles = (meetingId: string) => {
       if (!meetingId) return;
       
       try {
-        // Get all assigned roles for this meeting
+        // الحصول على جميع الأدوار المعينة لهذا الاجتماع
         const { data: participants, error } = await supabase
           .from('meeting_participants')
           .select('role')
@@ -21,15 +21,15 @@ export const useParticipantRoles = (meetingId: string) => {
           
         if (error) throw error;
         
-        // Get the complete list of possible roles
+        // الحصول على القائمة الكاملة للأدوار الممكنة
         const allRoles = getAllRoles();
         
-        // Check which roles are already assigned (we only allow one chairman and one secretary)
+        // التحقق من الأدوار التي تم تعيينها بالفعل (نسمح فقط برئيس اجتماع واحد ومقرر واحد)
         const assignedRoles = participants?.map(p => p.role) || [];
         const hasChairman = assignedRoles.includes('chairman');
         const hasSecretary = assignedRoles.includes('secretary');
         
-        // Filter available roles based on what's already assigned
+        // تصفية الأدوار المتاحة بناءً على ما تم تعيينه بالفعل
         const filtered = allRoles.filter(role => {
           if (role === 'chairman' && hasChairman) return false;
           if (role === 'secretary' && hasSecretary) return false;
@@ -39,7 +39,7 @@ export const useParticipantRoles = (meetingId: string) => {
         setAvailableRoles(filtered);
       } catch (error) {
         console.error('Error fetching available roles:', error);
-        // Fallback to all roles if there's an error
+        // الرجوع إلى جميع الأدوار في حالة وجود خطأ
         setAvailableRoles(getAllRoles());
       }
     };

@@ -30,7 +30,7 @@ export const useParticipantDialog = ({ meetingId, onSuccess }: UseParticipantDia
       return;
     }
 
-    // Validate phone if provided
+    // التحقق من صحة رقم الجوال إذا تم إدخاله
     if (participantData.phone && !/^05\d{8}$/.test(participantData.phone)) {
       toast.error('رقم الجوال يجب أن يبدأ بـ 05 ويتكون من 10 أرقام');
       return;
