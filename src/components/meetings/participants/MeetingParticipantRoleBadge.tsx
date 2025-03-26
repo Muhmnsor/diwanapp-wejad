@@ -12,7 +12,7 @@ export const MeetingParticipantRoleBadge: React.FC<MeetingParticipantRoleBadgePr
     case 'chairman':
       return (
         <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-200">
-          رئيس الاجتماع
+          رئيس
         </Badge>
       );
     case 'secretary':

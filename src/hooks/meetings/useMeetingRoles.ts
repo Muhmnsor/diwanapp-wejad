@@ -6,7 +6,7 @@ export const useMeetingRoles = () => {
   const getRoleLabel = (role: ParticipantRole): string => {
     switch (role) {
       case 'chairman':
-        return 'رئيس الاجتماع';
+        return 'رئيس';
       case 'secretary':
         return 'مقرر';
       case 'member':

@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { UserPlus } from 'lucide-react';
-import { AddParticipantDialog } from './AddParticipantDialog';
+import { AddParticipantSheet } from './AddParticipantSheet';
 import { useParticipantDialog } from '@/hooks/meetings/useParticipantDialog';
 
 interface ParticipantDialogBridgeProps {
@@ -14,10 +14,6 @@ interface ParticipantDialogBridgeProps {
   children?: React.ReactNode;
 }
 
-/**
- * مكون جسر يوفر زرًا لفتح حوار AddParticipantDialog
- * تم تصميم هذا المكون للعمل مع MeetingParticipantsTab دون تعديله
- */
 export const ParticipantDialogBridge: React.FC<ParticipantDialogBridgeProps> = ({
   meetingId,
   onSuccess,
@@ -32,9 +28,9 @@ export const ParticipantDialogBridge: React.FC<ParticipantDialogBridgeProps> = (
     openDialog,
     closeDialog,
     handleAddParticipant
-  } = useParticipantDialog({ 
-    meetingId, 
-    onSuccess 
+  } = useParticipantDialog({
+    meetingId,
+    onSuccess
   });
 
   return (
@@ -47,17 +43,15 @@ export const ParticipantDialogBridge: React.FC<ParticipantDialogBridgeProps> = (
       >
         {children || (
           <>
-            <UserPlus className="h-4 w-4 mr-1" />
+            <UserPlus className="h-4 w-4 ml-2" />
             إضافة مشارك
           </>
         )}
       </Button>
       
-      <AddParticipantDialog
+      <AddParticipantSheet
         open={isOpen}
         onOpenChange={closeDialog}
-        meetingId={meetingId}
-        onSuccess={onSuccess}
         onSubmit={handleAddParticipant}
         isPending={isPending}
       />
