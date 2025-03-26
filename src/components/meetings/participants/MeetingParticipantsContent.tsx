@@ -84,25 +84,27 @@ export const MeetingParticipantsContent: React.FC<MeetingParticipantsContentProp
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>الاسم</TableHead>
-              <TableHead>البريد الإلكتروني</TableHead>
-              <TableHead>الدور</TableHead>
-              <TableHead>الصفة</TableHead>
-              <TableHead>الحضور</TableHead>
-              <TableHead>إجراءات</TableHead>
+              <TableHead className="text-center">الاسم</TableHead>
+              <TableHead className="text-center">البريد الإلكتروني</TableHead>
+              <TableHead className="text-center">رقم الجوال</TableHead>
+              <TableHead className="text-center">الدور</TableHead>
+              <TableHead className="text-center">الصفة</TableHead>
+              <TableHead className="text-center">الحضور</TableHead>
+              <TableHead className="text-center">إجراءات</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {participants.map((participant) => (
               <TableRow key={participant.id}>
-                <TableCell>{participant.user_display_name}</TableCell>
-                <TableCell>{participant.user_email}</TableCell>
-                <TableCell>
+                <TableCell className="text-center">{participant.user_display_name}</TableCell>
+                <TableCell className="text-center">{participant.user_email}</TableCell>
+                <TableCell className="text-center">{participant.phone || '-'}</TableCell>
+                <TableCell className="text-center">
                   <Select 
                     value={participant.role} 
                     onValueChange={(value) => handleRoleChange(participant.id, value)}
                   >
-                    <SelectTrigger className="w-[150px]">
+                    <SelectTrigger className="w-[150px] mx-auto">
                       <SelectValue>
                         <MeetingParticipantRoleBadge role={participant.role as ParticipantRole} />
                       </SelectValue>
@@ -116,9 +118,9 @@ export const MeetingParticipantsContent: React.FC<MeetingParticipantsContentProp
                     </SelectContent>
                   </Select>
                 </TableCell>
-                <TableCell>{participant.title || '-'}</TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
+                <TableCell className="text-center">{participant.title || '-'}</TableCell>
+                <TableCell className="text-center">
+                  <div className="flex gap-2 justify-center">
                     <button
                       onClick={() => updateAttendance({ 
                         participantId: participant.id,
@@ -139,7 +141,7 @@ export const MeetingParticipantsContent: React.FC<MeetingParticipantsContentProp
                     </button>
                   </div>
                 </TableCell>
-                <TableCell>
+                <TableCell className="text-center">
                   <Button
                     variant="ghost"
                     size="sm"
