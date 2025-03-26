@@ -2,15 +2,16 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useMeetingParticipants } from '@/hooks/meetings/useMeetingParticipants';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, UserPlus, Mail, User, CheckCircle, XCircle, AlertCircle, Trash, Phone, Briefcase } from 'lucide-react';
+import { UserPlus, Mail, Phone, Briefcase, Trash, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { ParticipantDialogBridge } from '../participants/ParticipantDialogBridge';
-import { ParticipantRole } from '@/types/meeting';
+import { ParticipantRole, AttendanceStatus } from '@/types/meeting';
 import { MeetingParticipantRoleBadge } from '../participants/MeetingParticipantRoleBadge';
 import { useDeleteMeetingParticipant } from '@/hooks/meetings/useDeleteMeetingParticipant';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
+import { useUpdateParticipantAttendance } from '@/hooks/meetings/useUpdateParticipantAttendance';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface MeetingParticipantsProps {
   meetingId: string;
@@ -23,6 +24,7 @@ export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetin
   const [selectedParticipantName, setSelectedParticipantName] = useState<string>('');
   
   const { mutate: deleteParticipant, isPending: isDeleting } = useDeleteMeetingParticipant();
+  const { mutate: updateAttendance, isPending: isUpdatingAttendance } = useUpdateParticipantAttendance();
 
   const handleAddParticipantSuccess = () => {
     refetch();
@@ -45,33 +47,64 @@ export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetin
     }
   };
 
+  const handleAttendanceUpdate = (participantId: string, status: AttendanceStatus) => {
+    updateAttendance({ participantId, attendanceStatus: status });
+  };
+
   const renderAttendanceStatus = (status: string) => {
     switch (status) {
       case 'confirmed':
         return (
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
-            <CheckCircle className="w-3 h-3 mr-1" /> مؤكد
-          </Badge>
+          <span className="inline-flex items-center gap-1 text-sm font-medium text-blue-600">
+            <AlertCircle className="w-3 h-3" /> مؤكد
+          </span>
         );
       case 'attended':
         return (
-          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">
-            <CheckCircle className="w-3 h-3 mr-1" /> حضر
-          </Badge>
+          <span className="inline-flex items-center gap-1 text-sm font-medium text-green-600">
+            <CheckCircle className="w-3 h-3" /> حضر
+          </span>
         );
       case 'absent':
         return (
-          <Badge className="bg-red-100 text-red-800 hover:bg-red-200">
-            <XCircle className="w-3 h-3 mr-1" /> غائب
-          </Badge>
+          <span className="inline-flex items-center gap-1 text-sm font-medium text-red-600">
+            <XCircle className="w-3 h-3" /> غائب
+          </span>
         );
       default:
         return (
-          <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200">
-            <AlertCircle className="w-3 h-3 mr-1" /> معلق
-          </Badge>
+          <span className="inline-flex items-center gap-1 text-sm font-medium text-gray-600">
+            <AlertCircle className="w-3 h-3" /> معلق
+          </span>
         );
     }
+  };
+
+  const renderAttendanceActions = (participant: any) => {
+    return (
+      <div className="flex space-x-2 space-x-reverse">
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-green-600 hover:bg-green-50 hover:text-green-700 border-green-200"
+          onClick={() => handleAttendanceUpdate(participant.id, 'attended')}
+          disabled={isUpdatingAttendance}
+        >
+          <CheckCircle className="h-4 w-4 mr-1" />
+          حضر
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
+          onClick={() => handleAttendanceUpdate(participant.id, 'absent')}
+          disabled={isUpdatingAttendance}
+        >
+          <XCircle className="h-4 w-4 mr-1" />
+          غائب
+        </Button>
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -122,7 +155,7 @@ export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetin
         <CardContent>
           {!participants || participants.length === 0 ? (
             <div className="text-center py-8">
-              <User className="h-12 w-12 mx-auto text-gray-400 mb-3" />
+              <UserPlus className="h-12 w-12 mx-auto text-gray-400 mb-3" />
               <p className="text-gray-500">لا يوجد مشاركون في هذا الاجتماع</p>
               <ParticipantDialogBridge
                 meetingId={meetingId}
@@ -130,53 +163,77 @@ export const MeetingParticipants: React.FC<MeetingParticipantsProps> = ({ meetin
                 buttonVariant="outline"
                 className="mt-4"
               >
-                <Plus className="h-4 w-4 ml-2" />
+                <UserPlus className="h-4 w-4 ml-2" />
                 إضافة مشارك
               </ParticipantDialogBridge>
             </div>
           ) : (
-            <div className="space-y-4">
-              {participants.map((participant) => (
-                <div key={participant.id} className="border rounded-md p-3 bg-white">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <h4 className="font-medium text-gray-900">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>المشارك</TableHead>
+                    <TableHead>معلومات التواصل</TableHead>
+                    <TableHead>المنصب</TableHead>
+                    <TableHead>الدور</TableHead>
+                    <TableHead>حالة الحضور</TableHead>
+                    <TableHead>التحضير</TableHead>
+                    <TableHead>إجراءات</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {participants.map((participant) => (
+                    <TableRow key={participant.id}>
+                      <TableCell className="font-medium">
                         {participant.user_display_name || 'مشارك'}
-                      </h4>
-                      <div className="flex items-center text-gray-500">
-                        <Mail className="h-4 w-4 mr-1" />
-                        {participant.user_email}
-                      </div>
-                      
-                      {participant.title && (
-                        <div className="flex items-center text-gray-500">
-                          <Briefcase className="h-4 w-4 mr-1" />
-                          {participant.title}
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center text-gray-500 text-sm">
+                            <Mail className="h-3.5 w-3.5 mr-1 text-gray-400" />
+                            {participant.user_email}
+                          </div>
+                          {participant.phone && (
+                            <div className="flex items-center text-gray-500 text-sm">
+                              <Phone className="h-3.5 w-3.5 mr-1 text-gray-400" />
+                              {participant.phone}
+                            </div>
+                          )}
                         </div>
-                      )}
-                      
-                      {participant.phone && (
-                        <div className="flex items-center text-gray-500">
-                          <Phone className="h-4 w-4 mr-1" />
-                          {participant.phone}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex space-x-2 space-x-reverse">
-                      <MeetingParticipantRoleBadge role={participant.role as ParticipantRole} />
-                      {renderAttendanceStatus(participant.attendance_status)}
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="text-red-500 hover:bg-red-50 hover:text-red-600"
-                        onClick={() => handleDeleteClick(participant.id, participant.user_display_name || 'مشارك')}
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                      </TableCell>
+                      <TableCell>
+                        {participant.title ? (
+                          <div className="flex items-center text-gray-700">
+                            <Briefcase className="h-3.5 w-3.5 mr-1 text-gray-400" />
+                            {participant.title}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <MeetingParticipantRoleBadge role={participant.role as ParticipantRole} />
+                      </TableCell>
+                      <TableCell>
+                        {renderAttendanceStatus(participant.attendance_status)}
+                      </TableCell>
+                      <TableCell>
+                        {renderAttendanceActions(participant)}
+                      </TableCell>
+                      <TableCell>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                          onClick={() => handleDeleteClick(participant.id, participant.user_display_name || 'مشارك')}
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>
