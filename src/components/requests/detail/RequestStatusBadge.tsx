@@ -1,8 +1,7 @@
 
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-
-export type RequestStatus = 'pending' | 'approved' | 'rejected' | 'in_progress' | 'completed' | 'cancelled';
+import { RequestStatus } from '@/types/meeting';
 
 interface RequestStatusBadgeProps {
   status: RequestStatus;

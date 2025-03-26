@@ -1,3 +1,4 @@
+
 export interface Meeting {
   id: string;
   title: string;
@@ -36,7 +37,8 @@ export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 
 export type DecisionStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 
-export type RequestStatus = 'pending' | 'approved' | 'rejected' | 'in_progress' | 'completed' | 'cancelled';
+// Update the RequestStatus type to include all possible statuses that might be used in the application
+export type RequestStatus = 'pending' | 'in_progress' | 'approved' | 'rejected' | 'completed' | 'cancelled';
 
 export interface MeetingTask {
   id: string;
