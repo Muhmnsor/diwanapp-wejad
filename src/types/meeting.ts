@@ -37,6 +37,8 @@ export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 
 export type DecisionStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 
+export type RequestStatus = 'pending' | 'approved' | 'rejected' | 'in_progress' | 'completed' | 'cancelled';
+
 export interface MeetingTask {
   id: string;
   meeting_id: string;

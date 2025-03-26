@@ -11,8 +11,8 @@ interface ParticipantInput {
   user_display_name: string;
   role: ParticipantRole;
   attendance_status: AttendanceStatus;
-  title?: string; // Added: participant's organizational title
-  phone?: string; // Added: participant's phone number
+  title?: string; // إضافة: منصب المشارك التنظيمي
+  phone?: string; // إضافة: رقم هاتف المشارك
 }
 
 interface AddParticipantParams {
@@ -25,8 +25,10 @@ export const useAddMeetingParticipant = () => {
   
   return useMutation({
     mutationFn: async ({ meetingId, participant }: AddParticipantParams) => {
-      // Generate a UUID for the user_id if not provided
+      // توليد معرف UUID للمستخدم إذا لم يتم توفيره
       const user_id = participant.user_id || uuidv4();
+      
+      console.log('Adding participant with data:', { meetingId, ...participant });
       
       const { data, error } = await supabase
         .from('meeting_participants')
@@ -38,7 +40,10 @@ export const useAddMeetingParticipant = () => {
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
       
       return data;
     },

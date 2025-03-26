@@ -47,6 +47,19 @@ export const AddParticipantSheet: React.FC<AddParticipantSheetProps> = ({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  // إعادة تعيين النموذج عندما يتم إغلاق النافذة
+  React.useEffect(() => {
+    if (!open) {
+      setFormData({
+        user_email: '',
+        user_display_name: '',
+        role: '',
+        title: '',
+        phone: ''
+      });
+    }
+  }, [open]);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto" dir="rtl">

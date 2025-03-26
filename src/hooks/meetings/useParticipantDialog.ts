@@ -36,6 +36,8 @@ export const useParticipantDialog = ({ meetingId, onSuccess }: UseParticipantDia
       return;
     }
     
+    console.log('Submitting participant data:', participantData);
+    
     addParticipant({
       meetingId,
       participant: {

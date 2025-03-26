@@ -3,7 +3,7 @@
 export interface User {
   id: string;
   email: string;
-  display_name: string; // Ensure display_name is required to fix the type error
+  display_name: string; // جعلها إلزامية
   role?: string;
   isAdmin?: boolean;
   created_at?: string;
