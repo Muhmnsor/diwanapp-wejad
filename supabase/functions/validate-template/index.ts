@@ -1,10 +1,6 @@
 
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 import { corsHeaders } from '../_shared/cors.ts'
-
-interface TemplateValidationRequest {
-  template: string;
-  variables: Record<string, string>;
-}
 
 Deno.serve(async (req) => {
   // Handle CORS
@@ -13,85 +9,54 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Parse the request body
-    const { template, variables } = await req.json() as TemplateValidationRequest
+    const { template, variables } = await req.json()
 
-    // Validate that we have a template
     if (!template) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'No template content provided'
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
-      )
+      throw new Error('Template is required')
     }
 
-    console.log('Validating template:', { 
-      templateLength: template.length,
-      variablesCount: Object.keys(variables || {}).length
-    })
+    console.log('Validating template:', template)
+    console.log('With variables:', variables)
 
-    // Find all variables in the template (pattern: {{variable_name}})
-    const variableRegex = /{{([^{}]+)}}/g
-    const matches = Array.from(template.matchAll(variableRegex))
-    const templateVariables = matches.map(match => match[1])
+    // Regular expression to find variable placeholders like {{variable_name}}
+    const variableRegex = /\{\{([^}]+)\}\}/g
+    const requiredVariables = []
+    let match
 
-    // Identify missing variables (variables in template but not in provided variables)
-    const missingVariables = templateVariables.filter(
-      variable => !variables || !Object.prototype.hasOwnProperty.call(variables, variable)
+    // Find all required variables in the template
+    while ((match = variableRegex.exec(template)) !== null) {
+      requiredVariables.push(match[1])
+    }
+
+    console.log('Required variables:', requiredVariables)
+
+    // Check if all required variables are provided
+    const missingVariables = requiredVariables.filter(
+      variable => !variables || variables[variable] === undefined
     )
 
-    // Replace variables in template
-    let processedTemplate = template
-    if (variables) {
-      Object.entries(variables).forEach(([key, value]) => {
-        processedTemplate = processedTemplate.replace(
-          new RegExp(`{{${key}}}`, 'g'), 
-          value || '[placeholder]'
-        )
-      })
-    }
-
-    // Check if there are still any unreplaced variables
-    const unreplacedVariables = Array.from(processedTemplate.matchAll(variableRegex))
-    
-    // Build the response
-    const response = {
-      isValid: missingVariables.length === 0 && unreplacedVariables.length === 0,
-      templateVariables,
-      missingVariables,
-      unreplacedVariables: unreplacedVariables.map(match => match[1]),
-      processedTemplate
-    }
-
-    console.log('Template validation result:', { 
-      isValid: response.isValid,
-      templateVariablesCount: templateVariables.length,
-      missingVariablesCount: missingVariables.length
-    })
+    const isValid = missingVariables.length === 0
 
     return new Response(
-      JSON.stringify(response),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
-      }
+      JSON.stringify({
+        isValid,
+        requiredVariables,
+        missingVariables,
+        message: isValid ? 'Template is valid' : 'Missing required variables'
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
     console.error('Error validating template:', error)
-    
+
     return new Response(
       JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : 'An unexpected error occurred'
+        error: error.message,
+        isValid: false
       }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500
+      {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     )
   }
