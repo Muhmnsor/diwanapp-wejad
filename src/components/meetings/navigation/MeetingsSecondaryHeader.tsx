@@ -34,8 +34,8 @@ export const MeetingsSecondaryHeader = ({
   
   return (
     <div className="w-full bg-white border-t py-3">
-      <div className="flex justify-center">
-        <TabsList className="flex justify-center border-b rounded-none bg-white">
+      <div className="flex justify-end">
+        <TabsList className="flex justify-end border-b rounded-none bg-white">
           <TabsTrigger 
             value="dashboard" 
             className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium"
@@ -69,7 +69,7 @@ export const MeetingsSecondaryHeader = ({
           )}
         </TabsList>
       </div>
-      <Separator className="mt-3" />
+      {/* الخط الفاصل تمت إزالته من هنا */}
     </div>
   );
 };
