@@ -15,34 +15,32 @@ interface MeetingDetailsTabsProps {
 export const MeetingDetailsTabs: React.FC<MeetingDetailsTabsProps> = ({ meeting, meetingId }) => {
   return (
     <Tabs defaultValue="overview" className="w-full" dir="rtl">
-      <div className="bg-white shadow-sm rounded-lg mb-6">
-        <TabsList className="flex justify-center rounded-lg bg-gray-50 p-1 flex-row-reverse overflow-x-auto">
-          <TabsTrigger 
-            value="overview" 
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:font-semibold rounded-md transition-all"
-          >
-            نظرة عامة
-          </TabsTrigger>
-          <TabsTrigger 
-            value="participants" 
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:font-semibold rounded-md transition-all"
-          >
-            المشاركون
-          </TabsTrigger>
-          <TabsTrigger 
-            value="minutes" 
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:font-semibold rounded-md transition-all"
-          >
-            المحضر
-          </TabsTrigger>
-          <TabsTrigger 
-            value="tasks" 
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:font-semibold rounded-md transition-all"
-          >
-            المهام
-          </TabsTrigger>
-        </TabsList>
-      </div>
+      <TabsList className="flex justify-center border-b rounded-none bg-white mb-6 flex-row-reverse">
+        <TabsTrigger 
+          value="overview" 
+          className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium"
+        >
+          نظرة عامة
+        </TabsTrigger>
+        <TabsTrigger 
+          value="participants" 
+          className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium"
+        >
+          المشاركون
+        </TabsTrigger>
+        <TabsTrigger 
+          value="minutes" 
+          className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium"
+        >
+          المحضر
+        </TabsTrigger>
+        <TabsTrigger 
+          value="tasks" 
+          className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium"
+        >
+          المهام
+        </TabsTrigger>
+      </TabsList>
       
       <TabsContent value="overview" dir="rtl">
         <MeetingOverviewTab meeting={meeting} meetingId={meetingId} />
