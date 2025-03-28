@@ -15,6 +15,7 @@ import { MeetingsSecondaryHeader } from "@/components/meetings/navigation/Meetin
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { Tabs } from "@/components/ui/tabs";
 import { MeetingStatus } from "@/types/meeting";
+
 const MeetingDetailsPage = () => {
   const {
     meetingId
@@ -35,13 +36,16 @@ const MeetingDetailsPage = () => {
     mutate: deleteMeeting,
     isPending: isDeleting
   } = useDeleteMeeting();
+  
   const handleBack = () => {
     navigate(-1);
   };
+  
   const handleEdit = () => {
     // Edit functionality will be implemented later
     console.log('Edit meeting:', meetingId);
   };
+  
   const handleDelete = () => {
     if (meetingId) {
       deleteMeeting(meetingId, {
@@ -52,6 +56,7 @@ const MeetingDetailsPage = () => {
       });
     }
   };
+
   if (isMeetingLoading) {
     return <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
@@ -74,6 +79,7 @@ const MeetingDetailsPage = () => {
         <Footer />
       </div>;
   }
+
   if (meetingError || !meeting) {
     return <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
@@ -92,6 +98,7 @@ const MeetingDetailsPage = () => {
         <Footer />
       </div>;
   }
+
   return <div className="min-h-screen flex flex-col rtl" dir="rtl">
       <AdminHeader />
       <Tabs value="">
@@ -99,27 +106,22 @@ const MeetingDetailsPage = () => {
       </Tabs>
       
       <div className="container mx-auto px-4 py-8 flex-grow" dir="rtl">
-        {/* Header with back button and title */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+        <div className="flex flex-row justify-between items-center mb-6 gap-4">
           <div className="flex items-center">
-            <Button variant="ghost" size="sm" onClick={handleBack} className="ml-4">
-              <ArrowLeft className="h-4 w-4 ml-2" />
-              عودة
-            </Button>
             <h1 className="text-2xl font-bold">{meeting.title}</h1>
           </div>
           
-          
+          <Button variant="ghost" size="sm" onClick={handleBack} className="mr-auto">
+            <ArrowLeft className="h-4 w-4 ml-2" />
+            عودة
+          </Button>
         </div>
         
-        {/* Meeting status badge */}
-        
-        
-        {/* Main content with tabs */}
         <MeetingDetailsTabs meeting={meeting} meetingId={meetingId || ''} />
       </div>
       
       <Footer />
     </div>;
 };
+
 export default MeetingDetailsPage;
