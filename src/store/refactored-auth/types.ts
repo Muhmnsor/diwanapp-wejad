@@ -4,7 +4,6 @@ export interface User {
   email: string;
   isAdmin: boolean;
   role?: string;
-  display_name?: string; // Add display_name as optional
 }
 
 export interface AuthState {

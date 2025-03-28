@@ -26,8 +26,6 @@ export interface Task {
   workspace_name?: string;
   project_id?: string;
   project_name?: string;
-  meeting_id?: string; // Added for meeting-related tasks
-  task_type?: string; // Used to identify different types of tasks (meeting_task, etc.)
   start_date?: string; // تاريخ بداية المهمة لمخطط جانت
   end_date?: string; // تاريخ نهاية المهمة لمخطط جانت
 }
@@ -53,3 +51,4 @@ export interface WorkspaceMember {
   user_email?: string;
   user_display_name?: string;
 }
+

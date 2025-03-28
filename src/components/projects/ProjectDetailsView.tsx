@@ -1,4 +1,3 @@
-
 import { Project } from "@/types/project";
 import { ProjectContent } from "./ProjectContent";
 import { ProjectImage } from "./ProjectImage";
@@ -7,7 +6,7 @@ import { ProjectAdminTabs } from "./admin/ProjectAdminTabs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventDashboard } from "@/components/admin/EventDashboard";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 interface ProjectDetailsViewProps {
   project: Project;
   isAdmin: boolean;
@@ -23,33 +22,11 @@ export const ProjectDetailsView = ({
   id
 }: ProjectDetailsViewProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState("details");
-
-  // Get the active tab from URL hash if present
-  useEffect(() => {
-    const hash = window.location.hash.replace('#', '');
-    if (hash === 'dashboard') {
-      setActiveTab('dashboard');
-    }
-  }, []);
-
   console.log('ProjectDetailsView - User is admin:', isAdmin);
-  
   const handleDelete = () => {
     setShowDeleteDialog(false);
     onDelete();
   };
-
-  const handleTabChange = (value) => {
-    setActiveTab(value);
-    // Update URL hash without full page reload
-    if (value === 'details') {
-      history.pushState(null, '', window.location.pathname);
-    } else {
-      history.pushState(null, '', `${window.location.pathname}#${value}`);
-    }
-  };
-  
   return <div className="min-h-screen pb-12 bg-gradient-to-b from-gray-50 via-gray-50/80 to-transparent">
       <ProjectImage imageUrl={project.image_url} title={project.title} />
       
@@ -57,7 +34,7 @@ export const ProjectDetailsView = ({
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
           <ProjectTitle title={project.title} isAdmin={isAdmin} onEdit={onEdit} onDelete={() => setShowDeleteDialog(true)} projectId={id} isVisible={project.is_visible} />
 
-          {isAdmin ? <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          {isAdmin ? <Tabs defaultValue="details" className="w-full">
               <TabsList dir="rtl" className="w-full justify-start border-b rounded-none bg-white px-[38px]">
                 <TabsTrigger value="details">تفاصيل المشروع</TabsTrigger>
                 <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>

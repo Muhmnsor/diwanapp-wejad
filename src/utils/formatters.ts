@@ -1,158 +1,143 @@
 
+import { format, formatDistanceToNow, differenceInDays } from "date-fns";
+import { ar } from "date-fns/locale";
+
 /**
- * Format a date string to Arabic locale
+ * Format a date string to Arabic localized format dd/MM/yyyy
+ * @param dateString The date string to format
+ * @param fallback The fallback text if date is invalid or null
+ * @returns Formatted date string
  */
-export const formatDateArabic = (dateString: string): string => {
-  if (!dateString) return '';
+export const formatDate = (dateString: string | null | undefined, fallback: string = 'غير محدد'): string => {
+  if (!dateString) return fallback;
   
   try {
     const date = new Date(dateString);
-    return date.toLocaleDateString('ar-SA', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+    if (isNaN(date.getTime())) {
+      return fallback;
+    }
+    return format(date, 'dd/MM/yyyy', { locale: ar });
   } catch (error) {
     console.error('Error formatting date:', error);
-    return dateString;
+    return fallback;
   }
 };
 
 /**
- * Format a date string to standard format
+ * Format a date relative to current time (e.g. "2 days ago", "in 3 months")
+ * If the date is null, returns the fallback text
+ * @param dateString The date string to format
+ * @param fallback The fallback text if date is invalid or null
+ * @returns Formatted relative date string
  */
-export const formatDate = (dateString: string): string => {
-  if (!dateString) return '';
+export const formatRelative = (dateString: string | null, fallback: string = 'غير محدد'): string => {
+  if (!dateString) return fallback;
   
   try {
     const date = new Date(dateString);
-    return date.toLocaleDateString('ar-SA', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  } catch (error) {
-    console.error('Error formatting date:', error);
-    return dateString;
-  }
-};
-
-/**
- * Get remaining days from now until a future date
- */
-export const getRemainingDays = (dateString: string): number => {
-  if (!dateString) return 0;
-  
-  try {
-    const futureDate = new Date(dateString);
-    const today = new Date();
-    
-    // Clear time part for accurate day calculation
-    futureDate.setHours(0, 0, 0, 0);
-    today.setHours(0, 0, 0, 0);
-    
-    const diffTime = futureDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    return diffDays > 0 ? diffDays : 0;
-  } catch (error) {
-    console.error('Error calculating remaining days:', error);
-    return 0;
-  }
-};
-
-/**
- * Get time elapsed from a past date until now
- */
-export const getTimeFromNow = (dateString: string): string => {
-  if (!dateString) return '';
-  
-  try {
-    const pastDate = new Date(dateString);
-    const now = new Date();
-    
-    const diffTime = now.getTime() - pastDate.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) {
-      const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
-      if (diffHours === 0) {
-        const diffMinutes = Math.floor(diffTime / (1000 * 60));
-        return diffMinutes <= 1 ? 'منذ دقيقة' : `منذ ${diffMinutes} دقائق`;
-      }
-      return diffHours === 1 ? 'منذ ساعة' : `منذ ${diffHours} ساعات`;
+    if (isNaN(date.getTime())) {
+      return fallback;
     }
-    
-    if (diffDays === 1) return 'منذ يوم';
-    if (diffDays < 7) return `منذ ${diffDays} أيام`;
-    if (diffDays < 30) {
-      const diffWeeks = Math.floor(diffDays / 7);
-      return diffWeeks === 1 ? 'منذ أسبوع' : `منذ ${diffWeeks} أسابيع`;
-    }
-    
-    const diffMonths = Math.floor(diffDays / 30);
-    if (diffMonths < 12) {
-      return diffMonths === 1 ? 'منذ شهر' : `منذ ${diffMonths} أشهر`;
-    }
-    
-    const diffYears = Math.floor(diffDays / 365);
-    return diffYears === 1 ? 'منذ سنة' : `منذ ${diffYears} سنوات`;
-  } catch (error) {
-    console.error('Error calculating time from now:', error);
-    return '';
-  }
-};
-
-/**
- * Format time from 24-hour format to 12-hour format with AM/PM
- */
-export const formatTime12Hour = (time24: string): string => {
-  if (!time24) return '';
-  
-  try {
-    // Parse the time (assuming format is "HH:MM")
-    const [hours, minutes] = time24.split(':').map(Number);
-    
-    // Determine AM/PM
-    const period = hours >= 12 ? 'م' : 'ص';
-    
-    // Convert hours to 12-hour format
-    const hours12 = hours % 12 || 12;
-    
-    // Format the result
-    return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
-  } catch (error) {
-    console.error('Error formatting time:', error);
-    return time24;
-  }
-};
-
-/**
- * Format date relative to now (today, yesterday, etc)
- */
-export const formatRelative = (dateString: string): string => {
-  if (!dateString) return '';
-  
-  try {
-    const inputDate = new Date(dateString);
-    const today = new Date();
-    
-    // Set to start of day for comparison
-    today.setHours(0, 0, 0, 0);
-    
-    const inputDay = new Date(inputDate);
-    inputDay.setHours(0, 0, 0, 0);
-    
-    const diffTime = today.getTime() - inputDay.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return 'اليوم';
-    if (diffDays === 1) return 'الأمس';
-    if (diffDays < 7) return `منذ ${diffDays} أيام`;
-    
-    return formatDate(dateString);
+    return formatDistanceToNow(date, { addSuffix: true, locale: ar });
   } catch (error) {
     console.error('Error formatting relative date:', error);
-    return dateString;
+    return fallback;
+  }
+};
+
+/**
+ * Get relative time from now for a date
+ * @param dateString The date string to calculate relative time for
+ * @returns Formatted relative time string or null if date is invalid
+ */
+export const getTimeFromNow = (dateString: string | null): string | null => {
+  if (!dateString) return null;
+  
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return null;
+    }
+    return formatDistanceToNow(date, { addSuffix: true, locale: ar });
+  } catch (error) {
+    console.error('Error calculating time from now:', error);
+    return null;
+  }
+};
+
+/**
+ * Get remaining days until a date
+ * @param dateString The date string to calculate remaining days until
+ * @returns Number of remaining days or null if date is invalid
+ */
+export const getRemainingDays = (dateString: string | null): number | null => {
+  if (!dateString) return null;
+  
+  try {
+    const dueDate = new Date(dateString);
+    if (isNaN(dueDate.getTime())) {
+      return null;
+    }
+    const today = new Date();
+    const days = differenceInDays(dueDate, today);
+    return days <= 0 ? 0 : days;
+  } catch (error) {
+    console.error('Error calculating remaining days:', error);
+    return null;
+  }
+};
+
+/**
+ * Format time as 12-hour format with Arabic AM/PM indicators
+ * @param time Time string in HH:MM format
+ * @returns Formatted time string in 12-hour format
+ */
+export const formatTime12Hour = (time: string): string => {
+  try {
+    if (!time || !time.includes(':')) return time;
+    
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'م' : 'ص';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+  } catch (error) {
+    console.error('Error formatting time:', error);
+    return time;
+  }
+};
+
+/**
+ * Format date with Arabic day name
+ * @param dateStr Date string in YYYY-MM-DD format
+ * @returns Formatted date with Arabic day name
+ */
+export const formatDateWithDay = (dateStr: string): string => {
+  try {
+    const days = [
+      'الأحد',
+      'الإثنين',
+      'الثلاثاء',
+      'الأربعاء',
+      'الخميس',
+      'الجمعة',
+      'السبت'
+    ];
+
+    // Parse the date string
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      return dateStr;
+    }
+    
+    // Get localized date components
+    const dayName = days[date.getDay()];
+    const formattedDate = format(date, 'dd/MM/yyyy', { locale: ar });
+    
+    // Format: "dayName، dd/MM/yyyy"
+    return `${dayName}، ${formattedDate}`;
+  } catch (error) {
+    console.error('Error formatting date with day:', error);
+    return dateStr;
   }
 };

@@ -1,27 +1,27 @@
 
-import React from 'react';
-import { Badge } from '@/components/ui/badge';
-import { RequestStatus } from '@/types/meeting';
+import { Badge } from "@/components/ui/badge";
 
 interface RequestStatusBadgeProps {
-  status: RequestStatus;
+  status: string;
 }
 
-export const RequestStatusBadge: React.FC<RequestStatusBadgeProps> = ({ status }) => {
+export const RequestStatusBadge = ({ status }: RequestStatusBadgeProps) => {
   switch (status) {
+    case 'draft':
+      return <Badge variant="outline">مسودة</Badge>;
     case 'pending':
       return <Badge variant="secondary">قيد الانتظار</Badge>;
     case 'in_progress':
-      return <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200">قيد التنفيذ</Badge>;
+      return <Badge variant="default">قيد المعالجة</Badge>;
     case 'approved':
       return <Badge variant="success">تمت الموافقة</Badge>;
-    case 'completed':
-      return <Badge variant="success">مكتمل</Badge>;
+    case 'completed': // Handle legacy 'completed' status as 'approved'
+      return <Badge variant="success">تمت الموافقة</Badge>;
     case 'rejected':
       return <Badge variant="destructive">مرفوض</Badge>;
     case 'cancelled':
-      return <Badge variant="destructive" className="bg-gray-100 text-gray-800 hover:bg-gray-200">ملغي</Badge>;
+      return <Badge variant="outline" className="bg-gray-200">ملغي</Badge>;
     default:
-      return <Badge>غير معروف</Badge>;
+      return <Badge variant="outline">{status}</Badge>;
   }
 };

@@ -4,7 +4,6 @@ export interface User {
   email: string;
   isAdmin: boolean;
   role?: string; // Add the role property as optional
-  display_name?: string; // Add display_name as optional since it might not be available immediately in auth context
 }
 
 export interface AuthState {

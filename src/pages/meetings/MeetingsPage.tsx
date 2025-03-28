@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
 import { MeetingsHeader } from "@/components/meetings/navigation/MeetingsHeader";
@@ -15,9 +15,6 @@ const MeetingsPage = () => {
   
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    navigate(tab === "dashboard" ? "/admin/meetings" : 
-             tab === "categories" ? "/admin/meetings/categories" : 
-             tab === "all-meetings" ? "/admin/meetings/all" : "/admin/meetings");
   };
   
   return (

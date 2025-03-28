@@ -3,7 +3,6 @@ import { Activity, AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format, isValid, parseISO } from "date-fns";
 import { ar } from "date-fns/locale";
-import { TaskStatusBadge, TaskStatus } from "./taskStatusBadge";
 
 export const getStatusIcon = (status: string) => {
   switch (status) {
@@ -30,17 +29,44 @@ export const getStatusText = (status: string) => {
       return "متأخرة";
     case "upcoming":
       return "قادمة";
-    case "in_progress":
-      return "جارية";
-    case "cancelled":
-      return "ملغية";
     default:
       return "غير محددة";
   }
 };
 
 export const getStatusBadge = (status: string) => {
-  return <TaskStatusBadge status={status as TaskStatus} />;
+  switch (status) {
+    case "completed":
+      return (
+        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+          مكتملة
+        </Badge>
+      );
+    case "pending":
+      return (
+        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+          قيد التنفيذ
+        </Badge>
+      );
+    case "delayed":
+      return (
+        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+          متأخرة
+        </Badge>
+      );
+    case "upcoming":
+      return (
+        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+          قادمة
+        </Badge>
+      );
+    default:
+      return (
+        <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+          غير محددة
+        </Badge>
+      );
+  }
 };
 
 export const getPriorityBadge = (priority: string) => {
@@ -56,7 +82,7 @@ export const getPriorityBadge = (priority: string) => {
   }
 };
 
-export const formatDate = (dateString: string | null | undefined) => {
+export const formatDueDate = (dateString: string | null) => {
   if (!dateString) return "لا يوجد موعد";
 
   try {

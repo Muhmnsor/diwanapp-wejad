@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "@/store/refactored-auth";
 import { MainRoutes } from "./routes/MainRoutes";
@@ -10,7 +9,6 @@ import { DeveloperToolbar } from "./components/developer/DeveloperToolbar";
 import { useEffect, useState } from "react";
 import { isDeveloper } from "./utils/developer/roleManagement";
 import UpdateProfile from "./pages/UpdateProfile";
-import { EventNotFound } from "./components/events/EventNotFound";
 
 const AppRoutes = () => {
   const { isAuthenticated, user } = useAuthStore();
@@ -53,8 +51,7 @@ const AppRoutes = () => {
         {DeveloperRoutes}
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="/update-profile" element={<UpdateProfile />} />
-        {/* Add a catchall route that will display the EventNotFound component */}
-        <Route path="*" element={<EventNotFound />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       
       {showDevTools && <DeveloperToolbar />}

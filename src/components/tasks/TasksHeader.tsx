@@ -20,30 +20,27 @@ export const TasksHeader = () => {
 
   // Detect the active tab from URL hash
   useEffect(() => {
-    const updateFromHash = () => {
-      const hash = window.location.hash.replace('#', '');
-      if (hash === 'workspaces') {
-        setActiveTab('workspaces');
-      } else if (hash === 'yearly-plan') {
-        setActiveTab('yearly-plan');
-      } else if (hash === 'reports') {
-        setActiveTab('reports');
-      } else if (hash === 'recurring') {
-        setActiveTab('recurring');
-      } else {
-        setActiveTab('overview');
-      }
+    const hash = window.location.hash.replace('#', '');
+    if (hash === 'workspaces') {
+      setActiveTab('workspaces');
+    } else if (hash === 'yearly-plan') {
+      setActiveTab('yearly-plan');
+    } else if (hash === 'reports') {
+      setActiveTab('reports');
+    } else if (hash === 'recurring') {
+      setActiveTab('recurring');
+    } else {
+      setActiveTab('overview');
+    }
+
+    const handleHashChange = () => {
+      const newHash = window.location.hash.replace('#', '');
+      setActiveTab(newHash || 'overview');
     };
-    
-    // Update initially
-    updateFromHash();
-    
-    // Add event listener for hash changes
-    window.addEventListener('hashchange', updateFromHash);
-    
-    // Cleanup
+
+    window.addEventListener('hashchange', handleHashChange);
     return () => {
-      window.removeEventListener('hashchange', updateFromHash);
+      window.removeEventListener('hashchange', handleHashChange);
     };
   }, []);
 
