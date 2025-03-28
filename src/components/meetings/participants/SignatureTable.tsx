@@ -66,9 +66,12 @@ export const SignatureTable: React.FC<SignatureTableProps> = ({ meetingId }) => 
                 <div>
                   <span className="font-medium">{participant.user_display_name}</span>
                   <div className="text-sm text-gray-500">
-                    {participant.title ? 
-                      participant.title : 
-                      participant.role === 'chairman' ? '(الرئيس)' : ''}
+                    {participant.title && (
+                      <span>{participant.title}</span>
+                    )}
+                    {!participant.title && participant.role === 'chairman' && (
+                      <span>(الرئيس)</span>
+                    )}
                   </div>
                 </div>
               </TableCell>
