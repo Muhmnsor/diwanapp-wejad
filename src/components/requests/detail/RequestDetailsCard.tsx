@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
@@ -8,12 +9,14 @@ import { CalendarClock, FileText, Clock, PaperclipIcon, MessageSquareText, ListC
 import { ApprovalHistoryList } from "./ApprovalHistoryList";
 import { AttachmentsList } from "./AttachmentsList";
 import { RequestFormData } from "./RequestFormData";
+
 interface RequestDetailsCardProps {
   request: any;
   requestType: any;
   approvals: any[];
   attachments: any[];
 }
+
 export const RequestDetailsCard = ({
   request,
   requestType,
@@ -21,7 +24,9 @@ export const RequestDetailsCard = ({
   attachments
 }: RequestDetailsCardProps) => {
   if (!request) return null;
-  return <Card className="w-full overflow-hidden">
+
+  return (
+    <Card className="w-full overflow-hidden">
       <CardHeader className="bg-muted/20">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
           <div>
@@ -34,14 +39,16 @@ export const RequestDetailsCard = ({
           </div>
           <div className="flex items-center gap-2">
             <RequestStatusBadge status={request.status} />
-            {request.due_date && <div className="flex items-center text-sm text-muted-foreground">
+            {request.due_date && (
+              <div className="flex items-center text-sm text-muted-foreground">
                 <Clock className="h-4 w-4 mr-1" />
                 <span>
                   {format(new Date(request.due_date), 'P', {
-                locale: ar
-              })}
+                    locale: ar
+                  })}
                 </span>
-              </div>}
+              </div>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -69,8 +76,8 @@ export const RequestDetailsCard = ({
                 <span className="text-muted-foreground">تاريخ الإنشاء:</span>
                 <span className="font-medium">
                   {format(new Date(request.created_at), 'PPpp', {
-                  locale: ar
-                })}
+                    locale: ar
+                  })}
                 </span>
               </div>
               
@@ -93,5 +100,6 @@ export const RequestDetailsCard = ({
           </TabsContent>
         </Tabs>
       </CardContent>
-    </Card>;
+    </Card>
+  );
 };

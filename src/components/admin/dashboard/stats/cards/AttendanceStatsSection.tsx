@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
+import { formatDate } from "@/utils/formatters";
+import { formatTime12Hour } from "@/utils/dateTimeUtils";
 
 interface AttendanceStatsSectionProps {
   highestAttendance?: {
@@ -27,7 +29,7 @@ export const AttendanceStatsSection = ({
   highestAttendance,
   lowestAttendance
 }: AttendanceStatsSectionProps) => {
-  const formatDate = (dateString: string) => {
+  const formatEventDate = (dateString: string) => {
     try {
       return format(new Date(dateString), 'dd MMM yyyy', { locale: ar });
     } catch (error) {
@@ -49,7 +51,7 @@ export const AttendanceStatsSection = ({
             <>
               <div className="text-xl font-bold mb-1">{highestAttendance.title}</div>
               <div className="flex justify-between items-center">
-                <div className="text-sm">{formatDate(highestAttendance.date)}</div>
+                <div className="text-sm">{formatEventDate(highestAttendance.date)}</div>
                 <div className="text-sm font-semibold text-green-600">
                   {highestAttendance.attendanceRate.toFixed(0)}%
                 </div>
@@ -78,7 +80,7 @@ export const AttendanceStatsSection = ({
             <>
               <div className="text-xl font-bold mb-1">{lowestAttendance.title}</div>
               <div className="flex justify-between items-center">
-                <div className="text-sm">{formatDate(lowestAttendance.date)}</div>
+                <div className="text-sm">{formatEventDate(lowestAttendance.date)}</div>
                 <div className="text-sm font-semibold text-red-600">
                   {lowestAttendance.attendanceRate.toFixed(0)}%
                 </div>

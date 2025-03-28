@@ -1,3 +1,4 @@
+
 import { EventType } from "@/types/event";
 import { EventInfo } from "../EventInfo";
 import { EventDescription } from "../EventDescription";

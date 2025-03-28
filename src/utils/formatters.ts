@@ -19,14 +19,14 @@ export const formatDateArabic = (dateString: string): string => {
 };
 
 /**
- * Format a date string to standard format
+ * Format a date string to standard format with Gregorian calendar
  */
 export const formatDate = (dateString: string): string => {
   if (!dateString) return '';
   
   try {
     const date = new Date(dateString);
-    return date.toLocaleDateString('ar-SA', {
+    return date.toLocaleDateString('ar', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -104,7 +104,7 @@ export const getTimeFromNow = (dateString: string): string => {
 };
 
 /**
- * Format time from 24-hour format to 12-hour format with AM/PM
+ * Format time from 24-hour format to 12-hour format with AM/PM in Arabic
  */
 export const formatTime12Hour = (time24: string): string => {
   if (!time24) return '';
