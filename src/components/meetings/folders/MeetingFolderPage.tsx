@@ -93,12 +93,12 @@ export const MeetingFolderPage = () => {
       </Tabs>
       
       <div className="container mx-auto px-4 py-6 flex-grow">
-        <div className="flex items-center mb-4">
-          <Button variant="outline" onClick={handleGoBack} className="ml-4">
-            <ArrowLeft className="h-4 w-4 ml-2" />
-            العودة
-          </Button>
+        <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold">تصنيف: {folder.name}</h1>
+          <Button variant="outline" onClick={handleGoBack} className="mr-4">
+            العودة
+            <ArrowLeft className="h-4 w-4 mr-2" />
+          </Button>
         </div>
         
         <Card className="rtl text-right">
