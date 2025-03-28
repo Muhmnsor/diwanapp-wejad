@@ -100,14 +100,14 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
   if (isLoading) {
     return (
       <Card>
-        <CardHeader className="pb-3 flex flex-row-reverse items-center justify-between">
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle>مهام الاجتماع</CardTitle>
           <Button variant="outline" size="sm" onClick={handleAddTask}>
             <PlusCircle className="h-4 w-4 ml-1" />
             إضافة مهمة
           </Button>
         </CardHeader>
-        <CardContent className="flex justify-center items-center py-10" dir="rtl">
+        <CardContent className="flex justify-center items-center py-10">
           <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
         </CardContent>
       </Card>
@@ -118,7 +118,7 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
   if (meetingTasks.length === 0) {
     return (
       <Card>
-        <CardHeader className="pb-3 flex flex-row-reverse items-center justify-between">
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle>مهام الاجتماع</CardTitle>
           <Button variant="outline" size="sm" onClick={handleAddTask}>
             <PlusCircle className="h-4 w-4 ml-1" />
@@ -157,7 +157,7 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
   
   // If we have tasks, use the ProjectTasksList component to show them
   return (
-    <Card dir="rtl">
+    <Card>
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle>مهام الاجتماع</CardTitle>
         <Button variant="outline" size="sm" onClick={handleAddTask}>
@@ -173,8 +173,8 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
             onTaskUpdated={fetchMeetingTasks}
             meetingId={meetingId}
             isGeneral={true}
-            hideTasksHeader={true}
-            hideTasksTitle={true}
+            hideTasksHeader={true} // إخفاء زر إضافة المهمة في TasksHeader
+            hideTasksTitle={true} // إخفاء عنوان المهام العامة
           />
         </div>
       </CardContent>
