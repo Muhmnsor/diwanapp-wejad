@@ -19,21 +19,32 @@ export const useParticipantDialog = ({ meetingId, onSuccess }: UseParticipantDia
   const closeDialog = () => setIsOpen(false);
 
   const handleAddParticipant = (participantData: {
+    user_id?: string;
     user_email: string;
     user_display_name: string;
     role: ParticipantRole;
     title?: string;
     phone?: string;
+    is_system_user?: boolean;
   }) => {
-    if (!participantData.user_email || !participantData.user_display_name || !participantData.role) {
-      toast.error('يرجى ملء جميع الحقول المطلوبة');
-      return;
-    }
+    // للمستخدمين الخارجيين، يجب التحقق من البريد الإلكتروني واسم العرض
+    if (!participantData.is_system_user) {
+      if (!participantData.user_email || !participantData.user_display_name || !participantData.role) {
+        toast.error('يرجى ملء جميع الحقول المطلوبة');
+        return;
+      }
 
-    // التحقق من صحة رقم الجوال إذا تم إدخاله
-    if (participantData.phone && !/^05\d{8}$/.test(participantData.phone)) {
-      toast.error('رقم الجوال يجب أن يبدأ بـ 05 ويتكون من 10 أرقام');
-      return;
+      // التحقق من صحة رقم الجوال إذا تم إدخاله
+      if (participantData.phone && !/^05\d{8}$/.test(participantData.phone)) {
+        toast.error('رقم الجوال يجب أن يبدأ بـ 05 ويتكون من 10 أرقام');
+        return;
+      }
+    } else {
+      // للمستخدمين من النظام، نتحقق من اختيار مستخدم ودور
+      if (!participantData.user_id || !participantData.role) {
+        toast.error('يرجى اختيار المستخدم والدور في الاجتماع');
+        return;
+      }
     }
     
     console.log('Submitting participant data:', participantData);

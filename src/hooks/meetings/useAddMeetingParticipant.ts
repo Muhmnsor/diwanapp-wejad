@@ -13,6 +13,7 @@ interface ParticipantInput {
   attendance_status: AttendanceStatus;
   title?: string; // إضافة: منصب المشارك التنظيمي
   phone?: string; // إضافة: رقم هاتف المشارك
+  is_system_user?: boolean; // إضافة: هل المشارك مستخدم في النظام
 }
 
 interface AddParticipantParams {
@@ -25,17 +26,25 @@ export const useAddMeetingParticipant = () => {
   
   return useMutation({
     mutationFn: async ({ meetingId, participant }: AddParticipantParams) => {
-      // توليد معرف UUID للمستخدم إذا لم يتم توفيره
-      const user_id = participant.user_id || uuidv4();
+      // إذا كان المشارك مستخدم نظام، استخدم معرفه المقدم
+      // وإلا قم بتوليد معرف UUID جديد للمشارك الخارجي
+      const user_id = participant.is_system_user 
+        ? participant.user_id 
+        : (participant.user_id || uuidv4());
       
-      console.log('Adding participant with data:', { meetingId, ...participant });
+      console.log('Adding participant with data:', { meetingId, ...participant, user_id });
       
       const { data, error } = await supabase
         .from('meeting_participants')
         .insert({
           meeting_id: meetingId,
           user_id,
-          ...participant
+          user_email: participant.user_email,
+          user_display_name: participant.user_display_name,
+          role: participant.role,
+          attendance_status: participant.attendance_status,
+          title: participant.title,
+          phone: participant.phone
         })
         .select()
         .single();
