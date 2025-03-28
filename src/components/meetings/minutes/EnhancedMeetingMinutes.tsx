@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { SignatureTable } from '../participants/SignatureTable';
 import { MinutesParticipantsTable } from '../participants/MinutesParticipantsTable';
@@ -94,7 +93,6 @@ export const EnhancedMeetingMinutes: React.FC<EnhancedMeetingMinutesProps> = ({
   // Get the child elements so we can insert the participants list at the right position
   const childrenArray = React.Children.toArray(children);
   
-  // Always render the content with participants table right after meeting details
   return (
     <div className="space-y-6">
       {/* First part of children (meeting details) */}
