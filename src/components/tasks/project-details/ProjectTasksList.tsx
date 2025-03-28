@@ -102,11 +102,11 @@ export const ProjectTasksList = ({
         />
       )}
       
-      <Card className="border shadow-sm">
+      <Card className="border shadow-sm" dir="rtl">
         <CardHeader className="pb-0">
           <TasksHeader 
             onAddTask={() => setIsAddDialogOpen(true)} 
-            isGeneral={isGeneral || false}
+            isGeneral={isGeneral}
             hideAddButton={hideTasksHeader}
             hideTitle={hideTasksTitle}
           />
@@ -129,7 +129,7 @@ export const ProjectTasksList = ({
             formatDate={formatDate}
             onStatusChange={handleStatusChange}
             projectId={projectId}
-            isGeneral={isGeneral || false}
+            isGeneral={isGeneral}
             onEditTask={handleEditTask}
             onDeleteTask={handleDeleteTask}
           />
@@ -146,7 +146,7 @@ export const ProjectTasksList = ({
           if (onTaskAdded) onTaskAdded();
         }}
         projectMembers={projectMembers}
-        isGeneral={isGeneral || false}
+        isGeneral={isGeneral}
         meetingId={meetingId}
         isWorkspace={false}
       />

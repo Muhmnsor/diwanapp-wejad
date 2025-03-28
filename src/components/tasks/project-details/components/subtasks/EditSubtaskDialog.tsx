@@ -70,7 +70,7 @@ export const EditSubtaskDialog = ({
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px]" dir="rtl">
         <DialogHeader>
           <DialogTitle>تعديل المهمة الفرعية</DialogTitle>
         </DialogHeader>

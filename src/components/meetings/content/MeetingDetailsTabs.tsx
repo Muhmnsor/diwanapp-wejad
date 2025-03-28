@@ -14,8 +14,8 @@ interface MeetingDetailsTabsProps {
 
 export const MeetingDetailsTabs: React.FC<MeetingDetailsTabsProps> = ({ meeting, meetingId }) => {
   return (
-    <Tabs defaultValue="overview" className="w-full">
-      <TabsList className="flex justify-center border-b rounded-none bg-white mb-6">
+    <Tabs defaultValue="overview" className="w-full" dir="rtl">
+      <TabsList className="flex justify-center border-b rounded-none bg-white mb-6 flex-row-reverse">
         <TabsTrigger 
           value="overview" 
           className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium"
@@ -42,19 +42,19 @@ export const MeetingDetailsTabs: React.FC<MeetingDetailsTabsProps> = ({ meeting,
         </TabsTrigger>
       </TabsList>
       
-      <TabsContent value="overview">
+      <TabsContent value="overview" dir="rtl">
         <MeetingOverviewTab meeting={meeting} meetingId={meetingId} />
       </TabsContent>
       
-      <TabsContent value="participants">
+      <TabsContent value="participants" dir="rtl">
         <MeetingParticipantsContent meetingId={meetingId} />
       </TabsContent>
       
-      <TabsContent value="minutes">
+      <TabsContent value="minutes" dir="rtl">
         <MeetingMinutesTab meetingId={meetingId} />
       </TabsContent>
       
-      <TabsContent value="tasks">
+      <TabsContent value="tasks" dir="rtl">
         <MeetingTasksTab meetingId={meetingId} />
       </TabsContent>
     </Tabs>

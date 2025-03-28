@@ -15,6 +15,7 @@ import { MeetingStatusBadge } from "@/components/meetings/status/MeetingStatusBa
 import { MeetingsSecondaryHeader } from "@/components/meetings/navigation/MeetingsSecondaryHeader";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { Tabs } from "@/components/ui/tabs";
+import { MeetingStatus } from "@/types/meeting";
 
 const MeetingDetailsPage = () => {
   const { meetingId } = useParams<{ meetingId: string }>();
@@ -106,7 +107,7 @@ const MeetingDetailsPage = () => {
         <MeetingsSecondaryHeader hasAdminRole={hasAdminRole} activeTab="" />
       </Tabs>
       
-      <div className="container mx-auto px-4 py-8 flex-grow">
+      <div className="container mx-auto px-4 py-8 flex-grow" dir="rtl">
         {/* Header with back button and title */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
           <div className="flex items-center">
@@ -150,7 +151,7 @@ const MeetingDetailsPage = () => {
         
         {/* Meeting status badge */}
         <div className="mb-6">
-          <MeetingStatusBadge status={meeting.meeting_status} />
+          <MeetingStatusBadge status={meeting.meeting_status as MeetingStatus} />
           
           <Badge className="mr-2 bg-gray-100 text-gray-800 hover:bg-gray-200">
             {meeting.meeting_type === 'board' ? 'مجلس إدارة' :
