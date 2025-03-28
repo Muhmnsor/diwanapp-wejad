@@ -17,9 +17,9 @@ export const MeetingsHeader = ({
   const location = useLocation();
 
   return (
-    <div className="w-full bg-white border-t py-0">
-      <div className="flex justify-center">
-        <TabsList className="grid grid-cols-3 bg-secondary/20 p-1 rounded-xl">
+    <div className="w-full bg-white border-b py-2">
+      <div className="container mx-auto">
+        <TabsList className="w-full grid grid-cols-3 bg-secondary/20 p-1 rounded-xl" dir="rtl">
           <TabsTrigger 
             value="dashboard" 
             className="data-[state=active]:bg-white"
