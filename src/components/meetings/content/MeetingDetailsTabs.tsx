@@ -6,6 +6,7 @@ import { MeetingMinutesTab } from './tabs/MeetingMinutesTab';
 import { MeetingParticipantsContent } from '../participants/MeetingParticipantsContent';
 import { MeetingTasksTab } from './tabs/MeetingTasksTab';
 import { Meeting } from '@/types/meeting';
+import { ParticipantDialogBridge } from '../participants/ParticipantDialogBridge';
 
 interface MeetingDetailsTabsProps {
   meeting: Meeting;
@@ -47,6 +48,10 @@ export const MeetingDetailsTabs: React.FC<MeetingDetailsTabsProps> = ({ meeting,
       </TabsContent>
       
       <TabsContent value="participants" dir="rtl">
+        <div className="mb-4 flex justify-between items-center">
+          <h3 className="text-lg font-medium">المشاركون في الاجتماع</h3>
+          <ParticipantDialogBridge meetingId={meetingId} onSuccess={() => {}} />
+        </div>
         <MeetingParticipantsContent meetingId={meetingId} />
       </TabsContent>
       
