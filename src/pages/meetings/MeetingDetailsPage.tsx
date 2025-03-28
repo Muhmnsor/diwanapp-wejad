@@ -9,27 +9,26 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Edit, Trash } from "lucide-react";
-import { 
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, 
-  AlertDialogTitle, AlertDialogTrigger 
-} from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { MeetingDetailsTabs } from "@/components/meetings/content/MeetingDetailsTabs";
 import { MeetingStatusBadge } from "@/components/meetings/status/MeetingStatusBadge";
 
 const MeetingDetailsPage = () => {
-  const { meetingId } = useParams<{ meetingId: string; }>();
+  const {
+    meetingId
+  } = useParams<{
+    meetingId: string;
+  }>();
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const { 
-    data: meeting, 
-    isLoading: isMeetingLoading, 
-    error: meetingError 
+  const {
+    data: meeting,
+    isLoading: isMeetingLoading,
+    error: meetingError
   } = useMeeting(meetingId || '');
-  
-  const { 
-    mutate: deleteMeeting, 
-    isPending: isDeleting 
+  const {
+    mutate: deleteMeeting,
+    isPending: isDeleting
   } = useDeleteMeeting();
 
   const handleBack = () => {
@@ -53,8 +52,7 @@ const MeetingDetailsPage = () => {
   };
 
   if (isMeetingLoading) {
-    return (
-      <div className="min-h-screen flex flex-col rtl" dir="rtl">
+    return <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
         <div className="container mx-auto px-4 py-8 flex-grow">
           <div className="flex items-center mb-8">
@@ -70,19 +68,13 @@ const MeetingDetailsPage = () => {
           </div>
         </div>
         <Footer />
-      </div>
-    );
+      </div>;
   }
 
   if (meetingError || !meeting) {
-    return (
-      <div className="min-h-screen flex flex-col rtl" dir="rtl">
+    return <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
         <div className="container mx-auto px-4 py-8 flex-grow">
-          <Button variant="outline" onClick={handleBack} className="mb-4">
-            <ArrowLeft className="h-4 w-4 ml-2" />
-            العودة
-          </Button>
           <div className="flex justify-center items-center h-64">
             <div className="text-center">
               <h2 className="text-2xl font-bold text-red-600 mb-4">خطأ في تحميل بيانات الاجتماع</h2>
@@ -92,12 +84,10 @@ const MeetingDetailsPage = () => {
           </div>
         </div>
         <Footer />
-      </div>
-    );
+      </div>;
   }
 
-  return (
-    <div className="min-h-screen flex flex-col rtl" dir="rtl">
+  return <div className="min-h-screen flex flex-col rtl" dir="rtl">
       <AdminHeader />
       
       <div className="container mx-auto px-4 py-8 flex-grow">
@@ -160,8 +150,6 @@ const MeetingDetailsPage = () => {
       </div>
       
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default MeetingDetailsPage;
