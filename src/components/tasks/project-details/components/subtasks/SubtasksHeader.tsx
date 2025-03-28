@@ -20,7 +20,7 @@ export const SubtasksHeader: React.FC<SubtasksHeaderProps> = ({
         <Button 
           variant="ghost" 
           size="sm" 
-          className="h-7 text-xs text-primary hover:text-primary-dark hover:bg-primary/5"
+          className="h-7 text-xs text-primary hover:text-primary-dark hover:bg-primary/5 flex flex-row-reverse"
           onClick={onAddClick}
         >
           <Plus className="h-3.5 w-3.5 ml-1" />
