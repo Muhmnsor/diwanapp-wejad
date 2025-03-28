@@ -1,23 +1,19 @@
-
 import React from "react";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LayoutDashboard, FolderKanban, ListTodo } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
-
 interface MeetingsSecondaryHeaderProps {
   hasAdminRole: boolean;
   activeTab: string;
 }
-
 export const MeetingsSecondaryHeader = ({
   hasAdminRole,
   activeTab
 }: MeetingsSecondaryHeaderProps) => {
   const navigate = useNavigate();
-  
   const handleTabChange = (value: string) => {
-    switch(value) {
+    switch (value) {
       case "dashboard":
         navigate("/admin/meetings");
         break;
@@ -31,45 +27,25 @@ export const MeetingsSecondaryHeader = ({
         navigate("/admin/meetings");
     }
   };
-  
-  return (
-    <div className="w-full bg-white border-t py-3">
-      <div className="flex justify-center">
+  return <div className="w-full bg-white border-t py-0">
+      <div className="flex justify-center py-0 my-0">
         <TabsList className="flex justify-center border-b-0 rounded-none bg-white" dir="rtl">
-          <TabsTrigger 
-            value="dashboard" 
-            className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium"
-            onClick={() => handleTabChange("dashboard")}
-            data-state={activeTab === "dashboard" ? "active" : "inactive"}
-          >
+          <TabsTrigger value="dashboard" className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium" onClick={() => handleTabChange("dashboard")} data-state={activeTab === "dashboard" ? "active" : "inactive"}>
             <LayoutDashboard className="h-4 w-4 ml-1" />
             لوحة المعلومات
           </TabsTrigger>
           
-          <TabsTrigger 
-            value="categories" 
-            className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium"
-            onClick={() => handleTabChange("categories")}
-            data-state={activeTab === "categories" ? "active" : "inactive"}
-          >
+          <TabsTrigger value="categories" className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium" onClick={() => handleTabChange("categories")} data-state={activeTab === "categories" ? "active" : "inactive"}>
             <FolderKanban className="h-4 w-4 ml-1" />
             تصنيف الاجتماعات
           </TabsTrigger>
           
-          {hasAdminRole && (
-            <TabsTrigger 
-              value="all-meetings" 
-              className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium"
-              onClick={() => handleTabChange("all-meetings")}
-              data-state={activeTab === "all-meetings" ? "active" : "inactive"}
-            >
+          {hasAdminRole && <TabsTrigger value="all-meetings" className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium" onClick={() => handleTabChange("all-meetings")} data-state={activeTab === "all-meetings" ? "active" : "inactive"}>
               <ListTodo className="h-4 w-4 ml-1" />
               كل الاجتماعات
-            </TabsTrigger>
-          )}
+            </TabsTrigger>}
         </TabsList>
       </div>
-      <Separator className="mt-3" />
-    </div>
-  );
+      <Separator className="mt-3 my-0" />
+    </div>;
 };
