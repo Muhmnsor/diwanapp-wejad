@@ -12,17 +12,24 @@ import { ArrowLeft, Edit, Trash } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { MeetingDetailsTabs } from "@/components/meetings/content/MeetingDetailsTabs";
 import { MeetingStatusBadge } from "@/components/meetings/status/MeetingStatusBadge";
-import { MeetingsHeader } from "@/components/meetings/navigation/MeetingsHeader";
-import { useUserRoles } from "@/hooks/useUserRoles";
-import { Tabs } from "@/components/ui/tabs";
 
 const MeetingDetailsPage = () => {
-  const { meetingId } = useParams<{ meetingId: string; }>();
+  const {
+    meetingId
+  } = useParams<{
+    meetingId: string;
+  }>();
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const { data: meeting, isLoading: isMeetingLoading, error: meetingError } = useMeeting(meetingId || '');
-  const { mutate: deleteMeeting, isPending: isDeleting } = useDeleteMeeting();
-  const { hasAdminRole } = useUserRoles();
+  const {
+    data: meeting,
+    isLoading: isMeetingLoading,
+    error: meetingError
+  } = useMeeting(meetingId || '');
+  const {
+    mutate: deleteMeeting,
+    isPending: isDeleting
+  } = useDeleteMeeting();
 
   const handleBack = () => {
     navigate(-1);
@@ -45,121 +52,104 @@ const MeetingDetailsPage = () => {
   };
 
   if (isMeetingLoading) {
-    return (
-      <div className="min-h-screen flex flex-col rtl" dir="rtl">
+    return <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
-        <Tabs value="all-meetings">
-          <MeetingsHeader hasAdminRole={hasAdminRole} activeTab="all-meetings" />
-          <div className="container mx-auto px-4 py-8 flex-grow">
-            <div className="flex items-center mb-8">
-              <Button variant="ghost" size="sm" onClick={handleBack} className="ml-4">
-                <ArrowLeft className="h-4 w-4 ml-2" />
-                عودة
-              </Button>
-              <Skeleton className="h-8 w-64" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Skeleton className="h-64 md:col-span-2" />
-              <Skeleton className="h-64" />
-            </div>
+        <div className="container mx-auto px-4 py-8 flex-grow">
+          <div className="flex items-center mb-8">
+            <Button variant="ghost" size="sm" onClick={handleBack} className="ml-4">
+              <ArrowLeft className="h-4 w-4 ml-2" />
+              عودة
+            </Button>
+            <Skeleton className="h-8 w-64" />
           </div>
-        </Tabs>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Skeleton className="h-64 md:col-span-2" />
+            <Skeleton className="h-64" />
+          </div>
+        </div>
         <Footer />
-      </div>
-    );
+      </div>;
   }
 
   if (meetingError || !meeting) {
-    return (
-      <div className="min-h-screen flex flex-col rtl" dir="rtl">
+    return <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
-        <Tabs value="all-meetings">
-          <MeetingsHeader hasAdminRole={hasAdminRole} activeTab="all-meetings" />
-          <div className="container mx-auto px-4 py-8 flex-grow">
-            <div className="flex justify-center items-center h-64">
-              <div className="text-center">
-                <h2 className="text-2xl font-bold text-red-600 mb-4">خطأ في تحميل بيانات الاجتماع</h2>
-                <p className="text-gray-600 mb-6">{(meetingError as Error)?.message || 'لم يتم العثور على الاجتماع المطلوب'}</p>
-                <Button onClick={handleBack}>العودة</Button>
-              </div>
+        <div className="container mx-auto px-4 py-8 flex-grow">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-red-600 mb-4">خطأ في تحميل بيانات الاجتماع</h2>
+              <p className="text-gray-600 mb-6">{(meetingError as Error)?.message || 'لم يتم العثور على الاجتماع المطلوب'}</p>
+              <Button onClick={handleBack}>العودة</Button>
             </div>
           </div>
-        </Tabs>
+        </div>
         <Footer />
-      </div>
-    );
+      </div>;
   }
 
-  return (
-    <div className="min-h-screen flex flex-col rtl" dir="rtl">
+  return <div className="min-h-screen flex flex-col rtl" dir="rtl">
       <AdminHeader />
       
-      <Tabs value="all-meetings">
-        <MeetingsHeader hasAdminRole={hasAdminRole} activeTab="all-meetings" />
-        
-        <div className="container mx-auto px-4 py-8 flex-grow">
-          {/* Header with back button and title */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-            <div className="flex items-center">
-              <Button variant="ghost" size="sm" onClick={handleBack} className="ml-4">
-                <ArrowLeft className="h-4 w-4 ml-2" />
-                عودة
-              </Button>
-              <h1 className="text-2xl font-bold">{meeting.title}</h1>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={handleEdit}>
-                <Edit className="h-4 w-4 ml-2" />
-                تعديل
-              </Button>
-              
-              <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm">
-                    <Trash className="h-4 w-4 ml-2" />
-                    حذف
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>هل أنت متأكد من حذف هذا الاجتماع؟</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      سيتم حذف جميع البيانات المتعلقة بالاجتماع ولا يمكن التراجع عن هذا الإجراء.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      {isDeleting ? 'جاري الحذف...' : 'تأكيد الحذف'}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
+      <div className="container mx-auto px-4 py-8 flex-grow">
+        {/* Header with back button and title */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+          <div className="flex items-center">
+            <Button variant="ghost" size="sm" onClick={handleBack} className="ml-4">
+              <ArrowLeft className="h-4 w-4 ml-2" />
+              عودة
+            </Button>
+            <h1 className="text-2xl font-bold">{meeting.title}</h1>
           </div>
           
-          {/* Meeting status badge */}
-          <div className="mb-6">
-            <MeetingStatusBadge status={meeting.meeting_status} />
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleEdit}>
+              <Edit className="h-4 w-4 ml-2" />
+              تعديل
+            </Button>
             
-            <Badge className="mr-2 bg-gray-100 text-gray-800 hover:bg-gray-200">
-              {meeting.meeting_type === 'board' ? 'مجلس إدارة' :
-               meeting.meeting_type === 'department' ? 'قسم' :
-               meeting.meeting_type === 'team' ? 'فريق عمل' :
-               meeting.meeting_type === 'committee' ? 'لجنة' :
-               'أخرى'}
-            </Badge>
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm">
+                  <Trash className="h-4 w-4 ml-2" />
+                  حذف
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>هل أنت متأكد من حذف هذا الاجتماع؟</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    سيتم حذف جميع البيانات المتعلقة بالاجتماع ولا يمكن التراجع عن هذا الإجراء.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    {isDeleting ? 'جاري الحذف...' : 'تأكيد الحذف'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
-          
-          {/* Main content with tabs */}
-          <MeetingDetailsTabs meeting={meeting} meetingId={meetingId || ''} />
         </div>
-      </Tabs>
+        
+        {/* Meeting status badge */}
+        <div className="mb-6">
+          <MeetingStatusBadge status={meeting.meeting_status as any} />
+          
+          <Badge className="mr-2 bg-gray-100 text-gray-800 hover:bg-gray-200">
+            {meeting.meeting_type === 'board' ? 'مجلس إدارة' :
+             meeting.meeting_type === 'department' ? 'قسم' :
+             meeting.meeting_type === 'team' ? 'فريق عمل' :
+             meeting.meeting_type === 'committee' ? 'لجنة' :
+             'أخرى'}
+          </Badge>
+        </div>
+        
+        {/* Main content with tabs */}
+        <MeetingDetailsTabs meeting={meeting} meetingId={meetingId || ''} />
+      </div>
       
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default MeetingDetailsPage;

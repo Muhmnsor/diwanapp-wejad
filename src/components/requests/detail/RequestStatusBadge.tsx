@@ -4,14 +4,11 @@ import { Badge } from '@/components/ui/badge';
 import { RequestStatus } from '@/types/meeting';
 
 interface RequestStatusBadgeProps {
-  status: RequestStatus | string;
+  status: RequestStatus;
 }
 
 export const RequestStatusBadge: React.FC<RequestStatusBadgeProps> = ({ status }) => {
-  // Normalize the status to handle any string type inputs
-  const normalizedStatus = status as RequestStatus;
-  
-  switch (normalizedStatus) {
+  switch (status) {
     case 'pending':
       return <Badge variant="secondary">قيد الانتظار</Badge>;
     case 'in_progress':

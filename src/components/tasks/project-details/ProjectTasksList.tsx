@@ -106,9 +106,9 @@ export const ProjectTasksList = ({
         <CardHeader className="pb-0">
           <TasksHeader 
             onAddTask={() => setIsAddDialogOpen(true)} 
-            isGeneral={Boolean(isGeneral)} 
-            hideAddButton={Boolean(hideTasksHeader)}
-            hideTitle={Boolean(hideTasksTitle)}
+            isGeneral={isGeneral || false}
+            hideAddButton={hideTasksHeader}
+            hideTitle={hideTasksTitle}
           />
         </CardHeader>
         
@@ -129,7 +129,7 @@ export const ProjectTasksList = ({
             formatDate={formatDate}
             onStatusChange={handleStatusChange}
             projectId={projectId}
-            isGeneral={Boolean(isGeneral)}
+            isGeneral={isGeneral || false}
             onEditTask={handleEditTask}
             onDeleteTask={handleDeleteTask}
           />
@@ -146,7 +146,7 @@ export const ProjectTasksList = ({
           if (onTaskAdded) onTaskAdded();
         }}
         projectMembers={projectMembers}
-        isGeneral={Boolean(isGeneral)}
+        isGeneral={isGeneral || false}
         meetingId={meetingId}
         isWorkspace={false}
       />
