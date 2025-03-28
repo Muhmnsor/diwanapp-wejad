@@ -18,6 +18,10 @@ interface MeetingDetailsTabsProps {
 export const MeetingDetailsTabs: React.FC<MeetingDetailsTabsProps> = ({ meeting, meetingId }) => {
   const { data: minutes, isLoading: isMinutesLoading } = useMeetingMinutes(meetingId);
   
+  console.log('MeetingDetailsTabs - meeting:', meeting);
+  console.log('MeetingDetailsTabs - minutes:', minutes);
+  console.log('MeetingDetailsTabs - isMinutesLoading:', isMinutesLoading);
+  
   return (
     <Tabs defaultValue="overview" className="w-full" dir="rtl">
       <TabsList className="flex justify-center border-b rounded-none bg-white mb-6">

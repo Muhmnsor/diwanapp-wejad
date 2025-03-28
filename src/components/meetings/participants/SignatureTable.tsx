@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { useMeetingParticipants } from '@/hooks/meetings/useMeetingParticipants';
 import { ParticipantRole } from '@/types/meeting';
@@ -9,10 +9,23 @@ interface SignatureTableProps {
 }
 
 export const SignatureTable: React.FC<SignatureTableProps> = ({ meetingId }) => {
-  const { data: participants, isLoading } = useMeetingParticipants(meetingId);
+  const { data: participants, isLoading, error } = useMeetingParticipants(meetingId);
+
+  useEffect(() => {
+    console.log('SignatureTable - meetingId:', meetingId);
+    console.log('SignatureTable - participants:', participants);
+    if (error) {
+      console.error('SignatureTable - error loading participants:', error);
+    }
+  }, [meetingId, participants, error]);
 
   if (isLoading) {
     return <div className="py-4 text-center text-gray-500">جاري تحميل بيانات المشاركين...</div>;
+  }
+
+  if (error) {
+    console.error('Error loading participants:', error);
+    return <div className="py-4 text-center text-gray-500">حدث خطأ أثناء تحميل بيانات المشاركين</div>;
   }
 
   if (!participants || participants.length === 0) {
@@ -33,6 +46,8 @@ export const SignatureTable: React.FC<SignatureTableProps> = ({ meetingId }) => 
   if (filteredParticipants.length === 0) {
     return <div className="py-4 text-center text-gray-500">لا يوجد رئيس أو أعضاء في هذا الاجتماع</div>;
   }
+
+  console.log('Rendering signature table with participants:', filteredParticipants);
 
   return (
     <div className="mt-8 border rounded-md">

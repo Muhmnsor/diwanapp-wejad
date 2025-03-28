@@ -24,28 +24,33 @@ export const useMeetingMinutes = (meetingId: string) => {
       const { data, error } = await supabase
         .from('meeting_minutes')
         .select('*')
-        .eq('meeting_id', meetingId)
-        .single();
+        .eq('meeting_id', meetingId);
         
-      if (error && error.code !== 'PGSQL_ERROR') {
+      if (error) {
         console.error('Error fetching meeting minutes:', error);
-        if (error.code === 'PGSQL_ERROR' || error.message.includes('No rows found')) {
-          return { meeting_id: meetingId, agenda_notes: {} } as MeetingMinutes;
-        }
         throw error;
       }
       
+      // If no data found, return a default object
+      if (!data || data.length === 0) {
+        console.log('No meeting minutes found, returning default object');
+        return { meeting_id: meetingId, agenda_notes: {} } as MeetingMinutes;
+      }
+      
+      const minutes = data[0] as MeetingMinutes;
+      
       // Parse the agenda_notes if it's a string
-      if (data && data.agenda_notes && typeof data.agenda_notes === 'string') {
+      if (minutes.agenda_notes && typeof minutes.agenda_notes === 'string') {
         try {
-          data.agenda_notes = JSON.parse(data.agenda_notes);
+          minutes.agenda_notes = JSON.parse(minutes.agenda_notes);
         } catch (e) {
           console.error('Error parsing agenda notes:', e);
-          data.agenda_notes = {};
+          minutes.agenda_notes = {};
         }
       }
       
-      return data as MeetingMinutes || { meeting_id: meetingId, agenda_notes: {} };
+      console.log('Fetched meeting minutes:', minutes);
+      return minutes;
     },
     enabled: !!meetingId,
   });
