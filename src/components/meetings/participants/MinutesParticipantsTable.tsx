@@ -4,6 +4,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { useMeetingParticipants } from '@/hooks/meetings/useMeetingParticipants';
 import { MeetingParticipantRoleBadge } from './MeetingParticipantRoleBadge';
 import { Badge } from '@/components/ui/badge';
+import { ParticipantRole } from '@/types/meeting';
 
 interface MinutesParticipantsTableProps {
   meetingId: string;
@@ -61,7 +62,7 @@ export const MinutesParticipantsTable: React.FC<MinutesParticipantsTableProps> =
                 {participant.title || '-'}
               </TableCell>
               <TableCell>
-                <MeetingParticipantRoleBadge role={participant.role} />
+                <MeetingParticipantRoleBadge role={participant.role as ParticipantRole} />
               </TableCell>
               <TableCell>
                 <AttendanceStatusBadge status={participant.attendance_status} />
