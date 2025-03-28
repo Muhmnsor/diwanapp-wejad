@@ -2,6 +2,7 @@
 import React from "react";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LayoutDashboard, FolderKanban, ListTodo } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
 
 interface MeetingsSecondaryHeaderProps {
@@ -68,7 +69,7 @@ export const MeetingsSecondaryHeader = ({
           )}
         </TabsList>
       </div>
-      {/* Removed the Separator component */}
+      <Separator className="mt-3" />
     </div>
   );
 };
