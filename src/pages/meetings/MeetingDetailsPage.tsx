@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AdminHeader } from "@/components/layout/AdminHeader";
@@ -101,15 +102,18 @@ const MeetingDetailsPage = () => {
       <div className="container mx-auto px-4 py-8 flex-grow" dir="rtl">
         {/* Header with back button and title */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-          <div className="flex items-center">
-            <Button variant="ghost" size="sm" onClick={handleBack} className="ml-4">
+          <div className="flex items-center w-full">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleBack} 
+              className="border border-slate-300 me-4 hover:bg-slate-100"
+            >
               <ArrowLeft className="h-4 w-4 ml-2" />
               عودة
             </Button>
             <h1 className="text-2xl font-bold">{meeting.title}</h1>
           </div>
-          
-          
         </div>
         
         {/* Meeting status badge */}
