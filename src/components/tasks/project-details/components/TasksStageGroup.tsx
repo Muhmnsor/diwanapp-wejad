@@ -36,7 +36,7 @@ export const TasksStageGroup = ({
   
   return (
     <div className="border rounded-md overflow-hidden" dir="rtl">
-      <div className="bg-gray-50 p-3 border-b">
+      <div className="bg-gray-50 p-3 border-b text-right">
         <h3 className="font-medium">{stage.name}</h3>
       </div>
       <Table dir="rtl">
