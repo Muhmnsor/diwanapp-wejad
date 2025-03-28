@@ -1,170 +1,78 @@
 
-import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ProjectStages } from "./ProjectStages";
-import { AddTaskDialog } from "./AddTaskDialog";
-import { TasksHeader } from "./components/TasksHeader";
-import { TasksFilter } from "./components/TasksFilter";
+import React from "react";
+import { useProjectTasks } from "./hooks/useProjectTasks";
 import { TasksContent } from "./components/TasksContent";
-import { getStatusBadge, getPriorityBadge, formatDate } from "./utils/taskFormatters";
-import { useTasksList } from "./hooks/useTasksList";
-import { Task } from "./types/task";
-import { ProjectMember } from "./types/projectMember";
-import { useProjectMembers } from "./hooks/useProjectMembers";
-import { EditTaskDialog } from "./EditTaskDialog";
+import { TasksFilter } from "./components/TasksFilter";
+import { Badge } from "@/components/ui/badge"; 
+import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
+import { ar } from "date-fns/locale";
 
 interface ProjectTasksListProps {
-  projectId?: string | undefined;
-  projectMembers?: ProjectMember[];
-  stages?: { id: string; name: string }[];
-  tasks?: Task[];
-  onTaskAdded?: () => void;
-  onTaskUpdated?: () => void;
-  meetingId?: string;
-  isGeneral?: boolean;
-  hideTasksHeader?: boolean;
-  hideTasksTitle?: boolean;
+  projectId: string;
 }
 
-export type { Task };
-
-export const ProjectTasksList = ({ 
-  projectId,
-  projectMembers: externalProjectMembers,
-  stages: externalStages,
-  tasks: externalTasks,
-  onTaskAdded,
-  onTaskUpdated,
-  meetingId,
-  isGeneral = false,
-  hideTasksHeader = false,
-  hideTasksTitle = false
-}: ProjectTasksListProps) => {
+export const ProjectTasksList: React.FC<ProjectTasksListProps> = ({ projectId }) => {
   const {
-    tasks: fetchedTasks,
     isLoading,
+    error,
+    tasks,
     activeTab,
     setActiveTab,
-    isAddDialogOpen,
-    setIsAddDialogOpen,
-    projectStages,
-    handleStagesChange,
+    stages,
     tasksByStage,
+    getStatusBadge,
+    getPriorityBadge,
     handleStatusChange,
-    fetchTasks,
-    deleteTask
-  } = useTasksList(projectId, meetingId);
-  
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    openEditDialog,
+    openDeleteDialog
+  } = useProjectTasks(projectId);
 
-  const { projectMembers: fetchedMembers } = useProjectMembers(
-    externalProjectMembers ? undefined : projectId
-  );
-  
-  const tasks = externalTasks || fetchedTasks;
-  
-  const projectMembers = externalProjectMembers || fetchedMembers;
-
-  const stages = externalStages || projectStages;
-
-  useEffect(() => {
-    if (!externalTasks) {
-      fetchTasks();
-    }
-  }, [projectId, meetingId]);
-
-  const filteredTasks = tasks.filter(task => {
-    if (activeTab === "all") return true;
-    return task.status === activeTab;
-  });
-
-  const handleEditTask = (task: Task) => {
-    setEditingTask(task);
-    setIsEditDialogOpen(true);
-  };
-
-  const handleDeleteTask = async (taskId: string) => {
+  // Format date function
+  const formatDate = (date: string | null) => {
+    if (!date) return "غير محدد";
     try {
-      await deleteTask(taskId);
-      if (onTaskUpdated) onTaskUpdated();
+      return format(new Date(date), "d MMMM yyyy", { locale: ar });
     } catch (error) {
-      console.error("Error deleting task:", error);
+      return "تاريخ غير صالح";
     }
   };
+
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 text-red-800 rounded-md border border-red-200" dir="rtl">
+        <h3 className="font-medium mb-2">حدث خطأ أثناء تحميل المهام</h3>
+        <p className="text-sm">{error instanceof Error ? error.message : 'خطأ غير معروف'}</p>
+      </div>
+    );
+  }
 
   return (
-    <>
-      {!isGeneral && !meetingId && (
-        <ProjectStages 
-          projectId={projectId} 
-          onStagesChange={handleStagesChange} 
-        />
-      )}
-      
-      <Card className="border shadow-sm">
-        <CardHeader className="pb-0">
-          <TasksHeader 
-            onAddTask={() => setIsAddDialogOpen(true)} 
-            isGeneral={isGeneral || false}
-            hideAddButton={hideTasksHeader}
-            hideTitle={hideTasksTitle}
-          />
-        </CardHeader>
-        
-        <CardContent className="pt-4">
-          <TasksFilter 
-            activeTab={activeTab} 
-            onTabChange={setActiveTab} 
-          />
-          
-          <TasksContent 
-            isLoading={isLoading}
-            activeTab={activeTab}
-            filteredTasks={filteredTasks}
-            projectStages={stages}
-            tasksByStage={tasksByStage}
-            getStatusBadge={getStatusBadge}
-            getPriorityBadge={getPriorityBadge}
-            formatDate={formatDate}
-            onStatusChange={handleStatusChange}
-            projectId={projectId}
-            isGeneral={isGeneral || false}
-            onEditTask={handleEditTask}
-            onDeleteTask={handleDeleteTask}
-          />
-        </CardContent>
-      </Card>
-      
-      <AddTaskDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        projectId={projectId || ""}
-        projectStages={stages}
-        onTaskAdded={() => {
-          fetchTasks();
-          if (onTaskAdded) onTaskAdded();
-        }}
-        projectMembers={projectMembers}
-        isGeneral={isGeneral || false}
-        meetingId={meetingId}
-        isWorkspace={false}
+    <div className="space-y-6">
+      {/* Filter tabs */}
+      <TasksFilter 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        isLoading={isLoading} 
       />
-
-      {editingTask && (
-        <EditTaskDialog
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          task={editingTask}
-          projectStages={stages}
-          projectMembers={projectMembers}
-          onTaskUpdated={() => {
-            fetchTasks();
-            if (onTaskUpdated) onTaskUpdated();
-          }}
-          meetingId={meetingId}
-        />
-      )}
-    </>
+      
+      {/* Tasks content */}
+      <TasksContent 
+        isLoading={isLoading}
+        activeTab={activeTab}
+        filteredTasks={tasks.filter(task => 
+          activeTab === "all" || task.status === activeTab
+        )}
+        projectStages={stages}
+        tasksByStage={tasksByStage}
+        getStatusBadge={getStatusBadge}
+        getPriorityBadge={getPriorityBadge}
+        formatDate={formatDate}
+        onStatusChange={handleStatusChange}
+        projectId={projectId}
+        onEditTask={openEditDialog}
+        onDeleteTask={openDeleteDialog}
+      />
+    </div>
   );
 };
