@@ -1,11 +1,8 @@
-
 import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ActivityListHeader } from "@/components/projects/activities/list/ActivityListHeader";
 import { useActivityManagement } from "@/components/projects/activities/hooks/useActivityManagement";
-import { formatDate } from "@/utils/formatters";
-import { formatTime12Hour } from "@/utils/dateTimeUtils";
 
 interface ProjectActivitiesTabProps {
   projectId: string;
@@ -66,7 +63,7 @@ export const ProjectActivitiesTab = ({ projectId }: ProjectActivitiesTabProps) =
               <h3 className="font-medium">{activity.title}</h3>
               <p className="text-sm text-gray-600">{activity.description}</p>
               <div className="mt-2 text-sm text-gray-500">
-                {formatDate(activity.date)} - {formatTime12Hour(activity.time)}
+                {activity.date} - {activity.time}
               </div>
             </div>
           ))}

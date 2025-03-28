@@ -1,4 +1,3 @@
-
 import { EventBadges } from "./badges/EventBadges";
 import { EventDetails } from "./details/EventDetails";
 import { BeneficiaryType } from "@/types/event";
@@ -116,8 +115,6 @@ export const EventInfo = ({
         eventType={eventType}
         attendees={attendees}
         maxAttendees={maxAttendees}
-        eventPath={eventPath}
-        eventCategory={eventCategory}
       />
     </div>
   );

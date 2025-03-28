@@ -1,4 +1,3 @@
-
 import { CalendarDays, MapPin } from "lucide-react";
 
 interface EventCardDetailsProps {
