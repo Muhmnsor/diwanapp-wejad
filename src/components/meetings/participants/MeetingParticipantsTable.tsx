@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
-import { MeetingParticipant } from '@/types/meeting';
+import { MeetingParticipant, AttendanceStatus, ParticipantRole } from '@/types/meeting';
 import { MeetingParticipantRoleBadge } from './MeetingParticipantRoleBadge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
@@ -53,7 +53,7 @@ export const MeetingParticipantsTable: React.FC<MeetingParticipantsTableProps> =
             <TableCell className="font-medium">{participant.user_display_name}</TableCell>
             {showTitle && <TableCell>{participant.title || '-'}</TableCell>}
             <TableCell>
-              <MeetingParticipantRoleBadge role={participant.role as any} />
+              <MeetingParticipantRoleBadge role={participant.role as ParticipantRole} />
             </TableCell>
             <TableCell>
               {participant.attendance_status === 'attended' ? (
