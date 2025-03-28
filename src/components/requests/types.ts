@@ -52,11 +52,14 @@ export interface RequestWorkflow {
 // Keep backward compatibility by aliasing RequestWorkflow as Workflow
 export type Workflow = RequestWorkflow;
 
+// Update RequestStatus to include all possible status values
+export type RequestStatus = 'pending' | 'in_progress' | 'approved' | 'rejected' | 'completed' | 'cancelled';
+
 export interface Request {
   id: string;
   title: string;
   form_data: any;
-  status: 'pending' | 'in_progress' | 'approved' | 'rejected'; // Updated from 'completed' to 'approved'
+  status: RequestStatus;
   priority: 'low' | 'medium' | 'high';
   requester_id: string;
   request_type_id: string;
