@@ -22,10 +22,10 @@ export const MeetingsSecondaryHeader = ({
         navigate("/admin/meetings");
         break;
       case "categories":
-        navigate("/admin/meetings");
+        navigate("/admin/meetings?tab=categories");
         break;
       case "all-meetings":
-        navigate("/admin/meetings");
+        navigate("/admin/meetings?tab=all-meetings");
         break;
       default:
         navigate("/admin/meetings");
@@ -65,7 +65,7 @@ export const MeetingsSecondaryHeader = ({
             >
               <ListTodo className="h-4 w-4 ml-1" />
               كل الاجتماعات
-            </TabsTrigger>
+            </ListTodo>
           )}
         </TabsList>
       </div>

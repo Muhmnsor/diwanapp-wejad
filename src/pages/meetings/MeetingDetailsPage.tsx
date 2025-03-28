@@ -14,6 +14,7 @@ import { MeetingDetailsTabs } from "@/components/meetings/content/MeetingDetails
 import { MeetingStatusBadge } from "@/components/meetings/status/MeetingStatusBadge";
 import { MeetingsSecondaryHeader } from "@/components/meetings/navigation/MeetingsSecondaryHeader";
 import { useUserRoles } from "@/hooks/useUserRoles";
+import { Tabs } from "@/components/ui/tabs";
 
 const MeetingDetailsPage = () => {
   const { meetingId } = useParams<{ meetingId: string }>();
@@ -56,7 +57,9 @@ const MeetingDetailsPage = () => {
     return (
       <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
-        <MeetingsSecondaryHeader hasAdminRole={hasAdminRole} activeTab="" />
+        <Tabs value="">
+          <MeetingsSecondaryHeader hasAdminRole={hasAdminRole} activeTab="" />
+        </Tabs>
         <div className="container mx-auto px-4 py-8 flex-grow">
           <div className="flex items-center mb-8">
             <Button variant="ghost" size="sm" onClick={handleBack} className="ml-4">
@@ -79,7 +82,9 @@ const MeetingDetailsPage = () => {
     return (
       <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
-        <MeetingsSecondaryHeader hasAdminRole={hasAdminRole} activeTab="" />
+        <Tabs value="">
+          <MeetingsSecondaryHeader hasAdminRole={hasAdminRole} activeTab="" />
+        </Tabs>
         <div className="container mx-auto px-4 py-8 flex-grow">
           <div className="flex justify-center items-center h-64">
             <div className="text-center">
@@ -97,7 +102,9 @@ const MeetingDetailsPage = () => {
   return (
     <div className="min-h-screen flex flex-col rtl" dir="rtl">
       <AdminHeader />
-      <MeetingsSecondaryHeader hasAdminRole={hasAdminRole} activeTab="" />
+      <Tabs value="">
+        <MeetingsSecondaryHeader hasAdminRole={hasAdminRole} activeTab="" />
+      </Tabs>
       
       <div className="container mx-auto px-4 py-8 flex-grow">
         {/* Header with back button and title */}
@@ -143,7 +150,7 @@ const MeetingDetailsPage = () => {
         
         {/* Meeting status badge */}
         <div className="mb-6">
-          <MeetingStatusBadge status={meeting.meeting_status as any} />
+          <MeetingStatusBadge status={meeting.meeting_status} />
           
           <Badge className="mr-2 bg-gray-100 text-gray-800 hover:bg-gray-200">
             {meeting.meeting_type === 'board' ? 'مجلس إدارة' :

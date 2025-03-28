@@ -15,6 +15,7 @@ import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
 import { MeetingDialogWrapper } from "@/components/meetings/dialogs/MeetingDialogWrapper";
 import { MeetingsSecondaryHeader } from "@/components/meetings/navigation/MeetingsSecondaryHeader";
+import { Tabs } from "@/components/ui/tabs";
 
 export const MeetingFolderPage = () => {
   const { folderId } = useParams<{ folderId: string }>();
@@ -45,14 +46,16 @@ export const MeetingFolderPage = () => {
   };
   
   const handleGoBack = () => {
-    navigate("/admin/meetings");
+    navigate("/admin/meetings?tab=categories");
   };
   
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
-        <MeetingsSecondaryHeader hasAdminRole={hasAdminRole} activeTab="categories" />
+        <Tabs value="categories">
+          <MeetingsSecondaryHeader hasAdminRole={hasAdminRole} activeTab="categories" />
+        </Tabs>
         <div className="flex justify-center p-8 flex-grow">
           <div className="text-center">
             <span className="block mb-2">جاري تحميل التصنيف...</span>
@@ -67,7 +70,9 @@ export const MeetingFolderPage = () => {
     return (
       <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
-        <MeetingsSecondaryHeader hasAdminRole={hasAdminRole} activeTab="categories" />
+        <Tabs value="categories">
+          <MeetingsSecondaryHeader hasAdminRole={hasAdminRole} activeTab="categories" />
+        </Tabs>
         <div className="text-destructive p-4 text-right container mx-auto flex-grow">
           <Button variant="outline" onClick={handleGoBack} className="mb-4">
             <ArrowLeft className="h-4 w-4 ml-2" />
@@ -83,7 +88,9 @@ export const MeetingFolderPage = () => {
   return (
     <div className="min-h-screen flex flex-col rtl" dir="rtl">
       <AdminHeader />
-      <MeetingsSecondaryHeader hasAdminRole={hasAdminRole} activeTab="categories" />
+      <Tabs value="categories">
+        <MeetingsSecondaryHeader hasAdminRole={hasAdminRole} activeTab="categories" />
+      </Tabs>
       
       <div className="container mx-auto px-4 py-6 flex-grow">
         <div className="flex items-center mb-4">
@@ -120,7 +127,7 @@ export const MeetingFolderPage = () => {
       {/* Dialog components */}
       <EditFolderDialog open={isEditFolderOpen} onOpenChange={setIsEditFolderOpen} folder={folder} onSuccess={refreshFolder} />
       
-      <DeleteFolderDialog open={isDeleteFolderOpen} onOpenChange={setIsDeleteFolderOpen} folderId={folder.id} onSuccess={() => navigate("/admin/meetings")} />
+      <DeleteFolderDialog open={isDeleteFolderOpen} onOpenChange={setIsDeleteFolderOpen} folderId={folder.id} onSuccess={() => navigate("/admin/meetings?tab=categories")} />
       
       <FolderMembersDialog open={isMembersFolderOpen} onOpenChange={setIsMembersFolderOpen} folder={folder} onSuccess={refreshFolder} />
       
