@@ -1,6 +1,5 @@
 
 import { WorkflowStep } from "../../types";
-import { RequestStatus } from "@/types/meeting";
 
 export interface WorkflowCardDataHookResult {
   isLoading: boolean;
@@ -15,6 +14,6 @@ export interface WorkflowCardDataHookResult {
 
 export interface CurrentStepDisplayProps {
   currentStep: any;
-  requestStatus: RequestStatus;
+  requestStatus: string;
   isLoading?: boolean;
 }

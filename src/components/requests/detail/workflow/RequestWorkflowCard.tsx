@@ -13,13 +13,12 @@ import { Loader2, Check, X, CheckCircle, XCircle, HelpCircle, Clock } from "luci
 import { useWorkflowCardData } from "./useWorkflowCardData";
 import { WorkflowStepItem } from "./WorkflowStepItem";
 import { WorkflowStep } from "../../types";
-import { RequestStatus } from "@/types/meeting";
 
 interface RequestWorkflowCardProps {
   workflow: any;
   currentStep: any;
   requestId: string;
-  requestStatus?: RequestStatus;
+  requestStatus?: string;
   workflowSteps?: WorkflowStep[];
 }
 
@@ -167,7 +166,7 @@ export const RequestWorkflowCard = ({
 };
 
 // Helper component for status badge
-const StatusBadge = ({ status }: { status: RequestStatus }) => {
+const StatusBadge = ({ status }: { status: string }) => {
   switch (status) {
     case 'pending':
       return (
@@ -195,20 +194,6 @@ const StatusBadge = ({ status }: { status: RequestStatus }) => {
         <Badge variant="outline" className="border-red-500 text-red-500 flex items-center">
           <XCircle className="h-3 w-3 mr-1" />
           مرفوض
-        </Badge>
-      );
-    case 'cancelled':
-      return (
-        <Badge variant="outline" className="border-gray-500 text-gray-500 flex items-center">
-          <X className="h-3 w-3 mr-1" />
-          ملغي
-        </Badge>
-      );
-    case 'approved':
-      return (
-        <Badge variant="outline" className="border-green-500 text-green-500 flex items-center">
-          <Check className="h-3 w-3 mr-1" />
-          تمت الموافقة
         </Badge>
       );
     default:

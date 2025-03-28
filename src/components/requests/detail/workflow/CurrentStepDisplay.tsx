@@ -2,7 +2,6 @@
 import { AlertCircle, Check, X, MessageCircle, Loader2 } from "lucide-react";
 import { CurrentStepDisplayProps } from "./types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { RequestStatus } from "@/types/meeting";
 
 export const CurrentStepDisplay = ({ 
   currentStep, 
