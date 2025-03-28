@@ -1616,46 +1616,31 @@ export type Database = {
       }
       meeting_minutes: {
         Row: {
-          agenda_notes: Json | null
           attendees: string[] | null
-          author_id: string | null
-          author_name: string | null
-          conclusion: string | null
           content: string | null
           created_at: string
           created_by: string | null
           id: string
-          introduction: string | null
           meeting_id: string
           updated_at: string
           updated_by: string | null
         }
         Insert: {
-          agenda_notes?: Json | null
           attendees?: string[] | null
-          author_id?: string | null
-          author_name?: string | null
-          conclusion?: string | null
           content?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
-          introduction?: string | null
           meeting_id: string
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
-          agenda_notes?: Json | null
           attendees?: string[] | null
-          author_id?: string | null
-          author_name?: string | null
-          conclusion?: string | null
           content?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
-          introduction?: string | null
           meeting_id?: string
           updated_at?: string
           updated_by?: string | null

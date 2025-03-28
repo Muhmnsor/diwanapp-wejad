@@ -99,7 +99,7 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
   // If we're still loading, show a loading indicator
   if (isLoading) {
     return (
-      <Card dir="rtl">
+      <Card>
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle>مهام الاجتماع</CardTitle>
           <Button variant="outline" size="sm" onClick={handleAddTask}>
@@ -117,7 +117,7 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
   // If we have no tasks yet, show the empty state
   if (meetingTasks.length === 0) {
     return (
-      <Card dir="rtl">
+      <Card>
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle>مهام الاجتماع</CardTitle>
           <Button variant="outline" size="sm" onClick={handleAddTask}>
@@ -157,7 +157,7 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
   
   // If we have tasks, use the ProjectTasksList component to show them
   return (
-    <Card dir="rtl">
+    <Card>
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle>مهام الاجتماع</CardTitle>
         <Button variant="outline" size="sm" onClick={handleAddTask}>
@@ -173,8 +173,8 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
             onTaskUpdated={fetchMeetingTasks}
             meetingId={meetingId}
             isGeneral={true}
-            hideTasksHeader={true} 
-            hideTasksTitle={true} 
+            hideTasksHeader={true} // إخفاء زر إضافة المهمة في TasksHeader
+            hideTasksTitle={true} // إخفاء عنوان المهام العامة
           />
         </div>
       </CardContent>

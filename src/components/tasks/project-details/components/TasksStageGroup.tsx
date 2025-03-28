@@ -35,11 +35,11 @@ export const TasksStageGroup = ({
   if (filteredTasks.length === 0) return null;
   
   return (
-    <div className="border rounded-md overflow-hidden">
+    <div className="border rounded-md overflow-hidden" dir="rtl">
       <div className="bg-gray-50 p-3 border-b">
         <h3 className="font-medium">{stage.name}</h3>
       </div>
-      <Table>
+      <Table dir="rtl">
         <TableHeader>
           <TableRow>
             <TableHead>المهمة</TableHead>

@@ -1,8 +1,8 @@
 
 import React from "react";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNavigate, useLocation } from "react-router-dom";
 import { LayoutDashboard, FolderKanban, ListTodo } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
 
 interface MeetingsHeaderProps {
   hasAdminRole: boolean;
@@ -13,38 +13,46 @@ export const MeetingsHeader = ({
   hasAdminRole,
   activeTab
 }: MeetingsHeaderProps) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   return (
-    <div className="w-full bg-white border-t py-3">
-      <div className="flex justify-center">
-        <TabsList className="flex justify-center border-b rounded-none bg-white">
+    <div className="w-full bg-white border-b py-2">
+      <div className="container mx-auto">
+        <TabsList className="w-full grid grid-cols-3 bg-secondary/20 p-1 rounded-xl" dir="rtl">
           <TabsTrigger 
             value="dashboard" 
-            className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium"
+            className="data-[state=active]:bg-white"
           >
-            <LayoutDashboard className="h-4 w-4 ml-1" />
-            لوحة المعلومات
+            <div className="flex items-center gap-2">
+              <LayoutDashboard className="h-4 w-4" />
+              <span>لوحة المعلومات</span>
+            </div>
           </TabsTrigger>
           
           <TabsTrigger 
             value="categories" 
-            className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium"
+            className="data-[state=active]:bg-white"
           >
-            <FolderKanban className="h-4 w-4 ml-1" />
-            تصنيف الاجتماعات
+            <div className="flex items-center gap-2">
+              <FolderKanban className="h-4 w-4" />
+              <span>تصنيف الاجتماعات</span>
+            </div>
           </TabsTrigger>
           
           {hasAdminRole && (
             <TabsTrigger 
               value="all-meetings" 
-              className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium"
+              className="data-[state=active]:bg-white"
             >
-              <ListTodo className="h-4 w-4 ml-1" />
-              كل الاجتماعات
+              <div className="flex items-center gap-2">
+                <ListTodo className="h-4 w-4" />
+                <span>كل الاجتماعات</span>
+              </div>
             </TabsTrigger>
           )}
         </TabsList>
       </div>
-      <Separator className="mt-3" />
     </div>
   );
 };

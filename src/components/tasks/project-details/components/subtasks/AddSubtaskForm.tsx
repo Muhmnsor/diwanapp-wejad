@@ -33,7 +33,7 @@ export const AddSubtaskForm = ({ onSubmit, onCancel, projectMembers, isLoading =
   };
   
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 p-3 border rounded-md bg-gray-50" dir="rtl">
+    <form onSubmit={handleSubmit} className="space-y-3 p-3 border rounded-md bg-gray-50">
       <SubtaskTitleField 
         title={title}
         setTitle={setTitle}

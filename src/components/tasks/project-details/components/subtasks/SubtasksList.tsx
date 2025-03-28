@@ -64,7 +64,7 @@ export const SubtasksList: React.FC<SubtasksListProps> = ({
   }
   
   return (
-    <div className="mt-3 space-y-2" dir="rtl">
+    <div className="mt-3 space-y-2">
       <SubtasksHeader 
         onAddClick={() => setIsAddingSubtask(true)}
         isAddingSubtask={isAddingSubtask}
