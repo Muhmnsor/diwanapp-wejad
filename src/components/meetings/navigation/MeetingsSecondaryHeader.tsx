@@ -65,7 +65,7 @@ export const MeetingsSecondaryHeader = ({
             >
               <ListTodo className="h-4 w-4 ml-1" />
               كل الاجتماعات
-            </ListTodo>
+            </TabsTrigger>
           )}
         </TabsList>
       </div>
