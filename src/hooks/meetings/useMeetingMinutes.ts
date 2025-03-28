@@ -78,20 +78,19 @@ export const useSaveMeetingMinutes = () => {
       const { data: existingMinutes, error: fetchError } = await supabase
         .from('meeting_minutes')
         .select('id')
-        .eq('meeting_id', minutes.meeting_id)
-        .single();
+        .eq('meeting_id', minutes.meeting_id);
       
-      if (fetchError && !fetchError.message.includes('No rows found')) {
+      if (fetchError) {
         console.error('Error checking existing minutes:', fetchError);
         throw fetchError;
       }
       
-      if (existingMinutes?.id) {
-        console.log('Updating existing minutes:', existingMinutes.id);
+      if (existingMinutes && existingMinutes.length > 0) {
+        console.log('Updating existing minutes:', existingMinutes[0].id);
         const { data, error } = await supabase
           .from('meeting_minutes')
           .update(minutesToSave)
-          .eq('id', existingMinutes.id)
+          .eq('id', existingMinutes[0].id)
           .select()
           .single();
           
