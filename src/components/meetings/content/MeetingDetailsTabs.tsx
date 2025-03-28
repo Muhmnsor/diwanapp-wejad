@@ -7,6 +7,8 @@ import { MeetingParticipantsContent } from '../participants/MeetingParticipantsC
 import { MeetingTasksTab } from './tabs/MeetingTasksTab';
 import { Meeting } from '@/types/meeting';
 import { ParticipantDialogBridge } from '../participants/ParticipantDialogBridge';
+import { EnhancedMeetingMinutes } from '../minutes/EnhancedMeetingMinutes';
+import { useMeetingMinutes } from '@/hooks/meetings/useMeetingMinutes';
 
 interface MeetingDetailsTabsProps {
   meeting: Meeting;
@@ -14,6 +16,8 @@ interface MeetingDetailsTabsProps {
 }
 
 export const MeetingDetailsTabs: React.FC<MeetingDetailsTabsProps> = ({ meeting, meetingId }) => {
+  const { data: minutes, isLoading: isMinutesLoading } = useMeetingMinutes(meetingId);
+  
   return (
     <Tabs defaultValue="overview" className="w-full" dir="rtl">
       <TabsList className="flex justify-center border-b rounded-none bg-white mb-6">
@@ -56,7 +60,13 @@ export const MeetingDetailsTabs: React.FC<MeetingDetailsTabsProps> = ({ meeting,
       </TabsContent>
       
       <TabsContent value="minutes" dir="rtl">
-        <MeetingMinutesTab meetingId={meetingId} />
+        <EnhancedMeetingMinutes 
+          meetingId={meetingId} 
+          minutes={minutes}
+          isLoading={isMinutesLoading}
+        >
+          <MeetingMinutesTab meetingId={meetingId} />
+        </EnhancedMeetingMinutes>
       </TabsContent>
       
       <TabsContent value="tasks" dir="rtl">
