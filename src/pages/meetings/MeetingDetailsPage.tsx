@@ -12,20 +12,21 @@ import { ArrowLeft, Edit, Trash } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { MeetingDetailsTabs } from "@/components/meetings/content/MeetingDetailsTabs";
 import { MeetingStatusBadge } from "@/components/meetings/status/MeetingStatusBadge";
+import { MeetingsSecondaryHeader } from "@/components/meetings/navigation/MeetingsSecondaryHeader";
+import { useUserRoles } from "@/hooks/useUserRoles";
 
 const MeetingDetailsPage = () => {
-  const {
-    meetingId
-  } = useParams<{
-    meetingId: string;
-  }>();
+  const { meetingId } = useParams<{ meetingId: string }>();
   const navigate = useNavigate();
+  const { hasAdminRole } = useUserRoles();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  
   const {
     data: meeting,
     isLoading: isMeetingLoading,
     error: meetingError
   } = useMeeting(meetingId || '');
+  
   const {
     mutate: deleteMeeting,
     isPending: isDeleting
@@ -52,8 +53,10 @@ const MeetingDetailsPage = () => {
   };
 
   if (isMeetingLoading) {
-    return <div className="min-h-screen flex flex-col rtl" dir="rtl">
+    return (
+      <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
+        <MeetingsSecondaryHeader hasAdminRole={hasAdminRole} activeTab="" />
         <div className="container mx-auto px-4 py-8 flex-grow">
           <div className="flex items-center mb-8">
             <Button variant="ghost" size="sm" onClick={handleBack} className="ml-4">
@@ -68,12 +71,15 @@ const MeetingDetailsPage = () => {
           </div>
         </div>
         <Footer />
-      </div>;
+      </div>
+    );
   }
 
   if (meetingError || !meeting) {
-    return <div className="min-h-screen flex flex-col rtl" dir="rtl">
+    return (
+      <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
+        <MeetingsSecondaryHeader hasAdminRole={hasAdminRole} activeTab="" />
         <div className="container mx-auto px-4 py-8 flex-grow">
           <div className="flex justify-center items-center h-64">
             <div className="text-center">
@@ -84,11 +90,14 @@ const MeetingDetailsPage = () => {
           </div>
         </div>
         <Footer />
-      </div>;
+      </div>
+    );
   }
 
-  return <div className="min-h-screen flex flex-col rtl" dir="rtl">
+  return (
+    <div className="min-h-screen flex flex-col rtl" dir="rtl">
       <AdminHeader />
+      <MeetingsSecondaryHeader hasAdminRole={hasAdminRole} activeTab="" />
       
       <div className="container mx-auto px-4 py-8 flex-grow">
         {/* Header with back button and title */}
@@ -150,6 +159,8 @@ const MeetingDetailsPage = () => {
       </div>
       
       <Footer />
-    </div>;
+    </div>
+  );
 };
+
 export default MeetingDetailsPage;
