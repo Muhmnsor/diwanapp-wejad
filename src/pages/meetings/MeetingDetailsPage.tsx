@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AdminHeader } from "@/components/layout/AdminHeader";
@@ -16,33 +15,33 @@ import { MeetingsSecondaryHeader } from "@/components/meetings/navigation/Meetin
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { Tabs } from "@/components/ui/tabs";
 import { MeetingStatus } from "@/types/meeting";
-
 const MeetingDetailsPage = () => {
-  const { meetingId } = useParams<{ meetingId: string }>();
+  const {
+    meetingId
+  } = useParams<{
+    meetingId: string;
+  }>();
   const navigate = useNavigate();
-  const { hasAdminRole } = useUserRoles();
+  const {
+    hasAdminRole
+  } = useUserRoles();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  
   const {
     data: meeting,
     isLoading: isMeetingLoading,
     error: meetingError
   } = useMeeting(meetingId || '');
-  
   const {
     mutate: deleteMeeting,
     isPending: isDeleting
   } = useDeleteMeeting();
-
   const handleBack = () => {
     navigate(-1);
   };
-
   const handleEdit = () => {
     // Edit functionality will be implemented later
     console.log('Edit meeting:', meetingId);
   };
-
   const handleDelete = () => {
     if (meetingId) {
       deleteMeeting(meetingId, {
@@ -53,10 +52,8 @@ const MeetingDetailsPage = () => {
       });
     }
   };
-
   if (isMeetingLoading) {
-    return (
-      <div className="min-h-screen flex flex-col rtl" dir="rtl">
+    return <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
         <Tabs value="">
           <MeetingsSecondaryHeader hasAdminRole={hasAdminRole} activeTab="" />
@@ -75,13 +72,10 @@ const MeetingDetailsPage = () => {
           </div>
         </div>
         <Footer />
-      </div>
-    );
+      </div>;
   }
-
   if (meetingError || !meeting) {
-    return (
-      <div className="min-h-screen flex flex-col rtl" dir="rtl">
+    return <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
         <Tabs value="">
           <MeetingsSecondaryHeader hasAdminRole={hasAdminRole} activeTab="" />
@@ -96,12 +90,9 @@ const MeetingDetailsPage = () => {
           </div>
         </div>
         <Footer />
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen flex flex-col rtl" dir="rtl">
+  return <div className="min-h-screen flex flex-col rtl" dir="rtl">
       <AdminHeader />
       <Tabs value="">
         <MeetingsSecondaryHeader hasAdminRole={hasAdminRole} activeTab="" />
@@ -118,57 +109,17 @@ const MeetingDetailsPage = () => {
             <h1 className="text-2xl font-bold">{meeting.title}</h1>
           </div>
           
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleEdit}>
-              <Edit className="h-4 w-4 ml-2" />
-              تعديل
-            </Button>
-            
-            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm">
-                  <Trash className="h-4 w-4 ml-2" />
-                  حذف
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>هل أنت متأكد من حذف هذا الاجتماع؟</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    سيتم حذف جميع البيانات المتعلقة بالاجتماع ولا يمكن التراجع عن هذا الإجراء.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                    {isDeleting ? 'جاري الحذف...' : 'تأكيد الحذف'}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
+          
         </div>
         
         {/* Meeting status badge */}
-        <div className="mb-6">
-          <MeetingStatusBadge status={meeting.meeting_status as MeetingStatus} />
-          
-          <Badge className="mr-2 bg-gray-100 text-gray-800 hover:bg-gray-200">
-            {meeting.meeting_type === 'board' ? 'مجلس إدارة' :
-             meeting.meeting_type === 'department' ? 'قسم' :
-             meeting.meeting_type === 'team' ? 'فريق عمل' :
-             meeting.meeting_type === 'committee' ? 'لجنة' :
-             'أخرى'}
-          </Badge>
-        </div>
+        
         
         {/* Main content with tabs */}
         <MeetingDetailsTabs meeting={meeting} meetingId={meetingId || ''} />
       </div>
       
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default MeetingDetailsPage;
