@@ -21,13 +21,12 @@ const MeetingsPage = () => {
     <div className="min-h-screen flex flex-col rtl" dir="rtl">
       <AdminHeader />
       
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <MeetingsHeader hasAdminRole={hasAdminRole} activeTab={activeTab} />
-        
-        <div className="container mx-auto px-4 py-6 flex-grow">
+      <div className="container mx-auto px-4 py-6 flex-grow">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <MeetingsHeader hasAdminRole={hasAdminRole} activeTab={activeTab} />
           <MeetingsTabsContent hasAdminRole={hasAdminRole} activeTab={activeTab} />
-        </div>
-      </Tabs>
+        </Tabs>
+      </div>
       
       <Footer />
     </div>

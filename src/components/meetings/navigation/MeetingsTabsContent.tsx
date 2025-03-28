@@ -13,17 +13,17 @@ interface MeetingsTabsContentProps {
 export const MeetingsTabsContent = ({ hasAdminRole, activeTab }: MeetingsTabsContentProps) => {
   return (
     <>
-      <TabsContent value="dashboard">
-        {activeTab === "dashboard" && <DashboardTab />}
+      <TabsContent value="dashboard" className="mt-6">
+        <DashboardTab />
       </TabsContent>
       
-      <TabsContent value="categories">
-        {activeTab === "categories" && <CategoriesTab />}
+      <TabsContent value="categories" className="mt-6">
+        <CategoriesTab />
       </TabsContent>
       
       {hasAdminRole && (
-        <TabsContent value="all-meetings">
-          {activeTab === "all-meetings" && <AllMeetingsTab />}
+        <TabsContent value="all-meetings" className="mt-6">
+          <AllMeetingsTab />
         </TabsContent>
       )}
     </>
