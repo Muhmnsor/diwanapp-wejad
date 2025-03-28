@@ -19,21 +19,36 @@ export const MeetingsHeader = ({
   return (
     <div className="w-full bg-white border-t py-0">
       <div className="flex justify-center">
-        <TabsList className="flex justify-center border-b rounded-none bg-white">
-          <TabsTrigger value="dashboard" className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium">
-            <LayoutDashboard className="h-4 w-4 ml-1" />
-            لوحة المعلومات
+        <TabsList className="grid grid-cols-3 bg-secondary/20 p-1 rounded-xl">
+          <TabsTrigger 
+            value="dashboard" 
+            className="data-[state=active]:bg-white"
+          >
+            <div className="flex items-center gap-2">
+              <LayoutDashboard className="h-4 w-4" />
+              <span>لوحة المعلومات</span>
+            </div>
           </TabsTrigger>
           
-          <TabsTrigger value="categories" className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium">
-            <FolderKanban className="h-4 w-4 ml-1" />
-            تصنيف الاجتماعات
+          <TabsTrigger 
+            value="categories" 
+            className="data-[state=active]:bg-white"
+          >
+            <div className="flex items-center gap-2">
+              <FolderKanban className="h-4 w-4" />
+              <span>تصنيف الاجتماعات</span>
+            </div>
           </TabsTrigger>
           
           {hasAdminRole && (
-            <TabsTrigger value="all-meetings" className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium">
-              <ListTodo className="h-4 w-4 ml-1" />
-              كل الاجتماعات
+            <TabsTrigger 
+              value="all-meetings" 
+              className="data-[state=active]:bg-white"
+            >
+              <div className="flex items-center gap-2">
+                <ListTodo className="h-4 w-4" />
+                <span>كل الاجتماعات</span>
+              </div>
             </TabsTrigger>
           )}
         </TabsList>
