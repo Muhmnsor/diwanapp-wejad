@@ -1,6 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { SignatureTable } from '../participants/SignatureTable';
+import { MinutesParticipantsTable } from '../participants/MinutesParticipantsTable';
 import { MeetingMinutes } from '@/hooks/meetings/useMeetingMinutes';
 
 interface EnhancedMeetingMinutesProps {
@@ -28,21 +29,18 @@ export const EnhancedMeetingMinutes: React.FC<EnhancedMeetingMinutesProps> = ({
     return <>{children}</>;
   }
 
-  // If no minutes or no conclusion, just render the original content
-  if (!minutes || !minutes.conclusion) {
-    console.log('No meeting minutes or conclusion found, not showing signature table');
-    return <>{children}</>;
-  }
-
-  // If we have minutes with a conclusion, render the original content plus the signature table
-  console.log('Showing signature table for meeting:', meetingId);
+  // Always render the content with participants table and signatures if we have minutes
   return (
     <div className="space-y-6">
       {children}
       
-      <div className="mt-8">
-        <SignatureTable meetingId={meetingId} />
-      </div>
+      <MinutesParticipantsTable meetingId={meetingId} />
+      
+      {minutes && minutes.conclusion && (
+        <div className="mt-8">
+          <SignatureTable meetingId={meetingId} />
+        </div>
+      )}
     </div>
   );
 };
