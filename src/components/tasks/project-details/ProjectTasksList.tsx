@@ -129,7 +129,7 @@ export const ProjectTasksList = ({
             formatDate={formatDate}
             onStatusChange={handleStatusChange}
             projectId={projectId}
-            isGeneral={isGeneral}
+            isGeneral={isGeneral || false}
             onEditTask={handleEditTask}
             onDeleteTask={handleDeleteTask}
           />
