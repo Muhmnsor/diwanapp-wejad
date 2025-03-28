@@ -1,170 +1,124 @@
-
-import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ProjectStages } from "./ProjectStages";
-import { AddTaskDialog } from "./AddTaskDialog";
-import { TasksHeader } from "./components/TasksHeader";
-import { TasksFilter } from "./components/TasksFilter";
-import { TasksContent } from "./components/TasksContent";
-import { getStatusBadge, getPriorityBadge, formatDate } from "./utils/taskFormatters";
-import { useTasksList } from "./hooks/useTasksList";
-import { Task } from "./types/task";
-import { ProjectMember } from "./types/projectMember";
-import { useProjectMembers } from "./hooks/useProjectMembers";
-import { EditTaskDialog } from "./EditTaskDialog";
+import React, { useState } from "react";
+import { ProjectTask } from "@/types/task";
+import { ProjectTaskItem } from "./ProjectTaskItem";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { AddTaskForm } from "./AddTaskForm";
+import { useProjectTasks } from "@/hooks/tasks/useProjectTasks";
+import { TaskSkeleton } from "../TaskSkeleton";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { useDeleteTask } from "@/hooks/tasks/useDeleteTask";
+import { toast } from "sonner";
+import { useUpdateTask } from "@/hooks/tasks/useUpdateTask";
+import { useCreateTask } from "@/hooks/tasks/useCreateTask";
 
 interface ProjectTasksListProps {
-  projectId?: string | undefined;
-  projectMembers?: ProjectMember[];
-  stages?: { id: string; name: string }[];
-  tasks?: Task[];
-  onTaskAdded?: () => void;
-  onTaskUpdated?: () => void;
-  meetingId?: string;
-  isGeneral?: boolean;
-  hideTasksHeader?: boolean;
-  hideTasksTitle?: boolean;
+  projectId: string;
 }
 
-export type { Task };
+export const ProjectTasksList: React.FC<ProjectTasksListProps> = ({ projectId }) => {
+  const [isAddingTask, setIsAddingTask] = useState(false);
+  const { data: tasks, isLoading, refetch } = useProjectTasks(projectId);
+  const { mutate: deleteTask } = useDeleteTask();
+  const { mutate: updateTask } = useUpdateTask();
+  const { mutate: createTask } = useCreateTask();
 
-export const ProjectTasksList = ({ 
-  projectId,
-  projectMembers: externalProjectMembers,
-  stages: externalStages,
-  tasks: externalTasks,
-  onTaskAdded,
-  onTaskUpdated,
-  meetingId,
-  isGeneral = false,
-  hideTasksHeader = false,
-  hideTasksTitle = false
-}: ProjectTasksListProps) => {
-  const {
-    tasks: fetchedTasks,
-    isLoading,
-    activeTab,
-    setActiveTab,
-    isAddDialogOpen,
-    setIsAddDialogOpen,
-    projectStages,
-    handleStagesChange,
-    tasksByStage,
-    handleStatusChange,
-    fetchTasks,
-    deleteTask
-  } = useTasksList(projectId, meetingId);
-  
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-
-  const { projectMembers: fetchedMembers } = useProjectMembers(
-    externalProjectMembers ? undefined : projectId
-  );
-  
-  const tasks = externalTasks || fetchedTasks;
-  
-  const projectMembers = externalProjectMembers || fetchedMembers;
-
-  const stages = externalStages || projectStages;
-
-  useEffect(() => {
-    if (!externalTasks) {
-      fetchTasks();
-    }
-  }, [projectId, meetingId]);
-
-  const filteredTasks = tasks.filter(task => {
-    if (activeTab === "all") return true;
-    return task.status === activeTab;
-  });
-
-  const handleEditTask = (task: Task) => {
-    setEditingTask(task);
-    setIsEditDialogOpen(true);
+  const handleAddTask = async (taskData: Partial<ProjectTask>) => {
+    createTask(
+      {
+        ...taskData,
+        project_id: projectId,
+      },
+      {
+        onSuccess: () => {
+          toast.success("تمت إضافة المهمة بنجاح");
+          setIsAddingTask(false);
+          refetch();
+        },
+        onError: (error) => {
+          toast.error("حدث خطأ أثناء إضافة المهمة");
+          console.error(error);
+        },
+      }
+    );
   };
 
-  const handleDeleteTask = async (taskId: string) => {
-    try {
-      await deleteTask(taskId);
-      if (onTaskUpdated) onTaskUpdated();
-    } catch (error) {
-      console.error("Error deleting task:", error);
-    }
+  const handleDeleteTask = (taskId: string) => {
+    deleteTask(taskId, {
+      onSuccess: () => {
+        toast.success("تم حذف المهمة بنجاح");
+        refetch();
+      },
+      onError: (error) => {
+        toast.error("حدث خطأ أثناء حذف المهمة");
+        console.error(error);
+      },
+    });
   };
+
+  const handleUpdateTask = (taskId: string, taskData: Partial<ProjectTask>) => {
+    updateTask(
+      { id: taskId, ...taskData },
+      {
+        onSuccess: () => {
+          toast.success("تم تحديث المهمة بنجاح");
+          refetch();
+        },
+        onError: (error) => {
+          toast.error("حدث خطأ أثناء تحديث المهمة");
+          console.error(error);
+        },
+      }
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <TaskSkeleton />
+        <TaskSkeleton />
+        <TaskSkeleton />
+      </div>
+    );
+  }
 
   return (
-    <>
-      {!isGeneral && !meetingId && (
-        <ProjectStages 
-          projectId={projectId} 
-          onStagesChange={handleStagesChange} 
+    <div className="space-y-4" dir="rtl">
+      {tasks && tasks.length > 0 ? (
+        <div className="space-y-4">
+          {tasks.map((task) => (
+            <ProjectTaskItem
+              key={task.id}
+              task={task}
+              onDelete={() => handleDeleteTask(task.id)}
+              onUpdate={(data) => handleUpdateTask(task.id, data)}
+              isGeneral={task.category === "general" ? true : false}
+            />
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          title="لا توجد مهام"
+          description="لم يتم إضافة أي مهام لهذا المشروع بعد"
+          icon="task"
         />
       )}
-      
-      <Card className="border shadow-sm" dir="rtl">
-        <CardHeader className="pb-0">
-          <TasksHeader 
-            onAddTask={() => setIsAddDialogOpen(true)} 
-            isGeneral={isGeneral}
-            hideAddButton={hideTasksHeader}
-            hideTitle={hideTasksTitle}
-          />
-        </CardHeader>
-        
-        <CardContent className="pt-4">
-          <TasksFilter 
-            activeTab={activeTab} 
-            onTabChange={setActiveTab} 
-          />
-          
-          <TasksContent 
-            isLoading={isLoading}
-            activeTab={activeTab}
-            filteredTasks={filteredTasks}
-            projectStages={stages}
-            tasksByStage={tasksByStage}
-            getStatusBadge={getStatusBadge}
-            getPriorityBadge={getPriorityBadge}
-            formatDate={formatDate}
-            onStatusChange={handleStatusChange}
-            projectId={projectId}
-            isGeneral={isGeneral}
-            onEditTask={handleEditTask}
-            onDeleteTask={handleDeleteTask}
-          />
-        </CardContent>
-      </Card>
-      
-      <AddTaskDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        projectId={projectId || ""}
-        projectStages={stages}
-        onTaskAdded={() => {
-          fetchTasks();
-          if (onTaskAdded) onTaskAdded();
-        }}
-        projectMembers={projectMembers}
-        isGeneral={isGeneral}
-        meetingId={meetingId}
-        isWorkspace={false}
-      />
 
-      {editingTask && (
-        <EditTaskDialog
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          task={editingTask}
-          projectStages={stages}
-          projectMembers={projectMembers}
-          onTaskUpdated={() => {
-            fetchTasks();
-            if (onTaskUpdated) onTaskUpdated();
-          }}
-          meetingId={meetingId}
+      {isAddingTask ? (
+        <AddTaskForm
+          onSubmit={handleAddTask}
+          onCancel={() => setIsAddingTask(false)}
         />
+      ) : (
+        <Button
+          variant="outline"
+          className="w-full mt-4"
+          onClick={() => setIsAddingTask(true)}
+        >
+          <Plus className="h-4 w-4 ml-2" />
+          إضافة مهمة جديدة
+        </Button>
       )}
-    </>
+    </div>
   );
 };
