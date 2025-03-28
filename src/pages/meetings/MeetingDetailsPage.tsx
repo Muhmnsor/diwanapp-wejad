@@ -12,6 +12,8 @@ import { ArrowLeft, Edit, Trash } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { MeetingDetailsTabs } from "@/components/meetings/content/MeetingDetailsTabs";
 import { MeetingStatusBadge } from "@/components/meetings/status/MeetingStatusBadge";
+import { MeetingsHeader } from "@/components/meetings/navigation/MeetingsHeader";
+import { useUserRoles } from "@/hooks/useUserRoles";
 
 const MeetingDetailsPage = () => {
   const {
@@ -21,6 +23,7 @@ const MeetingDetailsPage = () => {
   }>();
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const { hasAdminRole } = useUserRoles();
   const {
     data: meeting,
     isLoading: isMeetingLoading,
@@ -54,6 +57,7 @@ const MeetingDetailsPage = () => {
   if (isMeetingLoading) {
     return <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
+        <MeetingsHeader hasAdminRole={hasAdminRole} activeTab="all-meetings" />
         <div className="container mx-auto px-4 py-8 flex-grow">
           <div className="flex items-center mb-8">
             <Button variant="ghost" size="sm" onClick={handleBack} className="ml-4">
@@ -74,6 +78,7 @@ const MeetingDetailsPage = () => {
   if (meetingError || !meeting) {
     return <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
+        <MeetingsHeader hasAdminRole={hasAdminRole} activeTab="all-meetings" />
         <div className="container mx-auto px-4 py-8 flex-grow">
           <div className="flex justify-center items-center h-64">
             <div className="text-center">
@@ -89,6 +94,7 @@ const MeetingDetailsPage = () => {
 
   return <div className="min-h-screen flex flex-col rtl" dir="rtl">
       <AdminHeader />
+      <MeetingsHeader hasAdminRole={hasAdminRole} activeTab="all-meetings" />
       
       <div className="container mx-auto px-4 py-8 flex-grow">
         {/* Header with back button and title */}

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -13,6 +14,8 @@ import { useMeetings } from "@/hooks/meetings/useMeetings";
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
 import { MeetingDialogWrapper } from "@/components/meetings/dialogs/MeetingDialogWrapper";
+import { MeetingsHeader } from "@/components/meetings/navigation/MeetingsHeader";
+
 export const MeetingFolderPage = () => {
   const {
     folderId
@@ -49,6 +52,7 @@ export const MeetingFolderPage = () => {
   if (isLoading) {
     return <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
+        <MeetingsHeader hasAdminRole={hasAdminRole} activeTab="categories" />
         <div className="flex justify-center p-8 flex-grow">
           <div className="text-center">
             <span className="block mb-2">جاري تحميل التصنيف...</span>
@@ -60,6 +64,7 @@ export const MeetingFolderPage = () => {
   if (error || !folder) {
     return <div className="min-h-screen flex flex-col rtl" dir="rtl">
         <AdminHeader />
+        <MeetingsHeader hasAdminRole={hasAdminRole} activeTab="categories" />
         <div className="text-destructive p-4 text-right container mx-auto flex-grow">
           <Button variant="outline" onClick={handleGoBack} className="mb-4">
             <ArrowLeft className="h-4 w-4 ml-2" />
@@ -72,6 +77,7 @@ export const MeetingFolderPage = () => {
   }
   return <div className="min-h-screen flex flex-col rtl" dir="rtl">
       <AdminHeader />
+      <MeetingsHeader hasAdminRole={hasAdminRole} activeTab="categories" />
       
       <div className="container mx-auto px-4 py-6 flex-grow">
         <div className="flex items-center mb-4">

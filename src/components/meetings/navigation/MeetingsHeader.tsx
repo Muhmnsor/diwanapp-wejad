@@ -23,6 +23,7 @@ export const MeetingsHeader = ({
           <TabsTrigger 
             value="dashboard" 
             className="data-[state=active]:bg-white"
+            onClick={() => navigate("/admin/meetings")}
           >
             <div className="flex items-center gap-2">
               <LayoutDashboard className="h-4 w-4" />
@@ -33,6 +34,7 @@ export const MeetingsHeader = ({
           <TabsTrigger 
             value="categories" 
             className="data-[state=active]:bg-white"
+            onClick={() => navigate("/admin/meetings")}
           >
             <div className="flex items-center gap-2">
               <FolderKanban className="h-4 w-4" />
@@ -44,6 +46,7 @@ export const MeetingsHeader = ({
             <TabsTrigger 
               value="all-meetings" 
               className="data-[state=active]:bg-white"
+              onClick={() => navigate("/admin/meetings")}
             >
               <div className="flex items-center gap-2">
                 <ListTodo className="h-4 w-4" />
