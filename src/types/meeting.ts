@@ -12,8 +12,13 @@ export interface Meeting {
   attendance_type: string;
   meeting_status: string;
   folder_id?: string;
+  folder_name?: string;
   created_at?: string;
   updated_at?: string;
+  folder?: {
+    id: string;
+    name: string;
+  };
 }
 
 export type MeetingStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
@@ -22,7 +27,7 @@ export type MeetingType = 'board' | 'department' | 'team' | 'committee' | 'other
 
 export type AttendanceType = 'in_person' | 'virtual' | 'hybrid';
 
-export type ParticipantRole = 'organizer' | 'presenter' | 'member' | 'guest';
+export type ParticipantRole = 'chairman' | 'secretary' | 'member' | 'observer';
 
 export type AttendanceStatus = 'pending' | 'confirmed' | 'attended' | 'absent';
 
@@ -31,6 +36,9 @@ export type TaskType = 'action_item' | 'follow_up' | 'decision' | 'other';
 export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 
 export type DecisionStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+
+// Update the RequestStatus type to include all possible statuses that might be used in the application
+export type RequestStatus = 'pending' | 'in_progress' | 'approved' | 'rejected' | 'completed' | 'cancelled';
 
 export interface MeetingTask {
   id: string;
@@ -41,6 +49,20 @@ export interface MeetingTask {
   assigned_to?: string;
   task_type: TaskType;
   status: TaskStatus;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface MeetingParticipant {
+  id: string;
+  meeting_id: string;
+  user_id: string;
+  user_email: string;
+  user_display_name: string;
+  role: string;
+  attendance_status: string;
+  title?: string;
+  phone?: string;
   created_at?: string;
   updated_at?: string;
 }

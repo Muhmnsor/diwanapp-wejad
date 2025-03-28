@@ -1,21 +1,7 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2, Settings, Bug, Loader2 } from "lucide-react";
 import { RequestType } from "./types";
@@ -28,7 +14,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WorkflowDebugPanel } from "./workflow/debug/WorkflowDebugPanel";
-
 export const AdminWorkflows = () => {
   const queryClient = useQueryClient();
   const [showRequestTypeDialog, setShowRequestTypeDialog] = useState(false);
@@ -38,80 +23,81 @@ export const AdminWorkflows = () => {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("request-types");
-
-  const { data: requestTypes, isLoading: typesLoading } = useQuery({
+  const {
+    data: requestTypes,
+    isLoading: typesLoading
+  } = useQuery({
     queryKey: ["requestTypes"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("request_types")
-        .select("*")
-        .order("name");
-      
+      const {
+        data,
+        error
+      } = await supabase.from("request_types").select("*").order("name");
       if (error) throw error;
       return data as RequestType[];
     }
   });
-
   const handleAddRequestType = () => {
     setSelectedRequestType(null);
     setShowRequestTypeDialog(true);
   };
-
   const handleEditRequestType = (requestType: RequestType) => {
     setSelectedRequestType(requestType);
     setShowRequestTypeDialog(true);
   };
-  
   const handleConfigureWorkflow = (requestType: RequestType) => {
     setSelectedRequestType(requestType);
     setShowWorkflowDialog(true);
   };
-
   const handleRequestTypeCreated = () => {
-    queryClient.invalidateQueries({ queryKey: ["requestTypes"] });
+    queryClient.invalidateQueries({
+      queryKey: ["requestTypes"]
+    });
   };
-  
   const handleWorkflowSaved = () => {
-    queryClient.invalidateQueries({ queryKey: ["requestTypes"] });
+    queryClient.invalidateQueries({
+      queryKey: ["requestTypes"]
+    });
     toast.success("تم حفظ خطوات سير العمل بنجاح");
   };
-  
   const confirmDeleteRequestType = (requestType: RequestType) => {
     setSelectedRequestType(requestType);
     setDeleteError(null);
     setShowDeleteDialog(true);
   };
-
   const deleteRequestTypeMutation = useMutation({
     mutationFn: async (typeId: string) => {
       // استخدام وظيفة حذف نوع الطلب المحسّنة
       console.log("Calling delete_request_type with ID:", typeId);
-      
-      const { data, error } = await supabase
-        .rpc('delete_request_type', { p_request_type_id: typeId });
-      
-      console.log("Result from delete_request_type:", { data, error });
-      
+      const {
+        data,
+        error
+      } = await supabase.rpc('delete_request_type', {
+        p_request_type_id: typeId
+      });
+      console.log("Result from delete_request_type:", {
+        data,
+        error
+      });
       if (error) {
         console.error("Error from delete_request_type RPC:", error);
         throw error;
       }
-      
       if (!data.success) {
         console.error("Unsuccessful delete operation:", data);
         throw new Error(data.message);
       }
-      
       return data;
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["requestTypes"] });
+    onSuccess: data => {
+      queryClient.invalidateQueries({
+        queryKey: ["requestTypes"]
+      });
       setShowDeleteDialog(false);
       toast.success(data.message || "تم حذف نوع الطلب بنجاح");
     },
     onError: (error: any) => {
       console.error("Error deleting request type:", error);
-      
       if (error.message) {
         setDeleteError(error.message);
       } else {
@@ -119,14 +105,12 @@ export const AdminWorkflows = () => {
       }
     }
   });
-
   const handleForceDelete = () => {
     if (selectedRequestType) {
       console.log("Initiating deletion for request type:", selectedRequestType.id);
       deleteRequestTypeMutation.mutate(selectedRequestType.id);
     }
   };
-
   const toggleDebugPanel = () => {
     setShowDebugPanel(!showDebugPanel);
     if (!showDebugPanel) {
@@ -135,9 +119,7 @@ export const AdminWorkflows = () => {
       setActiveTab("request-types");
     }
   };
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">إدارة أنواع الطلبات</h2>
         <div className="flex space-x-2">
@@ -153,10 +135,7 @@ export const AdminWorkflows = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="request-types">أنواع الطلبات</TabsTrigger>
-          {showDebugPanel && <TabsTrigger value="debug">سجلات التتبع</TabsTrigger>}
-        </TabsList>
+        
         
         <TabsContent value="request-types">
           <Card>
@@ -165,10 +144,7 @@ export const AdminWorkflows = () => {
               <CardDescription>إدارة أنواع الطلبات ونماذج البيانات وخطوات سير العمل المرتبطة بها</CardDescription>
             </CardHeader>
             <CardContent>
-              {typesLoading ? (
-                <Skeleton className="h-40 w-full" />
-              ) : requestTypes && requestTypes.length > 0 ? (
-                <Table>
+              {typesLoading ? <Skeleton className="h-40 w-full" /> : requestTypes && requestTypes.length > 0 ? <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>اسم نوع الطلب</TableHead>
@@ -179,8 +155,7 @@ export const AdminWorkflows = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {requestTypes.map((type) => (
-                      <TableRow key={type.id}>
+                    {requestTypes.map(type => <TableRow key={type.id}>
                         <TableCell>{type.name}</TableCell>
                         <TableCell>{type.description || "لا يوجد وصف"}</TableCell>
                         <TableCell>{type.form_schema.fields?.length || 0}</TableCell>
@@ -189,69 +164,36 @@ export const AdminWorkflows = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleConfigureWorkflow(type)}
-                            >
+                            <Button variant="outline" size="sm" onClick={() => handleConfigureWorkflow(type)}>
                               <Settings className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleEditRequestType(type)}
-                            >
+                            <Button variant="outline" size="sm" onClick={() => handleEditRequestType(type)}>
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-red-500"
-                              onClick={() => confirmDeleteRequestType(type)}
-                            >
+                            <Button variant="outline" size="sm" className="text-red-500" onClick={() => confirmDeleteRequestType(type)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </TableCell>
-                      </TableRow>
-                    ))}
+                      </TableRow>)}
                   </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-8">
+                </Table> : <div className="text-center py-8">
                   <p className="text-muted-foreground">
                     لا توجد أنواع طلبات مسجلة
                   </p>
-                </div>
-              )}
+                </div>}
             </CardContent>
           </Card>
         </TabsContent>
         
-        {showDebugPanel && (
-          <TabsContent value="debug">
+        {showDebugPanel && <TabsContent value="debug">
             <WorkflowDebugPanel />
-          </TabsContent>
-        )}
+          </TabsContent>}
       </Tabs>
 
-      <RequestTypeDialog
-        isOpen={showRequestTypeDialog}
-        onClose={() => setShowRequestTypeDialog(false)}
-        onRequestTypeCreated={handleRequestTypeCreated}
-        requestType={selectedRequestType}
-      />
+      <RequestTypeDialog isOpen={showRequestTypeDialog} onClose={() => setShowRequestTypeDialog(false)} onRequestTypeCreated={handleRequestTypeCreated} requestType={selectedRequestType} />
       
-      {selectedRequestType && (
-        <WorkflowConfigDialog
-          isOpen={showWorkflowDialog}
-          onClose={() => setShowWorkflowDialog(false)}
-          requestTypeId={selectedRequestType.id}
-          requestTypeName={selectedRequestType.name}
-          workflowId={selectedRequestType.default_workflow_id || null}
-          onWorkflowSaved={handleWorkflowSaved}
-        />
-      )}
+      {selectedRequestType && <WorkflowConfigDialog isOpen={showWorkflowDialog} onClose={() => setShowWorkflowDialog(false)} requestTypeId={selectedRequestType.id} requestTypeName={selectedRequestType.name} workflowId={selectedRequestType.default_workflow_id || null} onWorkflowSaved={handleWorkflowSaved} />}
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
@@ -263,29 +205,20 @@ export const AdminWorkflows = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           
-          {deleteError && (
-            <Alert variant="destructive" className="mt-4">
+          {deleteError && <Alert variant="destructive" className="mt-4">
               <AlertDescription>{deleteError}</AlertDescription>
-            </Alert>
-          )}
+            </Alert>}
           
           <AlertDialogFooter>
             <AlertDialogCancel>إلغاء</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleForceDelete}
-              disabled={deleteRequestTypeMutation.isPending}
-              className="bg-red-500 hover:bg-red-600"
-            >
-              {deleteRequestTypeMutation.isPending ? (
-                <>
+            <AlertDialogAction onClick={handleForceDelete} disabled={deleteRequestTypeMutation.isPending} className="bg-red-500 hover:bg-red-600">
+              {deleteRequestTypeMutation.isPending ? <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   جاري الحذف...
-                </>
-              ) : "حذف"}
+                </> : "حذف"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
-  );
+    </div>;
 };

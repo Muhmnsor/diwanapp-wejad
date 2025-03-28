@@ -10,7 +10,10 @@ interface TasksContentProps {
   isLoading: boolean;
   activeTab: string;
   filteredTasks: Task[];
-  projectStages: { id: string; name: string }[];
+  projectStages: {
+    id: string;
+    name: string;
+  }[];
   tasksByStage: Record<string, Task[]>;
   getStatusBadge: (status: string) => JSX.Element;
   getPriorityBadge: (priority: string | null) => JSX.Element | null;
@@ -33,20 +36,18 @@ export const TasksContent = ({
   formatDate,
   onStatusChange,
   projectId,
-  isGeneral,
+  isGeneral = false,
   onEditTask,
   onDeleteTask
 }: TasksContentProps) => {
   if (isLoading) {
     return (
       <div className="space-y-3" dir="rtl">
-        {[...Array(3)].map((_, index) => (
-          <Skeleton key={index} className="h-24 w-full" />
-        ))}
+        {[...Array(3)].map((_, index) => <Skeleton key={index} className="h-24 w-full" />)}
       </div>
     );
   }
-
+  
   if (filteredTasks.length === 0) {
     return (
       <div className="text-center py-8 bg-gray-50 rounded-md border" dir="rtl">
@@ -60,18 +61,18 @@ export const TasksContent = ({
     return (
       <div className="space-y-6" dir="rtl">
         {projectStages.map(stage => (
-          <TasksStageGroup
-            key={stage.id}
-            stage={stage}
-            tasks={tasksByStage[stage.id] || []}
-            activeTab={activeTab}
-            getStatusBadge={getStatusBadge}
-            getPriorityBadge={getPriorityBadge}
-            formatDate={formatDate}
-            onStatusChange={onStatusChange}
-            projectId={projectId || ''}
-            onEdit={onEditTask}
-            onDelete={onDeleteTask}
+          <TasksStageGroup 
+            key={stage.id} 
+            stage={stage} 
+            tasks={tasksByStage[stage.id] || []} 
+            activeTab={activeTab} 
+            getStatusBadge={getStatusBadge} 
+            getPriorityBadge={getPriorityBadge} 
+            formatDate={formatDate} 
+            onStatusChange={onStatusChange} 
+            projectId={projectId || ''} 
+            onEdit={onEditTask} 
+            onDelete={onDeleteTask} 
           />
         ))}
       </div>
@@ -82,9 +83,6 @@ export const TasksContent = ({
   return (
     <div className="space-y-6" dir="rtl">
       <div className="bg-white rounded-md shadow-sm overflow-hidden border">
-        <div className="p-4 bg-gray-50 border-b">
-          <h3 className="font-medium">{isGeneral ? "المهام العامة" : "المهام"}</h3>
-        </div>
         <div className="border rounded-md overflow-hidden">
           <Table dir="rtl">
             <TableHeader>
@@ -99,16 +97,16 @@ export const TasksContent = ({
             </TableHeader>
             <TableBody>
               {filteredTasks.map(task => (
-                <TaskItem
-                  key={task.id}
-                  task={task}
-                  getStatusBadge={getStatusBadge}
-                  getPriorityBadge={getPriorityBadge}
-                  formatDate={formatDate}
-                  onStatusChange={onStatusChange}
-                  projectId={projectId || ''}
-                  onEdit={onEditTask}
-                  onDelete={onDeleteTask}
+                <TaskItem 
+                  key={task.id} 
+                  task={task} 
+                  getStatusBadge={getStatusBadge} 
+                  getPriorityBadge={getPriorityBadge} 
+                  formatDate={formatDate} 
+                  onStatusChange={onStatusChange} 
+                  projectId={projectId || ''} 
+                  onEdit={onEditTask} 
+                  onDelete={onDeleteTask} 
                 />
               ))}
             </TableBody>

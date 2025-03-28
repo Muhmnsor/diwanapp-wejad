@@ -1614,6 +1614,113 @@ export type Database = {
           },
         ]
       }
+      meeting_minutes: {
+        Row: {
+          agenda_notes: Json | null
+          attendees: string[] | null
+          author_id: string | null
+          author_name: string | null
+          conclusion: string | null
+          content: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          introduction: string | null
+          meeting_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          agenda_notes?: Json | null
+          attendees?: string[] | null
+          author_id?: string | null
+          author_name?: string | null
+          conclusion?: string | null
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          introduction?: string | null
+          meeting_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          agenda_notes?: Json | null
+          attendees?: string[] | null
+          author_id?: string | null
+          author_name?: string | null
+          conclusion?: string | null
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          introduction?: string | null
+          meeting_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_minutes_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_minutes_items: {
+        Row: {
+          agenda_item_id: string | null
+          content: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          meeting_id: string
+          order_number: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          agenda_item_id?: string | null
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          meeting_id: string
+          order_number: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          agenda_item_id?: string | null
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          meeting_id?: string
+          order_number?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_minutes_items_agenda_item_id_fkey"
+            columns: ["agenda_item_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_agenda_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_minutes_items_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meeting_objectives: {
         Row: {
           content: string
@@ -1642,6 +1749,106 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "meeting_objectives_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_participants: {
+        Row: {
+          attendance_status: string | null
+          created_at: string | null
+          id: string
+          meeting_id: string
+          phone: string | null
+          role: string | null
+          title: string | null
+          updated_at: string | null
+          user_display_name: string | null
+          user_email: string | null
+          user_id: string
+        }
+        Insert: {
+          attendance_status?: string | null
+          created_at?: string | null
+          id?: string
+          meeting_id: string
+          phone?: string | null
+          role?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_display_name?: string | null
+          user_email?: string | null
+          user_id: string
+        }
+        Update: {
+          attendance_status?: string | null
+          created_at?: string | null
+          id?: string
+          meeting_id?: string
+          phone?: string | null
+          role?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_display_name?: string | null
+          user_email?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_participants_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_tasks: {
+        Row: {
+          assigned_to: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          meeting_id: string
+          status: string
+          task_type: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          meeting_id: string
+          status?: string
+          task_type?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          meeting_id?: string
+          status?: string
+          task_type?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_tasks_meeting_id_fkey"
             columns: ["meeting_id"]
             isOneToOne: false
             referencedRelation: "meetings"
@@ -4260,11 +4467,13 @@ export type Database = {
           due_date: string | null
           id: string
           is_general: boolean | null
+          meeting_id: string | null
           priority: string | null
           project_id: string | null
           requires_deliverable: boolean | null
           stage_id: string | null
           status: string | null
+          task_type: string | null
           title: string
           updated_at: string | null
           workspace_id: string | null
@@ -4279,11 +4488,13 @@ export type Database = {
           due_date?: string | null
           id?: string
           is_general?: boolean | null
+          meeting_id?: string | null
           priority?: string | null
           project_id?: string | null
           requires_deliverable?: boolean | null
           stage_id?: string | null
           status?: string | null
+          task_type?: string | null
           title: string
           updated_at?: string | null
           workspace_id?: string | null
@@ -4298,16 +4509,26 @@ export type Database = {
           due_date?: string | null
           id?: string
           is_general?: boolean | null
+          meeting_id?: string | null
           priority?: string | null
           project_id?: string | null
           requires_deliverable?: boolean | null
           stage_id?: string | null
           status?: string | null
+          task_type?: string | null
           title?: string
           updated_at?: string | null
           workspace_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tasks_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       unified_task_attachments: {
         Row: {

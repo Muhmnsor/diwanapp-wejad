@@ -1,180 +1,231 @@
 
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ParticipantRole, AttendanceStatus } from "@/types/meeting";
-import { useAddMeetingParticipant } from "@/hooks/meetings/useAddMeetingParticipant";
-import { toast } from "sonner";
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
+import { useAddMeetingParticipant } from '@/hooks/meetings/useAddMeetingParticipant';
+import { AttendanceStatus, ParticipantRole } from '@/types/meeting';
+import { supabase } from '@/integrations/supabase/client';
+import { useParticipantRoles } from '@/hooks/meetings/useParticipantRoles';
+import { useMeetingRoles } from '@/hooks/meetings/useMeetingRoles';
 
-interface AddParticipantDialogProps {
+export interface AddParticipantDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   meetingId: string;
+  onSuccess?: () => void;
+  onSubmit?: (participantData: {
+    user_email: string;
+    user_display_name: string;
+    role: ParticipantRole;
+    title?: string;
+    phone?: string;
+  }) => void;
+  isPending?: boolean;
 }
 
-export const AddParticipantDialog = ({ open, onOpenChange, meetingId }: AddParticipantDialogProps) => {
-  const [email, setEmail] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [role, setRole] = useState<ParticipantRole>("member");
-  const [attendanceStatus, setAttendanceStatus] = useState<AttendanceStatus>("pending");
-  const [errors, setErrors] = useState<{
-    email?: string;
-    displayName?: string;
-  }>({});
+export const AddParticipantDialog: React.FC<AddParticipantDialogProps> = ({
+  open,
+  onOpenChange,
+  meetingId,
+  onSuccess,
+  onSubmit,
+  isPending: externalIsPending,
+}) => {
+  const [email, setEmail] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [title, setTitle] = useState('');
+  const [phone, setPhone] = useState('');
+  const [role, setRole] = useState<ParticipantRole>('member');
+  const { mutate: addParticipant, isPending: internalIsPending } = useAddMeetingParticipant();
+  const { availableRoles } = useParticipantRoles(meetingId);
+  const { getRoleLabel } = useMeetingRoles();
   
-  const { mutate: addParticipant, isPending } = useAddMeetingParticipant();
-  
-  const validateForm = () => {
-    const newErrors: {email?: string; displayName?: string} = {};
-    let isValid = true;
-    
-    if (!email.trim()) {
-      newErrors.email = "البريد الإلكتروني مطلوب";
-      isValid = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = "صيغة البريد الإلكتروني غير صحيحة";
-      isValid = false;
+  const isPending = externalIsPending !== undefined ? externalIsPending : internalIsPending;
+
+  // إعادة تعيين اختيار الدور إذا كان الدور الحالي غير متاح
+  useEffect(() => {
+    if (open && availableRoles.length > 0 && !availableRoles.includes(role)) {
+      setRole(availableRoles[0]);
     }
-    
-    if (!displayName.trim()) {
-      newErrors.displayName = "الاسم مطلوب";
-      isValid = false;
+  }, [open, availableRoles, role]);
+
+  // إعادة تعيين النموذج عند فتح الحوار
+  useEffect(() => {
+    if (open) {
+      setEmail('');
+      setDisplayName('');
+      setTitle('');
+      setPhone('');
+      setRole('member');
     }
-    
-    setErrors(newErrors);
-    return isValid;
+  }, [open]);
+
+  // وظيفة التحقق من صحة رقم الجوال
+  const validatePhone = (value: string): boolean => {
+    // تأكد من أن الهاتف يبدأ بـ 05 وله 10 أرقام في المجموع
+    return /^05\d{8}$/.test(value);
   };
-  
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    if (!email || !displayName || !role) {
+      toast.error('يرجى ملء جميع الحقول المطلوبة');
+      return;
+    }
+
+    // التحقق من صحة رقم الجوال
+    if (phone && !validatePhone(phone)) {
+      toast.error('رقم الجوال يجب أن يبدأ بـ 05 ويتكون من 10 أرقام');
+      return;
+    }
     
-    addParticipant({
-      meetingId,
-      participant: {
+    // إذا تم توفير معالج إرسال خارجي، استخدمه
+    if (onSubmit) {
+      onSubmit({
         user_email: email,
         user_display_name: displayName,
         role,
-        attendance_status: attendanceStatus
-      }
-    }, {
-      onSuccess: () => {
-        toast.success("تمت إضافة المشارك بنجاح");
-        resetForm();
-        onOpenChange(false);
-      },
-      onError: (error) => {
-        console.error("Error adding participant:", error);
-        toast.error("حدث خطأ أثناء إضافة المشارك");
-      }
-    });
-  };
-  
-  const resetForm = () => {
-    setEmail("");
-    setDisplayName("");
-    setRole("member");
-    setAttendanceStatus("pending");
-    setErrors({});
+        title,
+        phone
+      });
+      return;
+    }
+    
+    try {
+      // الحصول على المستخدم الحالي لتعيينه كمنشئ
+      const { data: userData } = await supabase.auth.getUser();
+      const creatorId = userData?.user?.id;
+      
+      // إضافة المشارك باستخدام الهوك
+      addParticipant({
+        meetingId,
+        participant: {
+          user_email: email,
+          user_display_name: displayName,
+          role: role,
+          attendance_status: 'pending' as AttendanceStatus,
+          title,
+          phone,
+          // إذا كان هذا المشارك مستخدم مسجل بهذا البريد الإلكتروني، فيجب علينا مثاليًا
+          // البحث عن معرفه. في الوقت الحالي، نستخدم معرف UUID سيتم إنشاؤه في الهوك.
+        }
+      }, {
+        onSuccess: () => {
+          if (onSuccess) onSuccess();
+          onOpenChange(false);
+          
+          // إعادة تعيين النموذج
+          setEmail('');
+          setDisplayName('');
+          setTitle('');
+          setPhone('');
+          setRole('member');
+          
+          toast.success('تمت إضافة المشارك بنجاح');
+        },
+        onError: (error) => {
+          console.error('Error adding participant:', error);
+          toast.error('حدث خطأ أثناء إضافة المشارك');
+        }
+      });
+      
+    } catch (error) {
+      console.error('Exception adding participant:', error);
+      toast.error('حدث خطأ غير متوقع');
+    }
   };
   
   return (
-    <Dialog open={open} onOpenChange={(newOpen) => {
-      if (!newOpen) {
-        resetForm();
-      }
-      onOpenChange(newOpen);
-    }}>
-      <DialogContent className="sm:max-w-[425px]" dir="rtl">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>إضافة مشارك جديد</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <Label htmlFor="email">
-              البريد الإلكتروني <span className="text-destructive">*</span>
-            </Label>
+            <Label htmlFor="email">البريد الإلكتروني</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="أدخل البريد الإلكتروني"
-              className={errors.email ? "border-destructive" : ""}
+              placeholder="example@domain.com"
+              required
             />
-            {errors.email && (
-              <p className="text-destructive text-xs">{errors.email}</p>
-            )}
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="displayName">
-              الاسم <span className="text-destructive">*</span>
-            </Label>
+            <Label htmlFor="displayName">الاسم</Label>
             <Input
               id="displayName"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="أدخل اسم المشارك"
-              className={errors.displayName ? "border-destructive" : ""}
+              placeholder="اسم المشارك"
+              required
             />
-            {errors.displayName && (
-              <p className="text-destructive text-xs">{errors.displayName}</p>
-            )}
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="role">دور المشارك</Label>
+            <Label htmlFor="title">الصفة</Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="المسمى الوظيفي أو الصفة"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="phone">رقم الجوال</Label>
+            <Input
+              id="phone"
+              value={phone}
+              onChange={(e) => {
+                // التأكد من إدخال الأرقام فقط وتبدأ بـ 05
+                const value = e.target.value;
+                if (/^\d*$/.test(value) && value.length <= 10) {
+                  setPhone(value);
+                }
+              }}
+              placeholder="05xxxxxxxx"
+              inputMode="numeric"
+            />
+            <p className="text-xs text-muted-foreground">يجب أن يبدأ بـ 05 ويتكون من 10 أرقام</p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="role">الدور</Label>
             <Select value={role} onValueChange={(value) => setRole(value as ParticipantRole)}>
               <SelectTrigger id="role">
-                <SelectValue placeholder="اختر دور المشارك" />
+                <SelectValue placeholder="اختر الدور" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="organizer">منظم</SelectItem>
-                <SelectItem value="presenter">مقدم</SelectItem>
-                <SelectItem value="member">عضو</SelectItem>
-                <SelectItem value="guest">ضيف</SelectItem>
+                {availableRoles.map((availableRole) => (
+                  <SelectItem key={availableRole} value={availableRole}>
+                    {getRoleLabel(availableRole)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="attendanceStatus">حالة الحضور</Label>
-            <Select value={attendanceStatus} onValueChange={(value) => setAttendanceStatus(value as AttendanceStatus)}>
-              <SelectTrigger id="attendanceStatus">
-                <SelectValue placeholder="اختر حالة الحضور" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">قيد الانتظار</SelectItem>
-                <SelectItem value="confirmed">مؤكد</SelectItem>
-                <SelectItem value="attended">حضر</SelectItem>
-                <SelectItem value="absent">متغيب</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <DialogFooter className="pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
+          <DialogFooter className="mt-6">
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isPending}
             >
               إلغاء
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "جاري الإضافة..." : "إضافة"}
+              {isPending ? 'جاري الإضافة...' : 'إضافة المشارك'}
             </Button>
           </DialogFooter>
         </form>

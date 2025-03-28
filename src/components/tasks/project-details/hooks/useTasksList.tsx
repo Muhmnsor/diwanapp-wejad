@@ -1,3 +1,4 @@
+
 import { useTasksFetching } from "./useTasksFetching";
 import { useTaskStatusManagement } from "./useTaskStatusManagement";
 import { useTasksState } from "./useTasksState";
@@ -6,7 +7,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Task } from "../types/task";
 
-export const useTasksList = (projectId: string | undefined) => {
+export const useTasksList = (projectId?: string, meetingId?: string) => {
   // Hook for handling UI state
   const {
     activeTab,
@@ -25,7 +26,7 @@ export const useTasksList = (projectId: string | undefined) => {
     setTasks,
     setTasksByStage,
     fetchTasks
-  } = useTasksFetching(projectId);
+  } = useTasksFetching(projectId, meetingId);
 
   // Hook for task status management
   const { handleStatusChange } = useTaskStatusManagement(
@@ -192,7 +193,7 @@ export const useTasksList = (projectId: string | undefined) => {
     tasksByStage,
     handleStatusChange,
     fetchTasks,
-    isGeneral: !projectId,
+    isGeneral: !projectId && !meetingId,
     deleteTask,
     updateTask
   };
