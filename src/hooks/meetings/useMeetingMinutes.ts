@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -34,6 +35,7 @@ export const useMeetingMinutes = (meetingId: string) => {
         throw error;
       }
       
+      // Parse the agenda_notes if it's a string
       if (data && data.agenda_notes && typeof data.agenda_notes === 'string') {
         try {
           data.agenda_notes = JSON.parse(data.agenda_notes);
@@ -55,6 +57,8 @@ export const useSaveMeetingMinutes = () => {
   
   return useMutation({
     mutationFn: async (minutes: MeetingMinutes) => {
+      console.log('Saving minutes:', minutes);
+      
       if (user?.id && !minutes.author_id) {
         minutes.author_id = user.id;
         minutes.author_name = user.display_name || user.email;
@@ -68,13 +72,22 @@ export const useSaveMeetingMinutes = () => {
         updated_at: new Date().toISOString()
       };
       
-      const { data: existingMinutes } = await supabase
+      console.log('Minutes to save:', minutesToSave);
+      
+      // Check if minutes already exist for this meeting
+      const { data: existingMinutes, error: fetchError } = await supabase
         .from('meeting_minutes')
         .select('id')
         .eq('meeting_id', minutes.meeting_id)
         .single();
       
+      if (fetchError && !fetchError.message.includes('No rows found')) {
+        console.error('Error checking existing minutes:', fetchError);
+        throw fetchError;
+      }
+      
       if (existingMinutes?.id) {
+        console.log('Updating existing minutes:', existingMinutes.id);
         const { data, error } = await supabase
           .from('meeting_minutes')
           .update(minutesToSave)
@@ -82,16 +95,27 @@ export const useSaveMeetingMinutes = () => {
           .select()
           .single();
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error updating meeting minutes:', error);
+          throw error;
+        }
+        
+        console.log('Updated minutes:', data);
         return data;
       } else {
+        console.log('Creating new minutes');
         const { data, error } = await supabase
           .from('meeting_minutes')
           .insert({ ...minutesToSave, created_at: new Date().toISOString() })
           .select()
           .single();
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error creating meeting minutes:', error);
+          throw error;
+        }
+        
+        console.log('Created minutes:', data);
         return data;
       }
     },
