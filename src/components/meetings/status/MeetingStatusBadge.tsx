@@ -2,19 +2,25 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Clock, AlertCircle, XCircle } from 'lucide-react';
+import { MeetingStatus } from '@/types/meeting';
 
 // Define the allowed status types
-type MeetingStatus = 'upcoming' | 'in-progress' | 'completed' | 'cancelled';
+type MeetingStatusBadgeProp = 'upcoming' | 'in-progress' | 'completed' | 'cancelled' | 'scheduled' | 'in_progress';
 
 interface MeetingStatusBadgeProps {
-  status: MeetingStatus;
+  status: MeetingStatusBadgeProp | MeetingStatus | string;
 }
 
 export const MeetingStatusBadge = ({ status }: MeetingStatusBadgeProps) => {
   // Default status if undefined
   const meetingStatus = status || 'upcoming';
   
-  switch (meetingStatus) {
+  // Map any incoming status to the expected values
+  let normalizedStatus = meetingStatus;
+  if (meetingStatus === 'scheduled') normalizedStatus = 'upcoming';
+  if (meetingStatus === 'in_progress') normalizedStatus = 'in-progress';
+  
+  switch (normalizedStatus) {
     case 'upcoming':
       return (
         <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200 mr-2">
