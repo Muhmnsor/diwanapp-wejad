@@ -1,5 +1,4 @@
 
-import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ProjectStages } from "./ProjectStages";
 import { AddTaskDialog } from "./AddTaskDialog";
@@ -9,42 +8,21 @@ import { TasksContent } from "./components/TasksContent";
 import { getStatusBadge, getPriorityBadge, formatDate } from "./utils/taskFormatters";
 import { useTasksList } from "./hooks/useTasksList";
 import { Task } from "./types/task";
-import { ProjectMember } from "./types/projectMember";
 import { useProjectMembers } from "./hooks/useProjectMembers";
+import { useState } from "react";
 import { EditTaskDialog } from "./EditTaskDialog";
 
-interface ProjectTasksListProps {
+interface TasksListProps {
   projectId?: string | undefined;
-  projectMembers?: ProjectMember[];
-  stages?: { id: string; name: string }[];
-  tasks?: Task[];
-  onTaskAdded?: () => void;
-  onTaskUpdated?: () => void;
-  meetingId?: string;
-  isGeneral?: boolean;
-  hideTasksHeader?: boolean;
-  hideTasksTitle?: boolean;
   isWorkspace?: boolean;
 }
 
+// Re-export Task interface for backward compatibility
 export type { Task };
 
-export const ProjectTasksList = ({ 
-  projectId,
-  projectMembers: externalProjectMembers,
-  stages: externalStages,
-  tasks: externalTasks,
-  onTaskAdded,
-  onTaskUpdated,
-  meetingId,
-  isGeneral = false,
-  hideTasksHeader = false,
-  hideTasksTitle = false,
-  isWorkspace = false
-}: ProjectTasksListProps) => {
-  // Pass meetingId separately in first position if available, otherwise pass isWorkspace 
+export const TasksList = ({ projectId, isWorkspace = false }: TasksListProps) => {
   const {
-    tasks: fetchedTasks,
+    tasks,
     isLoading,
     activeTab,
     setActiveTab,
@@ -55,33 +33,18 @@ export const ProjectTasksList = ({
     tasksByStage,
     handleStatusChange,
     fetchTasks,
+    isGeneral,
     deleteTask
-  } = useTasksList(
-    projectId, 
-    meetingId || isWorkspace
-  );
-  
+  } = useTasksList(projectId, isWorkspace);
+
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  const { projectMembers: fetchedMembers } = useProjectMembers(
-    externalProjectMembers ? undefined : projectId
-  );
-  
-  const tasks = externalTasks || fetchedTasks;
-  
-  const projectMembers = externalProjectMembers || fetchedMembers;
-
-  const stages = externalStages || projectStages;
+  // Fetch project members
+  const { projectMembers } = useProjectMembers(projectId);
 
   // Convert isGeneral to boolean to ensure type safety
   const isGeneralBoolean = Boolean(isGeneral);
-
-  useEffect(() => {
-    if (!externalTasks) {
-      fetchTasks();
-    }
-  }, [projectId, meetingId]);
 
   const filteredTasks = tasks.filter(task => {
     if (activeTab === "all") return true;
@@ -96,7 +59,6 @@ export const ProjectTasksList = ({
   const handleDeleteTask = async (taskId: string) => {
     try {
       await deleteTask(taskId);
-      if (onTaskUpdated) onTaskUpdated();
     } catch (error) {
       console.error("Error deleting task:", error);
     }
@@ -104,21 +66,16 @@ export const ProjectTasksList = ({
 
   return (
     <>
-      {!isGeneralBoolean && !meetingId && (
+      {!isGeneralBoolean && !isWorkspace && (
         <ProjectStages 
           projectId={projectId} 
           onStagesChange={handleStagesChange} 
         />
       )}
       
-      <Card className="border shadow-sm" dir="rtl">
+      <Card className="border shadow-sm">
         <CardHeader className="pb-0">
-          <TasksHeader 
-            onAddTask={() => setIsAddDialogOpen(true)} 
-            isGeneral={isGeneralBoolean}
-            hideAddButton={hideTasksHeader}
-            hideTitle={hideTasksTitle}
-          />
+          <TasksHeader onAddTask={() => setIsAddDialogOpen(true)} isGeneral={isGeneralBoolean} />
         </CardHeader>
         
         <CardContent className="pt-4">
@@ -131,7 +88,7 @@ export const ProjectTasksList = ({
             isLoading={isLoading}
             activeTab={activeTab}
             filteredTasks={filteredTasks}
-            projectStages={stages}
+            projectStages={projectStages}
             tasksByStage={tasksByStage}
             getStatusBadge={getStatusBadge}
             getPriorityBadge={getPriorityBadge}
@@ -149,29 +106,22 @@ export const ProjectTasksList = ({
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
         projectId={projectId || ""}
-        projectStages={stages}
-        onTaskAdded={() => {
-          fetchTasks();
-          if (onTaskAdded) onTaskAdded();
-        }}
+        projectStages={projectStages}
+        onTaskAdded={fetchTasks}
         projectMembers={projectMembers}
         isGeneral={isGeneralBoolean}
-        meetingId={meetingId}
         isWorkspace={isWorkspace}
       />
 
+      {/* Dialog for editing tasks */}
       {editingTask && (
         <EditTaskDialog
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
           task={editingTask}
-          projectStages={stages}
+          projectStages={projectStages}
           projectMembers={projectMembers}
-          onTaskUpdated={() => {
-            fetchTasks();
-            if (onTaskUpdated) onTaskUpdated();
-          }}
-          meetingId={meetingId}
+          onTaskUpdated={fetchTasks}
         />
       )}
     </>
