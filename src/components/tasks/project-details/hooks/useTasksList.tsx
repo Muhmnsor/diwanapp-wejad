@@ -1,4 +1,3 @@
-
 import { useTasksFetching } from "./useTasksFetching";
 import { useTaskStatusManagement } from "./useTaskStatusManagement";
 import { useTasksState } from "./useTasksState";
@@ -33,7 +32,7 @@ export const useTasksList = (
     setTasks,
     setTasksByStage,
     fetchTasks
-  } = useTasksFetching(projectId, meetingId);
+  } = useTasksFetching(projectId, secondParam);
 
   // Hook for task status management
   const { handleStatusChange } = useTaskStatusManagement(
@@ -200,7 +199,7 @@ export const useTasksList = (
     tasksByStage,
     handleStatusChange,
     fetchTasks,
-    isGeneral: !projectId && !meetingId,
+    isGeneral: !projectId && !meetingId && !isWorkspace,
     deleteTask,
     updateTask
   };

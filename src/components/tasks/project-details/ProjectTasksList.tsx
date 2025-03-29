@@ -41,10 +41,6 @@ export const ProjectTasksList = ({
   hideTasksTitle = false,
   isWorkspace = false
 }: ProjectTasksListProps) => {
-  // Pass the correct types to useTasksList
-  // If meetingId is provided, pass it as string
-  // If isWorkspace is true and no meetingId, pass true
-  // Otherwise pass undefined for the second parameter
   const secondParam = meetingId ? meetingId : (isWorkspace ? true : undefined);
   
   const {
@@ -75,7 +71,6 @@ export const ProjectTasksList = ({
 
   const stages = externalStages || projectStages;
 
-  // Convert isGeneral to boolean to ensure type safety
   const isGeneralBoolean = Boolean(isGeneral);
 
   useEffect(() => {

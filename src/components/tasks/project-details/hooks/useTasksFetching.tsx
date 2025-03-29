@@ -4,7 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Task } from "../types/task";
 import { toast } from "sonner";
 
-export const useTasksFetching = (projectId?: string, meetingId?: string) => {
+export const useTasksFetching = (projectId?: string, secondParam?: string | boolean) => {
+  // Convert secondParam to appropriate types
+  const meetingId = typeof secondParam === 'string' ? secondParam : undefined;
+  const isWorkspace = secondParam === true;
+
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [tasksByStage, setTasksByStage] = useState<Record<string, Task[]>>({});
@@ -21,6 +25,9 @@ export const useTasksFetching = (projectId?: string, meetingId?: string) => {
         query = query.eq('project_id', projectId);
       } else if (meetingId) {
         query = query.eq('meeting_id', meetingId);
+      } else if (isWorkspace) {
+        // When isWorkspace is true and projectId is provided, we want tasks for that workspace
+        query = query.eq('workspace_id', projectId);
       } else {
         // General tasks
         query = query.eq('is_general', true);
@@ -45,7 +52,7 @@ export const useTasksFetching = (projectId?: string, meetingId?: string) => {
       setTasks(transformedTasks);
 
       // Group tasks by stage for project tasks with stages
-      if (projectId) {
+      if (projectId && !isWorkspace && !meetingId) {
         const groupedTasks: Record<string, Task[]> = {};
         transformedTasks.forEach(task => {
           if (task.stage_id) {
@@ -70,7 +77,7 @@ export const useTasksFetching = (projectId?: string, meetingId?: string) => {
 
   useEffect(() => {
     fetchTasks();
-  }, [projectId, meetingId]);
+  }, [projectId, meetingId, isWorkspace]);
 
   return {
     tasks,
