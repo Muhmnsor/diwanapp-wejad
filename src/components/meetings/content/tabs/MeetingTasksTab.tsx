@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,10 +28,7 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
       
       const { data, error } = await supabase
         .from('tasks')
-        .select(`
-          *,
-          profiles:assigned_to (display_name, email)
-        `)
+        .select('*')
         .eq('meeting_id', meetingId)
         .order('created_at', { ascending: false });
       
@@ -42,25 +40,41 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
       }
       
       // Process the tasks with assigned user info
-      const tasksWithAssigneeInfo = data.map(task => {
-        // Extract assigned user information
-        let assignedUserName = 'غير محدد'; // Default value
-        
-        if (task.profiles) {
-          if (typeof task.profiles === 'object' && task.profiles !== null) {
-            if (Array.isArray(task.profiles)) {
-              assignedUserName = task.profiles[0]?.display_name || task.profiles[0]?.email || 'غير محدد';
-            } else {
-              assignedUserName = task.profiles.display_name || task.profiles.email || 'غير محدد';
-            }
+      const tasksWithAssigneeInfo = data.map(task => ({
+        ...task,
+        assigned_user_name: 'غير محدد' // Default value
+      }));
+      
+      // Try to get assigned user names if we have assigned users
+      const userIds = data
+        .filter(task => task.assigned_to)
+        .map(task => task.assigned_to);
+      
+      if (userIds.length > 0) {
+        try {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, display_name, email')
+            .in('id', userIds);
+          
+          if (profiles && profiles.length > 0) {
+            // Create a map of user IDs to names
+            const userMap = profiles.reduce((map, profile) => {
+              map[profile.id] = profile.display_name || profile.email;
+              return map;
+            }, {});
+            
+            // Update tasks with user names
+            tasksWithAssigneeInfo.forEach(task => {
+              if (task.assigned_to && userMap[task.assigned_to]) {
+                task.assigned_user_name = userMap[task.assigned_to];
+              }
+            });
           }
+        } catch (err) {
+          console.error("Error fetching user profiles:", err);
         }
-        
-        return {
-          ...task,
-          assigned_user_name: assignedUserName
-        };
-      });
+      }
       
       console.log("Retrieved meeting tasks:", tasksWithAssigneeInfo);
       setMeetingTasks(tasksWithAssigneeInfo);

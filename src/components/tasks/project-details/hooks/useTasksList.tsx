@@ -7,15 +7,11 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Task } from "../types/task";
 
-interface TasksListOptions {
-  projectId?: string;
-  meetingId?: string;
-  isWorkspace?: boolean;
-}
-
-export const useTasksList = (options: TasksListOptions = {}) => {
-  const { projectId, meetingId, isWorkspace = false } = options;
-  
+export const useTasksList = (
+  projectId?: string, 
+  meetingId?: string, 
+  isWorkspace: boolean = false
+) => {
   // Hook for handling UI state
   const {
     activeTab,

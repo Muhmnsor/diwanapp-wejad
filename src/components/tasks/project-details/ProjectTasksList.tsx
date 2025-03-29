@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ProjectStages } from "./ProjectStages";
@@ -41,6 +42,7 @@ export const ProjectTasksList = ({
   hideTasksTitle = false,
   isWorkspace = false
 }: ProjectTasksListProps) => {
+  // Now we pass the parameters separately
   const {
     tasks: fetchedTasks,
     isLoading,
@@ -54,11 +56,7 @@ export const ProjectTasksList = ({
     handleStatusChange,
     fetchTasks,
     deleteTask
-  } = useTasksList({
-    projectId, 
-    meetingId, 
-    isWorkspace
-  });
+  } = useTasksList(projectId, meetingId, isWorkspace);
   
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
