@@ -95,7 +95,7 @@ export const useMeetingsDashboard = () => {
         
         return {
           name,
-          value: count,
+          value: Number(count), // Ensure value is a number
           color: colors[index % colors.length]
         };
       });
@@ -124,7 +124,7 @@ export const useMeetingsDashboard = () => {
         
         return {
           name,
-          value: count,
+          value: Number(count), // Ensure value is a number
           color: colors[index % colors.length]
         };
       });

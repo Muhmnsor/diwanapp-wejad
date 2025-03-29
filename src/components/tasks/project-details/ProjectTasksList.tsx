@@ -68,6 +68,9 @@ export const ProjectTasksList = ({
 
   const stages = externalStages || projectStages;
 
+  // Convert isGeneral to boolean to ensure type safety
+  const isGeneralBoolean = Boolean(isGeneral);
+
   useEffect(() => {
     if (!externalTasks) {
       fetchTasks();
@@ -95,7 +98,7 @@ export const ProjectTasksList = ({
 
   return (
     <>
-      {!isGeneral && !meetingId && (
+      {!isGeneralBoolean && !meetingId && (
         <ProjectStages 
           projectId={projectId} 
           onStagesChange={handleStagesChange} 
@@ -106,7 +109,7 @@ export const ProjectTasksList = ({
         <CardHeader className="pb-0">
           <TasksHeader 
             onAddTask={() => setIsAddDialogOpen(true)} 
-            isGeneral={isGeneral}
+            isGeneral={isGeneralBoolean}
             hideAddButton={hideTasksHeader}
             hideTitle={hideTasksTitle}
           />
@@ -129,7 +132,7 @@ export const ProjectTasksList = ({
             formatDate={formatDate}
             onStatusChange={handleStatusChange}
             projectId={projectId}
-            isGeneral={isGeneral || false}
+            isGeneral={isGeneralBoolean}
             onEditTask={handleEditTask}
             onDeleteTask={handleDeleteTask}
           />
@@ -146,7 +149,7 @@ export const ProjectTasksList = ({
           if (onTaskAdded) onTaskAdded();
         }}
         projectMembers={projectMembers}
-        isGeneral={isGeneral || false}
+        isGeneral={isGeneralBoolean}
         meetingId={meetingId}
         isWorkspace={false}
       />

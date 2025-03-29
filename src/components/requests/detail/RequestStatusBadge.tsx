@@ -8,7 +8,10 @@ interface RequestStatusBadgeProps {
 }
 
 export const RequestStatusBadge: React.FC<RequestStatusBadgeProps> = ({ status }) => {
-  switch (status) {
+  // Use type assertion to handle string values that should conform to RequestStatus
+  const safeStatus = status as RequestStatus;
+  
+  switch (safeStatus) {
     case 'pending':
       return <Badge variant="secondary">قيد الانتظار</Badge>;
     case 'in_progress':

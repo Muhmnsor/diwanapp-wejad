@@ -52,8 +52,10 @@ export interface RequestWorkflow {
 // Keep backward compatibility by aliasing RequestWorkflow as Workflow
 export type Workflow = RequestWorkflow;
 
-// Update RequestStatus to include all possible status values
-export type RequestStatus = 'pending' | 'in_progress' | 'approved' | 'rejected' | 'completed' | 'cancelled';
+// Import the RequestStatus type from meeting.ts to ensure consistency
+import { RequestStatus } from '@/types/meeting';
+// Re-export for backward compatibility
+export type { RequestStatus };
 
 export interface Request {
   id: string;
