@@ -10,18 +10,21 @@ interface ReportFormActionsProps {
 export const ReportFormActions = ({ 
   isSubmitting, 
   onClose,
-  mode = 'create'
+  mode = 'create' 
 }: ReportFormActionsProps) => {
   return (
-    <div className="flex justify-end gap-4">
-      <Button type="button" variant="outline" onClick={onClose}>
+    <div className="flex justify-end gap-2 mt-8">
+      <Button variant="outline" onClick={onClose} type="button">
         إلغاء
       </Button>
       <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting 
-          ? mode === 'edit' ? "جاري التحديث..." : "جاري الحفظ..." 
-          : mode === 'edit' ? "تحديث التقرير" : "حفظ التقرير"
-        }
+        {isSubmitting ? (
+          <span>جاري الحفظ...</span>
+        ) : mode === 'edit' ? (
+          'تحديث التقرير'
+        ) : (
+          'حفظ التقرير'
+        )}
       </Button>
     </div>
   );

@@ -1,7 +1,9 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, FileSpreadsheet, FilePieChart, FileBarChart } from "lucide-react";
 import { toast } from "sonner";
+import { EventReportsList } from "@/components/events/reports/EventReportsList";
 
 interface ReportsTabProps {
   eventId: string;
@@ -18,7 +20,9 @@ export const ReportsTab = ({ eventId }: ReportsTabProps) => {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">التقارير</h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <EventReportsList eventId={eventId} />
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
