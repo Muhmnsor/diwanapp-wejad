@@ -3,25 +3,67 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "../types/task";
 import { toast } from "sonner";
-import { useTasksFetching } from "./useTasksFetching";
 
 export const useTasksList = (projectId?: string, isWorkspace = false) => {
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [projectStages, setProjectStages] = useState<{ id: string; name: string }[]>([]);
-  
-  // Use the updated useTasksFetching hook
-  const {
-    tasks,
-    isLoading,
-    tasksByStage,
-    setTasks,
-    fetchTasks
-  } = useTasksFetching(projectId, undefined, isWorkspace);
+  const [tasksByStage, setTasksByStage] = useState<Record<string, Task[]>>({});
   
   // Determine if this is a general tasks view (no project ID)
   const isGeneral = !projectId || projectId === "";
+  
+  // Fetch tasks
+  const fetchTasks = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      console.log(`Fetching tasks for ${isWorkspace ? 'workspace' : isGeneral ? 'general' : 'project'} ID: ${projectId || 'none'}`);
+      
+      let query = supabase.from('tasks').select('*');
+      
+      if (isWorkspace) {
+        // Fetch tasks for a workspace
+        query = query.eq('workspace_id', projectId);
+      } else if (isGeneral) {
+        // Fetch general tasks
+        query = query.eq('is_general', true);
+      } else {
+        // Fetch project tasks
+        query = query.eq('project_id', projectId);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      
+      if (data) {
+        const formattedTasks = data.map(task => ({
+          ...task,
+          id: task.id,
+          title: task.title,
+          description: task.description || "",
+          status: task.status || "pending",
+          priority: task.priority || "medium",
+          due_date: task.due_date,
+          assigned_to: task.assigned_to,
+          project_id: task.project_id,
+          stage_id: task.stage_id,
+          created_at: task.created_at,
+          category: task.category
+        }));
+        
+        setTasks(formattedTasks);
+      }
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      toast.error("حدث خطأ أثناء تحميل المهام");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [projectId, isGeneral, isWorkspace]);
   
   // Fetch project stages if this is a project view
   const fetchProjectStages = useCallback(async () => {
@@ -78,10 +120,40 @@ export const useTasksList = (projectId?: string, isWorkspace = false) => {
     }
   }, [projectId, isGeneral, isWorkspace]);
   
+  // Group tasks by stage
+  useEffect(() => {
+    const groupTasksByStage = () => {
+      const grouped: Record<string, Task[]> = {};
+      
+      // Initialize with empty arrays for all stages
+      projectStages.forEach(stage => {
+        grouped[stage.id] = [];
+      });
+      
+      // Add tasks to their respective stages
+      tasks.forEach(task => {
+        if (task.stage_id && grouped[task.stage_id]) {
+          grouped[task.stage_id].push(task);
+        } else if (projectStages.length > 0) {
+          // If task has no stage, add to first stage
+          const firstStageId = projectStages[0].id;
+          grouped[firstStageId] = [...(grouped[firstStageId] || []), task];
+        }
+      });
+      
+      setTasksByStage(grouped);
+    };
+    
+    if (!isGeneral && !isWorkspace) {
+      groupTasksByStage();
+    }
+  }, [tasks, projectStages, isGeneral, isWorkspace]);
+  
   // Load data on mount and when projectId changes
   useEffect(() => {
+    fetchTasks();
     fetchProjectStages();
-  }, [fetchProjectStages]);
+  }, [fetchTasks, fetchProjectStages]);
   
   // Filter tasks based on active tab
   useEffect(() => {
