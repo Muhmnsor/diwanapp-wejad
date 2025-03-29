@@ -39,6 +39,12 @@ export type Request = {
   };
 };
 
+// Helper function to validate request status
+const validateRequestStatus = (status: any): RequestStatus => {
+  const validStatuses: RequestStatus[] = ['pending', 'in_progress', 'approved', 'rejected', 'completed', 'cancelled'];
+  return validStatuses.includes(status) ? status as RequestStatus : 'pending';
+};
+
 export const useAllRequests = () => {
   const [requests, setRequests] = useState<Request[]>([]);
   const [filteredRequests, setFilteredRequests] = useState<Request[]>([]);
@@ -78,7 +84,7 @@ export const useAllRequests = () => {
               id: requestData.id || '',
               title: requestData.title || '',
               form_data: requestData.form_data || {},
-              status: requestData.status || 'pending',
+              status: validateRequestStatus(requestData.status), // Validate status
               priority: requestData.priority || 'medium',
               requester_id: requestData.requester_id || '',
               request_type_id: requestData.request_type_id || '',
@@ -100,7 +106,7 @@ export const useAllRequests = () => {
               id: '',
               title: 'Error parsing data',
               form_data: {},
-              status: 'error',
+              status: 'error' as RequestStatus, // Type assertion to RequestStatus
               priority: 'medium',
               requester_id: '',
               request_type_id: '',

@@ -1,3 +1,4 @@
+
 import { Loader2 } from "lucide-react";
 import { RequestDetailsCard } from "./RequestDetailsCard";
 import { RequestWorkflowCard } from "./workflow/RequestWorkflowCard";
@@ -8,6 +9,7 @@ import { useRequestDetailEnhanced } from "@/hooks/meetings/useRequestDetailEnhan
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { DiagnoseWorkflowButton } from "./workflow/DiagnoseWorkflowButton";
+import { RequestStatus } from "@/types/meeting";
 
 interface RequestDetailProps {
   requestId: string;
@@ -70,6 +72,8 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   }
 
   const request = data.request;
+  // Ensure status is a valid RequestStatus
+  const status = request.status as RequestStatus;
   const requestType = data.request_type;
   const workflow = data.workflow;
   const currentStep = data.current_step;
@@ -81,7 +85,8 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
 
   const enhancedRequest = {
     ...request,
-    requester: requester
+    requester: requester,
+    status // Use the validated status
   };
 
   console.log("Request workflow data:", workflow);
@@ -112,7 +117,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
               className="ml-2"
             />
             <RequestActionButtons 
-              status={request.status}
+              status={status}
               isCurrentApprover={isCurrentApprover()}
               stepType={stepType}
               hasSubmittedOpinion={hasSubmittedOpinion()}
@@ -139,7 +144,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
               workflow={workflow}
               currentStep={currentStep}
               requestId={requestId}
-              requestStatus={request.status}
+              requestStatus={status}
               workflowSteps={workflowSteps}
             />
           </div>

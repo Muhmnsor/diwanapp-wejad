@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useRequests } from "./useRequests";
+import { RequestStatus } from "@/types/meeting";
 
 /**
  * Enhanced version of useRequests that adds additional functionality
@@ -46,6 +47,14 @@ export const useRequestsEnhanced = () => {
         console.log("Request has workflow_id:", formData.workflow_id);
       } else if (formData.request_type_id) {
         console.log("Request has request_type_id but no workflow_id");
+      }
+      
+      // Ensure the status field is a valid RequestStatus type if it exists
+      if (formData.status && typeof formData.status === 'string') {
+        const validStatuses: RequestStatus[] = ['pending', 'in_progress', 'approved', 'rejected', 'completed', 'cancelled'];
+        if (!validStatuses.includes(formData.status as RequestStatus)) {
+          formData.status = 'pending' as RequestStatus;
+        }
       }
       
       // Call the original mutate function with enhanced options

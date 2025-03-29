@@ -2,6 +2,7 @@
 import { AlertCircle, Check, X, MessageCircle, Loader2 } from "lucide-react";
 import { CurrentStepDisplayProps } from "./types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { RequestStatus } from "@/types/meeting";
 
 export const CurrentStepDisplay = ({ 
   currentStep, 
@@ -17,7 +18,10 @@ export const CurrentStepDisplay = ({
     );
   }
   
-  if (requestStatus === "completed") {
+  // Ensure requestStatus is a valid RequestStatus type
+  const safeStatus = requestStatus as RequestStatus;
+  
+  if (safeStatus === "completed") {
     return (
       <Alert className="bg-green-50 border-green-200 text-green-800">
         <Check className="h-4 w-4 text-green-600" />
@@ -27,7 +31,7 @@ export const CurrentStepDisplay = ({
     );
   }
   
-  if (requestStatus === "rejected") {
+  if (safeStatus === "rejected") {
     return (
       <Alert className="bg-red-50 border-red-200 text-red-800">
         <X className="h-4 w-4 text-red-600" />
@@ -37,7 +41,7 @@ export const CurrentStepDisplay = ({
     );
   }
   
-  if (requestStatus === "cancelled") {
+  if (safeStatus === "cancelled") {
     return (
       <Alert className="bg-gray-50 border-gray-200 text-gray-800">
         <X className="h-4 w-4 text-gray-600" />

@@ -43,6 +43,9 @@ export const TasksList = ({ projectId, isWorkspace = false }: TasksListProps) =>
   // Fetch project members
   const { projectMembers } = useProjectMembers(projectId);
 
+  // Convert isGeneral to boolean to ensure type safety
+  const isGeneralBoolean = Boolean(isGeneral);
+
   const filteredTasks = tasks.filter(task => {
     if (activeTab === "all") return true;
     return task.status === activeTab;
@@ -63,7 +66,7 @@ export const TasksList = ({ projectId, isWorkspace = false }: TasksListProps) =>
 
   return (
     <>
-      {!isGeneral && !isWorkspace && (
+      {!isGeneralBoolean && !isWorkspace && (
         <ProjectStages 
           projectId={projectId} 
           onStagesChange={handleStagesChange} 
@@ -72,7 +75,7 @@ export const TasksList = ({ projectId, isWorkspace = false }: TasksListProps) =>
       
       <Card className="border shadow-sm">
         <CardHeader className="pb-0">
-          <TasksHeader onAddTask={() => setIsAddDialogOpen(true)} isGeneral={isGeneral} />
+          <TasksHeader onAddTask={() => setIsAddDialogOpen(true)} isGeneral={isGeneralBoolean} />
         </CardHeader>
         
         <CardContent className="pt-4">
@@ -92,7 +95,7 @@ export const TasksList = ({ projectId, isWorkspace = false }: TasksListProps) =>
             formatDate={formatDate}
             onStatusChange={handleStatusChange}
             projectId={projectId}
-            isGeneral={isGeneral}
+            isGeneral={isGeneralBoolean}
             onEditTask={handleEditTask}
             onDeleteTask={handleDeleteTask}
           />
@@ -106,7 +109,7 @@ export const TasksList = ({ projectId, isWorkspace = false }: TasksListProps) =>
         projectStages={projectStages}
         onTaskAdded={fetchTasks}
         projectMembers={projectMembers}
-        isGeneral={isGeneral}
+        isGeneral={isGeneralBoolean}
         isWorkspace={isWorkspace}
       />
 
