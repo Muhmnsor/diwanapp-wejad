@@ -11,7 +11,7 @@ import { getAppsList } from "@/components/admin/dashboard/getAppsList";
 import { DeveloperToolbar } from "@/components/developer/DeveloperToolbar";
 import { useAuthStore } from "@/store/refactored-auth";
 import { AppItem } from "@/components/admin/dashboard/DashboardApps";
-import { Loader2, Users, AlertCircle } from "lucide-react";
+import { Loader2, Users, AlertCircle, CalendarClock } from "lucide-react";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { Card } from "@/components/ui/card";
 import { getCustomApps } from "@/components/admin/dashboard/customApps";
@@ -55,7 +55,7 @@ const AdminDashboard = () => {
         if (hasAdminRole) {
           const meetingsApp: AppItem = {
             title: "إدارة الاجتماعات",
-            icon: Users,
+            icon: CalendarClock,
             path: "/admin/meetings",
             description: "إدارة جدول الاجتماعات والمشاركين والمحاضر",
             notifications: notificationCounts?.meetings || 0,

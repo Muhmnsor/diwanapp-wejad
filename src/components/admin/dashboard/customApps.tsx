@@ -1,12 +1,12 @@
 
 import { User } from '@supabase/supabase-js';
-import { Calendar, Calculator, Users } from "lucide-react";
+import { BriefcaseIcon, Calculator, CalendarClock } from "lucide-react";
 import { AppItem } from "./DashboardApps";
 
 // Define our custom apps
 export const HR_MANAGEMENT_APP: AppItem = {
   title: "إدارة شؤون الموظفين",
-  icon: Users,
+  icon: BriefcaseIcon,
   path: "/admin/hr",
   description: "إدارة المعلومات والعمليات المتعلقة بالموظفين",
   notifications: 0
