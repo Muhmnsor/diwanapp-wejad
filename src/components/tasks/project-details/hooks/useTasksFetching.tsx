@@ -4,14 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Task } from "../types/task";
 import { toast } from "sonner";
 
-export const useTasksFetching = (projectId?: string, meetingIdOrIsWorkspace?: string | boolean) => {
+export const useTasksFetching = (projectId?: string, meetingId?: string) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [tasksByStage, setTasksByStage] = useState<Record<string, Task[]>>({});
-
-  // Determine if meetingIdOrIsWorkspace is a meeting ID (string) or isWorkspace flag (boolean)
-  const meetingId = typeof meetingIdOrIsWorkspace === 'string' ? meetingIdOrIsWorkspace : undefined;
-  const isWorkspace = typeof meetingIdOrIsWorkspace === 'boolean' ? meetingIdOrIsWorkspace : false;
 
   const fetchTasks = async () => {
     setIsLoading(true);
@@ -25,9 +21,6 @@ export const useTasksFetching = (projectId?: string, meetingIdOrIsWorkspace?: st
         query = query.eq('project_id', projectId);
       } else if (meetingId) {
         query = query.eq('meeting_id', meetingId);
-      } else if (isWorkspace) {
-        // If isWorkspace is true and we have a projectId, use it as workspace_id
-        query = query.eq('workspace_id', projectId);
       } else {
         // General tasks
         query = query.eq('is_general', true);
@@ -52,7 +45,7 @@ export const useTasksFetching = (projectId?: string, meetingIdOrIsWorkspace?: st
       setTasks(transformedTasks);
 
       // Group tasks by stage for project tasks with stages
-      if (projectId && !isWorkspace && !meetingId) {
+      if (projectId) {
         const groupedTasks: Record<string, Task[]> = {};
         transformedTasks.forEach(task => {
           if (task.stage_id) {
@@ -77,7 +70,7 @@ export const useTasksFetching = (projectId?: string, meetingIdOrIsWorkspace?: st
 
   useEffect(() => {
     fetchTasks();
-  }, [projectId, meetingId, isWorkspace]);
+  }, [projectId, meetingId]);
 
   return {
     tasks,

@@ -11,6 +11,10 @@ export const useTasksList = (
   projectId?: string, 
   meetingIdOrIsWorkspace?: string | boolean
 ) => {
+  // Determine if second parameter is a meetingId (string) or isWorkspace flag (boolean)
+  const meetingId = typeof meetingIdOrIsWorkspace === 'string' ? meetingIdOrIsWorkspace : undefined;
+  const isWorkspace = typeof meetingIdOrIsWorkspace === 'boolean' ? meetingIdOrIsWorkspace : false;
+
   // Hook for handling UI state
   const {
     activeTab,
@@ -21,7 +25,7 @@ export const useTasksList = (
     handleStagesChange
   } = useTasksState();
 
-  // Hook for fetching tasks - pass both parameters directly
+  // Hook for fetching tasks
   const {
     tasks,
     isLoading,
@@ -29,7 +33,7 @@ export const useTasksList = (
     setTasks,
     setTasksByStage,
     fetchTasks
-  } = useTasksFetching(projectId, meetingIdOrIsWorkspace);
+  } = useTasksFetching(projectId, meetingId);
 
   // Hook for task status management
   const { handleStatusChange } = useTaskStatusManagement(
@@ -39,12 +43,6 @@ export const useTasksList = (
     tasksByStage,
     setTasksByStage
   );
-
-  // Determine if this is a general tasks view
-  // It's general if no projectId AND no meetingId AND not workspace
-  const isGeneral = !projectId && 
-                    !(typeof meetingIdOrIsWorkspace === 'string') && 
-                    !(typeof meetingIdOrIsWorkspace === 'boolean' && meetingIdOrIsWorkspace);
 
   // Update task function
   const updateTask = async (taskId: string, updateData: Partial<Task>) => {
@@ -202,7 +200,7 @@ export const useTasksList = (
     tasksByStage,
     handleStatusChange,
     fetchTasks,
-    isGeneral,
+    isGeneral: !projectId && !meetingId,
     deleteTask,
     updateTask
   };

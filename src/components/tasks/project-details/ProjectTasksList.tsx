@@ -42,10 +42,7 @@ export const ProjectTasksList = ({
   hideTasksTitle = false,
   isWorkspace = false
 }: ProjectTasksListProps) => {
-  // Pass either meetingId or isWorkspace to useTasksList
-  // We need to pass the correct type (string | boolean)
-  const meetingIdOrWorkspace = meetingId ? meetingId : (isWorkspace ? true : undefined);
-  
+  // Pass meetingId separately in first position if available, otherwise pass isWorkspace 
   const {
     tasks: fetchedTasks,
     isLoading,
@@ -61,7 +58,7 @@ export const ProjectTasksList = ({
     deleteTask
   } = useTasksList(
     projectId, 
-    meetingIdOrWorkspace
+    meetingId || isWorkspace
   );
   
   const [editingTask, setEditingTask] = useState<Task | null>(null);
