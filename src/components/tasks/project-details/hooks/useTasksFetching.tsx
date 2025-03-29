@@ -4,11 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Task } from "../types/task";
 import { toast } from "sonner";
 
-export const useTasksFetching = (projectId?: string, secondParam?: string | boolean) => {
-  // Convert secondParam to appropriate types
-  const meetingId = typeof secondParam === 'string' ? secondParam : undefined;
-  const isWorkspace = secondParam === true;
-
+export const useTasksFetching = (
+  projectId?: string, 
+  meetingId?: string, 
+  isWorkspace: boolean = false
+) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [tasksByStage, setTasksByStage] = useState<Record<string, Task[]>>({});
@@ -21,13 +21,13 @@ export const useTasksFetching = (projectId?: string, secondParam?: string | bool
         .select('*, profiles:assigned_to(display_name, email), stage:stage_id(name)');
 
       // Filter based on what's provided
-      if (projectId) {
-        query = query.eq('project_id', projectId);
-      } else if (meetingId) {
-        query = query.eq('meeting_id', meetingId);
-      } else if (isWorkspace) {
+      if (isWorkspace && projectId) {
         // When isWorkspace is true and projectId is provided, we want tasks for that workspace
         query = query.eq('workspace_id', projectId);
+      } else if (meetingId) {
+        query = query.eq('meeting_id', meetingId);
+      } else if (projectId) {
+        query = query.eq('project_id', projectId);
       } else {
         // General tasks
         query = query.eq('is_general', true);

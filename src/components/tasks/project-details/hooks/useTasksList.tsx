@@ -8,12 +8,9 @@ import { Task } from "../types/task";
 
 export const useTasksList = (
   projectId?: string, 
-  secondParam?: string | boolean
+  meetingId?: string, 
+  isWorkspace: boolean = false
 ) => {
-  // Convert the second parameter into appropriate types
-  const meetingId = typeof secondParam === 'string' ? secondParam : undefined;
-  const isWorkspace = secondParam === true;
-
   // Hook for handling UI state
   const {
     activeTab,
@@ -24,7 +21,7 @@ export const useTasksList = (
     handleStagesChange
   } = useTasksState();
 
-  // Hook for fetching tasks
+  // Hook for fetching tasks with separate parameters
   const {
     tasks,
     isLoading,
@@ -32,7 +29,7 @@ export const useTasksList = (
     setTasks,
     setTasksByStage,
     fetchTasks
-  } = useTasksFetching(projectId, secondParam);
+  } = useTasksFetching(projectId, meetingId, isWorkspace);
 
   // Hook for task status management
   const { handleStatusChange } = useTaskStatusManagement(

@@ -35,7 +35,7 @@ export const TasksList = ({ projectId, isWorkspace = false }: TasksListProps) =>
     fetchTasks,
     isGeneral,
     deleteTask
-  } = useTasksList(projectId, isWorkspace ? true : undefined);
+  } = useTasksList(projectId, undefined, isWorkspace);
 
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
