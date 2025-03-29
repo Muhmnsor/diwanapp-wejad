@@ -42,7 +42,7 @@ export const ProjectTasksList = ({
   hideTasksTitle = false,
   isWorkspace = false
 }: ProjectTasksListProps) => {
-  // Now we pass the parameters separately
+  // Fix: Pass options object instead of multiple parameters
   const {
     tasks: fetchedTasks,
     isLoading,
@@ -56,7 +56,11 @@ export const ProjectTasksList = ({
     handleStatusChange,
     fetchTasks,
     deleteTask
-  } = useTasksList(projectId, meetingId, isWorkspace);
+  } = useTasksList({
+    projectId, 
+    meetingId, 
+    isWorkspace
+  });
   
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -173,3 +177,4 @@ export const ProjectTasksList = ({
     </>
   );
 };
+
