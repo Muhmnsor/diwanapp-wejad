@@ -21,6 +21,9 @@ interface TasksListProps {
 export type { Task };
 
 export const TasksList = ({ projectId, isWorkspace = false }: TasksListProps) => {
+  // Pass isWorkspace as a boolean to useTasksList
+  const isWorkspaceParam = isWorkspace ? true : undefined;
+  
   const {
     tasks,
     isLoading,
@@ -35,7 +38,7 @@ export const TasksList = ({ projectId, isWorkspace = false }: TasksListProps) =>
     fetchTasks,
     isGeneral,
     deleteTask
-  } = useTasksList(projectId, isWorkspace);
+  } = useTasksList(projectId, isWorkspaceParam);
 
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
