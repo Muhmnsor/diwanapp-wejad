@@ -4,14 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Task } from "../types/task";
 import { toast } from "sonner";
 
-interface TasksFetchingOptions {
-  projectId?: string;
-  meetingId?: string;
-  isWorkspace?: boolean;
-}
-
-export const useTasksFetching = (options: TasksFetchingOptions) => {
-  const { projectId, meetingId, isWorkspace = false } = options;
+export const useTasksFetching = (
+  projectId?: string, 
+  meetingId?: string, 
+  isWorkspace: boolean = false
+) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [tasksByStage, setTasksByStage] = useState<Record<string, Task[]>>({});
@@ -25,7 +22,8 @@ export const useTasksFetching = (options: TasksFetchingOptions) => {
         .from('tasks')
         .select(`
           *,
-          profiles:assigned_to (display_name, email)
+          profiles:assigned_to (display_name, email),
+          stage:stage_id (name)
         `);
 
       // Filter based on what's provided - using clear logic for each task type
@@ -56,51 +54,31 @@ export const useTasksFetching = (options: TasksFetchingOptions) => {
 
       console.log("Fetched tasks raw data:", data);
 
-      // If we have tasks but need to fetch stage information
-      const transformedTasks: Task[] = [];
-      
-      for (const task of data) {
-        // Get stage information if available
-        let stageName = '';
-        if (task.stage_id) {
-          const { data: stageData, error: stageError } = await supabase
-            .from('project_stages')
-            .select('name')
-            .eq('id', task.stage_id)
-            .single();
-            
-          if (!stageError && stageData) {
-            stageName = stageData.name;
-          }
-        }
-        
-        // Process assigned user data correctly
+      // Transform data to add user info and stage name
+      const transformedTasks = data.map(task => {
+        // Add proper debugging for assigned user
+        console.log("Task assigned_to:", task.assigned_to);
+        console.log("Task profiles:", task.profiles);
+
+        // Safely extract the assigned user name
         let assignedUserName = '';
-        if (task.assigned_to) {
-          // First check if the profiles join worked
-          if (task.profiles && (task.profiles.display_name || task.profiles.email)) {
-            assignedUserName = task.profiles.display_name || task.profiles.email;
-          } else {
-            // Fallback: directly fetch user info if the join didn't work properly
-            const { data: userData, error: userError } = await supabase
-              .from('profiles')
-              .select('display_name, email')
-              .eq('id', task.assigned_to)
-              .single();
-              
-            if (!userError && userData) {
-              assignedUserName = userData.display_name || userData.email || '';
-            }
-          }
+        if (task.profiles) {
+          assignedUserName = task.profiles.display_name || task.profiles.email || '';
+          console.log("Extracted assigned user name:", assignedUserName);
         }
-        
-        // Add the processed task to our results
-        transformedTasks.push({
+
+        // Safely extract stage name
+        let stageName = '';
+        if (task.stage) {
+          stageName = task.stage.name || '';
+        }
+
+        return {
           ...task,
           assigned_user_name: assignedUserName,
           stage_name: stageName,
-        });
-      }
+        };
+      });
 
       console.log("Transformed tasks with user names:", transformedTasks);
 
