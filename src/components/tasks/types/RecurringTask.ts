@@ -17,31 +17,31 @@ export interface RecurringTask {
   assign_to: string | null;
   last_generated_date: string | null;
   next_generation_date: string | null;
+  requires_deliverable?: boolean;
   
-  // Since Supabase join returns objects as arrays, we need to define them accordingly
-  projects?: any[] | null;
-  workspaces?: any[] | null;
-  profiles?: any[] | null;
+  // Relations
+  projects?: { title: string } | null;
+  workspaces?: { name: string } | null;
+  profiles?: { display_name: string } | null;
   
   // Convenience properties for nested data
   project_name?: string | null;
   workspace_name?: string | null;
   assignee_name?: string | null;
-  requires_deliverable?: boolean;
 }
 
-// Helper functions to extract values from the potentially nested arrays
+// Helper functions to extract values from the potentially nested data
 export const getProjectName = (task: RecurringTask): string | null => {
-  if (!task.projects || task.projects.length === 0) return null;
-  return task.projects[0]?.title || null;
+  if (!task.projects) return null;
+  return task.projects.title || null;
 };
 
 export const getWorkspaceName = (task: RecurringTask): string | null => {
-  if (!task.workspaces || task.workspaces.length === 0) return null;
-  return task.workspaces[0]?.name || null;
+  if (!task.workspaces) return null;
+  return task.workspaces.name || null;
 };
 
 export const getAssigneeName = (task: RecurringTask): string | null => {
-  if (!task.profiles || task.profiles.length === 0) return null;
-  return task.profiles[0]?.display_name || null;
+  if (!task.profiles) return null;
+  return task.profiles.display_name || null;
 };

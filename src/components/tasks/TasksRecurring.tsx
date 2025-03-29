@@ -16,7 +16,8 @@ export const TasksRecurring = () => {
     isGenerating,
     toggleTaskStatus,
     deleteTask,
-    generateTasks
+    generateTasks,
+    fetchRecurringTasks
   } = useRecurringTasks();
 
   const filteredTasks = recurringTasks.filter(task => {
@@ -46,24 +47,34 @@ export const TasksRecurring = () => {
         />
 
         {isAdmin && (
-          <Button 
-            onClick={generateTasks} 
-            disabled={isGenerating}
-            variant="outline"
-            className="flex gap-2 items-center"
-          >
-            {isGenerating ? (
-              <>
-                <div className="h-4 w-4 border-2 border-current border-t-transparent animate-spin rounded-full"></div>
-                جاري الإنشاء...
-              </>
-            ) : (
-              <>
-                <Calendar className="h-4 w-4" />
-                إنشاء المهام المجدولة
-              </>
-            )}
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={fetchRecurringTasks} 
+              variant="outline"
+              className="flex gap-2 items-center"
+            >
+              تحديث القائمة
+            </Button>
+            
+            <Button 
+              onClick={generateTasks} 
+              disabled={isGenerating}
+              variant="outline"
+              className="flex gap-2 items-center"
+            >
+              {isGenerating ? (
+                <>
+                  <div className="h-4 w-4 border-2 border-current border-t-transparent animate-spin rounded-full"></div>
+                  جاري الإنشاء...
+                </>
+              ) : (
+                <>
+                  <Calendar className="h-4 w-4" />
+                  إنشاء المهام المجدولة
+                </>
+              )}
+            </Button>
+          </div>
         )}
       </div>
 
@@ -75,8 +86,16 @@ export const TasksRecurring = () => {
             <RecurringTaskCard 
               key={task.id} 
               task={task} 
-              onToggleStatus={toggleTaskStatus}
-              onDelete={deleteTask}
+              onToggleStatus={(taskId, isActive) => {
+                toggleTaskStatus(taskId, isActive);
+                // After toggling, refresh the list
+                setTimeout(() => fetchRecurringTasks(), 500);
+              }}
+              onDelete={(taskId) => {
+                deleteTask(taskId);
+                // After deleting, refresh the list
+                setTimeout(() => fetchRecurringTasks(), 500);
+              }}
             />
           ))}
         </div>

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { RecurringTask, getProjectName, getWorkspaceName, getAssigneeName } from "../types/RecurringTask";
@@ -16,7 +16,7 @@ export const useRecurringTasks = () => {
     fetchRecurringTasks();
   }, [user]);
 
-  const fetchRecurringTasks = async () => {
+  const fetchRecurringTasks = useCallback(async () => {
     setIsLoading(true);
     try {
       if (!user) {
@@ -37,6 +37,8 @@ export const useRecurringTasks = () => {
       setIsAdmin(isAdminData || false);
       console.log("Is admin:", isAdminData);
 
+      // Improved query with more detailed console logging
+      console.log("Fetching recurring tasks...");
       const { data, error } = await supabase
         .from('recurring_tasks')
         .select(`
@@ -86,7 +88,7 @@ export const useRecurringTasks = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
 
   const toggleTaskStatus = async (taskId: string, isActive: boolean) => {
     try {
@@ -108,6 +110,9 @@ export const useRecurringTasks = () => {
       );
 
       toast.success(`تم ${!isActive ? 'تفعيل' : 'إيقاف'} المهمة بنجاح`);
+      
+      // Refresh the list after toggling
+      fetchRecurringTasks();
     } catch (error) {
       console.error('Error toggling task status:', error);
       toast.error('حدث خطأ أثناء تحديث حالة المهمة');
@@ -174,6 +179,7 @@ export const useRecurringTasks = () => {
     isGenerating,
     toggleTaskStatus,
     deleteTask,
-    generateTasks
+    generateTasks,
+    fetchRecurringTasks  // Export the function so it can be called from other components
   };
 };

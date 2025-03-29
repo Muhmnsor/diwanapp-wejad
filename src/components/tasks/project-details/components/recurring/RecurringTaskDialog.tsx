@@ -99,6 +99,8 @@ export const RecurringTaskDialog = ({
         throw error;
       }
       
+      console.log("Created recurring task:", data);
+      
       // رفع النماذج المرفقة إذا وجدت
       if (templates && templates.length > 0 && data) {
         const taskId = data.id;
