@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText, Save, Paperclip, Download, Upload, Clock, Calendar, User as UserIcon } from "lucide-react";
+import { FileText, Save, Paperclip, Eye, Download, Upload, Clock, Calendar, User as UserIcon } from "lucide-react";
 import { useMeeting } from "@/hooks/meetings/useMeeting";
 import { useMeetingParticipants } from "@/hooks/meetings/useMeetingParticipants";
 import { useMeetingAgendaItems, MeetingAgendaItem } from "@/hooks/meetings/useMeetingAgendaItems";
@@ -14,15 +13,9 @@ import { useMeetingMinutes, useSaveMeetingMinutes, MeetingMinutes } from "@/hook
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { useAuthStore } from "@/store/refactored-auth";
-import { MinutesParticipantsTable } from "../../participants/MinutesParticipantsTable";
-import { SignatureTable } from "../../participants/SignatureTable";
-import { ExportButton } from "@/components/admin/ExportButton";
-import { formatDateWithDay, formatTime12Hour } from "@/utils/dateTimeUtils";
-
 interface MeetingMinutesTabProps {
   meetingId: string;
 }
-
 export const MeetingMinutesTab: React.FC<MeetingMinutesTabProps> = ({
   meetingId
 }) => {
@@ -31,17 +24,14 @@ export const MeetingMinutesTab: React.FC<MeetingMinutesTabProps> = ({
     data: meeting,
     isLoading: isMeetingLoading
   } = useMeeting(meetingId);
-  
   const {
     data: participants,
     isLoading: isParticipantsLoading
   } = useMeetingParticipants(meetingId);
-  
   const {
     data: agendaItems,
     isLoading: isAgendaItemsLoading
   } = useMeetingAgendaItems(meetingId);
-  
   const {
     data: existingMinutes,
     isLoading: isMinutesLoading
@@ -114,34 +104,7 @@ export const MeetingMinutesTab: React.FC<MeetingMinutesTabProps> = ({
   const togglePreviewMode = () => {
     setIsPreviewMode(!isPreviewMode);
   };
-  
-  // Prepare export data
-  const prepareExportData = () => {
-    if (!meeting || !agendaItems || !minutes) return [];
-    
-    const exportData = [
-      { title: 'محضر اجتماع', content: meeting.title },
-      { title: 'تاريخ الاجتماع', content: formatDateWithDay(meeting.date) },
-      { title: 'وقت الاجتماع', content: formatTime12Hour(meeting.start_time) },
-      { title: 'المقدمة', content: minutes.introduction || '' }
-    ];
-    
-    // Add agenda items
-    agendaItems.forEach(item => {
-      exportData.push({
-        title: `بند: ${item.content}`,
-        content: minutes.agenda_notes?.[item.id] || ''
-      });
-    });
-    
-    exportData.push({ title: 'الخاتمة', content: minutes.conclusion || '' });
-    exportData.push({ title: 'كاتب المحضر', content: minutes.author_name || user?.display_name || '' });
-    
-    return exportData;
-  };
-  
   const isLoading = isMeetingLoading || isParticipantsLoading || isAgendaItemsLoading || isMinutesLoading;
-  
   if (isLoading) {
     return <Card>
         <CardHeader className="pb-3">
@@ -156,169 +119,124 @@ export const MeetingMinutesTab: React.FC<MeetingMinutesTabProps> = ({
         </CardContent>
       </Card>;
   }
-  
-  if (!meeting) {
-    return (
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle>محضر الاجتماع</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-center text-gray-500">لا يمكن تحميل بيانات الاجتماع</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <div className="space-y-6" id="meeting-minutes">
-      {/* Meeting Details Section */}
-      <Card className="mb-6">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            <span>محضر اجتماع: {meeting.title}</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-gray-500" />
-              <span className="font-medium ml-1">تاريخ الاجتماع:</span>
-              <span>{formatDateWithDay(meeting.date)}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-gray-500" />
-              <span className="font-medium ml-1">وقت الاجتماع:</span>
-              <span>{formatTime12Hour(meeting.start_time)}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <UserIcon className="h-4 w-4 text-gray-500" />
-              <span className="font-medium ml-1">كاتب المحضر:</span>
-              <span>{minutes.author_name || user?.display_name || user?.email || 'غير محدد'}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-gray-500" />
-              <span className="font-medium ml-1">تاريخ كتابة المحضر:</span>
-              <span>{currentDateTime}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Participants List - Added after meeting details */}
-      <MinutesParticipantsTable meetingId={meetingId} />
-
-      {/* Introduction Section */}
-      <Card className="mb-6">
-        <CardHeader className="pb-3">
-          <CardTitle>المقدمة</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isPreviewMode ? (
-            <div className="p-4 border rounded bg-gray-50 min-h-[100px] whitespace-pre-wrap">
-              {minutes.introduction || 'لا توجد مقدمة'}
-            </div>
-          ) : (
-            <Textarea
-              placeholder="اكتب مقدمة المحضر هنا..."
-              className="min-h-[150px] resize-y"
-              value={minutes.introduction || ''}
-              onChange={(e) => handleInputChange(e, 'introduction')}
-              dir="rtl"
-            />
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Agenda Items Section with Notes */}
-      <Card className="mb-6">
-        <CardHeader className="pb-3">
-          <CardTitle>بنود الاجتماع والملاحظات</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {agendaItems && agendaItems.length > 0 ? (
-            <div className="space-y-4">
-              {agendaItems.map((item: MeetingAgendaItem) => (
-                <div key={item.id} className="border rounded p-4">
-                  <h3 className="font-medium text-gray-800 mb-2">
-                    {item.order_number}. {item.content}
-                  </h3>
-                  {isPreviewMode ? (
-                    <div className="p-3 border rounded bg-gray-50 min-h-[80px] whitespace-pre-wrap">
-                      {minutes.agenda_notes?.[item.id] || 'لا توجد ملاحظات'}
-                    </div>
-                  ) : (
-                    <Textarea
-                      placeholder="اكتب الملاحظات حول هذا البند هنا..."
-                      className="min-h-[100px] resize-y"
-                      value={minutes.agenda_notes?.[item.id] || ''}
-                      onChange={(e) => handleAgendaNotesChange(item.id, e.target.value)}
-                      dir="rtl"
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-center text-gray-500">لا توجد بنود في جدول الأعمال</p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Conclusion Section */}
-      <Card className="mb-6">
-        <CardHeader className="pb-3">
-          <CardTitle>الخاتمة</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isPreviewMode ? (
-            <div className="p-4 border rounded bg-gray-50 min-h-[100px] whitespace-pre-wrap">
-              {minutes.conclusion || 'لا توجد خاتمة'}
-            </div>
-          ) : (
-            <Textarea
-              placeholder="اكتب خاتمة المحضر هنا..."
-              className="min-h-[150px] resize-y"
-              value={minutes.conclusion || ''}
-              onChange={(e) => handleInputChange(e, 'conclusion')}
-              dir="rtl"
-            />
-          )}
-        </CardContent>
-      </Card>
-      
-      {/* Signatures Table - Only show when there's a conclusion */}
-      {(minutes.conclusion || isPreviewMode) && (
-        <SignatureTable meetingId={meetingId} />
-      )}
-
-      {/* Actions Footer */}
-      <Card>
-        <CardFooter className="flex justify-between py-4">
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={togglePreviewMode}
-            >
-              {isPreviewMode ? 'تحرير المحضر' : 'عرض المحضر'}
-            </Button>
-            <ExportButton
-              data={prepareExportData()}
-              filename={`محضر-اجتماع-${meeting.title}`}
-            />
-          </div>
-          <Button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="gap-2"
-          >
-            <Save className="h-4 w-4" />
+  return <Card className="mb-6">
+      <CardHeader className="pb-3 flex flex-row items-center justify-between">
+        <CardTitle>محضر الاجتماع</CardTitle>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={togglePreviewMode}>
+            {isPreviewMode ? <>تحرير المحضر</> : <><Eye className="h-4 w-4 ml-1" /> معاينة</>}
+          </Button>
+          <Button disabled={isSaving} onClick={handleSave} size="sm">
+            <Save className="h-4 w-4 ml-1" />
             حفظ المحضر
           </Button>
-        </CardFooter>
-      </Card>
-    </div>
-  );
+        </div>
+      </CardHeader>
+      
+      <CardContent>
+        <div className="space-y-6" dir="rtl">
+          {/* Meeting Details Section */}
+          <section className="border rounded-md p-4 bg-gray-50">
+            <h3 className="text-lg font-medium mb-3">تفاصيل الاجتماع</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">عنوان الاجتماع</p>
+                <p className="font-medium">{meeting?.title}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">التاريخ والوقت</p>
+                <p className="font-medium">
+                  {meeting?.date} - {meeting?.start_time} (لمدة {meeting?.duration} دقيقة)
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">المكان</p>
+                <p className="font-medium">{meeting?.location || meeting?.meeting_link || "غير محدد"}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">حالة الاجتماع</p>
+                <p className="font-medium">{meeting?.meeting_status === 'scheduled' ? 'مجدول' : meeting?.meeting_status === 'in_progress' ? 'قيد التنفيذ' : meeting?.meeting_status === 'completed' ? 'مكتمل' : meeting?.meeting_status === 'cancelled' ? 'ملغى' : 'غير محدد'}</p>
+              </div>
+            </div>
+          </section>
+          
+          {/* Participants Section */}
+          
+          
+          {/* Introduction Section */}
+          <section className="border rounded-md p-4">
+            <h3 className="text-lg font-medium mb-3">المقدمة</h3>
+            {isPreviewMode ? <div className="p-3 bg-gray-50 rounded min-h-24 whitespace-pre-wrap">
+                {minutes.introduction || 'لا توجد مقدمة مسجلة'}
+              </div> : <Textarea value={minutes.introduction || ''} onChange={e => handleInputChange(e, 'introduction')} placeholder="اكتب مقدمة محضر الاجتماع هنا..." className="min-h-24 text-right" />}
+          </section>
+          
+          {/* Agenda Items Section */}
+          <section className="border rounded-md p-4">
+            <h3 className="text-lg font-medium mb-3">بنود الاجتماع</h3>
+            {agendaItems && agendaItems.length > 0 ? <div className="space-y-4">
+                {agendaItems.map((item: MeetingAgendaItem) => <div key={item.id} className="border-b pb-4 last:border-b-0">
+                    <h4 className="font-medium mb-2">{item.order_number}. {item.content}</h4>
+                    {isPreviewMode ? <div className="p-3 bg-gray-50 rounded min-h-16 whitespace-pre-wrap">
+                        {minutes.agenda_notes?.[item.id] || 'لا توجد ملاحظات مسجلة لهذا البند'}
+                      </div> : <Textarea value={minutes.agenda_notes?.[item.id] || ''} onChange={e => handleAgendaNotesChange(item.id, e.target.value)} placeholder={`اكتب ملاحظات حول البند "${item.content}" هنا...`} className="min-h-16 text-right" />}
+                  </div>)}
+              </div> : <p className="text-gray-500 py-2">لا توجد بنود مسجلة لهذا الاجتماع</p>}
+          </section>
+          
+          {/* Conclusion Section */}
+          <section className="border rounded-md p-4">
+            <h3 className="text-lg font-medium mb-3">الخاتمة</h3>
+            {isPreviewMode ? <div className="p-3 bg-gray-50 rounded min-h-24 whitespace-pre-wrap">
+                {minutes.conclusion || 'لا توجد خاتمة مسجلة'}
+              </div> : <Textarea value={minutes.conclusion || ''} onChange={e => handleInputChange(e, 'conclusion')} placeholder="اكتب خاتمة محضر الاجتماع هنا..." className="min-h-24 text-right" />}
+          </section>
+          
+          {/* Attachments Section */}
+          <section className="border rounded-md p-4">
+            <h3 className="text-lg font-medium mb-3">المرفقات</h3>
+            <p className="text-gray-500 mb-2">
+              <Paperclip className="h-4 w-4 inline-block ml-1" />
+              المرفقات الداعمة (ستتوفر قريباً)
+            </p>
+            <div className="bg-gray-100 border border-dashed border-gray-300 rounded-md p-6 text-center">
+              <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+              <p className="text-gray-500">ستتوفر إمكانية إضافة المرفقات قريباً</p>
+            </div>
+          </section>
+          
+          {/* Author Information */}
+          <section className="border rounded-md p-4 bg-gray-50">
+            <h3 className="text-lg font-medium mb-3">معلومات كاتب المحضر</h3>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center space-x-2 space-x-reverse">
+                <UserIcon className="h-5 w-5 text-gray-500" />
+                <span className="font-medium">{user?.display_name || user?.email || "مستخدم النظام"}</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center space-x-2 space-x-reverse">
+                  <Calendar className="h-5 w-5 text-gray-500" />
+                  <span>{currentDateTime.split('الساعة')[0]}</span>
+                </div>
+                <div className="flex items-center space-x-2 space-x-reverse">
+                  <Clock className="h-5 w-5 text-gray-500" />
+                  <span>الساعة {currentDateTime.split('الساعة')[1]}</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </CardContent>
+      
+      <CardFooter className="flex justify-between pt-4" dir="rtl">
+        <Button variant="outline" className="ml-2" disabled={true}>
+          <Download className="h-4 w-4 ml-1" />
+          تصدير إلى PDF
+        </Button>
+        <Button disabled={isSaving} onClick={handleSave}>
+          <Save className="h-4 w-4 ml-1" />
+          حفظ المحضر
+        </Button>
+      </CardFooter>
+    </Card>;
 };
