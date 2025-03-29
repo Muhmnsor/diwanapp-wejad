@@ -34,40 +34,13 @@ export function useHRPermissions() {
           
         if (adminError) throw adminError;
         
-        // Check specific app permissions
-        const { data: hasHRApp, error: hrAppError } = await supabase
-          .rpc('check_user_app_access', { 
-            p_user_id: user.id,
-            p_app_name: 'hr'
-          });
-          
-        if (hrAppError) throw hrAppError;
-        
-        const { data: hasAccountingApp, error: accountingAppError } = await supabase
-          .rpc('check_user_app_access', { 
-            p_user_id: user.id,
-            p_app_name: 'accounting'
-          });
-          
-        if (accountingAppError) throw accountingAppError;
-        
-        const { data: hasMeetingsApp, error: meetingsAppError } = await supabase
-          .rpc('check_user_app_access', { 
-            p_user_id: user.id,
-            p_app_name: 'meetings'
-          });
-          
-        if (meetingsAppError) throw meetingsAppError;
-        
         return {
-          canViewHR: hasHRAccess || isAdmin || hasHRApp,
-          canManageEmployees: hasHRAccess || isAdmin || hasHRApp,
-          canManageAttendance: hasHRAccess || isAdmin || hasHRApp,
-          canManageLeaves: hasHRAccess || isAdmin || hasHRApp,
-          canManageTraining: hasHRAccess || isAdmin || hasHRApp,
-          canManageCompensation: hasHRAccess || isAdmin || hasHRApp,
-          canAccessAccounting: isAdmin || hasAccountingApp,
-          canAccessMeetings: isAdmin || hasMeetingsApp,
+          canViewHR: hasHRAccess || isAdmin,
+          canManageEmployees: hasHRAccess || isAdmin,
+          canManageAttendance: hasHRAccess || isAdmin,
+          canManageLeaves: hasHRAccess || isAdmin,
+          canManageTraining: hasHRAccess || isAdmin,
+          canManageCompensation: hasHRAccess || isAdmin,
           isAdmin
         };
       } catch (error) {
@@ -79,8 +52,6 @@ export function useHRPermissions() {
           canManageLeaves: false,
           canManageTraining: false,
           canManageCompensation: false,
-          canAccessAccounting: false,
-          canAccessMeetings: false,
           isAdmin: false
         };
       }

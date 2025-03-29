@@ -4,6 +4,7 @@ import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { ModuleCollapsible } from "./ModuleCollapsible";
 import { Role } from "../types";
 import { usePermissions } from "./usePermissions";
+import { AppPermissionsManager } from "./AppPermissionsManager";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NoPermissionsMessage } from "./NoPermissionsMessage";
@@ -11,7 +12,6 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/refactored-auth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ManualAppPermissions } from "./ManualAppPermissions";
 
 interface RolePermissionsViewProps {
   role: Role;
@@ -133,10 +133,7 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
         </TabsContent>
         
         <TabsContent value="apps">
-          <ManualAppPermissions 
-            role={role} 
-            onPermissionsChange={() => setRefreshKey(prev => prev + 1)} 
-          />
+          <AppPermissionsManager role={role} key={`app-permissions-${refreshKey}`} onPermissionsChange={() => setRefreshKey(prev => prev + 1)} />
         </TabsContent>
       </Tabs>
     </div>
