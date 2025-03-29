@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Task } from "../types/task";
 import { toast } from "sonner";
 
-export const useTasksFetching = (projectId?: string, meetingId?: string, isWorkspace?: boolean) => {
+export const useTasksFetching = (projectId?: string, meetingId?: string) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [tasksByStage, setTasksByStage] = useState<Record<string, Task[]>>({});
@@ -21,8 +21,6 @@ export const useTasksFetching = (projectId?: string, meetingId?: string, isWorks
         query = query.eq('project_id', projectId);
       } else if (meetingId) {
         query = query.eq('meeting_id', meetingId);
-      } else if (isWorkspace) {
-        query = query.eq('is_workspace', true);
       } else {
         // General tasks
         query = query.eq('is_general', true);
@@ -72,7 +70,7 @@ export const useTasksFetching = (projectId?: string, meetingId?: string, isWorks
 
   useEffect(() => {
     fetchTasks();
-  }, [projectId, meetingId, isWorkspace]);
+  }, [projectId, meetingId]);
 
   return {
     tasks,
