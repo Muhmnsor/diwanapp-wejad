@@ -18,7 +18,7 @@ const Finance = () => {
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-primary text-right my-[13px]">نظام إدارة التقديرات</h1>
-          <p className="text-muted-foreground text-right">تحكم في إدارة الموارد والمصروفات بكفاءة</p>
+          <p className="text-muted-foreground text-right">تحكم في إدارة التقديرات بكفاءة</p>
         </div>
 
         <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
