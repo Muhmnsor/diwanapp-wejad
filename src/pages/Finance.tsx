@@ -1,4 +1,3 @@
-
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,27 +10,18 @@ import { ExpensesTab } from "@/components/finance/ExpensesTab";
 import { TargetsTab } from "@/components/finance/TargetsTab";
 import { ReportsTab } from "@/components/finance/ReportsTab";
 import { ObligationsTab } from "@/components/finance/obligations/ObligationsTab";
-
 const Finance = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
-
-  return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+  return <div className="min-h-screen flex flex-col bg-gray-50">
       <TopHeader />
       
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-primary text-right">نظام إدارة الأموال</h1>
+          <h1 className="text-3xl font-bold text-primary text-right my-[13px]">نظام إدارة التقديرات</h1>
           <p className="text-muted-foreground text-right">تحكم في إدارة الموارد والمصروفات بكفاءة</p>
         </div>
 
-        <Tabs
-          defaultValue="dashboard"
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="w-full"
-          dir="rtl"
-        >
+        <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
           <TabsList className="grid grid-cols-6 w-full mb-8">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <PieChart className="h-4 w-4" />
@@ -86,8 +76,6 @@ const Finance = () => {
       </main>
 
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Finance;
