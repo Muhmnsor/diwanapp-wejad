@@ -1,8 +1,7 @@
-
 import { useEffect, useState } from "react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
-import { Archive, FileText, Receipt } from "lucide-react";
+import { Archive, FileText, Receipt, FileDown } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +13,7 @@ import { AddDocumentDialog } from "@/components/documents/AddDocumentDialog";
 import { determineStatus, getStatusColor, getRemainingDays } from "@/utils/documentStatus";
 import { downloadFile, handleDelete, handleFileUpload } from "@/components/documents/DocumentOperations";
 import { SubscriptionsTab } from "@/components/subscriptions/SubscriptionsTab";
+import { TemplatesTab } from "@/components/templates/TemplatesTab";
 
 interface Document {
   id: string;
@@ -114,7 +114,7 @@ const Documents = () => {
     }
 
     if (!user) {
-      toast.error('يجب تسجيل الدخول أولاً');
+      toast.error('يجب تسجي�� الدخول أولاً');
       return;
     }
 
@@ -149,6 +149,10 @@ const Documents = () => {
             <TabsTrigger value="documents" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               <span>المستندات</span>
+            </TabsTrigger>
+            <TabsTrigger value="templates" className="flex items-center gap-2">
+              <FileDown className="h-4 w-4" />
+              <span>النماذج</span>
             </TabsTrigger>
             <TabsTrigger value="subscriptions" className="flex items-center gap-2">
               <Receipt className="h-4 w-4" />
@@ -186,6 +190,10 @@ const Documents = () => {
               downloadFile={downloadFile}
               onUpdate={fetchDocuments}
             />
+          </TabsContent>
+
+          <TabsContent value="templates" className="mt-6">
+            <TemplatesTab />
           </TabsContent>
 
           <TabsContent value="subscriptions" className="mt-6">
