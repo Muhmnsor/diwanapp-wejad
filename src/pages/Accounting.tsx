@@ -1,22 +1,18 @@
-
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calculator, PieChart, BarChart, CreditCard, FileText, Receipt } from "lucide-react";
 import { useState } from "react";
-
 const Accounting = () => {
   const [activeTab, setActiveTab] = useState("overview");
-
-  return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+  return <div className="min-h-screen flex flex-col bg-gray-50">
       <TopHeader />
       
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-primary text-right my-[13px]">نظام إدارة المحاسبة</h1>
-          <p className="text-muted-foreground text-right">إدارة الأمور المالية والمحاسبية للمنظمة</p>
+          <p className="text-muted-foreground text-right">إدارة الأمور المالية والمحاسبية </p>
         </div>
 
         <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
@@ -140,8 +136,6 @@ const Accounting = () => {
       </main>
 
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Accounting;
