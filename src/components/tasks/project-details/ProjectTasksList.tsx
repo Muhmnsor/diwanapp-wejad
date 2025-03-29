@@ -65,6 +65,8 @@ export const ProjectTasksList = ({
     externalProjectMembers ? undefined : projectId
   );
   
+  const tasks = externalTasks || fetchedTasks;
+  
   const projectMembers = externalProjectMembers || fetchedMembers;
 
   const stages = externalStages || projectStages;
@@ -76,8 +78,6 @@ export const ProjectTasksList = ({
       fetchTasks();
     }
   }, [projectId, meetingId]);
-
-  const tasks = externalTasks || fetchedTasks;
 
   const filteredTasks = tasks.filter(task => {
     if (activeTab === "all") return true;
