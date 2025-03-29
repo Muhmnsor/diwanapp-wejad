@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ProjectStages } from "./ProjectStages";
@@ -42,7 +41,6 @@ export const ProjectTasksList = ({
   hideTasksTitle = false,
   isWorkspace = false
 }: ProjectTasksListProps) => {
-  // Fix: Pass options object instead of multiple parameters
   const {
     tasks: fetchedTasks,
     isLoading,
@@ -177,4 +175,3 @@ export const ProjectTasksList = ({
     </>
   );
 };
-
