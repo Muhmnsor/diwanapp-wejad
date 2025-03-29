@@ -1,4 +1,3 @@
-
 export interface Meeting {
   id: string;
   title: string;
@@ -18,6 +17,10 @@ export interface Meeting {
   folder?: {
     id: string;
     name: string;
+  };
+  creator?: {
+    display_name: string;
+    email: string;
   };
 }
 
