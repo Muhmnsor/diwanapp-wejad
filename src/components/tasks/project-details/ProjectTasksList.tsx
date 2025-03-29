@@ -129,7 +129,7 @@ export const ProjectTasksList = ({
             formatDate={formatDate}
             onStatusChange={handleStatusChange}
             projectId={projectId}
-            isGeneral={isGeneral}
+            isGeneral={isGeneral || false}
             onEditTask={handleEditTask}
             onDeleteTask={handleDeleteTask}
           />
@@ -146,7 +146,7 @@ export const ProjectTasksList = ({
           if (onTaskAdded) onTaskAdded();
         }}
         projectMembers={projectMembers}
-        isGeneral={isGeneral}
+        isGeneral={isGeneral || false}
         meetingId={meetingId}
         isWorkspace={false}
       />

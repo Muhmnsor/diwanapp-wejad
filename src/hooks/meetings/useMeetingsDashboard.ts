@@ -71,17 +71,17 @@ export const useMeetingsDashboard = () => {
       const averageAttendance = null;
       
       // Calculate meeting type distribution
-      const meetingTypes = meetings.reduce((acc, meeting) => {
+      const meetingTypesMap: Record<string, number> = {};
+      meetings.forEach(meeting => {
         const type = meeting.meeting_type;
-        if (!acc[type]) {
-          acc[type] = 0;
+        if (!meetingTypesMap[type]) {
+          meetingTypesMap[type] = 0;
         }
-        acc[type]++;
-        return acc;
-      }, {} as Record<string, number>);
+        meetingTypesMap[type]++;
+      });
       
-      const typeDistribution = Object.entries(meetingTypes).map(([type, count], index) => {
-        let name;
+      const typeDistribution = Object.entries(meetingTypesMap).map(([type, count], index) => {
+        let name: string;
         switch (type) {
           case 'board': name = 'مجلس إدارة'; break;
           case 'department': name = 'قسم'; break;
@@ -101,17 +101,17 @@ export const useMeetingsDashboard = () => {
       });
       
       // Calculate attendance type distribution
-      const attendanceTypes = meetings.reduce((acc, meeting) => {
+      const attendanceTypesMap: Record<string, number> = {};
+      meetings.forEach(meeting => {
         const type = meeting.attendance_type;
-        if (!acc[type]) {
-          acc[type] = 0;
+        if (!attendanceTypesMap[type]) {
+          attendanceTypesMap[type] = 0;
         }
-        acc[type]++;
-        return acc;
-      }, {} as Record<string, number>);
+        attendanceTypesMap[type]++;
+      });
       
-      const attendanceTypeDistribution = Object.entries(attendanceTypes).map(([type, count], index) => {
-        let name;
+      const attendanceTypeDistribution = Object.entries(attendanceTypesMap).map(([type, count], index) => {
+        let name: string;
         switch (type) {
           case 'in_person': name = 'حضوري'; break;
           case 'virtual': name = 'افتراضي'; break;
@@ -135,16 +135,16 @@ export const useMeetingsDashboard = () => {
         'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
       ];
       
-      const meetingsByMonth = meetings.reduce((acc, meeting) => {
+      const meetingsByMonth: Record<number, number> = {};
+      meetings.forEach(meeting => {
         const date = new Date(meeting.date);
         const month = date.getMonth();
         
-        if (!acc[month]) {
-          acc[month] = 0;
+        if (!meetingsByMonth[month]) {
+          meetingsByMonth[month] = 0;
         }
-        acc[month]++;
-        return acc;
-      }, {} as Record<number, number>);
+        meetingsByMonth[month]++;
+      });
       
       const monthlyDistribution = arabicMonths.map((name, index) => ({
         name,
