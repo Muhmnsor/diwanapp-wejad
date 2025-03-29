@@ -9,6 +9,7 @@ import { ProjectTasksList } from "@/components/tasks/project-details/ProjectTask
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
 import { AddTaskDialog } from "@/components/tasks/project-details/AddTaskDialog";
+import { TasksList } from "@/components/tasks/project-details/TasksList";
 
 interface MeetingTasksTabProps {
   meetingId: string;
@@ -28,7 +29,11 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
       
       const { data, error } = await supabase
         .from('tasks')
-        .select('*')
+        .select(`
+          *,
+          profiles:assigned_to (display_name, email),
+          stage:stage_id (name)
+        `)
         .eq('meeting_id', meetingId)
         .order('created_at', { ascending: false });
       
@@ -40,44 +45,28 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
       }
       
       // Process the tasks with assigned user info
-      const tasksWithAssigneeInfo = data.map(task => ({
-        ...task,
-        assigned_user_name: 'غير محدد' // Default value
-      }));
-      
-      // Try to get assigned user names if we have assigned users
-      const userIds = data
-        .filter(task => task.assigned_to)
-        .map(task => task.assigned_to);
-      
-      if (userIds.length > 0) {
-        try {
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('id, display_name, email')
-            .in('id', userIds);
-          
-          if (profiles && profiles.length > 0) {
-            // Create a map of user IDs to names
-            const userMap = profiles.reduce((map, profile) => {
-              map[profile.id] = profile.display_name || profile.email;
-              return map;
-            }, {});
-            
-            // Update tasks with user names
-            tasksWithAssigneeInfo.forEach(task => {
-              if (task.assigned_to && userMap[task.assigned_to]) {
-                task.assigned_user_name = userMap[task.assigned_to];
-              }
-            });
-          }
-        } catch (err) {
-          console.error("Error fetching user profiles:", err);
+      const transformedTasks = data.map(task => {
+        // Safely extract the assigned user name
+        let assignedUserName = '';
+        if (task.profiles) {
+          assignedUserName = task.profiles.display_name || task.profiles.email || '';
         }
-      }
+
+        // Safely extract stage name
+        let stageName = '';
+        if (task.stage) {
+          stageName = task.stage.name || '';
+        }
+
+        return {
+          ...task,
+          assigned_user_name: assignedUserName,
+          stage_name: stageName
+        };
+      });
       
-      console.log("Retrieved meeting tasks:", tasksWithAssigneeInfo);
-      setMeetingTasks(tasksWithAssigneeInfo);
+      console.log("Retrieved meeting tasks:", transformedTasks);
+      setMeetingTasks(transformedTasks);
       setIsLoading(false);
     } catch (err) {
       console.error("Error in fetchMeetingTasks:", err);
@@ -155,7 +144,7 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
     );
   }
   
-  // If we have tasks, use the ProjectTasksList component to show them
+  // If we have tasks, use the TasksList component to show them
   return (
     <Card dir="rtl">
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
@@ -167,14 +156,8 @@ export const MeetingTasksTab: React.FC<MeetingTasksTabProps> = ({ meetingId }) =
       </CardHeader>
       <CardContent>
         <div className="mb-4">
-          <ProjectTasksList 
-            tasks={meetingTasks} 
-            onTaskAdded={fetchMeetingTasks} 
-            onTaskUpdated={fetchMeetingTasks}
+          <TasksList 
             meetingId={meetingId}
-            isGeneral={true}
-            hideTasksHeader={true} 
-            hideTasksTitle={true} 
           />
         </div>
       </CardContent>
