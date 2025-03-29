@@ -2,6 +2,7 @@
 import { User } from '@supabase/supabase-js';
 import { BriefcaseIcon, Calculator, CalendarClock } from "lucide-react";
 import { AppItem } from "./DashboardApps";
+import { supabase } from "@/integrations/supabase/client";
 
 // Define our custom apps
 export const HR_MANAGEMENT_APP: AppItem = {
@@ -21,12 +22,23 @@ export const ACCOUNTING_APP: AppItem = {
 };
 
 // Helper function to check if user has access to HR app
-export const hasHRAccess = (user: User | null): boolean => {
+export const hasHRAccess = async (user: User | null): Promise<boolean> => {
   if (!user) return false;
   
-  // Implement your access control logic here
-  // This is a placeholder - replace with real logic
-  return true;
+  try {
+    // Use the has_hr_access RPC function we created
+    const { data, error } = await supabase.rpc('has_hr_access', { user_id: user.id });
+    
+    if (error) {
+      console.error('Error checking HR access:', error);
+      return false;
+    }
+    
+    return !!data;
+  } catch (error) {
+    console.error('Error checking HR access:', error);
+    return false;
+  }
 };
 
 // Helper function to check if user has access to Accounting app
@@ -34,15 +46,15 @@ export const hasAccountingAccess = (user: User | null): boolean => {
   if (!user) return false;
   
   // Implement your access control logic here
-  // This is a placeholder - replace with real logic
+  // For now, we'll return true to allow access for testing
   return true;
 };
 
 // Function to get custom apps
-export const getCustomApps = (user: User | null, notificationCounts: any): AppItem[] => {
+export const getCustomApps = async (user: User | null, notificationCounts: any): Promise<AppItem[]> => {
   const customApps: AppItem[] = [];
   
-  if (hasHRAccess(user)) {
+  if (await hasHRAccess(user)) {
     customApps.push({
       ...HR_MANAGEMENT_APP,
       notifications: notificationCounts?.hr || 0

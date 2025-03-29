@@ -1,14 +1,28 @@
 
+import { useState, useEffect } from "react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, FileText, UserCheck, GraduationCap, Calendar, DollarSign } from "lucide-react";
-import { useState } from "react";
+import { Users, FileText, UserCheck, GraduationCap, Calendar, DollarSign, Search } from "lucide-react";
+import { EmployeesTab } from "@/components/hr/tabs/EmployeesTab";
+import { AttendanceTab } from "@/components/hr/tabs/AttendanceTab";
+import { TrainingTab } from "@/components/hr/tabs/TrainingTab";
+import { CompensationTab } from "@/components/hr/tabs/CompensationTab";
+import { ReportsTab } from "@/components/hr/tabs/ReportsTab";
+import { useHRStats } from "@/hooks/hr/useHRStats";
+import { usePermissions } from "@/components/permissions/usePermissions";
+import { Input } from "@/components/ui/input";
 
 const HR = () => {
   const [activeTab, setActiveTab] = useState("overview");
+  const { stats, isLoading } = useHRStats();
+  const { hasPermission } = usePermissions();
+  const [searchTerm, setSearchTerm] = useState("");
 
+  const hasHRAccess = hasPermission("hr", "view");
+  const canManageEmployees = hasPermission("hr", "manage_employees");
+  
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <TopHeader />
@@ -17,6 +31,19 @@ const HR = () => {
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-primary text-right my-[13px]">نظام إدارة شؤون الموظفين</h1>
           <p className="text-muted-foreground text-right">إدارة شاملة لشؤون الموظفين والموارد البشرية</p>
+        </div>
+
+        <div className="w-full flex justify-end my-4">
+          <div className="relative w-full max-w-sm">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="بحث..."
+              className="pl-10 pr-4 w-full"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              dir="rtl"
+            />
+          </div>
         </div>
 
         <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
@@ -54,8 +81,10 @@ const HR = () => {
                   <CardTitle className="text-right text-lg">إجمالي الموظفين</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">42</div>
-                  <p className="text-sm text-muted-foreground">7 موظفين جدد هذا الشهر</p>
+                  <div className="text-3xl font-bold">{isLoading ? "..." : stats?.totalEmployees || 0}</div>
+                  <p className="text-sm text-muted-foreground">
+                    {stats?.newEmployees ? `${stats.newEmployees} موظفين جدد هذا الشهر` : "لا يوجد موظفين جدد"}
+                  </p>
                 </CardContent>
               </Card>
               <Card>
@@ -63,8 +92,10 @@ const HR = () => {
                   <CardTitle className="text-right text-lg">الحضور اليوم</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">38</div>
-                  <p className="text-sm text-muted-foreground">90% نسبة الحضور</p>
+                  <div className="text-3xl font-bold">{isLoading ? "..." : stats?.presentToday || 0}</div>
+                  <p className="text-sm text-muted-foreground">
+                    {isLoading ? "..." : `${stats?.attendanceRate || 0}% نسبة الحضور`}
+                  </p>
                 </CardContent>
               </Card>
               <Card>
@@ -72,8 +103,10 @@ const HR = () => {
                   <CardTitle className="text-right text-lg">الإجازات النشطة</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">4</div>
-                  <p className="text-sm text-muted-foreground">3 إجازات متوقعة الأسبوع القادم</p>
+                  <div className="text-3xl font-bold">{isLoading ? "..." : stats?.activeLeaves || 0}</div>
+                  <p className="text-sm text-muted-foreground">
+                    {isLoading ? "..." : `${stats?.upcomingLeaves || 0} إجازات متوقعة الأسبوع القادم`}
+                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -85,11 +118,11 @@ const HR = () => {
               <CardContent>
                 <div className="space-y-4">
                   <div className="p-3 bg-blue-50 rounded-lg text-right">
-                    <p className="font-medium">3 عقود ستنتهي هذا الشهر</p>
+                    <p className="font-medium">{stats?.expiringContracts || 0} عقود ستنتهي هذا الشهر</p>
                     <p className="text-sm text-muted-foreground">يجب مراجعة العقود والتجديد إذا لزم الأمر</p>
                   </div>
                   <div className="p-3 bg-amber-50 rounded-lg text-right">
-                    <p className="font-medium">5 موظفين لم يكملوا التدريب الإلزامي</p>
+                    <p className="font-medium">{stats?.pendingTrainings || 0} موظفين لم يكملوا التدريب الإلزامي</p>
                     <p className="text-sm text-muted-foreground">يجب متابعة حالة التدريب للالتزام بالمتطلبات</p>
                   </div>
                 </div>
@@ -97,44 +130,24 @@ const HR = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="employees" className="space-y-4">
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground">سيتم هنا عرض قائمة الموظفين وإدارة بياناتهم</p>
-              </CardContent>
-            </Card>
+          <TabsContent value="employees">
+            <EmployeesTab searchTerm={searchTerm} />
           </TabsContent>
 
-          <TabsContent value="attendance" className="space-y-4">
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground">سيتم هنا عرض سجلات الحضور وإدارة الإجازات</p>
-              </CardContent>
-            </Card>
+          <TabsContent value="attendance">
+            <AttendanceTab />
           </TabsContent>
 
-          <TabsContent value="training" className="space-y-4">
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground">سيتم هنا إدارة برامج التدريب والتطوير المهني</p>
-              </CardContent>
-            </Card>
+          <TabsContent value="training">
+            <TrainingTab />
           </TabsContent>
 
-          <TabsContent value="compensation" className="space-y-4">
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground">سيتم هنا إدارة الرواتب والمزايا والتعويضات</p>
-              </CardContent>
-            </Card>
+          <TabsContent value="compensation">
+            <CompensationTab />
           </TabsContent>
 
-          <TabsContent value="reports" className="space-y-4">
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground">سيتم هنا عرض وإنشاء تقارير الموارد البشرية</p>
-              </CardContent>
-            </Card>
+          <TabsContent value="reports">
+            <ReportsTab />
           </TabsContent>
         </Tabs>
       </main>

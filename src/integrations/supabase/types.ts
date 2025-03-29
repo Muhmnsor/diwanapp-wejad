@@ -647,6 +647,57 @@ export type Database = {
         }
         Relationships: []
       }
+      employees: {
+        Row: {
+          contract_end_date: string | null
+          contract_type: string | null
+          created_at: string | null
+          department: string | null
+          email: string | null
+          employee_number: string | null
+          full_name: string
+          hire_date: string | null
+          id: string
+          phone: string | null
+          position: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          contract_end_date?: string | null
+          contract_type?: string | null
+          created_at?: string | null
+          department?: string | null
+          email?: string | null
+          employee_number?: string | null
+          full_name: string
+          hire_date?: string | null
+          id?: string
+          phone?: string | null
+          position?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          contract_end_date?: string | null
+          contract_type?: string | null
+          created_at?: string | null
+          department?: string | null
+          email?: string | null
+          employee_number?: string | null
+          full_name?: string
+          hire_date?: string | null
+          id?: string
+          phone?: string | null
+          position?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       event_feedback: {
         Row: {
           content_rating: number | null
@@ -1124,6 +1175,281 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      hr_attendance: {
+        Row: {
+          attendance_date: string
+          check_in: string | null
+          check_out: string | null
+          created_at: string | null
+          employee_id: string | null
+          id: string
+          notes: string | null
+          status: string | null
+        }
+        Insert: {
+          attendance_date: string
+          check_in?: string | null
+          check_out?: string | null
+          created_at?: string | null
+          employee_id?: string | null
+          id?: string
+          notes?: string | null
+          status?: string | null
+        }
+        Update: {
+          attendance_date?: string
+          check_in?: string | null
+          check_out?: string | null
+          created_at?: string | null
+          employee_id?: string | null
+          id?: string
+          notes?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_attendance_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_compensation: {
+        Row: {
+          benefits: Json | null
+          compensation_type: string | null
+          created_at: string | null
+          currency: string | null
+          effective_date: string | null
+          employee_id: string | null
+          end_date: string | null
+          id: string
+          salary: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          benefits?: Json | null
+          compensation_type?: string | null
+          created_at?: string | null
+          currency?: string | null
+          effective_date?: string | null
+          employee_id?: string | null
+          end_date?: string | null
+          id?: string
+          salary?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          benefits?: Json | null
+          compensation_type?: string | null
+          created_at?: string | null
+          currency?: string | null
+          effective_date?: string | null
+          employee_id?: string | null
+          end_date?: string | null
+          id?: string
+          salary?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_compensation_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_employee_training: {
+        Row: {
+          certification: string | null
+          completion_date: string | null
+          created_at: string | null
+          employee_id: string | null
+          id: string
+          notes: string | null
+          status: string | null
+          training_id: string | null
+        }
+        Insert: {
+          certification?: string | null
+          completion_date?: string | null
+          created_at?: string | null
+          employee_id?: string | null
+          id?: string
+          notes?: string | null
+          status?: string | null
+          training_id?: string | null
+        }
+        Update: {
+          certification?: string | null
+          completion_date?: string | null
+          created_at?: string | null
+          employee_id?: string | null
+          id?: string
+          notes?: string | null
+          status?: string | null
+          training_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_employee_training_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_employee_training_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "hr_training"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_evaluations: {
+        Row: {
+          areas_for_improvement: string | null
+          created_at: string | null
+          employee_id: string | null
+          evaluation_date: string | null
+          evaluation_period: string | null
+          evaluator_id: string | null
+          goals: string | null
+          id: string
+          overall_rating: number | null
+          status: string | null
+          strengths: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          areas_for_improvement?: string | null
+          created_at?: string | null
+          employee_id?: string | null
+          evaluation_date?: string | null
+          evaluation_period?: string | null
+          evaluator_id?: string | null
+          goals?: string | null
+          id?: string
+          overall_rating?: number | null
+          status?: string | null
+          strengths?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          areas_for_improvement?: string | null
+          created_at?: string | null
+          employee_id?: string | null
+          evaluation_date?: string | null
+          evaluation_period?: string | null
+          evaluator_id?: string | null
+          goals?: string | null
+          id?: string
+          overall_rating?: number | null
+          status?: string | null
+          strengths?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_evaluations_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_leave_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string | null
+          employee_id: string | null
+          end_date: string
+          id: string
+          leave_type: string
+          reason: string | null
+          start_date: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          employee_id?: string | null
+          end_date: string
+          id?: string
+          leave_type: string
+          reason?: string | null
+          start_date: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          employee_id?: string | null
+          end_date?: string
+          id?: string
+          leave_type?: string
+          reason?: string | null
+          start_date?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_leave_requests_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_training: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          start_date: string | null
+          status: string | null
+          title: string
+          training_type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          start_date?: string | null
+          status?: string | null
+          title: string
+          training_type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          start_date?: string | null
+          status?: string | null
+          title?: string
+          training_type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       idea_categories: {
         Row: {
@@ -5476,6 +5802,12 @@ export type Database = {
       has_developer_role: {
         Args: {
           p_user_id: string
+        }
+        Returns: boolean
+      }
+      has_hr_access: {
+        Args: {
+          user_id: string
         }
         Returns: boolean
       }

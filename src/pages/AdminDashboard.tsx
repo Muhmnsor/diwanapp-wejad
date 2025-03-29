@@ -46,8 +46,8 @@ const AdminDashboard = () => {
         // Get standard apps from existing function
         const standardAppsList = await getAppsList(notificationCounts, user);
         
-        // Get our custom apps
-        const customAppsList = getCustomApps(user, notificationCounts);
+        // Get our custom apps - Note the await here
+        const customAppsList = await getCustomApps(user, notificationCounts);
         
         // Combine the lists
         const allApps = [...standardAppsList, ...customAppsList];
