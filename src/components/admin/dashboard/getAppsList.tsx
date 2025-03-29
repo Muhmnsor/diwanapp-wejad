@@ -187,10 +187,10 @@ const ALL_APPS: AppItem[] = [
     notifications: 0
   },
   {
-    title: "إدارة المستندات",
+    title: "إدارة الوثائق",
     icon: Database,
     path: "/documents",
-    description: "إدارة وتنظيم المستندات والملفات",
+    description:  "إدارة وتنظيم المستندات والملفات والنماذج",
     notifications: 0
   },
   {
@@ -208,10 +208,10 @@ const ALL_APPS: AppItem[] = [
     notifications: 0
   },
   {
-    title: "إدارة الأموال",
+    title: "إدارة التقديرات",
     icon: DollarSign,
     path: "/finance",
-    description: "إدارة الميزانية والمصروفات",
+    description: "إدارة تقديرات المشاريع",
     notifications: 0
   },
   {
@@ -232,7 +232,7 @@ const ALL_APPS: AppItem[] = [
     title: "المتجر الإلكتروني",
     icon: ShoppingCart,
     path: "/store",
-    description: "إدارة المن��جات والطلبات في المتجر الإلكتروني",
+    description: "إدارة منتجات التبرع في المتجر الإلكتروني",
     notifications: 0
   },
   {
