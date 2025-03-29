@@ -46,11 +46,11 @@ export const useNotificationCounts = () => {
           throw notificationsError;
         }
 
-        // Get tasks count
+        // Get tasks count - Fixed: using assigned_to instead of assignee_id
         const { count: tasksCount, error: tasksError } = await supabase
           .from('tasks')
           .select('*', { count: 'exact', head: true })
-          .eq('assignee_id', user.id)
+          .eq('assigned_to', user.id)
           .eq('status', 'pending');
 
         if (tasksError) {

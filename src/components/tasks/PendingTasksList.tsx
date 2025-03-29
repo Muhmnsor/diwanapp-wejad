@@ -5,8 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { 
   CheckCircle2, 
   Clock,
-  AlertCircle,
-  User
+  AlertCircle
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -33,11 +32,7 @@ export const PendingTasksList = () => {
         .from('tasks')
         .select(`
           *,
-          project_tasks!project_id(
-            projects(
-              title
-            )
-          )
+          profiles(display_name, email)
         `)
         .eq('assigned_to', user.id)
         .order('due_date', { ascending: true });
@@ -47,10 +42,10 @@ export const PendingTasksList = () => {
         throw error;
       }
       
-      // Transform the data to include the project title
+      // Transform the data to include the project name
       const transformedData = data?.map(task => ({
         ...task,
-        project_name: task.project_tasks?.projects?.title || 'مشروع غير محدد'
+        assigned_user_name: task.profiles?.display_name || task.profiles?.email || ''
       })) || [];
       
       console.log('Transformed assigned tasks data:', transformedData);
