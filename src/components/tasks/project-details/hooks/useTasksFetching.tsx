@@ -16,20 +16,30 @@ export const useTasksFetching = (
   const fetchTasks = async () => {
     setIsLoading(true);
     try {
+      console.log("Fetching tasks with params:", { projectId, meetingId, isWorkspace });
+      
       let query = supabase
         .from('tasks')
-        .select('*, profiles:assigned_to(display_name, email), stage:stage_id(name)');
+        .select(`
+          *,
+          profiles:assigned_to (display_name, email),
+          stage:stage_id (name)
+        `);
 
       // Filter based on what's provided
       if (isWorkspace && projectId) {
         // When isWorkspace is true and projectId is provided, we want tasks for that workspace
+        console.log("Fetching workspace tasks for workspace ID:", projectId);
         query = query.eq('workspace_id', projectId);
       } else if (meetingId) {
+        console.log("Fetching meeting tasks for meeting ID:", meetingId);
         query = query.eq('meeting_id', meetingId);
       } else if (projectId) {
+        console.log("Fetching project tasks for project ID:", projectId);
         query = query.eq('project_id', projectId);
       } else {
         // General tasks
+        console.log("Fetching general tasks");
         query = query.eq('is_general', true);
       }
 
@@ -40,14 +50,35 @@ export const useTasksFetching = (
         throw error;
       }
 
-      console.log("Fetched tasks:", data);
+      console.log("Fetched tasks raw data:", data);
 
       // Transform data to add user info and stage name
-      const transformedTasks = data.map(task => ({
-        ...task,
-        assigned_user_name: task.profiles?.display_name || task.profiles?.email || '',
-        stage_name: task.stage?.name || '',
-      }));
+      const transformedTasks = data.map(task => {
+        // Add proper debugging for assigned user
+        console.log("Task assigned_to:", task.assigned_to);
+        console.log("Task profiles:", task.profiles);
+
+        // Safely extract the assigned user name
+        let assignedUserName = '';
+        if (task.profiles) {
+          assignedUserName = task.profiles.display_name || task.profiles.email || '';
+          console.log("Extracted assigned user name:", assignedUserName);
+        }
+
+        // Safely extract stage name
+        let stageName = '';
+        if (task.stage) {
+          stageName = task.stage.name || '';
+        }
+
+        return {
+          ...task,
+          assigned_user_name: assignedUserName,
+          stage_name: stageName,
+        };
+      });
+
+      console.log("Transformed tasks with user names:", transformedTasks);
 
       setTasks(transformedTasks);
 
