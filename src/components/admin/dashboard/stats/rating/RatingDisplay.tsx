@@ -3,9 +3,11 @@ import { Star } from "lucide-react";
 
 interface RatingDisplayProps {
   rating: number;
+  title?: string;
+  subtitle?: string;
 }
 
-export const RatingDisplay = ({ rating }: RatingDisplayProps) => {
+export const RatingDisplay = ({ rating, title, subtitle }: RatingDisplayProps) => {
   const getRatingColor = (rating: number) => {
     if (rating >= 4) return 'text-green-600';
     if (rating >= 3) return 'text-yellow-600';
@@ -27,7 +29,7 @@ export const RatingDisplay = ({ rating }: RatingDisplayProps) => {
         </div>
       </div>
       <p className="text-xs text-muted-foreground">
-        متوسط تقييم جميع أنشطة المشروع
+        {subtitle || "متوسط تقييم جميع أنشطة المشروع"}
       </p>
     </div>
   );

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -13,6 +14,7 @@ import { AppItem } from "@/components/admin/dashboard/DashboardApps";
 import { Loader2, Users, AlertCircle } from "lucide-react";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { Card } from "@/components/ui/card";
+import { getCustomApps } from "@/components/admin/dashboard/customApps";
 
 const AdminDashboard = () => {
   const { data: userName, isLoading: isLoadingUser } = useUserName();
@@ -41,7 +43,14 @@ const AdminDashboard = () => {
       
       try {
         console.log("Fetching apps with user:", user.id, "and notification counts:", notificationCounts);
-        const appsList = await getAppsList(notificationCounts, user);
+        // Get standard apps from existing function
+        const standardAppsList = await getAppsList(notificationCounts, user);
+        
+        // Get our custom apps
+        const customAppsList = getCustomApps(user, notificationCounts);
+        
+        // Combine the lists
+        const allApps = [...standardAppsList, ...customAppsList];
         
         if (hasAdminRole) {
           const meetingsApp: AppItem = {
@@ -52,14 +61,14 @@ const AdminDashboard = () => {
             notifications: notificationCounts?.meetings || 0,
           };
           
-          const meetingsAppExists = appsList.some(app => app.path === "/admin/meetings");
+          const meetingsAppExists = allApps.some(app => app.path === "/admin/meetings");
           
           if (!meetingsAppExists) {
-            appsList.push(meetingsApp);
+            allApps.push(meetingsApp);
           }
         }
         
-        setApps(appsList);
+        setApps(allApps);
       } catch (error) {
         console.error("Error fetching apps:", error);
         setAppsError(error instanceof Error ? error : new Error("Failed to fetch apps"));
