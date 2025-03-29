@@ -15,6 +15,8 @@ import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MeetingStatusBadge } from "../status/MeetingStatusBadge";
 import { formatDate } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ClipboardList } from "lucide-react";
 
 interface AllMeetingsTableProps {
   meetings: Meeting[];
@@ -33,11 +35,13 @@ export const AllMeetingsTable = ({ meetings, isLoading, onDelete }: AllMeetingsT
     return <LoadingState />;
   }
 
-  if (meetings.length === 0) {
+  if (!meetings || meetings.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">لا توجد اجتماعات متاحة</p>
-      </div>
+      <EmptyState
+        icon={<ClipboardList className="h-10 w-10 text-muted-foreground" />}
+        title="لا توجد اجتماعات"
+        description="لم يتم العثور على أي اجتماعات. قم بإنشاء اجتماع جديد للبدء."
+      />
     );
   }
 

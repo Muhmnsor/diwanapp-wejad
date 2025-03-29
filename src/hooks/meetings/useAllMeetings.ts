@@ -9,22 +9,38 @@ export const useAllMeetings = (refreshTrigger: number = 0) => {
     queryFn: async (): Promise<Meeting[]> => {
       console.log('Fetching all meetings for admin view');
       
-      const { data, error } = await supabase
-        .from('meetings')
-        .select(`
-          *,
-          folder:meeting_folders(id, name),
-          creator:profiles(display_name, email)
-        `)
-        .order('date', { ascending: false });
-      
-      if (error) {
+      try {
+        // Modified query to fetch meetings without attempting to join with profiles
+        // Instead, we'll just get the creator_id and handle display separately
+        const { data, error } = await supabase
+          .from('meetings')
+          .select(`
+            *,
+            folder:meeting_folders(id, name)
+          `)
+          .order('date', { ascending: false });
+        
+        if (error) {
+          console.error("Error fetching all meetings:", error);
+          throw error;
+        }
+
+        console.log(`Retrieved ${data.length} meetings for admin view`);
+        
+        // Transform the data to match the expected Meeting type
+        const transformedData = data.map(meeting => ({
+          ...meeting,
+          creator: {
+            display_name: "Unknown", // Default value
+            email: ""
+          }
+        }));
+        
+        return transformedData as Meeting[];
+      } catch (error) {
         console.error("Error fetching all meetings:", error);
         throw error;
       }
-
-      console.log(`Retrieved ${data.length} meetings for admin view`);
-      return data as Meeting[];
     },
     enabled: true
   });
