@@ -42,7 +42,12 @@ export const ProjectTasksList = ({
   hideTasksTitle = false,
   isWorkspace = false
 }: ProjectTasksListProps) => {
-  // Pass meetingId separately in first position if available, otherwise pass isWorkspace 
+  // Create a configuration object for meeting or workspace
+  const taskContext = {
+    meetingId,
+    isWorkspace
+  };
+  
   const {
     tasks: fetchedTasks,
     isLoading,
@@ -56,10 +61,7 @@ export const ProjectTasksList = ({
     handleStatusChange,
     fetchTasks,
     deleteTask
-  } = useTasksList(
-    projectId, 
-    meetingId || isWorkspace
-  );
+  } = useTasksList(projectId, taskContext);
   
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -81,7 +83,7 @@ export const ProjectTasksList = ({
     if (!externalTasks) {
       fetchTasks();
     }
-  }, [projectId, meetingId]);
+  }, [projectId, meetingId, isWorkspace]);
 
   const filteredTasks = tasks.filter(task => {
     if (activeTab === "all") return true;
@@ -104,7 +106,7 @@ export const ProjectTasksList = ({
 
   return (
     <>
-      {!isGeneralBoolean && !meetingId && (
+      {!isGeneralBoolean && !meetingId && !isWorkspace && (
         <ProjectStages 
           projectId={projectId} 
           onStagesChange={handleStagesChange} 

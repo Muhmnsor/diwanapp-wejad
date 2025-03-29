@@ -9,11 +9,11 @@ import { Task } from "../types/task";
 
 export const useTasksList = (
   projectId?: string, 
-  meetingIdOrIsWorkspace?: string | boolean
+  meetingOrWorkspaceProps?: { meetingId?: string; isWorkspace?: boolean }
 ) => {
-  // Determine if second parameter is a meetingId (string) or isWorkspace flag (boolean)
-  const meetingId = typeof meetingIdOrIsWorkspace === 'string' ? meetingIdOrIsWorkspace : undefined;
-  const isWorkspace = typeof meetingIdOrIsWorkspace === 'boolean' ? meetingIdOrIsWorkspace : false;
+  // Extract meetingId and isWorkspace from props or set defaults
+  const meetingId = meetingOrWorkspaceProps?.meetingId;
+  const isWorkspace = meetingOrWorkspaceProps?.isWorkspace || false;
 
   // Hook for handling UI state
   const {
@@ -33,7 +33,7 @@ export const useTasksList = (
     setTasks,
     setTasksByStage,
     fetchTasks
-  } = useTasksFetching(projectId, meetingId);
+  } = useTasksFetching(projectId, meetingId, isWorkspace);
 
   // Hook for task status management
   const { handleStatusChange } = useTaskStatusManagement(
@@ -200,7 +200,7 @@ export const useTasksList = (
     tasksByStage,
     handleStatusChange,
     fetchTasks,
-    isGeneral: !projectId && !meetingId,
+    isGeneral: !projectId && !meetingId && !isWorkspace,
     deleteTask,
     updateTask
   };
