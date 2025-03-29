@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { RecurringTask, getProjectName, getWorkspaceName, getAssigneeName } from "../types/RecurringTask";
 import { useAuthStore } from "@/store/authStore";
+import { checkUserPermissions } from "@/components/requests/workflow/hooks/utils/permissionUtils";
 
 export const useRecurringTasks = () => {
   const [recurringTasks, setRecurringTasks] = useState<RecurringTask[]>([]);
@@ -26,16 +27,25 @@ export const useRecurringTasks = () => {
       }
 
       console.log("Checking admin status for user:", user.id);
-      const { data: isAdminData, error: isAdminError } = await supabase.rpc('is_admin', { user_id: user.id });
       
-      if (isAdminError) {
-        console.error("Error checking admin status:", isAdminError);
-        toast.error("حدث خطأ أثناء التحقق من صلاحيات المستخدم");
-        throw isAdminError;
+      // First try with the is_admin RPC
+      try {
+        const { data: isAdminData, error: isAdminError } = await supabase.rpc('is_admin', { user_id: user.id });
+        
+        if (isAdminError) {
+          console.error("Error checking admin status with is_admin RPC:", isAdminError);
+          throw isAdminError;
+        }
+        
+        setIsAdmin(isAdminData || false);
+        console.log("Is admin (via RPC):", isAdminData);
+      } catch (rpcError) {
+        // If the RPC fails, try with the permission util function as a fallback
+        console.log("Falling back to permission utils for admin check");
+        const { isAdmin: isAdminCheck } = await checkUserPermissions();
+        setIsAdmin(isAdminCheck);
+        console.log("Is admin (via fallback):", isAdminCheck);
       }
-      
-      setIsAdmin(isAdminData || false);
-      console.log("Is admin:", isAdminData);
 
       // Improved query with more detailed console logging
       console.log("Fetching recurring tasks...");

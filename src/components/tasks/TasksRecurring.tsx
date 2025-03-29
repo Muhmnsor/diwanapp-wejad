@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "lucide-react";
+import { Calendar, RefreshCw } from "lucide-react";
 import { useRecurringTasks } from "./hooks/useRecurringTasks";
 import { RecurringTaskCard } from "./components/recurring/RecurringTaskCard";
 import { EmptyRecurringTasks } from "./components/recurring/EmptyRecurringTasks";
@@ -27,6 +27,10 @@ export const TasksRecurring = () => {
     return true;
   });
 
+  const handleRefresh = () => {
+    fetchRecurringTasks();
+  };
+
   console.log("TasksRecurring - All tasks:", recurringTasks.length);
   console.log("TasksRecurring - Filtered tasks:", filteredTasks.length);
 
@@ -46,16 +50,17 @@ export const TasksRecurring = () => {
           onFilterChange={setActiveFilter}
         />
 
-        {isAdmin && (
-          <div className="flex gap-2">
-            <Button 
-              onClick={fetchRecurringTasks} 
-              variant="outline"
-              className="flex gap-2 items-center"
-            >
-              تحديث القائمة
-            </Button>
-            
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleRefresh} 
+            variant="outline"
+            className="flex gap-2 items-center"
+          >
+            <RefreshCw className="h-4 w-4" />
+            تحديث القائمة
+          </Button>
+          
+          {isAdmin && (
             <Button 
               onClick={generateTasks} 
               disabled={isGenerating}
@@ -74,8 +79,8 @@ export const TasksRecurring = () => {
                 </>
               )}
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {filteredTasks.length === 0 ? (
