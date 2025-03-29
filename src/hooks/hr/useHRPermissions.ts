@@ -22,7 +22,7 @@ export function useHRPermissions() {
       }
       
       try {
-        // Check if user has HR role
+        // Check if user has HR role using the dedicated function
         const { data: hasHRAccess, error: hrError } = await supabase
           .rpc('has_hr_access', { user_id: user.id });
           
