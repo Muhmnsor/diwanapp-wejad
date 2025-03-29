@@ -20,7 +20,11 @@ export const useTasksFetching = (
       
       let query = supabase
         .from('tasks')
-        .select(`*`);
+        .select(`
+          *,
+          profiles:assigned_to (display_name, email),
+          stage:stage_id (name)
+        `);
 
       // Filter based on what's provided - using clear logic for each task type
       if (isWorkspace && projectId) {
@@ -41,94 +45,32 @@ export const useTasksFetching = (
         query = query.eq('is_general', true);
       }
 
-      const { data: tasksData, error } = await query.order('created_at', { ascending: false });
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) {
         console.error("Error fetching tasks:", error);
         throw error;
       }
 
-      console.log("Fetched tasks raw data:", tasksData);
-
-      // If no tasks, return empty array
-      if (!tasksData || tasksData.length === 0) {
-        setTasks([]);
-        setTasksByStage({});
-        setIsLoading(false);
-        return [];
-      }
-
-      // Extract all user IDs from assigned_to field
-      const userIds = tasksData
-        .map(task => task.assigned_to)
-        .filter(id => id !== null && id !== undefined);
-
-      // Create a Set to get unique user IDs
-      const uniqueUserIds = [...new Set(userIds)];
-      
-      // If there are assigned users, fetch their profiles
-      let userMap: Record<string, { display_name: string, email: string }> = {};
-      
-      if (uniqueUserIds.length > 0) {
-        const { data: usersData, error: usersError } = await supabase
-          .from('profiles')
-          .select('id, display_name, email')
-          .in('id', uniqueUserIds);
-        
-        if (usersError) {
-          console.error("Error fetching user profiles:", usersError);
-        } else if (usersData) {
-          // Create a map of user ID to user info
-          userMap = usersData.reduce((acc, user) => {
-            acc[user.id] = {
-              display_name: user.display_name,
-              email: user.email
-            };
-            return acc;
-          }, {} as Record<string, { display_name: string, email: string }>);
-        }
-      }
-
-      // Fetch stage information if necessary
-      let stagesMap: Record<string, { name: string }> = {};
-      
-      // Extract all stage IDs
-      const stageIds = tasksData
-        .map(task => task.stage_id)
-        .filter(id => id !== null && id !== undefined);
-      
-      // If there are stages, fetch their details
-      if (stageIds.length > 0) {
-        const { data: stagesData, error: stagesError } = await supabase
-          .from('project_stages')
-          .select('id, name')
-          .in('id', [...new Set(stageIds)]);
-        
-        if (stagesError) {
-          console.error("Error fetching stages:", stagesError);
-        } else if (stagesData) {
-          // Create a map of stage ID to stage info
-          stagesMap = stagesData.reduce((acc, stage) => {
-            acc[stage.id] = { name: stage.name };
-            return acc;
-          }, {} as Record<string, { name: string }>);
-        }
-      }
+      console.log("Fetched tasks raw data:", data);
 
       // Transform data to add user info and stage name
-      const transformedTasks = tasksData.map(task => {
+      const transformedTasks = data.map(task => {
+        // Add proper debugging for assigned user
+        console.log("Task assigned_to:", task.assigned_to);
+        console.log("Task profiles:", task.profiles);
+
         // Safely extract the assigned user name
-        let assignedUserName = 'غير محدد';
-        if (task.assigned_to && userMap[task.assigned_to]) {
-          assignedUserName = userMap[task.assigned_to].display_name || 
-                            userMap[task.assigned_to].email || 
-                            'غير محدد';
+        let assignedUserName = '';
+        if (task.profiles) {
+          assignedUserName = task.profiles.display_name || task.profiles.email || '';
+          console.log("Extracted assigned user name:", assignedUserName);
         }
 
         // Safely extract stage name
         let stageName = '';
-        if (task.stage_id && stagesMap[task.stage_id]) {
-          stageName = stagesMap[task.stage_id].name || '';
+        if (task.stage) {
+          stageName = task.stage.name || '';
         }
 
         return {
