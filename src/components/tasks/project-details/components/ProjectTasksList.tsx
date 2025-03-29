@@ -17,6 +17,13 @@ interface ProjectTasksListProps {
   projectId?: string | undefined;
   projectMembers?: ProjectMember[];
   stages?: { id: string; name: string }[];
+  tasks?: Task[];
+  onTaskAdded?: () => void;
+  onTaskUpdated?: () => void;
+  meetingId?: string;
+  isGeneral?: boolean;
+  hideTasksHeader?: boolean;
+  hideTasksTitle?: boolean;
 }
 
 // Re-export Task interface for backward compatibility
@@ -25,23 +32,30 @@ export type { Task };
 export const ProjectTasksList = ({ 
   projectId,
   projectMembers: externalProjectMembers,
-  stages: externalStages
+  stages: externalStages,
+  tasks: externalTasks,
+  onTaskAdded,
+  onTaskUpdated,
+  meetingId,
+  isGeneral: externalIsGeneral,
+  hideTasksHeader,
+  hideTasksTitle
 }: ProjectTasksListProps) => {
   const {
-    tasks,
+    tasks: fetchedTasks,
     isLoading,
     activeTab,
     setActiveTab,
     isAddDialogOpen,
     setIsAddDialogOpen,
-    projectStages,
+    projectStages: fetchedStages,
     handleStagesChange,
     tasksByStage,
     handleStatusChange,
     fetchTasks,
-    isGeneral,
+    isGeneral: calculatedIsGeneral,
     deleteTask
-  } = useTasksList(projectId);
+  } = useTasksList(projectId, meetingId);
 
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -51,11 +65,11 @@ export const ProjectTasksList = ({
     externalProjectMembers ? undefined : projectId
   );
   
-  // Use either external members or fetched members
+  // Determine which data sources to use
+  const tasks = externalTasks || fetchedTasks;
   const projectMembers = externalProjectMembers || fetchedMembers;
-
-  // Use external stages if provided, otherwise use the ones from useTasksList
-  const stages = externalStages || projectStages;
+  const stages = externalStages || fetchedStages;
+  const isGeneral = typeof externalIsGeneral !== 'undefined' ? externalIsGeneral : calculatedIsGeneral;
 
   const filteredTasks = tasks.filter(task => {
     if (activeTab === "all") return true;
@@ -70,6 +84,7 @@ export const ProjectTasksList = ({
   const handleDeleteTask = async (taskId: string) => {
     try {
       await deleteTask(taskId);
+      if (onTaskUpdated) onTaskUpdated();
     } catch (error) {
       console.error("Error deleting task:", error);
     }
@@ -77,7 +92,7 @@ export const ProjectTasksList = ({
 
   return (
     <>
-      {!isGeneral && (
+      {!isGeneral && !hideTasksHeader && (
         <ProjectStages 
           projectId={projectId} 
           onStagesChange={handleStagesChange} 
@@ -85,11 +100,17 @@ export const ProjectTasksList = ({
       )}
       
       <Card className="border shadow-sm">
-        <CardHeader className="pb-0">
-          <TasksHeader onAddTask={() => setIsAddDialogOpen(true)} isGeneral={isGeneral} />
-        </CardHeader>
+        {!hideTasksHeader && (
+          <CardHeader className="pb-0">
+            <TasksHeader 
+              onAddTask={() => setIsAddDialogOpen(true)} 
+              isGeneral={isGeneral} 
+              hideTitle={hideTasksTitle}
+            />
+          </CardHeader>
+        )}
         
-        <CardContent className="pt-4">
+        <CardContent className={hideTasksHeader ? "pt-2" : "pt-4"}>
           <TasksFilter 
             activeTab={activeTab} 
             onTabChange={setActiveTab} 
@@ -118,9 +139,13 @@ export const ProjectTasksList = ({
         onOpenChange={setIsAddDialogOpen}
         projectId={projectId || ""}
         projectStages={stages}
-        onTaskAdded={fetchTasks}
+        onTaskAdded={() => {
+          fetchTasks();
+          if (onTaskAdded) onTaskAdded();
+        }}
         projectMembers={projectMembers}
         isGeneral={isGeneral}
+        meetingId={meetingId}
       />
 
       {/* Dialog for editing tasks */}
@@ -131,7 +156,11 @@ export const ProjectTasksList = ({
           task={editingTask}
           projectStages={stages}
           projectMembers={projectMembers}
-          onTaskUpdated={fetchTasks}
+          onTaskUpdated={() => {
+            fetchTasks();
+            if (onTaskUpdated) onTaskUpdated();
+          }}
+          meetingId={meetingId}
         />
       )}
     </>
