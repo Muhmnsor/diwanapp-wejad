@@ -15,12 +15,17 @@ import { EditTaskDialog } from "./EditTaskDialog";
 interface TasksListProps {
   projectId?: string | undefined;
   isWorkspace?: boolean;
+  meetingId?: string;
 }
 
 // Re-export Task interface for backward compatibility
 export type { Task };
 
-export const TasksList = ({ projectId, isWorkspace = false }: TasksListProps) => {
+export const TasksList = ({ 
+  projectId, 
+  isWorkspace = false,
+  meetingId
+}: TasksListProps) => {
   const {
     tasks,
     isLoading,
@@ -35,7 +40,7 @@ export const TasksList = ({ projectId, isWorkspace = false }: TasksListProps) =>
     fetchTasks,
     isGeneral,
     deleteTask
-  } = useTasksList(projectId, undefined, isWorkspace);
+  } = useTasksList(projectId, meetingId, isWorkspace);
 
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -66,7 +71,7 @@ export const TasksList = ({ projectId, isWorkspace = false }: TasksListProps) =>
 
   return (
     <>
-      {!isGeneralBoolean && !isWorkspace && (
+      {!isGeneralBoolean && !isWorkspace && !meetingId && (
         <ProjectStages 
           projectId={projectId} 
           onStagesChange={handleStagesChange} 
@@ -111,6 +116,7 @@ export const TasksList = ({ projectId, isWorkspace = false }: TasksListProps) =>
         projectMembers={projectMembers}
         isGeneral={isGeneralBoolean}
         isWorkspace={isWorkspace}
+        meetingId={meetingId}
       />
 
       {/* Dialog for editing tasks */}
@@ -122,6 +128,7 @@ export const TasksList = ({ projectId, isWorkspace = false }: TasksListProps) =>
           projectStages={projectStages}
           projectMembers={projectMembers}
           onTaskUpdated={fetchTasks}
+          meetingId={meetingId}
         />
       )}
     </>

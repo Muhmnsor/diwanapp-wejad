@@ -26,19 +26,21 @@ export const useTasksFetching = (
           stage:stage_id (name)
         `);
 
-      // Filter based on what's provided
+      // Filter based on what's provided - using clear logic for each task type
       if (isWorkspace && projectId) {
-        // When isWorkspace is true and projectId is provided, we want tasks for that workspace
+        // Case 1: Workspace tasks - specific to a workspace
         console.log("Fetching workspace tasks for workspace ID:", projectId);
         query = query.eq('workspace_id', projectId);
       } else if (meetingId) {
+        // Case 2: Meeting tasks - tied to a specific meeting
         console.log("Fetching meeting tasks for meeting ID:", meetingId);
         query = query.eq('meeting_id', meetingId);
       } else if (projectId) {
+        // Case 3: Project tasks - specific to a project
         console.log("Fetching project tasks for project ID:", projectId);
         query = query.eq('project_id', projectId);
       } else {
-        // General tasks
+        // Case 4: General tasks - not tied to any specific entity
         console.log("Fetching general tasks");
         query = query.eq('is_general', true);
       }
