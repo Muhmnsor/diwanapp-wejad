@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/store/refactored-auth";
@@ -15,6 +16,8 @@ export function useAppPermissions() {
           hasHRAccess: false,
           hasAccountingAccess: false,
           hasMeetingsAccess: false,
+          hasTasksAccess: false, 
+          hasDocumentsAccess: false,
           isAdmin: false
         };
       }
@@ -32,12 +35,14 @@ export function useAppPermissions() {
             hasHRAccess: true,
             hasAccountingAccess: true,
             hasMeetingsAccess: true,
+            hasTasksAccess: true,
+            hasDocumentsAccess: true,
             isAdmin: true
           };
         }
         
         // Check specific app permissions
-        const [hrAccess, accountingAccess, meetingsAccess] = await Promise.all([
+        const [hrAccess, accountingAccess, meetingsAccess, tasksAccess, documentsAccess] = await Promise.all([
           supabase.rpc('check_user_app_access', { 
             p_user_id: user.id,
             p_app_name: 'hr'
@@ -49,6 +54,14 @@ export function useAppPermissions() {
           supabase.rpc('check_user_app_access', { 
             p_user_id: user.id,
             p_app_name: 'meetings'
+          }),
+          supabase.rpc('check_user_app_access', { 
+            p_user_id: user.id,
+            p_app_name: 'tasks'
+          }),
+          supabase.rpc('check_user_app_access', { 
+            p_user_id: user.id,
+            p_app_name: 'documents'
           })
         ]);
         
@@ -56,6 +69,8 @@ export function useAppPermissions() {
           hasHRAccess: !!hrAccess.data,
           hasAccountingAccess: !!accountingAccess.data,
           hasMeetingsAccess: !!meetingsAccess.data,
+          hasTasksAccess: !!tasksAccess.data,
+          hasDocumentsAccess: !!documentsAccess.data,
           isAdmin: false
         };
       } catch (error) {
@@ -64,6 +79,8 @@ export function useAppPermissions() {
           hasHRAccess: false,
           hasAccountingAccess: false,
           hasMeetingsAccess: false,
+          hasTasksAccess: false,
+          hasDocumentsAccess: false,
           isAdmin: false
         };
       }
@@ -82,6 +99,8 @@ export function useAppPermissions() {
         case 'hr': return data.hasHRAccess || data.isAdmin;
         case 'accounting': return data.hasAccountingAccess || data.isAdmin;
         case 'meetings': return data.hasMeetingsAccess || data.isAdmin;
+        case 'tasks': return data.hasTasksAccess || data.isAdmin;
+        case 'documents': return data.hasDocumentsAccess || data.isAdmin;
         default: return data.isAdmin;
       }
     }
