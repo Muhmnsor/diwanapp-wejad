@@ -40,7 +40,11 @@ export const TasksList = ({
     fetchTasks,
     isGeneral,
     deleteTask
-  } = useTasksList(projectId, meetingId, isWorkspace);
+  } = useTasksList({
+    projectId, 
+    meetingId, 
+    isWorkspace
+  });
 
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
