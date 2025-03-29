@@ -9,11 +9,11 @@ import { Task } from "../types/task";
 
 export const useTasksList = (
   projectId?: string, 
-  meetingIdOrIsWorkspace?: string | boolean
+  secondParam?: string | boolean
 ) => {
-  // Determine if second parameter is a meetingId (string) or isWorkspace flag (boolean)
-  const meetingId = typeof meetingIdOrIsWorkspace === 'string' ? meetingIdOrIsWorkspace : undefined;
-  const isWorkspace = typeof meetingIdOrIsWorkspace === 'boolean' ? meetingIdOrIsWorkspace : false;
+  // Convert the second parameter into appropriate types
+  const meetingId = typeof secondParam === 'string' ? secondParam : undefined;
+  const isWorkspace = secondParam === true;
 
   // Hook for handling UI state
   const {

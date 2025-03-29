@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ProjectStages } from "./ProjectStages";
@@ -42,7 +41,12 @@ export const ProjectTasksList = ({
   hideTasksTitle = false,
   isWorkspace = false
 }: ProjectTasksListProps) => {
-  // Pass meetingId separately in first position if available, otherwise pass isWorkspace 
+  // Pass the correct types to useTasksList
+  // If meetingId is provided, pass it as string
+  // If isWorkspace is true and no meetingId, pass true
+  // Otherwise pass undefined for the second parameter
+  const secondParam = meetingId ? meetingId : (isWorkspace ? true : undefined);
+  
   const {
     tasks: fetchedTasks,
     isLoading,
@@ -56,10 +60,7 @@ export const ProjectTasksList = ({
     handleStatusChange,
     fetchTasks,
     deleteTask
-  } = useTasksList(
-    projectId, 
-    meetingId || isWorkspace
-  );
+  } = useTasksList(projectId, secondParam);
   
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
