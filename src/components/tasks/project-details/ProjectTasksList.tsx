@@ -42,7 +42,7 @@ export const ProjectTasksList = ({
   hideTasksTitle = false,
   isWorkspace = false
 }: ProjectTasksListProps) => {
-  // Pass all three parameters to useTasksList
+  // Now we pass the parameters separately
   const {
     tasks: fetchedTasks,
     isLoading,
