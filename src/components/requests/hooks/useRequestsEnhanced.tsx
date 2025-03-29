@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useRequests } from "./useRequests";
 import { RequestStatus } from "@/types/meeting";
+import { isValidRequestStatus } from "../detail/workflow/types";
 
 /**
  * Enhanced version of useRequests that adds additional functionality
@@ -51,8 +52,7 @@ export const useRequestsEnhanced = () => {
       
       // Ensure the status field is a valid RequestStatus type if it exists
       if (formData.status && typeof formData.status === 'string') {
-        const validStatuses: RequestStatus[] = ['pending', 'in_progress', 'approved', 'rejected', 'completed', 'cancelled'];
-        if (!validStatuses.includes(formData.status as RequestStatus)) {
+        if (!isValidRequestStatus(formData.status)) {
           formData.status = 'pending' as RequestStatus;
         }
       }

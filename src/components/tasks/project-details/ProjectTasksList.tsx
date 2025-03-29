@@ -24,6 +24,7 @@ interface ProjectTasksListProps {
   isGeneral?: boolean;
   hideTasksHeader?: boolean;
   hideTasksTitle?: boolean;
+  isWorkspace?: boolean;
 }
 
 export type { Task };
@@ -38,8 +39,10 @@ export const ProjectTasksList = ({
   meetingId,
   isGeneral = false,
   hideTasksHeader = false,
-  hideTasksTitle = false
+  hideTasksTitle = false,
+  isWorkspace = false
 }: ProjectTasksListProps) => {
+  // Pass meetingId separately in first position if available, otherwise pass isWorkspace 
   const {
     tasks: fetchedTasks,
     isLoading,
@@ -53,7 +56,10 @@ export const ProjectTasksList = ({
     handleStatusChange,
     fetchTasks,
     deleteTask
-  } = useTasksList(projectId, meetingId);
+  } = useTasksList(
+    projectId, 
+    meetingId || isWorkspace
+  );
   
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -151,7 +157,7 @@ export const ProjectTasksList = ({
         projectMembers={projectMembers}
         isGeneral={isGeneralBoolean}
         meetingId={meetingId}
-        isWorkspace={false}
+        isWorkspace={isWorkspace}
       />
 
       {editingTask && (

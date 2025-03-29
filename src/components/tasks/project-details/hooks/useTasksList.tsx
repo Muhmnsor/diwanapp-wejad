@@ -7,7 +7,14 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Task } from "../types/task";
 
-export const useTasksList = (projectId?: string, meetingId?: string) => {
+export const useTasksList = (
+  projectId?: string, 
+  meetingIdOrIsWorkspace?: string | boolean
+) => {
+  // Determine if second parameter is a meetingId (string) or isWorkspace flag (boolean)
+  const meetingId = typeof meetingIdOrIsWorkspace === 'string' ? meetingIdOrIsWorkspace : undefined;
+  const isWorkspace = typeof meetingIdOrIsWorkspace === 'boolean' ? meetingIdOrIsWorkspace : false;
+
   // Hook for handling UI state
   const {
     activeTab,
