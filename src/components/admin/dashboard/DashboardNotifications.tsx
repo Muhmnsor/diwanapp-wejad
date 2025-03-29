@@ -56,7 +56,7 @@ export const DashboardNotifications = ({ notificationCount }: DashboardNotificat
               <Clock className="w-6 h-6 text-primary mr-2" />
               <h2 className="text-xl font-semibold">المهام المطلوبة</h2>
             </div>
-            <PendingTasksList />
+            <PendingTasksList limit={3} />
           </Card>
           
           <Card className="p-6">

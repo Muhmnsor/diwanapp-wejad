@@ -18,11 +18,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export const PendingTasksList = () => {
+interface PendingTasksListProps {
+  limit?: number;
+}
+
+export const PendingTasksList = ({ limit = 5 }: PendingTasksListProps) => {
   const { user } = useAuthStore();
   
   const { data: tasks, isLoading } = useQuery({
-    queryKey: ['assigned-tasks', user?.id],
+    queryKey: ['assigned-tasks', user?.id, limit],
     queryFn: async () => {
       if (!user?.id) return [];
       
@@ -32,10 +36,13 @@ export const PendingTasksList = () => {
         .from('tasks')
         .select(`
           *,
-          profiles(display_name, email)
+          profiles(display_name, email),
+          project_tasks(name)
         `)
         .eq('assigned_to', user.id)
-        .order('due_date', { ascending: true });
+        .in('status', ['pending', 'in_progress', 'delayed'])
+        .order('due_date', { ascending: true })
+        .limit(limit);
       
       if (error) {
         console.error("Error fetching assigned tasks:", error);
@@ -45,7 +52,8 @@ export const PendingTasksList = () => {
       // Transform the data to include the project name
       const transformedData = data?.map(task => ({
         ...task,
-        assigned_user_name: task.profiles?.display_name || task.profiles?.email || ''
+        assigned_user_name: task.profiles?.display_name || task.profiles?.email || '',
+        project_name: task.project_tasks?.name || 'مشروع غير محدد'
       })) || [];
       
       console.log('Transformed assigned tasks data:', transformedData);
@@ -57,7 +65,7 @@ export const PendingTasksList = () => {
   if (isLoading) {
     return (
       <div className="space-y-3">
-        {Array.from({ length: 3 }).map((_, i) => (
+        {Array.from({ length: limit }).map((_, i) => (
           <Skeleton key={i} className="h-14 w-full" />
         ))}
       </div>
@@ -101,6 +109,8 @@ export const PendingTasksList = () => {
         return <Clock className="h-4 w-4 text-blue-500" />;
       case 'delayed':
         return <AlertCircle className="h-4 w-4 text-amber-500" />;
+      case 'in_progress':
+        return <Clock className="h-4 w-4 text-indigo-500" />;
       default:
         return <Clock className="h-4 w-4 text-blue-500" />;
     }
