@@ -16,34 +16,118 @@ export const useTasksFetching = (
   const fetchTasks = async () => {
     setIsLoading(true);
     try {
-      let query = supabase
-        .from('tasks')
-        .select('*, profiles:assigned_to(display_name, email), stage:stage_id(name)');
+      let fetchedTasks: Task[] = [];
 
-      // Filter based on what's provided
       if (isWorkspace && projectId) {
-        // When isWorkspace is true and projectId is provided, we want tasks for that workspace
-        query = query.eq('workspace_id', projectId);
+        // When isWorkspace is true and projectId is provided, we need to:
+        // 1. Fetch the projects in this workspace
+        // 2. For each project, fetch its tasks
+        console.log("Fetching tasks for workspace:", projectId);
+        
+        // First, get all projects within this workspace
+        const { data: workspaceProjects, error: projectsError } = await supabase
+          .from('project_tasks')
+          .select('id')
+          .eq('workspace_id', projectId);
+        
+        if (projectsError) {
+          console.error("Error fetching workspace projects:", projectsError);
+          throw projectsError;
+        }
+        
+        const projectIds = workspaceProjects.map(project => project.id);
+        console.log("Found projects in workspace:", projectIds);
+        
+        if (projectIds.length > 0) {
+          // Fetch tasks for all projects in the workspace
+          const { data: projectTasks, error: tasksError } = await supabase
+            .from('tasks')
+            .select('*, profiles:assigned_to(display_name, email), stage:stage_id(name)')
+            .in('project_id', projectIds);
+          
+          if (tasksError) {
+            console.error("Error fetching project tasks:", tasksError);
+            throw tasksError;
+          }
+          
+          console.log(`Fetched ${projectTasks?.length || 0} tasks from workspace projects`);
+          
+          // Also fetch tasks directly associated with the workspace
+          const { data: workspaceTasks, error: workspaceTasksError } = await supabase
+            .from('tasks')
+            .select('*, profiles:assigned_to(display_name, email), stage:stage_id(name)')
+            .eq('workspace_id', projectId);
+          
+          if (workspaceTasksError) {
+            console.error("Error fetching workspace tasks:", workspaceTasksError);
+            throw workspaceTasksError;
+          }
+          
+          console.log(`Fetched ${workspaceTasks?.length || 0} direct workspace tasks`);
+          
+          // Combine all tasks
+          fetchedTasks = [...(projectTasks || []), ...(workspaceTasks || [])];
+        } else {
+          // No projects found, just fetch tasks associated directly with the workspace
+          const { data, error } = await supabase
+            .from('tasks')
+            .select('*, profiles:assigned_to(display_name, email), stage:stage_id(name)')
+            .eq('workspace_id', projectId);
+          
+          if (error) {
+            console.error("Error fetching workspace tasks:", error);
+            throw error;
+          }
+          
+          fetchedTasks = data || [];
+          console.log(`Fetched ${fetchedTasks.length} direct workspace tasks (no projects found)`);
+        }
       } else if (meetingId) {
-        query = query.eq('meeting_id', meetingId);
+        // Fetch meeting tasks
+        const { data, error } = await supabase
+          .from('tasks')
+          .select('*, profiles:assigned_to(display_name, email), stage:stage_id(name)')
+          .eq('meeting_id', meetingId);
+        
+        if (error) {
+          console.error("Error fetching meeting tasks:", error);
+          throw error;
+        }
+        
+        fetchedTasks = data || [];
+        console.log(`Fetched ${fetchedTasks.length} meeting tasks`);
       } else if (projectId) {
-        query = query.eq('project_id', projectId);
+        // Fetch project tasks
+        const { data, error } = await supabase
+          .from('tasks')
+          .select('*, profiles:assigned_to(display_name, email), stage:stage_id(name)')
+          .eq('project_id', projectId);
+        
+        if (error) {
+          console.error("Error fetching project tasks:", error);
+          throw error;
+        }
+        
+        fetchedTasks = data || [];
+        console.log(`Fetched ${fetchedTasks.length} project tasks`);
       } else {
-        // General tasks
-        query = query.eq('is_general', true);
+        // General tasks (not associated with project, workspace, or meeting)
+        const { data, error } = await supabase
+          .from('tasks')
+          .select('*, profiles:assigned_to(display_name, email), stage:stage_id(name)')
+          .eq('is_general', true);
+        
+        if (error) {
+          console.error("Error fetching general tasks:", error);
+          throw error;
+        }
+        
+        fetchedTasks = data || [];
+        console.log(`Fetched ${fetchedTasks.length} general tasks`);
       }
-
-      const { data, error } = await query.order('created_at', { ascending: false });
-
-      if (error) {
-        console.error("Error fetching tasks:", error);
-        throw error;
-      }
-
-      console.log("Fetched tasks:", data);
 
       // Transform data to add user info and stage name
-      const transformedTasks = data.map(task => ({
+      const transformedTasks = fetchedTasks.map(task => ({
         ...task,
         assigned_user_name: task.profiles?.display_name || task.profiles?.email || '',
         stage_name: task.stage?.name || '',
