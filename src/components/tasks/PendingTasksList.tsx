@@ -18,15 +18,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-interface PendingTasksListProps {
-  limit?: number;
-}
-
-export const PendingTasksList = ({ limit = 5 }: PendingTasksListProps) => {
+export const PendingTasksList = () => {
   const { user } = useAuthStore();
   
   const { data: tasks, isLoading } = useQuery({
-    queryKey: ['assigned-tasks', user?.id, limit],
+    queryKey: ['assigned-tasks', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
       
@@ -36,13 +32,10 @@ export const PendingTasksList = ({ limit = 5 }: PendingTasksListProps) => {
         .from('tasks')
         .select(`
           *,
-          profiles(display_name, email),
-          project_tasks(name)
+          profiles(display_name, email)
         `)
         .eq('assigned_to', user.id)
-        .in('status', ['pending', 'in_progress', 'delayed'])
-        .order('due_date', { ascending: true })
-        .limit(limit);
+        .order('due_date', { ascending: true });
       
       if (error) {
         console.error("Error fetching assigned tasks:", error);
@@ -52,8 +45,7 @@ export const PendingTasksList = ({ limit = 5 }: PendingTasksListProps) => {
       // Transform the data to include the project name
       const transformedData = data?.map(task => ({
         ...task,
-        assigned_user_name: task.profiles?.display_name || task.profiles?.email || '',
-        project_name: task.project_tasks?.name || 'مشروع غير محدد'
+        assigned_user_name: task.profiles?.display_name || task.profiles?.email || ''
       })) || [];
       
       console.log('Transformed assigned tasks data:', transformedData);
@@ -65,7 +57,7 @@ export const PendingTasksList = ({ limit = 5 }: PendingTasksListProps) => {
   if (isLoading) {
     return (
       <div className="space-y-3">
-        {Array.from({ length: limit }).map((_, i) => (
+        {Array.from({ length: 3 }).map((_, i) => (
           <Skeleton key={i} className="h-14 w-full" />
         ))}
       </div>
@@ -109,8 +101,6 @@ export const PendingTasksList = ({ limit = 5 }: PendingTasksListProps) => {
         return <Clock className="h-4 w-4 text-blue-500" />;
       case 'delayed':
         return <AlertCircle className="h-4 w-4 text-amber-500" />;
-      case 'in_progress':
-        return <Clock className="h-4 w-4 text-indigo-500" />;
       default:
         return <Clock className="h-4 w-4 text-blue-500" />;
     }
