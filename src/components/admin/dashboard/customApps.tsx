@@ -1,6 +1,6 @@
 
 import { User } from '@supabase/supabase-js';
-import { BriefcaseIcon, Calculator } from "lucide-react";
+import { BriefcaseIcon, Calculator, CalendarClock } from "lucide-react";
 import { AppItem } from "./DashboardApps";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -26,10 +26,8 @@ export const hasHRAccess = async (user: User | null): Promise<boolean> => {
   if (!user) return false;
   
   try {
-    // Use the has_hr_access RPC function with a parameterized query to avoid column ambiguity
-    const { data, error } = await supabase.rpc('has_hr_access', { 
-      input_user_id: user.id 
-    });
+    // Use the has_hr_access RPC function we created
+    const { data, error } = await supabase.rpc('has_hr_access', { user_id: user.id });
     
     if (error) {
       console.error('Error checking HR access:', error);
