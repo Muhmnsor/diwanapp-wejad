@@ -118,8 +118,8 @@ export function ImportAttendanceDialog() {
       // Read the file
       const reader = new FileReader();
       reader.onload = async (e) => {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
+        const fileData = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(fileData, { type: 'array' });
         
         // Get the first sheet
         const sheetName = workbook.SheetNames[0];
@@ -204,9 +204,9 @@ export function ImportAttendanceDialog() {
         }
         
         // Insert records
-        const { data, error } = await supabase
-          .from('hr_attendance')
-          .insert(validRecords);
+         const { data: newRecord, error } = await supabase
+           .from('hr_attendance')
+           .insert(validRecords);
           
         if (error) throw error;
         
