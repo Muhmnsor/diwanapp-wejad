@@ -14,7 +14,6 @@ import { AppItem } from "@/components/admin/dashboard/DashboardApps";
 import { Loader2, Users, AlertCircle, CalendarClock } from "lucide-react";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { Card } from "@/components/ui/card";
-import { getCustomApps } from "@/components/admin/dashboard/customApps";
 
 const AdminDashboard = () => {
   const { data: userName, isLoading: isLoadingUser } = useUserName();
