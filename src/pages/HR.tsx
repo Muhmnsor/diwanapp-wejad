@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 
 const HR = () => {
   const [activeTab, setActiveTab] = useState("overview");
-  const { stats, isLoading } = useHRStats();
+  const { data: stats, isLoading: isLoadingStats } = useHRStats();
   const { hasPermission } = usePermissions();
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -81,7 +81,7 @@ const HR = () => {
                   <CardTitle className="text-right text-lg">إجمالي الموظفين</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">{isLoading ? "..." : stats?.totalEmployees || 0}</div>
+                  <div className="text-3xl font-bold">{isLoadingStats ? "..." : stats?.totalEmployees || 0}</div>
                   <p className="text-sm text-muted-foreground">
                     {stats?.newEmployees ? `${stats.newEmployees} موظفين جدد هذا الشهر` : "لا يوجد موظفين جدد"}
                   </p>
@@ -92,9 +92,9 @@ const HR = () => {
                   <CardTitle className="text-right text-lg">الحضور اليوم</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">{isLoading ? "..." : stats?.presentToday || 0}</div>
+                  <div className="text-3xl font-bold">{isLoadingStats ? "..." : stats?.presentToday || 0}</div>
                   <p className="text-sm text-muted-foreground">
-                    {isLoading ? "..." : `${stats?.attendanceRate || 0}% نسبة الحضور`}
+                    {isLoadingStats ? "..." : `${stats?.attendanceRate || 0}% نسبة الحضور`}
                   </p>
                 </CardContent>
               </Card>
@@ -103,9 +103,9 @@ const HR = () => {
                   <CardTitle className="text-right text-lg">الإجازات النشطة</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">{isLoading ? "..." : stats?.activeLeaves || 0}</div>
+                  <div className="text-3xl font-bold">{isLoadingStats ? "..." : stats?.activeLeaves || 0}</div>
                   <p className="text-sm text-muted-foreground">
-                    {isLoading ? "..." : `${stats?.upcomingLeaves || 0} إجازات متوقعة الأسبوع القادم`}
+                    {isLoadingStats ? "..." : `${stats?.upcomingLeaves || 0} إجازات متوقعة الأسبوع القادم`}
                   </p>
                 </CardContent>
               </Card>
