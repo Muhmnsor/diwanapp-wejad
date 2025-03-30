@@ -47,9 +47,9 @@ export function useAttendanceOperations() {
         created_by: user.id
       };
 
-      // Check user HR permissions first
+      // Check user HR permissions first - Updated to use p_user_id parameter name
       const { data: hasAccess, error: permissionError } = await supabase
-        .rpc('has_hr_access', { user_id: user.id });
+        .rpc('has_hr_access', { p_user_id: user.id });
         
       if (permissionError) {
         console.error('Error checking HR permissions:', permissionError);

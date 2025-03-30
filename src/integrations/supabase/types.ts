@@ -5810,7 +5810,7 @@ export type Database = {
       }
       has_hr_access: {
         Args: {
-          user_id: string
+          p_user_id: string
         }
         Returns: boolean
       }
