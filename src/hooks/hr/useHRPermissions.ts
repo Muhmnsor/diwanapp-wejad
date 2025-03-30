@@ -22,7 +22,7 @@ export function useHRPermissions() {
       }
       
       try {
-        // Check if user is admin (this should include the 'developer' role check)
+        // Check if user is admin, app_admin, or developer (they get all HR permissions)
         const { data: isAdmin, error: adminError } = await supabase
           .rpc('is_admin', { user_id: user.id });
           
@@ -31,9 +31,18 @@ export function useHRPermissions() {
           throw adminError;
         }
         
-        // If user is admin, they have all permissions
-        if (isAdmin) {
-          console.log('User is admin, granting all HR permissions');
+        // Check if user is a developer explicitly
+        const { data: isDeveloper, error: devError } = await supabase
+          .rpc('has_developer_role', { p_user_id: user.id });
+        
+        if (devError) {
+          console.error('Error checking developer status:', devError);
+          // Don't throw, continue checking other permissions
+        }
+        
+        // If user is admin or developer, they have all permissions
+        if (isAdmin || isDeveloper) {
+          console.log('User is admin/developer, granting all HR permissions');
           return {
             canViewHR: true,
             canManageEmployees: true,
@@ -45,7 +54,7 @@ export function useHRPermissions() {
           };
         }
         
-        // If not admin, check for specific HR access
+        // If not admin or developer, check for specific HR access
         const { data: hasHRAccess, error: hrError } = await supabase
           .rpc('has_hr_access', { user_id: user.id });
           
