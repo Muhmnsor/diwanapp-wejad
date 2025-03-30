@@ -1182,6 +1182,7 @@ export type Database = {
           check_in: string | null
           check_out: string | null
           created_at: string | null
+          created_by: string | null
           employee_id: string | null
           id: string
           notes: string | null
@@ -1192,6 +1193,7 @@ export type Database = {
           check_in?: string | null
           check_out?: string | null
           created_at?: string | null
+          created_by?: string | null
           employee_id?: string | null
           id?: string
           notes?: string | null
@@ -1202,6 +1204,7 @@ export type Database = {
           check_in?: string | null
           check_out?: string | null
           created_at?: string | null
+          created_by?: string | null
           employee_id?: string | null
           id?: string
           notes?: string | null

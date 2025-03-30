@@ -12,6 +12,7 @@ export interface AttendanceRecord {
   check_out?: string | null;
   status: string;
   notes?: string | null;
+  created_by?: string | null;
 }
 
 export function useAttendanceOperations() {
