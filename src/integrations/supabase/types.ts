@@ -5997,6 +5997,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      test_auth_uid: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       update_request_after_approval: {
         Args: {
           p_request_id: string

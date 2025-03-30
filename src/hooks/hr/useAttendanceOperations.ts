@@ -39,7 +39,8 @@ export function useAttendanceOperations() {
 
     setIsLoading(true);
     try {
-      // Format check_in and check_out to proper timestamps
+      // Ensure created_by is explicitly set to the current user's ID
+      // This is critical for our updated RLS policy that checks created_by
       const formattedRecord = {
         ...record,
         check_in: formatDateTimeToTimestamp(record.attendance_date, record.check_in),
@@ -47,7 +48,7 @@ export function useAttendanceOperations() {
         created_by: user.id
       };
 
-      // Check user HR permissions first - Updated to use p_user_id parameter name
+      // Check user HR permissions first
       const { data: hasAccess, error: permissionError } = await supabase
         .rpc('has_hr_access', { p_user_id: user.id });
         
@@ -60,14 +61,21 @@ export function useAttendanceOperations() {
         throw new Error('ليس لديك صلاحية إضافة سجلات الحضور');
       }
 
+      console.log('Inserting attendance record with data:', formattedRecord);
+      
       const { data, error } = await supabase
         .from('hr_attendance')
         .insert(formattedRecord)
         .select('*')
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error from Supabase:', error);
+        throw error;
+      }
 
+      console.log('Successfully added attendance record:', data);
+      
       toast({
         title: "تم بنجاح",
         description: "تم تسجيل الحضور بنجاح",
