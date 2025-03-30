@@ -56,6 +56,12 @@ export function AttendanceTable() {
     return <Badge variant={variant}>{label}</Badge>;
   };
 
+  // Format time string to readable format
+  const formatTime = (timeString: string | null) => {
+    if (!timeString) return '-';
+    return timeString;
+  };
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -73,13 +79,13 @@ export function AttendanceTable() {
           {data.map((record) => (
             <TableRow key={record.id}>
               <TableCell className="font-medium">
-                {record.employees?.name || 'غير محدد'}
+                {record.employees?.full_name || 'غير محدد'}
               </TableCell>
               <TableCell>
                 {new Date(record.attendance_date).toLocaleDateString('ar-SA')}
               </TableCell>
-              <TableCell>{record.time_in}</TableCell>
-              <TableCell>{record.time_out || '-'}</TableCell>
+              <TableCell>{formatTime(record.check_in)}</TableCell>
+              <TableCell>{formatTime(record.check_out) || '-'}</TableCell>
               <TableCell>{getStatusBadge(record.status)}</TableCell>
               <TableCell className="max-w-[200px] truncate">
                 {record.notes || '-'}
