@@ -1,9 +1,10 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Calendar } from "lucide-react";
+import { AddAttendanceDialog } from "../dialogs/AddAttendanceDialog";
+import { AttendanceTable } from "../tables/AttendanceTable";
 
 export function AttendanceTab() {
   const [activeTab, setActiveTab] = useState("attendance");
@@ -12,7 +13,7 @@ export function AttendanceTab() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold">الحضور والإجازات</h2>
-        <Button>تسجيل حضور جديد</Button>
+        <AddAttendanceDialog />
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -26,10 +27,8 @@ export function AttendanceTab() {
             <CardHeader>
               <CardTitle className="text-right">سجلات الحضور</CardTitle>
             </CardHeader>
-            <CardContent className="text-center py-8">
-              <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
-              <p className="text-lg mb-2">سيتم هنا عرض سجلات الحضور وتفاصيلها</p>
-              <p className="text-sm text-muted-foreground">يمكنك تسجيل الحضور والانصراف والتقارير اليومية</p>
+            <CardContent>
+              <AttendanceTable />
             </CardContent>
           </Card>
         </TabsContent>
