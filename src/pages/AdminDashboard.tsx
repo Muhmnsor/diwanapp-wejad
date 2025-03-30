@@ -24,63 +24,56 @@ const AdminDashboard = () => {
   const [isLoadingApps, setIsLoadingApps] = useState<boolean>(true);
   const [appsError, setAppsError] = useState<Error | null>(null);
   
-  useEffect(() => {
-    const fetchApps = async () => {
-      if (!user) {
-        console.log("User not available, skipping apps fetch");
-        setIsLoadingApps(false);
-        return;
-      }
+useEffect(() => {
+  const fetchApps = async () => {
+    if (!user) {
+      console.log("User not available, skipping apps fetch");
+      setIsLoadingApps(false);
+      return;
+    }
 
-      if (!notificationCounts) {
-        console.log("Notification counts not available yet, skipping apps fetch");
-        return;
-      }
+    if (!notificationCounts) {
+      console.log("Notification counts not available yet, skipping apps fetch");
+      return;
+    }
 
-      setIsLoadingApps(true);
-      setAppsError(null);
-      
-      try {
-        console.log("Fetching apps with user:", user.id, "and notification counts:", notificationCounts);
-        // Get standard apps from existing function
-        const standardAppsList = await getAppsList(notificationCounts, user);
-        
-        // Get our custom apps - Note the await here
-        console.log("About to fetch custom apps for user:", user.id);
-        const customAppsList = await getCustomApps(user, notificationCounts);
-        console.log("Received custom apps:", customAppsList);
-        
-        // Combine the lists
-        const allApps = [...standardAppsList, ...customAppsList];
-        
-        // Add meetings app if user has admin role
-        if (hasAdminRole) {
-          const meetingsApp: AppItem = {
-            title: "إدارة الاجتماعات",
-            icon: CalendarClock,
-            path: "/admin/meetings",
-            description: "إدارة جدول الاجتماعات والمشاركين والمحاضر",
-            notifications: notificationCounts?.meetings || 0,
-          };
-          
-          const meetingsAppExists = allApps.some(app => app.path === "/admin/meetings");
-          
-          if (!meetingsAppExists) {
-            allApps.push(meetingsApp);
-          }
-        }
-        
-        setApps(allApps);
-      } catch (error) {
-        console.error("Error fetching apps:", error);
-        setAppsError(error instanceof Error ? error : new Error("Failed to fetch apps"));
-      } finally {
-        setIsLoadingApps(false);
-      }
-    };
+    setIsLoadingApps(true);
+    setAppsError(null);
     
-    fetchApps();
-  }, [user, notificationCounts, hasAdminRole]);
+    try {
+      console.log("Fetching apps with user:", user.id, "and notification counts:", notificationCounts);
+      // Get all apps from the updated getAppsList function
+      const allApps = await getAppsList(notificationCounts, user);
+      
+      // Add meetings app if user has admin role and it doesn't already exist
+      if (hasAdminRole) {
+        const meetingsApp: AppItem = {
+          title: "إدارة الاجتماعات",
+          icon: CalendarClock,
+          path: "/admin/meetings",
+          description: "إدارة جدول الاجتماعات والمشاركين والمحاضر",
+          notifications: notificationCounts?.meetings || 0,
+        };
+        
+        const meetingsAppExists = allApps.some(app => app.path === "/admin/meetings");
+        
+        if (!meetingsAppExists) {
+          allApps.push(meetingsApp);
+        }
+      }
+      
+      setApps(allApps);
+    } catch (error) {
+      console.error("Error fetching apps:", error);
+      setAppsError(error instanceof Error ? error : new Error("Failed to fetch apps"));
+    } finally {
+      setIsLoadingApps(false);
+    }
+  };
+  
+  fetchApps();
+}, [user, notificationCounts, hasAdminRole]);
+
 
   const isLoading = isLoadingUser || isLoadingNotifications || isLoadingApps || isLoadingRoles;
 
