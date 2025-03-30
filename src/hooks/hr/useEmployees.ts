@@ -6,10 +6,10 @@ export function useEmployees() {
   return useQuery({
     queryKey: ['employees'],
     queryFn: async () => {
+      // Remove the status filter if that field doesn't exist
       const { data, error } = await supabase
         .from('employees')
         .select('*')
-        .eq('status', 'active')
         .order('full_name');
         
       if (error) throw error;
