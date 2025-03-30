@@ -26,15 +26,41 @@ export const hasHRAccess = async (user: User | null): Promise<boolean> => {
   if (!user) return false;
   
   try {
-    // Use the has_hr_access RPC function we created
-    const { data, error } = await supabase.rpc('has_hr_access', { user_id: user.id });
-    
-    if (error) {
-      console.error('Error checking HR access:', error);
+    // First check if user is admin (they have all permissions)
+    const { data: isAdmin, error: adminError } = await supabase
+      .rpc('is_admin', { user_id: user.id });
+      
+    if (adminError) {
+      console.error('Error checking admin access:', adminError);
       return false;
     }
     
-    return !!data;
+    if (isAdmin) return true;
+    
+    // For non-admin users, check for specific HR role
+    const { data: userRoles, error: rolesError } = await supabase
+      .from('user_roles')
+      .select(`
+        role_id,
+        roles:role_id (
+          name
+        )
+      `)
+      .eq('user_id', user.id);
+      
+    if (rolesError) {
+      console.error('Error checking HR roles:', rolesError);
+      return false;
+    }
+    
+    // Check if user has hr_manager role
+    return userRoles?.some(userRole => {
+      if (userRole.roles && typeof userRole.roles === 'object') {
+        const roleName = userRole.roles as unknown as { name: string };
+        return roleName.name === 'hr_manager';
+      }
+      return false;
+    }) || false;
   } catch (error) {
     console.error('Error checking HR access:', error);
     return false;

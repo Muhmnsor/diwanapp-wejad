@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -46,7 +45,8 @@ const AdminDashboard = () => {
         // Get standard apps from existing function
         const standardAppsList = await getAppsList(notificationCounts, user);
         
-        // Get our custom apps - Note the await here
+        // Get our custom apps - convert user to Supabase User type
+        // Pass user as-is to getCustomApps since it's expecting our internal User type
         const customAppsList = await getCustomApps(user, notificationCounts);
         
         // Combine the lists
