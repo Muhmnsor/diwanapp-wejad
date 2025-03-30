@@ -47,6 +47,19 @@ export function useAttendanceOperations() {
         created_by: user.id
       };
 
+      // Check user HR permissions first
+      const { data: hasAccess, error: permissionError } = await supabase
+        .rpc('has_hr_access', { user_id: user.id });
+        
+      if (permissionError) {
+        console.error('Error checking HR permissions:', permissionError);
+        throw new Error('فشل التحقق من الصلاحيات');
+      }
+      
+      if (!hasAccess) {
+        throw new Error('ليس لديك صلاحية إضافة سجلات الحضور');
+      }
+
       const { data, error } = await supabase
         .from('hr_attendance')
         .insert(formattedRecord)
