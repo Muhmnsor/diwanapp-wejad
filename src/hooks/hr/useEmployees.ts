@@ -9,8 +9,8 @@ export function useEmployees() {
       const { data, error } = await supabase
         .from('employees')
         .select('*')
-        .eq('is_active', true)
-        .order('name');
+        .eq('status', 'active')
+        .order('full_name');
         
       if (error) throw error;
       return data || [];
