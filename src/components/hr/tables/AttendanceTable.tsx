@@ -11,6 +11,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { formatDateWithDay } from "@/utils/dateTimeUtils";
 
 export function AttendanceTable() {
   const { data, isLoading, error } = useAttendanceRecords();
@@ -56,10 +57,16 @@ export function AttendanceTable() {
     return <Badge variant={variant}>{label}</Badge>;
   };
 
-  // Format time string to readable format
-  const formatTime = (timeString: string | null) => {
-    if (!timeString) return '-';
-    return timeString;
+  // Format time from timestamp
+  const formatTime = (timestamp: string | null) => {
+    if (!timestamp) return '-';
+    try {
+      const date = new Date(timestamp);
+      return date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return timestamp;
+    }
   };
 
   return (
@@ -82,10 +89,10 @@ export function AttendanceTable() {
                 {record.employees?.full_name || 'غير محدد'}
               </TableCell>
               <TableCell>
-                {new Date(record.attendance_date).toLocaleDateString('ar-SA')}
+                {formatDateWithDay(record.attendance_date)}
               </TableCell>
               <TableCell>{formatTime(record.check_in)}</TableCell>
-              <TableCell>{formatTime(record.check_out) || '-'}</TableCell>
+              <TableCell>{formatTime(record.check_out)}</TableCell>
               <TableCell>{getStatusBadge(record.status)}</TableCell>
               <TableCell className="max-w-[200px] truncate">
                 {record.notes || '-'}

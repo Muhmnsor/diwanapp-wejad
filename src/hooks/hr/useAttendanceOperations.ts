@@ -19,6 +19,14 @@ export function useAttendanceOperations() {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuthStore();
 
+  // Helper function to convert date and time to timestamp
+  const formatDateTimeToTimestamp = (date: string, time: string) => {
+    if (!date || !time) return null;
+    // Create a date object with the date and time
+    const dateTimeString = `${date}T${time}:00`;
+    return dateTimeString;
+  };
+
   const addAttendanceRecord = async (record: AttendanceRecord) => {
     if (!user) {
       toast({
@@ -31,12 +39,17 @@ export function useAttendanceOperations() {
 
     setIsLoading(true);
     try {
+      // Format check_in and check_out to proper timestamps
+      const formattedRecord = {
+        ...record,
+        check_in: formatDateTimeToTimestamp(record.attendance_date, record.check_in),
+        check_out: record.check_out ? formatDateTimeToTimestamp(record.attendance_date, record.check_out) : null,
+        created_by: user.id
+      };
+
       const { data, error } = await supabase
         .from('hr_attendance')
-        .insert({
-          ...record,
-          created_by: user.id
-        })
+        .insert(formattedRecord)
         .select('*')
         .single();
 
