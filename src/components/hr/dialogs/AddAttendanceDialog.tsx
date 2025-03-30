@@ -29,8 +29,8 @@ export function AddAttendanceDialog() {
   const [formData, setFormData] = useState({
     employee_id: '',
     attendance_date: today,
-    time_in: currentTime,
-    time_out: '',
+    check_in: currentTime,
+    check_out: '',
     status: 'present',
     notes: '',
   });
@@ -48,8 +48,8 @@ export function AddAttendanceDialog() {
       setFormData({
         employee_id: '',
         attendance_date: today,
-        time_in: currentTime,
-        time_out: '',
+        check_in: currentTime,
+        check_out: '',
         status: 'present',
         notes: '',
       });
@@ -88,7 +88,7 @@ export function AddAttendanceDialog() {
                   ) : (
                     employees?.map((employee) => (
                       <SelectItem key={employee.id} value={employee.id}>
-                        {employee.name}
+                        {employee.full_name}
                       </SelectItem>
                     ))
                   )}
@@ -109,23 +109,23 @@ export function AddAttendanceDialog() {
             
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="time_in">وقت الحضور</Label>
+                <Label htmlFor="check_in">وقت الحضور</Label>
                 <Input
-                  id="time_in"
+                  id="check_in"
                   type="time"
-                  value={formData.time_in}
-                  onChange={(e) => handleChange('time_in', e.target.value)}
+                  value={formData.check_in}
+                  onChange={(e) => handleChange('check_in', e.target.value)}
                   required
                 />
               </div>
               
               <div className="grid gap-2">
-                <Label htmlFor="time_out">وقت الانصراف</Label>
+                <Label htmlFor="check_out">وقت الانصراف</Label>
                 <Input
-                  id="time_out"
+                  id="check_out"
                   type="time"
-                  value={formData.time_out}
-                  onChange={(e) => handleChange('time_out', e.target.value)}
+                  value={formData.check_out}
+                  onChange={(e) => handleChange('check_out', e.target.value)}
                 />
               </div>
             </div>
