@@ -22,54 +22,25 @@ export function useHRPermissions() {
       }
       
       try {
-        // Check if user has admin role first (they have all permissions)
+        // Check if user has HR role
+        const { data: hasHRAccess, error: hrError } = await supabase
+          .rpc('has_hr_access', { user_id: user.id });
+          
+        if (hrError) throw hrError;
+        
+        // Check if user is admin
         const { data: isAdmin, error: adminError } = await supabase
           .rpc('is_admin', { user_id: user.id });
           
         if (adminError) throw adminError;
         
-        if (isAdmin) {
-          // Admin users automatically have all HR permissions
-          return {
-            canViewHR: true,
-            canManageEmployees: true,
-            canManageAttendance: true,
-            canManageLeaves: true,
-            canManageTraining: true,
-            canManageCompensation: true,
-            isAdmin: true
-          };
-        }
-        
-        // For non-admin users, check specific HR access
-        const { data: userRoles, error: rolesError } = await supabase
-          .from('user_roles')
-          .select(`
-            role_id,
-            roles:role_id (
-              name
-            )
-          `)
-          .eq('user_id', user.id);
-          
-        if (rolesError) throw rolesError;
-        
-        // Check if user has hr_manager role
-        const hasHRRole = userRoles?.some(userRole => {
-          if (userRole.roles && typeof userRole.roles === 'object') {
-            const roleName = userRole.roles as unknown as { name: string };
-            return roleName.name === 'hr_manager';
-          }
-          return false;
-        });
-        
         return {
-          canViewHR: hasHRRole || isAdmin,
-          canManageEmployees: hasHRRole || isAdmin,
-          canManageAttendance: hasHRRole || isAdmin,
-          canManageLeaves: hasHRRole || isAdmin,
-          canManageTraining: hasHRRole || isAdmin,
-          canManageCompensation: hasHRRole || isAdmin,
+          canViewHR: hasHRAccess || isAdmin,
+          canManageEmployees: hasHRAccess || isAdmin,
+          canManageAttendance: hasHRAccess || isAdmin,
+          canManageLeaves: hasHRAccess || isAdmin,
+          canManageTraining: hasHRAccess || isAdmin,
+          canManageCompensation: hasHRAccess || isAdmin,
           isAdmin
         };
       } catch (error) {
