@@ -11,7 +11,7 @@ export function useAttendanceRecords() {
         .select(`
           *,
           employees:employee_id (
-            name,
+            full_name,
             position,
             department
           )
