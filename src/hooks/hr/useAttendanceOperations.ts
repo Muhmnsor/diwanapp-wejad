@@ -8,8 +8,8 @@ export interface AttendanceRecord {
   id?: string;
   employee_id: string;
   attendance_date: string;
-  time_in: string;
-  time_out?: string | null;
+  check_in: string;
+  check_out?: string | null;
   status: string;
   notes?: string | null;
 }
