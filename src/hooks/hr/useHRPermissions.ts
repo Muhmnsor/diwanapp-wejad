@@ -22,15 +22,15 @@ export function useHRPermissions() {
       }
       
       try {
-        // Check if user has HR role
+        // Check if user has HR role using parameter name that doesn't conflict with column names
         const { data: hasHRAccess, error: hrError } = await supabase
-          .rpc('has_hr_access', { user_id: user.id });
+          .rpc('has_hr_access', { input_user_id: user.id });
           
         if (hrError) throw hrError;
         
         // Check if user is admin
         const { data: isAdmin, error: adminError } = await supabase
-          .rpc('is_admin', { user_id: user.id });
+          .rpc('is_admin', { input_user_id: user.id });
           
         if (adminError) throw adminError;
         
