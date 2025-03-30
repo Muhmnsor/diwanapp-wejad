@@ -4,7 +4,7 @@ import { useSelfAttendance } from "@/hooks/hr/useSelfAttendance";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Clock, LogIn, LogOut } from "lucide-react";
-import { formatDateWithDay, formatTime } from "@/utils/dateTimeUtils";
+import { formatDateWithDay } from "@/utils/dateTimeUtils";
 
 export function SelfAttendanceCard() {
   const { checkIn, checkOut, getTodayAttendance, getEmployeeInfo, isLoading } = useSelfAttendance();
