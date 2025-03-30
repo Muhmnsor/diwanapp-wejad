@@ -39,3 +39,15 @@ export const formatDateWithDay = (dateStr: string) => {
     return dateStr;
   }
 };
+
+// Format time from timestamp
+export const formatTime = (timestamp: string | null) => {
+  if (!timestamp) return '-';
+  try {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+  } catch (error) {
+    console.error('Error formatting time:', error);
+    return timestamp;
+  }
+};
