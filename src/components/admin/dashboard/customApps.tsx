@@ -26,7 +26,17 @@ export const hasHRAccess = async (user: User | null): Promise<boolean> => {
   if (!user) return false;
   
   try {
-    // Use the has_hr_access RPC function we created
+    // Check if user is admin/developer first, they should have access to all apps
+    const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin', { user_id: user.id });
+    
+    if (adminError) {
+      console.error('Error checking admin status:', adminError);
+    } else if (isAdmin) {
+      console.log('User is admin, granting HR access');
+      return true;
+    }
+    
+    // If not admin, check specific HR access
     const { data, error } = await supabase.rpc('has_hr_access', { user_id: user.id });
     
     if (error) {
@@ -42,26 +52,49 @@ export const hasHRAccess = async (user: User | null): Promise<boolean> => {
 };
 
 // Helper function to check if user has access to Accounting app
-export const hasAccountingAccess = (user: User | null): boolean => {
+export const hasAccountingAccess = async (user: User | null): Promise<boolean> => {
   if (!user) return false;
   
-  // Implement your access control logic here
-  // For now, we'll return true to allow access for testing
-  return true;
+  try {
+    // Check if user is admin/developer first, they should have access to all apps
+    const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin', { user_id: user.id });
+    
+    if (adminError) {
+      console.error('Error checking admin status:', adminError);
+    } else if (isAdmin) {
+      console.log('User is admin, granting Accounting access');
+      return true;
+    }
+    
+    // For now, we'll return true to allow access for testing
+    // Later this can be replaced with a specific check like for HR
+    return true;
+  } catch (error) {
+    console.error('Error checking Accounting access:', error);
+    return false;
+  }
 };
 
 // Function to get custom apps
 export const getCustomApps = async (user: User | null, notificationCounts: any): Promise<AppItem[]> => {
   const customApps: AppItem[] = [];
   
-  if (await hasHRAccess(user)) {
+  // Check HR access
+  const hrAccess = await hasHRAccess(user);
+  console.log('User has HR access:', hrAccess);
+  
+  if (hrAccess) {
     customApps.push({
       ...HR_MANAGEMENT_APP,
       notifications: notificationCounts?.hr || 0
     });
   }
   
-  if (hasAccountingAccess(user)) {
+  // Check Accounting access
+  const accountingAccess = await hasAccountingAccess(user);
+  console.log('User has Accounting access:', accountingAccess);
+  
+  if (accountingAccess) {
     customApps.push({
       ...ACCOUNTING_APP,
       notifications: notificationCounts?.accounting || 0

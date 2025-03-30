@@ -22,26 +22,43 @@ export function useHRPermissions() {
       }
       
       try {
-        // Check if user has HR role
+        // Check if user is admin (this should include the 'developer' role check)
+        const { data: isAdmin, error: adminError } = await supabase
+          .rpc('is_admin', { user_id: user.id });
+          
+        if (adminError) {
+          console.error('Error checking admin status:', adminError);
+          throw adminError;
+        }
+        
+        // If user is admin, they have all permissions
+        if (isAdmin) {
+          console.log('User is admin, granting all HR permissions');
+          return {
+            canViewHR: true,
+            canManageEmployees: true,
+            canManageAttendance: true,
+            canManageLeaves: true,
+            canManageTraining: true,
+            canManageCompensation: true,
+            isAdmin: true
+          };
+        }
+        
+        // If not admin, check for specific HR access
         const { data: hasHRAccess, error: hrError } = await supabase
           .rpc('has_hr_access', { user_id: user.id });
           
         if (hrError) throw hrError;
         
-        // Check if user is admin
-        const { data: isAdmin, error: adminError } = await supabase
-          .rpc('is_admin', { user_id: user.id });
-          
-        if (adminError) throw adminError;
-        
         return {
-          canViewHR: hasHRAccess || isAdmin,
-          canManageEmployees: hasHRAccess || isAdmin,
-          canManageAttendance: hasHRAccess || isAdmin,
-          canManageLeaves: hasHRAccess || isAdmin,
-          canManageTraining: hasHRAccess || isAdmin,
-          canManageCompensation: hasHRAccess || isAdmin,
-          isAdmin
+          canViewHR: !!hasHRAccess,
+          canManageEmployees: !!hasHRAccess,
+          canManageAttendance: !!hasHRAccess,
+          canManageLeaves: !!hasHRAccess,
+          canManageTraining: !!hasHRAccess,
+          canManageCompensation: !!hasHRAccess,
+          isAdmin: false
         };
       } catch (error) {
         console.error('Error checking HR permissions:', error);

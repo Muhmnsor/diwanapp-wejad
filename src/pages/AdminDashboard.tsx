@@ -47,11 +47,14 @@ const AdminDashboard = () => {
         const standardAppsList = await getAppsList(notificationCounts, user);
         
         // Get our custom apps - Note the await here
+        console.log("About to fetch custom apps for user:", user.id);
         const customAppsList = await getCustomApps(user, notificationCounts);
+        console.log("Received custom apps:", customAppsList);
         
         // Combine the lists
         const allApps = [...standardAppsList, ...customAppsList];
         
+        // Add meetings app if user has admin role
         if (hasAdminRole) {
           const meetingsApp: AppItem = {
             title: "إدارة الاجتماعات",
