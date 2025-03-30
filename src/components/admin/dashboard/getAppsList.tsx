@@ -1,4 +1,3 @@
-
 import { 
   Database, 
   ListChecks, 
@@ -10,7 +9,10 @@ import {
   Bell,
   Clock,
   Inbox,
-  Code
+  Code,
+  BriefcaseIcon,
+  Calculator,
+  CalendarClock
 } from "lucide-react";
 import { AppItem } from "./DashboardApps";
 import { NotificationCounts } from "@/hooks/dashboard/useNotificationCounts";
@@ -70,6 +72,17 @@ export const APP_ROLE_ACCESS = {
     'approval_manager'
   ],
   developer: [
+    'admin', 'app_admin', 'developer'
+  ],
+  hr: [
+    'admin', 'app_admin', 'developer',
+    'hr_manager'
+  ],
+  accounting: [
+    'admin', 'app_admin', 'developer',
+    'finance_manager', 'financial_manager', 'accountant'
+  ],
+  meetings: [
     'admin', 'app_admin', 'developer'
   ]
 };
@@ -136,6 +149,7 @@ export const ROLE_MAPPING = {
   'منشئ الأفكار': 'idea_creator',
   'مدير الابتكار': 'innovation_manager',
   'مدير مالي': 'finance_manager',
+  'مدير الموارد البشرية': 'hr_manager',
   
   // English to English (for direct matching)
   'admin': 'admin',
@@ -255,6 +269,27 @@ const ALL_APPS: AppItem[] = [
     path: "/admin/developer-settings",
     description: "إعدادات وأدوات المطورين",
     notifications: 0
+  },
+  {
+    title: "إدارة شؤون الموظفين",
+    icon: BriefcaseIcon,
+    path: "/admin/hr",
+    description: "إدارة المعلومات والعمليات المتعلقة بالموظفين",
+    notifications: 0
+  },
+  {
+    title: "إدارة المحاسبة",
+    icon: Calculator,
+    path: "/admin/accounting",
+    description: "إدارة الميزانية والشؤون المالية",
+    notifications: 0
+  },
+  {
+    title: "إدارة الاجتماعات",
+    icon: CalendarClock,
+    path: "/admin/meetings",
+    description: "إدارة جدول الاجتماعات والمشاركين والمحاضر",
+    notifications: 0
   }
 ];
 
@@ -313,6 +348,47 @@ const checkDbAppAccess = async (role: string, appKey: string): Promise<boolean> 
   }
 };
 
+// Helper function to check if user is admin or developer
+const isAdminOrDeveloper = async (userId: string): Promise<boolean> => {
+  try {
+    const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin', { user_id: userId });
+    
+    if (adminError) {
+      console.error('Error checking admin status:', adminError);
+      return false;
+    }
+    
+    return !!isAdmin;
+  } catch (error) {
+    console.error('Error checking admin status:', error);
+    return false;
+  }
+};
+
+// Helper function to check if user has access to HR app
+const hasHRAccess = async (userId: string): Promise<boolean> => {
+  try {
+    // First check if user is admin/developer
+    const adminAccess = await isAdminOrDeveloper(userId);
+    if (adminAccess) {
+      return true;
+    }
+    
+    // If not, check specific HR access
+    const { data, error } = await supabase.rpc('has_hr_access', { user_id: userId });
+    
+    if (error) {
+      console.error('Error checking HR access:', error);
+      return false;
+    }
+    
+    return !!data;
+  } catch (error) {
+    console.error('Error checking HR access:', error);
+    return false;
+  }
+};
+
 // Get applications list based on user role
 export const getAppsList = async (notificationCounts: NotificationCounts, user?: User | null): Promise<AppItem[]> => {
   // If no user is provided, return an empty array
@@ -332,7 +408,10 @@ export const getAppsList = async (notificationCounts: NotificationCounts, user?:
   // Map the role to its English equivalent if needed
   let mappedRole = ROLE_MAPPING[userRole as keyof typeof ROLE_MAPPING] || userRole;
   
-  // *** IMPORTANT CHANGE: Try DB permissions first, then fall back to hardcoded ***
+  // Check if user is admin/developer (they get access to all apps)
+  const isAdmin = await isAdminOrDeveloper(user.id);
+  console.log('User is admin/developer:', isAdmin);
+  
   let filteredApps: AppItem[] = [];
   
   // Process each app to check permissions
@@ -340,13 +419,25 @@ export const getAppsList = async (notificationCounts: NotificationCounts, user?:
     const appKey = getAppKeyFromPath(app.path);
     if (!appKey) continue;
     
-    // First check database permissions
-    let hasAccess = await checkDbAppAccess(mappedRole, appKey);
+    let hasAccess = false;
     
-    // If no database permission, fall back to hardcoded permissions
-    if (!hasAccess) {
-      const allowedRoles = APP_ROLE_ACCESS[appKey as keyof typeof APP_ROLE_ACCESS] || [];
-      hasAccess = allowedRoles.includes(mappedRole);
+    // Admin/developer gets access to all apps
+    if (isAdmin) {
+      hasAccess = true;
+    } else {
+      // First check database permissions
+      hasAccess = await checkDbAppAccess(mappedRole, appKey);
+      
+      // If no database permission, fall back to hardcoded permissions
+      if (!hasAccess) {
+        const allowedRoles = APP_ROLE_ACCESS[appKey as keyof typeof APP_ROLE_ACCESS] || [];
+        hasAccess = allowedRoles.includes(mappedRole);
+      }
+      
+      // Special handling for HR app
+      if (appKey === 'hr' && !hasAccess) {
+        hasAccess = await hasHRAccess(user.id);
+      }
     }
     
     if (hasAccess) {
@@ -374,59 +465,11 @@ const getAppKeyFromPath = (path: string): string | null => {
   if (path === '/notifications') return 'notifications';
   if (path === '/requests') return 'requests';
   if (path === '/admin/developer-settings') return 'developer';
+  if (path === '/admin/hr') return 'hr';
+  if (path === '/admin/accounting') return 'accounting';
+  if (path === '/admin/meetings') return 'meetings';
   
   return null;
-};
-
-// Helper function to check if user role has access to app
-const hasAccessToApp = (userRole: string, appKey: string): boolean => {
-  try {
-    // Normalize role for comparison: handle both with and without spaces
-    // Try different normalization approaches to maximize matching success
-    
-    // 1. Direct match first (if it's already in our standardized format)
-    let mappedRole = ROLE_MAPPING[userRole as keyof typeof ROLE_MAPPING];
-    
-    // 2. Try with spaces replaced by underscores
-    if (!mappedRole) {
-      const normalizedWithUnderscores = userRole.trim().replace(/\s+/g, '_').toLowerCase();
-      console.log('Trying with underscores:', normalizedWithUnderscores);
-      mappedRole = ROLE_MAPPING[normalizedWithUnderscores as keyof typeof ROLE_MAPPING];
-    }
-    
-    // 3. Try without any normalization (for roles already in English)
-    if (!mappedRole) {
-      console.log('Trying direct match for possible English role name:', userRole);
-      // If the role itself is a valid English role, use it directly
-      if (Object.values(ROLE_MAPPING).includes(userRole)) {
-        mappedRole = userRole;
-      }
-    }
-    
-    if (!mappedRole) {
-      console.warn('No role mapping found for:', userRole, 'This role is not recognized in the system.');
-      return false;
-    }
-    
-    console.log('Successfully mapped role:', userRole, '→', mappedRole, 'Checking access to app:', appKey);
-    
-    // Get allowed roles for the app
-    const allowedRoles = APP_ROLE_ACCESS[appKey as keyof typeof APP_ROLE_ACCESS] || [];
-    console.log('Allowed roles for', appKey, ':', allowedRoles);
-    
-    // Check if mapped role is in allowed roles
-    const hasAccess = allowedRoles.includes(mappedRole);
-    console.log('Has access to', appKey, ':', hasAccess);
-    
-    if (!hasAccess) {
-      console.warn(`User with role "${userRole}" (mapped to "${mappedRole}") does not have access to app "${appKey}"`);
-    }
-    
-    return hasAccess;
-  } catch (error) {
-    console.error('Error checking role access:', error);
-    return false;
-  }
 };
 
 // Helper function to get notification count for an app
@@ -435,6 +478,9 @@ const getNotificationCount = (path: string, counts: NotificationCounts): number 
   if (path === '/ideas') return counts.ideas;
   if (path === '/finance') return counts.finance;
   if (path === '/notifications') return counts.notifications;
+  if (path === '/admin/hr') return counts.hr || 0;
+  if (path === '/admin/accounting') return counts.accounting || 0;
+  if (path === '/admin/meetings') return counts.meetings || 0;
   
   return 0;
 };
