@@ -140,6 +140,13 @@ export function EmployeesTab({ searchTerm = "" }: EmployeesTabProps) {
       </Card>
     );
   }
+
+  const filteredEmployees = employees?.filter(employee => 
+    employee.full_name.includes(searchTerm) || 
+    employee.employee_number.includes(searchTerm) || 
+    employee.position.includes(searchTerm) || 
+    employee.department.includes(searchTerm)
+ );
   
   return (
     <>
