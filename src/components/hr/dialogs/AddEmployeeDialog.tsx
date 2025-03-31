@@ -33,23 +33,22 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
   
   // Fetch users for linking
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('auth_users_view')
-          .select('id, email');
-          
-        if (error) throw error;
-        setUsers(data || []);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-      }
-    };
-    
-    if (isOpen) {
-      fetchUsers();
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .rpc('get_app_users');
+        
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
     }
-  }, [isOpen]);
+  };
+  
+  if (isOpen) {
+    fetchUsers();
+  }
+}, [isOpen]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
