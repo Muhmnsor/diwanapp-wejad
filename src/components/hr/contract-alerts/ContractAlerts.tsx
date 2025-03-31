@@ -2,26 +2,58 @@
 import { useEmployeeContracts } from "@/hooks/hr/useEmployeeContracts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { FileText, AlertCircle, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { format, differenceInDays } from "date-fns";
 import { ar } from "date-fns/locale";
-import { Badge } from "@/components/ui/badge";
+import { useHRPermissions } from "@/hooks/hr/useHRPermissions";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export function ContractAlerts() {
   const { 
     expiringContracts, 
     endingProbations, 
-    isLoading 
+    isLoading,
+    error 
   } = useEmployeeContracts();
+  
+  const { data: permissions } = useHRPermissions();
+  
+  // Check if user has HR permissions
+  const hasAccess = permissions?.canViewHR || permissions?.isAdmin;
 
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-64 w-full" />
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="mr-2">جاري تحميل بيانات العقود...</span>
+        </div>
       </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>خطأ في تحميل البيانات</AlertTitle>
+        <AlertDescription>
+          {error instanceof Error ? error.message : 'حدث خطأ أثناء تحميل بيانات العقود'}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+  
+  if (!hasAccess) {
+    return (
+      <Alert className="mb-4">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>وصول محدود</AlertTitle>
+        <AlertDescription>
+          لا تملك الصلاحيات الكافية لعرض بيانات العقود
+        </AlertDescription>
+      </Alert>
     );
   }
 
@@ -149,4 +181,3 @@ export function ContractAlerts() {
     </div>
   );
 }
-
