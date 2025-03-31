@@ -106,34 +106,42 @@ export function useUserEmployeeLink() {
   
   // Function to get employees linked to users
   const getLinkedEmployees = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('employees')
-        .select(`
-          id,
-          full_name,
-          employee_number,
-          user_id,
-          auth_users_view!inner(
-            email
-          )
-        `)
-        .not('user_id', 'is', null);
-      
-      if (error) throw error;
-      
-      return { success: true, data };
-    } catch (error: any) {
-      console.error('Error getting linked employees:', error);
-      return { 
-        success: false, 
-        error: error.message || "حدث خطأ أثناء جلب الموظفين المرتبطين" 
+  setIsLoading(true);
+  try {
+    // First get employees with user_id
+    const { data: employeesData, error: empError } = await supabase
+      .from('employees')
+      .select('id, full_name, employee_number, user_id')
+      .not('user_id', 'is', null);
+    
+    if (empError) throw empError;
+    
+    // Then get user data separately
+    const { data: userData, error: userError } = await supabase
+      .rpc('get_app_users');
+    
+    if (userError) throw userError;
+    
+    // Combine the data
+    const combinedData = employeesData.map(emp => {
+      const user = userData.find(u => u.id === emp.user_id);
+      return {
+        ...emp,
+        auth_users_view: user ? { email: user.email } : null
       };
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    });
+    
+    return { success: true, data: combinedData };
+  } catch (error: any) {
+    console.error('Error getting linked employees:', error);
+    return { 
+      success: false, 
+      error: error.message || "حدث خطأ أثناء جلب الموظفين المرتبطين" 
+    };
+  } finally {
+    setIsLoading(false);
+  }
+};
   
   return {
     linkUserToEmployee,
