@@ -47,7 +47,7 @@ export function useSelfAttendance() {
     }
   };
 
-  // Check in function
+  // Check in function - using the SECURITY DEFINER RPC function
   const checkIn = async () => {
     if (!user) {
       toast({
@@ -60,67 +60,35 @@ export function useSelfAttendance() {
 
     setIsLoading(true);
     try {
-      // Get current employee info
-      const employeeResult = await getEmployeeInfo();
-      if (!employeeResult.success) {
-        toast({
-          title: "خطأ",
-          description: employeeResult.error,
-          variant: "destructive",
-        });
-        return { success: false, error: employeeResult.error };
-      }
-
-      const employee = employeeResult.data;
-      
-      // Get server timestamp for today's date
-      const { data: serverTime, error: timeError } = await supabase.rpc('get_server_timestamp');
-      if (timeError) {
-        console.error("Error getting server timestamp:", timeError);
-        throw timeError;
-      }
-      
-      console.log("Server timestamp for check-in:", serverTime);
-      const today = new Date(serverTime).toISOString().split('T')[0];
-
-      // Check if employee already checked in today
-      const { data: existingRecord, error: checkError } = await supabase
-        .from('hr_attendance')
-        .select('*')
-        .eq('employee_id', employee.id)
-        .eq('attendance_date', today)
-        .single();
-
-      if (existingRecord && existingRecord.check_in) {
-        toast({
-          title: "تنبيه",
-          description: "لقد قمت بتسجيل الحضور مسبقًا اليوم",
-          variant: "default",
-        });
-        return { success: false, alreadyCheckedIn: true, record: existingRecord };
-      }
-
-      // Insert attendance record using server timestamp directly
-      const { data, error } = await supabase
-        .from('hr_attendance')
-        .insert({
-          employee_id: employee.id,
-          attendance_date: today,
-          check_in: serverTime,  // Using the server timestamp directly
-          status: 'present',
-          created_by: user.id
-        })
-        .select('*')
-        .single();
+      // Call the record_employee_attendance RPC function with 'check_in' action
+      const { data, error } = await supabase.rpc('record_employee_attendance', {
+        p_action: 'check_in'
+      });
 
       if (error) throw error;
+      
+      console.log("Check-in response:", data);
+      
+      if (!data.success) {
+        // Handle specific error cases
+        if (data.alreadyCheckedIn) {
+          toast({
+            title: "تنبيه",
+            description: data.message || "لقد قمت بتسجيل الحضور مسبقًا اليوم",
+            variant: "default",
+          });
+          return { success: false, alreadyCheckedIn: true, data: data.data };
+        } else {
+          throw new Error(data.message);
+        }
+      }
 
       toast({
         title: "تم بنجاح",
         description: "تم تسجيل الحضور بنجاح",
       });
       
-      return { success: true, data };
+      return { success: true, data: data.data };
     } catch (error: any) {
       console.error('Error checking in:', error);
       toast({
@@ -134,7 +102,7 @@ export function useSelfAttendance() {
     }
   };
 
-  // Check out function
+  // Check out function - using the SECURITY DEFINER RPC function
   const checkOut = async () => {
     if (!user) {
       toast({
@@ -147,71 +115,35 @@ export function useSelfAttendance() {
 
     setIsLoading(true);
     try {
-      // Get current employee info
-      const employeeResult = await getEmployeeInfo();
-      if (!employeeResult.success) {
-        toast({
-          title: "خطأ",
-          description: employeeResult.error,
-          variant: "destructive",
-        });
-        return { success: false, error: employeeResult.error };
-      }
-
-      const employee = employeeResult.data;
-      
-      // Get server timestamp
-      const { data: serverTime, error: timeError } = await supabase.rpc('get_server_timestamp');
-      if (timeError) {
-        console.error("Error getting server timestamp:", timeError);
-        throw timeError;
-      }
-      
-      console.log("Server timestamp for check-out:", serverTime);
-      const today = new Date(serverTime).toISOString().split('T')[0];
-
-      // Check if employee checked in today
-      const { data: existingRecord, error: checkError } = await supabase
-        .from('hr_attendance')
-        .select('*')
-        .eq('employee_id', employee.id)
-        .eq('attendance_date', today)
-        .single();
-
-      if (!existingRecord) {
-        toast({
-          title: "خطأ",
-          description: "لم تقم بتسجيل الحضور اليوم بعد",
-          variant: "destructive",
-        });
-        return { success: false, error: "لم تقم بتسجيل الحضور اليوم بعد" };
-      }
-
-      if (existingRecord.check_out) {
-        toast({
-          title: "تنبيه",
-          description: "لقد قمت بتسجيل الانصراف مسبقًا اليوم",
-          variant: "default",
-        });
-        return { success: false, alreadyCheckedOut: true, record: existingRecord };
-      }
-
-      // Update attendance record with server timestamp directly
-      const { data, error } = await supabase
-        .from('hr_attendance')
-        .update({ check_out: serverTime })  // Using the server timestamp directly
-        .eq('id', existingRecord.id)
-        .select('*')
-        .single();
+      // Call the record_employee_attendance RPC function with 'check_out' action
+      const { data, error } = await supabase.rpc('record_employee_attendance', {
+        p_action: 'check_out'
+      });
 
       if (error) throw error;
+      
+      console.log("Check-out response:", data);
+      
+      if (!data.success) {
+        // Handle specific error cases
+        if (data.alreadyCheckedOut) {
+          toast({
+            title: "تنبيه",
+            description: data.message || "لقد قمت بتسجيل الانصراف مسبقًا اليوم",
+            variant: "default",
+          });
+          return { success: false, alreadyCheckedOut: true, data: data.data };
+        } else {
+          throw new Error(data.message);
+        }
+      }
 
       toast({
         title: "تم بنجاح",
         description: "تم تسجيل الانصراف بنجاح",
       });
       
-      return { success: true, data };
+      return { success: true, data: data.data };
     } catch (error: any) {
       console.error('Error checking out:', error);
       toast({
@@ -225,44 +157,23 @@ export function useSelfAttendance() {
     }
   };
 
-  // Get today's attendance for current employee
+  // Get today's attendance for current employee - using the SECURITY DEFINER RPC function
   const getTodayAttendance = async () => {
     if (!user) {
       return { success: false, error: "يجب تسجيل الدخول أولاً" };
     }
 
     try {
-      // Get current employee info
-      const employeeResult = await getEmployeeInfo();
-      if (!employeeResult.success) {
-        return { success: false, error: employeeResult.error };
-      }
+      // Call the record_employee_attendance RPC function with 'get_today' action
+      const { data, error } = await supabase.rpc('record_employee_attendance', {
+        p_action: 'get_today'
+      });
 
-      const employee = employeeResult.data;
+      if (error) throw error;
       
-      // Get server timestamp for today's date
-      const { data: serverTime, error: timeError } = await supabase.rpc('get_server_timestamp');
-      if (timeError) {
-        console.error("Error getting server timestamp:", timeError);
-        throw timeError;
-      }
+      console.log("Get today attendance response:", data);
       
-      console.log("Server timestamp for getting today's attendance:", serverTime);
-      const today = new Date(serverTime).toISOString().split('T')[0];
-
-      // Get today's attendance record
-      const { data, error } = await supabase
-        .from('hr_attendance')
-        .select('*')
-        .eq('employee_id', employee.id)
-        .eq('attendance_date', today)
-        .single();
-
-      if (error && error.code !== 'PGRST116') { // Not found error code
-        throw error;
-      }
-
-      return { success: true, data };
+      return { success: data.success, data: data.data };
     } catch (error: any) {
       console.error('Error fetching today attendance:', error);
       return { 
@@ -280,3 +191,4 @@ export function useSelfAttendance() {
     isLoading
   };
 }
+
