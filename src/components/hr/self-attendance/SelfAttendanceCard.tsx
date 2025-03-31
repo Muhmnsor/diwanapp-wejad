@@ -1,33 +1,52 @@
 
 import { useState, useEffect } from "react";
 import { useSelfAttendance } from "@/hooks/hr/useSelfAttendance";
+import { useUserEmployeeLink } from "@/components/hr/useUserEmployeeLink";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Clock, LogIn, LogOut } from "lucide-react";
+import { Loader2, Clock, LogIn, LogOut, UserIcon } from "lucide-react";
 import { formatDateWithDay, formatTime } from "@/utils/dateTimeUtils";
+import { Link } from "react-router-dom";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function SelfAttendanceCard() {
-  const { checkIn, checkOut, getTodayAttendance, getEmployeeInfo, isLoading } = useSelfAttendance();
+  const { checkIn, checkOut, getTodayAttendance, getEmployeeInfo, isLoading: attendanceLoading } = useSelfAttendance();
+  const { getCurrentUserEmployee, isFetching: employeeLinkFetching } = useUserEmployeeLink();
   const [employee, setEmployee] = useState<any>(null);
   const [attendanceRecord, setAttendanceRecord] = useState<any>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [isLinkedToEmployee, setIsLinkedToEmployee] = useState<boolean | null>(null);
 
   // Load employee and attendance data
   useEffect(() => {
     const loadData = async () => {
       setIsLoadingData(true);
-      const employeeResult = await getEmployeeInfo();
-      if (employeeResult.success) {
-        setEmployee(employeeResult.data);
-      }
-
-      const attendanceResult = await getTodayAttendance();
-      if (attendanceResult.success) {
-        setAttendanceRecord(attendanceResult.data);
-      }
       
-      setIsLoadingData(false);
+      try {
+        // First check if user is linked to an employee
+        const linkResult = await getCurrentUserEmployee();
+        console.log("Employee link check:", linkResult);
+        
+        setIsLinkedToEmployee(linkResult.isLinked);
+        
+        if (linkResult.success && linkResult.isLinked) {
+          // If linked, get employee info and attendance data
+          const employeeResult = await getEmployeeInfo();
+          if (employeeResult.success) {
+            setEmployee(employeeResult.data);
+          }
+
+          const attendanceResult = await getTodayAttendance();
+          if (attendanceResult.success) {
+            setAttendanceRecord(attendanceResult.data);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading self-attendance data:", error);
+      } finally {
+        setIsLoadingData(false);
+      }
     };
 
     loadData();
@@ -68,20 +87,57 @@ export function SelfAttendanceCard() {
     }
   };
 
-  if (isLoadingData) {
+  // Loading state
+  if (isLoadingData || employeeLinkFetching) {
     return (
       <Card className="w-full max-w-md mx-auto">
         <CardHeader className="text-center">
           <CardTitle>تسجيل الحضور</CardTitle>
           <CardDescription>جاري تحميل البيانات...</CardDescription>
         </CardHeader>
-        <CardContent className="flex justify-center p-8">
-          <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+          </div>
+          <Skeleton className="h-20 w-full" />
         </CardContent>
+        <CardFooter className="flex justify-around">
+          <Skeleton className="h-10 w-full" />
+        </CardFooter>
       </Card>
     );
   }
 
+  // User not linked to an employee
+  if (isLinkedToEmployee === false) {
+    return (
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader className="text-center">
+          <CardTitle>تسجيل الحضور</CardTitle>
+          <CardDescription>لم يتم ربط حسابك بموظف</CardDescription>
+        </CardHeader>
+        <CardContent className="text-center py-6">
+          <UserIcon className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+          <p className="text-muted-foreground mb-4">
+            لاستخدام ميزة تسجيل الحضور الذاتي، يجب ربط حسابك كمستخدم بسجل موظف.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            يرجى التواصل مع مدير النظام أو الانتقال إلى إدارة المستخدمين لربط حسابك.
+          </p>
+        </CardContent>
+        <CardFooter className="justify-center">
+          <Link to="/admin/hr/employees">
+            <Button variant="default">
+              الانتقال إلى إدارة الموظفين
+            </Button>
+          </Link>
+        </CardFooter>
+      </Card>
+    );
+  }
+
+  // No employee data found
   if (!employee) {
     return (
       <Card className="w-full max-w-md mx-auto">
@@ -98,6 +154,7 @@ export function SelfAttendanceCard() {
     );
   }
 
+  // Normal attendance card display
   const today = new Date();
   const formattedDate = formatDateWithDay(today.toISOString().split('T')[0]);
   const formattedTime = today.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
@@ -149,20 +206,20 @@ export function SelfAttendanceCard() {
       <CardFooter className="flex justify-around">
         <Button
           variant="default"
-          disabled={isLoading || (attendanceRecord && attendanceRecord.check_in)}
+          disabled={attendanceLoading || (attendanceRecord && attendanceRecord.check_in)}
           onClick={handleCheckIn}
           className="flex-1 ml-2"
         >
-          {isLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <LogIn className="ml-2 h-4 w-4" />}
+          {attendanceLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <LogIn className="ml-2 h-4 w-4" />}
           تسجيل الحضور
         </Button>
         <Button
           variant="outline"
-          disabled={isLoading || !attendanceRecord || (attendanceRecord && attendanceRecord.check_out)}
+          disabled={attendanceLoading || !attendanceRecord || (attendanceRecord && attendanceRecord.check_out)}
           onClick={handleCheckOut}
           className="flex-1 mr-2"
         >
-          {isLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <LogOut className="ml-2 h-4 w-4" />}
+          {attendanceLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <LogOut className="ml-2 h-4 w-4" />}
           تسجيل الانصراف
         </Button>
       </CardFooter>

@@ -1,3 +1,4 @@
+
 // src/hooks/hr/useUserEmployeeLink.ts
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,16 +7,19 @@ import { useAuthStore } from "@/store/refactored-auth";
 
 export function useUserEmployeeLink() {
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const { user } = useAuthStore();
   
   // Function to get the current user's linked employee
   const getCurrentUserEmployee = async () => {
     if (!user?.id) {
-      return { success: false, error: "User not authenticated" };
+      console.log("User not authenticated in getCurrentUserEmployee");
+      return { success: false, error: "User not authenticated", isLinked: false };
     }
     
-    setIsLoading(true);
+    setIsFetching(true);
     try {
+      console.log("Fetching employee data for user:", user.id);
       const { data, error } = await supabase
         .from('employees')
         .select('*')
@@ -24,10 +28,13 @@ export function useUserEmployeeLink() {
       
       if (error) throw error;
       
+      const isLinked = !!data;
+      console.log("Employee link check result:", { isLinked, data: data || null });
+      
       return { 
         success: true, 
         data: data || null,
-        isLinked: !!data 
+        isLinked
       };
     } catch (error: any) {
       console.error('Error getting current user employee:', error);
@@ -37,7 +44,7 @@ export function useUserEmployeeLink() {
         isLinked: false
       };
     } finally {
-      setIsLoading(false);
+      setIsFetching(false);
     }
   };
   
@@ -183,6 +190,8 @@ export function useUserEmployeeLink() {
     unlinkUserFromEmployee,
     getLinkedEmployees,
     getCurrentUserEmployee,
-    isLoading
+    isLoading,
+    isFetching
   };
 }
+

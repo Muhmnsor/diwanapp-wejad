@@ -84,6 +84,12 @@ export function UserEmployeeLink({
       }
       
       onSuccess();
+      
+      // Refresh the page to update the UI state
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
     } catch (error: any) {
       console.error('Error updating employee user link:', error);
       toast.error(error.message || "حدث خطأ أثناء تحديث ربط الحساب");
