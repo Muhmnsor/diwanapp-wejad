@@ -1,4 +1,3 @@
-
 export const formatTime12Hour = (time: string) => {
   try {
     // تحويل الوقت إلى تنسيق 12 ساعة
@@ -44,8 +43,17 @@ export const formatDateWithDay = (dateStr: string) => {
 export const formatTime = (timestamp: string | null) => {
   if (!timestamp) return '-';
   try {
+    // Create a date object with the timestamp 
     const date = new Date(timestamp);
-    return date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+    
+    // Format to local time using Saudi Arabia locale (ar-SA)
+    // This ensures proper time display with AM/PM in Arabic
+    return date.toLocaleTimeString('ar-SA', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true, 
+      timeZone: 'Asia/Riyadh' 
+    });
   } catch (error) {
     console.error('Error formatting time:', error);
     return timestamp;
