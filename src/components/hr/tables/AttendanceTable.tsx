@@ -11,7 +11,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { formatDateWithDay } from "@/utils/dateTimeUtils";
+import { formatDateWithDay, formatTime } from "@/utils/dateTimeUtils";
 import { ExportButton } from "@/components/admin/ExportButton";
 import { ImportAttendanceDialog } from "../dialogs/ImportAttendanceDialog";
 import { ExportAttendanceDialog } from "../dialogs/ExportAttendanceDialog";
@@ -60,18 +60,6 @@ export function AttendanceTable() {
 
     const { label, variant } = statusMap[status] || { label: status, variant: "default" };
     return <Badge variant={variant}>{label}</Badge>;
-  };
-
-  // Format time from timestamp
-  const formatTime = (timestamp: string | null) => {
-    if (!timestamp) return '-';
-    try {
-      const date = new Date(timestamp);
-      return date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
-    } catch (error) {
-      console.error('Error formatting time:', error);
-      return timestamp;
-    }
   };
 
   // Prepare data for export
