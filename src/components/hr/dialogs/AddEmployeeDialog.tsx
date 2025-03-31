@@ -28,7 +28,7 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
     contract_type: "full_time",
     email: "",
     phone: "",
-    user_id: ""
+    user_id: "no_user"
   });
   
   // Fetch users for linking
@@ -78,6 +78,7 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
         .from('employees')
         .insert({
           ...formData,
+          user_id: formData.user_id === "no_user" ? null : formData.user_id,
           status: 'active'
         })
         .select();
@@ -219,7 +220,7 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
                 <SelectValue placeholder="اختر حساب المستخدم (اختياري)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">بدون ربط</SelectItem>
+                <SelectItem value="no_user">بدون ربط</SelectItem>
                 {users.map(user => (
                   <SelectItem key={user.id} value={user.id}>
                     {user.email}
