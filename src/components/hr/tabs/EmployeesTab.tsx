@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { Loader2, Plus, Trash, Edit, Eye, Link2, LinkSlash } from "lucide-react";
+import { Loader2, Plus, Trash, Edit, Eye, Link2, Unlink } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -192,7 +192,7 @@ export function EmployeesTab({ searchTerm = "" }: EmployeesTabProps) {
                         </span>
                       ) : (
                         <span className="text-gray-500 text-xs font-medium flex items-center gap-1">
-                          <LinkSlash className="w-3 h-3" /> غير مرتبط
+                          <Unlink className="w-3 h-3" /> غير مرتبط
                         </span>
                       )}
                     </TableCell>
@@ -210,7 +210,7 @@ export function EmployeesTab({ searchTerm = "" }: EmployeesTabProps) {
                               <Trash className="w-4 h-4" />
                             </Button>
                             <Button variant="ghost" size="icon" onClick={() => handleLinkEmployee(employee)}>
-                              {employee.user_id ? <LinkSlash className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
+                              {employee.user_id ? <Unlink className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
                             </Button>
                           </>
                         )}
