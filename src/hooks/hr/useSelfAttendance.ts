@@ -74,7 +74,13 @@ export function useSelfAttendance() {
       const employee = employeeResult.data;
       
       // Get server timestamp for today's date
-      const { data: serverTime } = await supabase.rpc('get_server_timestamp');
+      const { data: serverTime, error: timeError } = await supabase.rpc('get_server_timestamp');
+      if (timeError) {
+        console.error("Error getting server timestamp:", timeError);
+        throw timeError;
+      }
+      
+      console.log("Server timestamp for check-in:", serverTime);
       const today = new Date(serverTime).toISOString().split('T')[0];
 
       // Check if employee already checked in today
@@ -94,13 +100,13 @@ export function useSelfAttendance() {
         return { success: false, alreadyCheckedIn: true, record: existingRecord };
       }
 
-      // Insert attendance record using server timestamp
+      // Insert attendance record using server timestamp directly
       const { data, error } = await supabase
         .from('hr_attendance')
         .insert({
           employee_id: employee.id,
           attendance_date: today,
-          check_in: serverTime,
+          check_in: serverTime,  // Using the server timestamp directly
           status: 'present',
           created_by: user.id
         })
@@ -154,8 +160,14 @@ export function useSelfAttendance() {
 
       const employee = employeeResult.data;
       
-      // Get server timestamp for today's date
-      const { data: serverTime } = await supabase.rpc('get_server_timestamp');
+      // Get server timestamp
+      const { data: serverTime, error: timeError } = await supabase.rpc('get_server_timestamp');
+      if (timeError) {
+        console.error("Error getting server timestamp:", timeError);
+        throw timeError;
+      }
+      
+      console.log("Server timestamp for check-out:", serverTime);
       const today = new Date(serverTime).toISOString().split('T')[0];
 
       // Check if employee checked in today
@@ -184,10 +196,10 @@ export function useSelfAttendance() {
         return { success: false, alreadyCheckedOut: true, record: existingRecord };
       }
 
-      // Update attendance record with server timestamp
+      // Update attendance record with server timestamp directly
       const { data, error } = await supabase
         .from('hr_attendance')
-        .update({ check_out: serverTime })
+        .update({ check_out: serverTime })  // Using the server timestamp directly
         .eq('id', existingRecord.id)
         .select('*')
         .single();
@@ -229,7 +241,13 @@ export function useSelfAttendance() {
       const employee = employeeResult.data;
       
       // Get server timestamp for today's date
-      const { data: serverTime } = await supabase.rpc('get_server_timestamp');
+      const { data: serverTime, error: timeError } = await supabase.rpc('get_server_timestamp');
+      if (timeError) {
+        console.error("Error getting server timestamp:", timeError);
+        throw timeError;
+      }
+      
+      console.log("Server timestamp for getting today's attendance:", serverTime);
       const today = new Date(serverTime).toISOString().split('T')[0];
 
       // Get today's attendance record
@@ -262,4 +280,3 @@ export function useSelfAttendance() {
     isLoading
   };
 }
-
