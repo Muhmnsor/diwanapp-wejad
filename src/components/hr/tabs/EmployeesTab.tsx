@@ -1,286 +1,267 @@
 
-import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { Loader2, Plus, Trash, Edit, Eye, Link2, Unlink } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { AddEmployeeDialog } from "../dialogs/AddEmployeeDialog";
-import { EditEmployeeDialog } from "../dialogs/EditEmployeeDialog";
-import { ViewEmployeeDialog } from "../dialogs/ViewEmployeeDialog";
-import { DeleteEmployeeDialog } from "../dialogs/DeleteEmployeeDialog";
-import { usePermissions } from "@/components/permissions/usePermissions";
-import { UserEmployeeLink } from "../user-management/UserEmployeeLink";
-import { useUserEmployeeLink } from "../useUserEmployeeLink";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Loader2, Plus, Trash2, FileSearch, UserCog, AlertCircle, Bell } from "lucide-react";
+import { useEmployees } from "@/hooks/hr/useEmployees";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ViewEmployeeDialog } from "@/components/hr/dialogs/ViewEmployeeDialog";
+import { AddEmployeeDialog } from "@/components/hr/dialogs/AddEmployeeDialog";
+import { EditEmployeeDialog } from "@/components/hr/dialogs/EditEmployeeDialog";
+import { DeleteEmployeeDialog } from "@/components/hr/dialogs/DeleteEmployeeDialog";
+import { UserEmployeeLink } from "@/components/hr/user-management/UserEmployeeLink";
+import { ContractAlerts } from "@/components/hr/contract-alerts/ContractAlerts";
+import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-interface Employee {
-  id: string;
-  employee_number: string;
-  full_name: string;
-  position: string;
-  department: string;
-  hire_date: string;
-  status: string;
-  email: string;
-  phone: string;
-  user_id?: string | null;
-}
-
-interface EmployeesTabProps {
-  searchTerm?: string;
-}
-
-export function EmployeesTab({ searchTerm = "" }: EmployeesTabProps) {
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+export function EmployeesTab() {
+  const [isAlertsOpen, setIsAlertsOpen] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isUserLinkDialogOpen, setIsUserLinkDialogOpen] = useState(false);
   
-  const { hasPermission } = usePermissions();
-  const canManageEmployees = hasPermission("hr", "manage_employees");
-  const { linkUserToEmployee, unlinkUserFromEmployee } = useUserEmployeeLink();
+  const { data: employees, isLoading, refetch } = useEmployees();
   
-  const { data: employees, isLoading, error, refetch } = useQuery({
-  queryKey: ['hr-employees'],
-  queryFn: async () => {
-    // First get employee data
-    const { data: employeesData, error: employeesError } = await supabase
-      .from('employees')
-      .select('*')
-      .order('full_name', { ascending: true });
-      
-    if (employeesError) throw employeesError;
-    
-    // For employees with user_id, get their email
-    const employeesWithUser = employeesData.filter(emp => emp.user_id);
-    if (employeesWithUser.length > 0) {
-      const { data: userData, error: userError } = await supabase
-        .rpc('get_app_users');
-        
-      if (userError) throw userError;
-      
-      // Map user emails to employees
-      return employeesData.map(employee => {
-        if (employee.user_id) {
-          const userInfo = userData.find(u => u.id === employee.user_id);
-          if (userInfo) {
-            return {
-              ...employee,
-              auth_users_view: { email: userInfo.email }
-            };
-          }
-        }
-        return employee;
-      });
-    }
-    
-    return employeesData;
-  }
-});
-  
-  const handleAddEmployee = () => {
-    setIsAddDialogOpen(true);
-  };
-  
-  const handleViewEmployee = (employee: Employee) => {
-    setSelectedEmployee(employee);
-    setIsViewDialogOpen(true);
-  };
-  
-  const handleEditEmployee = (employee: Employee) => {
-    setSelectedEmployee(employee);
-    setIsEditDialogOpen(true);
-  };
-  
-  const handleDeleteEmployee = (employee: Employee) => {
-    setSelectedEmployee(employee);
-    setIsDeleteDialogOpen(true);
-  };
-  
-  const handleLinkEmployee = (employee: Employee) => {
-    setSelectedEmployee(employee);
-    setIsUserLinkDialogOpen(true);
-  };
-  
-  const onEmployeeAdded = async () => {
-    toast.success("تمت إضافة الموظف بنجاح");
-    await refetch();
-    setIsAddDialogOpen(false);
-  };
-  
-  const onEmployeeUpdated = async () => {
-    toast.success("تم تحديث بيانات الموظف بنجاح");
-    await refetch();
-    setIsEditDialogOpen(false);
-  };
-  
-  const onEmployeeDeleted = async () => {
-    toast.success("تم حذف الموظف بنجاح");
-    await refetch();
-    setIsDeleteDialogOpen(false);
-  };
-  
-  const onUserLinkSuccess = async () => {
-    await refetch();
-    setIsUserLinkDialogOpen(false);
-  };
-  
-  if (error) {
-    return (
-      <Card>
-        <CardContent className="pt-6 text-center">
-          <p className="text-red-500">حدث خطأ أثناء تحميل بيانات الموظفين</p>
-          <p className="text-sm text-muted-foreground">{(error as Error).message}</p>
-          <Button className="mt-4" onClick={() => refetch()}>إعادة المحاولة</Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
   const filteredEmployees = employees?.filter(employee => 
-    employee.full_name.includes(searchTerm) || 
-    employee.employee_number.includes(searchTerm) || 
-    employee.position.includes(searchTerm) || 
-    employee.department.includes(searchTerm)
- );
+    employee.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    employee.employee_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (employee.department && employee.department.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (employee.position && employee.position.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+  
+  const handleRefresh = () => {
+    refetch();
+  };
+  
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'active':
+        return <Badge variant="outline" className="border-green-500 text-green-600">نشط</Badge>;
+      case 'on_leave':
+        return <Badge variant="outline" className="border-blue-500 text-blue-600">في إجازة</Badge>;
+      case 'terminated':
+        return <Badge variant="outline" className="border-red-500 text-red-600">غير نشط</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
   
   return (
-    <>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold">الموظفين</h2>
-        {canManageEmployees && (
-          <Button onClick={handleAddEmployee} className="flex items-center gap-2">
-            <Plus size={16} />
-            <span>إضافة موظف</span>
-          </Button>
-        )}
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold">الموظفون</h2>
+        <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Plus className="h-4 w-4 ml-2" />
+          إضافة موظف
+        </Button>
       </div>
       
-      <Card>
-        <CardContent className="p-0 overflow-x-auto">
-          {isLoading ? (
-            <div className="flex justify-center items-center h-32">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <span className="mr-2">جاري تحميل البيانات...</span>
-            </div>
-          ) : filteredEmployees?.length === 0 ? (
-            <div className="p-6 text-center">
-              <p className="text-muted-foreground">لا توجد بيانات موظفين متاحة</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-right">الرقم الوظيفي</TableHead>
-                  <TableHead className="text-right">الاسم</TableHead>
-                  <TableHead className="text-right">المسمى الوظيفي</TableHead>
-                  <TableHead className="text-right">القسم</TableHead>
-                  <TableHead className="text-right">تاريخ التعيين</TableHead>
-                  <TableHead className="text-right">الحالة</TableHead>
-                  <TableHead className="text-right">ربط المستخدم</TableHead>
-                  <TableHead className="text-center">الإجراءات</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredEmployees?.map((employee) => (
+      {/* Contract Alerts Section */}
+      <Collapsible
+        open={isAlertsOpen}
+        onOpenChange={setIsAlertsOpen}
+        className="bg-muted/40 rounded-md"
+      >
+        <div className="px-4 py-3 flex items-center justify-between">
+          <h3 className="text-lg font-medium flex items-center">
+            <Bell className="h-5 w-5 ml-2 text-amber-500" />
+            تنبيهات العقود والفترات التجريبية
+          </h3>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" size="sm">
+              {isAlertsOpen ? 'إخفاء' : 'عرض'}
+            </Button>
+          </CollapsibleTrigger>
+        </div>
+        <CollapsibleContent className="px-4 pb-4">
+          <ContractAlerts />
+        </CollapsibleContent>
+      </Collapsible>
+      
+      <div className="flex items-center justify-between">
+        <div className="relative max-w-sm">
+          <Input
+            placeholder="البحث عن موظف..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+          <FileSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        </div>
+      </div>
+      
+      <div className="bg-white rounded-md shadow">
+        {isLoading ? (
+          <div className="p-6 space-y-3">
+            <Skeleton className="h-6 w-1/4" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-right">الموظف</TableHead>
+                <TableHead className="text-right">القسم</TableHead>
+                <TableHead className="text-right">المسمى الوظيفي</TableHead>
+                <TableHead className="text-right">تاريخ التعيين</TableHead>
+                <TableHead className="text-right">الحالة</TableHead>
+                <TableHead className="text-center">الإجراءات</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredEmployees && filteredEmployees.length > 0 ? (
+                filteredEmployees.map(employee => (
                   <TableRow key={employee.id}>
-                    <TableCell className="text-right">{employee.employee_number}</TableCell>
-                    <TableCell className="text-right">{employee.full_name}</TableCell>
-                    <TableCell className="text-right">{employee.position}</TableCell>
-                    <TableCell className="text-right">{employee.department}</TableCell>
-                    <TableCell className="text-right">{new Date(employee.hire_date).toLocaleDateString('ar-SA')}</TableCell>
-                    <TableCell className="text-right">
-                      <span className={`px-2 py-1 rounded-full text-xs
-                        ${employee.status === 'active' ? 'bg-green-100 text-green-800' : 
-                          employee.status === 'on_leave' ? 'bg-blue-100 text-blue-800' : 
-                          'bg-gray-100 text-gray-800'}`}>
-                        {employee.status === 'active' ? 'نشط' : 
-                         employee.status === 'on_leave' ? 'في إجازة' : 
-                         employee.status === 'terminated' ? 'منتهي' : employee.status}
-                      </span>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-sm">
+                          {employee.full_name.charAt(0)}
+                        </div>
+                        <div>
+                          <p>{employee.full_name}</p>
+                          <p className="text-xs text-muted-foreground">#{employee.employee_number}</p>
+                        </div>
+                      </div>
                     </TableCell>
-                    <TableCell className="text-right">
-                      {employee.user_id ? (
-                        <span className="text-green-600 text-xs font-medium flex items-center gap-1">
-                          <Link2 className="w-3 h-3" /> تم الربط
-                        </span>
-                      ) : (
-                        <span className="text-gray-500 text-xs font-medium flex items-center gap-1">
-                          <Unlink className="w-3 h-3" /> غير مرتبط
-                        </span>
-                      )}
+                    <TableCell>{employee.department || "-"}</TableCell>
+                    <TableCell>{employee.position || "-"}</TableCell>
+                    <TableCell>
+                      {employee.hire_date ? 
+                        new Date(employee.hire_date).toLocaleDateString('ar-SA') : 
+                        "-"}
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell>{getStatusBadge(employee.status)}</TableCell>
+                    <TableCell>
                       <div className="flex justify-center gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleViewEmployee(employee)}>
-                          <Eye className="w-4 h-4" />
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          onClick={() => {
+                            setSelectedEmployee(employee);
+                            setIsViewDialogOpen(true);
+                          }}
+                        >
+                          <FileSearch className="h-4 w-4" />
                         </Button>
-                        {canManageEmployees && (
-                          <>
-                            <Button variant="ghost" size="icon" onClick={() => handleEditEmployee(employee)}>
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDeleteEmployee(employee)}>
-                              <Trash className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleLinkEmployee(employee)}>
-                              {employee.user_id ? <Unlink className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
-                            </Button>
-                          </>
-                        )}
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          onClick={() => {
+                            setSelectedEmployee(employee);
+                            setIsUserLinkDialogOpen(true);
+                          }}
+                        >
+                          <UserCog className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          onClick={() => {
+                            setSelectedEmployee(employee);
+                            setIsEditDialogOpen(true);
+                          }}
+                        >
+                          <UserCog className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          className="text-red-500 hover:text-red-700"
+                          onClick={() => {
+                            setSelectedEmployee(employee);
+                            setIsDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center">
+                    {searchQuery ? (
+                      <div className="flex flex-col items-center justify-center">
+                        <AlertCircle className="h-8 w-8 text-muted-foreground mb-2" />
+                        <p className="text-lg font-medium">لا توجد نتائج</p>
+                        <p className="text-sm text-muted-foreground">
+                          لم يتم العثور على موظفين مطابقين لـ "{searchQuery}"
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center">
+                        <AlertCircle className="h-8 w-8 text-muted-foreground mb-2" />
+                        <p className="text-lg font-medium">لا يوجد موظفين</p>
+                        <p className="text-sm text-muted-foreground">
+                          لم يتم العثور على سجلات للموظفين
+                        </p>
+                      </div>
+                    )}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        )}
+      </div>
       
-      <AddEmployeeDialog
-        isOpen={isAddDialogOpen}
-        onClose={() => setIsAddDialogOpen(false)}
-        onSuccess={onEmployeeAdded}
-      />
-      
-      {selectedEmployee && (
-        <>
-          <ViewEmployeeDialog
-            employee={selectedEmployee}
-            isOpen={isViewDialogOpen}
-            onClose={() => setIsViewDialogOpen(false)}
-          />
-          
-          <EditEmployeeDialog
-            employee={selectedEmployee}
-            isOpen={isEditDialogOpen}
-            onClose={() => setIsEditDialogOpen(false)}
-            onSuccess={onEmployeeUpdated}
-          />
-          
-          <DeleteEmployeeDialog
-            employee={selectedEmployee}
-            isOpen={isDeleteDialogOpen}
-            onClose={() => setIsDeleteDialogOpen(false)}
-            onSuccess={onEmployeeDeleted}
-          />
-          
-          <UserEmployeeLink
-            employeeId={selectedEmployee.id}
-            employeeName={selectedEmployee.full_name}
-            currentUserId={selectedEmployee.user_id || null}
-            isOpen={isUserLinkDialogOpen}
-            onClose={() => setIsUserLinkDialogOpen(false)}
-            onSuccess={onUserLinkSuccess}
-          />
-        </>
+      {/* View Employee Dialog */}
+      {isViewDialogOpen && selectedEmployee && (
+        <ViewEmployeeDialog
+          employee={selectedEmployee}
+          isOpen={isViewDialogOpen}
+          onClose={() => setIsViewDialogOpen(false)}
+        />
       )}
-    </>
+      
+      {/* Add Employee Dialog */}
+      {isAddDialogOpen && (
+        <AddEmployeeDialog
+          isOpen={isAddDialogOpen}
+          onClose={() => setIsAddDialogOpen(false)}
+          onSuccess={handleRefresh}
+        />
+      )}
+      
+      {/* Edit Employee Dialog */}
+      {isEditDialogOpen && selectedEmployee && (
+        <EditEmployeeDialog
+          employee={selectedEmployee}
+          isOpen={isEditDialogOpen}
+          onClose={() => setIsEditDialogOpen(false)}
+          onSuccess={handleRefresh}
+        />
+      )}
+      
+      {/* Delete Employee Dialog */}
+      {isDeleteDialogOpen && selectedEmployee && (
+        <DeleteEmployeeDialog
+          employee={selectedEmployee}
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onSuccess={handleRefresh}
+        />
+      )}
+      
+      {/* User-Employee Link Dialog */}
+      {isUserLinkDialogOpen && selectedEmployee && (
+        <UserEmployeeLink
+          employeeId={selectedEmployee.id}
+          employeeName={selectedEmployee.full_name}
+          currentUserId={selectedEmployee.user_id}
+          isOpen={isUserLinkDialogOpen}
+          onClose={() => setIsUserLinkDialogOpen(false)}
+          onSuccess={handleRefresh}
+        />
+      )}
+    </div>
   );
 }
-
