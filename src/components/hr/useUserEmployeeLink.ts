@@ -1,53 +1,75 @@
 
 // src/hooks/hr/useUserEmployeeLink.ts
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
 import { useAuthStore } from "@/store/refactored-auth";
+import { toast } from "@/hooks/use-toast";
 
 export function useUserEmployeeLink() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
+  const [employeeData, setEmployeeData] = useState<any>(null);
+  const [isLinked, setIsLinked] = useState<boolean | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   const { user } = useAuthStore();
   
   // Function to get the current user's linked employee
-const getCurrentUserEmployee = async () => {
-  if (!user?.id) {
-    console.log("User not authenticated in getCurrentUserEmployee");
-    return { success: false, error: "User not authenticated", isLinked: false };
-  }
-  
-  setIsFetching(true);
-  try {
-    console.log("Fetching employee data for user:", user.id);
-    const { data, error } = await supabase
-      .from('employees')
-      .select('*')
-      .eq('user_id', user.id)
-      .maybeSingle();
+  const getCurrentUserEmployee = useCallback(async () => {
+    if (!user?.id) {
+      console.log("User not authenticated in getCurrentUserEmployee");
+      setIsLinked(false);
+      setEmployeeData(null);
+      return { success: false, error: "User not authenticated", isLinked: false };
+    }
     
-    if (error) throw error;
+    setIsFetching(true);
+    setError(null);
     
-    const isLinked = !!data;
-    console.log("Employee link check result:", { isLinked, data: data || null });
-    
-    return { 
-      success: true, 
-      data: data || null,
-      isLinked
-    };
-  } catch (error: any) {
-    console.error('Error getting current user employee:', error);
-    return { 
-      success: false, 
-      error: error.message || "حدث خطأ أثناء جلب بيانات الموظف",
-      isLinked: false
-    };
-  } finally {
-    setIsFetching(false);
-  }
-};
+    try {
+      console.log("Fetching employee info for user:", user.id);
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (error) throw error;
+      
+      const linkedStatus = !!data;
+      console.log("Employee link check result:", { isLinked: linkedStatus, data: data || null });
+      
+      setIsLinked(linkedStatus);
+      setEmployeeData(data);
+      
+      return { 
+        success: true, 
+        data: data || null,
+        isLinked: linkedStatus
+      };
+    } catch (error: any) {
+      console.error('Error getting current user employee:', error);
+      setError(error);
+      setIsLinked(false);
+      setEmployeeData(null);
+      return { 
+        success: false, 
+        error: error.message || "حدث خطأ أثناء جلب بيانات الموظف",
+        isLinked: false
+      };
+    } finally {
+      setIsFetching(false);
+    }
+  }, [user?.id]);
 
+  // Load employee data when the component mounts or user changes
+  useEffect(() => {
+    if (user?.id) {
+      getCurrentUserEmployee();
+    } else {
+      setIsLinked(false);
+      setEmployeeData(null);
+    }
+  }, [user?.id, getCurrentUserEmployee]);
   
   // Function to link a user to an employee
   const linkUserToEmployee = async (employeeId: string, userId: string) => {
@@ -93,6 +115,11 @@ const getCurrentUserEmployee = async () => {
         description: "تم ربط الموظف بحساب المستخدم",
       });
       
+      // Refresh employee data after successful linking
+      if (user?.id === userId) {
+        await getCurrentUserEmployee();
+      }
+      
       return { success: true };
     } catch (error: any) {
       console.error('Error linking user to employee:', error);
@@ -132,6 +159,11 @@ const getCurrentUserEmployee = async () => {
         title: "تم بنجاح",
         description: "تم إلغاء ربط الموظف بحساب المستخدم",
       });
+      
+      // Refresh employee data after successful unlinking
+      if (user?.id) {
+        await getCurrentUserEmployee();
+      }
       
       return { success: true };
     } catch (error: any) {
@@ -192,7 +224,9 @@ const getCurrentUserEmployee = async () => {
     getLinkedEmployees,
     getCurrentUserEmployee,
     isLoading,
-    isFetching
+    isFetching,
+    isLinked,
+    employeeData,
+    error
   };
 }
-
