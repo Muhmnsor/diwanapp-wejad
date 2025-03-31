@@ -11,42 +11,43 @@ export function useUserEmployeeLink() {
   const { user } = useAuthStore();
   
   // Function to get the current user's linked employee
-  const getCurrentUserEmployee = async () => {
-    if (!user?.id) {
-      console.log("User not authenticated in getCurrentUserEmployee");
-      return { success: false, error: "User not authenticated", isLinked: false };
-    }
+const getCurrentUserEmployee = async () => {
+  if (!user?.id) {
+    console.log("User not authenticated in getCurrentUserEmployee");
+    return { success: false, error: "User not authenticated", isLinked: false };
+  }
+  
+  setIsFetching(true);
+  try {
+    console.log("Fetching employee data for user:", user.id);
+    const { data, error } = await supabase
+      .from('employees')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
     
-    setIsFetching(true);
-    try {
-      console.log("Fetching employee data for user:", user.id);
-      const { data, error } = await supabase
-        .from('employees')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (error) throw error;
-      
-      const isLinked = !!data;
-      console.log("Employee link check result:", { isLinked, data: data || null });
-      
-      return { 
-        success: true, 
-        data: data || null,
-        isLinked
-      };
-    } catch (error: any) {
-      console.error('Error getting current user employee:', error);
-      return { 
-        success: false, 
-        error: error.message || "حدث خطأ أثناء جلب بيانات الموظف",
-        isLinked: false
-      };
-    } finally {
-      setIsFetching(false);
-    }
-  };
+    if (error) throw error;
+    
+    const isLinked = !!data;
+    console.log("Employee link check result:", { isLinked, data: data || null });
+    
+    return { 
+      success: true, 
+      data: data || null,
+      isLinked
+    };
+  } catch (error: any) {
+    console.error('Error getting current user employee:', error);
+    return { 
+      success: false, 
+      error: error.message || "حدث خطأ أثناء جلب بيانات الموظف",
+      isLinked: false
+    };
+  } finally {
+    setIsFetching(false);
+  }
+};
+
   
   // Function to link a user to an employee
   const linkUserToEmployee = async (employeeId: string, userId: string) => {
