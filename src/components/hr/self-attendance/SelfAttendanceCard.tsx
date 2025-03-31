@@ -19,38 +19,41 @@ export function SelfAttendanceCard() {
   const [isLinkedToEmployee, setIsLinkedToEmployee] = useState<boolean | null>(null);
 
   // Load employee and attendance data
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoadingData(true);
+useEffect(() => {
+  const loadData = async () => {
+    setIsLoadingData(true);
+    
+    try {
+      // First check if user is linked to an employee
+      const linkResult = await getCurrentUserEmployee();
+      console.log("Employee link check:", linkResult);
       
-      try {
-        // First check if user is linked to an employee
-        const linkResult = await getCurrentUserEmployee();
-        console.log("Employee link check:", linkResult);
-        
-        setIsLinkedToEmployee(linkResult.isLinked);
-        
-        if (linkResult.success && linkResult.isLinked) {
-          // If linked, get employee info and attendance data
-          const employeeResult = await getEmployeeInfo();
-          if (employeeResult.success) {
-            setEmployee(employeeResult.data);
-          }
-
-          const attendanceResult = await getTodayAttendance();
-          if (attendanceResult.success) {
-            setAttendanceRecord(attendanceResult.data);
-          }
+      // Always set this value regardless of success
+      setIsLinkedToEmployee(linkResult.isLinked);
+      
+      if (linkResult.success && linkResult.isLinked) {
+        // If linked, get employee info and attendance data
+        const employeeResult = await getEmployeeInfo();
+        if (employeeResult.success) {
+          setEmployee(employeeResult.data);
         }
-      } catch (error) {
-        console.error("Error loading self-attendance data:", error);
-      } finally {
-        setIsLoadingData(false);
-      }
-    };
 
-    loadData();
-  }, []);
+        const attendanceResult = await getTodayAttendance();
+        if (attendanceResult.success) {
+          setAttendanceRecord(attendanceResult.data);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading self-attendance data:", error);
+    } finally {
+      // Always finish loading, even on error
+      setIsLoadingData(false);
+    }
+  };
+
+  loadData();
+}, []);
+
 
   // Update current time every minute
   useEffect(() => {
