@@ -35,46 +35,58 @@ export function SelfAttendanceToolbar() {
   const navigate = useNavigate();
 
   // Load employee and attendance data
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoadingData(true);
-      try {
-        // First check if the current user is linked to an employee
-        const userEmployeeResult = await getCurrentUserEmployee();
-        
-        if (!userEmployeeResult.success || !userEmployeeResult.data) {
-          console.log("Current user is not linked to an employee:", userEmployeeResult);
-          setNotLinked(true);
-          setIsLoadingData(false);
-          return;
-        }
-        
-        setNotLinked(false);
-        
-        // If linked, get employee info and attendance record
-        const employeeResult = await getEmployeeInfo();
-        if (employeeResult.success) {
-          setEmployee(employeeResult.data);
-        }
-
-        const attendanceResult = await getTodayAttendance();
-        if (attendanceResult.success) {
-          setAttendanceRecord(attendanceResult.data);
-        }
-      } catch (error) {
-        console.error("Error loading attendance data:", error);
-      } finally {
+useEffect(() => {
+  const loadData = async () => {
+    setIsLoadingData(true);
+    try {
+      // First check if the current user is linked to an employee
+      const userEmployeeResult = await getCurrentUserEmployee();
+      
+      if (!userEmployeeResult.success || !userEmployeeResult.isLinked) {
+        console.log("Current user is not linked to an employee:", userEmployeeResult);
+        setNotLinked(true);
+        setEmployee(null);
+        setAttendanceRecord(null);
         setIsLoadingData(false);
+        return;
       }
-    };
+      
+      setNotLinked(false);
+      
+      // If linked, get employee info and attendance record
+      const employeeResult = await getEmployeeInfo();
+      if (employeeResult.success) {
+        setEmployee(employeeResult.data);
+      } else {
+        setEmployee(null);
+        console.error("Failed to get employee info:", employeeResult.error);
+      }
 
-    loadData();
-    
-    // Refresh data every 5 minutes
-    const intervalId = setInterval(loadData, 5 * 60 * 1000);
-    
-    return () => clearInterval(intervalId);
-  }, [getCurrentUserEmployee, getEmployeeInfo, getTodayAttendance]);
+      const attendanceResult = await getTodayAttendance();
+      if (attendanceResult.success) {
+        setAttendanceRecord(attendanceResult.data);
+      } else {
+        setAttendanceRecord(null);
+        console.error("Failed to get attendance:", attendanceResult.error);
+      }
+    } catch (error) {
+      console.error("Error loading attendance data:", error);
+      setNotLinked(true); // Default to not linked on error
+      setEmployee(null);
+      setAttendanceRecord(null);
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  loadData();
+  
+  // Refresh data every 5 minutes
+  const intervalId = setInterval(loadData, 5 * 60 * 1000);
+  
+  return () => clearInterval(intervalId);
+}, []);
+
 
   // Handle check in
   const handleCheckIn = async () => {
