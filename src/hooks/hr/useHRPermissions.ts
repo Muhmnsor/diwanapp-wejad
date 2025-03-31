@@ -1,7 +1,7 @@
 
+import { useAuthStore } from "@/store/refactored-auth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuthStore } from "@/store/refactored-auth";
 
 export function useHRPermissions() {
   const { user } = useAuthStore();
