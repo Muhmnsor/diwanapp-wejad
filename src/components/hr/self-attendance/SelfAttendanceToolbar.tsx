@@ -5,11 +5,28 @@ import { Button } from "@/components/ui/button";
 import { Loader2, LogIn, LogOut } from "lucide-react";
 import { formatTime } from "@/utils/dateTimeUtils";
 import { toast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+interface Employee {
+  id: string;
+  full_name: string;
+  employee_number: string;
+  position: string;
+}
+
+interface AttendanceRecord {
+  id: string;
+  employee_id: string;
+  attendance_date: string;
+  check_in: string | null;
+  check_out: string | null;
+  status: string;
+}
 
 export function SelfAttendanceToolbar() {
   const { checkIn, checkOut, getTodayAttendance, getEmployeeInfo, isLoading } = useSelfAttendance();
-  const [employee, setEmployee] = useState<any>(null);
-  const [attendanceRecord, setAttendanceRecord] = useState<any>(null);
+  const [employee, setEmployee] = useState<Employee | null>(null);
+  const [attendanceRecord, setAttendanceRecord] = useState<AttendanceRecord | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   // Load employee and attendance data
@@ -88,31 +105,23 @@ export function SelfAttendanceToolbar() {
     return null;
   }
 
-  // Format time from timestamp
-  const formatTimestamp = (timestamp: string | null) => {
-    if (!timestamp) return null;
-    try {
-      return formatTime(timestamp);
-    } catch (error) {
-      return null;
-    }
-  };
-
   // Get current state text
   const getButtonText = () => {
     if (isLoadingData || isLoading) {
       return "جاري التحميل...";
     }
     
+    const employeeName = employee?.full_name ? `(${employee.full_name})` : '';
+    
     if (!attendanceRecord || !attendanceRecord.check_in) {
-      return "تسجيل الحضور";
+      return `تسجيل الحضور ${employeeName}`;
     }
     
     if (attendanceRecord.check_in && !attendanceRecord.check_out) {
-      return "تسجيل الانصراف";
+      return `تسجيل الانصراف ${employeeName}`;
     }
     
-    return "تم تسجيل الحضور والانصراف";
+    return `تم تسجيل الحضور والانصراف ${employeeName}`;
   };
 
   // Determine button variant and handler
@@ -144,22 +153,52 @@ export function SelfAttendanceToolbar() {
   };
 
   const buttonProps = getButtonProps();
+  
+  // Get tooltip content based on attendance state
+  const getTooltipContent = () => {
+    if (!employee) return "لم يتم العثور على بيانات الموظف";
+    
+    if (!attendanceRecord) return `مرحباً ${employee.full_name}`;
+    
+    const checkInTime = attendanceRecord.check_in ? formatTime(attendanceRecord.check_in) : null;
+    const checkOutTime = attendanceRecord.check_out ? formatTime(attendanceRecord.check_out) : null;
+    
+    if (checkInTime && checkOutTime) {
+      return `تم تسجيل الحضور: ${checkInTime}\nتم تسجيل الانصراف: ${checkOutTime}`;
+    }
+    
+    if (checkInTime) {
+      return `تم تسجيل الحضور: ${checkInTime}`;
+    }
+    
+    return `مرحباً ${employee.full_name}`;
+  };
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
-      <Button
-        variant={buttonProps.variant}
-        onClick={buttonProps.onClick}
-        disabled={buttonProps.disabled}
-        className="shadow-lg"
-      >
-        {isLoading || isLoadingData ? (
-          <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-        ) : (
-          buttonProps.icon
-        )}
-        {getButtonText()}
-      </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant={buttonProps.variant}
+              onClick={buttonProps.onClick}
+              disabled={buttonProps.disabled}
+              className="shadow-lg"
+            >
+              {isLoading || isLoadingData ? (
+                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+              ) : (
+                buttonProps.icon
+              )}
+              {getButtonText()}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent className="text-right">
+            <p className="whitespace-pre-line">{getTooltipContent()}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 }
+
