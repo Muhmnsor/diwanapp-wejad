@@ -26,7 +26,7 @@ export function UserEmployeeLink({
 }: UserEmployeeLinkProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [users, setUsers] = useState<{ id: string, email: string }[]>([]);
-  const [selectedUserId, setSelectedUserId] = useState(currentUserId || "");
+  const [selectedUserId, setSelectedUserId] = useState(currentUserId || "no_user");
   
   // Fetch available users
   useEffect(() => {
@@ -46,7 +46,7 @@ export function UserEmployeeLink({
     
     if (isOpen) {
       fetchUsers();
-      setSelectedUserId(currentUserId || "");
+      setSelectedUserId(currentUserId || "no_user");
     }
   }, [isOpen, currentUserId]);
   
@@ -67,7 +67,7 @@ export function UserEmployeeLink({
       if (error) throw error;
       
       toast.success(
-        selectedUserId 
+        selectedUserId !== "no_user" 
           ? "تم ربط الموظف بحساب المستخدم بنجاح" 
           : "تم إلغاء ربط الموظف بحساب المستخدم"
       );
