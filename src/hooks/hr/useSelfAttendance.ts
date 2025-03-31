@@ -17,23 +17,26 @@ export function useSelfAttendance() {
   };
 
   // Get employee info for current user
-  const getEmployeeInfo = async () => {
-    if (!user) {
-       console.log("User not authenticated in getEmployeeInfo");
-       return { success: false, error: "يجب تسجيل الدخول أولاً" };
-     }
+const getEmployeeInfo = async () => {
+  if (!user) {
+    console.log("User not authenticated in getEmployeeInfo");
+    return { success: false, error: "يجب تسجيل الدخول أولاً" };
+  }
 
-   try {
-     console.log("Fetching employee info for user:", user.id);
-     const { data, error } = await supabase
+  try {
+    console.log("Fetching employee info for user:", user.id);
+    const { data, error } = await supabase
       .from('employees')
       .select('*')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (error) {
-      console.log("Error fetching employee data:", error);
-      throw error;
+      console.error("Error fetching employee data:", error);
+      return { 
+        success: false, 
+        error: error.message || "حدث خطأ أثناء جلب بيانات الموظف" 
+      };
     }
     
     if (!data) {
@@ -54,6 +57,7 @@ export function useSelfAttendance() {
     };
   }
 };
+
 
   // Check in function
   const checkIn = async () => {
