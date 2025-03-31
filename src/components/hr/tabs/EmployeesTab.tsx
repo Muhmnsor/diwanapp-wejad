@@ -45,31 +45,42 @@ export function EmployeesTab({ searchTerm = "" }: EmployeesTabProps) {
   const { linkUserToEmployee, unlinkUserFromEmployee } = useUserEmployeeLink();
   
   const { data: employees, isLoading, error, refetch } = useQuery({
-    queryKey: ['hr-employees'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('employees')
-        .select('*, auth_users_view(email)')
-        .order('full_name', { ascending: true });
-        
-      if (error) throw error;
-      return data as Employee[];
-    }
-  });
-  
-  // Filter employees based on search term
-  const filteredEmployees = employees?.filter(employee => {
-    if (!searchTerm) return true;
+  queryKey: ['hr-employees'],
+  queryFn: async () => {
+    // First get employee data
+    const { data: employeesData, error: employeesError } = await supabase
+      .from('employees')
+      .select('*')
+      .order('full_name', { ascending: true });
+      
+    if (employeesError) throw employeesError;
     
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      employee.full_name.toLowerCase().includes(searchLower) ||
-      employee.position?.toLowerCase().includes(searchLower) ||
-      employee.department?.toLowerCase().includes(searchLower) ||
-      employee.employee_number?.toLowerCase().includes(searchLower) ||
-      employee.email?.toLowerCase().includes(searchLower)
-    );
-  });
+    // For employees with user_id, get their email
+    const employeesWithUser = employeesData.filter(emp => emp.user_id);
+    if (employeesWithUser.length > 0) {
+      const { data: userData, error: userError } = await supabase
+        .rpc('get_app_users');
+        
+      if (userError) throw userError;
+      
+      // Map user emails to employees
+      return employeesData.map(employee => {
+        if (employee.user_id) {
+          const userInfo = userData.find(u => u.id === employee.user_id);
+          if (userInfo) {
+            return {
+              ...employee,
+              auth_users_view: { email: userInfo.email }
+            };
+          }
+        }
+        return employee;
+      });
+    }
+    
+    return employeesData;
+  }
+});
   
   const handleAddEmployee = () => {
     setIsAddDialogOpen(true);
