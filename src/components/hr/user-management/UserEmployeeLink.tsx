@@ -86,10 +86,12 @@ export function UserEmployeeLink({
       // After successful user-employee linking, refresh the page
       onSuccess();
 
-     // Refresh the page to update the UI state
-       setTimeout(() => {
-          window.location.reload();
-      }, 1000);
+     // Refresh the page to update the UI state more reliably with a bit longer delay
+     setTimeout(() => {
+       console.log("Reloading page after user-employee link update");
+      window.location.reload();
+    }, 2000);
+
       
     } catch (error: any) {
       console.error('Error updating employee user link:', error);
