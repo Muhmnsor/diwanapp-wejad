@@ -19,34 +19,41 @@ export function useSelfAttendance() {
   // Get employee info for current user
   const getEmployeeInfo = async () => {
     if (!user) {
-      return { success: false, error: "يجب تسجيل الدخول أولاً" };
+       console.log("User not authenticated in getEmployeeInfo");
+       return { success: false, error: "يجب تسجيل الدخول أولاً" };
+     }
+
+   try {
+     console.log("Fetching employee info for user:", user.id);
+     const { data, error } = await supabase
+      .from('employees')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    if (error) {
+      console.log("Error fetching employee data:", error);
+      throw error;
     }
-
-    try {
-      const { data, error } = await supabase
-        .from('employees')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (error) throw error;
-      
-      if (!data) {
-        return { 
-          success: false, 
-          error: "لم يتم العثور على بيانات الموظف. يرجى التواصل مع إدارة الموارد البشرية." 
-        };
-      }
-
-      return { success: true, data };
-    } catch (error: any) {
-      console.error('Error fetching employee info:', error);
+    
+    if (!data) {
+      console.log("No employee data found for user:", user.id);
       return { 
         success: false, 
-        error: error.message || "حدث خطأ أثناء جلب بيانات الموظف" 
+        error: "لم يتم العثور على بيانات الموظف. يرجى التواصل مع إدارة الموارد البشرية." 
       };
     }
-  };
+
+    console.log("Employee data found:", data);
+    return { success: true, data };
+  } catch (error: any) {
+    console.error('Error fetching employee info:', error);
+    return { 
+      success: false, 
+      error: error.message || "حدث خطأ أثناء جلب بيانات الموظف" 
+    };
+  }
+};
 
   // Check in function
   const checkIn = async () => {
