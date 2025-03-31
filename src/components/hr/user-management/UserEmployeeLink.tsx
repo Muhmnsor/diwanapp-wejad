@@ -56,13 +56,13 @@ export function UserEmployeeLink({
     
     try {
       // Update employee with selected user_id (or null if none selected)
-      const { error } = await supabase
-        .from('employees')
-        .update({ 
-          user_id: selectedUserId || null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', employeeId);
+const { error } = await supabase
+  .from('employees')
+  .update({ 
+    user_id: selectedUserId === "no_user" ? null : selectedUserId,
+    updated_at: new Date().toISOString()
+  })
+  .eq('id', employeeId);
         
       if (error) throw error;
       
@@ -103,7 +103,7 @@ export function UserEmployeeLink({
                 <SelectValue placeholder="اختر حساب المستخدم" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">بدون ربط</SelectItem>
+                <SelectItem value="no_user">بدون ربط</SelectItem>
                 {users.map(user => (
                   <SelectItem key={user.id} value={user.id}>
                     {user.email}
