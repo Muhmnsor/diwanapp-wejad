@@ -1,4 +1,3 @@
-
 // src/components/hr/user-management/UserEmployeeLink.tsx
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -27,7 +26,7 @@ export function UserEmployeeLink({
 }: UserEmployeeLinkProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [users, setUsers] = useState<{ id: string, email: string }[]>([]);
-  const [selectedUserId, setSelectedUserId] = useState(currentUserId || "no_user");
+  const [selectedUserId, setSelectedUserId] = useState(currentUserId || "");
   
   // Fetch available users
   useEffect(() => {
@@ -47,7 +46,7 @@ export function UserEmployeeLink({
     
     if (isOpen) {
       fetchUsers();
-      setSelectedUserId(currentUserId || "no_user");
+      setSelectedUserId(currentUserId || "");
     }
   }, [isOpen, currentUserId]);
   
@@ -60,7 +59,7 @@ export function UserEmployeeLink({
       const { error } = await supabase
         .from('employees')
         .update({ 
-          user_id: selectedUserId === "no_user" ? null : selectedUserId,
+          user_id: selectedUserId || null,
           updated_at: new Date().toISOString()
         })
         .eq('id', employeeId);
@@ -68,7 +67,7 @@ export function UserEmployeeLink({
       if (error) throw error;
       
       toast.success(
-        selectedUserId !== "no_user"
+        selectedUserId 
           ? "تم ربط الموظف بحساب المستخدم بنجاح" 
           : "تم إلغاء ربط الموظف بحساب المستخدم"
       );
@@ -104,7 +103,7 @@ export function UserEmployeeLink({
                 <SelectValue placeholder="اختر حساب المستخدم" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="no_user">بدون ربط</SelectItem>
+                <SelectItem value="">بدون ربط</SelectItem>
                 {users.map(user => (
                   <SelectItem key={user.id} value={user.id}>
                     {user.email}
