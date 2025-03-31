@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { Loader2, Plus, Trash, Edit, Eye } from "lucide-react";
+import { Loader2, Plus, Trash, Edit, Eye, Link2, LinkSlash } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -13,7 +13,7 @@ import { ViewEmployeeDialog } from "../dialogs/ViewEmployeeDialog";
 import { DeleteEmployeeDialog } from "../dialogs/DeleteEmployeeDialog";
 import { usePermissions } from "@/components/permissions/usePermissions";
 import { UserEmployeeLink } from "../user-management/UserEmployeeLink";
-import { Link2, LinkOff } from "lucide-react";
+import { useUserEmployeeLink } from "../useUserEmployeeLink";
 
 interface Employee {
   id: string;
@@ -38,17 +38,18 @@ export function EmployeesTab({ searchTerm = "" }: EmployeesTabProps) {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+  const [isUserLinkDialogOpen, setIsUserLinkDialogOpen] = useState(false);
   
   const { hasPermission } = usePermissions();
   const canManageEmployees = hasPermission("hr", "manage_employees");
+  const { linkUserToEmployee, unlinkUserFromEmployee } = useUserEmployeeLink();
   
   const { data: employees, isLoading, error, refetch } = useQuery({
     queryKey: ['hr-employees'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('employees')
-        .select('*')
+        .select('*, auth_users_view(email)')
         .order('full_name', { ascending: true });
         
       if (error) throw error;
@@ -88,10 +89,10 @@ export function EmployeesTab({ searchTerm = "" }: EmployeesTabProps) {
     setSelectedEmployee(employee);
     setIsDeleteDialogOpen(true);
   };
-
+  
   const handleLinkEmployee = (employee: Employee) => {
     setSelectedEmployee(employee);
-    setIsLinkDialogOpen(true);
+    setIsUserLinkDialogOpen(true);
   };
   
   const onEmployeeAdded = async () => {
@@ -111,11 +112,10 @@ export function EmployeesTab({ searchTerm = "" }: EmployeesTabProps) {
     await refetch();
     setIsDeleteDialogOpen(false);
   };
-
-  const onEmployeeLinked = async () => {
-    toast.success("تم ربط الموظف بحساب المستخدم بنجاح");
+  
+  const onUserLinkSuccess = async () => {
     await refetch();
-    setIsLinkDialogOpen(false);
+    setIsUserLinkDialogOpen(false);
   };
   
   if (error) {
@@ -163,7 +163,7 @@ export function EmployeesTab({ searchTerm = "" }: EmployeesTabProps) {
                   <TableHead className="text-right">القسم</TableHead>
                   <TableHead className="text-right">تاريخ التعيين</TableHead>
                   <TableHead className="text-right">الحالة</TableHead>
-                  <TableHead className="text-right">حالة الربط</TableHead>
+                  <TableHead className="text-right">ربط المستخدم</TableHead>
                   <TableHead className="text-center">الإجراءات</TableHead>
                 </TableRow>
               </TableHeader>
@@ -186,10 +186,15 @@ export function EmployeesTab({ searchTerm = "" }: EmployeesTabProps) {
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <span className={`px-2 py-1 rounded-full text-xs
-                        ${employee.user_id ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>
-                        {employee.user_id ? 'مرتبط بمستخدم' : 'غير مرتبط'}
-                      </span>
+                      {employee.user_id ? (
+                        <span className="text-green-600 text-xs font-medium flex items-center gap-1">
+                          <Link2 className="w-3 h-3" /> تم الربط
+                        </span>
+                      ) : (
+                        <span className="text-gray-500 text-xs font-medium flex items-center gap-1">
+                          <LinkSlash className="w-3 h-3" /> غير مرتبط
+                        </span>
+                      )}
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex justify-center gap-2">
@@ -204,13 +209,8 @@ export function EmployeesTab({ searchTerm = "" }: EmployeesTabProps) {
                             <Button variant="ghost" size="icon" onClick={() => handleDeleteEmployee(employee)}>
                               <Trash className="w-4 h-4" />
                             </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              title={employee.user_id ? "تعديل ربط المستخدم" : "ربط بمستخدم"}
-                              onClick={() => handleLinkEmployee(employee)}
-                            >
-                              {employee.user_id ? <LinkOff className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
+                            <Button variant="ghost" size="icon" onClick={() => handleLinkEmployee(employee)}>
+                              {employee.user_id ? <LinkSlash className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
                             </Button>
                           </>
                         )}
@@ -251,15 +251,18 @@ export function EmployeesTab({ searchTerm = "" }: EmployeesTabProps) {
             onClose={() => setIsDeleteDialogOpen(false)}
             onSuccess={onEmployeeDeleted}
           />
-
+          
           <UserEmployeeLink
-            employee={selectedEmployee}
-            isOpen={isLinkDialogOpen}
-            onClose={() => setIsLinkDialogOpen(false)}
-            onSuccess={onEmployeeLinked}
+            employeeId={selectedEmployee.id}
+            employeeName={selectedEmployee.full_name}
+            currentUserId={selectedEmployee.user_id || null}
+            isOpen={isUserLinkDialogOpen}
+            onClose={() => setIsUserLinkDialogOpen(false)}
+            onSuccess={onUserLinkSuccess}
           />
         </>
       )}
     </>
   );
 }
+
