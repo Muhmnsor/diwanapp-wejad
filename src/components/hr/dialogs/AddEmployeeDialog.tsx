@@ -1,5 +1,5 @@
-
-import { useState } from "react";
+// src/components/hr/dialogs/AddEmployeeDialog.tsx
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,7 @@ interface AddEmployeeDialogProps {
 export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDialogProps) {
   const { user } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
+  const [users, setUsers] = useState<{ id: string, email: string }[]>([]);
   const [formData, setFormData] = useState({
     employee_number: "",
     full_name: "",
@@ -26,8 +27,29 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
     hire_date: new Date().toISOString().split("T")[0],
     contract_type: "full_time",
     email: "",
-    phone: ""
+    phone: "",
+    user_id: ""
   });
+  
+  // Fetch users for linking
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('auth_users_view')
+          .select('id, email');
+          
+        if (error) throw error;
+        setUsers(data || []);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    };
+    
+    if (isOpen) {
+      fetchUsers();
+    }
+  }, [isOpen]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -36,6 +58,14 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
   
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // If user is selected, auto-fill email if available
+    if (name === 'user_id' && value) {
+      const selectedUser = users.find(u => u.id === value);
+      if (selectedUser && selectedUser.email && !formData.email) {
+        setFormData(prev => ({ ...prev, email: selectedUser.email }));
+      }
+    }
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -178,6 +208,30 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
             </div>
           </div>
           
+          {/* User Linking Field */}
+          <div className="space-y-2">
+            <Label htmlFor="user_id">ربط بحساب مستخدم</Label>
+            <Select 
+              value={formData.user_id} 
+              onValueChange={(value) => handleSelectChange("user_id", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="اختر حساب المستخدم (اختياري)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">بدون ربط</SelectItem>
+                {users.map(user => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              ربط الموظف بحساب مستخدم يتيح له استخدام ميزات التسجيل الذاتي للحضور والانصراف
+            </p>
+          </div>
+          
           <DialogFooter className="mt-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
               إلغاء
@@ -191,3 +245,4 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
     </Dialog>
   );
 }
+
