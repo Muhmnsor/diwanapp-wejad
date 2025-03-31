@@ -1,47 +1,145 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Label } from "@/components/ui/label";
+import { FileText, Download, Users, Calendar, BarChart } from "lucide-react";
+import { AttendanceReport } from "../reports/AttendanceReport";
+import { EmployeeReport } from "../reports/EmployeeReport";
+import { LeaveReport } from "../reports/LeaveReport";
+import { useToast } from "@/hooks/use-toast";
 
 export function ReportsTab() {
+  const [reportType, setReportType] = useState<string>("attendance");
+  const [activeTab, setActiveTab] = useState<string>("generate");
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const { toast } = useToast();
+
+  const handleReportTypeChange = (value: string) => {
+    setReportType(value);
+  };
+  
+  const handleGenerateReport = () => {
+    if (!startDate || !endDate) {
+      toast({
+        title: "تحديد التاريخ مطلوب",
+        description: "يرجى تحديد تاريخ البداية والنهاية للتقرير",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (endDate < startDate) {
+      toast({
+        title: "خطأ في التاريخ",
+        description: "تاريخ النهاية يجب أن يكون بعد تاريخ البداية",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setActiveTab("view");
+  };
+  
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">التقارير</h2>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-2">نوع التقرير</label>
-          <Select>
-            <SelectTrigger>
-              <SelectValue placeholder="اختر نوع التقرير" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="attendance">تقرير الحضور</SelectItem>
-              <SelectItem value="leaves">تقرير الإجازات</SelectItem>
-              <SelectItem value="training">تقرير التدريب</SelectItem>
-              <SelectItem value="payroll">تقرير الرواتب</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="mb-4 grid w-full grid-cols-2">
+          <TabsTrigger value="generate">إنشاء تقرير جديد</TabsTrigger>
+          <TabsTrigger value="view">عرض التقرير</TabsTrigger>
+        </TabsList>
         
-        <div className="text-left md:text-right">
-          <Button className="mt-8">إنشاء التقرير</Button>
-        </div>
-      </div>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-right">تقارير الموارد البشرية</CardTitle>
-        </CardHeader>
-        <CardContent className="text-center py-8">
-          <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
-          <p className="text-lg mb-2">سيتم هنا عرض وإنشاء تقارير الموارد البشرية</p>
-          <p className="text-sm text-muted-foreground">يمكنك إنشاء تقارير متنوعة عن الموظفين والحضور والإجازات والرواتب</p>
-        </CardContent>
-      </Card>
+        <TabsContent value="generate" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-right">إنشاء تقرير جديد</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="block text-sm font-medium mb-2">نوع التقرير</Label>
+                  <Select value={reportType} onValueChange={handleReportTypeChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر نوع التقرير" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="attendance" className="flex items-center">
+                        <Calendar className="ml-2 h-4 w-4" />
+                        <span>تقرير الحضور</span>
+                      </SelectItem>
+                      <SelectItem value="leaves" className="flex items-center">
+                        <Calendar className="ml-2 h-4 w-4" />
+                        <span>تقرير الإجازات</span>
+                      </SelectItem>
+                      <SelectItem value="employees" className="flex items-center">
+                        <Users className="ml-2 h-4 w-4" />
+                        <span>تقرير الموظفين</span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div></div>
+                
+                <div>
+                  <Label className="block text-sm font-medium mb-2">تاريخ البداية</Label>
+                  <DatePicker 
+                    date={startDate} 
+                    setDate={setStartDate} 
+                    locale="ar" 
+                    placeholder="اختر تاريخ البداية" 
+                  />
+                </div>
+                
+                <div>
+                  <Label className="block text-sm font-medium mb-2">تاريخ النهاية</Label>
+                  <DatePicker 
+                    date={endDate} 
+                    setDate={setEndDate} 
+                    locale="ar" 
+                    placeholder="اختر تاريخ النهاية" 
+                  />
+                </div>
+              </div>
+              
+              <div className="text-left md:text-right mt-4">
+                <Button onClick={handleGenerateReport}>
+                  <BarChart className="ml-2 h-4 w-4" />
+                  إنشاء التقرير
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="view" className="space-y-4">
+          {reportType === "attendance" && (
+            <AttendanceReport 
+              startDate={startDate} 
+              endDate={endDate} 
+            />
+          )}
+          
+          {reportType === "leaves" && (
+            <LeaveReport 
+              startDate={startDate} 
+              endDate={endDate} 
+            />
+          )}
+          
+          {reportType === "employees" && (
+            <EmployeeReport 
+              startDate={startDate} 
+              endDate={endDate} 
+            />
+          )}
+          
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

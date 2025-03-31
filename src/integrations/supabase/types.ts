@@ -685,6 +685,72 @@ export type Database = {
           },
         ]
       }
+      employee_contracts: {
+        Row: {
+          contract_type: string
+          created_at: string | null
+          created_by: string | null
+          document_url: string | null
+          employee_id: string
+          end_date: string
+          id: string
+          notes: string | null
+          probation_end_date: string | null
+          probation_period: number | null
+          salary: number | null
+          start_date: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          contract_type: string
+          created_at?: string | null
+          created_by?: string | null
+          document_url?: string | null
+          employee_id: string
+          end_date: string
+          id?: string
+          notes?: string | null
+          probation_end_date?: string | null
+          probation_period?: number | null
+          salary?: number | null
+          start_date: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          contract_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          document_url?: string | null
+          employee_id?: string
+          end_date?: string
+          id?: string
+          notes?: string | null
+          probation_end_date?: string | null
+          probation_period?: number | null
+          salary?: number | null
+          start_date?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_contracts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "auth_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_contracts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           contract_end_date: string | null
@@ -6151,6 +6217,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      get_server_timestamp: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_incoming_requests: {
         Args: {
           p_user_id: string
@@ -6344,6 +6414,13 @@ export type Database = {
           p_details?: string
         }
         Returns: string
+      }
+      record_employee_attendance: {
+        Args: {
+          p_action: string
+          p_employee_id?: string
+        }
+        Returns: Json
       }
       record_request_pdf_export: {
         Args: {
