@@ -8,56 +8,44 @@ export function useSelfAttendance() {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuthStore();
 
-  // Helper function to convert date and time to timestamp
-  const formatDateTimeToTimestamp = (date: string, time: string) => {
-    if (!date || !time) return null;
-    // Create a date object with the date and time
-    const dateTimeString = `${date}T${time}:00`;
-    return dateTimeString;
-  };
-
   // Get employee info for current user
-const getEmployeeInfo = async () => {
-  if (!user) {
-    console.log("User not authenticated in getEmployeeInfo");
-    return { success: false, error: "يجب تسجيل الدخول أولاً" };
-  }
+  const getEmployeeInfo = async () => {
+    if (!user) {
+       console.log("User not authenticated in getEmployeeInfo");
+       return { success: false, error: "يجب تسجيل الدخول أولاً" };
+     }
 
-  try {
-    console.log("Fetching employee info for user:", user.id);
-    const { data, error } = await supabase
-      .from('employees')
-      .select('*')
-      .eq('user_id', user.id)
-      .maybeSingle();
+    try {
+      console.log("Fetching employee info for user:", user.id);
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
 
-    if (error) {
-      console.error("Error fetching employee data:", error);
+      if (error) {
+        console.log("Error fetching employee data:", error);
+        throw error;
+      }
+      
+      if (!data) {
+        console.log("No employee data found for user:", user.id);
+        return { 
+          success: false, 
+          error: "لم يتم العثور على بيانات الموظف. يرجى التواصل مع إدارة الموارد البشرية." 
+        };
+      }
+
+      console.log("Employee data found:", data);
+      return { success: true, data };
+    } catch (error: any) {
+      console.error('Error fetching employee info:', error);
       return { 
         success: false, 
         error: error.message || "حدث خطأ أثناء جلب بيانات الموظف" 
       };
     }
-    
-    if (!data) {
-      console.log("No employee data found for user:", user.id);
-      return { 
-        success: false, 
-        error: "لم يتم العثور على بيانات الموظف. يرجى التواصل مع إدارة الموارد البشرية." 
-      };
-    }
-
-    console.log("Employee data found:", data);
-    return { success: true, data };
-  } catch (error: any) {
-    console.error('Error fetching employee info:', error);
-    return { 
-      success: false, 
-      error: error.message || "حدث خطأ أثناء جلب بيانات الموظف" 
-    };
-  }
-};
-
+  };
 
   // Check in function
   const checkIn = async () => {
@@ -85,21 +73,16 @@ const getEmployeeInfo = async () => {
 
       const employee = employeeResult.data;
       
-      // Get current date and time
-      const today = new Date();
-      const currentDate = today.toISOString().split('T')[0];
-      const currentTime = today.toLocaleTimeString('en-US', { 
-        hour12: false, 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      });
+      // Get server timestamp for today's date
+      const { data: serverTime } = await supabase.rpc('get_server_timestamp');
+      const today = new Date(serverTime).toISOString().split('T')[0];
 
       // Check if employee already checked in today
       const { data: existingRecord, error: checkError } = await supabase
         .from('hr_attendance')
         .select('*')
         .eq('employee_id', employee.id)
-        .eq('attendance_date', currentDate)
+        .eq('attendance_date', today)
         .single();
 
       if (existingRecord && existingRecord.check_in) {
@@ -111,24 +94,16 @@ const getEmployeeInfo = async () => {
         return { success: false, alreadyCheckedIn: true, record: existingRecord };
       }
 
-      const attendanceRecord = {
-        employee_id: employee.id,
-        attendance_date: currentDate,
-        check_in: currentTime,
-        status: 'present',
-        created_by: user.id
-      };
-
-      // Format timestamp
-      const formattedRecord = {
-        ...attendanceRecord,
-        check_in: formatDateTimeToTimestamp(currentDate, currentTime),
-      };
-
-      // Insert attendance record
+      // Insert attendance record using server timestamp
       const { data, error } = await supabase
         .from('hr_attendance')
-        .insert(formattedRecord)
+        .insert({
+          employee_id: employee.id,
+          attendance_date: today,
+          check_in: serverTime,
+          status: 'present',
+          created_by: user.id
+        })
         .select('*')
         .single();
 
@@ -179,21 +154,16 @@ const getEmployeeInfo = async () => {
 
       const employee = employeeResult.data;
       
-      // Get current date and time
-      const today = new Date();
-      const currentDate = today.toISOString().split('T')[0];
-      const currentTime = today.toLocaleTimeString('en-US', { 
-        hour12: false, 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      });
+      // Get server timestamp for today's date
+      const { data: serverTime } = await supabase.rpc('get_server_timestamp');
+      const today = new Date(serverTime).toISOString().split('T')[0];
 
       // Check if employee checked in today
       const { data: existingRecord, error: checkError } = await supabase
         .from('hr_attendance')
         .select('*')
         .eq('employee_id', employee.id)
-        .eq('attendance_date', currentDate)
+        .eq('attendance_date', today)
         .single();
 
       if (!existingRecord) {
@@ -214,13 +184,10 @@ const getEmployeeInfo = async () => {
         return { success: false, alreadyCheckedOut: true, record: existingRecord };
       }
 
-      // Format timestamp
-      const checkOut = formatDateTimeToTimestamp(currentDate, currentTime);
-
-      // Update attendance record with check out time
+      // Update attendance record with server timestamp
       const { data, error } = await supabase
         .from('hr_attendance')
-        .update({ check_out: checkOut })
+        .update({ check_out: serverTime })
         .eq('id', existingRecord.id)
         .select('*')
         .single();
@@ -261,8 +228,9 @@ const getEmployeeInfo = async () => {
 
       const employee = employeeResult.data;
       
-      // Get current date
-      const today = new Date().toISOString().split('T')[0];
+      // Get server timestamp for today's date
+      const { data: serverTime } = await supabase.rpc('get_server_timestamp');
+      const today = new Date(serverTime).toISOString().split('T')[0];
 
       // Get today's attendance record
       const { data, error } = await supabase
@@ -294,3 +262,4 @@ const getEmployeeInfo = async () => {
     isLoading
   };
 }
+
