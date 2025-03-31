@@ -26,18 +26,22 @@ useEffect(() => {
     try {
       // First check if user is linked to an employee
       const linkResult = await getCurrentUserEmployee();
-      console.log("Employee link check:", linkResult);
+      console.log("Employee link check in SelfAttendanceCard:", linkResult);
       
-      // Always set this value regardless of success
+      // Set to false by default if there's any error
+      if (!linkResult.success) {
+        setIsLinkedToEmployee(false);
+        setIsLoadingData(false);
+        return;
+      }
+      
+      // Set accurate linking status
       setIsLinkedToEmployee(linkResult.isLinked);
       
-      if (linkResult.success && linkResult.isLinked) {
-        // If linked, get employee info and attendance data
-        const employeeResult = await getEmployeeInfo();
-        if (employeeResult.success) {
-          setEmployee(employeeResult.data);
-        }
-
+      if (linkResult.isLinked && linkResult.data) {
+        setEmployee(linkResult.data);
+        
+        // Get attendance data
         const attendanceResult = await getTodayAttendance();
         if (attendanceResult.success) {
           setAttendanceRecord(attendanceResult.data);
@@ -45,6 +49,7 @@ useEffect(() => {
       }
     } catch (error) {
       console.error("Error loading self-attendance data:", error);
+      setIsLinkedToEmployee(false);
     } finally {
       // Always finish loading, even on error
       setIsLoadingData(false);
@@ -52,7 +57,7 @@ useEffect(() => {
   };
 
   loadData();
-}, []);
+}, [getCurrentUserEmployee, getTodayAttendance]);
 
 
   // Update current time every minute
