@@ -30,25 +30,24 @@ export function UserEmployeeLink({
   
   // Fetch available users
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('auth_users_view')
-          .select('id, email');
-          
-        if (error) throw error;
-        setUsers(data || []);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-        toast.error("حدث خطأ أثناء جلب بيانات المستخدمين");
-      }
-    };
-    
-    if (isOpen) {
-      fetchUsers();
-      setSelectedUserId(currentUserId || "no_user");
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .rpc('get_app_users');
+        
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast.error("حدث خطأ أثناء جلب بيانات المستخدمين");
     }
-  }, [isOpen, currentUserId]);
+  };
+  
+  if (isOpen) {
+    fetchUsers();
+    setSelectedUserId(currentUserId || "no_user");
+  }
+}, [isOpen, currentUserId]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
