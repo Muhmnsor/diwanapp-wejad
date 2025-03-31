@@ -2,9 +2,44 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useAuthStore } from "@/store/refactored-auth";
 
 export function useUserEmployeeLink() {
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuthStore();
+  
+  // Function to get the current user's linked employee
+  const getCurrentUserEmployee = async () => {
+    if (!user?.id) {
+      return { success: false, error: "User not authenticated" };
+    }
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (error) throw error;
+      
+      return { 
+        success: true, 
+        data: data || null,
+        isLinked: !!data 
+      };
+    } catch (error: any) {
+      console.error('Error getting current user employee:', error);
+      return { 
+        success: false, 
+        error: error.message || "حدث خطأ أثناء جلب بيانات الموظف",
+        isLinked: false
+      };
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   // Function to link a user to an employee
   const linkUserToEmployee = async (employeeId: string, userId: string) => {
@@ -106,47 +141,48 @@ export function useUserEmployeeLink() {
   
   // Function to get employees linked to users
   const getLinkedEmployees = async () => {
-  setIsLoading(true);
-  try {
-    // First get employees with user_id
-    const { data: employeesData, error: empError } = await supabase
-      .from('employees')
-      .select('id, full_name, employee_number, user_id')
-      .not('user_id', 'is', null);
-    
-    if (empError) throw empError;
-    
-    // Then get user data separately
-    const { data: userData, error: userError } = await supabase
-      .rpc('get_app_users');
-    
-    if (userError) throw userError;
-    
-    // Combine the data
-    const combinedData = employeesData.map(emp => {
-      const user = userData.find(u => u.id === emp.user_id);
-      return {
-        ...emp,
-        auth_users_view: user ? { email: user.email } : null
+    setIsLoading(true);
+    try {
+      // First get employees with user_id
+      const { data: employeesData, error: empError } = await supabase
+        .from('employees')
+        .select('id, full_name, employee_number, user_id')
+        .not('user_id', 'is', null);
+      
+      if (empError) throw empError;
+      
+      // Then get user data separately
+      const { data: userData, error: userError } = await supabase
+        .rpc('get_app_users');
+      
+      if (userError) throw userError;
+      
+      // Combine the data
+      const combinedData = employeesData.map(emp => {
+        const user = userData.find(u => u.id === emp.user_id);
+        return {
+          ...emp,
+          auth_users_view: user ? { email: user.email } : null
+        };
+      });
+      
+      return { success: true, data: combinedData };
+    } catch (error: any) {
+      console.error('Error getting linked employees:', error);
+      return { 
+        success: false, 
+        error: error.message || "حدث خطأ أثناء جلب الموظفين المرتبطين" 
       };
-    });
-    
-    return { success: true, data: combinedData };
-  } catch (error: any) {
-    console.error('Error getting linked employees:', error);
-    return { 
-      success: false, 
-      error: error.message || "حدث خطأ أثناء جلب الموظفين المرتبطين" 
-    };
-  } finally {
-    setIsLoading(false);
-  }
-};
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   return {
     linkUserToEmployee,
     unlinkUserFromEmployee,
     getLinkedEmployees,
+    getCurrentUserEmployee,
     isLoading
   };
 }

@@ -2,10 +2,12 @@
 import { useState, useEffect } from "react";
 import { useSelfAttendance } from "@/hooks/hr/useSelfAttendance";
 import { Button } from "@/components/ui/button";
-import { Loader2, LogIn, LogOut } from "lucide-react";
+import { Loader2, LogIn, LogOut, UserX } from "lucide-react";
 import { formatTime } from "@/utils/dateTimeUtils";
 import { toast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useUserEmployeeLink } from "@/components/hr/useUserEmployeeLink";
+import { useNavigate } from "react-router-dom";
 
 interface Employee {
   id: string;
@@ -25,15 +27,31 @@ interface AttendanceRecord {
 
 export function SelfAttendanceToolbar() {
   const { checkIn, checkOut, getTodayAttendance, getEmployeeInfo, isLoading } = useSelfAttendance();
+  const { getCurrentUserEmployee } = useUserEmployeeLink();
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [attendanceRecord, setAttendanceRecord] = useState<AttendanceRecord | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [notLinked, setNotLinked] = useState(false);
+  const navigate = useNavigate();
 
   // Load employee and attendance data
   useEffect(() => {
     const loadData = async () => {
       setIsLoadingData(true);
       try {
+        // First check if the current user is linked to an employee
+        const userEmployeeResult = await getCurrentUserEmployee();
+        
+        if (!userEmployeeResult.success || !userEmployeeResult.data) {
+          console.log("Current user is not linked to an employee:", userEmployeeResult);
+          setNotLinked(true);
+          setIsLoadingData(false);
+          return;
+        }
+        
+        setNotLinked(false);
+        
+        // If linked, get employee info and attendance record
         const employeeResult = await getEmployeeInfo();
         if (employeeResult.success) {
           setEmployee(employeeResult.data);
@@ -56,7 +74,7 @@ export function SelfAttendanceToolbar() {
     const intervalId = setInterval(loadData, 5 * 60 * 1000);
     
     return () => clearInterval(intervalId);
-  }, [getEmployeeInfo, getTodayAttendance]);
+  }, [getCurrentUserEmployee, getEmployeeInfo, getTodayAttendance]);
 
   // Handle check in
   const handleCheckIn = async () => {
@@ -100,9 +118,41 @@ export function SelfAttendanceToolbar() {
     }
   };
 
-  // If no employee data, don't show the toolbar
-  if (!employee && !isLoadingData) {
-    return null;
+  // If user is not linked to an employee, show a different button
+  if (notLinked && !isLoadingData) {
+    return (
+      <div className="fixed bottom-4 right-4 z-50">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                onClick={() => navigate("/admin/users-management")}
+                className="shadow-lg"
+              >
+                <UserX className="ml-2 h-4 w-4" />
+                تفعيل تسجيل الحضور الذاتي
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent className="text-right">
+              <p>حسابك غير مرتبط بسجل موظف. قم بزيارة صفحة إدارة المستخدمين لربط حسابك</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+    );
+  }
+
+  // If still loading or no employee data, show loading state
+  if (isLoadingData || (!employee && !notLinked)) {
+    return (
+      <div className="fixed bottom-4 right-4 z-50">
+        <Button variant="outline" disabled className="shadow-lg">
+          <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+          جاري التحميل...
+        </Button>
+      </div>
+    );
   }
 
   // Get current state text
@@ -201,4 +251,3 @@ export function SelfAttendanceToolbar() {
     </div>
   );
 }
-
