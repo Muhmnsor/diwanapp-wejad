@@ -82,12 +82,13 @@ export function UserEmployeeLink({
           }
         }
       }
-      
+
+      // After successful user-employee linking, refresh the page
       onSuccess();
-      
-      // Refresh the page to update the UI state
-      setTimeout(() => {
-        window.location.reload();
+
+     // Refresh the page to update the UI state
+       setTimeout(() => {
+          window.location.reload();
       }, 1000);
       
     } catch (error: any) {
