@@ -232,12 +232,13 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
             <p className="text-xs text-muted-foreground">
               ربط الموظف بحساب مستخدم يتيح له استخدام ميزات التسجيل الذاتي للحضور والانصراف
             </p>
-          </div>
           {/* Employee Schedule Field */}
 <EmployeeScheduleField
   value={formData.schedule_id}
   onChange={(value) => handleSelectChange("schedule_id", value)}
 />
+          </div>
+
           <DialogFooter className="mt-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
               إلغاء
