@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,11 @@ interface EmployeesListProps {
 export function EmployeesList({ searchTerm = "" }: EmployeesListProps) {
   const [search, setSearch] = useState(searchTerm);
   const { data: employees, isLoading, error } = useEmployees();
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+
+  const handleAddSuccess = () => {
+    // Refetch employees data after a successful add
+  };
 
   const filteredEmployees = employees?.filter(
     (employee) =>
@@ -34,7 +40,15 @@ export function EmployeesList({ searchTerm = "" }: EmployeesListProps) {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <AddEmployeeDialog />
+        <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          إضافة موظف
+        </Button>
+        <AddEmployeeDialog 
+          isOpen={isAddDialogOpen} 
+          onClose={() => setIsAddDialogOpen(false)} 
+          onSuccess={handleAddSuccess}
+        />
       </div>
 
       <Card>
@@ -48,4 +62,3 @@ export function EmployeesList({ searchTerm = "" }: EmployeesListProps) {
     </div>
   );
 }
-

@@ -81,13 +81,13 @@ export function EmployeesTable({ employees, isLoading }: EmployeesTableProps) {
                       <span>عرض</span>
                     </DropdownMenuItem>
                   } />
-                  <EditEmployeeDialog employeeId={employee.id} trigger={
+                  <EditEmployeeDialog employee={employee} trigger={
                     <DropdownMenuItem>
                       <Edit className="ml-2 h-4 w-4" />
                       <span>تعديل</span>
                     </DropdownMenuItem>
                   } />
-                  <DeleteEmployeeDialog employeeId={employee.id} employeeName={employee.full_name} trigger={
+                  <DeleteEmployeeDialog employee={employee} trigger={
                     <DropdownMenuItem className="text-red-600">
                       <Trash className="ml-2 h-4 w-4" />
                       <span>حذف</span>
