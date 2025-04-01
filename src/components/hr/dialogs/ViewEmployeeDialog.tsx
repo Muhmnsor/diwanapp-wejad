@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ContractsTab } from "@/components/hr/tabs/ContractsTab";
+import { ScheduleInfoDetail } from "@/components/hr/fields/ScheduleInfoDetail";
 
 interface Employee {
   id: string;
@@ -103,7 +104,12 @@ export function ViewEmployeeDialog({ employee, isOpen, onClose }: ViewEmployeeDi
             <TabsTrigger value="contracts">العقود</TabsTrigger>
             <TabsTrigger value="statistics">الإحصائيات</TabsTrigger>
           </TabsList>
-          
+
+          <div className="col-span-2 mt-4 pt-4 border-t">
+  <p className="text-sm text-muted-foreground mb-2">جدول العمل</p>
+  <ScheduleInfoDetail scheduleId={employee.schedule_id} />
+</div>
+
           <TabsContent value="basic-info" className="pt-4">
             <div className="grid grid-cols-2 gap-y-4">
               <div>
