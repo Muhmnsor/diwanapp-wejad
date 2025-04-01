@@ -11,6 +11,7 @@ export interface AttendanceRecord {
   check_out: string | null;
   status: string;
   notes: string | null;
+  schedule_name?: string;
 }
 
 export interface AttendanceReportData {
@@ -25,6 +26,13 @@ export interface AttendanceReportData {
     absentPercentage: number;
     latePercentage: number;
     leavePercentage: number;
+    byScheduleType?: { 
+      name: string; 
+      present: number; 
+      absent: number; 
+      late: number; 
+      leave: number;
+    }[];
   };
   employeeStats?: {
     employee_name: string;
@@ -48,7 +56,13 @@ export function useAttendanceReport(startDate?: Date, endDate?: Date) {
             id,
             full_name,
             position,
-            department
+            department,
+            schedule_id
+          ),
+          schedules:employees (
+            schedule:schedule_id (
+              name
+            )
           )
         `)
         .order('attendance_date', { ascending: false });
@@ -74,7 +88,8 @@ export function useAttendanceReport(startDate?: Date, endDate?: Date) {
         check_in: record.check_in,
         check_out: record.check_out,
         status: record.status,
-        notes: record.notes
+        notes: record.notes,
+        schedule_name: record.employees?.schedule?.name || 'دوام عادي'
       }));
       
       // Calculate statistics
@@ -108,6 +123,32 @@ export function useAttendanceReport(startDate?: Date, endDate?: Date) {
       
       const employeeStats = Array.from(employeeMap.values());
       
+      // Calculate stats by schedule type
+      const scheduleMap = new Map();
+      
+      records.forEach(record => {
+        const scheduleName = record.schedule_name || 'دوام عادي';
+        
+        if (!scheduleMap.has(scheduleName)) {
+          scheduleMap.set(scheduleName, {
+            name: scheduleName,
+            present: 0,
+            absent: 0,
+            late: 0,
+            leave: 0
+          });
+        }
+        
+        const schedStats = scheduleMap.get(scheduleName);
+        
+        if (record.status === 'present') schedStats.present++;
+        else if (record.status === 'absent') schedStats.absent++;
+        else if (record.status === 'late') schedStats.late++;
+        else if (record.status === 'leave') schedStats.leave++;
+      });
+      
+      const scheduleStats = Array.from(scheduleMap.values());
+      
       return {
         records,
         stats: {
@@ -119,7 +160,8 @@ export function useAttendanceReport(startDate?: Date, endDate?: Date) {
           presentPercentage: totalRecords ? (presentCount / totalRecords) * 100 : 0,
           absentPercentage: totalRecords ? (absentCount / totalRecords) * 100 : 0,
           latePercentage: totalRecords ? (lateCount / totalRecords) * 100 : 0,
-          leavePercentage: totalRecords ? (leaveCount / totalRecords) * 100 : 0
+          leavePercentage: totalRecords ? (leaveCount / totalRecords) * 100 : 0,
+          byScheduleType: scheduleStats
         },
         employeeStats
       };

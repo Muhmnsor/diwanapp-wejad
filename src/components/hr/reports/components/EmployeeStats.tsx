@@ -1,6 +1,6 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, UserCheck, Briefcase, Building } from "lucide-react";
+import { Users, UserCheck, Briefcase, Building, Clock } from "lucide-react";
 
 interface EmployeeStatsProps {
   stats: {
@@ -11,6 +11,7 @@ interface EmployeeStatsProps {
     byDepartment?: { name: string; count: number }[];
     byPosition?: { name: string; count: number }[];
     byContractType?: { name: string; count: number }[];
+    byScheduleType?: { name: string; count: number }[];
   };
 }
 
@@ -57,6 +58,20 @@ export function EmployeeStats({ stats }: EmployeeStatsProps) {
             </div>
             <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
               <Building className="h-5 w-5 text-amber-600" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">أنواع الدوام</p>
+              <h3 className="text-2xl font-bold">{stats.byScheduleType?.length || 0}</h3>
+            </div>
+            <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+              <Clock className="h-5 w-5 text-purple-600" />
             </div>
           </div>
         </CardContent>

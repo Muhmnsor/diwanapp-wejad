@@ -1,6 +1,6 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { UserCheck, UserX, Clock, Users } from "lucide-react";
+import { UserCheck, UserX, Clock, Users, Calendar } from "lucide-react";
 
 interface AttendanceStatsProps {
   stats: {
@@ -13,6 +13,7 @@ interface AttendanceStatsProps {
     absentPercentage: number;
     latePercentage: number;
     leavePercentage: number;
+    byScheduleType?: { name: string; present: number; absent: number; late: number; leave: number }[];
   };
 }
 
@@ -62,6 +63,40 @@ export function AttendanceStats({ stats }: AttendanceStatsProps) {
             </div>
             <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
               <UserX className="h-5 w-5 text-red-600" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">التأخير</p>
+              <h3 className="text-2xl font-bold">{stats.lateCount}</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                {stats.latePercentage.toFixed(1)}%
+              </p>
+            </div>
+            <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
+              <Clock className="h-5 w-5 text-amber-600" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">الإجازات</p>
+              <h3 className="text-2xl font-bold">{stats.leaveCount}</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                {stats.leavePercentage.toFixed(1)}%
+              </p>
+            </div>
+            <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+              <Calendar className="h-5 w-5 text-purple-600" />
             </div>
           </div>
         </CardContent>
