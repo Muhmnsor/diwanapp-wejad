@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -20,6 +19,7 @@ interface Employee {
   email: string;
   phone: string;
   contract_type?: string;
+  schedule_id?: string;
 }
 
 interface EditEmployeeDialogProps {
@@ -44,7 +44,7 @@ export function EditEmployeeDialog({ employee, isOpen, onClose, onSuccess }: Edi
         contract_type: employee.contract_type || "full_time",
         email: employee.email || "",
         phone: employee.phone || "",
-        status: employee.status || "active"
+        status: employee.status || "active",
         schedule_id: employee.schedule_id || ""
       });
     }
@@ -193,13 +193,13 @@ export function EditEmployeeDialog({ employee, isOpen, onClose, onSuccess }: Edi
                 placeholder="أدخل رقم الهاتف"
               />
             </div>
-
-{/* Employee Schedule Field */}
-<EmployeeScheduleField
-  value={formData.schedule_id || ""}
-  onChange={(value) => handleSelectChange("schedule_id", value)}
-/>
           </div>
+          
+          {/* Employee Schedule Field */}
+          <EmployeeScheduleField
+            value={formData.schedule_id || ""}
+            onChange={(value) => handleSelectChange("schedule_id", value)}
+          />
           
           <DialogFooter className="mt-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
