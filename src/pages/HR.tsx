@@ -13,6 +13,7 @@ import { ReportsTab } from "@/components/hr/tabs/ReportsTab";
 import { useHRStats } from "@/hooks/hr/useHRStats";
 import { usePermissions } from "@/components/permissions/usePermissions";
 import { Input } from "@/components/ui/input";
+import { HRTabs } from "@/components/hr/HRTabs";
 
 const HR = () => {
   const [activeTab, setActiveTab] = useState("overview");
