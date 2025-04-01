@@ -1,217 +1,201 @@
-
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import React, { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Loader2 } from "lucide-react";
-import { format } from "date-fns";
-import { ar } from "date-fns/locale";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
+import { useEmployeeContracts, EmployeeContract } from "@/hooks/hr/useEmployeeContracts";
 import { toast } from "sonner";
-import { EmployeeContract } from "@/hooks/hr/useEmployeeContracts";
 
 interface ContractDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
   employeeId: string;
   contract?: EmployeeContract;
-  onSave: (contract: any, file?: File) => Promise<void>;
+  isEdit?: boolean;
+  trigger?: React.ReactNode;
+  onContractUpdated?: () => void;
 }
 
-export function ContractDialog({ isOpen, onClose, employeeId, contract, onSave }: ContractDialogProps) {
-  const [isLoading, setIsLoading] = useState(false);
+export function ContractDialog({
+  employeeId,
+  contract,
+  isEdit = false,
+  trigger,
+  onContractUpdated,
+}: ContractDialogProps) {
+  const [open, setOpen] = useState(false);
+  const { createContract, updateContract, isUploading, uploadContractDocument } = useEmployeeContracts(employeeId);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [contractFile, setContractFile] = useState<File | null>(null);
-  
-  // Form state
+
   const [formData, setFormData] = useState({
-    startDate: contract?.start_date ? new Date(contract.start_date) : new Date(),
-    endDate: contract?.end_date ? new Date(contract.end_date) : null,
-    probationEndDate: contract?.probation_end_date ? new Date(contract.probation_end_date) : null,
-    salary: contract?.salary || 0,
-    contractType: contract?.contract_type || 'permanent',
-    notes: contract?.notes || '',
+    startDate: new Date(),
+    endDate: new Date(new Date().setMonth(new Date().getMonth() + 12)),
+    probationEndDate: new Date(new Date().setMonth(new Date().getMonth() + 3)),
+    salary: 0,
+    contractType: "permanent" as "permanent" | "temporary" | "contract",
+    notes: "",
   });
-  
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-  
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const fileSize = file.size / 1024 / 1024; // size in MB
-      if (fileSize > 10) {
-        toast.error("حجم الملف كبير جداً. الحد الأقصى هو 10 ميجابايت.");
-        return;
-      }
-      setContractFile(file);
+
+  useEffect(() => {
+    if (contract && isEdit) {
+      setFormData({
+        startDate: new Date(contract.start_date),
+        endDate: contract.end_date ? new Date(contract.end_date) : new Date(new Date().setMonth(new Date().getMonth() + 12)),
+        probationEndDate: contract.probation_end_date 
+          ? new Date(contract.probation_end_date) 
+          : new Date(new Date().setMonth(new Date().getMonth() + 3)),
+        salary: contract.salary || 0,
+        contractType: contract.contract_type as "permanent" | "temporary" | "contract",
+        notes: contract.notes || "",
+      });
     }
-  };
-  
+  }, [contract, isEdit]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    
+    setIsSubmitting(true);
+
     try {
-      // Format the dates for API
-      const contractData = {
-        employee_id: employeeId,
-        start_date: formData.startDate.toISOString().split('T')[0],
-        end_date: formData.endDate ? formData.endDate.toISOString().split('T')[0] : null,
-        probation_end_date: formData.probationEndDate ? formData.probationEndDate.toISOString().split('T')[0] : null,
-        salary: Number(formData.salary),
-        contract_type: formData.contractType as 'permanent' | 'temporary' | 'contract',
-        notes: formData.notes,
-        status: 'active'
-      };
-      
-      if (contract?.id) {
-        await onSave({ id: contract.id, ...contractData }, contractFile || undefined);
-      } else {
-        await onSave(contractData, contractFile || undefined);
+      // Format dates to strings for the API
+      const startDateStr = formData.startDate.toISOString().split("T")[0];
+      const endDateStr = formData.endDate.toISOString().split("T")[0];
+      const probationEndDateStr = formData.probationEndDate.toISOString().split("T")[0];
+
+      let documentUrl = contract?.document_url || null;
+
+      // Upload the document if a file was selected
+      if (contractFile) {
+        const contractId = contract?.id || "new";
+        documentUrl = await uploadContractDocument(contractFile, contractId);
       }
-      
-      onClose();
+
+      if (isEdit && contract) {
+        // Update existing contract
+        await updateContract({
+          id: contract.id,
+          start_date: startDateStr,
+          end_date: endDateStr,
+          probation_end_date: probationEndDateStr,
+          salary: formData.salary,
+          contract_type: formData.contractType,
+          document_url: documentUrl,
+          notes: formData.notes,
+        });
+        toast.success("تم تحديث العقد بنجاح");
+      } else {
+        // Create new contract
+        await createContract({
+          employee_id: employeeId,
+          start_date: startDateStr,
+          end_date: endDateStr,
+          probation_end_date: probationEndDateStr,
+          salary: formData.salary,
+          contract_type: formData.contractType,
+          document_url: documentUrl,
+          status: "active",
+          notes: formData.notes,
+        });
+        toast.success("تم إنشاء العقد بنجاح");
+      }
+
+      if (onContractUpdated) {
+        onContractUpdated();
+      }
+      setOpen(false);
     } catch (error: any) {
-      console.error('Error saving contract:', error);
       toast.error(`حدث خطأ: ${error.message}`);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
-  
-  const formatContractType = (type: string) => {
-    switch (type) {
-      case 'permanent': return 'دائم';
-      case 'temporary': return 'مؤقت';
-      case 'contract': return 'تعاقد';
-      default: return type;
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setContractFile(e.target.files[0]);
     }
   };
-  
+
+  const handleContractTypeChange = (value: "permanent" | "temporary" | "contract") => {
+    setFormData(prev => ({
+      ...prev,
+      contractType: value
+    }));
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[550px]" dir="rtl">
+    <Dialog open={open} onOpenChange={setOpen}>
+      {trigger ? (
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+      ) : (
+        <DialogTrigger asChild>
+          <Button>{isEdit ? "تعديل العقد" : "إضافة عقد"}</Button>
+        </DialogTrigger>
+      )}
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{contract ? 'تعديل العقد' : 'إضافة عقد جديد'}</DialogTitle>
+          <DialogTitle>{isEdit ? "تعديل العقد" : "إضافة عقد جديد"}</DialogTitle>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4 py-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="startDate">تاريخ بداية العقد</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-right font-normal"
-                  >
-                    <CalendarIcon className="ml-2 h-4 w-4" />
-                    {formData.startDate ? (
-                      format(formData.startDate, 'PPP', { locale: ar })
-                    ) : (
-                      <span>اختر التاريخ</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={formData.startDate}
-                    onSelect={(date) => date && setFormData(prev => ({ ...prev, startDate: date }))}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="endDate">تاريخ نهاية العقد</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-right font-normal"
-                  >
-                    <CalendarIcon className="ml-2 h-4 w-4" />
-                    {formData.endDate ? (
-                      format(formData.endDate, 'PPP', { locale: ar })
-                    ) : (
-                      <span>غير محدد (دائم)</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={formData.endDate || undefined}
-                    onSelect={(date) => setFormData(prev => ({ ...prev, endDate: date }))}
-                    initialFocus
-                    fromDate={formData.startDate}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="probationEndDate">تاريخ انتهاء فترة التجربة</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-right font-normal"
-                >
-                  <CalendarIcon className="ml-2 h-4 w-4" />
-                  {formData.probationEndDate ? (
-                    format(formData.probationEndDate, 'PPP', { locale: ar })
-                  ) : (
-                    <span>غير محدد</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={formData.probationEndDate || undefined}
-                  onSelect={(date) => setFormData(prev => ({ ...prev, probationEndDate: date }))}
-                  initialFocus
-                  fromDate={formData.startDate}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="salary">الراتب الشهري</Label>
-              <Input
-                id="salary"
-                name="salary"
-                type="number"
-                value={formData.salary}
-                onChange={handleInputChange}
-                min="0"
-                step="0.01"
-                required
+              <Label htmlFor="startDate">تاريخ البدء</Label>
+              <DatePicker
+                date={formData.startDate}
+                setDate={(date) => setFormData(prev => ({ ...prev, startDate: date || new Date() }))}
+                locale="ar"
               />
             </div>
-            
+            <div className="space-y-2">
+              <Label htmlFor="endDate">تاريخ الانتهاء</Label>
+              <DatePicker
+                date={formData.endDate}
+                setDate={(date) => setFormData(prev => ({ ...prev, endDate: date || new Date() }))}
+                locale="ar"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="probationEndDate">تاريخ انتهاء فترة التجربة</Label>
+            <DatePicker
+              date={formData.probationEndDate}
+              setDate={(date) => setFormData(prev => ({ ...prev, probationEndDate: date || new Date() }))}
+              locale="ar"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="salary">الراتب</Label>
+              <Input
+                id="salary"
+                type="number"
+                value={formData.salary}
+                onChange={(e) => setFormData(prev => ({ ...prev, salary: Number(e.target.value) }))}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="contractType">نوع العقد</Label>
               <Select
                 value={formData.contractType}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, contractType: value }))}
+                onValueChange={handleContractTypeChange}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger>
                   <SelectValue placeholder="اختر نوع العقد" />
                 </SelectTrigger>
                 <SelectContent>
@@ -222,52 +206,40 @@ export function ContractDialog({ isOpen, onClose, employeeId, contract, onSave }
               </Select>
             </div>
           </div>
-          
+
+          <div className="space-y-2">
+            <Label htmlFor="documentUrl">نسخة العقد (اختياري)</Label>
+            <Input
+              id="documentUrl"
+              type="file"
+              onChange={handleFileChange}
+              accept=".pdf,.doc,.docx"
+            />
+            {contract?.document_url && (
+              <div className="text-sm text-blue-600">
+                <a href={contract.document_url} target="_blank" rel="noopener noreferrer">
+                  عرض العقد الحالي
+                </a>
+              </div>
+            )}
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="notes">ملاحظات</Label>
             <Textarea
               id="notes"
-              name="notes"
-              value={formData.notes}
-              onChange={handleInputChange}
+              value={formData.notes || ""}
+              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
               rows={3}
             />
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="document">ملف العقد (PDF)</Label>
-            <Input
-              id="document"
-              type="file"
-              accept="application/pdf"
-              onChange={handleFileChange}
-              className="cursor-pointer"
-            />
-            {contract?.document_url && !contractFile && (
-              <div className="text-sm text-muted-foreground mt-1">
-                <a href={contract.document_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                  عرض الملف الحالي
-                </a>
-              </div>
-            )}
-            {contractFile && (
-              <div className="text-sm text-muted-foreground">
-                تم اختيار: {contractFile.name}
-              </div>
-            )}
-          </div>
-          
-          <DialogFooter className="mt-6">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-              إلغاء
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                  جارِ الحفظ...
-                </>
-              ) : contract ? 'تحديث العقد' : 'إضافة العقد'}
+
+          <DialogFooter>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting || isUploading}
+            >
+              {isSubmitting ? "جاري الحفظ..." : (isEdit ? "تحديث" : "إضافة")}
             </Button>
           </DialogFooter>
         </form>
@@ -275,4 +247,3 @@ export function ContractDialog({ isOpen, onClose, employeeId, contract, onSave }
     </Dialog>
   );
 }
-
