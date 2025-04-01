@@ -18,6 +18,7 @@ interface Employee {
   status: string;
   email: string;
   phone: string;
+  schedule_id?: string; // إضافة هذه الخاصية
 }
 
 interface ViewEmployeeDialogProps {
@@ -84,113 +85,113 @@ export function ViewEmployeeDialog({ employee, isOpen, onClose }: ViewEmployeeDi
   };
   
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px]" dir="rtl">
-        <DialogHeader>
-          <DialogTitle>تفاصيل الموظف</DialogTitle>
-        </DialogHeader>
-        
-        <div className="text-center mb-6">
-          <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold mx-auto mb-2">
-            {employee.full_name?.charAt(0) || "؟"}
+<Dialog open={isOpen} onOpenChange={onClose}>
+  <DialogContent className="sm:max-w-[700px]" dir="rtl">
+    <DialogHeader>
+      <DialogTitle>تفاصيل الموظف</DialogTitle>
+    </DialogHeader>
+    
+    <div className="text-center mb-6">
+      <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold mx-auto mb-2">
+        {employee.full_name?.charAt(0) || "؟"}
+      </div>
+      <h2 className="text-xl font-bold">{employee.full_name}</h2>
+      <p className="text-muted-foreground">{employee.position}</p>
+    </div>
+    
+    <Tabs defaultValue="basic-info">
+      <TabsList className="grid w-full grid-cols-3">
+        <TabsTrigger value="basic-info">المعلومات الأساسية</TabsTrigger>
+        <TabsTrigger value="contracts">العقود</TabsTrigger>
+        <TabsTrigger value="statistics">الإحصائيات</TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="basic-info" className="pt-4">
+        <div className="grid grid-cols-2 gap-y-4">
+          <div>
+            <p className="text-sm text-muted-foreground">الرقم الوظيفي</p>
+            <p className="font-medium">{employee.employee_number}</p>
           </div>
-          <h2 className="text-xl font-bold">{employee.full_name}</h2>
-          <p className="text-muted-foreground">{employee.position}</p>
-        </div>
-        
-        <Tabs defaultValue="basic-info">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="basic-info">المعلومات الأساسية</TabsTrigger>
-            <TabsTrigger value="contracts">العقود</TabsTrigger>
-            <TabsTrigger value="statistics">الإحصائيات</TabsTrigger>
-          </TabsList>
-
+          
+          <div>
+            <p className="text-sm text-muted-foreground">القسم</p>
+            <p className="font-medium">{employee.department || "-"}</p>
+          </div>
+          
+          <div>
+            <p className="text-sm text-muted-foreground">تاريخ التعيين</p>
+            <p className="font-medium">
+              {employee.hire_date ? new Date(employee.hire_date).toLocaleDateString('ar-SA') : "-"}
+            </p>
+          </div>
+          
+          <div>
+            <p className="text-sm text-muted-foreground">الحالة</p>
+            <p className="font-medium">
+              <span className={`px-2 py-1 rounded-full text-xs
+                ${employee.status === 'active' ? 'bg-green-100 text-green-800' : 
+                  employee.status === 'on_leave' ? 'bg-blue-100 text-blue-800' : 
+                  'bg-gray-100 text-gray-800'}`}>
+                {getStatusText(employee.status)}
+              </span>
+            </p>
+          </div>
+          
+          <div>
+            <p className="text-sm text-muted-foreground">البريد الإلكتروني</p>
+            <p className="font-medium">{employee.email || "-"}</p>
+          </div>
+          
+          <div>
+            <p className="text-sm text-muted-foreground">رقم الهاتف</p>
+            <p className="font-medium">{employee.phone || "-"}</p>
+          </div>
+          
           <div className="col-span-2 mt-4 pt-4 border-t">
-  <p className="text-sm text-muted-foreground mb-2">جدول العمل</p>
-  <ScheduleInfoDetail scheduleId={employee.schedule_id} />
-</div>
-
-          <TabsContent value="basic-info" className="pt-4">
-            <div className="grid grid-cols-2 gap-y-4">
-              <div>
-                <p className="text-sm text-muted-foreground">الرقم الوظيفي</p>
-                <p className="font-medium">{employee.employee_number}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm text-muted-foreground">القسم</p>
-                <p className="font-medium">{employee.department || "-"}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm text-muted-foreground">تاريخ التعيين</p>
-                <p className="font-medium">
-                  {employee.hire_date ? new Date(employee.hire_date).toLocaleDateString('ar-SA') : "-"}
-                </p>
-              </div>
-              
-              <div>
-                <p className="text-sm text-muted-foreground">الحالة</p>
-                <p className="font-medium">
-                  <span className={`px-2 py-1 rounded-full text-xs
-                    ${employee.status === 'active' ? 'bg-green-100 text-green-800' : 
-                      employee.status === 'on_leave' ? 'bg-blue-100 text-blue-800' : 
-                      'bg-gray-100 text-gray-800'}`}>
-                    {getStatusText(employee.status)}
-                  </span>
-                </p>
-              </div>
-              
-              <div>
-                <p className="text-sm text-muted-foreground">البريد الإلكتروني</p>
-                <p className="font-medium">{employee.email || "-"}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm text-muted-foreground">رقم الهاتف</p>
-                <p className="font-medium">{employee.phone || "-"}</p>
-              </div>
+            <p className="text-sm text-muted-foreground mb-2">جدول العمل</p>
+            <ScheduleInfoDetail scheduleId={employee.schedule_id} />
+          </div>
+        </div>
+      </TabsContent>
+      
+      <TabsContent value="contracts" className="pt-4">
+        <ContractsTab employeeId={employee.id} />
+      </TabsContent>
+      
+      <TabsContent value="statistics" className="pt-4">
+        {isLoading ? (
+          <div className="flex justify-center py-4">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-4 mt-2">
+            <div className="p-4 rounded-lg bg-blue-50 text-center">
+              <p className="text-2xl font-bold text-blue-600">
+                {employeeDetails?.leavesCount || 0}
+              </p>
+              <p className="text-sm text-muted-foreground">الإجازات</p>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="contracts" className="pt-4">
-            <ContractsTab employeeId={employee.id} />
-          </TabsContent>
-          
-          <TabsContent value="statistics" className="pt-4">
-            {isLoading ? (
-              <div className="flex justify-center py-4">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 gap-4 mt-2">
-                <div className="p-4 rounded-lg bg-blue-50 text-center">
-                  <p className="text-2xl font-bold text-blue-600">
-                    {employeeDetails?.leavesCount || 0}
-                  </p>
-                  <p className="text-sm text-muted-foreground">الإجازات</p>
-                </div>
-                <div className="p-4 rounded-lg bg-green-50 text-center">
-                  <p className="text-2xl font-bold text-green-600">
-                    {employeeDetails?.trainingCount || 0}
-                  </p>
-                  <p className="text-sm text-muted-foreground">التدريبات</p>
-                </div>
-                <div className="p-4 rounded-lg bg-amber-50 text-center">
-                  <p className="text-2xl font-bold text-amber-600">
-                    {employeeDetails?.attendanceCount || 0}
-                  </p>
-                  <p className="text-sm text-muted-foreground">أيام الحضور</p>
-                </div>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-        
-        <DialogFooter>
-          <Button onClick={onClose}>إغلاق</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            <div className="p-4 rounded-lg bg-green-50 text-center">
+              <p className="text-2xl font-bold text-green-600">
+                {employeeDetails?.trainingCount || 0}
+              </p>
+              <p className="text-sm text-muted-foreground">التدريبات</p>
+            </div>
+            <div className="p-4 rounded-lg bg-amber-50 text-center">
+              <p className="text-2xl font-bold text-amber-600">
+                {employeeDetails?.attendanceCount || 0}
+              </p>
+              <p className="text-sm text-muted-foreground">أيام الحضور</p>
+            </div>
+          </div>
+        )}
+      </TabsContent>
+    </Tabs>
+    
+    <DialogFooter>
+      <Button onClick={onClose}>إغلاق</Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
   );
 }
