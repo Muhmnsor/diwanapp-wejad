@@ -756,6 +756,7 @@ export type Database = {
           contract_end_date: string | null
           contract_type: string | null
           created_at: string | null
+          default_schedule_id: string | null
           department: string | null
           email: string | null
           employee_number: string | null
@@ -764,6 +765,7 @@ export type Database = {
           id: string
           phone: string | null
           position: string | null
+          schedule_id: string | null
           status: string | null
           updated_at: string | null
           user_id: string | null
@@ -772,6 +774,7 @@ export type Database = {
           contract_end_date?: string | null
           contract_type?: string | null
           created_at?: string | null
+          default_schedule_id?: string | null
           department?: string | null
           email?: string | null
           employee_number?: string | null
@@ -780,6 +783,7 @@ export type Database = {
           id?: string
           phone?: string | null
           position?: string | null
+          schedule_id?: string | null
           status?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -788,6 +792,7 @@ export type Database = {
           contract_end_date?: string | null
           contract_type?: string | null
           created_at?: string | null
+          default_schedule_id?: string | null
           department?: string | null
           email?: string | null
           employee_number?: string | null
@@ -796,11 +801,26 @@ export type Database = {
           id?: string
           phone?: string | null
           position?: string | null
+          schedule_id?: string | null
           status?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "employees_default_schedule_id_fkey"
+            columns: ["default_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "hr_work_schedule_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "hr_work_schedules"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "employees_user_id_fkey"
             columns: ["user_id"]
@@ -1295,10 +1315,14 @@ export type Database = {
           check_out: string | null
           created_at: string | null
           created_by: string | null
+          early_departure_minutes: number | null
           employee_id: string | null
           id: string
+          is_tardy: boolean | null
+          left_early: boolean | null
           notes: string | null
           status: string | null
+          tardiness_minutes: number | null
         }
         Insert: {
           attendance_date: string
@@ -1306,10 +1330,14 @@ export type Database = {
           check_out?: string | null
           created_at?: string | null
           created_by?: string | null
+          early_departure_minutes?: number | null
           employee_id?: string | null
           id?: string
+          is_tardy?: boolean | null
+          left_early?: boolean | null
           notes?: string | null
           status?: string | null
+          tardiness_minutes?: number | null
         }
         Update: {
           attendance_date?: string
@@ -1317,10 +1345,14 @@ export type Database = {
           check_out?: string | null
           created_at?: string | null
           created_by?: string | null
+          early_departure_minutes?: number | null
           employee_id?: string | null
           id?: string
+          is_tardy?: boolean | null
+          left_early?: boolean | null
           notes?: string | null
           status?: string | null
+          tardiness_minutes?: number | null
         }
         Relationships: [
           {
@@ -1338,6 +1370,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      hr_attendance_settings: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+          value: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+          value?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+          value?: string | null
+        }
+        Relationships: []
       }
       hr_compensation: {
         Row: {
@@ -1382,6 +1441,61 @@ export type Database = {
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_employee_schedules: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          effective_date: string | null
+          employee_id: string | null
+          end_date: string | null
+          id: string
+          is_active: boolean | null
+          schedule_type_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          effective_date?: string | null
+          employee_id?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          schedule_type_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          effective_date?: string | null
+          employee_id?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          schedule_type_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_employee_schedules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "auth_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_employee_schedules_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_employee_schedules_schedule_type_id_fkey"
+            columns: ["schedule_type_id"]
+            isOneToOne: false
+            referencedRelation: "hr_work_schedule_types"
             referencedColumns: ["id"]
           },
         ]
@@ -1494,6 +1608,57 @@ export type Database = {
           },
         ]
       }
+      hr_leave_entitlements: {
+        Row: {
+          created_at: string | null
+          employee_id: string
+          id: string
+          leave_type_id: string
+          remaining_days: number | null
+          total_days: number
+          updated_at: string | null
+          used_days: number | null
+          year: number
+        }
+        Insert: {
+          created_at?: string | null
+          employee_id: string
+          id?: string
+          leave_type_id: string
+          remaining_days?: number | null
+          total_days: number
+          updated_at?: string | null
+          used_days?: number | null
+          year: number
+        }
+        Update: {
+          created_at?: string | null
+          employee_id?: string
+          id?: string
+          leave_type_id?: string
+          remaining_days?: number | null
+          total_days?: number
+          updated_at?: string | null
+          used_days?: number | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_leave_entitlements_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_leave_entitlements_leave_type_id_fkey"
+            columns: ["leave_type_id"]
+            isOneToOne: false
+            referencedRelation: "hr_leave_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hr_leave_requests: {
         Row: {
           approved_at: string | null
@@ -1551,6 +1716,53 @@ export type Database = {
           },
         ]
       }
+      hr_leave_types: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_paid: boolean | null
+          max_days_per_year: number | null
+          name: string
+          requires_approval: boolean | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_paid?: boolean | null
+          max_days_per_year?: number | null
+          name: string
+          requires_approval?: boolean | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_paid?: boolean | null
+          max_days_per_year?: number | null
+          name?: string
+          requires_approval?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_leave_types_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "auth_users_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hr_training: {
         Row: {
           created_at: string | null
@@ -1584,6 +1796,162 @@ export type Database = {
           title?: string
           training_type?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      hr_weekly_schedule: {
+        Row: {
+          break_end_time: string | null
+          break_start_time: string | null
+          created_at: string | null
+          day_of_week: number
+          id: string
+          is_working_day: boolean | null
+          schedule_type_id: string | null
+          updated_at: string | null
+          work_end_time: string | null
+          work_start_time: string | null
+        }
+        Insert: {
+          break_end_time?: string | null
+          break_start_time?: string | null
+          created_at?: string | null
+          day_of_week: number
+          id?: string
+          is_working_day?: boolean | null
+          schedule_type_id?: string | null
+          updated_at?: string | null
+          work_end_time?: string | null
+          work_start_time?: string | null
+        }
+        Update: {
+          break_end_time?: string | null
+          break_start_time?: string | null
+          created_at?: string | null
+          day_of_week?: number
+          id?: string
+          is_working_day?: boolean | null
+          schedule_type_id?: string | null
+          updated_at?: string | null
+          work_end_time?: string | null
+          work_start_time?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_weekly_schedule_schedule_type_id_fkey"
+            columns: ["schedule_type_id"]
+            isOneToOne: false
+            referencedRelation: "hr_work_schedule_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_work_days: {
+        Row: {
+          created_at: string | null
+          day_of_week: number
+          end_time: string | null
+          id: string
+          is_working_day: boolean | null
+          schedule_id: string
+          start_time: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          day_of_week: number
+          end_time?: string | null
+          id?: string
+          is_working_day?: boolean | null
+          schedule_id: string
+          start_time?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          day_of_week?: number
+          end_time?: string | null
+          id?: string
+          is_working_day?: boolean | null
+          schedule_id?: string
+          start_time?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_work_days_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "hr_work_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_work_schedule_types: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_work_schedule_types_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "auth_users_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_work_schedules: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          updated_at: string | null
+          work_days_per_week: number
+          work_hours_per_day: number
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          updated_at?: string | null
+          work_days_per_week: number
+          work_hours_per_day: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          updated_at?: string | null
+          work_days_per_week?: number
+          work_hours_per_day?: number
         }
         Relationships: []
       }
@@ -6025,6 +6393,14 @@ export type Database = {
           p_role_id: string
         }
         Returns: boolean
+      }
+      calculate_leave_balance: {
+        Args: {
+          p_employee_id: string
+          p_leave_type_id: string
+          p_year?: number
+        }
+        Returns: Json
       }
       can_delete_request: {
         Args: {

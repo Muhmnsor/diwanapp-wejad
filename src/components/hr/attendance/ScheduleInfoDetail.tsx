@@ -20,16 +20,22 @@ export function ScheduleInfoDetail({ employeeId }: ScheduleInfoDetailProps) {
     const loadScheduleData = async () => {
       try {
         setIsLoading(true);
+        console.log("ScheduleInfoDetail (attendance) - Loading data for employee:", employeeId);
+        
         const employeeSchedule = await getEmployeeSchedule(employeeId);
+        console.log("ScheduleInfoDetail (attendance) - Retrieved schedule:", employeeSchedule);
         
         if (employeeSchedule) {
           setSchedule(employeeSchedule);
           
           const days = await getWorkDays(employeeSchedule.id);
+          console.log("ScheduleInfoDetail (attendance) - Work days:", days);
           setWorkDays(days || []);
+        } else {
+          console.log("ScheduleInfoDetail (attendance) - No schedule found");
         }
       } catch (error) {
-        console.error("Error loading schedule data:", error);
+        console.error("ScheduleInfoDetail (attendance) - Error loading schedule data:", error);
       } finally {
         setIsLoading(false);
       }
@@ -37,6 +43,8 @@ export function ScheduleInfoDetail({ employeeId }: ScheduleInfoDetailProps) {
     
     if (employeeId) {
       loadScheduleData();
+    } else {
+      console.log("ScheduleInfoDetail (attendance) - No employee ID provided");
     }
   }, [employeeId, getEmployeeSchedule, getWorkDays]);
   

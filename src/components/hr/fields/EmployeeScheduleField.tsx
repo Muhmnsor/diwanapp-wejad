@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,17 +13,24 @@ export function EmployeeScheduleField({ value, onChange }: EmployeeScheduleField
   const { schedules, defaultSchedule, isLoadingSchedules } = useEmployeeSchedule();
   const [selectedValue, setSelectedValue] = useState<string>(value || "");
 
+  console.log("EmployeeScheduleField (fields) - Initial value:", value);
+  console.log("EmployeeScheduleField (fields) - Available schedules:", schedules);
+  console.log("EmployeeScheduleField (fields) - Default schedule:", defaultSchedule);
+
   // تعيين الجدول الافتراضي إذا لم يكن هناك قيمة محددة
   useEffect(() => {
-    if (!value && defaultSchedule) {
+    if ((!value || value === "") && defaultSchedule && defaultSchedule.id) {
+      console.log("EmployeeScheduleField (fields) - Setting default schedule:", defaultSchedule.id);
       setSelectedValue(defaultSchedule.id);
       onChange(defaultSchedule.id);
-    } else if (value) {
+    } else if (value && value !== selectedValue) {
+      console.log("EmployeeScheduleField (fields) - Updating from props:", value);
       setSelectedValue(value);
     }
-  }, [value, defaultSchedule, onChange]);
+  }, [value, defaultSchedule, onChange, selectedValue]);
 
   const handleScheduleChange = (newValue: string) => {
+    console.log("EmployeeScheduleField (fields) - Schedule changed to:", newValue);
     setSelectedValue(newValue);
     onChange(newValue);
   };
@@ -36,7 +44,7 @@ export function EmployeeScheduleField({ value, onChange }: EmployeeScheduleField
         disabled={isLoadingSchedules}
       >
         <SelectTrigger id="schedule_id">
-          <SelectValue placeholder="اختر جدول العمل" />
+          <SelectValue placeholder={isLoadingSchedules ? "جاري التحميل..." : "اختر جدول العمل"} />
         </SelectTrigger>
         <SelectContent>
           {schedules?.map((schedule) => (
@@ -52,4 +60,3 @@ export function EmployeeScheduleField({ value, onChange }: EmployeeScheduleField
     </div>
   );
 }
-

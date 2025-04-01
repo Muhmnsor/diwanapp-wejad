@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useEmployeeSchedule } from "@/hooks/hr/useEmployeeSchedule";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,18 +17,35 @@ export function ScheduleInfoDetail({ scheduleId }: ScheduleInfoDetailProps) {
   useEffect(() => {
     const loadScheduleDetails = async () => {
       setIsLoading(true);
+      console.log("ScheduleInfoDetail - Loading schedule details. scheduleId:", scheduleId);
+      console.log("ScheduleInfoDetail - Available schedules:", schedules);
+      console.log("ScheduleInfoDetail - Default schedule:", defaultSchedule);
+      
       try {
         // تحديد الجدول المستخدم (المحدد أو الافتراضي)
-        const targetSchedule = scheduleId 
-          ? schedules?.find(s => s.id === scheduleId)
-          : defaultSchedule;
+        let targetSchedule = null;
+        
+        if (scheduleId) {
+          console.log("ScheduleInfoDetail - Looking for schedule with ID:", scheduleId);
+          targetSchedule = schedules?.find(s => s.id === scheduleId);
+          console.log("ScheduleInfoDetail - Found matching schedule:", targetSchedule);
+        } 
+        
+        if (!targetSchedule && defaultSchedule) {
+          console.log("ScheduleInfoDetail - Using default schedule");
+          targetSchedule = defaultSchedule;
+        }
         
         if (targetSchedule) {
+          console.log("ScheduleInfoDetail - Setting schedule:", targetSchedule);
           setSchedule(targetSchedule);
           
           // تحميل تفاصيل أيام العمل
           const days = await getWorkDays(targetSchedule.id);
+          console.log("ScheduleInfoDetail - Work days loaded:", days);
           setWorkDays(days || []);
+        } else {
+          console.log("ScheduleInfoDetail - No schedule found");
         }
       } catch (error) {
         console.error('Error loading schedule details:', error);
@@ -38,6 +56,8 @@ export function ScheduleInfoDetail({ scheduleId }: ScheduleInfoDetailProps) {
 
     if (schedules?.length) {
       loadScheduleDetails();
+    } else {
+      console.log("ScheduleInfoDetail - No schedules available yet");
     }
   }, [scheduleId, schedules, defaultSchedule, getWorkDays]);
 
@@ -94,4 +114,3 @@ export function ScheduleInfoDetail({ scheduleId }: ScheduleInfoDetailProps) {
     </div>
   );
 }
-
