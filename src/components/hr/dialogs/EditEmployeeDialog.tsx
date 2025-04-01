@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { EmployeeScheduleField } from "@/components/hr/fields/EmployeeScheduleField";
 
 interface Employee {
   id: string;
@@ -44,6 +45,7 @@ export function EditEmployeeDialog({ employee, isOpen, onClose, onSuccess }: Edi
         email: employee.email || "",
         phone: employee.phone || "",
         status: employee.status || "active"
+        schedule_id: employee.schedule_id || ""
       });
     }
   }, [employee]);
@@ -191,6 +193,12 @@ export function EditEmployeeDialog({ employee, isOpen, onClose, onSuccess }: Edi
                 placeholder="أدخل رقم الهاتف"
               />
             </div>
+
+{/* Employee Schedule Field */}
+<EmployeeScheduleField
+  value={formData.schedule_id || ""}
+  onChange={(value) => handleSelectChange("schedule_id", value)}
+/>
           </div>
           
           <DialogFooter className="mt-4">
