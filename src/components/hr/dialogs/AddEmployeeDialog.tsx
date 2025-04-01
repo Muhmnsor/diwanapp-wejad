@@ -1,4 +1,3 @@
-// src/components/hr/dialogs/AddEmployeeDialog.tsx
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -29,7 +28,7 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
     contract_type: "full_time",
     email: "",
     phone: "",
-    user_id: "no_user"
+    user_id: "no_user",
     schedule_id: ""
   });
   
@@ -232,12 +231,13 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
             <p className="text-xs text-muted-foreground">
               ربط الموظف بحساب مستخدم يتيح له استخدام ميزات التسجيل الذاتي للحضور والانصراف
             </p>
-          {/* Employee Schedule Field */}
-<EmployeeScheduleField
-  value={formData.schedule_id}
-  onChange={(value) => handleSelectChange("schedule_id", value)}
-/>
           </div>
+
+          {/* Employee Schedule Field */}
+          <EmployeeScheduleField
+            value={formData.schedule_id}
+            onChange={(value) => handleSelectChange("schedule_id", value)}
+          />
 
           <DialogFooter className="mt-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
@@ -252,4 +252,3 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
     </Dialog>
   );
 }
-
