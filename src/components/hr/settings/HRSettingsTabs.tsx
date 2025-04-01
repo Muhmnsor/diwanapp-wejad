@@ -2,7 +2,9 @@
 import * as React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WorkScheduleManagement } from "../schedule/WorkScheduleManagement";
-import { Settings, Clock, FileText, Briefcase } from "lucide-react";
+import { LeaveTypesManagement } from "../leaves/LeaveTypesManagement";
+import { AttendanceSettings } from "./AttendanceSettings";
+import { Settings, Clock, FileText, Briefcase, CalendarCheck } from "lucide-react";
 
 interface HRSettingsTabsProps {
   defaultTab?: string;
@@ -17,12 +19,12 @@ export function HRSettingsTabs({ defaultTab = "schedules" }: HRSettingsTabsProps
           جداول العمل
         </TabsTrigger>
         <TabsTrigger value="leave" className="flex items-center gap-1">
-          <FileText className="h-4 w-4" />
+          <CalendarCheck className="h-4 w-4" />
           الإجازات
         </TabsTrigger>
-        <TabsTrigger value="contracts" className="flex items-center gap-1">
-          <Briefcase className="h-4 w-4" />
-          العقود
+        <TabsTrigger value="attendance" className="flex items-center gap-1">
+          <FileText className="h-4 w-4" />
+          الحضور
         </TabsTrigger>
         <TabsTrigger value="settings" className="flex items-center gap-1">
           <Settings className="h-4 w-4" />
@@ -35,15 +37,11 @@ export function HRSettingsTabs({ defaultTab = "schedules" }: HRSettingsTabsProps
       </TabsContent>
       
       <TabsContent value="leave" className="space-y-4">
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">إعدادات الإجازات - قيد التطوير</p>
-        </div>
+        <LeaveTypesManagement />
       </TabsContent>
       
-      <TabsContent value="contracts" className="space-y-4">
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">إعدادات العقود - قيد التطوير</p>
-        </div>
+      <TabsContent value="attendance" className="space-y-4">
+        <AttendanceSettings />
       </TabsContent>
       
       <TabsContent value="settings" className="space-y-4">
