@@ -16,6 +16,7 @@ export interface EmployeeContract {
   renewal_reminder_sent: boolean;
   created_at: string;
   updated_at: string;
+  notes: string | null; // Added the missing notes property
 }
 
 export function useEmployeeContracts(employeeId?: string) {
