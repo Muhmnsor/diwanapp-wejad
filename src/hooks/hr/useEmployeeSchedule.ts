@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -61,11 +62,9 @@ export function useEmployeeSchedule() {
         throw error;
       }
 
-      // Invalidate more specific queries to refresh data properly
+      // Invalidate employee queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["employees"] });
       queryClient.invalidateQueries({ queryKey: ["employee", employeeId] });
-      queryClient.invalidateQueries({ queryKey: ["employee-schedule", employeeId] });
-      queryClient.invalidateQueries({ queryKey: ["work-days"] });
 
       toast.success("تم تعيين جدول العمل للموظف بنجاح");
       return { success: true };
@@ -78,7 +77,7 @@ export function useEmployeeSchedule() {
     }
   };
 
-  // Get employee schedule - improve with a more specific query key
+  // Get employee schedule
   const getEmployeeSchedule = async (employeeId: string) => {
     console.log(`useEmployeeSchedule - Getting schedule for employee ${employeeId}`);
     
@@ -125,14 +124,9 @@ export function useEmployeeSchedule() {
     }
   };
 
-  // Get work days for a schedule - enhance with caching
+  // Get work days for a schedule
   const getWorkDays = async (scheduleId: string) => {
     console.log(`useEmployeeSchedule - Getting work days for schedule ${scheduleId}`);
-    
-    if (!scheduleId) {
-      console.error("useEmployeeSchedule - No scheduleId provided to getWorkDays");
-      return [];
-    }
     
     try {
       const { data, error } = await supabase
@@ -146,25 +140,12 @@ export function useEmployeeSchedule() {
         throw error;
       }
       
-      console.log(`useEmployeeSchedule - Work days for schedule ${scheduleId}:`, data);
-      
-      if (!data || data.length === 0) {
-        console.warn(`useEmployeeSchedule - No work days found for schedule ${scheduleId}`);
-      }
-      
+      console.log("useEmployeeSchedule - Work days:", data);
       return data;
     } catch (error) {
-      console.error(`useEmployeeSchedule - Error getting work days for schedule ${scheduleId}:`, error);
+      console.error("useEmployeeSchedule - Error getting work days:", error);
       return [];
     }
-  };
-
-  // Add a new function to refresh schedule data
-  const refreshScheduleData = (employeeId: string) => {
-    console.log(`useEmployeeSchedule - Refreshing schedule data for employee ${employeeId}`);
-    queryClient.invalidateQueries({ queryKey: ["employee-schedule", employeeId] });
-    queryClient.invalidateQueries({ queryKey: ["work-days"] });
-    queryClient.invalidateQueries({ queryKey: ["employee", employeeId] });
   };
 
   return {
@@ -175,6 +156,5 @@ export function useEmployeeSchedule() {
     assignScheduleToEmployee,
     getEmployeeSchedule,
     getWorkDays,
-    refreshScheduleData, // New function to easily refresh data
   };
 }

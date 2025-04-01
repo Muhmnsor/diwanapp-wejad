@@ -12,12 +12,6 @@ import { EmployeeReport } from "../reports/EmployeeReport";
 import { LeaveReport } from "../reports/LeaveReport";
 import { useToast } from "@/hooks/use-toast";
 
-// Define interfaces for report components
-interface ReportProps {
-  startDate?: Date; 
-  endDate?: Date;
-}
-
 export function ReportsTab() {
   const [reportType, setReportType] = useState<string>("attendance");
   const [activeTab, setActiveTab] = useState<string>("generate");
