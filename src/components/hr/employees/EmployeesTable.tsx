@@ -101,4 +101,3 @@ export function EmployeesTable({ employees, isLoading }: EmployeesTableProps) {
     </Table>
   );
 }
-
