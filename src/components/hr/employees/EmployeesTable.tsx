@@ -74,7 +74,7 @@ export function EmployeesTable({ employees, isLoading }: EmployeesTableProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <ViewEmployeeDialog employeeId={employee.id} trigger={
+                  <ViewEmployeeDialog employeeId={employee.id} trigger={...} />
                     <DropdownMenuItem>
                       <Eye className="ml-2 h-4 w-4" />
                       <span>عرض</span>
