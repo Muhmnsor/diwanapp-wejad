@@ -1,84 +1,73 @@
 
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface AttendanceChartsProps {
-  data: {
-    stats: {
-      totalRecords: number;
-      presentCount: number;
-      absentCount: number;
-      lateCount: number;
-      leaveCount: number;
-      presentPercentage: number;
-      absentPercentage: number;
-      latePercentage: number;
-      leavePercentage: number;
-    };
-    employeeStats?: { employee_name: string; present: number; absent: number; late: number; leave: number }[];
-  };
+  period: "daily" | "weekly" | "monthly";
 }
 
-export function AttendanceCharts({ data }: AttendanceChartsProps) {
-  const { stats, employeeStats } = data;
-  
-  // Prepare data for pie chart
-  const pieData = [
-    { name: 'حاضر', value: stats.presentCount, color: '#10b981' },
-    { name: 'غائب', value: stats.absentCount, color: '#ef4444' },
-    { name: 'متأخر', value: stats.lateCount, color: '#f59e0b' },
-    { name: 'إجازة', value: stats.leaveCount, color: '#6b7280' },
+export function AttendanceCharts({ period }: AttendanceChartsProps) {
+  // Sample data - in a real app, we would fetch this from an API
+  const getDailyData = () => [
+    { name: "8 ص", present: 10, late: 2, absent: 1 },
+    { name: "9 ص", present: 15, late: 3, absent: 1 },
+    { name: "10 ص", present: 18, late: 2, absent: 2 },
+    { name: "11 ص", present: 18, late: 1, absent: 2 },
+    { name: "12 م", present: 19, late: 0, absent: 2 },
   ];
   
-  // Prepare data for bar chart if employee stats available
-  const barData = employeeStats?.map(empStat => ({
-    name: empStat.employee_name,
-    حاضر: empStat.present,
-    غائب: empStat.absent,
-    متأخر: empStat.late,
-    إجازة: empStat.leave,
-  })) || [];
+  const getWeeklyData = () => [
+    { name: "الأحد", present: 18, late: 2, absent: 1 },
+    { name: "الإثنين", present: 17, late: 3, absent: 1 },
+    { name: "الثلاثاء", present: 16, late: 2, absent: 3 },
+    { name: "الأربعاء", present: 19, late: 1, absent: 1 },
+    { name: "الخميس", present: 15, late: 4, absent: 2 },
+  ];
+  
+  const getMonthlyData = () => [
+    { name: "أسبوع 1", present: 85, late: 10, absent: 5 },
+    { name: "أسبوع 2", present: 82, late: 12, absent: 6 },
+    { name: "أسبوع 3", present: 88, late: 8, absent: 4 },
+    { name: "أسبوع 4", present: 85, late: 10, absent: 5 },
+  ];
+  
+  const chartData = period === "daily" 
+    ? getDailyData() 
+    : period === "weekly" 
+      ? getWeeklyData() 
+      : getMonthlyData();
   
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
-      <div className="h-64">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={pieData}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              outerRadius={80}
-              fill="#8884d8"
-              dataKey="value"
-              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-            >
-              {pieData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Pie>
-            <Tooltip formatter={(value) => [value, 'عدد السجلات']} />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
-      
-      {barData.length > 0 && (
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={barData}>
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="حاضر" fill="#10b981" />
-              <Bar dataKey="غائب" fill="#ef4444" />
-              <Bar dataKey="متأخر" fill="#f59e0b" />
-              <Bar dataKey="إجازة" fill="#6b7280" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-    </div>
+    <>
+      <Card className="col-span-2">
+        <CardHeader>
+          <CardTitle>الحضور والغياب</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData}
+                margin={{
+                  top: 20,
+                  right: 30,
+                  left: 20,
+                  bottom: 5,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="present" fill="#4ade80" name="حضور" />
+                <Bar dataKey="late" fill="#facc15" name="تأخير" />
+                <Bar dataKey="absent" fill="#f87171" name="غياب" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+    </>
   );
 }

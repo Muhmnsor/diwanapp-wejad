@@ -1,104 +1,60 @@
 
-import { Card, CardContent } from "@/components/ui/card";
-import { UserCheck, UserX, Clock, Users, Calendar } from "lucide-react";
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Users, Clock, AlertTriangle } from "lucide-react";
 
 interface AttendanceStatsProps {
-  stats: {
-    totalRecords: number;
-    presentCount: number;
-    absentCount: number;
-    lateCount: number;
-    leaveCount: number;
-    presentPercentage: number;
-    absentPercentage: number;
-    latePercentage: number;
-    leavePercentage: number;
-    byScheduleType?: { name: string; present: number; absent: number; late: number; leave: number }[];
-  };
+  period: "daily" | "weekly" | "monthly";
 }
 
-export function AttendanceStats({ stats }: AttendanceStatsProps) {
+export function AttendanceStats({ period }: AttendanceStatsProps) {
+  // In a real app, we would fetch this data from an API based on the period
+  // For now, we'll use sample data
+  const stats = {
+    presentCount: period === "daily" ? 18 : period === "weekly" ? 85 : 340,
+    lateCount: period === "daily" ? 3 : period === "weekly" ? 12 : 45,
+    absentCount: period === "daily" ? 2 : period === "weekly" ? 8 : 30,
+    averageWorkHours: period === "daily" ? 7.5 : period === "weekly" ? 37.5 : 150
+  };
+  
   return (
     <>
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">إجمالي السجلات</p>
-              <h3 className="text-2xl font-bold">{stats.totalRecords}</h3>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-              <Users className="h-5 w-5 text-blue-600" />
-            </div>
-          </div>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">الحضور</CardTitle>
+          <Users className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.presentCount}</div>
+          <p className="text-xs text-muted-foreground">
+            موظف حاضر خلال {period === "daily" ? "اليوم" : period === "weekly" ? "الأسبوع" : "الشهر"}
+          </p>
         </CardContent>
       </Card>
-
+      
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">الحضور</p>
-              <h3 className="text-2xl font-bold">{stats.presentCount}</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                {stats.presentPercentage.toFixed(1)}%
-              </p>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-              <UserCheck className="h-5 w-5 text-green-600" />
-            </div>
-          </div>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">التأخير</CardTitle>
+          <Clock className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.lateCount}</div>
+          <p className="text-xs text-muted-foreground">
+            حالة تأخير خلال {period === "daily" ? "اليوم" : period === "weekly" ? "الأسبوع" : "الشهر"}
+          </p>
         </CardContent>
       </Card>
-
+      
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">الغياب</p>
-              <h3 className="text-2xl font-bold">{stats.absentCount}</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                {stats.absentPercentage.toFixed(1)}%
-              </p>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
-              <UserX className="h-5 w-5 text-red-600" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">التأخير</p>
-              <h3 className="text-2xl font-bold">{stats.lateCount}</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                {stats.latePercentage.toFixed(1)}%
-              </p>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
-              <Clock className="h-5 w-5 text-amber-600" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">الإجازات</p>
-              <h3 className="text-2xl font-bold">{stats.leaveCount}</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                {stats.leavePercentage.toFixed(1)}%
-              </p>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-              <Calendar className="h-5 w-5 text-purple-600" />
-            </div>
-          </div>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">الغياب</CardTitle>
+          <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.absentCount}</div>
+          <p className="text-xs text-muted-foreground">
+            حالة غياب خلال {period === "daily" ? "اليوم" : period === "weekly" ? "الأسبوع" : "الشهر"}
+          </p>
         </CardContent>
       </Card>
     </>

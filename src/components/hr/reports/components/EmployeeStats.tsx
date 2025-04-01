@@ -1,79 +1,71 @@
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Users, UserCheck, Briefcase, Building, Clock } from "lucide-react";
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Users, Briefcase, UserCheck } from "lucide-react";
 
 interface EmployeeStatsProps {
-  stats: {
-    totalEmployees: number;
-    activeCount: number;
-    departmentCount: number;
-    positionCount: number;
-    byDepartment?: { name: string; count: number }[];
-    byPosition?: { name: string; count: number }[];
-    byContractType?: { name: string; count: number }[];
-    byScheduleType?: { name: string; count: number }[];
-  };
+  department: "all" | "engineering" | "marketing" | "hr";
 }
 
-export function EmployeeStats({ stats }: EmployeeStatsProps) {
+export function EmployeeStats({ department }: EmployeeStatsProps) {
+  // Sample data - in a real app, we would fetch this from an API
+  const getDepartmentData = () => {
+    switch (department) {
+      case "engineering":
+        return { total: 15, active: 14, onLeave: 1 };
+      case "marketing":
+        return { total: 8, active: 7, onLeave: 1 };
+      case "hr":
+        return { total: 5, active: 5, onLeave: 0 };
+      case "all":
+      default:
+        return { total: 28, active: 26, onLeave: 2 };
+    }
+  };
+  
+  const stats = getDepartmentData();
+  
   return (
     <>
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">إجمالي الموظفين</p>
-              <h3 className="text-2xl font-bold">{stats.totalEmployees}</h3>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-              <Users className="h-5 w-5 text-blue-600" />
-            </div>
-          </div>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">إجمالي الموظفين</CardTitle>
+          <Users className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.total}</div>
+          <p className="text-xs text-muted-foreground">
+            {department === "all" ? "في جميع الأقسام" : `في قسم ${
+              department === "engineering" ? "الهندسة" : 
+              department === "marketing" ? "التسويق" : "الموارد البشرية"
+            }`}
+          </p>
         </CardContent>
       </Card>
-
+      
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">الموظفين النشطين</p>
-              <h3 className="text-2xl font-bold">{stats.activeCount}</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                {((stats.activeCount / stats.totalEmployees) * 100).toFixed(1)}%
-              </p>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-              <UserCheck className="h-5 w-5 text-green-600" />
-            </div>
-          </div>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">الموظفين النشطين</CardTitle>
+          <UserCheck className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.active}</div>
+          <p className="text-xs text-muted-foreground">
+            {Math.round((stats.active / stats.total) * 100)}% من إجمالي الموظفين
+          </p>
         </CardContent>
       </Card>
-
+      
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">الأقسام</p>
-              <h3 className="text-2xl font-bold">{stats.departmentCount}</h3>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
-              <Building className="h-5 w-5 text-amber-600" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">أنواع الدوام</p>
-              <h3 className="text-2xl font-bold">{stats.byScheduleType?.length || 0}</h3>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-              <Clock className="h-5 w-5 text-purple-600" />
-            </div>
-          </div>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">في إجازة</CardTitle>
+          <Briefcase className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.onLeave}</div>
+          <p className="text-xs text-muted-foreground">
+            {Math.round((stats.onLeave / stats.total) * 100)}% من إجمالي الموظفين
+          </p>
         </CardContent>
       </Card>
     </>

@@ -1,88 +1,118 @@
 
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
 interface EmployeeChartsProps {
-  data: {
-    stats: {
-      totalEmployees: number;
-      activeCount: number;
-      departmentCount: number;
-      positionCount: number;
-      byDepartment?: { name: string; count: number }[];
-      byPosition?: { name: string; count: number }[];
-      byContractType?: { name: string; count: number }[];
-    };
-  };
+  department: "all" | "engineering" | "marketing" | "hr";
 }
 
-export function EmployeeCharts({ data }: EmployeeChartsProps) {
-  const { stats } = data;
+export function EmployeeCharts({ department }: EmployeeChartsProps) {
+  // Sample data - in a real app, we would fetch this from an API
+  const getDepartmentDistribution = () => [
+    { name: "الهندسة", value: 15, color: "#4ade80" },
+    { name: "التسويق", value: 8, color: "#facc15" },
+    { name: "الموارد البشرية", value: 5, color: "#f87171" },
+  ];
   
-  // Prepare department data for bar chart
-  const departmentData = stats.byDepartment?.map(dept => ({
-    name: dept.name || 'غير محدد',
-    عدد: dept.count,
-  })) || [];
+  const getContractTypeDistribution = () => {
+    switch (department) {
+      case "engineering":
+        return [
+          { name: "دوام كامل", value: 12, color: "#4ade80" },
+          { name: "دوام جزئي", value: 2, color: "#facc15" },
+          { name: "تعاقد", value: 1, color: "#f87171" },
+        ];
+      case "marketing":
+        return [
+          { name: "دوام كامل", value: 5, color: "#4ade80" },
+          { name: "دوام جزئي", value: 3, color: "#facc15" },
+          { name: "تعاقد", value: 0, color: "#f87171" },
+        ];
+      case "hr":
+        return [
+          { name: "دوام كامل", value: 5, color: "#4ade80" },
+          { name: "دوام جزئي", value: 0, color: "#facc15" },
+          { name: "تعاقد", value: 0, color: "#f87171" },
+        ];
+      case "all":
+      default:
+        return [
+          { name: "دوام كامل", value: 22, color: "#4ade80" },
+          { name: "دوام جزئي", value: 5, color: "#facc15" },
+          { name: "تعاقد", value: 1, color: "#f87171" },
+        ];
+    }
+  };
   
-  // Prepare contract type data for pie chart
-  const contractTypeData = stats.byContractType?.map(contract => ({
-    name: contract.name || 'غير محدد',
-    value: contract.count,
-    color: getColorForIndex(contract.name),
-  })) || [];
-  
-  // Function to generate color based on contract type
-  function getColorForIndex(name: string): string {
-    const colorMap: Record<string, string> = {
-      'دوام كامل': '#10b981',
-      'دوام جزئي': '#6366f1',
-      'متعاقد': '#f59e0b',
-      'مؤقت': '#ef4444',
-    };
-    
-    return colorMap[name] || '#6b7280';
-  }
+  const departmentData = getDepartmentDistribution();
+  const contractTypeData = getContractTypeDistribution();
   
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
-      {departmentData.length > 0 && (
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={departmentData}>
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="عدد" fill="#10b981" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+    <>
+      {department === "all" && (
+        <Card>
+          <CardHeader>
+            <CardTitle>توزيع الموظفين حسب الأقسام</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={departmentData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={true}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    nameKey="name"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {departmentData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
       )}
       
-      {contractTypeData.length > 0 && (
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={contractTypeData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-              >
-                {contractTypeData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(value) => [value, 'عدد الموظفين']} />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-    </div>
+      <Card className={department === "all" ? "" : "col-span-2"}>
+        <CardHeader>
+          <CardTitle>توزيع الموظفين حسب نوع العقد</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={contractTypeData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={true}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                  nameKey="name"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {contractTypeData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+    </>
   );
 }

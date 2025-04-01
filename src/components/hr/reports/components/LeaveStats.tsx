@@ -1,71 +1,66 @@
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, CheckCircle, XCircle, Clock } from "lucide-react";
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar, Clock, Briefcase } from "lucide-react";
 
 interface LeaveStatsProps {
-  stats: {
-    totalRequests: number;
-    approvedCount: number;
-    rejectedCount: number;
-    pendingCount: number;
-    totalDays: number;
-    approvedPercentage: number;
-    rejectedPercentage: number;
-    pendingPercentage: number;
-  };
+  period: "yearly" | "quarterly" | "monthly";
 }
 
-export function LeaveStats({ stats }: LeaveStatsProps) {
+export function LeaveStats({ period }: LeaveStatsProps) {
+  // Sample data - in a real app, we would fetch this from an API
+  const getPeriodData = () => {
+    switch (period) {
+      case "yearly":
+        return { total: 120, approved: 110, rejected: 5, pending: 5 };
+      case "quarterly":
+        return { total: 40, approved: 35, rejected: 2, pending: 3 };
+      case "monthly":
+      default:
+        return { total: 15, approved: 12, rejected: 1, pending: 2 };
+    }
+  };
+  
+  const stats = getPeriodData();
+  
   return (
     <>
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">إجمالي الطلبات</p>
-              <h3 className="text-2xl font-bold">{stats.totalRequests}</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                {stats.totalDays} يوم إجازة
-              </p>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-              <Calendar className="h-5 w-5 text-blue-600" />
-            </div>
-          </div>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">إجمالي الإجازات</CardTitle>
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.total}</div>
+          <p className="text-xs text-muted-foreground">
+            إجازة خلال {period === "yearly" ? "السنة" : period === "quarterly" ? "الربع" : "الشهر"}
+          </p>
         </CardContent>
       </Card>
-
+      
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">موافق عليها</p>
-              <h3 className="text-2xl font-bold">{stats.approvedCount}</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                {stats.approvedPercentage.toFixed(1)}%
-              </p>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-            </div>
-          </div>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">الإجازات المعتمدة</CardTitle>
+          <Briefcase className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.approved}</div>
+          <p className="text-xs text-muted-foreground">
+            {Math.round((stats.approved / stats.total) * 100)}% من إجمالي الإجازات
+          </p>
         </CardContent>
       </Card>
-
+      
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">قيد الانتظار</p>
-              <h3 className="text-2xl font-bold">{stats.pendingCount}</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                {stats.pendingPercentage.toFixed(1)}%
-              </p>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
-              <Clock className="h-5 w-5 text-amber-600" />
-            </div>
-          </div>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">قيد الانتظار</CardTitle>
+          <Clock className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.pending}</div>
+          <p className="text-xs text-muted-foreground">
+            {Math.round((stats.pending / stats.total) * 100)}% من إجمالي الإجازات
+          </p>
         </CardContent>
       </Card>
     </>
