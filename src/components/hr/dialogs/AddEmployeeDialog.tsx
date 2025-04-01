@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/store/refactored-auth";
 import { toast } from "sonner";
+import { EmployeeScheduleField } from "@/components/hr/fields/EmployeeScheduleField";
 
 interface AddEmployeeDialogProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
     email: "",
     phone: "",
     user_id: "no_user"
+    schedule_id: ""
   });
   
   // Fetch users for linking
@@ -231,7 +233,11 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
               ربط الموظف بحساب مستخدم يتيح له استخدام ميزات التسجيل الذاتي للحضور والانصراف
             </p>
           </div>
-          
+          {/* Employee Schedule Field */}
+<EmployeeScheduleField
+  value={formData.schedule_id}
+  onChange={(value) => handleSelectChange("schedule_id", value)}
+/>
           <DialogFooter className="mt-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
               إلغاء
