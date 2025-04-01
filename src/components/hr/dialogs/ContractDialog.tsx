@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -209,7 +208,10 @@ export function ContractDialog({ isOpen, onClose, employeeId, contract, onSave }
               <Label htmlFor="contractType">نوع العقد</Label>
               <Select
                 value={formData.contractType}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, contractType: value }))}
+                onValueChange={(value) => setFormData(prev => ({ 
+                  ...prev, 
+                  contractType: value as 'permanent' | 'temporary' | 'contract'
+                }))}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="اختر نوع العقد" />
@@ -275,4 +277,3 @@ export function ContractDialog({ isOpen, onClose, employeeId, contract, onSave }
     </Dialog>
   );
 }
-
