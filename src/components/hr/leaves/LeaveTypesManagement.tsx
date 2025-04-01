@@ -1,19 +1,9 @@
-import React, { useState, useEffect } from "react";
+
+import * as React from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, Pencil, Trash2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
+import { Plus, Trash, Pencil } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -22,279 +12,102 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
-interface LeaveType {
+type LeaveType = {
   id: string;
   name: string;
-  description: string | null;
-  is_paid: boolean;
-  max_days_per_year: number | null;
-  requires_approval: boolean;
-  color: string | null;
-  is_active: boolean;
-  created_at?: string;
-}
+  daysAllowed: number;
+  isPaid: boolean;
+  description?: string;
+};
 
 export function LeaveTypesManagement() {
-  const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([
+    {
+      id: "1",
+      name: "إجازة سنوية",
+      daysAllowed: 21,
+      isPaid: true,
+      description: "إجازة سنوية مدفوعة الأجر",
+    },
+    {
+      id: "2",
+      name: "إجازة مرضية",
+      daysAllowed: 14,
+      isPaid: true,
+      description: "إجازة مرضية بموجب تقرير طبي",
+    },
+    {
+      id: "3",
+      name: "إجازة بدون راتب",
+      daysAllowed: 30,
+      isPaid: false,
+      description: "إجازة غير مدفوعة الأجر",
+    },
+  ]);
+
+  const [openAddDialog, setOpenAddDialog] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
   const [selectedLeaveType, setSelectedLeaveType] = useState<LeaveType | null>(null);
+  
+  const [newLeaveType, setNewLeaveType] = useState({
+    name: "",
+    daysAllowed: 0,
+    isPaid: true,
+    description: "",
+  });
 
-  // Form state
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [isPaid, setIsPaid] = useState(true);
-  const [maxDaysPerYear, setMaxDaysPerYear] = useState<number | null>(null);
-  const [requiresApproval, setRequiresApproval] = useState(true);
-  const [color, setColor] = useState("#4f46e5");
-  const [isActive, setIsActive] = useState(true);
-
-  useEffect(() => {
-    fetchLeaveTypes();
-  }, []);
-
-  const fetchLeaveTypes = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("hr_leave_types")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        throw error;
-      }
-
-      setLeaveTypes(data || []);
-
-      // If no leave types exist, create default ones
-      if (!data || data.length === 0) {
-        await createDefaultLeaveTypes();
-        fetchLeaveTypes();
-      }
-    } catch (error) {
-      console.error("Error fetching leave types:", error);
-      toast({
-        title: "خطأ في جلب أنواع الإجازات",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+  const handleAddLeaveType = () => {
+    const id = Math.random().toString(36).substring(2, 9);
+    setLeaveTypes([...leaveTypes, { id, ...newLeaveType }]);
+    setNewLeaveType({
+      name: "",
+      daysAllowed: 0,
+      isPaid: true,
+      description: "",
+    });
+    setOpenAddDialog(false);
+    toast.success("تم إضافة نوع الإجازة بنجاح");
   };
 
-  const createDefaultLeaveTypes = async () => {
-    const defaultLeaveTypes = [
-      {
-        name: "إجازة سنوية",
-        description: "الإجازة السنوية المدفوعة",
-        is_paid: true,
-        max_days_per_year: 30,
-        requires_approval: true,
-        color: "#4f46e5",
-        is_active: true,
-      },
-      {
-        name: "إجازة مرضية",
-        description: "إجازة للمرض أو الإصابة",
-        is_paid: true,
-        max_days_per_year: 14,
-        requires_approval: true,
-        color: "#ef4444",
-        is_active: true,
-      },
-      {
-        name: "إجازة طارئة",
-        description: "إجازة قصيرة للأمور الطارئة",
-        is_paid: true,
-        max_days_per_year: 5,
-        requires_approval: true,
-        color: "#f59e0b",
-        is_active: true,
-      },
-      {
-        name: "إجازة بدون راتب",
-        description: "إجازة غير مدفوعة",
-        is_paid: false,
-        max_days_per_year: null,
-        requires_approval: true,
-        color: "#6b7280",
-        is_active: true,
-      },
-    ];
-
-    await supabase.from("hr_leave_types").insert(defaultLeaveTypes);
+  const handleEditLeaveType = () => {
+    if (!selectedLeaveType) return;
+    
+    const updatedLeaveTypes = leaveTypes.map((type) =>
+      type.id === selectedLeaveType.id ? selectedLeaveType : type
+    );
+    
+    setLeaveTypes(updatedLeaveTypes);
+    setOpenEditDialog(false);
+    toast.success("تم تعديل نوع الإجازة بنجاح");
   };
 
-  const handleAddLeaveType = async () => {
-    try {
-      if (!name) {
-        toast({
-          title: "خطأ في البيانات",
-          description: "يرجى إدخال اسم نوع الإجازة",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { error } = await supabase
-        .from("hr_leave_types")
-        .insert({
-          name,
-          description: description || null,
-          is_paid: isPaid,
-          max_days_per_year: maxDaysPerYear,
-          requires_approval: requiresApproval,
-          color,
-          is_active: isActive,
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "تم إضافة نوع الإجازة بنجاح",
-      });
-
-      resetForm();
-      setShowAddDialog(false);
-      fetchLeaveTypes();
-    } catch (error) {
-      console.error("Error adding leave type:", error);
-      toast({
-        title: "خطأ في إضافة نوع الإجازة",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleEditLeaveType = async () => {
-    try {
-      if (!selectedLeaveType) return;
-
-      if (!name) {
-        toast({
-          title: "خطأ في البيانات",
-          description: "يرجى إدخال اسم نوع الإجازة",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { error } = await supabase
-        .from("hr_leave_types")
-        .update({
-          name,
-          description: description || null,
-          is_paid: isPaid,
-          max_days_per_year: maxDaysPerYear,
-          requires_approval: requiresApproval,
-          color,
-          is_active: isActive,
-        })
-        .eq("id", selectedLeaveType.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "تم تحديث نوع الإجازة بنجاح",
-      });
-
-      resetForm();
-      setShowEditDialog(false);
-      fetchLeaveTypes();
-    } catch (error) {
-      console.error("Error updating leave type:", error);
-      toast({
-        title: "خطأ في تحديث نوع الإجازة",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteLeaveType = async (id: string) => {
-    try {
-      // Check if this leave type is being used
-      const { data: leaveRequests, error: checkError } = await supabase
-        .from("hr_leave_requests")
-        .select("id")
-        .eq("leave_type", leaveTypes.find(lt => lt.id === id)?.name || "")
-        .limit(1);
-
-      if (checkError) throw checkError;
-
-      if (leaveRequests && leaveRequests.length > 0) {
-        toast({
-          title: "لا يمكن حذف نوع الإجازة",
-          description: "هذا النوع مستخدم في طلبات إجازة موجودة",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { error } = await supabase
-        .from("hr_leave_types")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-
-      toast({
-        title: "تم حذف نوع الإجازة بنجاح",
-      });
-
-      fetchLeaveTypes();
-    } catch (error) {
-      console.error("Error deleting leave type:", error);
-      toast({
-        title: "خطأ في حذف نوع الإجازة",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const openEditDialog = (leaveType: LeaveType) => {
-    setSelectedLeaveType(leaveType);
-    setName(leaveType.name);
-    setDescription(leaveType.description || "");
-    setIsPaid(leaveType.is_paid);
-    setMaxDaysPerYear(leaveType.max_days_per_year);
-    setRequiresApproval(leaveType.requires_approval);
-    setColor(leaveType.color || "#4f46e5");
-    setIsActive(leaveType.is_active);
-    setShowEditDialog(true);
-  };
-
-  const resetForm = () => {
-    setName("");
-    setDescription("");
-    setIsPaid(true);
-    setMaxDaysPerYear(null);
-    setRequiresApproval(true);
-    setColor("#4f46e5");
-    setIsActive(true);
-    setSelectedLeaveType(null);
+  const handleDeleteLeaveType = (id: string) => {
+    const updatedLeaveTypes = leaveTypes.filter((type) => type.id !== id);
+    setLeaveTypes(updatedLeaveTypes);
+    toast.success("تم حذف نوع الإجازة بنجاح");
   };
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold">أنواع الإجازات</h2>
-        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <h2 className="text-xl font-bold">أنواع الإجازات</h2>
+        <Dialog open={openAddDialog} onOpenChange={setOpenAddDialog}>
           <DialogTrigger asChild>
-            <Button variant="outline" className="gap-1">
-              <PlusCircle className="h-4 w-4" />
+            <Button className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
               إضافة نوع إجازة
             </Button>
           </DialogTrigger>
@@ -303,258 +116,221 @@ export function LeaveTypesManagement() {
               <DialogTitle>إضافة نوع إجازة جديد</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="name">اسم نوع الإجازة</Label>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right col-span-1">
+                  الاسم
+                </Label>
                 <Input
                   id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="مثال: إجازة سنوية"
+                  value={newLeaveType.name}
+                  onChange={(e) =>
+                    setNewLeaveType({ ...newLeaveType, name: e.target.value })
+                  }
+                  className="col-span-3"
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="description">الوصف</Label>
-                <Textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="وصف مختصر لنوع الإجازة"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="maxDays">الحد الأقصى للأيام سنوياً</Label>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="daysAllowed" className="text-right col-span-1">
+                  عدد الأيام
+                </Label>
                 <Input
-                  id="maxDays"
+                  id="daysAllowed"
                   type="number"
-                  value={maxDaysPerYear !== null ? maxDaysPerYear : ""}
-                  onChange={(e) => setMaxDaysPerYear(e.target.value ? Number(e.target.value) : null)}
-                  placeholder="اترك فارغاً للأيام غير المحدودة"
+                  value={newLeaveType.daysAllowed}
+                  onChange={(e) =>
+                    setNewLeaveType({
+                      ...newLeaveType,
+                      daysAllowed: parseInt(e.target.value) || 0,
+                    })
+                  }
+                  className="col-span-3"
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="color">اللون</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    id="color"
-                    type="color"
-                    value={color}
-                    onChange={(e) => setColor(e.target.value)}
-                    className="w-12 h-8 p-1"
-                  />
-                  <Input
-                    type="text"
-                    value={color}
-                    onChange={(e) => setColor(e.target.value)}
-                    placeholder="#RRGGBB"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center space-x-2 space-x-reverse">
-                  <Label htmlFor="isPaid">مدفوعة الأجر</Label>
-                  <Switch
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="isPaid" className="text-right col-span-1">
+                  مدفوعة الأجر
+                </Label>
+                <div className="col-span-3 flex items-center">
+                  <input
                     id="isPaid"
-                    checked={isPaid}
-                    onCheckedChange={setIsPaid}
-                  />
-                </div>
-                <div className="flex items-center space-x-2 space-x-reverse">
-                  <Label htmlFor="requiresApproval">تتطلب موافقة</Label>
-                  <Switch
-                    id="requiresApproval"
-                    checked={requiresApproval}
-                    onCheckedChange={setRequiresApproval}
+                    type="checkbox"
+                    checked={newLeaveType.isPaid}
+                    onChange={(e) =>
+                      setNewLeaveType({
+                        ...newLeaveType,
+                        isPaid: e.target.checked,
+                      })
+                    }
+                    className="h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary"
                   />
                 </div>
               </div>
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <Label htmlFor="isActive">فعّال</Label>
-                <Switch
-                  id="isActive"
-                  checked={isActive}
-                  onCheckedChange={setIsActive}
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="description" className="text-right col-span-1">
+                  الوصف
+                </Label>
+                <Input
+                  id="description"
+                  value={newLeaveType.description}
+                  onChange={(e) =>
+                    setNewLeaveType({
+                      ...newLeaveType,
+                      description: e.target.value,
+                    })
+                  }
+                  className="col-span-3"
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button type="submit" onClick={handleAddLeaveType}>إضافة</Button>
+              <DialogClose asChild>
+                <Button variant="outline">إلغاء</Button>
+              </DialogClose>
+              <Button onClick={handleAddLeaveType}>إضافة</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={openEditDialog} onOpenChange={setOpenEditDialog}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>تعديل نوع الإجازة</DialogTitle>
+            </DialogHeader>
+            {selectedLeaveType && (
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-name" className="text-right col-span-1">
+                    الاسم
+                  </Label>
+                  <Input
+                    id="edit-name"
+                    value={selectedLeaveType.name}
+                    onChange={(e) =>
+                      setSelectedLeaveType({
+                        ...selectedLeaveType,
+                        name: e.target.value,
+                      })
+                    }
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-daysAllowed" className="text-right col-span-1">
+                    عدد الأيام
+                  </Label>
+                  <Input
+                    id="edit-daysAllowed"
+                    type="number"
+                    value={selectedLeaveType.daysAllowed}
+                    onChange={(e) =>
+                      setSelectedLeaveType({
+                        ...selectedLeaveType,
+                        daysAllowed: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-isPaid" className="text-right col-span-1">
+                    مدفوعة الأجر
+                  </Label>
+                  <div className="col-span-3 flex items-center">
+                    <input
+                      id="edit-isPaid"
+                      type="checkbox"
+                      checked={selectedLeaveType.isPaid}
+                      onChange={(e) =>
+                        setSelectedLeaveType({
+                          ...selectedLeaveType,
+                          isPaid: e.target.checked,
+                        })
+                      }
+                      className="h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-description" className="text-right col-span-1">
+                    الوصف
+                  </Label>
+                  <Input
+                    id="edit-description"
+                    value={selectedLeaveType.description || ""}
+                    onChange={(e) =>
+                      setSelectedLeaveType({
+                        ...selectedLeaveType,
+                        description: e.target.value,
+                      })
+                    }
+                    className="col-span-3"
+                  />
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">إلغاء</Button>
+              </DialogClose>
+              <Button onClick={handleEditLeaveType}>حفظ</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      {loading ? (
-        <div className="text-center py-4">جاري التحميل...</div>
-      ) : leaveTypes.length === 0 ? (
-        <div className="text-center py-4 text-muted-foreground">
-          لا توجد أنواع إجازات. أضف نوع الإجازة الأول.
-        </div>
-      ) : (
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>نوع الإجازة</TableHead>
-                  <TableHead>مدفوعة الأجر</TableHead>
-                  <TableHead>الحد الأقصى للأيام</TableHead>
-                  <TableHead>الحالة</TableHead>
-                  <TableHead className="text-left">الإجراءات</TableHead>
+      <Card>
+        <CardHeader>
+          <CardTitle>قائمة أنواع الإجازات</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-right">الاسم</TableHead>
+                <TableHead className="text-right">عدد الأيام</TableHead>
+                <TableHead className="text-right">مدفوعة الأجر</TableHead>
+                <TableHead className="text-right">الوصف</TableHead>
+                <TableHead className="text-right">الإجراءات</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {leaveTypes.map((type) => (
+                <TableRow key={type.id}>
+                  <TableCell className="font-medium">{type.name}</TableCell>
+                  <TableCell>{type.daysAllowed}</TableCell>
+                  <TableCell>
+                    {type.isPaid ? "نعم" : "لا"}
+                  </TableCell>
+                  <TableCell>{type.description}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setSelectedLeaveType(type);
+                          setOpenEditDialog(true);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive"
+                        onClick={() => handleDeleteLeaveType(type.id)}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {leaveTypes.map((leaveType) => (
-                  <TableRow key={leaveType.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className="w-3 h-3 rounded-full" 
-                          style={{ backgroundColor: leaveType.color || '#4f46e5' }}
-                        />
-                        <span>{leaveType.name}</span>
-                      </div>
-                      {leaveType.description && (
-                        <p className="text-xs text-muted-foreground">{leaveType.description}</p>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {leaveType.is_paid ? (
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                          مدفوعة
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
-                          غير مدفوعة
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {leaveType.max_days_per_year !== null ? (
-                        `${leaveType.max_days_per_year} يوم`
-                      ) : (
-                        "غير محدود"
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {leaveType.is_active ? (
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                          فعّال
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
-                          غير فعّال
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openEditDialog(leaveType)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteLeaveType(leaveType.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Edit Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>تعديل نوع الإجازة</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="edit-name">اسم نوع الإجازة</Label>
-              <Input
-                id="edit-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-description">الوصف</Label>
-              <Textarea
-                id="edit-description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-maxDays">الحد الأقصى للأيام سنوياً</Label>
-              <Input
-                id="edit-maxDays"
-                type="number"
-                value={maxDaysPerYear !== null ? maxDaysPerYear : ""}
-                onChange={(e) => setMaxDaysPerYear(e.target.value ? Number(e.target.value) : null)}
-                placeholder="اترك فارغاً للأيام غير المحدودة"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-color">اللون</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="edit-color"
-                  type="color"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="w-12 h-8 p-1"
-                />
-                <Input
-                  type="text"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  placeholder="#RRGGBB"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <Label htmlFor="edit-isPaid">مدفوعة الأجر</Label>
-                <Switch
-                  id="edit-isPaid"
-                  checked={isPaid}
-                  onCheckedChange={setIsPaid}
-                />
-              </div>
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <Label htmlFor="edit-requiresApproval">تتطلب موافقة</Label>
-                <Switch
-                  id="edit-requiresApproval"
-                  checked={requiresApproval}
-                  onCheckedChange={setRequiresApproval}
-                />
-              </div>
-            </div>
-            <div className="flex items-center space-x-2 space-x-reverse">
-              <Label htmlFor="edit-isActive">فعّال</Label>
-              <Switch
-                id="edit-isActive"
-                checked={isActive}
-                onCheckedChange={setIsActive}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="submit" onClick={handleEditLeaveType}>حفظ التغييرات</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
+

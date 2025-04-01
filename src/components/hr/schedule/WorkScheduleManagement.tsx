@@ -1,373 +1,399 @@
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, Pencil, Trash2, Check, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
   DialogFooter,
-  DialogClose
 } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { WorkDaysEditor } from "./WorkDaysEditor";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
+import { Clock, Plus, Trash, Edit } from "lucide-react";
+import { TimeInput } from "@/components/ui/time-input";
 
 interface WorkSchedule {
   id: string;
   name: string;
-  description: string | null;
+  description: string;
   is_default: boolean;
   work_hours_per_day: number;
   work_days_per_week: number;
-  created_at?: string;
+  created_at: string;
 }
 
 interface WorkDay {
   id: string;
   schedule_id: string;
   day_of_week: number;
-  is_working_day: boolean;
   start_time: string | null;
   end_time: string | null;
+  is_working_day: boolean;
 }
 
 export function WorkScheduleManagement() {
-  const [schedules, setSchedules] = useState<WorkSchedule[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [selectedSchedule, setSelectedSchedule] = useState<WorkSchedule | null>(null);
-  const [workDays, setWorkDays] = useState<WorkDay[]>([]);
-  const [showWorkDaysDialog, setShowWorkDaysDialog] = useState(false);
-
-  // Form state
+  const queryClient = useQueryClient();
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState<WorkSchedule | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [workHoursPerDay, setWorkHoursPerDay] = useState(8);
-  const [workDaysPerWeek, setWorkDaysPerWeek] = useState(5);
   const [isDefault, setIsDefault] = useState(false);
+  const [workHours, setWorkHours] = useState(8);
+  const [workDays, setWorkDays] = useState(5);
+  const [workDaySettings, setWorkDaySettings] = useState<WorkDay[]>([]);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchSchedules();
-  }, []);
-
-  const fetchSchedules = async () => {
-    try {
-      setLoading(true);
+  // Fetch work schedules
+  const { data: schedules, isLoading } = useQuery({
+    queryKey: ["work-schedules"],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("hr_work_schedules")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
+      return data as WorkSchedule[];
+    },
+  });
 
-      setSchedules(data || []);
-    } catch (error) {
-      console.error("Error fetching work schedules:", error);
-      toast({
-        title: "خطأ في جلب جداول العمل",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+  // Fetch work days for a specific schedule
+  const fetchWorkDays = async (scheduleId: string) => {
+    const { data, error } = await supabase
+      .from("hr_work_days")
+      .select("*")
+      .eq("schedule_id", scheduleId)
+      .order("day_of_week", { ascending: true });
+
+    if (error) throw error;
+    return data as WorkDay[];
   };
 
-  const handleAddSchedule = async () => {
-    try {
-      if (!name || workHoursPerDay <= 0 || workDaysPerWeek <= 0) {
-        toast({
-          title: "خطأ في البيانات",
-          description: "يرجى ملء جميع الحقول المطلوبة",
-          variant: "destructive",
-        });
+  // Create or update work schedule
+  const mutation = useMutation({
+    mutationFn: async () => {
+      // Validate form
+      if (!name.trim()) {
+        toast.error("يرجى إدخال اسم الجدول");
         return;
       }
 
-      // If setting as default, update all other schedules
-      if (isDefault) {
-        await supabase
-          .from("hr_work_schedules")
-          .update({ is_default: false })
-          .eq("is_default", true);
+      if (workHours <= 0 || workDays <= 0) {
+        toast.error("يجب أن تكون ساعات وأيام العمل أكبر من الصفر");
+        return;
       }
 
-      const { data, error } = await supabase
-        .from("hr_work_schedules")
-        .insert({
-          name,
-          description: description || null,
-          work_hours_per_day: workHoursPerDay,
-          work_days_per_week: workDaysPerWeek,
-          is_default: isDefault,
-        })
-        .select()
-        .single();
+      // First, create or update the schedule
+      let scheduleId: string;
+      if (editingSchedule) {
+        const { data, error } = await supabase
+          .from("hr_work_schedules")
+          .update({
+            name,
+            description,
+            is_default: isDefault,
+            work_hours_per_day: workHours,
+            work_days_per_week: workDays,
+          })
+          .eq("id", editingSchedule.id)
+          .select()
+          .single();
 
-      if (error) throw error;
+        if (error) throw error;
+        scheduleId = data.id;
 
-      toast({
-        title: "تم إنشاء جدول العمل بنجاح",
-      });
-
-      // Create default work days for this schedule
-      if (data) {
-        const defaultWorkDays = [];
-        for (let i = 0; i < 7; i++) {
-          // Default work days are Sunday to Thursday (0-4)
-          const isWorkingDay = i < workDaysPerWeek;
-          defaultWorkDays.push({
-            schedule_id: data.id,
-            day_of_week: i,
-            is_working_day: isWorkingDay,
-            start_time: isWorkingDay ? "08:00:00" : null,
-            end_time: isWorkingDay ? "16:00:00" : null,
-          });
+        // If marked as default, unmark other schedules
+        if (isDefault) {
+          await supabase
+            .from("hr_work_schedules")
+            .update({ is_default: false })
+            .neq("id", scheduleId);
         }
-
-        await supabase.from("hr_work_days").insert(defaultWorkDays);
-      }
-
-      // Reset form and refetch
-      resetForm();
-      setShowAddDialog(false);
-      fetchSchedules();
-    } catch (error) {
-      console.error("Error adding work schedule:", error);
-      toast({
-        title: "خطأ في إنشاء جدول العمل",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleEditSchedule = async () => {
-    try {
-      if (!selectedSchedule) return;
-
-      if (!name || workHoursPerDay <= 0 || workDaysPerWeek <= 0) {
-        toast({
-          title: "خطأ في البيانات",
-          description: "يرجى ملء جميع الحقول المطلوبة",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // If setting as default, update all other schedules
-      if (isDefault && !selectedSchedule.is_default) {
-        await supabase
+      } else {
+        const { data, error } = await supabase
           .from("hr_work_schedules")
-          .update({ is_default: false })
-          .eq("is_default", true);
+          .insert({
+            name,
+            description,
+            is_default: isDefault,
+            work_hours_per_day: workHours,
+            work_days_per_week: workDays,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        scheduleId = data.id;
+
+        // If marked as default, unmark other schedules
+        if (isDefault) {
+          await supabase
+            .from("hr_work_schedules")
+            .update({ is_default: false })
+            .neq("id", scheduleId);
+        }
       }
 
-      const { error } = await supabase
-        .from("hr_work_schedules")
-        .update({
-          name,
-          description: description || null,
-          work_hours_per_day: workHoursPerDay,
-          work_days_per_week: workDaysPerWeek,
-          is_default: isDefault,
-        })
-        .eq("id", selectedSchedule.id);
+      // Now save the work days
+      if (workDaySettings.length > 0) {
+        // Delete existing work days for this schedule
+        await supabase
+          .from("hr_work_days")
+          .delete()
+          .eq("schedule_id", scheduleId);
 
-      if (error) throw error;
+        // Insert new work days
+        const { error } = await supabase
+          .from("hr_work_days")
+          .insert(workDaySettings.map(day => ({
+            ...day,
+            schedule_id: scheduleId
+          })));
 
-      toast({
-        title: "تم تحديث جدول العمل بنجاح",
-      });
+        if (error) throw error;
+      }
 
+      return scheduleId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["work-schedules"] });
+      toast.success(
+        editingSchedule
+          ? "تم تحديث جدول العمل بنجاح"
+          : "تم إنشاء جدول العمل بنجاح"
+      );
       resetForm();
-      setShowEditDialog(false);
-      fetchSchedules();
-    } catch (error) {
-      console.error("Error updating work schedule:", error);
-      toast({
-        title: "خطأ في تحديث جدول العمل",
-        variant: "destructive",
-      });
-    }
-  };
+    },
+    onError: (error) => {
+      console.error("Error saving work schedule:", error);
+      toast.error("حدث خطأ أثناء حفظ جدول العمل");
+    },
+  });
 
-  const handleDeleteSchedule = async (id: string) => {
-    try {
-      // Check if this is the default schedule
-      const scheduleToDelete = schedules.find(s => s.id === id);
-      
-      if (scheduleToDelete?.is_default) {
-        toast({
-          title: "لا يمكن حذف الجدول الافتراضي",
-          description: "يرجى تعيين جدول آخر كافتراضي أولاً",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Check if schedule is assigned to any employees
-      const { data: employees, error: empError } = await supabase
+  // Delete work schedule
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      // First check if any employees are using this schedule
+      const { data: employees, error: checkError } = await supabase
         .from("employees")
         .select("id")
         .eq("schedule_id", id);
 
-      if (empError) throw empError;
+      if (checkError) throw checkError;
 
       if (employees && employees.length > 0) {
-        toast({
-          title: "لا يمكن حذف الجدول",
-          description: `هذا الجدول مُعين لـ ${employees.length} موظف`,
-          variant: "destructive",
-        });
-        return;
+        throw new Error(`هناك ${employees.length} موظف يستخدم هذا الجدول. قم بتغيير جداولهم أولاً.`);
       }
 
-      // Delete the schedule (work days will be cascade deleted)
+      // Delete work days first
+      const { error: daysError } = await supabase
+        .from("hr_work_days")
+        .delete()
+        .eq("schedule_id", id);
+
+      if (daysError) throw daysError;
+
+      // Then delete the schedule
       const { error } = await supabase
         .from("hr_work_schedules")
         .delete()
         .eq("id", id);
 
       if (error) throw error;
-
-      toast({
-        title: "تم حذف جدول العمل بنجاح",
-      });
-
-      fetchSchedules();
-    } catch (error) {
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["work-schedules"] });
+      toast.success("تم حذف جدول العمل بنجاح");
+      setIsDeleting(null);
+    },
+    onError: (error) => {
       console.error("Error deleting work schedule:", error);
-      toast({
-        title: "خطأ في حذف جدول العمل",
-        variant: "destructive",
-      });
-    }
-  };
+      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء حذف جدول العمل");
+      setIsDeleting(null);
+    },
+  });
 
-  const openEditDialog = (schedule: WorkSchedule) => {
-    setSelectedSchedule(schedule);
+  // Initialize work days when creating a new schedule
+  useEffect(() => {
+    if (!editingSchedule && workDaySettings.length === 0) {
+      const days = [
+        { day_of_week: 0, name: "الأحد" },
+        { day_of_week: 1, name: "الإثنين" },
+        { day_of_week: 2, name: "الثلاثاء" },
+        { day_of_week: 3, name: "الأربعاء" },
+        { day_of_week: 4, name: "الخميس" },
+        { day_of_week: 5, name: "الجمعة" },
+        { day_of_week: 6, name: "السبت" },
+      ];
+
+      const initialWorkDays = days.map(day => ({
+        id: `temp-${day.day_of_week}`,
+        schedule_id: "temp",
+        day_of_week: day.day_of_week,
+        start_time: day.day_of_week < 5 ? "08:00:00" : null,
+        end_time: day.day_of_week < 5 ? "16:00:00" : null,
+        is_working_day: day.day_of_week < 5, // Default: Sunday to Thursday are working days
+      }));
+
+      setWorkDaySettings(initialWorkDays);
+    }
+  }, [editingSchedule, workDaySettings.length]);
+
+  // Load work day settings when editing a schedule
+  useEffect(() => {
+    if (editingSchedule) {
+      const loadWorkDays = async () => {
+        try {
+          const workDays = await fetchWorkDays(editingSchedule.id);
+          
+          // If no work days are found, initialize them
+          if (workDays.length === 0) {
+            const days = [
+              { day_of_week: 0, name: "الأحد" },
+              { day_of_week: 1, name: "الإثنين" },
+              { day_of_week: 2, name: "الثلاثاء" },
+              { day_of_week: 3, name: "الأربعاء" },
+              { day_of_week: 4, name: "الخميس" },
+              { day_of_week: 5, name: "الجمعة" },
+              { day_of_week: 6, name: "السبت" },
+            ];
+
+            const initialWorkDays = days.map(day => ({
+              id: `temp-${day.day_of_week}`,
+              schedule_id: editingSchedule.id,
+              day_of_week: day.day_of_week,
+              start_time: day.day_of_week < 5 ? "08:00:00" : null,
+              end_time: day.day_of_week < 5 ? "16:00:00" : null,
+              is_working_day: day.day_of_week < 5,
+            }));
+
+            setWorkDaySettings(initialWorkDays);
+          } else {
+            setWorkDaySettings(workDays);
+          }
+        } catch (error) {
+          console.error("Error loading work days:", error);
+          toast.error("حدث خطأ أثناء تحميل تفاصيل أيام العمل");
+        }
+      };
+
+      loadWorkDays();
+    }
+  }, [editingSchedule]);
+
+  const handleEditSchedule = async (schedule: WorkSchedule) => {
+    setEditingSchedule(schedule);
     setName(schedule.name);
     setDescription(schedule.description || "");
-    setWorkHoursPerDay(schedule.work_hours_per_day);
-    setWorkDaysPerWeek(schedule.work_days_per_week);
     setIsDefault(schedule.is_default);
-    setShowEditDialog(true);
+    setWorkHours(schedule.work_hours_per_day);
+    setWorkDays(schedule.work_days_per_week);
+    setIsFormOpen(true);
+
+    // Work days will be loaded in the useEffect
   };
 
-  const openWorkDaysDialog = async (schedule: WorkSchedule) => {
-    try {
-      setSelectedSchedule(schedule);
-      
-      // Fetch work days for this schedule
-      const { data, error } = await supabase
-        .from("hr_work_days")
-        .select("*")
-        .eq("schedule_id", schedule.id)
-        .order("day_of_week", { ascending: true });
-        
-      if (error) throw error;
-      
-      setWorkDays(data || []);
-      setShowWorkDaysDialog(true);
-    } catch (error) {
-      console.error("Error fetching work days:", error);
-      toast({
-        title: "خطأ في جلب أيام العمل",
-        variant: "destructive",
-      });
-    }
+  const handleDeleteSchedule = (id: string) => {
+    setIsDeleting(id);
+    deleteMutation.mutate(id);
   };
 
   const resetForm = () => {
+    setIsFormOpen(false);
+    setEditingSchedule(null);
     setName("");
     setDescription("");
-    setWorkHoursPerDay(8);
-    setWorkDaysPerWeek(5);
     setIsDefault(false);
-    setSelectedSchedule(null);
+    setWorkHours(8);
+    setWorkDays(5);
+    setWorkDaySettings([]);
   };
 
-  const handleWorkDaysChange = (updatedWorkDays: WorkDay[]) => {
-    setWorkDays(updatedWorkDays);
+  const handleWorkDayChange = (dayOfWeek: number, field: string, value: any) => {
+    setWorkDaySettings(prev => 
+      prev.map(day => 
+        day.day_of_week === dayOfWeek 
+          ? { ...day, [field]: value } 
+          : day
+      )
+    );
   };
 
-  const saveWorkDays = async () => {
-    try {
-      if (!selectedSchedule) return;
-      
-      // Update all work days at once
-      const { error } = await supabase
-        .from("hr_work_days")
-        .upsert(workDays);
-        
-      if (error) throw error;
-      
-      toast({
-        title: "تم حفظ أيام العمل بنجاح",
-      });
-      
-      setShowWorkDaysDialog(false);
-    } catch (error) {
-      console.error("Error saving work days:", error);
-      toast({
-        title: "خطأ في حفظ أيام العمل",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const getDayString = (day: number): string => {
+  const getDayName = (dayOfWeek: number) => {
     const days = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-    return days[day];
+    return days[dayOfWeek];
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="flex justify-center items-center min-h-[200px]">
+          <p>جاري تحميل جداول العمل...</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold">جداول العمل</h2>
-        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <h2 className="text-xl font-bold flex items-center gap-2">
+          <Clock className="h-5 w-5" />
+          جداول العمل
+        </h2>
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" className="gap-1">
-              <PlusCircle className="h-4 w-4" />
+            <Button 
+              onClick={() => {
+                resetForm();
+                setIsFormOpen(true);
+              }} 
+              className="flex items-center gap-1"
+            >
+              <Plus className="h-4 w-4" />
               إضافة جدول عمل
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[600px]" dir="rtl">
             <DialogHeader>
-              <DialogTitle>إضافة جدول عمل جديد</DialogTitle>
+              <DialogTitle>
+                {editingSchedule ? "تعديل جدول العمل" : "إضافة جدول عمل جديد"}
+              </DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
+              <div className="space-y-2">
                 <Label htmlFor="name">اسم الجدول</Label>
                 <Input
                   id="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="مثال: دوام كامل"
+                  placeholder="مثال: دوام كامل، دوام جزئي، عن بعد"
                 />
               </div>
-              <div className="grid gap-2">
+              <div className="space-y-2">
                 <Label htmlFor="description">الوصف</Label>
-                <Textarea
+                <Input
                   id="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -375,206 +401,187 @@ export function WorkScheduleManagement() {
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="workHours">ساعات العمل / يوم</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="workHours">ساعات العمل اليومية</Label>
                   <Input
                     id="workHours"
                     type="number"
                     min="1"
                     max="24"
-                    value={workHoursPerDay}
-                    onChange={(e) => setWorkHoursPerDay(Number(e.target.value))}
+                    value={workHours}
+                    onChange={(e) => setWorkHours(parseInt(e.target.value))}
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="workDays">أيام العمل / أسبوع</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="workDays">أيام العمل الأسبوعية</Label>
                   <Input
                     id="workDays"
                     type="number"
                     min="1"
                     max="7"
-                    value={workDaysPerWeek}
-                    onChange={(e) => setWorkDaysPerWeek(Number(e.target.value))}
+                    value={workDays}
+                    onChange={(e) => setWorkDays(parseInt(e.target.value))}
                   />
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label>جدول الأسبوع</Label>
+                <div className="border rounded-md overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>اليوم</TableHead>
+                        <TableHead>يوم عمل</TableHead>
+                        <TableHead>وقت البدء</TableHead>
+                        <TableHead>وقت الانتهاء</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {workDaySettings.map((day) => (
+                        <TableRow key={day.day_of_week}>
+                          <TableCell>{getDayName(day.day_of_week)}</TableCell>
+                          <TableCell>
+                            <Select
+                              value={day.is_working_day ? "true" : "false"}
+                              onValueChange={(value) =>
+                                handleWorkDayChange(
+                                  day.day_of_week,
+                                  "is_working_day",
+                                  value === "true"
+                                )
+                              }
+                            >
+                              <SelectTrigger className="w-[100px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="true">نعم</SelectItem>
+                                <SelectItem value="false">لا</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <TimeInput
+                              value={day.start_time || ""}
+                              onChange={(value) =>
+                                handleWorkDayChange(day.day_of_week, "start_time", value)
+                              }
+                              disabled={!day.is_working_day}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <TimeInput
+                              value={day.end_time || ""}
+                              onChange={(value) =>
+                                handleWorkDayChange(day.day_of_week, "end_time", value)
+                              }
+                              disabled={!day.is_working_day}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
               <div className="flex items-center space-x-2 space-x-reverse">
-                <Checkbox
+                <input
+                  type="checkbox"
                   id="isDefault"
                   checked={isDefault}
-                  onCheckedChange={(checked) => setIsDefault(checked as boolean)}
+                  onChange={(e) => setIsDefault(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300"
                 />
-                <Label htmlFor="isDefault">
-                  تعيين كجدول افتراضي
-                </Label>
+                <Label htmlFor="isDefault">تعيين كجدول افتراضي</Label>
               </div>
             </div>
             <DialogFooter>
-              <Button type="submit" onClick={handleAddSchedule}>إضافة</Button>
+              <Button type="button" variant="outline" onClick={resetForm}>
+                إلغاء
+              </Button>
+              <Button 
+                type="button" 
+                onClick={() => mutation.mutate()}
+                disabled={mutation.isPending}
+              >
+                {mutation.isPending ? "جاري الحفظ..." : "حفظ"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      {loading ? (
-        <div className="text-center py-4">جاري التحميل...</div>
-      ) : schedules.length === 0 ? (
-        <div className="text-center py-4 text-muted-foreground">
-          لا توجد جداول عمل. أضف جدولك الأول.
-        </div>
-      ) : (
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>اسم الجدول</TableHead>
-                  <TableHead>ساعات/أيام العمل</TableHead>
-                  <TableHead>الحالة</TableHead>
-                  <TableHead className="text-left">الإجراءات</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {schedules.map((schedule) => (
-                  <TableRow key={schedule.id}>
-                    <TableCell className="font-medium">
-                      {schedule.name}
-                      {schedule.description && (
-                        <p className="text-xs text-muted-foreground">{schedule.description}</p>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {schedule.work_hours_per_day} ساعة / {schedule.work_days_per_week} أيام
-                    </TableCell>
-                    <TableCell>
-                      {schedule.is_default && (
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                          افتراضي
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => openWorkDaysDialog(schedule)}
-                        >
-                          أيام العمل
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => openEditDialog(schedule)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => handleDeleteSchedule(schedule.id)}
-                          disabled={schedule.is_default}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+      <Card>
+        <CardHeader>
+          <CardTitle>جداول العمل المتاحة</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {schedules?.length === 0 ? (
+            <div className="text-center py-4">
+              <p className="text-muted-foreground">لا توجد جداول عمل محددة.</p>
+              <Button
+                variant="outline"
+                className="mt-2"
+                onClick={() => setIsFormOpen(true)}
+              >
+                إضافة جدول عمل
+              </Button>
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>الاسم</TableHead>
+                    <TableHead>الوصف</TableHead>
+                    <TableHead>ساعات العمل</TableHead>
+                    <TableHead>أيام العمل</TableHead>
+                    <TableHead>افتراضي</TableHead>
+                    <TableHead>إجراءات</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Edit Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>تعديل جدول العمل</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="edit-name">اسم الجدول</Label>
-              <Input
-                id="edit-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
+                </TableHeader>
+                <TableBody>
+                  {schedules?.map((schedule) => (
+                    <TableRow key={schedule.id}>
+                      <TableCell className="font-medium">{schedule.name}</TableCell>
+                      <TableCell>{schedule.description || "-"}</TableCell>
+                      <TableCell>{schedule.work_hours_per_day} ساعة</TableCell>
+                      <TableCell>{schedule.work_days_per_week} أيام</TableCell>
+                      <TableCell>
+                        {schedule.is_default ? (
+                          <span className="text-green-600">نعم</span>
+                        ) : (
+                          <span className="text-muted-foreground">لا</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2 space-x-reverse">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEditSchedule(schedule)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive"
+                            onClick={() => handleDeleteSchedule(schedule.id)}
+                            disabled={isDeleting === schedule.id}
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-description">الوصف</Label>
-              <Textarea
-                id="edit-description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="edit-workHours">ساعات العمل / يوم</Label>
-                <Input
-                  id="edit-workHours"
-                  type="number"
-                  min="1"
-                  max="24"
-                  value={workHoursPerDay}
-                  onChange={(e) => setWorkHoursPerDay(Number(e.target.value))}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-workDays">أيام العمل / أسبوع</Label>
-                <Input
-                  id="edit-workDays"
-                  type="number"
-                  min="1"
-                  max="7"
-                  value={workDaysPerWeek}
-                  onChange={(e) => setWorkDaysPerWeek(Number(e.target.value))}
-                />
-              </div>
-            </div>
-            <div className="flex items-center space-x-2 space-x-reverse">
-              <Checkbox
-                id="edit-isDefault"
-                checked={isDefault}
-                onCheckedChange={(checked) => setIsDefault(checked as boolean)}
-              />
-              <Label htmlFor="edit-isDefault">
-                تعيين كجدول افتراضي
-              </Label>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="submit" onClick={handleEditSchedule}>حفظ التغييرات</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Work Days Dialog */}
-      <Dialog open={showWorkDaysDialog} onOpenChange={setShowWorkDaysDialog}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>
-              أيام العمل - {selectedSchedule?.name}
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="py-4">
-            {selectedSchedule && (
-              <WorkDaysEditor 
-                workDays={workDays} 
-                onChange={handleWorkDaysChange} 
-              />
-            )}
-          </div>
-          
-          <DialogFooter>
-            <Button type="submit" onClick={saveWorkDays}>حفظ</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
-
