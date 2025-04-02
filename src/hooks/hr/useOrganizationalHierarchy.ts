@@ -24,7 +24,14 @@ export function useOrganizationalHierarchy() {
         throw error;
       }
       
-      return data as OrganizationalHierarchyItem[];
+      // Transform the data if needed
+      const transformedData = data.map((item: any) => ({
+        ...item,
+        // Convert UUID[] to string[] if needed
+        path: Array.isArray(item.path) ? item.path : []
+      }));
+      
+      return transformedData as OrganizationalHierarchyItem[];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

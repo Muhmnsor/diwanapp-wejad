@@ -1,9 +1,10 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useOrganizationalHierarchy } from "@/hooks/hr/useOrganizationalHierarchy";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ChartNodeProps {
   name: string;
@@ -11,6 +12,8 @@ interface ChartNodeProps {
   depth: number;
   isLast: boolean;
   hasChildren: boolean;
+  isDepartment: boolean;
+  parentType?: string;
 }
 
 const ChartNode: React.FC<ChartNodeProps> = ({ 
@@ -18,10 +21,24 @@ const ChartNode: React.FC<ChartNodeProps> = ({
   type, 
   depth, 
   isLast,
-  hasChildren
+  hasChildren,
+  isDepartment,
+  parentType
 }) => {
   // Get the background color based on the node type
-  const getBgColor = (type: string) => {
+  const getBgColor = (type: string, isDepartment: boolean, parentType?: string) => {
+    // If it's a department, use a different style that relates to its parent
+    if (isDepartment && parentType) {
+      switch (parentType.toLowerCase()) {
+        case 'division': return 'bg-green-50 border-green-200';
+        case 'section': return 'bg-amber-50 border-amber-200';
+        case 'team': return 'bg-orange-50 border-orange-200';
+        case 'unit': return 'bg-purple-50 border-purple-200';
+        default: return 'bg-blue-50 border-blue-200';
+      }
+    }
+    
+    // Regular styling for non-department units
     switch (type.toLowerCase()) {
       case 'department': return 'bg-blue-100 border-blue-300';
       case 'division': return 'bg-green-100 border-green-300';
@@ -32,6 +49,11 @@ const ChartNode: React.FC<ChartNodeProps> = ({
     }
   };
 
+  // Adjust padding based on whether it's a department
+  const nodePadding = isDepartment ? 'px-3 py-1' : 'px-4 py-2';
+  const nodeFont = isDepartment ? 'text-sm' : 'text-base';
+  const nodeBorder = isDepartment ? 'border-dashed' : 'border-solid';
+
   return (
     <div className="relative">
       {depth > 0 && (
@@ -41,7 +63,7 @@ const ChartNode: React.FC<ChartNodeProps> = ({
         </>
       )}
       
-      <div className={`relative z-10 inline-block px-4 py-2 rounded-lg border ${getBgColor(type)} min-w-32 text-center font-medium`}>
+      <div className={`relative z-10 inline-block ${nodePadding} rounded-lg border ${nodeBorder} ${getBgColor(type, isDepartment, parentType)} min-w-32 text-center font-medium ${nodeFont}`}>
         {name}
         {hasChildren && <ChevronDown className="mx-auto mt-1 h-4 w-4 text-muted-foreground" />}
       </div>
@@ -56,6 +78,7 @@ const ChartNode: React.FC<ChartNodeProps> = ({
 
 export function OrganizationChart() {
   const { data: hierarchy, isLoading, isError } = useOrganizationalHierarchy();
+  const [viewMode, setViewMode] = useState<'chart' | 'tree'>('chart');
   
   if (isLoading) {
     return (
@@ -107,7 +130,11 @@ export function OrganizationChart() {
     return rootItems;
   };
   
-  const renderNode = (node: any, depth = 0, isLast = true) => {
+  const renderNode = (node: any, depth = 0, isLast = true, parentType?: string) => {
+    const isDepartment = node.unit_type.toLowerCase() === 'department';
+    
+    // Departments will be rendered slightly differently
+    // by passing the isDepartment and parentType props
     return (
       <div key={node.id} className="flex flex-col items-center">
         <ChartNode 
@@ -116,6 +143,8 @@ export function OrganizationChart() {
           depth={depth}
           isLast={isLast}
           hasChildren={node.children && node.children.length > 0}
+          isDepartment={isDepartment}
+          parentType={parentType}
         />
         
         {node.children && node.children.length > 0 && (
@@ -132,7 +161,8 @@ export function OrganizationChart() {
               renderNode(
                 child, 
                 depth + 1, 
-                index === node.children.length - 1
+                index === node.children.length - 1,
+                node.unit_type // Pass the parent's unit type to the child
               )
             ))}
           </div>
@@ -146,6 +176,16 @@ export function OrganizationChart() {
   return (
     <Card>
       <CardContent className="p-6 overflow-auto">
+        <div className="flex justify-end mb-4">
+          <Button
+            variant="outline"
+            className="mr-2"
+            onClick={() => setViewMode(viewMode === 'chart' ? 'tree' : 'chart')}
+          >
+            {viewMode === 'chart' ? 'عرض شجري' : 'عرض هيكلي'} 
+            {viewMode === 'chart' ? <ChevronDown className="ms-2 h-4 w-4" /> : <ChevronUp className="ms-2 h-4 w-4" />}
+          </Button>
+        </div>
         <div className="min-w-[500px] flex justify-center p-4">
           {treeData.length > 0 ? (
             <div className="flex flex-col gap-8">
