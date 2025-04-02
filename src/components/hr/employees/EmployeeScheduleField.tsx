@@ -27,32 +27,25 @@ export function EmployeeScheduleField({
   const { schedules, defaultSchedule, isLoadingSchedules } = useEmployeeSchedule();
   const [selectedSchedule, setSelectedSchedule] = useState(scheduleId || "");
 
-  console.log("EmployeeScheduleField - Initial props:", { employeeId, scheduleId, isReadOnly });
-  console.log("EmployeeScheduleField - Available schedules:", schedules);
-  console.log("EmployeeScheduleField - Default schedule:", defaultSchedule);
-
+  // Effect to set default values and handle prop changes
   useEffect(() => {
-    console.log("EmployeeScheduleField - Effect triggered with scheduleId:", scheduleId);
-    
     // If scheduleId is empty and we have a default schedule, set it
     if ((!scheduleId || scheduleId === "") && defaultSchedule?.id && !selectedSchedule) {
-      console.log("EmployeeScheduleField - Setting default schedule:", defaultSchedule.id);
       setSelectedSchedule(defaultSchedule.id);
       onScheduleChange(defaultSchedule.id);
-    } else if (scheduleId !== selectedSchedule && scheduleId) {
-      console.log("EmployeeScheduleField - Updating selected schedule from props:", scheduleId);
+    } 
+    // If scheduleId changes from props, update local state
+    else if (scheduleId !== selectedSchedule && scheduleId) {
       setSelectedSchedule(scheduleId);
     }
   }, [scheduleId, defaultSchedule, selectedSchedule, onScheduleChange]);
 
   const handleScheduleChange = (value: string) => {
-    console.log("EmployeeScheduleField - Schedule changed to:", value);
     setSelectedSchedule(value);
     onScheduleChange(value);
   };
 
   const currentSchedule = schedules?.find(s => s.id === selectedSchedule);
-  console.log("EmployeeScheduleField - Current schedule:", currentSchedule);
 
   return (
     <div className="space-y-2">

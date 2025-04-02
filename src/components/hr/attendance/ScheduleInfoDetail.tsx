@@ -17,35 +17,56 @@ export function ScheduleInfoDetail({ employeeId }: ScheduleInfoDetailProps) {
   const { getEmployeeSchedule, getWorkDays } = useEmployeeSchedule();
 
   useEffect(() => {
+    // Only load data if we have a valid employeeId
+    if (!employeeId) {
+      setIsLoading(false);
+      setSchedule(null);
+      setWorkDays([]);
+      return;
+    }
+
+    let isMounted = true;
     const loadScheduleData = async () => {
       try {
         setIsLoading(true);
-        console.log("ScheduleInfoDetail (attendance) - Loading data for employee:", employeeId);
         
         const employeeSchedule = await getEmployeeSchedule(employeeId);
-        console.log("ScheduleInfoDetail (attendance) - Retrieved schedule:", employeeSchedule);
+        
+        // Only update state if component is still mounted
+        if (!isMounted) return;
         
         if (employeeSchedule) {
           setSchedule(employeeSchedule);
           
           const days = await getWorkDays(employeeSchedule.id);
-          console.log("ScheduleInfoDetail (attendance) - Work days:", days);
+          
+          // Only update state if component is still mounted
+          if (!isMounted) return;
+          
           setWorkDays(days || []);
         } else {
-          console.log("ScheduleInfoDetail (attendance) - No schedule found");
+          setSchedule(null);
+          setWorkDays([]);
         }
       } catch (error) {
-        console.error("ScheduleInfoDetail (attendance) - Error loading schedule data:", error);
+        console.error("Error loading schedule data:", error);
+        if (isMounted) {
+          setSchedule(null);
+          setWorkDays([]);
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
     
-    if (employeeId) {
-      loadScheduleData();
-    } else {
-      console.log("ScheduleInfoDetail (attendance) - No employee ID provided");
-    }
+    loadScheduleData();
+    
+    // Cleanup function to prevent state updates if component unmounts
+    return () => {
+      isMounted = false;
+    };
   }, [employeeId, getEmployeeSchedule, getWorkDays]);
   
   if (isLoading) {

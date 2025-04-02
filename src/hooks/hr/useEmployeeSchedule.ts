@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -13,15 +13,30 @@ interface WorkSchedule {
   work_days_per_week: number;
 }
 
+interface WorkDay {
+  id: string;
+  schedule_id: string;
+  day_of_week: number;
+  is_working_day: boolean;
+  start_time: string | null;
+  end_time: string | null;
+}
+
+// Create cache keys for better caching
+const CACHE_KEYS = {
+  SCHEDULES: "work-schedules",
+  EMPLOYEE_SCHEDULE: "employee-schedule",
+  WORK_DAYS: "work-days",
+};
+
 export function useEmployeeSchedule() {
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
 
   // Fetch all available work schedules
   const { data: schedules, isLoading: isLoadingSchedules } = useQuery({
-    queryKey: ["work-schedules"],
+    queryKey: [CACHE_KEYS.SCHEDULES],
     queryFn: async () => {
-      console.log("useEmployeeSchedule - Fetching work schedules");
       try {
         const { data, error } = await supabase
           .from("hr_work_schedules")
@@ -29,57 +44,70 @@ export function useEmployeeSchedule() {
           .order("created_at", { ascending: false });
 
         if (error) {
-          console.error("useEmployeeSchedule - Error fetching schedules:", error);
           throw error;
         }
         
-        console.log("useEmployeeSchedule - Schedules fetched:", data);
         return data as WorkSchedule[];
       } catch (err) {
-        console.error("useEmployeeSchedule - Exception fetching schedules:", err);
+        console.error("Error fetching schedules:", err);
         throw err;
       }
     },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Get default schedule
-  const defaultSchedule = schedules?.find(s => s.is_default) || null;
-  console.log("useEmployeeSchedule - Default schedule:", defaultSchedule);
+  // Memoize default schedule to prevent unnecessary re-renders
+  const defaultSchedule = useMemo(() => {
+    return schedules?.find(s => s.is_default) || null;
+  }, [schedules]);
 
-  // Assign schedule to employee
-  const assignScheduleToEmployee = async (employeeId: string, scheduleId: string) => {
-    setIsLoading(true);
-    console.log(`useEmployeeSchedule - Assigning schedule ${scheduleId} to employee ${employeeId}`);
-    
-    try {
-      const { error } = await supabase
-        .from("employees")
-        .update({ schedule_id: scheduleId })
-        .eq("id", employeeId);
+  // Assign schedule to employee - optimized with useMutation
+  const { mutateAsync: assignScheduleToEmployee } = useMutation({
+    mutationFn: async ({ employeeId, scheduleId }: { employeeId: string, scheduleId: string }) => {
+      setIsLoading(true);
+      
+      try {
+        const { error } = await supabase
+          .from("employees")
+          .update({ schedule_id: scheduleId })
+          .eq("id", employeeId);
 
-      if (error) {
-        console.error("useEmployeeSchedule - Error assigning schedule:", error);
+        if (error) {
+          throw error;
+        }
+
+        return { success: true };
+      } catch (error) {
+        console.error("Error assigning schedule:", error);
         throw error;
+      } finally {
+        setIsLoading(false);
       }
-
-      // Invalidate employee queries to refresh data
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate relevant queries on success
       queryClient.invalidateQueries({ queryKey: ["employees"] });
-      queryClient.invalidateQueries({ queryKey: ["employee", employeeId] });
-
+      queryClient.invalidateQueries({ queryKey: ["employee", variables.employeeId] });
+      queryClient.invalidateQueries({ 
+        queryKey: [CACHE_KEYS.EMPLOYEE_SCHEDULE, variables.employeeId] 
+      });
+      
       toast.success("تم تعيين جدول العمل للموظف بنجاح");
-      return { success: true };
-    } catch (error) {
-      console.error("useEmployeeSchedule - Exception assigning schedule to employee:", error);
+    },
+    onError: () => {
       toast.error("حدث خطأ أثناء تعيين جدول العمل للموظف");
-      return { success: false, error };
-    } finally {
-      setIsLoading(false);
     }
-  };
+  });
 
-  // Get employee schedule
-  const getEmployeeSchedule = async (employeeId: string) => {
-    console.log(`useEmployeeSchedule - Getting schedule for employee ${employeeId}`);
+  // Get employee schedule with caching
+  const getEmployeeSchedule = useCallback(async (employeeId: string) => {
+    const cacheKey = [CACHE_KEYS.EMPLOYEE_SCHEDULE, employeeId];
+    
+    // Check if we have cached data
+    const cachedData = queryClient.getQueryData(cacheKey) as WorkSchedule | undefined;
+    if (cachedData) {
+      return cachedData;
+    }
     
     try {
       // First get the employee's schedule_id
@@ -90,19 +118,13 @@ export function useEmployeeSchedule() {
         .single();
 
       if (employeeError) {
-        console.error("useEmployeeSchedule - Error getting employee:", employeeError);
         throw employeeError;
       }
 
-      console.log("useEmployeeSchedule - Employee data:", employee);
-
       // If no schedule is assigned, return default
       if (!employee?.schedule_id) {
-        console.log("useEmployeeSchedule - No schedule assigned, returning default");
         return defaultSchedule;
       }
-
-      console.log(`useEmployeeSchedule - Getting schedule ${employee.schedule_id}`);
       
       // Get the schedule details
       const { data: schedule, error: scheduleError } = await supabase
@@ -112,21 +134,30 @@ export function useEmployeeSchedule() {
         .single();
 
       if (scheduleError) {
-        console.error("useEmployeeSchedule - Error getting schedule:", scheduleError);
         throw scheduleError;
       }
 
-      console.log("useEmployeeSchedule - Got schedule:", schedule);
+      // Cache the result
+      queryClient.setQueryData(cacheKey, schedule);
+      
       return schedule as WorkSchedule;
     } catch (error) {
-      console.error("useEmployeeSchedule - Error getting employee schedule:", error);
+      console.error("Error getting employee schedule:", error);
       return defaultSchedule; // Fallback to default schedule
     }
-  };
+  }, [defaultSchedule, queryClient]);
 
-  // Get work days for a schedule
-  const getWorkDays = async (scheduleId: string) => {
-    console.log(`useEmployeeSchedule - Getting work days for schedule ${scheduleId}`);
+  // Get work days for a schedule with caching
+  const getWorkDays = useCallback(async (scheduleId: string) => {
+    if (!scheduleId) return [];
+    
+    const cacheKey = [CACHE_KEYS.WORK_DAYS, scheduleId];
+    
+    // Check if we have cached data
+    const cachedData = queryClient.getQueryData(cacheKey) as WorkDay[] | undefined;
+    if (cachedData) {
+      return cachedData;
+    }
     
     try {
       const { data, error } = await supabase
@@ -136,17 +167,18 @@ export function useEmployeeSchedule() {
         .order("day_of_week", { ascending: true });
 
       if (error) {
-        console.error("useEmployeeSchedule - Error getting work days:", error);
         throw error;
       }
       
-      console.log("useEmployeeSchedule - Work days:", data);
-      return data;
+      // Cache the result
+      queryClient.setQueryData(cacheKey, data);
+      
+      return data as WorkDay[];
     } catch (error) {
-      console.error("useEmployeeSchedule - Error getting work days:", error);
+      console.error("Error getting work days:", error);
       return [];
     }
-  };
+  }, [queryClient]);
 
   return {
     schedules,
