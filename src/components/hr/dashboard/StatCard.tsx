@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Card } from "@/components/ui/card";
-import { Sparkline, SparklineSpot } from "@/components/ui/sparkline";
+import { Sparkline } from "@/components/ui/sparkline";
 import { ArrowUp, ArrowDown, Minus } from "lucide-react";
 import { getTrendDirection, getTrendPercentage } from "@/hooks/hr/useHRStats";
 
@@ -63,12 +63,7 @@ export function StatCard({
               </span>
             </div>
             <div className="h-8 w-24">
-              <Sparkline data={trendData} height={20} color={trendColor}>
-                <SparklineSpot spotColors={{ 
-                  endSpot: trendColor,
-                  spotColor: `${trendColor}80`
-                }} />
-              </Sparkline>
+              <Sparkline data={trendData} height={20} color={trendColor} />
             </div>
           </div>
         </div>
