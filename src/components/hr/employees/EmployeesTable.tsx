@@ -1,4 +1,5 @@
-import React from "react";
+
+import React, { useState } from "react";
 import {
   Table,
   TableHeader,
@@ -16,9 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MoreVertical, Eye, Edit, Trash } from "lucide-react";
-import { ViewEmployeeDialog } from "../dialogs/ViewEmployeeDialog";
-import { EditEmployeeDialog } from "../dialogs/EditEmployeeDialog";
-import { DeleteEmployeeDialog } from "../dialogs/DeleteEmployeeDialog";
+import { DeleteDialog } from "@/components/ui/delete-dialog";
 
 interface EmployeesTableProps {
   employees?: any[];
@@ -26,6 +25,11 @@ interface EmployeesTableProps {
 }
 
 export function EmployeesTable({ employees, isLoading }: EmployeesTableProps) {
+  const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
   if (isLoading) {
     return <div className="flex justify-center p-4">جاري تحميل البيانات...</div>;
   }
@@ -35,70 +39,93 @@ export function EmployeesTable({ employees, isLoading }: EmployeesTableProps) {
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>الاسم</TableHead>
-          <TableHead>المسمى الوظيفي</TableHead>
-          <TableHead>القسم</TableHead>
-          <TableHead>الحالة</TableHead>
-          <TableHead>تاريخ التعيين</TableHead>
-          <TableHead className="text-left">الإجراءات</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {employees.map((employee) => (
-          <TableRow key={employee.id}>
-            <TableCell className="font-medium">{employee.full_name}</TableCell>
-            <TableCell>{employee.position}</TableCell>
-            <TableCell>{employee.department}</TableCell>
-            <TableCell>
-              <Badge
-                variant={employee.status === "active" ? "outline" : "secondary"}
-                className={
-                  employee.status === "active"
-                    ? "bg-green-50 text-green-700 hover:bg-green-50"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-100"
-                }
-              >
-                {employee.status === "active" ? "يعمل" : "منتهي"}
-              </Badge>
-            </TableCell>
-            <TableCell>{new Date(employee.hire_date).toLocaleDateString("ar-SA")}</TableCell>
-            <TableCell>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">فتح القائمة</span>
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <ViewEmployeeDialog employeeId={employee.id} trigger={
-                    <DropdownMenuItem>
+    <>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>الاسم</TableHead>
+            <TableHead>المسمى الوظيفي</TableHead>
+            <TableHead>القسم</TableHead>
+            <TableHead>الحالة</TableHead>
+            <TableHead>تاريخ التعيين</TableHead>
+            <TableHead className="text-left">الإجراءات</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {employees.map((employee) => (
+            <TableRow key={employee.id}>
+              <TableCell className="font-medium">{employee.full_name}</TableCell>
+              <TableCell>{employee.position}</TableCell>
+              <TableCell>{employee.department}</TableCell>
+              <TableCell>
+                <Badge
+                  variant={employee.status === "active" ? "outline" : "secondary"}
+                  className={
+                    employee.status === "active"
+                      ? "bg-green-50 text-green-700 hover:bg-green-50"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-100"
+                  }
+                >
+                  {employee.status === "active" ? "يعمل" : "منتهي"}
+                </Badge>
+              </TableCell>
+              <TableCell>{new Date(employee.hire_date).toLocaleDateString("ar-SA")}</TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                      <span className="sr-only">فتح القائمة</span>
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => {
+                      setSelectedEmployee(employee);
+                      setIsViewDialogOpen(true);
+                    }}>
                       <Eye className="ml-2 h-4 w-4" />
                       <span>عرض</span>
                     </DropdownMenuItem>
-                  } />
-                  <EditEmployeeDialog employeeId={employee.id} trigger={
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => {
+                      setSelectedEmployee(employee);
+                      setIsEditDialogOpen(true);
+                    }}>
                       <Edit className="ml-2 h-4 w-4" />
                       <span>تعديل</span>
                     </DropdownMenuItem>
-                  } />
-                  <DeleteEmployeeDialog employeeId={employee.id} employeeName={employee.full_name} trigger={
-                    <DropdownMenuItem className="text-red-600">
+                    <DropdownMenuItem 
+                      className="text-red-600"
+                      onClick={() => {
+                        setSelectedEmployee(employee);
+                        setIsDeleteDialogOpen(true);
+                      }}
+                    >
                       <Trash className="ml-2 h-4 w-4" />
                       <span>حذف</span>
                     </DropdownMenuItem>
-                  } />
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      {isDeleteDialogOpen && selectedEmployee && (
+        <DeleteDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          title="حذف الموظف"
+          description={`هل أنت متأكد من حذف الموظف "${selectedEmployee.full_name}"؟ هذا الإجراء لا يمكن التراجع عنه.`}
+          onDelete={() => {
+            // Handle delete logic here
+            console.log("Deleting employee:", selectedEmployee.id);
+            setIsDeleteDialogOpen(false);
+          }}
+        />
+      )}
+
+      {/* View and Edit dialogs would be implemented here */}
+    </>
   );
 }
-
