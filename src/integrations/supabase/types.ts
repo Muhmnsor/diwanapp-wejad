@@ -751,6 +751,57 @@ export type Database = {
           },
         ]
       }
+      employee_organizational_units: {
+        Row: {
+          created_at: string
+          employee_id: string
+          end_date: string | null
+          id: string
+          is_primary: boolean | null
+          organizational_unit_id: string
+          role: string | null
+          start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          end_date?: string | null
+          id?: string
+          is_primary?: boolean | null
+          organizational_unit_id: string
+          role?: string | null
+          start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          end_date?: string | null
+          id?: string
+          is_primary?: boolean | null
+          organizational_unit_id?: string
+          role?: string | null
+          start_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_organizational_units_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_organizational_units_organizational_unit_id_fkey"
+            columns: ["organizational_unit_id"]
+            isOneToOne: false
+            referencedRelation: "organizational_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           contract_end_date: string | null
@@ -3065,6 +3116,57 @@ export type Database = {
             columns: ["obligation_id"]
             isOneToOne: false
             referencedRelation: "resource_obligations_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizational_units: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          parent_id: string | null
+          unit_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          parent_id?: string | null
+          unit_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          parent_id?: string | null
+          unit_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organizational_units_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "auth_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organizational_units_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "organizational_units"
             referencedColumns: ["id"]
           },
         ]
@@ -6631,6 +6733,31 @@ export type Database = {
         Returns: {
           id: string
           email: string
+        }[]
+      }
+      get_organizational_hierarchy: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          name: string
+          description: string
+          unit_type: string
+          parent_id: string
+          level: number
+          path: string[]
+        }[]
+      }
+      get_organizational_unit_children: {
+        Args: {
+          unit_id: string
+        }
+        Returns: {
+          id: string
+          name: string
+          description: string
+          unit_type: string
+          parent_id: string
+          level: number
         }[]
       }
       get_request_details: {
