@@ -1,3 +1,4 @@
+
 import { 
   Database, 
   ListChecks, 
@@ -7,480 +8,219 @@ import {
   ShoppingCart, 
   Users, 
   Bell,
+  BellRing,
   Clock,
   Inbox,
-  Code,
-  BriefcaseIcon,
-  Calculator,
-  CalendarClock
+  Mail
 } from "lucide-react";
 import { AppItem } from "./DashboardApps";
-import { NotificationCounts } from "@/hooks/dashboard/useNotificationCounts";
-import { User } from "@/store/refactored-auth/types";
-import { supabase } from "@/integrations/supabase/client";
 
-// For backwards compatibility until migration is complete
-// Eventually this will be removed once all permissions are managed through the UI
-export const APP_ROLE_ACCESS = {
-  events: [
-    'admin', 'app_admin', 'developer',
-    'event_manager', 'event_creator', 'event_coordinator',
-    'event_executor', 'event_media', 'event_planner'
-  ],
-  documents: [
-    'admin', 'app_admin', 'developer',
-    'document_manager', 'finance_manager', 'financial_manager',
-    'document_reviewer', 'document_creator'
-  ],
-  tasks: [
-    'admin', 'app_admin', 'developer',
-    'task_manager', 'project_manager', 'finance_manager', 
-    'financial_manager', 'task_creator', 'team_leader'
-  ],
-  ideas: [
-    'admin', 'app_admin', 'developer',
-    'idea_manager', 'finance_manager', 'financial_manager',
-    'idea_reviewer', 'idea_creator', 'innovation_manager',
-    'event_media' // Added event_media to ideas access
-  ],
-  finance: [
-    'admin', 'app_admin', 'developer',
-    'finance_manager', 'financial_manager', 'accountant',
-    'budget_manager', 'resource_manager',
-    'event_media' // Added event_media to finance access
-  ],
-  users: [
-    'admin', 'app_admin', 'developer',
-    'hr_manager', 'user_manager'
-  ],
-  website: [
-    'admin', 'app_admin', 'developer',
-    'content_manager', 'media_manager', 'web_editor'
-  ],
-  store: [
-    'admin', 'app_admin', 'developer',
-    'store_manager', 'inventory_manager', 'sales_manager'
-  ],
-  notifications: [
-    'admin', 'app_admin', 'developer',
-    'notification_manager', 'finance_manager', 'financial_manager',
-    'communication_manager'
-  ],
-  requests: [
-    'admin', 'app_admin', 'developer',
-    'request_manager', 'finance_manager', 'financial_manager',
-    'approval_manager'
-  ],
-  developer: [
-    'admin', 'app_admin', 'developer'
-  ],
-  hr: [
-    'admin', 'app_admin', 'developer',
-    'hr_manager'
-  ],
-  accounting: [
-    'admin', 'app_admin', 'developer',
-    'finance_manager', 'financial_manager', 'accountant'
-  ],
-  meetings: [
-    'admin', 'app_admin', 'developer'
-  ]
-};
-
-// Comprehensive role mapping between Arabic and English
-export const ROLE_MAPPING = {
-  // Arabic to English - Common database roles
+// Role mapping from Arabic to English to standardize roles
+// This is used to match roles from the database with the roles in the app
+export const ROLE_MAPPING: Record<string, string> = {
   'مدير': 'admin',
-  'مدير_التطبيق': 'app_admin',
-  'مدير_الفعاليات': 'event_manager',
-  'منشئ_الفعاليات': 'event_creator',
-  'منسق_الفعاليات': 'event_coordinator',
-  'منفذ_الفعاليات': 'event_executor',
-  'إعلامي_الفعاليات': 'event_media',
-  'مخطط_الفعاليات': 'event_planner',
-  'مدير_المستندات': 'document_manager',
-  'مراجع_المستندات': 'document_reviewer',
-  'منشئ_المستندات': 'document_creator',
-  'مدير_المهام': 'task_manager',
-  'مدير_المشاريع': 'project_manager',
-  'منشئ_المهام': 'task_creator',
-  'قائد_فريق': 'team_leader',
-  'مدير_الأفكار': 'idea_manager',
-  'مراجع_الأفكار': 'idea_reviewer',
-  'منشئ_الأفكار': 'idea_creator',
-  'مدير_الابتكار': 'innovation_manager',
-  'مدير_مالي': 'finance_manager',
-  'المدير_المالي': 'financial_manager',
-  'محاسب': 'accountant',
-  'مدير_الميزانية': 'budget_manager',
-  'مدير_الموارد': 'resource_manager',
-  'مدير_الموارد_البشرية': 'hr_manager',
-  'مدير_المستخدمين': 'user_manager',
-  'مدير_المحتوى': 'content_manager',
-  'مدير_الإعلام': 'media_manager',
-  'محرر_موقع': 'web_editor',
-  'مدير_المتجر': 'store_manager',
-  'مدير_المخزون': 'inventory_manager',
-  'مدير_المبيعات': 'sales_manager',
-  'مدير_الإشعارات': 'notification_manager',
-  'مدير_الاتصالات': 'communication_manager',
-  'مدير_الطلبات': 'request_manager',
-  'مدير_الموافقات': 'approval_manager',
+  'مسؤول': 'admin',
+  'مدير_النظام': 'admin',
   'مطور': 'developer',
-  
-  // Variations of Arabic role names (with spaces, different formats)
-  'المدير': 'admin',
-  'مدير التطبيق': 'app_admin',
-  'مدير الفعاليات': 'event_manager',
-  'منشئ الفعاليات': 'event_creator',
-  'منسق الفعاليات': 'event_coordinator',
-  'منفذ الفعاليات': 'event_executor',
-  'إعلامي الفعاليات': 'event_media',
-  'مخطط الفعاليات': 'event_planner',
-  'مدير المستندات': 'document_manager',
-  'مراجع المستندات': 'document_reviewer',
-  'منشئ المستندات': 'document_creator',
-  'مدير المهام': 'task_manager',
-  'مدير المشاريع': 'project_manager',
-  'منشئ المهام': 'task_creator',
-  'قائد فريق': 'team_leader',
-  'مدير الأفكار': 'idea_manager',
-  'مراجع الأفكار': 'idea_reviewer',
-  'منشئ الأفكار': 'idea_creator',
-  'مدير الابتكار': 'innovation_manager',
-  'مدير مالي': 'finance_manager',
-  'مدير الموارد البشرية': 'hr_manager',
-  
-  // English to English (for direct matching)
-  'admin': 'admin',
-  'app_admin': 'app_admin',
-  'event_manager': 'event_manager',
-  'event_creator': 'event_creator',
-  'event_coordinator': 'event_coordinator',
-  'event_executor': 'event_executor',
-  'event_media': 'event_media',
-  'event_planner': 'event_planner',
-  'document_manager': 'document_manager',
-  'document_reviewer': 'document_reviewer',
-  'document_creator': 'document_creator',
-  'task_manager': 'task_manager',
-  'project_manager': 'project_manager',
-  'task_creator': 'task_creator',
-  'team_leader': 'team_leader',
-  'idea_manager': 'idea_manager',
-  'idea_reviewer': 'idea_reviewer',
-  'idea_creator': 'idea_creator',
-  'innovation_manager': 'innovation_manager',
-  'finance_manager': 'finance_manager',
-  'financial_manager': 'financial_manager',
-  'accountant': 'accountant',
-  'budget_manager': 'budget_manager',
-  'resource_manager': 'resource_manager',
-  'hr_manager': 'hr_manager',
-  'user_manager': 'user_manager',
-  'content_manager': 'content_manager',
-  'media_manager': 'media_manager',
-  'web_editor': 'web_editor',
-  'store_manager': 'store_manager',
-  'inventory_manager': 'inventory_manager',
-  'sales_manager': 'sales_manager',
-  'notification_manager': 'notification_manager',
-  'communication_manager': 'communication_manager',
-  'request_manager': 'request_manager',
-  'approval_manager': 'approval_manager',
-  'developer': 'developer'
+  'مستخدم': 'user',
+  'مشرف': 'moderator',
+  'مراقب': 'moderator',
+  'محرر': 'editor',
+  'كاتب': 'writer',
+  'مالي': 'finance',
+  'محاسب': 'accountant',
+  'منسق': 'coordinator',
+  'مدير_مشاريع': 'project_manager',
+  'مدير_مهام': 'task_manager',
+  'مدير_فريق': 'team_leader',
+  'قائد_فريق': 'team_leader',
+  'عضو_فريق': 'team_member',
+  'مدير_محتوى': 'content_manager',
+  'مدير_تسويق': 'marketing_manager',
+  'مسؤول_مبيعات': 'sales_manager',
+  'خدمة_عملاء': 'customer_service',
+  'موارد_بشرية': 'hr',
+  'شؤون_الموظفين': 'hr'
 };
 
-// Define the list of all available applications
-const ALL_APPS: AppItem[] = [
+// Define which roles have access to which apps
+export const APP_ROLE_ACCESS: Record<string, string[]> = {
+  'dashboard': ['admin', 'developer', 'moderator', 'user'],
+  'tasks': ['admin', 'developer', 'task_manager', 'team_leader', 'team_member'],
+  'documents': ['admin', 'developer', 'content_manager', 'editor', 'writer'],
+  'finance': ['admin', 'developer', 'finance', 'accountant'],
+  'website': ['admin', 'developer', 'content_manager', 'marketing_manager'],
+  'store': ['admin', 'developer', 'sales_manager', 'marketing_manager'],
+  'users': ['admin', 'developer', 'hr'],
+  'notifications': ['admin', 'developer', 'moderator'],
+  'requests': ['admin', 'developer', 'moderator', 'user'],
+  'meetings': ['admin', 'developer', 'team_leader', 'project_manager'],
+  'internal_mail': ['admin', 'developer', 'moderator', 'user', 'team_member']
+};
+
+// Helper function to get app key from path
+export const getAppKeyFromPath = (path: string): string => {
+  if (path.startsWith('/admin/dashboard')) return 'dashboard';
+  if (path.startsWith('/tasks')) return 'tasks';
+  if (path.startsWith('/documents')) return 'documents';
+  if (path.startsWith('/finance')) return 'finance';
+  if (path.startsWith('/website')) return 'website';
+  if (path.startsWith('/store')) return 'store';
+  if (path.startsWith('/users-management') || path.startsWith('/admin/users-management')) return 'users';
+  if (path.startsWith('/notifications')) return 'notifications';
+  if (path.startsWith('/requests')) return 'requests';
+  if (path.startsWith('/admin/meetings')) return 'meetings';
+  if (path.startsWith('/internal-mail')) return 'internal_mail';
+  return '';
+};
+
+// All available apps that can be shown on the dashboard
+export const ALL_APPS: AppItem[] = [
   {
-    title: "إدارة الفعاليات",
+    title: "المهام",
     icon: ListChecks,
-    path: "/",
-    description: "إدارة وتنظيم الفعاليات والأنشطة",
+    path: "/tasks",
+    description: "إدارة المهام والمشاريع",
     notifications: 0
   },
   {
-    title: "إدارة الوثائق",
+    title: "المستندات",
     icon: Database,
     path: "/documents",
-    description:  "إدارة وتنظيم المستندات والملفات والنماذج",
+    description: "إدارة المستندات والملفات",
     notifications: 0
   },
   {
-    title: "إدارة المهام",
-    icon: Clock,
-    path: "/tasks",
-    description: "إدارة وتتبع المهام والمشاريع",
-    notifications: 0
-  },
-  {
-    title: "إدارة الأفكار",
+    title: "الأفكار",
     icon: Lightbulb,
     path: "/ideas",
-    description: "إدارة وتنظيم الأفكار والمقترحات",
+    description: "متابعة وتطوير الأفكار والمقترحات",
     notifications: 0
   },
   {
-    title: "إدارة التقديرات",
+    title: "المالية",
     icon: DollarSign,
     path: "/finance",
-    description: "إدارة تقديرات المشاريع",
-    notifications: 0
-  },
-  {
-    title: "إدارة المستخدمين",
-    icon: Users,
-    path: "/admin/users-management",
-    description: "إدارة حسابات المستخدمين والصلاحيات",
+    description: "إدارة الموارد المالية والميزانيات",
     notifications: 0
   },
   {
     title: "الموقع الإلكتروني",
     icon: Globe,
     path: "/website",
-    description: "إدارة وتحديث محتوى الموقع الإلكتروني",
+    description: "إدارة محتوى الموقع الإلكتروني",
     notifications: 0
   },
   {
     title: "المتجر الإلكتروني",
     icon: ShoppingCart,
     path: "/store",
-    description: "إدارة منتجات التبرع في المتجر الإلكتروني",
+    description: "إدارة المنتجات والمبيعات",
+    notifications: 0
+  },
+  {
+    title: "المستخدمين",
+    icon: Users,
+    path: "/admin/users-management",
+    description: "إدارة المستخدمين والصلاحيات",
     notifications: 0
   },
   {
     title: "الإشعارات",
     icon: Bell,
     path: "/notifications",
-    description: "عرض وإدارة إشعارات النظام",
+    description: "إدارة الإشعارات والتنبيهات",
     notifications: 0
   },
   {
-    title: "إدارة الطلبات",
-    icon: Inbox,
+    title: "الطلبات",
+    icon: BellRing,
     path: "/requests",
-    description: "إدارة ومتابعة الطلبات والاستمارات والاعتمادات",
-    notifications: 0
-  },
-  {
-    title: "المطورين",
-    icon: Code,
-    path: "/admin/developer-settings",
-    description: "إعدادات وأدوات المطورين",
-    notifications: 0
-  },
-  {
-    title: "إدارة شؤون الموظفين",
-    icon: BriefcaseIcon,
-    path: "/admin/hr",
-    description: "إدارة المعلومات والعمليات المتعلقة بالموظفين",
-    notifications: 0
-  },
-  {
-    title: "إدارة المحاسبة",
-    icon: Calculator,
-    path: "/admin/accounting",
-    description: "إدارة الميزانية والشؤون المالية",
+    description: "إدارة طلبات الموافقة والاعتماد",
     notifications: 0
   },
   {
     title: "إدارة الاجتماعات",
-    icon: CalendarClock,
+    icon: Clock,
     path: "/admin/meetings",
     description: "إدارة جدول الاجتماعات والمشاركين والمحاضر",
+    notifications: 0
+  },
+  {
+    title: "البريد الداخلي",
+    icon: Mail,
+    path: "/internal-mail",
+    description: "إدارة المراسلات الداخلية بين أعضاء الفريق",
     notifications: 0
   }
 ];
 
-// Cache for role permissions to avoid redundant database calls
-let rolePermissionsCache: Record<string, string[]> = {};
-let cacheExpiry = 0;
-const CACHE_DURATION = 60000; // 1 minute
-
-/**
- * Check if a role has access to an app through database permissions
- */
-const checkDbAppAccess = async (role: string, appKey: string): Promise<boolean> => {
-  try {
-    // Check if we have a valid cache
-    const now = Date.now();
-    if (now > cacheExpiry) {
-      // Cache expired, clear it
-      rolePermissionsCache = {};
-      cacheExpiry = now + CACHE_DURATION;
-    }
-
-    // Check if role is in cache
-    if (!rolePermissionsCache[role]) {
-      // Get role ID first
-      const { data: roleData, error: roleError } = await supabase
-        .from('roles')
-        .select('id')
-        .eq('name', role)
-        .single();
-
-      if (roleError || !roleData) {
-        console.error('Error fetching role:', roleError);
-        return false;
-      }
-
-      // Get app permissions for this role
-      const { data: permissions, error: permError } = await supabase
-        .from('app_permissions')
-        .select('app_name')
-        .eq('role_id', roleData.id);
-
-      if (permError) {
-        console.error('Error fetching app permissions:', permError);
-        return false;
-      }
-
-      // Store in cache
-      rolePermissionsCache[role] = permissions.map(p => p.app_name);
-    }
-
-    // Check if the app is in the permissions
-    return rolePermissionsCache[role].includes(appKey);
-  } catch (error) {
-    console.error('Error in checkDbAppAccess:', error);
-    return false;
+// Function to get apps list based on user role and notifications
+export const getAppsList = async (notificationCounts: any, user: any) => {
+  console.log("Getting apps list for user:", user?.id, user?.role);
+  
+  if (!user) {
+    console.warn("No user provided to getAppsList");
+    return [];
   }
-};
 
-// Helper function to check if user is admin or developer
-const isAdminOrDeveloper = async (userId: string): Promise<boolean> => {
   try {
-    const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin', { user_id: userId });
+    // Start with all apps and filter based on role
+    const userRoles = Array.isArray(user.roles) ? user.roles : [user.role].filter(Boolean);
+    console.log("User roles:", userRoles);
     
-    if (adminError) {
-      console.error('Error checking admin status:', adminError);
-      return false;
-    }
+    // Get standardized English roles
+    const standardizedRoles = userRoles.map(role => {
+      const standardRole = ROLE_MAPPING[role as keyof typeof ROLE_MAPPING] || role;
+      console.log(`Role mapping: ${role} -> ${standardRole}`);
+      return standardRole;
+    });
     
-    return !!isAdmin;
-  } catch (error) {
-    console.error('Error checking admin status:', error);
-    return false;
-  }
-};
-
-// Helper function to check if user has access to HR app
-const hasHRAccess = async (userId: string): Promise<boolean> => {
-  try {
-    // First check if user is admin/developer
-    const adminAccess = await isAdminOrDeveloper(userId);
-    if (adminAccess) {
-      return true;
-    }
+    // Special case: Admin and Developer roles have access to all apps
+    const isAdmin = standardizedRoles.some(role => role === 'admin' || role === 'developer');
     
-    // If not, check specific HR access
-    const { data, error } = await supabase.rpc('has_hr_access', { user_id: userId });
-    
-    if (error) {
-      console.error('Error checking HR access:', error);
-      return false;
-    }
-    
-    return !!data;
-  } catch (error) {
-    console.error('Error checking HR access:', error);
-    return false;
-  }
-};
-
-// Get applications list based on user role
-export const getAppsList = async (notificationCounts: NotificationCounts, user?: User | null): Promise<AppItem[]> => {
-  // If no user is provided, return an empty array
-  if (!user) return [];
-  
-  console.log('GetAppsList - User:', { 
-    id: user.id, 
-    email: user.email, 
-    role: user.role,
-    isAdmin: user.isAdmin
-  });
-  
-  // Get user role and normalize it
-  const userRole = user.role || '';
-  console.log('User role before mapping:', userRole);
-
-  // Map the role to its English equivalent if needed
-  let mappedRole = ROLE_MAPPING[userRole as keyof typeof ROLE_MAPPING] || userRole;
-  
-  // Check if user is admin/developer (they get access to all apps)
-  const isAdmin = await isAdminOrDeveloper(user.id);
-  console.log('User is admin/developer:', isAdmin);
-  
-  let filteredApps: AppItem[] = [];
-  
-  // Process each app to check permissions
-  for (const app of ALL_APPS) {
-    const appKey = getAppKeyFromPath(app.path);
-    if (!appKey) continue;
-    
-    let hasAccess = false;
-    
-    // Admin/developer gets access to all apps
-    if (isAdmin) {
-      hasAccess = true;
-    } else {
-      // First check database permissions
-      hasAccess = await checkDbAppAccess(mappedRole, appKey);
+    // Filter apps based on user roles
+    const filteredApps = ALL_APPS.filter(app => {
+      const appKey = getAppKeyFromPath(app.path);
+      if (!appKey) return false;
       
-      // If no database permission, fall back to hardcoded permissions
-      if (!hasAccess) {
-        const allowedRoles = APP_ROLE_ACCESS[appKey as keyof typeof APP_ROLE_ACCESS] || [];
-        hasAccess = allowedRoles.includes(mappedRole);
+      const hasAccess = isAdmin || 
+        APP_ROLE_ACCESS[appKey]?.some(role => standardizedRoles.includes(role));
+      
+      if (hasAccess) {
+        console.log(`User has access to ${app.title} (${appKey})`);
       }
       
-      // Special handling for HR app
-      if (appKey === 'hr' && !hasAccess) {
-        hasAccess = await hasHRAccess(user.id);
-      }
-    }
+      return hasAccess;
+    });
     
-    if (hasAccess) {
-      filteredApps.push({
+    // Add notification counts to each app
+    return filteredApps.map(app => {
+      const notificationKey = getAppKeyFromPath(app.path);
+      let count = 0;
+      
+      if (notificationKey === 'tasks') {
+        count = notificationCounts?.tasks || 0;
+      } else if (notificationKey === 'documents') {
+        count = notificationCounts?.documents || 0;
+      } else if (notificationKey === 'notifications') {
+        count = notificationCounts?.notifications || 0;
+      } else if (notificationKey === 'requests') {
+        count = notificationCounts?.approval_requests || 0;
+      } else if (notificationKey === 'meetings') {
+        count = notificationCounts?.meetings || 0;
+      } else if (notificationKey === 'internal_mail') {
+        // This would be populated from a real notifications count in the future
+        count = 0;
+      }
+      
+      return {
         ...app,
-        notifications: getNotificationCount(app.path, notificationCounts)
-      });
-    }
+        notifications: count
+      };
+    });
+  } catch (error) {
+    console.error("Error in getAppsList:", error);
+    return [];
   }
-  
-  console.log('Filtered apps for role', mappedRole, ':', filteredApps.length);
-  return filteredApps;
-};
-
-// Helper function to get app key from path
-const getAppKeyFromPath = (path: string): string | null => {
-  if (path === '/') return 'events';
-  if (path === '/documents') return 'documents';
-  if (path === '/tasks') return 'tasks';
-  if (path === '/ideas') return 'ideas';
-  if (path === '/finance') return 'finance';
-  if (path === '/admin/users-management') return 'users';
-  if (path === '/website') return 'website';
-  if (path === '/store') return 'store';
-  if (path === '/notifications') return 'notifications';
-  if (path === '/requests') return 'requests';
-  if (path === '/admin/developer-settings') return 'developer';
-  if (path === '/admin/hr') return 'hr';
-  if (path === '/admin/accounting') return 'accounting';
-  if (path === '/admin/meetings') return 'meetings';
-  
-  return null;
-};
-
-// Helper function to get notification count for an app
-const getNotificationCount = (path: string, counts: NotificationCounts): number => {
-  if (path === '/tasks') return counts.tasks;
-  if (path === '/ideas') return counts.ideas;
-  if (path === '/finance') return counts.finance;
-  if (path === '/notifications') return counts.notifications;
-  if (path === '/admin/hr') return counts.hr || 0;
-  if (path === '/admin/accounting') return counts.accounting || 0;
-  if (path === '/admin/meetings') return counts.meetings || 0;
-  
-  return 0;
 };
