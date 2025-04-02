@@ -11,6 +11,12 @@ interface HRStats {
   upcomingLeaves: number;
   expiringContracts: number;
   pendingTrainings: number;
+  // Trend data for sparklines
+  employeeTrend?: number[];
+  attendanceTrend?: number[];
+  leavesTrend?: number[];
+  contractsTrend?: number[];
+  trainingsTrend?: number[];
 }
 
 export function useHRStats() {
@@ -96,6 +102,14 @@ export function useHRStats() {
         const attendanceRate = totalEmployees > 0 ? 
           Math.round((presentToday / (totalEmployees - activeLeaves)) * 100) : 0;
         
+        // Generate trend data (for demonstration - in a real app, this would come from historical data)
+        // In this example we're simulating trend data by generating random variations
+        const generateTrendData = (baseValue: number, variance: number = 2, length: number = 7): number[] => {
+          return Array.from({ length }, () => {
+            return Math.max(0, baseValue + Math.floor(Math.random() * variance * 2) - variance);
+          });
+        };
+        
         return {
           totalEmployees: totalEmployees || 0,
           newEmployees: newEmployees || 0,
@@ -104,7 +118,13 @@ export function useHRStats() {
           activeLeaves: activeLeaves || 0,
           upcomingLeaves: upcomingLeaves || 0,
           expiringContracts: expiringContracts || 0,
-          pendingTrainings: pendingTrainings || 0
+          pendingTrainings: pendingTrainings || 0,
+          // Generate trend data based on current values
+          employeeTrend: generateTrendData(totalEmployees || 0, 5, 10),
+          attendanceTrend: generateTrendData(presentToday || 0, 3, 10),
+          leavesTrend: generateTrendData(activeLeaves || 0, 2, 10),
+          contractsTrend: generateTrendData(expiringContracts || 0, 1, 10),
+          trainingsTrend: generateTrendData(pendingTrainings || 0, 2, 10)
         };
       } catch (error) {
         console.error('Error fetching HR stats:', error);
