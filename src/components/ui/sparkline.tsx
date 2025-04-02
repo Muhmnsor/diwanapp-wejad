@@ -20,14 +20,10 @@ export function Sparkline({
   className,
   ...props
 }: SparklineProps) {
-  // تأكد من أن البيانات صالحة وغير فارغة
-  const validData = Array.isArray(data) && data.length > 0 ? data : [0, 0];
-  
   return (
     <div className={cn("w-full", className)} {...props}>
-      <Sparklines data={validData} limit={limit} height={height} margin={5}>
+      <Sparklines data={data} limit={limit} height={height} margin={5}>
         <SparklinesLine color={color} />
-        {/* تمرير الأطفال فقط إذا كانوا موجودين */}
         {children}
       </Sparklines>
     </div>
@@ -49,22 +45,16 @@ export function SparklineSpot({
     spotColor: "rgba(74, 222, 128, 0.6)"
   }
 }: SparklineSpotProps) {
-  // SparklinesSpots تفشل إذا تم استدعاؤها بدون بيانات صالحة
-  try {
-    return (
-      <SparklinesSpots
-        size={size}
-        style={{ 
-          fill: spotColors.spotColor, 
-          strokeWidth: 0 
-        }}
-        spotColors={{
-          endSpot: spotColors.endSpot
-        }}
-      />
-    );
-  } catch (error) {
-    console.error("Error rendering SparklinesSpots:", error);
-    return null;
-  }
+  return (
+    <SparklinesSpots
+      size={size}
+      style={{ 
+        fill: spotColors.spotColor, 
+        strokeWidth: 0 
+      }}
+      spotColors={{
+        endSpot: spotColors.endSpot
+      }}
+    />
+  );
 }
