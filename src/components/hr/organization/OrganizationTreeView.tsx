@@ -3,20 +3,11 @@ import React, { useState } from "react";
 import { ChevronRight, ChevronDown, Building2, FolderTree, Users, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-interface OrganizationalUnit {
-  id: string;
-  name: string;
-  description?: string;
-  unit_type: string;
-  parent_id?: string;
-  is_active?: boolean;
-  position_type?: 'standard' | 'side' | 'assistant';
-}
+import { OrganizationalHierarchyItem } from "@/hooks/hr/useOrganizationalHierarchy";
 
 interface OrganizationTreeViewProps {
-  units: OrganizationalUnit[];
-  onUnitClick: (unit: OrganizationalUnit) => void;
+  units: OrganizationalHierarchyItem[];
+  onUnitClick: (unit: OrganizationalHierarchyItem) => void;
   selectedUnitId?: string;
 }
 
@@ -40,7 +31,7 @@ export function OrganizationTreeView({ units, onUnitClick, selectedUnitId }: Org
   };
 
   // Render a unit and its children recursively
-  const renderUnit = (unit: OrganizationalUnit, level = 0) => {
+  const renderUnit = (unit: OrganizationalHierarchyItem, level = 0) => {
     const children = getChildUnits(unit.id);
     const hasChildren = children.length > 0;
     const isExpanded = expandedUnits[unit.id];
@@ -48,7 +39,7 @@ export function OrganizationTreeView({ units, onUnitClick, selectedUnitId }: Org
     
     // Divide children into standard and side/assistant
     const standardChildren = children.filter(child => 
-      !child.position_type || child.position_type === 'standard'
+      child.position_type === 'standard'
     );
     
     const sideChildren = children.filter(child => 
