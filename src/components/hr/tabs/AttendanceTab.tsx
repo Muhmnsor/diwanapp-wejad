@@ -19,9 +19,9 @@ export function AttendanceTab() {
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full grid grid-cols-3">
-          <TabsTrigger value="attendance">سجلات الحضور</TabsTrigger>
-          <TabsTrigger value="self-attendance">التسجيل الذاتي</TabsTrigger>
           <TabsTrigger value="leaves">طلبات الإجازات</TabsTrigger>
+          <TabsTrigger value="self-attendance">التسجيل الذاتي</TabsTrigger>
+          <TabsTrigger value="attendance">سجلات الحضور</TabsTrigger>
         </TabsList>
         
         <TabsContent value="attendance" className="mt-4">

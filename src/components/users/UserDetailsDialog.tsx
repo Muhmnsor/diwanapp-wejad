@@ -5,7 +5,7 @@ import { User } from "./types";
 import { UserPermissionsList } from "./UserPermissionsList";
 import { UserActivityList } from "./UserActivityList";
 import { Separator } from "@/components/ui/separator";
-import { Shield, Activity } from "lucide-react";
+import { Activity, Shield } from "lucide-react";
 
 interface UserDetailsDialogProps {
   user: User | null;
@@ -55,13 +55,13 @@ export const UserDetailsDialog = ({ user, isOpen, onClose }: UserDetailsDialogPr
           
           <Tabs defaultValue="permissions" className="w-full">
             <TabsList className="w-full">
-              <TabsTrigger value="permissions" className="flex-1">
-                <Shield className="h-4 w-4 mr-2" />
-                الصلاحيات
-              </TabsTrigger>
               <TabsTrigger value="activity" className="flex-1">
-                <Activity className="h-4 w-4 mr-2" />
+                <Activity className="h-4 w-4 ml-2" />
                 سجل النشاط
+              </TabsTrigger>
+              <TabsTrigger value="permissions" className="flex-1">
+                <Shield className="h-4 w-4 ml-2" />
+                الصلاحيات
               </TabsTrigger>
             </TabsList>
             

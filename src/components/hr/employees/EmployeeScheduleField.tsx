@@ -76,9 +76,9 @@ export function EmployeeScheduleField({
   return (
     <div className="space-y-2">
       <div className="flex justify-between">
-        <Label htmlFor="scheduleSelect">جدول العمل</Label>
+        <Label htmlFor="scheduleSelect" className="text-right">جدول العمل</Label>
         {currentSchedule && (
-          <Badge variant="outline" className="mr-2">
+          <Badge variant="outline" className="mr-auto ml-2">
             {currentSchedule.work_hours_per_day} ساعة / {currentSchedule.work_days_per_week} أيام
           </Badge>
         )}
@@ -89,7 +89,7 @@ export function EmployeeScheduleField({
         onValueChange={handleScheduleChange}
         disabled={isReadOnly || isLoadingSchedules}
       >
-        <SelectTrigger id="scheduleSelect">
+        <SelectTrigger id="scheduleSelect" className="text-right">
           <SelectValue placeholder={isLoadingSchedules ? "جاري التحميل..." : "اختر جدول العمل"} />
         </SelectTrigger>
         <SelectContent>
@@ -102,7 +102,7 @@ export function EmployeeScheduleField({
       </Select>
       
       {!selectedSchedule && !isLoadingSchedules && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground text-right">
           سيتم استخدام الجدول الافتراضي إذا لم يتم اختيار جدول.
         </p>
       )}

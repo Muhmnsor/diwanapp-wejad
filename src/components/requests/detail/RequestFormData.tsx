@@ -56,15 +56,15 @@ export const RequestFormData = ({ formData, formSchema }: RequestFormDataProps) 
   return (
     <Card>
       <CardContent className="p-4">
-        <h3 className="font-medium text-lg mb-4">بيانات الطلب</h3>
+        <h3 className="font-medium text-lg mb-4 text-right">بيانات الطلب</h3>
         <div className="space-y-3">
           {Object.entries(formData).map(([field, value]) => (
             <div key={field} className="py-2">
               <div className="flex flex-col">
-                <span className="text-sm font-medium text-muted-foreground mb-1">
+                <span className="text-sm font-medium text-muted-foreground mb-1 text-right">
                   {getFieldLabel(field)}
                 </span>
-                <span className="text-base">
+                <span className="text-base text-right">
                   {formatFieldValue(field, value)}
                 </span>
               </div>
