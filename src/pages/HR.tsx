@@ -1,43 +1,79 @@
 
-import React, { useState } from "react";
-import { SearchIcon } from "lucide-react";
-import { HRTabs } from "@/components/hr/HRTabs";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useAuthStore } from "@/store/authStore";
-import { PermissionGuard } from "@/components/permissions/PermissionGuard";
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
+import { HRTabs } from '@/components/hr/HRTabs';
+import { HRDashboardOverview } from '@/components/hr/dashboard/HRDashboardOverview';
+
+// Additional imports for other HR tabs
+import { EmployeesList } from '@/components/hr/employees/EmployeesList';
+import { AttendanceTab } from '@/components/hr/tabs/AttendanceTab';
+import { CompensationTab } from '@/components/hr/tabs/CompensationTab';
+import { LeavesManagement } from '@/components/hr/leaves/LeavesManagement';
+import { TrainingTab } from '@/components/hr/tabs/TrainingTab';
+import { ReportsTab } from '@/components/hr/tabs/ReportsTab';
+import { ContractAlerts } from '@/components/hr/contract-alerts/ContractAlerts';
 
 const HR = () => {
-  const { user } = useAuthStore();
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Searching for:", searchQuery);
-    // Implement search functionality
-  };
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('overview');
 
   return (
-    <div className="container mx-auto py-6 space-y-8 max-w-7xl">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-3xl font-bold">إدارة الموارد البشرية</h1>
-        
-        <form onSubmit={handleSearch} className="flex w-full sm:w-auto gap-2">
+    <div className="container mx-auto py-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold text-right">إدارة الموارد البشرية</h1>
+        <div className="relative w-64">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="بحث عن موظف..."
+            placeholder="بحث..."
+            className="pl-10 pr-4 text-right"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full sm:w-auto min-w-[250px] text-right"
           />
-          <Button type="submit" variant="outline" size="icon">
-            <SearchIcon className="h-4 w-4" />
-          </Button>
-        </form>
+        </div>
       </div>
 
-      <PermissionGuard permissions={["hr.view", "hr.manage"]}>
-        <HRTabs defaultTab="dashboard" />
-      </PermissionGuard>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="w-full grid grid-cols-3 md:grid-cols-7 text-right">
+          <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
+          <TabsTrigger value="employees">الموظفين</TabsTrigger>
+          <TabsTrigger value="attendance">الحضور</TabsTrigger>
+          <TabsTrigger value="leaves">الإجازات</TabsTrigger>
+          <TabsTrigger value="compensation">التعويضات</TabsTrigger>
+          <TabsTrigger value="training">التدريب</TabsTrigger>
+          <TabsTrigger value="reports">التقارير</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-4">
+          <HRDashboardOverview />
+        </TabsContent>
+        
+        <TabsContent value="employees" className="space-y-4">
+          <EmployeesList />
+        </TabsContent>
+        
+        <TabsContent value="attendance" className="space-y-4">
+          <AttendanceTab />
+        </TabsContent>
+        
+        <TabsContent value="leaves" className="space-y-4">
+          <LeavesManagement />
+        </TabsContent>
+        
+        <TabsContent value="compensation" className="space-y-4">
+          <CompensationTab />
+        </TabsContent>
+        
+        <TabsContent value="training" className="space-y-4">
+          <TrainingTab />
+        </TabsContent>
+        
+        <TabsContent value="reports" className="space-y-4">
+          <ReportsTab />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
