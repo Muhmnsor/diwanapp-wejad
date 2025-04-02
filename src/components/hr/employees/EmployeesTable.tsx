@@ -14,10 +14,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MoreVertical, Eye, Edit, Trash } from "lucide-react";
-import { DeleteDialog } from "@/components/ui/delete-dialog";
+import { DeleteEmployeeDialog } from "@/components/hr/dialogs/DeleteEmployeeDialog";
 
 interface EmployeesTableProps {
   employees?: any[];
@@ -111,21 +119,160 @@ export function EmployeesTable({ employees, isLoading }: EmployeesTableProps) {
         </TableBody>
       </Table>
 
+      {/* View Employee Dialog */}
+      {isViewDialogOpen && selectedEmployee && (
+        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+          <DialogContent dir="rtl" className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>تفاصيل الموظف</DialogTitle>
+              <DialogDescription>
+                عرض بيانات {selectedEmployee.full_name}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">الاسم</p>
+                  <p className="text-md">{selectedEmployee.full_name}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">المسمى الوظيفي</p>
+                  <p className="text-md">{selectedEmployee.position}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">القسم</p>
+                  <p className="text-md">{selectedEmployee.department}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">الحالة</p>
+                  <Badge
+                    variant={selectedEmployee.status === "active" ? "outline" : "secondary"}
+                    className={
+                      selectedEmployee.status === "active"
+                        ? "bg-green-50 text-green-700 hover:bg-green-50"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-100"
+                    }
+                  >
+                    {selectedEmployee.status === "active" ? "يعمل" : "منتهي"}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">تاريخ التعيين</p>
+                  <p className="text-md">{new Date(selectedEmployee.hire_date).toLocaleDateString("ar-SA")}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">البريد الإلكتروني</p>
+                  <p className="text-md">{selectedEmployee.email || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">رقم الهاتف</p>
+                  <p className="text-md">{selectedEmployee.phone || "-"}</p>
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button onClick={() => setIsViewDialogOpen(false)}>إغلاق</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Edit Employee Dialog */}
+      {isEditDialogOpen && selectedEmployee && (
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent dir="rtl" className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>تعديل بيانات الموظف</DialogTitle>
+              <DialogDescription>
+                تعديل بيانات {selectedEmployee.full_name}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <form className="space-y-4 py-4">
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-2">
+                  <label htmlFor="full_name" className="text-sm font-medium">
+                    الاسم الكامل
+                  </label>
+                  <input
+                    id="full_name"
+                    defaultValue={selectedEmployee.full_name}
+                    className="w-full rounded-md border border-gray-300 p-2"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="position" className="text-sm font-medium">
+                    المسمى الوظيفي
+                  </label>
+                  <input
+                    id="position"
+                    defaultValue={selectedEmployee.position}
+                    className="w-full rounded-md border border-gray-300 p-2"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="department" className="text-sm font-medium">
+                    القسم
+                  </label>
+                  <input
+                    id="department"
+                    defaultValue={selectedEmployee.department}
+                    className="w-full rounded-md border border-gray-300 p-2"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="email" className="text-sm font-medium">
+                    البريد الإلكتروني
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    defaultValue={selectedEmployee.email || ""}
+                    className="w-full rounded-md border border-gray-300 p-2"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="phone" className="text-sm font-medium">
+                    رقم الهاتف
+                  </label>
+                  <input
+                    id="phone"
+                    defaultValue={selectedEmployee.phone || ""}
+                    className="w-full rounded-md border border-gray-300 p-2"
+                  />
+                </div>
+              </div>
+            </form>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>إلغاء</Button>
+              <Button onClick={() => {
+                // Here you would normally save the employee data
+                console.log("Save employee data");
+                setIsEditDialogOpen(false);
+              }}>
+                حفظ التغييرات
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Delete Employee Dialog */}
       {isDeleteDialogOpen && selectedEmployee && (
-        <DeleteDialog
-          open={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-          title="حذف الموظف"
-          description={`هل أنت متأكد من حذف الموظف "${selectedEmployee.full_name}"؟ هذا الإجراء لا يمكن التراجع عنه.`}
-          onDelete={() => {
-            // Handle delete logic here
-            console.log("Deleting employee:", selectedEmployee.id);
+        <DeleteEmployeeDialog
+          employee={selectedEmployee}
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onSuccess={() => {
             setIsDeleteDialogOpen(false);
+            // You might want to refresh the employees list here
+            console.log("Employee deleted successfully");
           }}
         />
       )}
-
-      {/* View and Edit dialogs would be implemented here */}
     </>
   );
 }
