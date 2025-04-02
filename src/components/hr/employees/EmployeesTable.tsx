@@ -56,17 +56,18 @@ export function EmployeesTable({ employees, isLoading, onRefresh }: EmployeesTab
     setScheduleDialogOpen(true);
   };
 
-  // Clear selected employee when closing dialogs
+  // Enhanced close dialog handler with improved cleanup
   const handleCloseDialog = () => {
+    // First close the dialogs
     setViewEmployeeOpen(false);
     setEditEmployeeOpen(false);
     setDeleteEmployeeOpen(false);
     setScheduleDialogOpen(false);
-    // Don't clear selectedEmployee immediately to avoid UI flickers
-    // Allow components to unmount properly first
+    
+    // Clear selected employee after a short delay to allow dialog transitions to complete
     setTimeout(() => {
       setSelectedEmployee(null);
-    }, 100);
+    }, 200);
   };
 
   if (isLoading) {
