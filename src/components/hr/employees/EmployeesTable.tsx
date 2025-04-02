@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Table,
@@ -152,21 +151,25 @@ export function EmployeesTable({ employees = [], isLoading, onRefresh }: Employe
         </Table>
       </div>
 
-      <ViewEmployeeDialog 
-        employee={viewEmployee} 
-        isOpen={isViewDialogOpen} 
-        onClose={() => setIsViewDialogOpen(false)} 
-      />
+      {viewEmployee && (
+        <ViewEmployeeDialog 
+          employee={viewEmployee} 
+          isOpen={isViewDialogOpen} 
+          onClose={() => setIsViewDialogOpen(false)} 
+        />
+      )}
       
-      <EditEmployeeDialog 
-        employee={editEmployee} 
-        isOpen={isEditDialogOpen} 
-        onClose={() => setIsEditDialogOpen(false)} 
-        onSuccess={() => {
-          handleSuccess();
-          setIsEditDialogOpen(false);
-        }} 
-      />
+      {editEmployee && (
+        <EditEmployeeDialog 
+          employee={editEmployee} 
+          isOpen={isEditDialogOpen} 
+          onClose={() => setIsEditDialogOpen(false)} 
+          onSuccess={() => {
+            handleSuccess();
+            setIsEditDialogOpen(false);
+          }} 
+        />
+      )}
       
       <DeleteEmployeeDialog 
         employee={deleteEmployee}

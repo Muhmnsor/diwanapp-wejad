@@ -20,7 +20,7 @@ interface Employee {
 }
 
 interface DeleteEmployeeDialogProps {
-  employee: Employee;
+  employee: Employee | null;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -28,6 +28,9 @@ interface DeleteEmployeeDialogProps {
 
 export function DeleteEmployeeDialog({ employee, isOpen, onClose, onSuccess }: DeleteEmployeeDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
+  
+  // If employee is null, don't render the dialog at all
+  if (!employee) return null;
   
   const handleDelete = async () => {
     setIsLoading(true);
@@ -41,6 +44,7 @@ export function DeleteEmployeeDialog({ employee, isOpen, onClose, onSuccess }: D
         
       if (error) throw error;
       
+      toast.success("تم حذف الموظف بنجاح");
       onSuccess();
     } catch (error) {
       console.error('Error deleting employee:', error);
