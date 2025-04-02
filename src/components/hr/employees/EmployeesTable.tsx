@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Table,
@@ -19,6 +20,7 @@ import { MoreVertical, Eye, Edit, Trash } from "lucide-react";
 import { ViewEmployeeDialog } from "../dialogs/ViewEmployeeDialog";
 import { EditEmployeeDialog } from "../dialogs/EditEmployeeDialog";
 import { DeleteEmployeeDialog } from "../dialogs/DeleteEmployeeDialog";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface EmployeesTableProps {
   employees?: any[];
@@ -74,24 +76,36 @@ export function EmployeesTable({ employees, isLoading }: EmployeesTableProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <ViewEmployeeDialog employeeId={employee.id} trigger={
-                    <DropdownMenuItem>
-                      <Eye className="ml-2 h-4 w-4" />
-                      <span>عرض</span>
-                    </DropdownMenuItem>
-                  } />
-                  <EditEmployeeDialog employeeId={employee.id} trigger={
-                    <DropdownMenuItem>
-                      <Edit className="ml-2 h-4 w-4" />
-                      <span>تعديل</span>
-                    </DropdownMenuItem>
-                  } />
-                  <DeleteEmployeeDialog employeeId={employee.id} employeeName={employee.full_name} trigger={
-                    <DropdownMenuItem className="text-red-600">
-                      <Trash className="ml-2 h-4 w-4" />
-                      <span>حذف</span>
-                    </DropdownMenuItem>
-                  } />
+                  <ViewEmployeeDialog 
+                    employeeId={employee.id} 
+                    trigger={
+                      <DropdownMenuItem>
+                        <Eye className="ml-2 h-4 w-4" />
+                        <span>عرض</span>
+                      </DropdownMenuItem>
+                    } 
+                  />
+                  
+                  <EditEmployeeDialog 
+                    employeeId={employee.id} 
+                    trigger={
+                      <DropdownMenuItem>
+                        <Edit className="ml-2 h-4 w-4" />
+                        <span>تعديل</span>
+                      </DropdownMenuItem>
+                    } 
+                  />
+                  
+                  <DeleteEmployeeDialog 
+                    employeeId={employee.id} 
+                    employeeName={employee.full_name} 
+                    trigger={
+                      <DropdownMenuItem className="text-red-600">
+                        <Trash className="ml-2 h-4 w-4" />
+                        <span>حذف</span>
+                      </DropdownMenuItem>
+                    } 
+                  />
                 </DropdownMenuContent>
               </DropdownMenu>
             </TableCell>
@@ -101,4 +115,3 @@ export function EmployeesTable({ employees, isLoading }: EmployeesTableProps) {
     </Table>
   );
 }
-

@@ -1,11 +1,13 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Users } from "lucide-react";
 import { AddEmployeeDialog } from "../dialogs/AddEmployeeDialog";
 import { useEmployees } from "@/hooks/hr/useEmployees";
 import { EmployeesTable } from "./EmployeesTable";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface EmployeesListProps {
   searchTerm?: string;
@@ -14,6 +16,27 @@ interface EmployeesListProps {
 export function EmployeesList({ searchTerm = "" }: EmployeesListProps) {
   const [search, setSearch] = useState(searchTerm);
   const { data: employees, isLoading, error } = useEmployees();
+
+  // Handle error state
+  if (error) {
+    console.error("Error loading employees:", error);
+    return (
+      <Card>
+        <CardContent className="py-10">
+          <EmptyState
+            icon={<Users className="h-10 w-10 text-red-500" />}
+            title="حدث خطأ أثناء تحميل البيانات"
+            description="حاول مرة أخرى في وقت لاحق أو اتصل بالدعم الفني"
+            action={
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                إعادة تحميل
+              </Button>
+            }
+          />
+        </CardContent>
+      </Card>
+    );
+  }
 
   const filteredEmployees = employees?.filter(
     (employee) =>
@@ -48,4 +71,3 @@ export function EmployeesList({ searchTerm = "" }: EmployeesListProps) {
     </div>
   );
 }
-

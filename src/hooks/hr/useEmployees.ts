@@ -6,13 +6,19 @@ export function useEmployees() {
   return useQuery({
     queryKey: ['employees'],
     queryFn: async () => {
-      // Remove the status filter if that field doesn't exist
+      console.log("Fetching employees data...");
+      
       const { data, error } = await supabase
         .from('employees')
         .select('*')
         .order('full_name');
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching employees:", error);
+        throw error;
+      }
+      
+      console.log("Employees data fetched:", data?.length || 0, "records");
       return data || [];
     }
   });
