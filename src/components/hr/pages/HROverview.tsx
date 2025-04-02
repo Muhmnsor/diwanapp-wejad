@@ -1,203 +1,188 @@
 
-import { Card } from "@/components/ui/card";
+import React from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useHRStats } from "@/hooks/hr/useHRStats";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Users, CalendarClock, FileBarChart, Clock, AlertCircle, Calendar, Briefcase, GraduationCap } from "lucide-react";
 import { Sparkline, SparklineSpot } from "@/components/ui/sparkline";
+import { ArrowUpRight, ArrowDownRight, Users, UserPlus, Calendar, ClipboardList, FileWarning, GraduationCap } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const HROverview = () => {
   const { data: stats, isLoading, error } = useHRStats();
 
-  // Error state
-  if (error) {
+  if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">نظرة عامة على شؤون الموظفين</h1>
-          <p className="text-muted-foreground">إحصائيات ومؤشرات أداء إدارة شؤون الموظفين</p>
-        </div>
-        
-        <EmptyState
-          title="حدث خطأ في تحميل البيانات"
-          description="يرجى تحديث الصفحة أو المحاولة مرة أخرى لاحقاً"
-          icon={<AlertCircle className="h-10 w-10 text-red-500" />}
-        />
+      <div className="space-y-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <Skeleton className="h-8 w-64" />
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[...Array(8)].map((_, index) => (
+                <Card key={index}>
+                  <CardContent className="p-6">
+                    <Skeleton className="h-8 w-24 mb-2" />
+                    <Skeleton className="h-12 w-16" />
+                    <Skeleton className="h-6 w-full mt-4" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  // Loading state - simple skeleton version of cards
-  if (isLoading) {
+  if (error || !stats) {
     return (
-      <div className="space-y-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">نظرة عامة على شؤون الموظفين</h1>
-          <p className="text-muted-foreground">إحصائيات ومؤشرات أداء إدارة شؤون الموظفين</p>
-        </div>
-        
-        {/* Skeleton Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          {[1, 2, 3].map(i => (
-            <Card key={i} className="p-4 flex items-center">
-              <div className="p-2 rounded-full"><Skeleton className="h-6 w-6 rounded-full" /></div>
-              <div className="flex-1 rtl:text-right pl-4">
-                <Skeleton className="h-4 w-20 mb-2" />
-                <Skeleton className="h-8 w-16 mb-2" />
-                <Skeleton className="h-3 w-24" />
-              </div>
-            </Card>
-          ))}
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1, 2, 3].map(i => (
-            <Card key={i} className="p-4 flex items-center">
-              <div className="p-2 rounded-full"><Skeleton className="h-6 w-6 rounded-full" /></div>
-              <div className="flex-1 rtl:text-right pl-4">
-                <Skeleton className="h-4 w-20 mb-2" />
-                <Skeleton className="h-8 w-16 mb-2" />
-                <Skeleton className="h-3 w-24" />
-              </div>
-            </Card>
-          ))}
-        </div>
-      </div>
+      <EmptyState
+        title="لا يمكن تحميل البيانات"
+        description="حدث خطأ أثناء تحميل إحصائيات الموارد البشرية. يرجى المحاولة مرة أخرى."
+        icon={<FileWarning className="h-10 w-10" />}
+      />
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">نظرة عامة على شؤون الموظفين</h1>
-        <p className="text-muted-foreground">إحصائيات ومؤشرات أداء إدارة شؤون الموظفين</p>
-      </div>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xl">لوحة متابعة الموارد البشرية</CardTitle>
+          <CardDescription>نظرة عامة على بيانات ومؤشرات الموارد البشرية</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Employees Stats */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-muted-foreground text-sm">إجمالي الموظفين</span>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="text-2xl font-bold">{stats.totalEmployees}</div>
+                <div className="h-10 mt-2">
+                  {Array.isArray(stats.employeeTrend) && stats.employeeTrend.length > 0 && (
+                    <Sparkline data={stats.employeeTrend} height={20} color="#4ade80">
+                      <SparklineSpot />
+                    </Sparkline>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card className="p-4 flex items-center space-x-4 space-x-reverse">
-          <div className="p-2 bg-blue-100 rounded-full">
-            <Users className="h-6 w-6 text-blue-600" />
-          </div>
-          <div className="flex-1 rtl:text-right">
-            <p className="text-sm text-muted-foreground">الموظفين</p>
-            <div className="flex items-end">
-              <h3 className="text-2xl font-bold">{stats?.totalEmployees || 0}</h3>
-              {stats?.employeeTrend && stats.employeeTrend.length > 0 && (
-                <div className="mb-1 mx-3 w-20 h-8">
-                  <Sparkline data={stats.employeeTrend}>
-                    <SparklineSpot />
-                  </Sparkline>
+            {/* New Employees */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-muted-foreground text-sm">موظفين جدد</span>
+                  <UserPlus className="h-4 w-4 text-muted-foreground" />
                 </div>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {stats?.newEmployees || 0} موظف جديد هذا الشهر
-            </p>
-          </div>
-        </Card>
-        
-        <Card className="p-4 flex items-center space-x-4 space-x-reverse">
-          <div className="p-2 bg-green-100 rounded-full">
-            <CalendarClock className="h-6 w-6 text-green-600" />
-          </div>
-          <div className="flex-1 rtl:text-right">
-            <p className="text-sm text-muted-foreground">الحضور اليوم</p>
-            <div className="flex items-end">
-              <h3 className="text-2xl font-bold">{stats?.presentToday || 0}</h3>
-              {stats?.attendanceTrend && stats.attendanceTrend.length > 0 && (
-                <div className="mb-1 mx-3 w-20 h-8">
-                  <Sparkline data={stats.attendanceTrend} color="#16a34a">
-                    <SparklineSpot 
-                      spotColors={{
-                        endSpot: "#16a34a",
-                        spotColor: "rgba(22, 163, 74, 0.6)"
-                      }}
-                    />
-                  </Sparkline>
+                <div className="text-2xl font-bold">{stats.newEmployees}</div>
+                <div className="flex items-center mt-2 text-green-500 text-sm">
+                  <ArrowUpRight className="h-4 w-4 mr-1" />
+                  <span>هذا الشهر</span>
                 </div>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              نسبة الحضور: {`${stats?.attendanceRate || 0}%`}
-            </p>
-          </div>
-        </Card>
-        
-        <Card className="p-4 flex items-center space-x-4 space-x-reverse">
-          <div className="p-2 bg-amber-100 rounded-full">
-            <Calendar className="h-6 w-6 text-amber-600" />
-          </div>
-          <div className="flex-1 rtl:text-right">
-            <p className="text-sm text-muted-foreground">الإجازات النشطة</p>
-            <div className="flex items-end">
-              <h3 className="text-2xl font-bold">{stats?.activeLeaves || 0}</h3>
-              {stats?.leavesTrend && stats.leavesTrend.length > 0 && (
-                <div className="mb-1 mx-3 w-20 h-8">
-                  <Sparkline data={stats.leavesTrend} color="#d97706">
-                    <SparklineSpot 
-                      spotColors={{
-                        endSpot: "#d97706",
-                        spotColor: "rgba(217, 119, 6, 0.6)"
-                      }}
-                    />
-                  </Sparkline>
-                </div>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {stats?.upcomingLeaves || 0} إجازة في الأسبوع القادم
-            </p>
-          </div>
-        </Card>
-      </div>
+              </CardContent>
+            </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 flex items-center space-x-4 space-x-reverse">
-          <div className="p-2 bg-purple-100 rounded-full">
-            <Briefcase className="h-6 w-6 text-purple-600" />
+            {/* Attendance Rate */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-muted-foreground text-sm">نسبة الحضور</span>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="text-2xl font-bold">{stats.attendanceRate}%</div>
+                <div className="h-10 mt-2">
+                  {Array.isArray(stats.attendanceTrend) && stats.attendanceTrend.length > 0 && (
+                    <Sparkline data={stats.attendanceTrend} height={20} color="#4ade80">
+                      <SparklineSpot />
+                    </Sparkline>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Present Today */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-muted-foreground text-sm">الحضور اليوم</span>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="text-2xl font-bold">{stats.presentToday}</div>
+                <div className="flex items-center mt-2 text-green-500 text-sm">
+                  <span>من {stats.totalEmployees} موظف</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Active Leaves */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-muted-foreground text-sm">إجازات نشطة</span>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="text-2xl font-bold">{stats.activeLeaves}</div>
+                <div className="h-10 mt-2">
+                  {Array.isArray(stats.leavesTrend) && stats.leavesTrend.length > 0 && (
+                    <Sparkline data={stats.leavesTrend} height={20} color="#f97316">
+                      <SparklineSpot spotColors={{ endSpot: "#f97316", spotColor: "rgba(249, 115, 22, 0.6)" }} />
+                    </Sparkline>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Upcoming Leaves */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-muted-foreground text-sm">إجازات قادمة</span>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="text-2xl font-bold">{stats.upcomingLeaves}</div>
+                <div className="flex items-center mt-2 text-orange-500 text-sm">
+                  <ArrowUpRight className="h-4 w-4 mr-1" />
+                  <span>الأسبوع القادم</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Expiring Contracts */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-muted-foreground text-sm">عقود منتهية</span>
+                  <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="text-2xl font-bold">{stats.expiringContracts}</div>
+                <div className="flex items-center mt-2 text-red-500 text-sm">
+                  <ArrowUpRight className="h-4 w-4 mr-1" />
+                  <span>خلال الشهر</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Pending Trainings */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-muted-foreground text-sm">تدريبات معلقة</span>
+                  <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="text-2xl font-bold">{stats.pendingTrainings}</div>
+                <div className="flex items-center mt-2 text-blue-500 text-sm">
+                  <span>مسجلة للموظفين</span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-          <div className="flex-1 rtl:text-right">
-            <p className="text-sm text-muted-foreground">العقود المنتهية قريباً</p>
-            <h3 className="text-2xl font-bold">
-              {stats?.expiringContracts || 0}
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              خلال الشهر القادم
-            </p>
-          </div>
-        </Card>
-        
-        <Card className="p-4 flex items-center space-x-4 space-x-reverse">
-          <div className="p-2 bg-cyan-100 rounded-full">
-            <GraduationCap className="h-6 w-6 text-cyan-600" />
-          </div>
-          <div className="flex-1 rtl:text-right">
-            <p className="text-sm text-muted-foreground">التدريبات الحالية</p>
-            <h3 className="text-2xl font-bold">
-              {stats?.pendingTrainings || 0}
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              برامج تدريبية قيد التنفيذ
-            </p>
-          </div>
-        </Card>
-        
-        <Card className="p-4 flex items-center space-x-4 space-x-reverse">
-          <div className="p-2 bg-red-100 rounded-full">
-            <AlertCircle className="h-6 w-6 text-red-600" />
-          </div>
-          <div className="flex-1 rtl:text-right">
-            <p className="text-sm text-muted-foreground">المهام العاجلة</p>
-            <h3 className="text-2xl font-bold">
-              3
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              مهام تحتاج إلى متابعة فورية
-            </p>
-          </div>
-        </Card>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -41,6 +41,7 @@ export function useHRStats() {
         let pendingTrainings = 0;
         
         // Generate mock trend data in case we can't get real data
+        // Make sure we always have at least one data point to avoid the sparkline error
         const mockTrend = [5, 6, 8, 7, 9, 8, 10];
         
         try {
@@ -154,6 +155,18 @@ export function useHRStats() {
         const attendanceRate = totalEmployees > 0 ? 
           Math.round((presentToday / Math.max(1, (totalEmployees - activeLeaves))) * 100) : 0;
         
+        // Ensure trend arrays always have at least one value
+        const ensureTrendData = (data: number[] | undefined): number[] => {
+          if (!data || !Array.isArray(data) || data.length === 0) {
+            return [0]; // Return array with at least one value
+          }
+          return data;
+        };
+        
+        const employeeTrend = ensureTrendData(mockTrend);
+        const attendanceTrend = ensureTrendData([75, 78, 80, 82, 79, 85, 86]);
+        const leavesTrend = ensureTrendData([2, 3, 1, 2, 4, 2, 1]);
+        
         return {
           totalEmployees,
           newEmployees,
@@ -163,14 +176,14 @@ export function useHRStats() {
           upcomingLeaves,
           expiringContracts,
           pendingTrainings,
-          // Adding static trend data for now (would be dynamic in a real implementation)
-          employeeTrend: mockTrend,
-          attendanceTrend: [75, 78, 80, 82, 79, 85, 86],
-          leavesTrend: [2, 3, 1, 2, 4, 2, 1]
+          employeeTrend,
+          attendanceTrend,
+          leavesTrend
         };
       } catch (error) {
         console.error('Error fetching HR stats:', error);
         // Return safe default values if everything fails
+        // Ensure all trend data has at least one value
         return {
           totalEmployees: 0,
           newEmployees: 0,
@@ -180,9 +193,9 @@ export function useHRStats() {
           upcomingLeaves: 0,
           expiringContracts: 0,
           pendingTrainings: 0,
-          employeeTrend: [0, 0, 0, 0, 0],
-          attendanceTrend: [0, 0, 0, 0, 0],
-          leavesTrend: [0, 0, 0, 0, 0]
+          employeeTrend: [0],
+          attendanceTrend: [0],
+          leavesTrend: [0]
         };
       }
     },

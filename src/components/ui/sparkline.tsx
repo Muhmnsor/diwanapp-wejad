@@ -20,6 +20,15 @@ export function Sparkline({
   className,
   ...props
 }: SparklineProps) {
+  // Don't render sparkline if data is empty or undefined
+  if (!data || data.length === 0) {
+    return (
+      <div className={cn("w-full h-[30px] flex items-center justify-center text-muted-foreground text-xs", className)} {...props}>
+        No data available
+      </div>
+    );
+  }
+
   return (
     <div className={cn("w-full", className)} {...props}>
       <Sparklines data={data} limit={limit} height={height} margin={5}>
