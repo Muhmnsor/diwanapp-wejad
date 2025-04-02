@@ -56,6 +56,19 @@ export function EmployeesTable({ employees, isLoading, onRefresh }: EmployeesTab
     setScheduleDialogOpen(true);
   };
 
+  // Clear selected employee when closing dialogs
+  const handleCloseDialog = () => {
+    setViewEmployeeOpen(false);
+    setEditEmployeeOpen(false);
+    setDeleteEmployeeOpen(false);
+    setScheduleDialogOpen(false);
+    // Don't clear selectedEmployee immediately to avoid UI flickers
+    // Allow components to unmount properly first
+    setTimeout(() => {
+      setSelectedEmployee(null);
+    }, 100);
+  };
+
   if (isLoading) {
     return <div className="flex justify-center p-4">جاري تحميل البيانات...</div>;
   }
@@ -136,36 +149,36 @@ export function EmployeesTable({ employees, isLoading, onRefresh }: EmployeesTab
         <>
           <ViewEmployeeDialog 
             isOpen={viewEmployeeOpen} 
-            onClose={() => setViewEmployeeOpen(false)} 
+            onClose={handleCloseDialog} 
             employee={selectedEmployee} 
           />
           
           <EditEmployeeDialog 
             isOpen={editEmployeeOpen} 
-            onClose={() => setEditEmployeeOpen(false)} 
+            onClose={handleCloseDialog} 
             employee={selectedEmployee}
             onSuccess={() => {
-              setEditEmployeeOpen(false);
+              handleCloseDialog();
               if (onRefresh) onRefresh();
             }} 
           />
           
           <DeleteEmployeeDialog 
             isOpen={deleteEmployeeOpen} 
-            onClose={() => setDeleteEmployeeOpen(false)} 
+            onClose={handleCloseDialog} 
             employee={selectedEmployee}
             onSuccess={() => {
-              setDeleteEmployeeOpen(false);
+              handleCloseDialog();
               if (onRefresh) onRefresh();
             }} 
           />
           
           <ManageScheduleDialog
             isOpen={scheduleDialogOpen}
-            onClose={() => setScheduleDialogOpen(false)}
+            onClose={handleCloseDialog}
             employee={selectedEmployee}
             onSuccess={() => {
-              setScheduleDialogOpen(false);
+              handleCloseDialog();
               if (onRefresh) onRefresh();
             }}
           />
