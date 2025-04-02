@@ -1,202 +1,236 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useSelfAttendance } from "@/hooks/hr/useSelfAttendance";
 import { useUserEmployeeLink } from "@/components/hr/useUserEmployeeLink";
-import { CalendarClockIcon, UserCheckIcon, UserXIcon, AlertTriangleIcon } from "lucide-react";
-import { format } from "date-fns";
-import { ar } from "date-fns/locale";
-import { toast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, Clock, LogIn, LogOut, UserIcon } from "lucide-react";
+import { formatDateWithDay, formatTime } from "@/utils/dateTimeUtils";
+import { Link } from "react-router-dom";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function SelfAttendanceCard() {
-  const [employeeInfo, setEmployeeInfo] = useState<any>(null);
-  const [todayRecord, setTodayRecord] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingRecord, setIsLoadingRecord] = useState(true);
-  const { checkIn, checkOut, getTodayAttendance } = useSelfAttendance();
-  const { getCurrentUserEmployee } = useUserEmployeeLink();
+  const { checkIn, checkOut, getTodayAttendance, getEmployeeInfo, isLoading: attendanceLoading } = useSelfAttendance();
+  const { getCurrentUserEmployee, isFetching: employeeLinkFetching } = useUserEmployeeLink();
+  const [employee, setEmployee] = useState<any>(null);
+  const [attendanceRecord, setAttendanceRecord] = useState<any>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [isLinkedToEmployee, setIsLinkedToEmployee] = useState<boolean | null>(null);
 
-  // Fetch employee info
-  useEffect(() => {
-    const fetchEmployeeInfo = async () => {
-      setIsLoading(true);
-      const result = await getCurrentUserEmployee();
-      
-      if (result.success && result.data) {
-        setEmployeeInfo(result.data);
-        // After getting employee info, fetch today's attendance
-        fetchTodayAttendance();
-      } else {
-        setIsLoadingRecord(false);
-        console.error("Error fetching employee info:", result.error);
-      }
-      setIsLoading(false);
-    };
-
-    fetchEmployeeInfo();
-  }, []);
-
-  // Fetch today's attendance
-  const fetchTodayAttendance = async () => {
-    setIsLoadingRecord(true);
+  // Load employee and attendance data
+useEffect(() => {
+  const loadData = async () => {
+    setIsLoadingData(true);
+    
     try {
-      const result = await getTodayAttendance();
-      if (result.success) {
-        setTodayRecord(result.data);
-      } else {
-        console.error("Error fetching today's attendance:", result.error);
+      // First check if user is linked to an employee
+      const linkResult = await getCurrentUserEmployee();
+      console.log("Employee link check in SelfAttendanceCard:", linkResult);
+      
+      // Set to false by default if there's any error
+      if (!linkResult.success) {
+        setIsLinkedToEmployee(false);
+        setIsLoadingData(false);
+        return;
+      }
+      
+      // Set accurate linking status
+      setIsLinkedToEmployee(linkResult.isLinked);
+      
+      if (linkResult.isLinked && linkResult.data) {
+        setEmployee(linkResult.data);
+        
+        // Get attendance data
+        const attendanceResult = await getTodayAttendance();
+        if (attendanceResult.success) {
+          setAttendanceRecord(attendanceResult.data);
+        }
       }
     } catch (error) {
-      console.error("Exception fetching attendance:", error);
+      console.error("Error loading self-attendance data:", error);
+      setIsLinkedToEmployee(false);
     } finally {
-      setIsLoadingRecord(false);
+      // Always finish loading, even on error
+      setIsLoadingData(false);
     }
   };
 
+  loadData();
+}, [getCurrentUserEmployee, getTodayAttendance]);
+
+
+  // Update current time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   // Handle check in
   const handleCheckIn = async () => {
-    setIsLoading(true);
     const result = await checkIn();
-    
     if (result.success) {
-      await fetchTodayAttendance();
-    } else if (result.alreadyCheckedIn && result.data) {
-      setTodayRecord(result.data);
+      setAttendanceRecord(result.data);
     }
-    
-    setIsLoading(false);
   };
 
   // Handle check out
   const handleCheckOut = async () => {
-    setIsLoading(true);
     const result = await checkOut();
-    
     if (result.success) {
-      await fetchTodayAttendance();
-    } else if (result.alreadyCheckedOut && result.data) {
-      setTodayRecord(result.data);
+      setAttendanceRecord(result.data);
     }
-    
-    setIsLoading(false);
   };
 
-  const formatTimeFromDate = (dateString: string) => {
-    if (!dateString) return "غير متوفر";
-    
+  // Format time from timestamp
+  const formatTimestamp = (timestamp: string | null) => {
+    if (!timestamp) return '-';
     try {
-      const date = new Date(dateString);
-      return format(date, 'hh:mm a', { locale: ar });
+      return formatTime(timestamp);
     } catch (error) {
-      console.error("Error formatting date:", error);
-      return dateString;
+      return timestamp;
     }
   };
 
-  if (isLoading && !employeeInfo) {
+  // Loading state
+  if (isLoadingData || employeeLinkFetching) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-right">تسجيل الحضور والانصراف</CardTitle>
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader className="text-center">
+          <CardTitle>تسجيل الحضور</CardTitle>
+          <CardDescription>جاري تحميل البيانات...</CardDescription>
         </CardHeader>
-        <CardContent className="text-center py-8">
-          <div className="flex flex-col items-center gap-4">
-            <CalendarClockIcon className="h-12 w-12 text-muted-foreground animate-pulse" />
-            <p className="text-muted-foreground">جاري التحميل...</p>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
           </div>
+          <Skeleton className="h-20 w-full" />
+        </CardContent>
+        <CardFooter className="flex justify-around">
+          <Skeleton className="h-10 w-full" />
+        </CardFooter>
+      </Card>
+    );
+  }
+
+  // User not linked to an employee
+  if (isLinkedToEmployee === false) {
+    return (
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader className="text-center">
+          <CardTitle>تسجيل الحضور</CardTitle>
+          <CardDescription>لم يتم ربط حسابك بموظف</CardDescription>
+        </CardHeader>
+        <CardContent className="text-center py-6">
+          <UserIcon className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+          <p className="text-muted-foreground mb-4">
+            لاستخدام ميزة تسجيل الحضور الذاتي، يجب ربط حسابك كمستخدم بسجل موظف.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            يرجى التواصل مع مدير النظام أو الانتقال إلى إدارة المستخدمين لربط حسابك.
+          </p>
+        </CardContent>
+        <CardFooter className="justify-center">
+          <Link to="/admin/hr/employees">
+            <Button variant="default">
+              الانتقال إلى إدارة الموظفين
+            </Button>
+          </Link>
+        </CardFooter>
+      </Card>
+    );
+  }
+
+  // No employee data found
+  if (!employee) {
+    return (
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader className="text-center">
+          <CardTitle>تسجيل الحضور</CardTitle>
+          <CardDescription>لم يتم العثور على بيانات الموظف</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-center text-muted-foreground">
+            لم يتم العثور على بياناتك كموظف في النظام. يرجى التواصل مع قسم الموارد البشرية.
+          </p>
         </CardContent>
       </Card>
     );
   }
 
-  if (!employeeInfo) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-right">تسجيل الحضور والانصراف</CardTitle>
-        </CardHeader>
-        <CardContent className="text-center py-8">
-          <div className="flex flex-col items-center gap-4">
-            <AlertTriangleIcon className="h-12 w-12 text-yellow-500" />
-            <p className="text-lg">لم يتم ربط حسابك بسجل موظف</p>
-            <p className="text-muted-foreground">
-              يرجى التواصل مع إدارة الموارد البشرية لربط حسابك
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Normal attendance card display
+  const today = new Date();
+  const formattedDate = formatDateWithDay(today.toISOString().split('T')[0]);
+  const formattedTime = today.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-right">تسجيل الحضور والانصراف</CardTitle>
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader className="text-center">
+        <CardTitle>تسجيل الحضور</CardTitle>
+        <CardDescription>
+          مرحباً {employee.full_name}
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        {isLoadingRecord ? (
-          <div className="flex flex-col items-center gap-4 py-6">
-            <CalendarClockIcon className="h-8 w-8 text-muted-foreground animate-pulse" />
-            <p className="text-muted-foreground">جاري تحميل بيانات الحضور...</p>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="flex flex-col items-center p-4 border rounded-lg">
+            <span className="text-muted-foreground text-sm">التاريخ</span>
+            <span className="font-bold text-lg">{formattedDate}</span>
+          </div>
+          <div className="flex flex-col items-center p-4 border rounded-lg">
+            <span className="text-muted-foreground text-sm">الوقت الحالي</span>
+            <div className="font-bold text-lg flex items-center">
+              <Clock className="h-4 w-4 ml-1" />
+              {formattedTime}
+            </div>
+          </div>
+        </div>
+        
+        {attendanceRecord ? (
+          <div className="grid grid-cols-2 gap-4 border rounded-lg p-4">
+            <div className="text-center">
+              <p className="text-muted-foreground text-sm">وقت الحضور</p>
+              <p className="font-bold text-lg text-green-600">
+                {formatTimestamp(attendanceRecord.check_in)}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-muted-foreground text-sm">وقت الانصراف</p>
+              <p className={`font-bold text-lg ${attendanceRecord.check_out ? 'text-red-600' : 'text-gray-400'}`}>
+                {attendanceRecord.check_out ? formatTimestamp(attendanceRecord.check_out) : 'لم يتم التسجيل بعد'}
+              </p>
+            </div>
           </div>
         ) : (
-          <div className="space-y-6">
-            <div className="text-right space-y-1">
-              <p className="text-lg font-semibold">{employeeInfo.full_name}</p>
-              <p className="text-muted-foreground">{employeeInfo.position || "غير محدد"}</p>
-            </div>
-            
-            <div className="border rounded-lg p-4 bg-muted/30">
-              <div className="flex justify-between items-center mb-4">
-                <p className="text-sm text-muted-foreground">
-                  {format(new Date(), 'EEEE, d MMMM yyyy', { locale: ar })}
-                </p>
-                <div className="bg-primary/10 text-primary rounded-md px-2 py-1 text-xs">
-                  {todayRecord?.status === "present" ? "حاضر" : 
-                   todayRecord?.status === "late" ? "متأخر" : 
-                   todayRecord?.status === "absent" ? "غائب" : "غير مسجل"}
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div className="space-y-1 text-center">
-                  <p className="text-xs text-muted-foreground">وقت الحضور</p>
-                  <p className="font-medium">
-                    {todayRecord?.check_in ? formatTimeFromDate(todayRecord.check_in) : "غير مسجل"}
-                  </p>
-                </div>
-                <div className="space-y-1 text-center">
-                  <p className="text-xs text-muted-foreground">وقت الانصراف</p>
-                  <p className="font-medium">
-                    {todayRecord?.check_out ? formatTimeFromDate(todayRecord.check_out) : "غير مسجل"}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex gap-3 justify-center mt-6">
-                <Button 
-                  onClick={handleCheckIn} 
-                  disabled={isLoading || (todayRecord?.check_in !== null && todayRecord?.check_in !== undefined)}
-                  className="flex-1"
-                >
-                  <UserCheckIcon className="h-4 w-4 mr-2" />
-                  تسجيل الحضور
-                </Button>
-                <Button 
-                  onClick={handleCheckOut} 
-                  disabled={isLoading || !todayRecord?.check_in || todayRecord?.check_out !== null}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  <UserXIcon className="h-4 w-4 mr-2" />
-                  تسجيل الانصراف
-                </Button>
-              </div>
-            </div>
+          <div className="text-center p-4 border rounded-lg bg-muted/30">
+            <p className="text-muted-foreground">لم تقم بتسجيل الحضور اليوم</p>
           </div>
         )}
       </CardContent>
+      <CardFooter className="flex justify-around">
+        <Button
+          variant="default"
+          disabled={attendanceLoading || (attendanceRecord && attendanceRecord.check_in)}
+          onClick={handleCheckIn}
+          className="flex-1 ml-2"
+        >
+          {attendanceLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <LogIn className="ml-2 h-4 w-4" />}
+          تسجيل الحضور
+        </Button>
+        <Button
+          variant="outline"
+          disabled={attendanceLoading || !attendanceRecord || (attendanceRecord && attendanceRecord.check_out)}
+          onClick={handleCheckOut}
+          className="flex-1 mr-2"
+        >
+          {attendanceLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <LogOut className="ml-2 h-4 w-4" />}
+          تسجيل الانصراف
+        </Button>
+      </CardFooter>
     </Card>
   );
 }
