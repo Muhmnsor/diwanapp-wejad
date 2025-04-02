@@ -1,179 +1,118 @@
 
-import * as React from "react";
-import { CaretSortIcon, CircleIcon } from "@radix-ui/react-icons";
-import { Users, Building, Briefcase, Network, UserCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import React, { useState } from "react";
+import { ChevronRight, ChevronDown, Building2, FolderTree, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
 
-interface OrganizationalHierarchyItem {
+interface OrganizationalUnit {
   id: string;
   name: string;
   description?: string;
   unit_type: string;
   parent_id?: string;
-  level: number;
-  path: string[];
-  children?: OrganizationalHierarchyItem[];
+  is_active?: boolean;
 }
 
 interface OrganizationTreeViewProps {
-  data: OrganizationalHierarchyItem[];
-  onUnitSelect?: (unitId: string) => void;
-  expandAll?: boolean;
+  units: OrganizationalUnit[];
+  onUnitClick: (unit: OrganizationalUnit) => void;
+  selectedUnitId?: string;
 }
 
-export function OrganizationTreeView({ 
-  data, 
-  onUnitSelect, 
-  expandAll = false 
-}: OrganizationTreeViewProps) {
-  // تنظيم البيانات في هيكل شجري
-  const organizeTree = (items: OrganizationalHierarchyItem[]): OrganizationalHierarchyItem[] => {
-    const rootItems: OrganizationalHierarchyItem[] = [];
-    const itemMap = new Map<string, OrganizationalHierarchyItem>();
-    
-    // إنشاء خريطة للعناصر
-    items.forEach(item => {
-      const newItem = { ...item, children: [] };
-      itemMap.set(item.id, newItem);
-    });
-    
-    // بناء الشجرة
-    items.forEach(item => {
-      const mappedItem = itemMap.get(item.id);
-      if (mappedItem) {
-        if (!item.parent_id) {
-          rootItems.push(mappedItem);
-        } else {
-          const parent = itemMap.get(item.parent_id);
-          if (parent && parent.children) {
-            parent.children.push(mappedItem);
-          }
-        }
-      }
-    });
-    
-    return rootItems;
+export function OrganizationTreeView({ units, onUnitClick, selectedUnitId }: OrganizationTreeViewProps) {
+  const [expandedUnits, setExpandedUnits] = useState<Record<string, boolean>>({});
+
+  // Function to toggle expanded state of a unit
+  const toggleExpand = (unitId: string) => {
+    setExpandedUnits(prev => ({
+      ...prev,
+      [unitId]: !prev[unitId]
+    }));
   };
 
-  const getUnitTypeIcon = (unitType: string) => {
-    switch (unitType) {
+  // Get root level units (no parent_id)
+  const rootUnits = units.filter(unit => !unit.parent_id);
+
+  // Get children of a specific unit
+  const getChildUnits = (parentId: string) => {
+    return units.filter(unit => unit.parent_id === parentId);
+  };
+
+  // Render a unit and its children recursively
+  const renderUnit = (unit: OrganizationalUnit, level = 0) => {
+    const children = getChildUnits(unit.id);
+    const hasChildren = children.length > 0;
+    const isExpanded = expandedUnits[unit.id];
+    const isSelected = unit.id === selectedUnitId;
+
+    return (
+      <div key={unit.id}>
+        <div 
+          className={cn(
+            "flex items-center py-1 px-2 hover:bg-secondary/50 rounded-md cursor-pointer",
+            isSelected && "bg-secondary"
+          )}
+          style={{ paddingRight: `${level * 12 + 8}px` }}
+        >
+          {hasChildren ? (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6 p-0" 
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleExpand(unit.id);
+              }}
+            >
+              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            </Button>
+          ) : (
+            <div className="w-6" />
+          )}
+          
+          <div 
+            className="flex items-center gap-2 flex-1 py-1" 
+            onClick={() => onUnitClick(unit)}
+          >
+            {getUnitIcon(unit.unit_type)}
+            <span>{unit.name}</span>
+          </div>
+        </div>
+        
+        {isExpanded && hasChildren && (
+          <div className="mt-1">
+            {children.map(childUnit => renderUnit(childUnit, level + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Get appropriate icon based on unit type
+  const getUnitIcon = (unitType: string) => {
+    switch (unitType.toLowerCase()) {
       case 'department':
-        return <Building className="h-4 w-4 text-blue-500" />;
+        return <Building2 className="h-4 w-4 text-blue-500" />;
       case 'division':
-        return <Network className="h-4 w-4 text-green-500" />;
-      case 'section':
-        return <Briefcase className="h-4 w-4 text-amber-500" />;
+        return <FolderTree className="h-4 w-4 text-green-500" />;
       case 'team':
-        return <Users className="h-4 w-4 text-purple-500" />;
-      case 'position':
-        return <UserCircle className="h-4 w-4 text-rose-500" />;
+        return <Users className="h-4 w-4 text-orange-500" />;
       default:
-        return <CircleIcon className="h-4 w-4" />;
+        return <Building2 className="h-4 w-4" />;
     }
   };
 
-  const treeData = organizeTree(data);
-
-  const renderTreeItems = (items: OrganizationalHierarchyItem[]) => {
-    return items.map((item) => (
-      <TreeItem 
-        key={item.id} 
-        item={item} 
-        onUnitSelect={onUnitSelect}
-        expandAll={expandAll}
-        getUnitTypeIcon={getUnitTypeIcon}
-      />
-    ));
-  };
+  if (units.length === 0) {
+    return (
+      <div className="text-center p-4">
+        <p className="text-muted-foreground">لا توجد وحدات تنظيمية</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-2 rtl">
-      {data.length === 0 ? (
-        <div className="text-center py-4 text-muted-foreground">
-          لا توجد وحدات تنظيمية
-        </div>
-      ) : (
-        renderTreeItems(treeData)
-      )}
-    </div>
-  );
-}
-
-interface TreeItemProps {
-  item: OrganizationalHierarchyItem;
-  onUnitSelect?: (unitId: string) => void;
-  expandAll?: boolean;
-  getUnitTypeIcon: (unitType: string) => React.ReactNode;
-}
-
-function TreeItem({ 
-  item, 
-  onUnitSelect, 
-  expandAll = false,
-  getUnitTypeIcon
-}: TreeItemProps) {
-  const [isOpen, setIsOpen] = React.useState(expandAll);
-  const hasChildren = item.children && item.children.length > 0;
-
-  React.useEffect(() => {
-    setIsOpen(expandAll);
-  }, [expandAll]);
-
-  return (
-    <div>
-      {hasChildren ? (
-        <Collapsible
-          open={isOpen}
-          onOpenChange={setIsOpen}
-          className="space-y-2"
-        >
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              className={cn(
-                "w-full justify-start px-2 hover:bg-muted/50 gap-2",
-                isOpen && "font-bold"
-              )}
-              onClick={() => onUnitSelect && onUnitSelect(item.id)}
-            >
-              {getUnitTypeIcon(item.unit_type)}
-              <span>{item.name}</span>
-            </Button>
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="sm" className="p-0 h-7 w-7">
-                <CaretSortIcon className="h-4 w-4" />
-                <span className="sr-only">Toggle</span>
-              </Button>
-            </CollapsibleTrigger>
-          </div>
-          <CollapsibleContent className="space-y-2 mr-4 border-r pr-2">
-            {item.children?.map((child) => (
-              <TreeItem 
-                key={child.id} 
-                item={child} 
-                onUnitSelect={onUnitSelect}
-                expandAll={expandAll}
-                getUnitTypeIcon={getUnitTypeIcon}
-              />
-            ))}
-          </CollapsibleContent>
-        </Collapsible>
-      ) : (
-        <Button
-          variant="ghost"
-          className="w-full justify-start px-2 hover:bg-muted/50 gap-2"
-          onClick={() => onUnitSelect && onUnitSelect(item.id)}
-        >
-          {getUnitTypeIcon(item.unit_type)}
-          <span>{item.name}</span>
-        </Button>
-      )}
+    <div className="overflow-y-auto max-h-[400px]">
+      {rootUnits.map(unit => renderUnit(unit))}
     </div>
   );
 }
