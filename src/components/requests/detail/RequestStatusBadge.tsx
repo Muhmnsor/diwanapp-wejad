@@ -23,7 +23,7 @@ export const RequestStatusBadge: React.FC<RequestStatusBadgeProps> = ({ status }
     case 'rejected':
       return <Badge variant="destructive">مرفوض</Badge>;
     case 'cancelled':
-      return <Badge variant="secondary" className="bg-gray-100 text-gray-800 hover:bg-gray-200">ملغي</Badge>;
+      return <Badge variant="destructive" className="bg-gray-100 text-gray-800 hover:bg-gray-200">ملغي</Badge>;
     default:
       return <Badge>غير معروف</Badge>;
   }

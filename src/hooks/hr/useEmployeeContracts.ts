@@ -16,7 +16,6 @@ export interface EmployeeContract {
   renewal_reminder_sent: boolean;
   created_at: string;
   updated_at: string;
-  notes?: string;
 }
 
 export function useEmployeeContracts(employeeId?: string) {
@@ -205,3 +204,4 @@ export function useEmployeeContracts(employeeId?: string) {
     uploadContractDocument
   };
 }
+

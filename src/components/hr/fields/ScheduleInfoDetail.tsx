@@ -15,58 +15,50 @@ export function ScheduleInfoDetail({ scheduleId }: ScheduleInfoDetailProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!schedules?.length) {
-      return;
-    }
-    
-    let isMounted = true;
     const loadScheduleDetails = async () => {
       setIsLoading(true);
+      console.log("ScheduleInfoDetail - Loading schedule details. scheduleId:", scheduleId);
+      console.log("ScheduleInfoDetail - Available schedules:", schedules);
+      console.log("ScheduleInfoDetail - Default schedule:", defaultSchedule);
       
       try {
-        // Find either the selected schedule or use the default
+        // تحديد الجدول المستخدم (المحدد أو الافتراضي)
         let targetSchedule = null;
         
         if (scheduleId) {
-          targetSchedule = schedules.find(s => s.id === scheduleId);
+          console.log("ScheduleInfoDetail - Looking for schedule with ID:", scheduleId);
+          targetSchedule = schedules?.find(s => s.id === scheduleId);
+          console.log("ScheduleInfoDetail - Found matching schedule:", targetSchedule);
         } 
         
         if (!targetSchedule && defaultSchedule) {
+          console.log("ScheduleInfoDetail - Using default schedule");
           targetSchedule = defaultSchedule;
         }
         
-        if (!isMounted) return;
-        
         if (targetSchedule) {
+          console.log("ScheduleInfoDetail - Setting schedule:", targetSchedule);
           setSchedule(targetSchedule);
           
-          // Load work days only after setting the schedule
+          // تحميل تفاصيل أيام العمل
           const days = await getWorkDays(targetSchedule.id);
-          
-          if (!isMounted) return;
+          console.log("ScheduleInfoDetail - Work days loaded:", days);
           setWorkDays(days || []);
         } else {
-          setSchedule(null);
-          setWorkDays([]);
+          console.log("ScheduleInfoDetail - No schedule found");
         }
       } catch (error) {
         console.error('Error loading schedule details:', error);
-        if (isMounted) {
-          setSchedule(null);
-          setWorkDays([]);
-        }
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     };
 
-    loadScheduleDetails();
-    
-    return () => {
-      isMounted = false;
-    };
+    if (schedules?.length) {
+      loadScheduleDetails();
+    } else {
+      console.log("ScheduleInfoDetail - No schedules available yet");
+    }
   }, [scheduleId, schedules, defaultSchedule, getWorkDays]);
 
   const getDayName = (dayOfWeek: number) => {

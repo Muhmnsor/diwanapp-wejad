@@ -42,6 +42,7 @@ export const ProjectTasksList = ({
   hideTasksTitle = false,
   isWorkspace = false
 }: ProjectTasksListProps) => {
+  // Now we pass the parameters separately
   const {
     tasks: fetchedTasks,
     isLoading,

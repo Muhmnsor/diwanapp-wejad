@@ -11,24 +11,20 @@ interface EventReportDialogProps {
   isOpen: boolean;
   onClose: () => void;
   eventId: string;
-  initialData?: any;
-  mode?: 'create' | 'edit';
 }
 
 export const EventReportDialog = ({
   isOpen,
   onClose,
   eventId,
-  initialData,
-  mode = 'create',
 }: EventReportDialogProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
-          <DialogTitle>{mode === 'create' ? 'إضافة تقرير جديد' : 'تعديل التقرير'}</DialogTitle>
+          <DialogTitle>إضافة تقرير جديد</DialogTitle>
         </DialogHeader>
-        <EventReportForm eventId={eventId} onClose={onClose} initialData={initialData} mode={mode} />
+        <EventReportForm eventId={eventId} onClose={onClose} />
       </DialogContent>
     </Dialog>
   );

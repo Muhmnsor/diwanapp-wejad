@@ -43,9 +43,9 @@ export interface AttendanceReportData {
   }[];
 }
 
-export function useAttendanceReport(startDate?: Date, endDate?: Date, employeeId?: string) {
+export function useAttendanceReport(startDate?: Date, endDate?: Date) {
   return useQuery<AttendanceReportData, Error>({
-    queryKey: ['attendance-report', startDate?.toISOString(), endDate?.toISOString(), employeeId],
+    queryKey: ['attendance-report', startDate?.toISOString(), endDate?.toISOString()],
     queryFn: async () => {
       // Construct date filters
       let query = supabase
@@ -73,11 +73,6 @@ export function useAttendanceReport(startDate?: Date, endDate?: Date, employeeId
       
       if (endDate) {
         query = query.lte('attendance_date', endDate.toISOString().split('T')[0]);
-      }
-      
-      // Add employee filter if specified
-      if (employeeId) {
-        query = query.eq('employee_id', employeeId);
       }
       
       const { data, error } = await query;

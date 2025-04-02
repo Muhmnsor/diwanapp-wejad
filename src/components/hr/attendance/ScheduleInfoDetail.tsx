@@ -17,56 +17,35 @@ export function ScheduleInfoDetail({ employeeId }: ScheduleInfoDetailProps) {
   const { getEmployeeSchedule, getWorkDays } = useEmployeeSchedule();
 
   useEffect(() => {
-    // Only load data if we have a valid employeeId
-    if (!employeeId) {
-      setIsLoading(false);
-      setSchedule(null);
-      setWorkDays([]);
-      return;
-    }
-
-    let isMounted = true;
     const loadScheduleData = async () => {
       try {
         setIsLoading(true);
+        console.log("ScheduleInfoDetail (attendance) - Loading data for employee:", employeeId);
         
         const employeeSchedule = await getEmployeeSchedule(employeeId);
-        
-        // Only update state if component is still mounted
-        if (!isMounted) return;
+        console.log("ScheduleInfoDetail (attendance) - Retrieved schedule:", employeeSchedule);
         
         if (employeeSchedule) {
           setSchedule(employeeSchedule);
           
           const days = await getWorkDays(employeeSchedule.id);
-          
-          // Only update state if component is still mounted
-          if (!isMounted) return;
-          
+          console.log("ScheduleInfoDetail (attendance) - Work days:", days);
           setWorkDays(days || []);
         } else {
-          setSchedule(null);
-          setWorkDays([]);
+          console.log("ScheduleInfoDetail (attendance) - No schedule found");
         }
       } catch (error) {
-        console.error("Error loading schedule data:", error);
-        if (isMounted) {
-          setSchedule(null);
-          setWorkDays([]);
-        }
+        console.error("ScheduleInfoDetail (attendance) - Error loading schedule data:", error);
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     };
     
-    loadScheduleData();
-    
-    // Cleanup function to prevent state updates if component unmounts
-    return () => {
-      isMounted = false;
-    };
+    if (employeeId) {
+      loadScheduleData();
+    } else {
+      console.log("ScheduleInfoDetail (attendance) - No employee ID provided");
+    }
   }, [employeeId, getEmployeeSchedule, getWorkDays]);
   
   if (isLoading) {

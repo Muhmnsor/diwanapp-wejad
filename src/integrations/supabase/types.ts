@@ -1445,62 +1445,6 @@ export type Database = {
           },
         ]
       }
-      hr_employee_contracts: {
-        Row: {
-          contract_type: string
-          created_at: string | null
-          document_url: string | null
-          employee_id: string
-          end_date: string | null
-          id: string
-          notes: string | null
-          probation_end_date: string | null
-          renewal_reminder_sent: boolean | null
-          salary: number | null
-          start_date: string
-          status: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          contract_type: string
-          created_at?: string | null
-          document_url?: string | null
-          employee_id: string
-          end_date?: string | null
-          id?: string
-          notes?: string | null
-          probation_end_date?: string | null
-          renewal_reminder_sent?: boolean | null
-          salary?: number | null
-          start_date: string
-          status?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          contract_type?: string
-          created_at?: string | null
-          document_url?: string | null
-          employee_id?: string
-          end_date?: string | null
-          id?: string
-          notes?: string | null
-          probation_end_date?: string | null
-          renewal_reminder_sent?: boolean | null
-          salary?: number | null
-          start_date?: string
-          status?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "hr_employee_contracts_employee_id_fkey"
-            columns: ["employee_id"]
-            isOneToOne: false
-            referencedRelation: "employees"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       hr_employee_schedules: {
         Row: {
           created_at: string | null

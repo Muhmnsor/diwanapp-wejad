@@ -3,7 +3,7 @@ import * as React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmployeesList } from "./employees/EmployeesList";
 import { AttendanceManagement } from "./attendance/AttendanceManagement";
-import { ReportsTab } from "./tabs/ReportsTab";
+import { HRReports } from "./reports/HRReports";
 import { HRSettingsTabs } from "./settings/HRSettingsTabs";
 import { Users, CalendarClock, FileBarChart, Settings } from "lucide-react";
 
@@ -42,7 +42,7 @@ export function HRTabs({ defaultTab = "employees" }: HRTabsProps) {
       </TabsContent>
       
       <TabsContent value="reports" className="space-y-4">
-        <ReportsTab />
+        <HRReports />
       </TabsContent>
       
       <TabsContent value="settings" className="space-y-4">

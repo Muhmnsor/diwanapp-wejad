@@ -1,81 +1,62 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAttendanceReport } from "@/hooks/hr/useAttendanceReport";
-import { Badge } from "@/components/ui/badge";
-import { Loader2 } from "lucide-react";
+import { Users, Clock, AlertTriangle } from "lucide-react";
 
 interface AttendanceStatsProps {
-  startDate?: Date;
-  endDate?: Date;
-  employeeId?: string;
+  period: "daily" | "weekly" | "monthly";
 }
 
-export function AttendanceStats({ startDate, endDate, employeeId }: AttendanceStatsProps) {
-  const { data, isLoading } = useAttendanceReport(startDate, endDate, employeeId);
-  
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardContent className="p-6">
-              <div className="h-4 w-1/2 bg-muted rounded mb-3"></div>
-              <div className="h-8 w-1/3 bg-muted rounded mb-2"></div>
-              <div className="h-3 w-1/4 bg-muted rounded"></div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
-  
-  if (!data) {
-    return null;
-  }
-  
-  const statsItems = [
-    {
-      title: "إجمالي السجلات",
-      value: data.stats.totalRecords,
-      badge: "",
-      badgeVariant: "default",
-    },
-    {
-      title: "الحضور",
-      value: data.stats.presentCount,
-      badge: `${data.stats.presentPercentage.toFixed(1)}%`,
-      badgeVariant: "success",
-    },
-    {
-      title: "الغياب",
-      value: data.stats.absentCount,
-      badge: `${data.stats.absentPercentage.toFixed(1)}%`,
-      badgeVariant: "destructive",
-    },
-    {
-      title: "التأخير",
-      value: data.stats.lateCount,
-      badge: `${data.stats.latePercentage.toFixed(1)}%`,
-      badgeVariant: "secondary",
-    },
-  ];
+export function AttendanceStats({ period }: AttendanceStatsProps) {
+  // In a real app, we would fetch this data from an API based on the period
+  // For now, we'll use sample data
+  const stats = {
+    presentCount: period === "daily" ? 18 : period === "weekly" ? 85 : 340,
+    lateCount: period === "daily" ? 3 : period === "weekly" ? 12 : 45,
+    absentCount: period === "daily" ? 2 : period === "weekly" ? 8 : 30,
+    averageWorkHours: period === "daily" ? 7.5 : period === "weekly" ? 37.5 : 150
+  };
   
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {statsItems.map((item, index) => (
-        <Card key={index}>
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <p className="text-sm font-medium text-muted-foreground">{item.title}</p>
-              {item.badge && (
-                <Badge variant={item.badgeVariant as any}>{item.badge}</Badge>
-              )}
-            </div>
-            <h2 className="text-3xl font-bold mt-2">{item.value}</h2>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+    <>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">الحضور</CardTitle>
+          <Users className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.presentCount}</div>
+          <p className="text-xs text-muted-foreground">
+            موظف حاضر خلال {period === "daily" ? "اليوم" : period === "weekly" ? "الأسبوع" : "الشهر"}
+          </p>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">التأخير</CardTitle>
+          <Clock className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.lateCount}</div>
+          <p className="text-xs text-muted-foreground">
+            حالة تأخير خلال {period === "daily" ? "اليوم" : period === "weekly" ? "الأسبوع" : "الشهر"}
+          </p>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">الغياب</CardTitle>
+          <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.absentCount}</div>
+          <p className="text-xs text-muted-foreground">
+            حالة غياب خلال {period === "daily" ? "اليوم" : period === "weekly" ? "الأسبوع" : "الشهر"}
+          </p>
+        </CardContent>
+      </Card>
+    </>
   );
 }

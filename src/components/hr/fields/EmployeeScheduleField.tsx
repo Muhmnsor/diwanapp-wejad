@@ -13,20 +13,24 @@ export function EmployeeScheduleField({ value, onChange }: EmployeeScheduleField
   const { schedules, defaultSchedule, isLoadingSchedules } = useEmployeeSchedule();
   const [selectedValue, setSelectedValue] = useState<string>(value || "");
 
-  // Update state when props or default value changes
+  console.log("EmployeeScheduleField (fields) - Initial value:", value);
+  console.log("EmployeeScheduleField (fields) - Available schedules:", schedules);
+  console.log("EmployeeScheduleField (fields) - Default schedule:", defaultSchedule);
+
+  // تعيين الجدول الافتراضي إذا لم يكن هناك قيمة محددة
   useEffect(() => {
-    // If no value selected and we have a default, use it
     if ((!value || value === "") && defaultSchedule && defaultSchedule.id) {
+      console.log("EmployeeScheduleField (fields) - Setting default schedule:", defaultSchedule.id);
       setSelectedValue(defaultSchedule.id);
       onChange(defaultSchedule.id);
-    } 
-    // If value from props changes, update local state
-    else if (value && value !== selectedValue) {
+    } else if (value && value !== selectedValue) {
+      console.log("EmployeeScheduleField (fields) - Updating from props:", value);
       setSelectedValue(value);
     }
   }, [value, defaultSchedule, onChange, selectedValue]);
 
   const handleScheduleChange = (newValue: string) => {
+    console.log("EmployeeScheduleField (fields) - Schedule changed to:", newValue);
     setSelectedValue(newValue);
     onChange(newValue);
   };
