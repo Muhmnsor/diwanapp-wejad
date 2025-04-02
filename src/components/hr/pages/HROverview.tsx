@@ -1,9 +1,20 @@
+
 import { Card } from "@/components/ui/card";
 import { useHRStats } from "@/hooks/hr/useHRStats";
-import { Users, CalendarClock, FileBarChart, Clock, AlertCircle, Calendar, Briefcase, GraduationCap } from "lucide-react";
+import { 
+  Users, CalendarClock, FileBarChart, 
+  Clock, AlertCircle, Calendar, 
+  Briefcase, GraduationCap 
+} from "lucide-react";
+import { Sparkline, SparklineSpot } from "@/components/ui/sparkline";
 
 const HROverview = () => {
   const { data: stats, isLoading: isLoadingStats } = useHRStats();
+
+  // التأكد من وجود بيانات الاتجاهات قبل استخدامها
+  const hasTrendData = stats?.trends && 
+    stats.trends.attendance && 
+    stats.trends.attendance.length > 1;
 
   return (
     <div className="space-y-6">
@@ -26,6 +37,22 @@ const HROverview = () => {
             <p className="text-xs text-muted-foreground">
               {isLoadingStats ? "..." : stats?.newEmployees || 0} موظف جديد هذا الشهر
             </p>
+            {hasTrendData && (
+              <div className="mt-2 h-8">
+                <Sparkline 
+                  data={stats.trends.employees} 
+                  height={24} 
+                  color="#3b82f6"
+                >
+                  <SparklineSpot 
+                    spotColors={{
+                      endSpot: "#3b82f6",
+                      spotColor: "rgba(59, 130, 246, 0.6)"
+                    }}
+                  />
+                </Sparkline>
+              </div>
+            )}
           </div>
         </Card>
         
@@ -41,6 +68,22 @@ const HROverview = () => {
             <p className="text-xs text-muted-foreground">
               نسبة الحضور: {isLoadingStats ? "..." : `${stats?.attendanceRate || 0}%`}
             </p>
+            {hasTrendData && (
+              <div className="mt-2 h-8">
+                <Sparkline 
+                  data={stats.trends.attendance} 
+                  height={24} 
+                  color="#22c55e"
+                >
+                  <SparklineSpot 
+                    spotColors={{
+                      endSpot: "#22c55e",
+                      spotColor: "rgba(34, 197, 94, 0.6)"
+                    }}
+                  />
+                </Sparkline>
+              </div>
+            )}
           </div>
         </Card>
         
@@ -56,6 +99,22 @@ const HROverview = () => {
             <p className="text-xs text-muted-foreground">
               {isLoadingStats ? "..." : stats?.upcomingLeaves || 0} إجازة في الأسبوع القادم
             </p>
+            {hasTrendData && (
+              <div className="mt-2 h-8">
+                <Sparkline 
+                  data={stats.trends.leaves} 
+                  height={24} 
+                  color="#f59e0b"
+                >
+                  <SparklineSpot 
+                    spotColors={{
+                      endSpot: "#f59e0b",
+                      spotColor: "rgba(245, 158, 11, 0.6)"
+                    }}
+                  />
+                </Sparkline>
+              </div>
+            )}
           </div>
         </Card>
       </div>
