@@ -1,64 +1,136 @@
-import React from "react";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
+
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { ProjectStages } from "./ProjectStages";
+import { AddTaskDialog } from "./AddTaskDialog";
+import { TasksHeader } from "./components/TasksHeader";
+import { TasksFilter } from "./components/TasksFilter";
+import { TasksContent } from "./components/TasksContent";
+import { getStatusBadge, getPriorityBadge, formatDate } from "./utils/taskFormatters";
+import { useTasksList } from "./hooks/useTasksList";
 import { Task } from "./types/task";
-import { TaskTableRow } from "../components/TaskTableRow";
-import { Loader2 } from "lucide-react";
+import { useProjectMembers } from "./hooks/useProjectMembers";
+import { useState } from "react";
+import { EditTaskDialog } from "./EditTaskDialog";
 
 interface TasksListProps {
-  tasks?: Task[];
-  isLoading?: boolean;
-  onTaskUpdated?: () => void;
+  projectId?: string | undefined;
+  isWorkspace?: boolean;
+  meetingId?: string;
 }
 
-export function TasksList({ 
-  tasks = [], 
-  isLoading = false,
-  onTaskUpdated 
-}: TasksListProps) {
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+// Re-export Task interface for backward compatibility
+export type { Task };
 
-  if (tasks.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        لا توجد مهام بعد
-      </div>
-    );
-  }
+export const TasksList = ({ 
+  projectId, 
+  isWorkspace = false,
+  meetingId
+}: TasksListProps) => {
+  const {
+    tasks,
+    isLoading,
+    activeTab,
+    setActiveTab,
+    isAddDialogOpen,
+    setIsAddDialogOpen,
+    projectStages,
+    handleStagesChange,
+    tasksByStage,
+    handleStatusChange,
+    fetchTasks,
+    isGeneral,
+    deleteTask
+  } = useTasksList(projectId, meetingId, isWorkspace);
+
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  // Fetch project members
+  const { projectMembers } = useProjectMembers(projectId);
+
+  // Convert isGeneral to boolean to ensure type safety
+  const isGeneralBoolean = Boolean(isGeneral);
+
+  const filteredTasks = tasks.filter(task => {
+    if (activeTab === "all") return true;
+    return task.status === activeTab;
+  });
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      await deleteTask(taskId);
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
+  };
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="text-right">عنوان المهمة</TableHead>
-          <TableHead className="text-right">الحالة</TableHead>
-          <TableHead className="text-right">الأولوية</TableHead>
-          <TableHead className="text-right">تاريخ الاستحقاق</TableHead>
-          <TableHead className="text-right">المسؤول</TableHead>
-          <TableHead></TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {tasks.map((task) => (
-          <TaskTableRow 
-            key={task.id} 
-            task={task} 
-            onTaskUpdated={onTaskUpdated} 
+    <>
+      {!isGeneralBoolean && !isWorkspace && !meetingId && (
+        <ProjectStages 
+          projectId={projectId} 
+          onStagesChange={handleStagesChange} 
+        />
+      )}
+      
+      <Card className="border shadow-sm">
+        <CardHeader className="pb-0">
+          <TasksHeader onAddTask={() => setIsAddDialogOpen(true)} isGeneral={isGeneralBoolean} />
+        </CardHeader>
+        
+        <CardContent className="pt-4">
+          <TasksFilter 
+            activeTab={activeTab} 
+            onTabChange={setActiveTab} 
           />
-        ))}
-      </TableBody>
-    </Table>
+          
+          <TasksContent 
+            isLoading={isLoading}
+            activeTab={activeTab}
+            filteredTasks={filteredTasks}
+            projectStages={projectStages}
+            tasksByStage={tasksByStage}
+            getStatusBadge={getStatusBadge}
+            getPriorityBadge={getPriorityBadge}
+            formatDate={formatDate}
+            onStatusChange={handleStatusChange}
+            projectId={projectId}
+            isGeneral={isGeneralBoolean}
+            onEditTask={handleEditTask}
+            onDeleteTask={handleDeleteTask}
+          />
+        </CardContent>
+      </Card>
+      
+      <AddTaskDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        projectId={projectId || ""}
+        projectStages={projectStages}
+        onTaskAdded={fetchTasks}
+        projectMembers={projectMembers}
+        isGeneral={isGeneralBoolean}
+        isWorkspace={isWorkspace}
+        meetingId={meetingId}
+      />
+
+      {/* Dialog for editing tasks */}
+      {editingTask && (
+        <EditTaskDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          task={editingTask}
+          projectStages={projectStages}
+          projectMembers={projectMembers}
+          onTaskUpdated={fetchTasks}
+          meetingId={meetingId}
+        />
+      )}
+    </>
   );
-}
+};
