@@ -26,11 +26,11 @@ export function ContractAlerts() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" dir="rtl">
       {/* Contracts Expiring Soon */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-right flex items-center">
+          <CardTitle className="flex items-center">
             <AlertCircle className="h-5 w-5 ml-2 text-amber-500" />
             عقود قاربت على الانتهاء
           </CardTitle>
@@ -40,11 +40,11 @@ export function ContractAlerts() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-right">الموظف</TableHead>
-                  <TableHead className="text-right">القسم</TableHead>
-                  <TableHead className="text-right">تاريخ الانتهاء</TableHead>
-                  <TableHead className="text-right">المدة المتبقية</TableHead>
-                  <TableHead className="text-right">العقد</TableHead>
+                  <TableHead>الموظف</TableHead>
+                  <TableHead>القسم</TableHead>
+                  <TableHead>تاريخ الانتهاء</TableHead>
+                  <TableHead>المدة المتبقية</TableHead>
+                  <TableHead>العقد</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -98,7 +98,7 @@ export function ContractAlerts() {
       {/* Probation Periods Ending Soon */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-right flex items-center">
+          <CardTitle className="flex items-center">
             <AlertCircle className="h-5 w-5 ml-2 text-blue-500" />
             فترات تجربة قاربت على الانتهاء
           </CardTitle>
@@ -108,10 +108,10 @@ export function ContractAlerts() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-right">الموظف</TableHead>
-                  <TableHead className="text-right">القسم</TableHead>
-                  <TableHead className="text-right">تاريخ انتهاء فترة التجربة</TableHead>
-                  <TableHead className="text-right">المدة المتبقية</TableHead>
+                  <TableHead>الموظف</TableHead>
+                  <TableHead>القسم</TableHead>
+                  <TableHead>تاريخ انتهاء فترة التجربة</TableHead>
+                  <TableHead>المدة المتبقية</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -149,4 +149,3 @@ export function ContractAlerts() {
     </div>
   );
 }
-

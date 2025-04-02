@@ -74,7 +74,7 @@ export function EmployeeScheduleField({
   const currentSchedule = schedules?.find(s => s.id === selectedSchedule);
   
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" dir="rtl">
       <div className="flex justify-between">
         <Label htmlFor="scheduleSelect">جدول العمل</Label>
         {currentSchedule && (
