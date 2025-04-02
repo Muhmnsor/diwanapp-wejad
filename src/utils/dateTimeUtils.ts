@@ -1,3 +1,4 @@
+
 export const formatTime12Hour = (time: string) => {
   try {
     // تحويل الوقت إلى تنسيق 12 ساعة
@@ -59,3 +60,26 @@ export const formatTime = (timestamp: string | null) => {
     return timestamp;
   }
 };
+
+// Add the missing formatDate function
+export const formatDate = (dateString: string): string => {
+  if (!dateString) return '';
+  
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return dateString;
+    }
+    
+    // Format as day/month/year
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${day}/${month}/${year}`;
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return dateString;
+  }
+};
+

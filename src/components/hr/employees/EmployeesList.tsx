@@ -24,51 +24,47 @@ export function EmployeesList() {
   const [deletingEmployeeId, setDeletingEmployeeId] = useState<string | null>(null);
   const [assignScheduleEmployeeId, setAssignScheduleEmployeeId] = useState<string | null>(null);
   const { data: permissions } = useHRPermissions();
-  
   const canManageEmployees = permissions?.canManageEmployees || permissions?.isAdmin;
 
-  // Filter employees based on the search query and active tab
   const filteredEmployees = employees?.filter((employee) => {
     // Filter by tab
     if (activeTab !== "all" && employee.status !== activeTab) {
       return false;
     }
-    
     // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       return (
         employee.full_name.toLowerCase().includes(query) ||
-        (employee.email?.toLowerCase().includes(query) || false) ||
-        (employee.department?.toLowerCase().includes(query) || false) ||
-        (employee.position?.toLowerCase().includes(query) || false)
+        employee.email?.toLowerCase().includes(query) || false ||
+        employee.department?.toLowerCase().includes(query) || false ||
+        employee.job_title?.toLowerCase().includes(query) || false
       );
     }
-    
     return true;
   });
-  
+
   // Find the schedule name for an employee
   const getScheduleName = (scheduleId?: string) => {
     if (!scheduleId) return null;
     const schedule = schedules?.find((s) => s.id === scheduleId);
     return schedule?.name || null;
   };
-  
+
   // Get the editing employee name
   const getEditingEmployeeName = () => {
     if (!editingEmployeeId || !employees) return "";
     const employee = employees.find((emp) => emp.id === editingEmployeeId);
     return employee?.full_name || "";
   };
-  
+
   // Get the deleting employee name
   const getDeletingEmployeeName = () => {
     if (!deletingEmployeeId || !employees) return "";
     const employee = employees.find((emp) => emp.id === deletingEmployeeId);
     return employee?.full_name || "";
   };
-  
+
   // Get the employee name for schedule assignment
   const getAssignScheduleEmployeeName = () => {
     if (!assignScheduleEmployeeId || !employees) return "";
@@ -88,7 +84,6 @@ export function EmployeesList() {
             className="pr-9 pl-4"
           />
         </div>
-        
         {canManageEmployees && (
           <Button onClick={() => setIsAddDialogOpen(true)}>
             <Plus className="ml-2 h-4 w-4" />
@@ -96,7 +91,7 @@ export function EmployeesList() {
           </Button>
         )}
       </div>
-      
+
       <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList>
           <TabsTrigger value="all">الكل</TabsTrigger>
@@ -104,7 +99,7 @@ export function EmployeesList() {
           <TabsTrigger value="inactive">غير نشط</TabsTrigger>
         </TabsList>
       </Tabs>
-      
+
       {isLoading ? (
         <div className="flex justify-center items-center p-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -113,7 +108,7 @@ export function EmployeesList() {
         <Card>
           <CardContent className="p-8 text-center">
             <p className="text-destructive">حدث خطأ أثناء تحميل بيانات الموظفين</p>
-            <p className="text-sm text-muted-foreground">{(error as Error).message}</p>
+            <p className="text-sm text-muted-foreground">{error.message}</p>
           </CardContent>
         </Card>
       ) : filteredEmployees?.length === 0 ? (
@@ -129,7 +124,7 @@ export function EmployeesList() {
               key={employee.id}
               id={employee.id}
               name={employee.full_name}
-              position={employee.position}
+              position={employee.job_title}
               department={employee.department}
               email={employee.email}
               phone={employee.phone}
@@ -142,29 +137,30 @@ export function EmployeesList() {
           ))}
         </div>
       )}
-      
+
       {canManageEmployees && (
         <>
-          <AddEmployeeDialog
-            open={isAddDialogOpen}
-            onOpenChange={setIsAddDialogOpen}
+          {/* Fix the dialog props */}
+          <AddEmployeeDialog 
+            isOpen={isAddDialogOpen} 
+            onClose={() => setIsAddDialogOpen(false)} 
           />
           
           {editingEmployeeId && (
             <EditEmployeeDialog
-              employeeId={editingEmployeeId}
-              employeeName={getEditingEmployeeName()}
-              open={!!editingEmployeeId}
-              onOpenChange={() => setEditingEmployeeId(null)}
+              employee={editingEmployeeId}
+              name={getEditingEmployeeName()}
+              isOpen={!!editingEmployeeId}
+              onClose={() => setEditingEmployeeId(null)}
             />
           )}
           
           {deletingEmployeeId && (
             <DeleteEmployeeDialog
-              employeeId={deletingEmployeeId}
-              employeeName={getDeletingEmployeeName()}
-              open={!!deletingEmployeeId}
-              onOpenChange={() => setDeletingEmployeeId(null)}
+              employee={deletingEmployeeId}
+              name={getDeletingEmployeeName()}
+              isOpen={!!deletingEmployeeId}
+              onClose={() => setDeletingEmployeeId(null)}
             />
           )}
           

@@ -1,174 +1,98 @@
-
 import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ProjectStages } from "./ProjectStages";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Plus, Filter } from "lucide-react";
 import { AddTaskDialog } from "./AddTaskDialog";
-import { TasksHeader } from "./components/TasksHeader";
-import { TasksFilter } from "./components/TasksFilter";
-import { TasksContent } from "./components/TasksContent";
-import { getStatusBadge, getPriorityBadge, formatDate } from "./utils/taskFormatters";
-import { useTasksList } from "./hooks/useTasksList";
-import { Task } from "./types/task";
-import { ProjectMember } from "./types/projectMember";
-import { useProjectMembers } from "./hooks/useProjectMembers";
-import { EditTaskDialog } from "./EditTaskDialog";
+import { useProjectTasks } from "./hooks/useProjectTasks";
+import { ProjectStages } from "./ProjectStages";
+import { TasksList } from "./TasksList";
 
 interface ProjectTasksListProps {
-  projectId?: string | undefined;
-  projectMembers?: ProjectMember[];
-  stages?: { id: string; name: string }[];
-  tasks?: Task[];
-  onTaskAdded?: () => void;
-  onTaskUpdated?: () => void;
-  meetingId?: string;
-  isGeneral?: boolean;
-  hideTasksHeader?: boolean;
-  hideTasksTitle?: boolean;
-  isWorkspace?: boolean;
+  projectId: string;
+  canEdit?: boolean;
 }
 
-export type { Task };
-
-export const ProjectTasksList = ({ 
-  projectId,
-  projectMembers: externalProjectMembers,
-  stages: externalStages,
-  tasks: externalTasks,
-  onTaskAdded,
-  onTaskUpdated,
-  meetingId,
-  isGeneral = false,
-  hideTasksHeader = false,
-  hideTasksTitle = false,
-  isWorkspace = false
-}: ProjectTasksListProps) => {
-  const {
-    tasks: fetchedTasks,
-    isLoading,
-    activeTab,
-    setActiveTab,
-    isAddDialogOpen,
-    setIsAddDialogOpen,
-    projectStages,
-    handleStagesChange,
-    tasksByStage,
-    handleStatusChange,
-    fetchTasks,
-    deleteTask
-  } = useTasksList(projectId, meetingId, isWorkspace);
+export function ProjectTasksList({ projectId, canEdit }: ProjectTasksListProps) {
+  const [activeTab, setActiveTab] = useState("list");
+  const [taskFilter, setTaskFilter] = useState("all");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-
-  const { projectMembers: fetchedMembers } = useProjectMembers(
-    externalProjectMembers ? undefined : projectId
-  );
-  
-  const tasks = externalTasks || fetchedTasks;
-  
-  const projectMembers = externalProjectMembers || fetchedMembers;
-
-  const stages = externalStages || projectStages;
-
-  const isGeneralBoolean = Boolean(isGeneral);
+  const { 
+    tasks, 
+    categories, 
+    isLoading, 
+    error,
+    refreshTasks 
+  } = useProjectTasks(projectId);
 
   useEffect(() => {
-    if (!externalTasks) {
-      fetchTasks();
-    }
-  }, [projectId, meetingId]);
+    // Refresh tasks when the component mounts
+    refreshTasks();
+  }, [projectId]);
 
-  const filteredTasks = tasks.filter(task => {
-    if (activeTab === "all") return true;
-    return task.status === activeTab;
-  });
-
-  const handleEditTask = (task: Task) => {
-    setEditingTask(task);
-    setIsEditDialogOpen(true);
+  const handleTaskAdded = () => {
+    refreshTasks();
   };
 
-  const handleDeleteTask = async (taskId: string) => {
-    try {
-      await deleteTask(taskId);
-      if (onTaskUpdated) onTaskUpdated();
-    } catch (error) {
-      console.error("Error deleting task:", error);
-    }
+  const handleTaskUpdated = () => {
+    refreshTasks();
   };
 
   return (
-    <>
-      {!isGeneralBoolean && !meetingId && (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="list">قائمة المهام</TabsTrigger>
+            <TabsTrigger value="board">لوحة المهام</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm">
+            <Filter className="ml-2 h-4 w-4" />
+            فلترة
+          </Button>
+          
+          {canEdit && (
+            <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
+              <Plus className="ml-2 h-4 w-4" />
+              إضافة مهمة
+            </Button>
+          )}
+        </div>
+      </div>
+      
+      <TabsContent value="list" className="mt-0">
+        <Card>
+          <CardContent className="p-0">
+            <TasksList 
+              tasks={tasks} 
+              isLoading={isLoading}
+              onTaskUpdated={() => refreshTasks()} 
+            />
+          </CardContent>
+        </Card>
+      </TabsContent>
+      
+      <TabsContent value="board" className="mt-0">
         <ProjectStages 
           projectId={projectId} 
-          onStagesChange={handleStagesChange} 
+          canEdit={canEdit}
+          tasks={tasks}
+          isLoading={isLoading}
+        />
+      </TabsContent>
+      
+      {isAddDialogOpen && (
+        <AddTaskDialog
+          projectId={projectId}
+          isOpen={isAddDialogOpen}
+          onClose={() => setIsAddDialogOpen(false)}
+          onTaskAdded={() => refreshTasks()}
         />
       )}
-      
-      <Card className="border shadow-sm" dir="rtl">
-        <CardHeader className="pb-0">
-          <TasksHeader 
-            onAddTask={() => setIsAddDialogOpen(true)} 
-            isGeneral={isGeneralBoolean}
-            hideAddButton={hideTasksHeader}
-            hideTitle={hideTasksTitle}
-          />
-        </CardHeader>
-        
-        <CardContent className="pt-4">
-          <TasksFilter 
-            activeTab={activeTab} 
-            onTabChange={setActiveTab} 
-          />
-          
-          <TasksContent 
-            isLoading={isLoading}
-            activeTab={activeTab}
-            filteredTasks={filteredTasks}
-            projectStages={stages}
-            tasksByStage={tasksByStage}
-            getStatusBadge={getStatusBadge}
-            getPriorityBadge={getPriorityBadge}
-            formatDate={formatDate}
-            onStatusChange={handleStatusChange}
-            projectId={projectId}
-            isGeneral={isGeneralBoolean}
-            onEditTask={handleEditTask}
-            onDeleteTask={handleDeleteTask}
-          />
-        </CardContent>
-      </Card>
-      
-      <AddTaskDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        projectId={projectId || ""}
-        projectStages={stages}
-        onTaskAdded={() => {
-          fetchTasks();
-          if (onTaskAdded) onTaskAdded();
-        }}
-        projectMembers={projectMembers}
-        isGeneral={isGeneralBoolean}
-        meetingId={meetingId}
-        isWorkspace={isWorkspace}
-      />
-
-      {editingTask && (
-        <EditTaskDialog
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          task={editingTask}
-          projectStages={stages}
-          projectMembers={projectMembers}
-          onTaskUpdated={() => {
-            fetchTasks();
-            if (onTaskUpdated) onTaskUpdated();
-          }}
-          meetingId={meetingId}
-        />
-      )}
-    </>
+    </div>
   );
-};
+}
