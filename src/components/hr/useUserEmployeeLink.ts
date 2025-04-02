@@ -2,9 +2,59 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store/refactored-auth";
 
 export function useUserEmployeeLink() {
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuthStore();
+  
+  const getCurrentUserEmployee = async () => {
+    setIsLoading(true);
+    
+    if (!user) {
+      return {
+        success: false,
+        isLinked: false,
+        error: new Error("المستخدم غير مسجل الدخول")
+      };
+    }
+    
+    try {
+      // Check if the current user is linked to any employee
+      const { data: employee, error } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+        
+      if (error) {
+        if (error.code === 'PGRST116') { // No rows returned
+          return {
+            success: true,
+            isLinked: false,
+            employee: null
+          };
+        }
+        throw error;
+      }
+      
+      return {
+        success: true,
+        isLinked: true,
+        employee
+      };
+      
+    } catch (error: any) {
+      console.error('Error checking employee link:', error);
+      return {
+        success: false,
+        isLinked: false,
+        error
+      };
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   const linkUserToEmployee = async (employeeId: string, userId: string) => {
     setIsLoading(true);
@@ -90,6 +140,7 @@ export function useUserEmployeeLink() {
   return {
     linkUserToEmployee,
     unlinkUserFromEmployee,
+    getCurrentUserEmployee,
     isLoading
   };
 }
