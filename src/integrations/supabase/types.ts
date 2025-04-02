@@ -3129,6 +3129,7 @@ export type Database = {
           is_active: boolean | null
           name: string
           parent_id: string | null
+          position_type: string | null
           unit_type: string
           updated_at: string
         }
@@ -3140,6 +3141,7 @@ export type Database = {
           is_active?: boolean | null
           name: string
           parent_id?: string | null
+          position_type?: string | null
           unit_type: string
           updated_at?: string
         }
@@ -3151,6 +3153,7 @@ export type Database = {
           is_active?: boolean | null
           name?: string
           parent_id?: string | null
+          position_type?: string | null
           unit_type?: string
           updated_at?: string
         }
@@ -6745,6 +6748,7 @@ export type Database = {
           parent_id: string
           level: number
           path: string[]
+          position_type: string
         }[]
       }
       get_organizational_unit_children: {

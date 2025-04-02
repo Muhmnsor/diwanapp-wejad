@@ -56,20 +56,23 @@ export function OrganizationTreeView({ units, onUnitClick, selectedUnitId }: Org
     );
 
     return (
-      <div key={unit.id}>
+      <div key={unit.id} className="relative">
         <div 
           className={cn(
-            "flex items-center py-1 px-2 hover:bg-secondary/50 rounded-md cursor-pointer",
-            isSelected && "bg-secondary",
+            "flex items-center py-2 px-3 my-1 hover:bg-secondary/50 rounded-md cursor-pointer transition-colors",
+            isSelected && "bg-secondary font-medium",
             (unit.position_type === 'side' || unit.position_type === 'assistant') && "italic"
           )}
-          style={{ paddingRight: `${level * 12 + 8}px` }}
+          style={{ 
+            marginRight: `${level * 4}px`,
+            marginLeft: `${level * 16}px` 
+          }}
         >
           {hasChildren ? (
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-6 w-6 p-0" 
+              className="h-6 w-6 p-0 mr-1" 
               onClick={(e) => {
                 e.stopPropagation();
                 toggleExpand(unit.id);
@@ -78,7 +81,7 @@ export function OrganizationTreeView({ units, onUnitClick, selectedUnitId }: Org
               {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </Button>
           ) : (
-            <div className="w-6" />
+            <div className="w-6 mr-1" />
           )}
           
           <div 
@@ -87,6 +90,7 @@ export function OrganizationTreeView({ units, onUnitClick, selectedUnitId }: Org
           >
             {getUnitIcon(unit.unit_type, unit.position_type)}
             <span className={cn(
+              "text-sm transition-colors",
               unit.position_type === 'side' && "text-gray-600",
               unit.position_type === 'assistant' && "text-gray-500 font-light"
             )}>
@@ -96,14 +100,48 @@ export function OrganizationTreeView({ units, onUnitClick, selectedUnitId }: Org
         </div>
         
         {isExpanded && hasChildren && (
-          <div className="mt-1">
-            {/* First render standard children */}
-            {standardChildren.map(childUnit => renderUnit(childUnit, level + 1))}
+          <div className="relative">
+            {/* Standard children with vertical line connector */}
+            {standardChildren.length > 0 && (
+              <div className="relative">
+                <div 
+                  className="absolute border-r-2 border-gray-200" 
+                  style={{ 
+                    right: `${level * 4 + 17}px`,
+                    top: '0px',
+                    height: '100%',
+                    width: '2px'
+                  }}
+                />
+                <div className="mt-1 pt-1">
+                  {standardChildren.map(childUnit => renderUnit(childUnit, level + 1))}
+                </div>
+              </div>
+            )}
             
-            {/* Then render side positions with slight indentation and styling */}
+            {/* Side/assistant positions with dotted line styling */}
             {sideChildren.length > 0 && (
-              <div className="mt-1 border-r-2 border-dotted border-gray-200 mr-4 pr-2">
-                {sideChildren.map(childUnit => renderUnit(childUnit, level + 1))}
+              <div className="relative mt-3">
+                <div 
+                  className="absolute border-r-2 border-dotted border-gray-300" 
+                  style={{ 
+                    right: `${level * 4 + 17}px`,
+                    top: '-10px',
+                    height: 'calc(100% + 10px)',
+                    width: '2px'
+                  }}
+                />
+                <div 
+                  className="absolute border-t-2 border-dotted border-gray-300" 
+                  style={{
+                    right: `${level * 4 + 17}px`,
+                    top: '-10px',
+                    width: '12px',
+                  }}
+                />
+                <div className="pt-1 pr-2">
+                  {sideChildren.map(childUnit => renderUnit(childUnit, level + 1))}
+                </div>
               </div>
             )}
           </div>
@@ -115,18 +153,18 @@ export function OrganizationTreeView({ units, onUnitClick, selectedUnitId }: Org
   // Get appropriate icon based on unit type and position type
   const getUnitIcon = (unitType: string, positionType?: string) => {
     if (positionType === 'side' || positionType === 'assistant') {
-      return <FileText className="h-4 w-4 text-gray-400" />;
+      return <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />;
     }
     
     switch (unitType.toLowerCase()) {
       case 'department':
-        return <Building2 className="h-4 w-4 text-blue-500" />;
+        return <Building2 className="h-4 w-4 text-blue-500 flex-shrink-0" />;
       case 'division':
-        return <FolderTree className="h-4 w-4 text-green-500" />;
+        return <FolderTree className="h-4 w-4 text-green-500 flex-shrink-0" />;
       case 'team':
-        return <Users className="h-4 w-4 text-orange-500" />;
+        return <Users className="h-4 w-4 text-orange-500 flex-shrink-0" />;
       default:
-        return <Building2 className="h-4 w-4" />;
+        return <Building2 className="h-4 w-4 flex-shrink-0" />;
     }
   };
 
@@ -139,7 +177,7 @@ export function OrganizationTreeView({ units, onUnitClick, selectedUnitId }: Org
   }
 
   return (
-    <div className="overflow-y-auto max-h-[400px]">
+    <div className="overflow-y-auto max-h-[500px] pr-2">
       {rootUnits.map(unit => renderUnit(unit))}
     </div>
   );
