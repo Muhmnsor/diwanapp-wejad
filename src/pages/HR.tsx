@@ -1,10 +1,9 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { HRTabs } from "@/components/hr/HRTabs";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useLocation } from "react-router-dom";
-import { InlineCalendarDemo } from "@/components/demo/InlineCalendarDemo";
 
 const HR = () => {
   const location = useLocation();
@@ -16,7 +15,7 @@ const HR = () => {
       <TopHeader />
       <div className="flex-grow container mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-6">
-          <div className="flex-1">
+          <div className="w-full">
             <HRTabs defaultTab={defaultTab} />
           </div>
         </div>

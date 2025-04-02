@@ -6,17 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
-import { FileText, Download, Users, Calendar, BarChart } from "lucide-react";
+import { FileText, Download, Users, Calendar, BarChart, Calendar as CalendarIcon, FileBarChart } from "lucide-react";
 import { AttendanceReport } from "../reports/AttendanceReport";
 import { EmployeeReport } from "../reports/EmployeeReport";
 import { LeaveReport } from "../reports/LeaveReport";
 import { useToast } from "@/hooks/use-toast";
+import { format, subDays, subMonths } from "date-fns";
+import { ar } from "date-fns/locale";
 
 export function ReportsTab() {
   const [reportType, setReportType] = useState<string>("attendance");
   const [activeTab, setActiveTab] = useState<string>("generate");
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [startDate, setStartDate] = useState<Date | undefined>(subMonths(new Date(), 1)); // Default to 1 month ago
+  const [endDate, setEndDate] = useState<Date | undefined>(new Date()); // Default to today
   const { toast } = useToast();
 
   const handleReportTypeChange = (value: string) => {
@@ -44,6 +46,33 @@ export function ReportsTab() {
     
     setActiveTab("view");
   };
+
+  const handleQuickDateSelect = (period: string) => {
+    const today = new Date();
+    
+    switch (period) {
+      case "today":
+        setStartDate(today);
+        setEndDate(today);
+        break;
+      case "week":
+        setStartDate(subDays(today, 7));
+        setEndDate(today);
+        break;
+      case "month":
+        setStartDate(subMonths(today, 1));
+        setEndDate(today);
+        break;
+      case "quarter":
+        setStartDate(subMonths(today, 3));
+        setEndDate(today);
+        break;
+      case "year":
+        setStartDate(subMonths(today, 12));
+        setEndDate(today);
+        break;
+    }
+  };
   
   return (
     <div className="space-y-6">
@@ -67,23 +96,62 @@ export function ReportsTab() {
                       <SelectValue placeholder="اختر نوع التقرير" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="attendance" className="flex items-center">
-                        <Calendar className="ml-2 h-4 w-4" />
-                        <span>تقرير الحضور</span>
+                      <SelectItem value="attendance" className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        تقرير الحضور
                       </SelectItem>
-                      <SelectItem value="leaves" className="flex items-center">
-                        <Calendar className="ml-2 h-4 w-4" />
-                        <span>تقرير الإجازات</span>
+                      <SelectItem value="leaves" className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        تقرير الإجازات
                       </SelectItem>
-                      <SelectItem value="employees" className="flex items-center">
-                        <Users className="ml-2 h-4 w-4" />
-                        <span>تقرير الموظفين</span>
+                      <SelectItem value="employees" className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        تقرير الموظفين
                       </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 
-                <div></div>
+                <div>
+                  <Label className="block text-sm font-medium mb-2">الفترة الزمنية</Label>
+                  <div className="flex flex-wrap gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleQuickDateSelect("today")}
+                    >
+                      اليوم
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleQuickDateSelect("week")}
+                    >
+                      آخر أسبوع
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleQuickDateSelect("month")}
+                    >
+                      آخر شهر
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleQuickDateSelect("quarter")}
+                    >
+                      آخر 3 أشهر
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleQuickDateSelect("year")}
+                    >
+                      آخر سنة
+                    </Button>
+                  </div>
+                </div>
                 
                 <div>
                   <Label className="block text-sm font-medium mb-2">تاريخ البداية</Label>
@@ -104,6 +172,19 @@ export function ReportsTab() {
                     placeholder="اختر تاريخ النهاية" 
                   />
                 </div>
+                
+                {startDate && endDate && (
+                  <div className="md:col-span-2">
+                    <div className="p-4 bg-muted rounded-md">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <CalendarIcon className="h-4 w-4" />
+                        <span>
+                          سيتم إنشاء تقرير للفترة من {format(startDate, 'dd MMMM yyyy', { locale: ar })} إلى {format(endDate, 'dd MMMM yyyy', { locale: ar })}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
               
               <div className="text-left md:text-right mt-4">
