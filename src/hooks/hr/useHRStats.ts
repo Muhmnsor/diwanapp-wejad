@@ -106,12 +106,13 @@ export function useHRStats() {
         // In this example we're simulating trend data by generating random variations
         const generateTrendData = (baseValue: number, variance: number = 2, length: number = 7): number[] => {
           if (baseValue === 0) return Array(length).fill(0);
-          return Array.from({ length }, () => {
+          // Ensure we have at least two points for valid sparkline
+          return Array.from({ length: Math.max(2, length) }, () => {
             return Math.max(0, baseValue + Math.floor(Math.random() * variance * 2) - variance);
           });
         };
         
-        // Make sure we always have valid array data for trends
+        // Make sure we always have valid array data for trends (at least 2 points)
         const employeeTrend = generateTrendData(totalEmployees || 0, 5, 10);
         const attendanceTrend = generateTrendData(presentToday || 0, 3, 10);
         const leavesTrend = generateTrendData(activeLeaves || 0, 2, 10);
@@ -135,7 +136,7 @@ export function useHRStats() {
         };
       } catch (error) {
         console.error('Error fetching HR stats:', error);
-        // Return default values with empty trend arrays to prevent errors
+        // Return default values with valid trend arrays to prevent errors
         return {
           totalEmployees: 0,
           newEmployees: 0,
@@ -145,11 +146,11 @@ export function useHRStats() {
           upcomingLeaves: 0,
           expiringContracts: 0,
           pendingTrainings: 0,
-          employeeTrend: [0],
-          attendanceTrend: [0],
-          leavesTrend: [0],
-          contractsTrend: [0],
-          trainingsTrend: [0]
+          employeeTrend: [0, 0],
+          attendanceTrend: [0, 0],
+          leavesTrend: [0, 0],
+          contractsTrend: [0, 0],
+          trainingsTrend: [0, 0]
         };
       }
     },

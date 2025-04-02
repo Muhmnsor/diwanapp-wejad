@@ -21,7 +21,7 @@ export function Sparkline({
   ...props
 }: SparklineProps) {
   // Ensure data is never empty to prevent sparklines errors
-  const safeData = Array.isArray(data) && data.length > 0 ? data : [0];
+  const safeData = Array.isArray(data) && data.length > 0 ? data : [0, 0];
   
   return (
     <div className={cn("w-full", className)} {...props}>
