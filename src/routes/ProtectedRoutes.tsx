@@ -1,3 +1,4 @@
+
 import { Route } from "react-router-dom";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Settings from "@/pages/Settings";
@@ -17,6 +18,8 @@ import MeetingsPage from "@/pages/meetings/MeetingsPage";
 import MeetingFolderPage from "@/components/meetings/folders/MeetingFolderPage";
 import MeetingDetailsPage from "@/pages/meetings/MeetingDetailsPage";
 import InternalMail from "@/pages/InternalMail";
+import { HRDashboard } from "@/components/hr/pages";
+import Accounting from "@/pages/Accounting";
 
 export const ProtectedRoutes = [
   <Route 
@@ -162,6 +165,24 @@ export const ProtectedRoutes = [
     element={
       <ProtectedRoute>
         <InternalMail />
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="admin-hr"
+    path="/admin/hr" 
+    element={
+      <ProtectedRoute>
+        <HRDashboard />
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="admin-accounting"
+    path="/admin/accounting" 
+    element={
+      <ProtectedRoute>
+        <Accounting />
       </ProtectedRoute>
     } 
   />

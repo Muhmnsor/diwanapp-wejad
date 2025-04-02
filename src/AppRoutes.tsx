@@ -11,7 +11,6 @@ import { useEffect, useState } from "react";
 import { isDeveloper } from "./utils/developer/roleManagement";
 import UpdateProfile from "./pages/UpdateProfile";
 import { EventNotFound } from "./components/events/EventNotFound";
-import HR from "./pages/HR";
 import Accounting from "./pages/Accounting";
 
 const AppRoutes = () => {
@@ -54,8 +53,6 @@ const AppRoutes = () => {
         {TaskRoutes}
         {DeveloperRoutes}
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-        <Route path="/admin/hr" element={<HR />} />
-        <Route path="/admin/accounting" element={<Accounting />} />
         <Route path="/update-profile" element={<UpdateProfile />} />
         {/* Add a catchall route that will display the EventNotFound component */}
         <Route path="*" element={<EventNotFound />} />
