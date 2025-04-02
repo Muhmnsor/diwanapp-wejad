@@ -110,13 +110,21 @@ export function useHRStats() {
         const attendanceRate = totalEmployees > 0 ? 
           Math.round((presentToday / (totalEmployees - activeLeaves)) * 100) : 0;
           
-        // Mock trend data (in a real app, we would fetch this from the database)
+        // Ensure we always have valid trend data (in a real app, we would fetch this from the database)
         // For a 7-day period, making sure we always have at least 2 points
         const trends = {
           attendanceTrend: [75, 82, 78, 85, 80, 87, attendanceRate],
-          employeeTrend: [totalEmployees - 5, totalEmployees - 3, totalEmployees - 3, totalEmployees - 2, totalEmployees - 1, totalEmployees - 1, totalEmployees],
-          leaveTrend: [3, 4, 3, 2, 5, 4, activeLeaves],
-          trainingTrend: [10, 8, 12, 15, 14, 13, pendingTrainings]
+          employeeTrend: totalEmployees ? [
+            totalEmployees - 5, 
+            totalEmployees - 3, 
+            totalEmployees - 3, 
+            totalEmployees - 2, 
+            totalEmployees - 1, 
+            totalEmployees - 1, 
+            totalEmployees
+          ] : [0, 0, 0, 0, 0, 0, 0],
+          leaveTrend: [3, 4, 3, 2, 5, 4, activeLeaves || 0],
+          trainingTrend: [10, 8, 12, 15, 14, 13, pendingTrainings || 0]
         };
         
         return {
@@ -132,7 +140,7 @@ export function useHRStats() {
         };
       } catch (error) {
         console.error('Error fetching HR stats:', error);
-        // Even in error cases, provide valid trend data
+        // Even in error cases, provide valid trend data with at least 2 points
         return {
           totalEmployees: 0,
           newEmployees: 0,
