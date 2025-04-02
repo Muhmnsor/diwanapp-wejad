@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Table,
@@ -74,26 +75,59 @@ export function EmployeesTable({ employees, isLoading }: EmployeesTableProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <ViewEmployeeDialog employeeId={employee.id} trigger={
-                    <DropdownMenuItem>
-                      <Eye className="ml-2 h-4 w-4" />
-                      <span>عرض</span>
-                    </DropdownMenuItem>
-                  } />
-                  <EditEmployeeDialog employeeId={employee.id} trigger={
-                    <DropdownMenuItem>
-                      <Edit className="ml-2 h-4 w-4" />
-                      <span>تعديل</span>
-                    </DropdownMenuItem>
-                  } />
-                  <DeleteEmployeeDialog employeeId={employee.id} employeeName={employee.full_name} trigger={
-                    <DropdownMenuItem className="text-red-600">
-                      <Trash className="ml-2 h-4 w-4" />
-                      <span>حذف</span>
-                    </DropdownMenuItem>
-                  } />
+                  <DropdownMenuItem 
+                    onClick={() => {
+                      const viewDialog = document.getElementById(`view-employee-${employee.id}`);
+                      if (viewDialog) {
+                        (viewDialog as HTMLDialogElement).showModal();
+                      }
+                    }}
+                  >
+                    <Eye className="ml-2 h-4 w-4" />
+                    <span>عرض</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const editDialog = document.getElementById(`edit-employee-${employee.id}`);
+                      if (editDialog) {
+                        (editDialog as HTMLDialogElement).showModal();
+                      }
+                    }}
+                  >
+                    <Edit className="ml-2 h-4 w-4" />
+                    <span>تعديل</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="text-red-600"
+                    onClick={() => {
+                      const deleteDialog = document.getElementById(`delete-employee-${employee.id}`);
+                      if (deleteDialog) {
+                        (deleteDialog as HTMLDialogElement).showModal();
+                      }
+                    }}
+                  >
+                    <Trash className="ml-2 h-4 w-4" />
+                    <span>حذف</span>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              
+              {/* Hidden dialogs that will be shown via JavaScript */}
+              <div className="hidden">
+                <ViewEmployeeDialog
+                  id={`view-employee-${employee.id}`}
+                  employee={employee}
+                />
+                <EditEmployeeDialog
+                  id={`edit-employee-${employee.id}`}
+                  employee={employee}
+                />
+                <DeleteEmployeeDialog
+                  id={`delete-employee-${employee.id}`}
+                  employee={employee}
+                  employeeName={employee.full_name}
+                />
+              </div>
             </TableCell>
           </TableRow>
         ))}
@@ -101,4 +135,3 @@ export function EmployeesTable({ employees, isLoading }: EmployeesTableProps) {
     </Table>
   );
 }
-
