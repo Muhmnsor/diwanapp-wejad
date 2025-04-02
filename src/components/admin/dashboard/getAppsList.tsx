@@ -13,18 +13,47 @@ import {
   Inbox,
   Clock
 } from "lucide-react";
+import { APP_ROLE_ACCESS } from "@/utils/roleMapping";
 import { supabase } from "@/integrations/supabase/client";
 
 export const getAppsList = async (notificationCounts: any, user: any): Promise<AppItem[]> => {
   const apps: AppItem[] = [];
   
-  // Check user access to HR app
-  const { data: hasHRAccess } = await supabase.rpc('check_user_app_access', {
-    p_user_id: user.id,
-    p_app_name: 'hr'
-  });
+  // Fetch user roles from the database
+  const { data: userRoles, error: rolesError } = await supabase
+    .from("user_roles")
+    .select(`
+      role_id,
+      roles:role_id (
+        name
+      )
+    `)
+    .eq("user_id", user.id);
   
-  if (hasHRAccess) {
+  if (rolesError) {
+    console.error("Error fetching user roles:", rolesError);
+    return [];
+  }
+  
+  // Extract role names from the user roles data
+  const userRoleNames = userRoles?.map(userRole => {
+    if (userRole.roles && typeof userRole.roles === 'object') {
+      const roleName = userRole.roles as unknown as { name: string };
+      return roleName.name;
+    }
+    return null;
+  }).filter(Boolean) || [];
+  
+  console.log("User roles:", userRoleNames);
+  
+  // Helper function to check if user has access to an app
+  const hasAccessToApp = (appName: string): boolean => {
+    const allowedRoles = APP_ROLE_ACCESS[appName] || [];
+    return userRoleNames.some(role => allowedRoles.includes(role as string));
+  };
+  
+  // Check access for HR app
+  if (hasAccessToApp('hr')) {
     apps.push({
       title: "الموارد البشرية",
       icon: Users,
@@ -34,13 +63,8 @@ export const getAppsList = async (notificationCounts: any, user: any): Promise<A
     });
   }
   
-  // Check user access to accounting app
-  const { data: hasAccountingAccess } = await supabase.rpc('check_user_app_access', {
-    p_user_id: user.id,
-    p_app_name: 'accounting'
-  });
-  
-  if (hasAccountingAccess) {
+  // Check access for accounting app
+  if (hasAccessToApp('accounting')) {
     apps.push({
       title: "المحاسبة",
       icon: DollarSign,
@@ -50,13 +74,8 @@ export const getAppsList = async (notificationCounts: any, user: any): Promise<A
     });
   }
   
-  // Check user access to website app
-  const { data: hasWebsiteAccess } = await supabase.rpc('check_user_app_access', {
-    p_user_id: user.id,
-    p_app_name: 'website'
-  });
-  
-  if (hasWebsiteAccess) {
+  // Check access for website app
+  if (hasAccessToApp('website')) {
     apps.push({
       title: "الموقع الإلكتروني",
       icon: Globe,
@@ -66,13 +85,8 @@ export const getAppsList = async (notificationCounts: any, user: any): Promise<A
     });
   }
   
-  // Check user access to store app
-  const { data: hasStoreAccess } = await supabase.rpc('check_user_app_access', {
-    p_user_id: user.id,
-    p_app_name: 'store'
-  });
-  
-  if (hasStoreAccess) {
+  // Check access for store app
+  if (hasAccessToApp('store')) {
     apps.push({
       title: "المتجر الإلكتروني",
       icon: ShoppingCart,
@@ -82,13 +96,8 @@ export const getAppsList = async (notificationCounts: any, user: any): Promise<A
     });
   }
   
-  // Check user access to tasks app
-  const { data: hasTasksAccess } = await supabase.rpc('check_user_app_access', {
-    p_user_id: user.id,
-    p_app_name: 'tasks'
-  });
-  
-  if (hasTasksAccess) {
+  // Check access for tasks app
+  if (hasAccessToApp('tasks')) {
     apps.push({
       title: "المهام",
       icon: ListChecks,
@@ -98,13 +107,8 @@ export const getAppsList = async (notificationCounts: any, user: any): Promise<A
     });
   }
   
-  // Check user access to documents app
-  const { data: hasDocumentsAccess } = await supabase.rpc('check_user_app_access', {
-    p_user_id: user.id,
-    p_app_name: 'documents'
-  });
-  
-  if (hasDocumentsAccess) {
+  // Check access for documents app
+  if (hasAccessToApp('documents')) {
     apps.push({
       title: "المستندات",
       icon: Database,
@@ -114,13 +118,8 @@ export const getAppsList = async (notificationCounts: any, user: any): Promise<A
     });
   }
   
-  // Check user access to ideas app
-  const { data: hasIdeasAccess } = await supabase.rpc('check_user_app_access', {
-    p_user_id: user.id,
-    p_app_name: 'ideas'
-  });
-  
-  if (hasIdeasAccess) {
+  // Check access for ideas app
+  if (hasAccessToApp('ideas')) {
     apps.push({
       title: "الأفكار والمبادرات",
       icon: Lightbulb,
@@ -130,13 +129,8 @@ export const getAppsList = async (notificationCounts: any, user: any): Promise<A
     });
   }
   
-  // Check user access to notifications app
-  const { data: hasNotificationsAccess } = await supabase.rpc('check_user_app_access', {
-    p_user_id: user.id,
-    p_app_name: 'notifications'
-  });
-  
-  if (hasNotificationsAccess) {
+  // Check access for notifications app
+  if (hasAccessToApp('notifications')) {
     apps.push({
       title: "الإشعارات",
       icon: Bell,
@@ -146,13 +140,8 @@ export const getAppsList = async (notificationCounts: any, user: any): Promise<A
     });
   }
 
-  // Check user access to internal mail app
-  const { data: hasInternalMailAccess } = await supabase.rpc('check_user_app_access', {
-    p_user_id: user.id,
-    p_app_name: 'internal_mail'
-  });
-  
-  if (hasInternalMailAccess) {
+  // Check access for internal mail app
+  if (hasAccessToApp('internal_mail')) {
     apps.push({
       title: "البريد الداخلي",
       icon: Mail,
