@@ -11,7 +11,7 @@ import { HRDashboardOverview } from '@/components/hr/dashboard/HRDashboardOvervi
 import { EmployeesList } from '@/components/hr/employees/EmployeesList';
 import { AttendanceTab } from '@/components/hr/tabs/AttendanceTab';
 import { CompensationTab } from '@/components/hr/tabs/CompensationTab';
-import { LeaveManagement } from '@/components/hr/leaves/LeavesManagement';
+import { LeavesManagement } from '@/components/hr/leaves/LeavesManagement';
 import { TrainingTab } from '@/components/hr/tabs/TrainingTab';
 import { ReportsTab } from '@/components/hr/tabs/ReportsTab';
 import { ContractAlerts } from '@/components/hr/contract-alerts/ContractAlerts';
@@ -59,7 +59,7 @@ const HR = () => {
         </TabsContent>
         
         <TabsContent value="leaves" className="space-y-4">
-          <LeaveManagement />
+          <LeavesManagement />
         </TabsContent>
         
         <TabsContent value="compensation" className="space-y-4">
