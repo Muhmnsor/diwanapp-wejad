@@ -27,20 +27,8 @@ export function useOrganizationalUnits() {
         throw error;
       }
       
-      return data || [];
+      return data as OrganizationalUnit[];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
-}
-
-// Add a custom SQL query to update the stored procedure
-export async function updateOrganizationalHierarchyFunction() {
-  const { error } = await supabase.rpc('update_organizational_hierarchy_function');
-  
-  if (error) {
-    console.error("Error updating organizational hierarchy function:", error);
-    throw error;
-  }
-  
-  return true;
 }
