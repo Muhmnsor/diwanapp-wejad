@@ -30,7 +30,7 @@ export const UserDetailsDialog = ({ user, isOpen, onClose }: UserDetailsDialogPr
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]" dir="rtl">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="text-xl flex items-center gap-2">
             تفاصيل المستخدم
@@ -55,21 +55,21 @@ export const UserDetailsDialog = ({ user, isOpen, onClose }: UserDetailsDialogPr
           
           <Tabs defaultValue="permissions" className="w-full">
             <TabsList className="w-full">
-              <TabsTrigger value="permissions" className="flex-1 flex items-center">
-                <Shield className="h-4 w-4 ml-2" />
+              <TabsTrigger value="permissions" className="flex-1">
+                <Shield className="h-4 w-4 mr-2" />
                 الصلاحيات
               </TabsTrigger>
-              <TabsTrigger value="activity" className="flex-1 flex items-center">
-                <Activity className="h-4 w-4 ml-2" />
+              <TabsTrigger value="activity" className="flex-1">
+                <Activity className="h-4 w-4 mr-2" />
                 سجل النشاط
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="permissions" className="pt-4 text-right">
+            <TabsContent value="permissions" className="pt-4">
               <UserPermissionsList userId={user.id} role={user.role} />
             </TabsContent>
             
-            <TabsContent value="activity" className="pt-4 text-right">
+            <TabsContent value="activity" className="pt-4">
               <UserActivityList userId={user.id} />
             </TabsContent>
           </Tabs>

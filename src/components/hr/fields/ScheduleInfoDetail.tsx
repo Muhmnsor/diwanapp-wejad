@@ -97,7 +97,7 @@ export function ScheduleInfoDetail({ scheduleId }: ScheduleInfoDetailProps) {
   // If there's an error, show error message
   if (error) {
     return (
-      <div className="text-sm text-red-500 text-right">
+      <div className="text-sm text-red-500">
         {error}
       </div>
     );
@@ -106,7 +106,7 @@ export function ScheduleInfoDetail({ scheduleId }: ScheduleInfoDetailProps) {
   // If there's no schedule (and we're not loading), show no schedule message
   if (!schedule) {
     return (
-      <div className="text-sm text-muted-foreground text-right">
+      <div className="text-sm text-muted-foreground">
         لم يتم تعيين جدول عمل للموظف
       </div>
     );
@@ -115,7 +115,7 @@ export function ScheduleInfoDetail({ scheduleId }: ScheduleInfoDetailProps) {
   const workingDays = workDays.filter(d => d.is_working_day);
 
   return (
-    <div className="space-y-3" dir="rtl">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-primary" />
@@ -126,16 +126,16 @@ export function ScheduleInfoDetail({ scheduleId }: ScheduleInfoDetailProps) {
         </Badge>
       </div>
       
-      <p className="text-sm text-muted-foreground text-right">{schedule.description}</p>
+      <p className="text-sm text-muted-foreground">{schedule.description}</p>
       
-      <div className="text-sm text-right">
+      <div className="text-sm">
         <p className="font-medium mb-1">أيام العمل:</p>
         <p>{workingDays.map(d => getDayName(d.day_of_week)).join('، ')}</p>
       </div>
       
       {workingDays.length > 0 && (
         <div className="text-xs pt-2 border-t border-dashed">
-          <p className="mb-2 font-medium text-right">أوقات الدوام:</p>
+          <p className="mb-2 font-medium">أوقات الدوام:</p>
           <div className="grid gap-1">
             {workingDays.map(day => (
               <div key={day.id} className="flex justify-between items-center">
