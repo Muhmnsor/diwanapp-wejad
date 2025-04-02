@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ interface OrganizationalUnit {
   unit_type: string;
   parent_id?: string;
   is_active?: boolean;
+  position_type?: 'standard' | 'side' | 'assistant';
 }
 
 interface OrganizationalUnitDialogProps {
@@ -35,6 +37,7 @@ export function OrganizationalUnitDialog({
   const [description, setDescription] = useState("");
   const [unitType, setUnitType] = useState("department");
   const [parentId, setParentId] = useState<string | undefined>(undefined);
+  const [positionType, setPositionType] = useState<'standard' | 'side' | 'assistant'>('standard');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { data: units, isLoading } = useOrganizationalUnits();
@@ -45,11 +48,13 @@ export function OrganizationalUnitDialog({
       setDescription(unitToEdit.description || "");
       setUnitType(unitToEdit.unit_type || "department");
       setParentId(unitToEdit.parent_id);
+      setPositionType(unitToEdit.position_type || 'standard');
     } else {
       setName("");
       setDescription("");
       setUnitType("department");
       setParentId(undefined);
+      setPositionType('standard');
     }
   }, [unitToEdit, isOpen]);
 
@@ -71,6 +76,7 @@ export function OrganizationalUnitDialog({
         description,
         unit_type: unitType,
         parent_id: parentId === "none" ? null : parentId,
+        position_type: positionType
       };
 
       let result;
@@ -173,6 +179,24 @@ export function OrganizationalUnitDialog({
                     {unit.name}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="position" className="text-right">
+              نوع الموضع
+            </Label>
+            <Select 
+              value={positionType} 
+              onValueChange={(value) => setPositionType(value as 'standard' | 'side' | 'assistant')}
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="اختر نوع الموضع" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="standard">قياسي</SelectItem>
+                <SelectItem value="side">جانبي</SelectItem>
+                <SelectItem value="assistant">مساعد</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { ChevronRight, ChevronDown, Building2, FolderTree, Users } from "lucide-react";
+import { ChevronRight, ChevronDown, Building2, FolderTree, Users, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,7 @@ interface OrganizationalUnit {
   unit_type: string;
   parent_id?: string;
   is_active?: boolean;
+  position_type?: 'standard' | 'side' | 'assistant';
 }
 
 interface OrganizationTreeViewProps {
@@ -44,13 +45,23 @@ export function OrganizationTreeView({ units, onUnitClick, selectedUnitId }: Org
     const hasChildren = children.length > 0;
     const isExpanded = expandedUnits[unit.id];
     const isSelected = unit.id === selectedUnitId;
+    
+    // Divide children into standard and side/assistant
+    const standardChildren = children.filter(child => 
+      !child.position_type || child.position_type === 'standard'
+    );
+    
+    const sideChildren = children.filter(child => 
+      child.position_type === 'side' || child.position_type === 'assistant'
+    );
 
     return (
       <div key={unit.id}>
         <div 
           className={cn(
             "flex items-center py-1 px-2 hover:bg-secondary/50 rounded-md cursor-pointer",
-            isSelected && "bg-secondary"
+            isSelected && "bg-secondary",
+            (unit.position_type === 'side' || unit.position_type === 'assistant') && "italic"
           )}
           style={{ paddingRight: `${level * 12 + 8}px` }}
         >
@@ -74,22 +85,39 @@ export function OrganizationTreeView({ units, onUnitClick, selectedUnitId }: Org
             className="flex items-center gap-2 flex-1 py-1" 
             onClick={() => onUnitClick(unit)}
           >
-            {getUnitIcon(unit.unit_type)}
-            <span>{unit.name}</span>
+            {getUnitIcon(unit.unit_type, unit.position_type)}
+            <span className={cn(
+              unit.position_type === 'side' && "text-gray-600",
+              unit.position_type === 'assistant' && "text-gray-500 font-light"
+            )}>
+              {unit.name}
+            </span>
           </div>
         </div>
         
         {isExpanded && hasChildren && (
           <div className="mt-1">
-            {children.map(childUnit => renderUnit(childUnit, level + 1))}
+            {/* First render standard children */}
+            {standardChildren.map(childUnit => renderUnit(childUnit, level + 1))}
+            
+            {/* Then render side positions with slight indentation and styling */}
+            {sideChildren.length > 0 && (
+              <div className="mt-1 border-r-2 border-dotted border-gray-200 mr-4 pr-2">
+                {sideChildren.map(childUnit => renderUnit(childUnit, level + 1))}
+              </div>
+            )}
           </div>
         )}
       </div>
     );
   };
 
-  // Get appropriate icon based on unit type
-  const getUnitIcon = (unitType: string) => {
+  // Get appropriate icon based on unit type and position type
+  const getUnitIcon = (unitType: string, positionType?: string) => {
+    if (positionType === 'side' || positionType === 'assistant') {
+      return <FileText className="h-4 w-4 text-gray-400" />;
+    }
+    
     switch (unitType.toLowerCase()) {
       case 'department':
         return <Building2 className="h-4 w-4 text-blue-500" />;

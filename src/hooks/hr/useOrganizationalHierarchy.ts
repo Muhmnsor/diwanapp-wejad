@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-interface OrganizationalHierarchyItem {
+export interface OrganizationalHierarchyItem {
   id: string;
   name: string;
   description?: string;
@@ -10,6 +10,7 @@ interface OrganizationalHierarchyItem {
   parent_id?: string;
   level: number;
   path: string[];
+  position_type?: 'standard' | 'side' | 'assistant';
 }
 
 export function useOrganizationalHierarchy() {
@@ -24,7 +25,13 @@ export function useOrganizationalHierarchy() {
         throw error;
       }
       
-      return data as OrganizationalHierarchyItem[];
+      // Add position_type if it doesn't exist (default to 'standard')
+      const enhancedData = (data as OrganizationalHierarchyItem[]).map(item => ({
+        ...item,
+        position_type: item.position_type || 'standard'
+      }));
+      
+      return enhancedData;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

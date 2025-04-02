@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { useOrganizationalHierarchy } from "@/hooks/hr/useOrganizationalHierarchy";
+import { useOrganizationalHierarchy, OrganizationalHierarchyItem } from "@/hooks/hr/useOrganizationalHierarchy";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronDown } from "lucide-react";
 
@@ -11,6 +11,7 @@ interface ChartNodeProps {
   depth: number;
   isLast: boolean;
   hasChildren: boolean;
+  positionType: 'standard' | 'side' | 'assistant';
 }
 
 const ChartNode: React.FC<ChartNodeProps> = ({ 
@@ -18,7 +19,8 @@ const ChartNode: React.FC<ChartNodeProps> = ({
   type, 
   depth, 
   isLast,
-  hasChildren
+  hasChildren,
+  positionType
 }) => {
   // Get the background color based on the node type
   const getBgColor = (type: string) => {
@@ -32,21 +34,40 @@ const ChartNode: React.FC<ChartNodeProps> = ({
     }
   };
 
+  // Apply additional styles based on position type
+  const getPositionStyle = (positionType: string) => {
+    switch (positionType) {
+      case 'side':
+        return 'italic border-dashed';
+      case 'assistant':
+        return 'font-light border-dotted';
+      default:
+        return '';
+    }
+  };
+
   return (
-    <div className="relative">
-      {depth > 0 && (
+    <div className={`relative ${positionType === 'side' ? '-mr-8 mt-10' : ''}`}>
+      {depth > 0 && positionType === 'standard' && (
         <>
           {/* Vertical line from parent */}
           <div className="absolute right-[50%] top-0 h-4 border-l border-slate-300"></div>
         </>
       )}
       
-      <div className={`relative z-10 inline-block px-4 py-2 rounded-lg border ${getBgColor(type)} min-w-32 text-center font-medium`}>
+      {depth > 0 && positionType === 'side' && (
+        <>
+          {/* Horizontal line to side position */}
+          <div className="absolute right-[100%] top-1/2 w-8 border-t border-slate-300"></div>
+        </>
+      )}
+      
+      <div className={`relative z-10 inline-block px-4 py-2 rounded-lg border ${getBgColor(type)} ${getPositionStyle(positionType)} min-w-32 text-center font-medium`}>
         {name}
         {hasChildren && <ChevronDown className="mx-auto mt-1 h-4 w-4 text-muted-foreground" />}
       </div>
       
-      {!isLast && depth > 0 && (
+      {!isLast && depth > 0 && positionType === 'standard' && (
         // Horizontal line to siblings
         <div className="absolute right-full top-1/2 w-4 border-t border-slate-300"></div>
       )}
@@ -78,7 +99,7 @@ export function OrganizationChart() {
   }
   
   // Organize data into a tree structure
-  const buildTree = (items: any[]) => {
+  const buildTree = (items: OrganizationalHierarchyItem[]) => {
     const rootItems: any[] = [];
     const itemMap = new Map();
     
@@ -86,7 +107,9 @@ export function OrganizationChart() {
     items.forEach(item => {
       itemMap.set(item.id, {
         ...item,
-        children: []
+        children: [],
+        standardChildren: [],
+        sideChildren: []
       });
     });
     
@@ -98,6 +121,13 @@ export function OrganizationChart() {
         const parent = itemMap.get(item.parent_id);
         if (parent) {
           parent.children.push(treeItem);
+          
+          // Also add to specific child arrays based on position type
+          if (item.position_type === 'side' || item.position_type === 'assistant') {
+            parent.sideChildren.push(treeItem);
+          } else {
+            parent.standardChildren.push(treeItem);
+          }
         }
       } else {
         rootItems.push(treeItem);
@@ -110,29 +140,47 @@ export function OrganizationChart() {
   const renderNode = (node: any, depth = 0, isLast = true) => {
     return (
       <div key={node.id} className="flex flex-col items-center">
-        <ChartNode 
-          name={node.name} 
-          type={node.unit_type} 
-          depth={depth}
-          isLast={isLast}
-          hasChildren={node.children && node.children.length > 0}
-        />
+        <div className="flex flex-row items-start">
+          {/* Render side positions to the right */}
+          <div className="flex flex-col items-end mr-4">
+            {node.sideChildren && node.sideChildren.map((child: any, index: number) => (
+              <div key={`side-${child.id}`} className="mb-2">
+                {renderNode(
+                  child, 
+                  depth + 1, 
+                  index === node.sideChildren.length - 1
+                )}
+              </div>
+            ))}
+          </div>
+          
+          {/* Main node */}
+          <ChartNode 
+            name={node.name} 
+            type={node.unit_type} 
+            depth={depth}
+            isLast={isLast}
+            hasChildren={node.standardChildren && node.standardChildren.length > 0}
+            positionType={node.position_type || 'standard'}
+          />
+        </div>
         
-        {node.children && node.children.length > 0 && (
+        {/* Standard children */}
+        {node.standardChildren && node.standardChildren.length > 0 && (
           <div className="mt-4 flex flex-wrap justify-center gap-6 pt-4 relative">
             {/* Vertical line down to children */}
             <div className="absolute right-1/2 top-0 h-4 border-l border-slate-300"></div>
             
             {/* Horizontal line across all children */}
-            {node.children.length > 1 && (
+            {node.standardChildren.length > 1 && (
               <div className="absolute right-[calc(50%-((100%-2rem)/2))] top-4 w-[calc(100%-2rem)] border-t border-slate-300"></div>
             )}
             
-            {node.children.map((child: any, index: number) => (
+            {node.standardChildren.map((child: any, index: number) => (
               renderNode(
                 child, 
                 depth + 1, 
-                index === node.children.length - 1
+                index === node.standardChildren.length - 1
               )
             ))}
           </div>
