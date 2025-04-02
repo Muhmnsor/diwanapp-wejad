@@ -14,22 +14,15 @@ interface LeaveType {
   requires_approval?: boolean;
 }
 
-export function useLeaveTypes(gender?: string) {
+export function useLeaveTypes() {
   return useQuery({
-    queryKey: ["leave-types", gender],
+    queryKey: ["leave-types"],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from("hr_leave_types")
         .select("*")
         .eq("is_active", true)
         .order("name");
-      
-      // If gender is specified, filter leave types based on eligibility
-      if (gender) {
-        query = query.or(`eligible_gender.eq.both,eligible_gender.eq.${gender}`);
-      }
-
-      const { data, error } = await query;
 
       if (error) {
         console.error("Error fetching leave types:", error);

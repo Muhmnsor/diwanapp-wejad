@@ -12,7 +12,7 @@ export function GenderField({ value, onChange }: GenderFieldProps) {
     <div className="space-y-2">
       <Label htmlFor="gender">الجنس</Label>
       <Select value={value || ""} onValueChange={onChange}>
-        <SelectTrigger id="gender">
+        <SelectTrigger>
           <SelectValue placeholder="اختر الجنس" />
         </SelectTrigger>
         <SelectContent>

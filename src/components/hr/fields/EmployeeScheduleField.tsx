@@ -5,18 +5,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useEmployeeSchedule } from "@/hooks/hr/useEmployeeSchedule";
 
 interface EmployeeScheduleFieldProps {
-  value: string;
+  value: string | null;
   onChange: (value: string) => void;
 }
 
-export function EmployeeScheduleField({ 
-  value, 
-  onChange 
-}: EmployeeScheduleFieldProps) {
+export function EmployeeScheduleField({ value, onChange }: EmployeeScheduleFieldProps) {
   const { schedules, defaultSchedule, isLoadingSchedules } = useEmployeeSchedule();
   const [selectedValue, setSelectedValue] = useState<string>(value || "");
 
-  // Set default schedule if no schedule is selected
+  console.log("EmployeeScheduleField (fields) - Initial value:", value);
+  console.log("EmployeeScheduleField (fields) - Available schedules:", schedules);
+  console.log("EmployeeScheduleField (fields) - Default schedule:", defaultSchedule);
+
+  // تعيين الجدول الافتراضي إذا لم يكن هناك قيمة محددة
   useEffect(() => {
     if ((!value || value === "") && defaultSchedule && defaultSchedule.id) {
       console.log("EmployeeScheduleField (fields) - Setting default schedule:", defaultSchedule.id);

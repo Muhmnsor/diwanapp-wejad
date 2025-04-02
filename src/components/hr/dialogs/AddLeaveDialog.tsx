@@ -1,111 +1,139 @@
-
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { useLeaveTypes } from "@/hooks/hr/useLeaveTypes";
-import { CalendarIcon, Plus } from "lucide-react";
-import { useEmployees } from "@/hooks/hr/useEmployees";
-import { format } from "date-fns";
-import { ar } from "date-fns/locale";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useLeaveTypes } from "@/hooks/hr/useLeaveTypes";
+
+// Define form fields interface
+interface LeaveFormValues {
+  employeeId: string;
+  leaveType: string;
+  startDate: Date;
+  endDate: Date;
+  reason: string;
+}
 
 export function AddLeaveDialog() {
   const [open, setOpen] = useState(false);
-  const [employeeId, setEmployeeId] = useState<string>("");
-  const [selectedEmployeeGender, setSelectedEmployeeGender] = useState<string | undefined>();
-  const [leaveType, setLeaveType] = useState<string>("");
-  const [startDate, setStartDate] = useState<Date | undefined>();
-  const [endDate, setEndDate] = useState<Date | undefined>();
-  const [reason, setReason] = useState<string>("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const { data: employees } = useEmployees();
-  const { data: leaveTypes, isLoading: isLoadingLeaveTypes } = useLeaveTypes(selectedEmployeeGender);
-
-  // Update selected employee's gender when employeeId changes
-  useEffect(() => {
-    if (employeeId && employees) {
-      const selectedEmployee = employees.find(emp => emp.id === employeeId);
-      setSelectedEmployeeGender(selectedEmployee?.gender);
-      
-      // Reset leave type when employee changes (in case previous selection is not valid for new gender)
-      setLeaveType("");
-    }
-  }, [employeeId, employees]);
-
-  const handleSubmit = async () => {
-    if (!employeeId || !leaveType || !startDate || !endDate) {
-      toast.error("الرجاء إكمال جميع الحقول المطلوبة");
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const { error } = await supabase
-        .from("hr_leave_requests")
-        .insert({
-          employee_id: employeeId,
-          leave_type: leaveType,
-          start_date: startDate.toISOString().split('T')[0],
-          end_date: endDate.toISOString().split('T')[0],
-          reason: reason || null,
-          status: "pending",
-        });
+  const { register, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<LeaveFormValues>();
+  const queryClient = useQueryClient();
+  const { data: leaveTypes } = useLeaveTypes();
+  const [selectedEmployeeGender, setSelectedEmployeeGender] = useState<string | null>(null);
+  
+  // Track selected employee ID to fetch their gender
+  const selectedEmployeeId = watch("employeeId");
+  
+  // Fetch employees from the database
+  const { data: employees } = useQuery({
+    queryKey: ["employees"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("employees")
+        .select("id, full_name, gender")
+        .eq("status", "active")
+        .order("full_name");
 
       if (error) throw error;
+      return data;
+    },
+  });
 
-      toast.success("تم إرسال طلب الإجازة بنجاح");
-      
-      // Reset form
-      setEmployeeId("");
-      setLeaveType("");
-      setStartDate(undefined);
-      setEndDate(undefined);
-      setReason("");
-      setSelectedEmployeeGender(undefined);
-      
-      setOpen(false);
-    } catch (error) {
-      console.error("Error submitting leave request:", error);
-      toast.error("حدث خطأ أثناء إرسال طلب الإجازة");
-    } finally {
-      setIsSubmitting(false);
+  // Update selected employee gender when employee changes
+  useEffect(() => {
+    if (selectedEmployeeId && employees) {
+      const employee = employees.find(emp => emp.id === selectedEmployeeId);
+      if (employee) {
+        setSelectedEmployeeGender(employee.gender || null);
+      }
     }
+  }, [selectedEmployeeId, employees]);
+
+  // Filter leave types based on employee gender
+  const filteredLeaveTypes = leaveTypes?.filter(type => {
+    // If no gender is selected or type has no eligible_gender constraint, show it
+    if (!selectedEmployeeGender || !type.eligible_gender || type.eligible_gender === 'both') {
+      return true;
+    }
+    
+    // Otherwise, only show leave types that match the employee's gender
+    return type.eligible_gender === selectedEmployeeGender;
+  });
+
+  const createLeaveMutation = useMutation({
+    mutationFn: async (values: LeaveFormValues) => {
+      const { error } = await supabase.from("hr_leave_requests").insert({
+        employee_id: values.employeeId,
+        leave_type: values.leaveType,
+        start_date: format(values.startDate, "yyyy-MM-dd"),
+        end_date: format(values.endDate, "yyyy-MM-dd"),
+        reason: values.reason,
+        status: "pending"
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({
+        title: "تم إنشاء طلب الإجازة",
+        description: "تم إرسال طلب الإجازة بنجاح",
+      });
+      setOpen(false);
+      reset();
+      queryClient.invalidateQueries({ queryKey: ["leaves"] });
+    },
+    onError: (error) => {
+      console.error("Error creating leave request:", error);
+      toast({
+        title: "حدث خطأ",
+        description: "لم نتمكن من إنشاء طلب الإجازة",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (values: LeaveFormValues) => {
+    createLeaveMutation.mutate(values);
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-1">
-          <Plus className="h-4 w-4" />
-          طلب إجازة جديد
+        <Button className="flex items-center gap-2">
+          <CalendarCheck className="h-4 w-4" />
+          إضافة طلب إجازة
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>طلب إجازة جديدة</DialogTitle>
+          <DialogTitle className="text-right">إضافة طلب إجازة جديد</DialogTitle>
         </DialogHeader>
-        
-        <div className="space-y-4 py-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="employee">الموظف</Label>
-            <Select value={employeeId} onValueChange={setEmployeeId}>
-              <SelectTrigger id="employee">
+            <Label htmlFor="employeeId">الموظف</Label>
+            <Select
+              onValueChange={(value) => setValue("employeeId", value)} 
+              defaultValue={watch("employeeId")}
+            >
+              <SelectTrigger id="employeeId">
                 <SelectValue placeholder="اختر الموظف" />
               </SelectTrigger>
               <SelectContent>
@@ -116,102 +144,119 @@ export function AddLeaveDialog() {
                 ))}
               </SelectContent>
             </Select>
+            {errors.employeeId && <p className="text-sm text-red-500">{errors.employeeId.message}</p>}
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="leaveType">نوع الإجازة</Label>
             <Select 
-              value={leaveType} 
-              onValueChange={setLeaveType}
-              disabled={!employeeId || isLoadingLeaveTypes}
+              onValueChange={(value) => setValue("leaveType", value)}
+              defaultValue={watch("leaveType")}
             >
               <SelectTrigger id="leaveType">
-                <SelectValue placeholder={isLoadingLeaveTypes ? "جاري التحميل..." : "اختر نوع الإجازة"} />
+                <SelectValue placeholder="اختر نوع الإجازة" />
               </SelectTrigger>
               <SelectContent>
-                {leaveTypes?.map((type) => (
+                {filteredLeaveTypes?.map((type) => (
                   <SelectItem key={type.id} value={type.code}>
                     {type.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {errors.leaveType && <p className="text-sm text-red-500">{errors.leaveType.message}</p>}
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="startDate">تاريخ البداية</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  id="startDate"
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-right",
-                    !startDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {startDate ? format(startDate, "PPP", { locale: ar }) : "اختر التاريخ"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={startDate}
-                  onSelect={setStartDate}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="startDate">تاريخ البداية</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-right",
+                      !watch("startDate") && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="ml-2 h-4 w-4" />
+                    {watch("startDate") ? (
+                      format(watch("startDate"), "PPP")
+                    ) : (
+                      <span>اختر التاريخ</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={watch("startDate")}
+                    onSelect={(date) => setValue("startDate", date!)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              {errors.startDate && <p className="text-sm text-red-500">{errors.startDate.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="endDate">تاريخ النهاية</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-right",
+                      !watch("endDate") && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="ml-2 h-4 w-4" />
+                    {watch("endDate") ? (
+                      format(watch("endDate"), "PPP")
+                    ) : (
+                      <span>اختر التاريخ</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={watch("endDate")}
+                    onSelect={(date) => setValue("endDate", date!)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              {errors.endDate && <p className="text-sm text-red-500">{errors.endDate.message}</p>}
+            </div>
           </div>
-          
+
           <div className="space-y-2">
-            <Label htmlFor="endDate">تاريخ النهاية</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  id="endDate"
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-right",
-                    !endDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {endDate ? format(endDate, "PPP", { locale: ar }) : "اختر التاريخ"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={endDate}
-                  onSelect={setEndDate}
-                  disabled={(date) => (startDate ? date < startDate : false)}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="reason">سبب الإجازة (اختياري)</Label>
-            <Input
+            <Label htmlFor="reason">سبب الإجازة</Label>
+            <Textarea
               id="reason"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
               placeholder="أدخل سبب الإجازة"
+              {...register("reason")}
             />
+            {errors.reason && <p className="text-sm text-red-500">{errors.reason.message}</p>}
           </div>
-        </div>
-        
-        <DialogFooter>
-          <Button onClick={() => setOpen(false)} variant="outline" disabled={isSubmitting}>
-            إلغاء
-          </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? "جاري الإرسال..." : "إرسال الطلب"}
-          </Button>
-        </DialogFooter>
+
+          <DialogFooter className="gap-2 sm:space-x-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                reset();
+                setOpen(false);
+              }}
+            >
+              إلغاء
+            </Button>
+            <Button type="submit" disabled={createLeaveMutation.isPending}>
+              {createLeaveMutation.isPending ? "جاري الإرسال..." : "إرسال الطلب"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
