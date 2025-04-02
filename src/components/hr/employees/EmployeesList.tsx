@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useEmployees } from "@/hooks/hr/useEmployees";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, Plus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { EmployeeCard } from "./EmployeeCard";
 import { AddEmployeeDialog } from "../dialogs/AddEmployeeDialog";
 import { EditEmployeeDialog } from "../dialogs/EditEmployeeDialog";
 import { DeleteEmployeeDialog } from "../dialogs/DeleteEmployeeDialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AssignScheduleDialog } from "../dialogs/AssignScheduleDialog";
 import { useHRPermissions } from "@/hooks/hr/useHRPermissions";
 import { useEmployeeSchedules } from "@/hooks/hr/useEmployeeSchedules";
@@ -24,10 +24,11 @@ export function EmployeesList() {
   const [deletingEmployeeId, setDeletingEmployeeId] = useState<string | null>(null);
   const [assignScheduleEmployeeId, setAssignScheduleEmployeeId] = useState<string | null>(null);
   const { data: permissions } = useHRPermissions();
-
+  
   const canManageEmployees = permissions?.canManageEmployees || permissions?.isAdmin;
 
-  const filteredEmployees = employees?.filter(employee => {
+  // Filter employees based on the search query and active tab
+  const filteredEmployees = employees?.filter((employee) => {
     // Filter by tab
     if (activeTab !== "all" && employee.status !== activeTab) {
       return false;
@@ -40,38 +41,38 @@ export function EmployeesList() {
         employee.full_name.toLowerCase().includes(query) ||
         (employee.email?.toLowerCase().includes(query) || false) ||
         (employee.department?.toLowerCase().includes(query) || false) ||
-        (employee.job_title?.toLowerCase().includes(query) || false)
+        (employee.position?.toLowerCase().includes(query) || false)
       );
     }
     
     return true;
   });
-
+  
   // Find the schedule name for an employee
   const getScheduleName = (scheduleId?: string) => {
     if (!scheduleId) return null;
-    const schedule = schedules?.find(s => s.id === scheduleId);
+    const schedule = schedules?.find((s) => s.id === scheduleId);
     return schedule?.name || null;
   };
-
+  
   // Get the editing employee name
   const getEditingEmployeeName = () => {
     if (!editingEmployeeId || !employees) return "";
-    const employee = employees.find(emp => emp.id === editingEmployeeId);
+    const employee = employees.find((emp) => emp.id === editingEmployeeId);
     return employee?.full_name || "";
   };
-
+  
   // Get the deleting employee name
   const getDeletingEmployeeName = () => {
     if (!deletingEmployeeId || !employees) return "";
-    const employee = employees.find(emp => emp.id === deletingEmployeeId);
+    const employee = employees.find((emp) => emp.id === deletingEmployeeId);
     return employee?.full_name || "";
   };
-
+  
   // Get the employee name for schedule assignment
   const getAssignScheduleEmployeeName = () => {
     if (!assignScheduleEmployeeId || !employees) return "";
-    const employee = employees.find(emp => emp.id === assignScheduleEmployeeId);
+    const employee = employees.find((emp) => emp.id === assignScheduleEmployeeId);
     return employee?.full_name || "";
   };
 
@@ -128,7 +129,7 @@ export function EmployeesList() {
               key={employee.id}
               id={employee.id}
               name={employee.full_name}
-              position={employee.job_title}
+              position={employee.position}
               department={employee.department}
               email={employee.email}
               phone={employee.phone}

@@ -14,7 +14,7 @@ const HR = () => {
     <div className="min-h-screen flex flex-col" dir="rtl">
       <TopHeader />
       <div className="flex-grow container mx-auto px-4 py-8">
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col gap-6">
           <div className="w-full">
             <HRTabs defaultTab={defaultTab} />
           </div>

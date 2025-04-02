@@ -11,8 +11,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { EmployeeScheduleField } from "../employees/EmployeeScheduleField";
 import { useQueryClient } from "@tanstack/react-query";
+import { useEmployeeSchedule } from "@/hooks/hr/useEmployeeSchedule";
 
 interface AssignScheduleDialogProps {
   employeeId: string | null;
@@ -31,6 +31,7 @@ export function AssignScheduleDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const queryClient = useQueryClient();
+  const { schedules, defaultSchedule } = useEmployeeSchedule();
 
   useEffect(() => {
     if (isOpen && employeeId) {
@@ -77,6 +78,10 @@ export function AssignScheduleDialog({
     }
   };
 
+  const handleScheduleChange = (value: string) => {
+    setScheduleId(value);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]" dir="rtl">
@@ -93,10 +98,32 @@ export function AssignScheduleDialog({
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : (
-            <EmployeeScheduleField
-              value={scheduleId}
-              onChange={setScheduleId}
-            />
+            <div className="space-y-2">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <label htmlFor="schedule" className="text-right col-span-1">
+                  جدول العمل
+                </label>
+                <select
+                  id="schedule"
+                  className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={scheduleId}
+                  onChange={(e) => handleScheduleChange(e.target.value)}
+                >
+                  <option value="">اختر جدول العمل</option>
+                  {schedules?.map((schedule) => (
+                    <option key={schedule.id} value={schedule.id}>
+                      {schedule.name} {schedule.is_default && "(افتراضي)"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              {!scheduleId && !isLoading && (
+                <p className="text-xs text-muted-foreground pr-4">
+                  سيتم استخدام الجدول الافتراضي إذا لم يتم اختيار جدول.
+                </p>
+              )}
+            </div>
           )}
         </div>
         
