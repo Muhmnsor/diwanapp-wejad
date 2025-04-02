@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -11,7 +10,7 @@ import { getAppsList } from "@/components/admin/dashboard/getAppsList";
 import { DeveloperToolbar } from "@/components/developer/DeveloperToolbar";
 import { useAuthStore } from "@/store/refactored-auth";
 import { AppItem } from "@/components/admin/dashboard/DashboardApps";
-import { Loader2, Users, AlertCircle, CalendarClock } from "lucide-react";
+import { Loader2, AlertCircle, CalendarClock } from "lucide-react";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { Card } from "@/components/ui/card";
 
@@ -24,56 +23,40 @@ const AdminDashboard = () => {
   const [isLoadingApps, setIsLoadingApps] = useState<boolean>(true);
   const [appsError, setAppsError] = useState<Error | null>(null);
   
-useEffect(() => {
-  const fetchApps = async () => {
-    if (!user) {
-      console.log("User not available, skipping apps fetch");
-      setIsLoadingApps(false);
-      return;
-    }
-
-    if (!notificationCounts) {
-      console.log("Notification counts not available yet, skipping apps fetch");
-      return;
-    }
-
-    setIsLoadingApps(true);
-    setAppsError(null);
-    
-    try {
-      console.log("Fetching apps with user:", user.id, "and notification counts:", notificationCounts);
-      // Get all apps from the updated getAppsList function
-      const allApps = await getAppsList(notificationCounts, user);
-      
-      // Add meetings app if user has admin role and it doesn't already exist
-      if (hasAdminRole) {
-        const meetingsApp: AppItem = {
-          title: "إدارة الاجتماعات",
-          icon: CalendarClock,
-          path: "/admin/meetings",
-          description: "إدارة جدول الاجتماعات والمشاركين والمحاضر",
-          notifications: notificationCounts?.meetings || 0,
-        };
-        
-        const meetingsAppExists = allApps.some(app => app.path === "/admin/meetings");
-        
-        if (!meetingsAppExists) {
-          allApps.push(meetingsApp);
-        }
+  useEffect(() => {
+    const fetchApps = async () => {
+      if (!user) {
+        console.log("User not available, skipping apps fetch");
+        setIsLoadingApps(false);
+        return;
       }
-      
-      setApps(allApps);
-    } catch (error) {
-      console.error("Error fetching apps:", error);
-      setAppsError(error instanceof Error ? error : new Error("Failed to fetch apps"));
-    } finally {
-      setIsLoadingApps(false);
-    }
-  };
-  
-  fetchApps();
-}, [user, notificationCounts, hasAdminRole]);
 
+      if (!notificationCounts) {
+        console.log("Notification counts not available yet, skipping apps fetch");
+        return;
+      }
+
+      setIsLoadingApps(true);
+      setAppsError(null);
+      
+      try {
+        console.log("Fetching apps with user:", user.id, "and notification counts:", notificationCounts);
+        // Get all apps from the updated getAppsList function
+        const allApps = await getAppsList(notificationCounts, user);
+        
+        // Make sure we're not filtering apps unnecessarily
+        setApps(allApps);
+        console.log("Fetched apps:", allApps.length, allApps.map(app => app.title));
+      } catch (error) {
+        console.error("Error fetching apps:", error);
+        setAppsError(error instanceof Error ? error : new Error("Failed to fetch apps"));
+      } finally {
+        setIsLoadingApps(false);
+      }
+    };
+    
+    fetchApps();
+  }, [user, notificationCounts, hasAdminRole]);
 
   const isLoading = isLoadingUser || isLoadingNotifications || isLoadingApps || isLoadingRoles;
 
