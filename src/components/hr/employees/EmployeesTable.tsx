@@ -8,20 +8,13 @@ import {
   TableBody,
   TableCell
 } from "@/components/ui/table";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MoreVertical, Eye, Edit, Trash, Calendar } from "lucide-react";
+import { Eye, Edit, Trash, Calendar } from "lucide-react";
 import { ViewEmployeeDialog } from "../dialogs/ViewEmployeeDialog";
 import { EditEmployeeDialog } from "../dialogs/EditEmployeeDialog";
 import { DeleteEmployeeDialog } from "../dialogs/DeleteEmployeeDialog";
 import { ManageScheduleDialog } from "../dialogs/ManageScheduleDialog";
-import { supabase } from "@/integrations/supabase/client";
 
 interface EmployeesTableProps {
   employees?: any[];
@@ -74,7 +67,7 @@ export function EmployeesTable({ employees, isLoading, onRefresh }: EmployeesTab
             <TableHead>القسم</TableHead>
             <TableHead>الحالة</TableHead>
             <TableHead>تاريخ التعيين</TableHead>
-            <TableHead className="text-left">الإجراءات</TableHead>
+            <TableHead className="text-center">الإجراءات</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -97,35 +90,43 @@ export function EmployeesTable({ employees, isLoading, onRefresh }: EmployeesTab
               </TableCell>
               <TableCell>{new Date(employee.hire_date).toLocaleDateString("ar-SA")}</TableCell>
               <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <span className="sr-only">فتح القائمة</span>
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleViewEmployee(employee)}>
-                      <Eye className="ml-2 h-4 w-4" />
-                      <span>عرض</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleEditEmployee(employee)}>
-                      <Edit className="ml-2 h-4 w-4" />
-                      <span>تعديل</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleManageSchedule(employee)}>
-                      <Calendar className="ml-2 h-4 w-4" />
-                      <span>إدارة جدول العمل</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      className="text-red-600"
-                      onClick={() => handleDeleteEmployee(employee)}
-                    >
-                      <Trash className="ml-2 h-4 w-4" />
-                      <span>حذف</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex items-center justify-center gap-2">
+                  <Button
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleViewEmployee(employee)}
+                    title="عرض"
+                  >
+                    <Eye className="h-4 w-4 text-gray-500" />
+                  </Button>
+                  
+                  <Button
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleEditEmployee(employee)}
+                    title="تعديل"
+                  >
+                    <Edit className="h-4 w-4 text-blue-500" />
+                  </Button>
+                  
+                  <Button
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleManageSchedule(employee)}
+                    title="إدارة جدول العمل"
+                  >
+                    <Calendar className="h-4 w-4 text-green-500" />
+                  </Button>
+                  
+                  <Button
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleDeleteEmployee(employee)}
+                    title="حذف"
+                  >
+                    <Trash className="h-4 w-4 text-red-500" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
