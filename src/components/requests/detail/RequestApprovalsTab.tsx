@@ -51,7 +51,7 @@ export const RequestApprovalsTab: React.FC<RequestApprovalsTabProps> = ({ approv
               <TableCell>{approval.approvalDate}</TableCell>
               <TableCell>
                 {approval.status === 'approved' && (
-                  <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200">
+                  <Badge variant="success">
                     تمت الموافقة
                   </Badge>
                 )}

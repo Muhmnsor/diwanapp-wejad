@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   Table,
@@ -75,19 +74,19 @@ export function EmployeesTable({ employees, isLoading }: EmployeesTableProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <ViewEmployeeDialog employee={employee} trigger={
+                  <ViewEmployeeDialog employeeId={employee.id} trigger={
                     <DropdownMenuItem>
                       <Eye className="ml-2 h-4 w-4" />
                       <span>عرض</span>
                     </DropdownMenuItem>
                   } />
-                  <EditEmployeeDialog employee={employee} trigger={
+                  <EditEmployeeDialog employeeId={employee.id} trigger={
                     <DropdownMenuItem>
                       <Edit className="ml-2 h-4 w-4" />
                       <span>تعديل</span>
                     </DropdownMenuItem>
                   } />
-                  <DeleteEmployeeDialog employee={employee} trigger={
+                  <DeleteEmployeeDialog employeeId={employee.id} employeeName={employee.full_name} trigger={
                     <DropdownMenuItem className="text-red-600">
                       <Trash className="ml-2 h-4 w-4" />
                       <span>حذف</span>
@@ -102,3 +101,4 @@ export function EmployeesTable({ employees, isLoading }: EmployeesTableProps) {
     </Table>
   );
 }
+

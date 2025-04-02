@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,8 +13,7 @@ interface EmployeesListProps {
 
 export function EmployeesList({ searchTerm = "" }: EmployeesListProps) {
   const [search, setSearch] = useState(searchTerm);
-  const { data: employees, isLoading, error, refetch } = useEmployees();
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const { data: employees, isLoading, error } = useEmployees();
 
   const filteredEmployees = employees?.filter(
     (employee) =>
@@ -23,10 +21,6 @@ export function EmployeesList({ searchTerm = "" }: EmployeesListProps) {
       employee.position?.toLowerCase().includes(search.toLowerCase()) ||
       employee.department?.toLowerCase().includes(search.toLowerCase())
   );
-
-  const handleAddSuccess = () => {
-    refetch();
-  };
 
   return (
     <div className="space-y-4">
@@ -40,10 +34,7 @@ export function EmployeesList({ searchTerm = "" }: EmployeesListProps) {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <Plus className="ml-2 h-4 w-4" />
-          إضافة موظف
-        </Button>
+        <AddEmployeeDialog />
       </div>
 
       <Card>
@@ -54,12 +45,7 @@ export function EmployeesList({ searchTerm = "" }: EmployeesListProps) {
           <EmployeesTable employees={filteredEmployees} isLoading={isLoading} />
         </CardContent>
       </Card>
-
-      <AddEmployeeDialog 
-        isOpen={isAddDialogOpen} 
-        onClose={() => setIsAddDialogOpen(false)} 
-        onSuccess={handleAddSuccess} 
-      />
     </div>
   );
 }
+
