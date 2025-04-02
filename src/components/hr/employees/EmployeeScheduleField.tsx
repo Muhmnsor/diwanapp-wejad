@@ -74,11 +74,11 @@ export function EmployeeScheduleField({
   const currentSchedule = schedules?.find(s => s.id === selectedSchedule);
   
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" dir="rtl">
       <div className="flex justify-between">
         <Label htmlFor="scheduleSelect">جدول العمل</Label>
         {currentSchedule && (
-          <Badge variant="outline" className="mr-2">
+          <Badge variant="outline" className="ml-2">
             {currentSchedule.work_hours_per_day} ساعة / {currentSchedule.work_days_per_week} أيام
           </Badge>
         )}
@@ -102,7 +102,7 @@ export function EmployeeScheduleField({
       </Select>
       
       {!selectedSchedule && !isLoadingSchedules && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground text-right">
           سيتم استخدام الجدول الافتراضي إذا لم يتم اختيار جدول.
         </p>
       )}

@@ -114,7 +114,7 @@ export function ScheduleInfoDetail({ employeeId }: ScheduleInfoDetailProps) {
     .join("، ");
   
   return (
-    <Card>
+    <Card dir="rtl">
       <CardContent className="p-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -126,7 +126,7 @@ export function ScheduleInfoDetail({ employeeId }: ScheduleInfoDetailProps) {
           </Badge>
         </div>
         
-        <div className="mt-2 space-y-1 text-sm">
+        <div className="mt-2 space-y-1 text-sm text-right">
           <p>
             <span className="text-muted-foreground">أيام العمل:</span>{" "}
             {workingDays || "غير محدد"}
