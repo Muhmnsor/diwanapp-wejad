@@ -1,6 +1,6 @@
 
-import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface AttendanceRecord {
   id: string;
@@ -26,28 +26,32 @@ export interface AttendanceReportData {
     absentPercentage: number;
     latePercentage: number;
     leavePercentage: number;
-    byScheduleType?: { 
-      name: string; 
-      present: number; 
-      absent: number; 
-      late: number; 
-      leave: number;
-    }[];
   };
-  employeeStats?: {
-    employee_name: string;
-    present: number;
-    absent: number;
-    late: number;
-    leave: number;
-  }[];
 }
 
 export function useAttendanceReport(startDate?: Date, endDate?: Date, employeeId?: string) {
   return useQuery<AttendanceReportData, Error>({
     queryKey: ['attendance-report', startDate?.toISOString(), endDate?.toISOString(), employeeId],
     queryFn: async () => {
-      // Construct date filters
+      if (!startDate || !endDate) {
+        return { records: [], stats: {
+          totalRecords: 0,
+          presentCount: 0,
+          absentCount: 0,
+          lateCount: 0,
+          leaveCount: 0,
+          presentPercentage: 0,
+          absentPercentage: 0,
+          latePercentage: 0,
+          leavePercentage: 0
+        }};
+      }
+      
+      // Format dates for the query
+      const startDateStr = startDate.toISOString().split('T')[0];
+      const endDateStr = endDate.toISOString().split('T')[0];
+      
+      // Construct query
       let query = supabase
         .from('hr_attendance')
         .select(`
@@ -56,24 +60,12 @@ export function useAttendanceReport(startDate?: Date, endDate?: Date, employeeId
             id,
             full_name,
             position,
-            department,
-            schedule_id
-          ),
-          schedules:employees (
-            schedule:schedule_id (
-              name
-            )
+            department
           )
         `)
+        .gte('attendance_date', startDateStr)
+        .lte('attendance_date', endDateStr)
         .order('attendance_date', { ascending: false });
-      
-      if (startDate) {
-        query = query.gte('attendance_date', startDate.toISOString().split('T')[0]);
-      }
-      
-      if (endDate) {
-        query = query.lte('attendance_date', endDate.toISOString().split('T')[0]);
-      }
       
       // Add employee filter if specified
       if (employeeId) {
@@ -82,9 +74,9 @@ export function useAttendanceReport(startDate?: Date, endDate?: Date, employeeId
       
       const { data, error } = await query;
       
-      if (error) throw error;
+      if (error) throw new Error(error.message);
       
-      // Transform data
+      // Transform the data
       const records: AttendanceRecord[] = (data || []).map(record => ({
         id: record.id,
         employee_id: record.employee_id,
@@ -92,9 +84,8 @@ export function useAttendanceReport(startDate?: Date, endDate?: Date, employeeId
         attendance_date: record.attendance_date,
         check_in: record.check_in,
         check_out: record.check_out,
-        status: record.status,
-        notes: record.notes,
-        schedule_name: record.employees?.schedule?.name || 'دوام عادي'
+        status: record.status || 'غير محدد',
+        notes: record.notes
       }));
       
       // Calculate statistics
@@ -103,56 +94,6 @@ export function useAttendanceReport(startDate?: Date, endDate?: Date, employeeId
       const absentCount = records.filter(r => r.status === 'absent').length;
       const lateCount = records.filter(r => r.status === 'late').length;
       const leaveCount = records.filter(r => r.status === 'leave').length;
-      
-      // Calculate employee-specific stats
-      const employeeMap = new Map();
-      
-      records.forEach(record => {
-        if (!employeeMap.has(record.employee_id)) {
-          employeeMap.set(record.employee_id, {
-            employee_name: record.employee_name,
-            present: 0,
-            absent: 0,
-            late: 0,
-            leave: 0
-          });
-        }
-        
-        const empStats = employeeMap.get(record.employee_id);
-        
-        if (record.status === 'present') empStats.present++;
-        else if (record.status === 'absent') empStats.absent++;
-        else if (record.status === 'late') empStats.late++;
-        else if (record.status === 'leave') empStats.leave++;
-      });
-      
-      const employeeStats = Array.from(employeeMap.values());
-      
-      // Calculate stats by schedule type
-      const scheduleMap = new Map();
-      
-      records.forEach(record => {
-        const scheduleName = record.schedule_name || 'دوام عادي';
-        
-        if (!scheduleMap.has(scheduleName)) {
-          scheduleMap.set(scheduleName, {
-            name: scheduleName,
-            present: 0,
-            absent: 0,
-            late: 0,
-            leave: 0
-          });
-        }
-        
-        const schedStats = scheduleMap.get(scheduleName);
-        
-        if (record.status === 'present') schedStats.present++;
-        else if (record.status === 'absent') schedStats.absent++;
-        else if (record.status === 'late') schedStats.late++;
-        else if (record.status === 'leave') schedStats.leave++;
-      });
-      
-      const scheduleStats = Array.from(scheduleMap.values());
       
       return {
         records,
@@ -165,10 +106,8 @@ export function useAttendanceReport(startDate?: Date, endDate?: Date, employeeId
           presentPercentage: totalRecords ? (presentCount / totalRecords) * 100 : 0,
           absentPercentage: totalRecords ? (absentCount / totalRecords) * 100 : 0,
           latePercentage: totalRecords ? (lateCount / totalRecords) * 100 : 0,
-          leavePercentage: totalRecords ? (leaveCount / totalRecords) * 100 : 0,
-          byScheduleType: scheduleStats
-        },
-        employeeStats
+          leavePercentage: totalRecords ? (leaveCount / totalRecords) * 100 : 0
+        }
       };
     },
     enabled: !!startDate && !!endDate

@@ -9,7 +9,8 @@ import { AttendanceStats } from "./components/AttendanceStats";
 import { AttendanceCharts } from "./components/AttendanceCharts";
 import { EmployeeSelector } from "./components/EmployeeSelector";
 import { EmptyState } from "@/components/ui/empty-state";
-import { FileSpreadsheet } from "lucide-react";
+import { Download } from "lucide-react";
+import { useAttendanceReport } from "@/hooks/hr/useAttendanceReport";
 
 interface AttendanceReportProps {
   startDate?: Date;
@@ -33,6 +34,11 @@ export function AttendanceReport({
   );
 
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | undefined>(employeeId);
+  const { data: reportData, isLoading, error } = useAttendanceReport(
+    dateRange?.from, 
+    dateRange?.to, 
+    selectedEmployeeId
+  );
 
   // Update parent component with date range changes
   useEffect(() => {
@@ -85,7 +91,7 @@ export function AttendanceReport({
             className="w-[140px]"
             onClick={exportReport}
           >
-            <FileSpreadsheet className="h-4 w-4 ml-2" />
+            <Download className="h-4 w-4 ml-2" />
             تصدير التقرير
           </Button>
         </div>
@@ -104,12 +110,80 @@ export function AttendanceReport({
             endDate={dateRange.to}
             employeeId={selectedEmployeeId}
           />
+          
+          {isLoading ? (
+            <Card>
+              <CardContent className="py-10 text-center">
+                <p>جاري تحميل البيانات...</p>
+              </CardContent>
+            </Card>
+          ) : error ? (
+            <Card>
+              <CardContent className="py-10 text-center">
+                <p className="text-destructive">حدث خطأ أثناء تحميل البيانات</p>
+                <p className="text-sm text-muted-foreground">{(error as Error).message}</p>
+              </CardContent>
+            </Card>
+          ) : reportData?.records.length === 0 ? (
+            <Card>
+              <CardContent className="py-10 text-center">
+                <p className="text-muted-foreground">لا توجد سجلات في النطاق الزمني المحدد</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>سجلات الحضور</CardTitle>
+                <CardDescription>
+                  {reportData?.records.length} سجل في النطاق الزمني المحدد
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="py-2 px-4 text-right">الموظف</th>
+                        <th className="py-2 px-4 text-right">التاريخ</th>
+                        <th className="py-2 px-4 text-right">الحضور</th>
+                        <th className="py-2 px-4 text-right">الانصراف</th>
+                        <th className="py-2 px-4 text-right">الحالة</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reportData?.records.map((record) => (
+                        <tr key={record.id} className="border-b">
+                          <td className="py-2 px-4">{record.employee_name}</td>
+                          <td className="py-2 px-4">{format(new Date(record.attendance_date), "yyyy-MM-dd")}</td>
+                          <td className="py-2 px-4">{record.check_in || "-"}</td>
+                          <td className="py-2 px-4">{record.check_out || "-"}</td>
+                          <td className="py-2 px-4">
+                            <span className={`px-2 py-1 rounded-full text-xs ${
+                              record.status === 'present' ? 'bg-green-100 text-green-800' :
+                              record.status === 'absent' ? 'bg-red-100 text-red-800' :
+                              record.status === 'late' ? 'bg-amber-100 text-amber-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {record.status === 'present' ? 'حاضر' :
+                               record.status === 'absent' ? 'غائب' :
+                               record.status === 'late' ? 'متأخر' :
+                               record.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </>
       ) : (
         <Card>
           <CardContent className="py-10">
             <EmptyState
-              icon={<FileSpreadsheet className="h-8 w-8 text-muted-foreground" />}
+              icon={<Download className="h-8 w-8 text-muted-foreground" />}
               title="الرجاء اختيار نطاق زمني"
               description="حدد الفترة الزمنية لعرض تقرير الحضور"
             />

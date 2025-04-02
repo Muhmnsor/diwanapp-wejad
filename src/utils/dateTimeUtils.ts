@@ -1,3 +1,4 @@
+
 export const formatTime12Hour = (time: string) => {
   try {
     // تحويل الوقت إلى تنسيق 12 ساعة
@@ -57,5 +58,23 @@ export const formatTime = (timestamp: string | null) => {
   } catch (error) {
     console.error('Error formatting time:', error);
     return timestamp;
+  }
+};
+
+// Add the missing formatDate function
+export const formatDate = (date: string | Date) => {
+  try {
+    if (!date) return '-';
+    
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    
+    return dateObj.toLocaleDateString('ar-SA', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return String(date);
   }
 };
