@@ -812,7 +812,6 @@ export type Database = {
           email: string | null
           employee_number: string | null
           full_name: string
-          gender: string | null
           hire_date: string | null
           id: string
           phone: string | null
@@ -831,7 +830,6 @@ export type Database = {
           email?: string | null
           employee_number?: string | null
           full_name: string
-          gender?: string | null
           hire_date?: string | null
           id?: string
           phone?: string | null
@@ -850,7 +848,6 @@ export type Database = {
           email?: string | null
           employee_number?: string | null
           full_name?: string
-          gender?: string | null
           hire_date?: string | null
           id?: string
           phone?: string | null
@@ -1832,42 +1829,36 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           description: string | null
-          eligible_gender: string | null
           id: string
           is_active: boolean | null
           is_paid: boolean | null
           max_days_per_year: number | null
           name: string
           requires_approval: boolean | null
-          updated_at: string | null
         }
         Insert: {
           color?: string | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
-          eligible_gender?: string | null
           id?: string
           is_active?: boolean | null
           is_paid?: boolean | null
           max_days_per_year?: number | null
           name: string
           requires_approval?: boolean | null
-          updated_at?: string | null
         }
         Update: {
           color?: string | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
-          eligible_gender?: string | null
           id?: string
           is_active?: boolean | null
           is_paid?: boolean | null
           max_days_per_year?: number | null
           name?: string
           requires_approval?: boolean | null
-          updated_at?: string | null
         }
         Relationships: [
           {
