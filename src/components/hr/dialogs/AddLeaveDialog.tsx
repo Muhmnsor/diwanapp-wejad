@@ -5,32 +5,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserStore } from "@/store/user";
+import { useAuthStore } from "@/store/authStore";
 import { toast } from "@/hooks/use-toast";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -41,47 +20,45 @@ const leaveFormSchema = z.object({
   start_date: z.date(),
   end_date: z.date(),
   reason: z.string().optional(),
-  status: z.string().default("pending"),
+  status: z.string().default("pending")
 });
-
-type LeaveFormValues = z.infer<typeof leaveFormSchema>;
 
 export function AddLeaveDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const user = useUserStore((state) => state.user);
   
-  const form = useForm<LeaveFormValues>({
+  // Using the correct auth store
+  const user = useAuthStore((state) => state.user);
+  
+  const form = useForm({
     resolver: zodResolver(leaveFormSchema),
     defaultValues: {
       employee_id: user?.id || "",
       leave_type: "",
       status: "pending",
-      reason: "",
-    },
+      reason: ""
+    }
   });
 
-  const onSubmit = async (data: LeaveFormValues) => {
+  const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
       // Format dates for Supabase
       const formattedData = {
         ...data,
         start_date: data.start_date.toISOString().split('T')[0],
-        end_date: data.end_date.toISOString().split('T')[0],
+        end_date: data.end_date.toISOString().split('T')[0]
       };
-
-      const { error } = await supabase
-        .from("hr_leave_requests")
-        .insert(formattedData);
-
+      
+      const { error } = await supabase.from("hr_leave_requests").insert(formattedData);
+      
       if (error) throw error;
-
+      
       toast({
         title: "تم تقديم طلب الإجازة بنجاح",
-        description: "سيتم مراجعة طلبك من قبل المسؤول",
+        description: "سيتم مراجعة طلبك من قبل المسؤول"
       });
-
+      
       form.reset();
       setIsOpen(false);
     } catch (error) {
@@ -89,7 +66,7 @@ export function AddLeaveDialog() {
       toast({
         title: "حدث خطأ",
         description: "لم نتمكن من تقديم طلب الإجازة، يرجى المحاولة مرة أخرى",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsSubmitting(false);
@@ -116,10 +93,7 @@ export function AddLeaveDialog() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>نوع الإجازة</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="اختر نوع الإجازة" />
@@ -140,7 +114,7 @@ export function AddLeaveDialog() {
                 </FormItem>
               )}
             />
-
+            
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -158,7 +132,7 @@ export function AddLeaveDialog() {
                   </FormItem>
                 )}
               />
-
+              
               <FormField
                 control={form.control}
                 name="end_date"
@@ -176,7 +150,7 @@ export function AddLeaveDialog() {
                 )}
               />
             </div>
-
+            
             <FormField
               control={form.control}
               name="reason"
@@ -194,16 +168,19 @@ export function AddLeaveDialog() {
                 </FormItem>
               )}
             />
-
+            
             <div className="flex justify-end gap-2 pt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => setIsOpen(false)}
               >
                 إلغاء
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? "جاري التقديم..." : "تقديم طلب الإجازة"}
               </Button>
             </div>

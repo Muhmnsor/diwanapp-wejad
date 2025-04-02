@@ -3,10 +3,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { CalendarDays, Check, X, Hourglass } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
-
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -16,48 +14,64 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Check, X } from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
+import { toast } from "@/hooks/use-toast";
 
-const fetchLeaveRequests = async () => {
-  const { data, error } = await supabase
-    .from("hr_leave_requests")
-    .select(`
-      *,
-      employees:employee_id (
-        id,
-        full_name,
-        position,
-        department
-      )
-    `)
-    .order("created_at", { ascending: false });
+interface LeaveRequest {
+  id: string;
+  employee_id: string;
+  leave_type: string;
+  start_date: string;
+  end_date: string;
+  reason: string | null;
+  status: string;
+  created_at: string;
+  employee: {
+    full_name: string;
+  } | null;
+}
 
-  if (error) throw error;
-  return data;
+const leaveTypeMap = {
+  annual: "سنوية",
+  sick: "مرضية",
+  emergency: "طارئة",
+  maternity: "أمومة",
+  unpaid: "بدون راتب",
 };
 
-const getLeaveTypeName = (type: string) => {
-  const types: Record<string, string> = {
-    annual: "سنوية",
-    sick: "مرضية",
-    emergency: "طارئة",
-    maternity: "أمومة",
-    unpaid: "بدون راتب",
-  };
-  return types[type] || type;
+const statusMap = {
+  pending: { label: "قيد المراجعة", variant: "default" },
+  approved: { label: "تمت الموافقة", variant: "success" },
+  rejected: { label: "مرفوض", variant: "destructive" },
 };
 
 export function LeavesTable() {
-  const { data: leaveRequests, isLoading, error, refetch } = useQuery({
-    queryKey: ["leave-requests"],
-    queryFn: fetchLeaveRequests,
+  const { user } = useAuthStore();
+  const [updating, setUpdating] = useState<string | null>(null);
+
+  const { data: leaves, refetch } = useQuery({
+    queryKey: ["leaves"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("hr_leave_requests")
+        .select(`
+          *,
+          employee:employee_id (full_name)
+        `)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching leaves:", error);
+        throw error;
+      }
+
+      return data as LeaveRequest[];
+    },
   });
 
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
-
   const updateLeaveStatus = async (id: string, status: string) => {
-    setUpdatingId(id);
+    setUpdating(id);
     try {
       const { error } = await supabase
         .from("hr_leave_requests")
@@ -80,126 +94,77 @@ export function LeavesTable() {
         variant: "destructive",
       });
     } finally {
-      setUpdatingId(null);
+      setUpdating(null);
     }
   };
 
-  if (error) {
-    return (
-      <div className="text-center py-8 text-red-500">
-        حدث خطأ أثناء تحميل طلبات الإجازات
-      </div>
-    );
+  const isAdmin = user?.isAdmin || user?.role === "admin";
+
+  if (!leaves || leaves.length === 0) {
+    return <div className="text-center py-10 text-muted-foreground">لا توجد طلبات إجازة</div>;
   }
 
   return (
-    <div className="space-y-4">
-      {isLoading ? (
-        <div className="space-y-3">
-          {Array(5)
-            .fill(null)
-            .map((_, index) => (
-              <div key={index} className="flex items-center space-x-4 space-x-reverse">
-                <Skeleton className="h-12 w-full" />
-              </div>
-            ))}
-        </div>
-      ) : leaveRequests && leaveRequests.length > 0 ? (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>الموظف</TableHead>
-              <TableHead>نوع الإجازة</TableHead>
-              <TableHead>التاريخ</TableHead>
-              <TableHead>المدة</TableHead>
-              <TableHead>الحالة</TableHead>
-              <TableHead>الإجراءات</TableHead>
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>الموظف</TableHead>
+            <TableHead>نوع الإجازة</TableHead>
+            <TableHead>تاريخ البداية</TableHead>
+            <TableHead>تاريخ النهاية</TableHead>
+            <TableHead>السبب</TableHead>
+            <TableHead>الحالة</TableHead>
+            {isAdmin && <TableHead>الإجراءات</TableHead>}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {leaves.map((leave) => (
+            <TableRow key={leave.id}>
+              <TableCell>{leave.employee?.full_name || "غير معروف"}</TableCell>
+              <TableCell>{leaveTypeMap[leave.leave_type] || leave.leave_type}</TableCell>
+              <TableCell>
+                {format(new Date(leave.start_date), "d MMMM yyyy", { locale: ar })}
+              </TableCell>
+              <TableCell>
+                {format(new Date(leave.end_date), "d MMMM yyyy", { locale: ar })}
+              </TableCell>
+              <TableCell>{leave.reason || "غير محدد"}</TableCell>
+              <TableCell>
+                <Badge variant={statusMap[leave.status]?.variant as any || "default"}>
+                  {statusMap[leave.status]?.label || leave.status}
+                </Badge>
+              </TableCell>
+              {isAdmin && (
+                <TableCell>
+                  {leave.status === "pending" && (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 w-8 p-0"
+                        onClick={() => updateLeaveStatus(leave.id, "approved")}
+                        disabled={updating === leave.id}
+                      >
+                        <Check className="h-4 w-4 text-green-500" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 w-8 p-0"
+                        onClick={() => updateLeaveStatus(leave.id, "rejected")}
+                        disabled={updating === leave.id}
+                      >
+                        <X className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
+                  )}
+                </TableCell>
+              )}
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {leaveRequests.map((leave: any) => {
-              const startDate = new Date(leave.start_date);
-              const endDate = new Date(leave.end_date);
-              const dateDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-              
-              return (
-                <TableRow key={leave.id}>
-                  <TableCell className="font-medium">
-                    {leave.employees?.full_name || "غير محدد"}
-                  </TableCell>
-                  <TableCell>{getLeaveTypeName(leave.leave_type)}</TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    {format(new Date(leave.start_date), "dd MMM yyyy", { locale: ar })} - {format(new Date(leave.end_date), "dd MMM yyyy", { locale: ar })}
-                  </TableCell>
-                  <TableCell>{dateDiff} يوم</TableCell>
-                  <TableCell>
-                    <LeaveStatusBadge status={leave.status} />
-                  </TableCell>
-                  <TableCell>
-                    {leave.status === "pending" && (
-                      <div className="flex space-x-2 space-x-reverse">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-green-600 hover:text-green-800 hover:bg-green-100"
-                          onClick={() => updateLeaveStatus(leave.id, "approved")}
-                          disabled={updatingId === leave.id}
-                        >
-                          <Check className="h-4 w-4 mr-1" />
-                          قبول
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-600 hover:text-red-800 hover:bg-red-100"
-                          onClick={() => updateLeaveStatus(leave.id, "rejected")}
-                          disabled={updatingId === leave.id}
-                        >
-                          <X className="h-4 w-4 mr-1" />
-                          رفض
-                        </Button>
-                      </div>
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      ) : (
-        <div className="text-center py-8 text-muted-foreground bg-muted rounded-md">
-          <CalendarDays className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
-          <p className="text-lg mb-2">لا توجد طلبات إجازات حالياً</p>
-          <p className="text-sm">طلبات الإجازات التي يتم تقديمها ستظهر هنا</p>
-        </div>
-      )}
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
-}
-
-function LeaveStatusBadge({ status }: { status: string }) {
-  switch (status) {
-    case "approved":
-      return (
-        <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200">
-          <Check className="h-3 w-3 mr-1" />
-          مقبولة
-        </Badge>
-      );
-    case "rejected":
-      return (
-        <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-200">
-          <X className="h-3 w-3 mr-1" />
-          مرفوضة
-        </Badge>
-      );
-    case "pending":
-    default:
-      return (
-        <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">
-          <Hourglass className="h-3 w-3 mr-1" />
-          قيد المراجعة
-        </Badge>
-      );
-  }
 }
