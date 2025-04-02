@@ -1,3 +1,4 @@
+
 export const formatTime12Hour = (time: string) => {
   try {
     // تحويل الوقت إلى تنسيق 12 ساعة
@@ -33,6 +34,22 @@ export const formatDateWithDay = (dateStr: string) => {
     
     // تنسيق التاريخ بالطريقة العربية
     return `${dayName}، ${day}-${month}-${year}`;
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return dateStr;
+  }
+};
+
+// إضافة دالة formatDate التي تستخدم في العديد من الملفات
+export const formatDate = (dateStr: string | null | undefined): string => {
+  if (!dateStr) return '-';
+  
+  try {
+    // تحويل التاريخ إلى كائن Date
+    const date = new Date(dateStr);
+    
+    // تنسيق التاريخ بالطريقة العربية (يوم-شهر-سنة)
+    return date.toLocaleDateString('ar-SA');
   } catch (error) {
     console.error('Error formatting date:', error);
     return dateStr;

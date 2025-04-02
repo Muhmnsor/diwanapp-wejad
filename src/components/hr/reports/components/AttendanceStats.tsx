@@ -1,12 +1,9 @@
 
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
-import { ar } from "date-fns/locale";
-import { Clock, UserCheck, UserX, AlertTriangle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAttendanceReport } from "@/hooks/hr/useAttendanceReport";
+import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
 
 interface AttendanceStatsProps {
   startDate?: Date;
@@ -15,150 +12,70 @@ interface AttendanceStatsProps {
 }
 
 export function AttendanceStats({ startDate, endDate, employeeId }: AttendanceStatsProps) {
-  // Get attendance statistics within date range
-  const { data: stats, isLoading } = useQuery({
-    queryKey: ['attendance-stats', startDate?.toISOString(), endDate?.toISOString(), employeeId],
-    queryFn: async () => {
-      if (!startDate || !endDate) return null;
-
-      console.log(`Fetching attendance stats from ${startDate} to ${endDate} for employee ${employeeId || 'all'}`);
-      
-      let query = supabase
-        .from('employee_attendance')
-        .select('*')
-        .gte('check_in_time', startDate.toISOString())
-        .lte('check_in_time', endDate.toISOString());
-      
-      // Add employee filter if provided
-      if (employeeId) {
-        query = query.eq('employee_id', employeeId);
-      }
-      
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error("Error fetching attendance stats:", error);
-        throw error;
-      }
-      
-      // Calculate statistics
-      const totalAttendance = data.length;
-      const lateAttendance = data.filter(record => record.late_minutes > 0).length;
-      const absenceDays = 0; // This would need a more complex query to determine absences
-      const problemDays = data.filter(record => record.weekend || record.holiday).length;
-      
-      return {
-        totalAttendance,
-        lateAttendance,
-        absenceDays,
-        problemDays
-      };
-    },
-    enabled: !!startDate && !!endDate
-  });
-
+  const { data, isLoading } = useAttendanceReport(startDate, endDate, employeeId);
+  
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[1, 2, 3, 4].map((i) => (
-          <Skeleton key={i} className="h-32 w-full" />
+        {[...Array(4)].map((_, i) => (
+          <Card key={i} className="animate-pulse">
+            <CardContent className="p-6">
+              <div className="h-4 w-1/2 bg-muted rounded mb-3"></div>
+              <div className="h-8 w-1/3 bg-muted rounded mb-2"></div>
+              <div className="h-3 w-1/4 bg-muted rounded"></div>
+            </CardContent>
+          </Card>
         ))}
       </div>
     );
   }
-
+  
+  if (!data) {
+    return null;
+  }
+  
+  const statsItems = [
+    {
+      title: "إجمالي السجلات",
+      value: data.stats.totalRecords,
+      badge: "",
+      badgeVariant: "default",
+    },
+    {
+      title: "الحضور",
+      value: data.stats.presentCount,
+      badge: `${data.stats.presentPercentage.toFixed(1)}%`,
+      badgeVariant: "success",
+    },
+    {
+      title: "الغياب",
+      value: data.stats.absentCount,
+      badge: `${data.stats.absentPercentage.toFixed(1)}%`,
+      badgeVariant: "destructive",
+    },
+    {
+      title: "التأخير",
+      value: data.stats.lateCount,
+      badge: `${data.stats.latePercentage.toFixed(1)}%`,
+      badgeVariant: "secondary",
+    },
+  ];
+  
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            إجمالي أيام الحضور
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="text-2xl font-bold">
-              {stats?.totalAttendance || 0}
-              <span className="text-sm text-muted-foreground mr-1">يوم</span>
+      {statsItems.map((item, index) => (
+        <Card key={index}>
+          <CardContent className="p-6">
+            <div className="flex justify-between items-start">
+              <p className="text-sm font-medium text-muted-foreground">{item.title}</p>
+              {item.badge && (
+                <Badge variant={item.badgeVariant as any}>{item.badge}</Badge>
+              )}
             </div>
-            <UserCheck className="h-5 w-5 text-primary" />
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            {startDate && endDate ? (
-              <>
-                {format(startDate, "d MMM", { locale: ar })} -{" "}
-                {format(endDate, "d MMM yyyy", { locale: ar })}
-              </>
-            ) : (
-              "لا يوجد نطاق زمني محدد"
-            )}
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            أيام التأخير
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="text-2xl font-bold">
-              {stats?.lateAttendance || 0}
-              <span className="text-sm text-muted-foreground mr-1">يوم</span>
-            </div>
-            <Clock className="h-5 w-5 text-amber-500" />
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            {stats && stats.totalAttendance > 0 ? (
-              `${Math.round((stats.lateAttendance / stats.totalAttendance) * 100)}% من إجمالي أيام الحضور`
-            ) : (
-              "لا توجد بيانات"
-            )}
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            أيام الغياب
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="text-2xl font-bold">
-              {stats?.absenceDays || 0}
-              <span className="text-sm text-muted-foreground mr-1">يوم</span>
-            </div>
-            <UserX className="h-5 w-5 text-destructive" />
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            تحتاج لتحسين قياس أيام الغياب
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            أيام استثنائية
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="text-2xl font-bold">
-              {stats?.problemDays || 0}
-              <span className="text-sm text-muted-foreground mr-1">يوم</span>
-            </div>
-            <AlertTriangle className="h-5 w-5 text-blue-500" />
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            أيام العطل الرسمية وعطل نهاية الأسبوع
-          </p>
-        </CardContent>
-      </Card>
+            <h2 className="text-3xl font-bold mt-2">{item.value}</h2>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
