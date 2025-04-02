@@ -31,16 +31,20 @@ export function EmployeeScheduleField({
   }, [scheduleId, defaultSchedule, onScheduleChange, selectedValue]);
 
   const handleScheduleChange = (newValue: string) => {
+    if (!newValue) return; // Prevent empty values
     console.log("Schedule changed to:", newValue);
     setSelectedValue(newValue);
     onScheduleChange(newValue);
   };
 
+  // Make sure we never pass undefined or empty string as a value to SelectItem
+  const safeValue = selectedValue || undefined;
+
   return (
     <div className="space-y-2">
       <Label htmlFor="schedule_id">جدول العمل</Label>
       <Select
-        value={selectedValue}
+        value={safeValue}
         onValueChange={handleScheduleChange}
         disabled={isLoadingSchedules}
       >
@@ -55,7 +59,7 @@ export function EmployeeScheduleField({
               </SelectItem>
             ))
           ) : (
-            <SelectItem value="no_schedules">لا توجد جداول عمل</SelectItem>
+            <SelectItem value="no_schedules_placeholder">لا توجد جداول عمل</SelectItem>
           )}
         </SelectContent>
       </Select>

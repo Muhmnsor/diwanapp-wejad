@@ -16,11 +16,14 @@ export function DepartmentField({ value, onChange }: DepartmentFieldProps) {
     unit.unit_type === 'department' || unit.unit_type === 'قسم'
   ) || [];
 
+  // Handle edge case where value is empty string
+  const safeValue = value === "" ? undefined : value || undefined;
+
   return (
     <div className="space-y-2">
       <Label htmlFor="department">القسم</Label>
       <Select
-        value={value || ""}
+        value={safeValue}
         onValueChange={onChange}
         disabled={isLoading}
       >
@@ -30,7 +33,7 @@ export function DepartmentField({ value, onChange }: DepartmentFieldProps) {
         <SelectContent>
           {departments.length > 0 ? (
             departments.map((dept) => (
-              <SelectItem key={dept.id} value={dept.name}>
+              <SelectItem key={dept.id} value={dept.id}>
                 {dept.name}
               </SelectItem>
             ))
