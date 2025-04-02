@@ -5,16 +5,27 @@ import { EmployeesList } from "./employees/EmployeesList";
 import { AttendanceManagement } from "./attendance/AttendanceManagement";
 import { HRReports } from "./reports/HRReports";
 import { HRSettingsTabs } from "./settings/HRSettingsTabs";
-import { Users, CalendarClock, FileBarChart, Settings } from "lucide-react";
+import { HRDashboardOverview } from "./dashboard/HRDashboardOverview";
+import { 
+  Users, 
+  CalendarClock, 
+  FileBarChart, 
+  Settings, 
+  LayoutDashboard 
+} from "lucide-react";
 
 interface HRTabsProps {
   defaultTab?: string;
 }
 
-export function HRTabs({ defaultTab = "employees" }: HRTabsProps) {
+export function HRTabs({ defaultTab = "dashboard" }: HRTabsProps) {
   return (
     <Tabs defaultValue={defaultTab} className="space-y-4">
-      <TabsList className="grid grid-cols-4 w-full sm:w-auto">
+      <TabsList className="grid grid-cols-5 w-full sm:w-auto">
+        <TabsTrigger value="dashboard" className="flex items-center gap-1">
+          <LayoutDashboard className="h-4 w-4" />
+          نظرة عامة
+        </TabsTrigger>
         <TabsTrigger value="employees" className="flex items-center gap-1">
           <Users className="h-4 w-4" />
           الموظفين
@@ -32,6 +43,10 @@ export function HRTabs({ defaultTab = "employees" }: HRTabsProps) {
           الإعدادات
         </TabsTrigger>
       </TabsList>
+      
+      <TabsContent value="dashboard" className="space-y-4">
+        <HRDashboardOverview />
+      </TabsContent>
       
       <TabsContent value="employees" className="space-y-4">
         <EmployeesList />
