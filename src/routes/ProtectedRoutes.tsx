@@ -7,6 +7,7 @@ import Tasks from "@/pages/Tasks";
 import TasksDashboard from "@/pages/TasksDashboard";
 import Finance from "@/pages/Finance";
 import WebsiteManagement from "@/pages/WebsiteManagement";
+import InternalMail from "@/pages/InternalMail";
 import StoreManagement from "@/pages/StoreManagement";
 import UsersManagement from "@/pages/UsersManagement";
 import Notifications from "@/pages/Notifications";
@@ -96,6 +97,15 @@ export const ProtectedRoutes = [
     element={
       <ProtectedRoute>
         <Finance />
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="internal-mail"
+    path="/internal-mail" 
+    element={
+      <ProtectedRoute>
+        <InternalMail />
       </ProtectedRoute>
     } 
   />,
