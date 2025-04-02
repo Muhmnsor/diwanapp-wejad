@@ -15,7 +15,8 @@ interface EmployeesListProps {
 
 export function EmployeesList({ searchTerm = "" }: EmployeesListProps) {
   const [search, setSearch] = useState(searchTerm);
-  const { data: employees, isLoading, error } = useEmployees();
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const { data: employees, isLoading, error, refetch } = useEmployees();
 
   // Handle error state
   if (error) {
@@ -45,6 +46,10 @@ export function EmployeesList({ searchTerm = "" }: EmployeesListProps) {
       employee.department?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleEmployeeAdded = () => {
+    refetch();
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -57,7 +62,10 @@ export function EmployeesList({ searchTerm = "" }: EmployeesListProps) {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <AddEmployeeDialog />
+        <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Plus className="ml-2 h-4 w-4" />
+          إضافة موظف جديد
+        </Button>
       </div>
 
       <Card>
@@ -68,6 +76,12 @@ export function EmployeesList({ searchTerm = "" }: EmployeesListProps) {
           <EmployeesTable employees={filteredEmployees} isLoading={isLoading} />
         </CardContent>
       </Card>
+
+      <AddEmployeeDialog 
+        isOpen={isAddDialogOpen} 
+        onClose={() => setIsAddDialogOpen(false)} 
+        onSuccess={handleEmployeeAdded} 
+      />
     </div>
   );
 }

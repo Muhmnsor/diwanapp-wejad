@@ -1,39 +1,36 @@
-
-import React, { useState } from "react";
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LeaveCharts } from "./components/LeaveCharts";
-import { LeaveStats } from "./components/LeaveStats";
+import { format } from "date-fns";
+import { ar } from "date-fns/locale";
 
-export function LeaveReport() {
-  const [period, setPeriod] = useState<"yearly" | "quarterly" | "monthly">("monthly");
+interface LeaveReportProps {
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export function LeaveReport({ startDate, endDate }: LeaveReportProps) {
+  // Format dates for display
+  const formattedStartDate = startDate ? format(startDate, 'dd MMMM yyyy', { locale: ar }) : '';
+  const formattedEndDate = endDate ? format(endDate, 'dd MMMM yyyy', { locale: ar }) : '';
   
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold tracking-tight">تقارير الإجازات</h2>
-          <p className="text-muted-foreground">
-            متابعة إحصائيات وبيانات الإجازات للموظفين
-          </p>
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          تقرير الإجازات
+          {startDate && endDate && (
+            <span className="block text-sm font-normal text-muted-foreground mt-1">
+              الفترة: {formattedStartDate} إلى {formattedEndDate}
+            </span>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {/* Content of the leave report would go here */}
+        <div className="text-center p-8 text-muted-foreground">
+          يتم إنشاء التقرير...
         </div>
-        
-        <Tabs value={period} onValueChange={(v) => setPeriod(v as any)} className="w-[400px]">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="monthly">شهري</TabsTrigger>
-            <TabsTrigger value="quarterly">ربع سنوي</TabsTrigger>
-            <TabsTrigger value="yearly">سنوي</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-      
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <LeaveStats period={period} />
-      </div>
-      
-      <div className="grid gap-4 md:grid-cols-2">
-        <LeaveCharts period={period} />
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
