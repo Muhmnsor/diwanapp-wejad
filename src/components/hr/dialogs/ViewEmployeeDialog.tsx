@@ -52,6 +52,15 @@ export function ViewEmployeeDialog({ isOpen, onClose, employee }: ViewEmployeeDi
   
   if (!employee) return null;
 
+  // Helper function to translate gender values
+  const translateGender = (gender: string | null | undefined) => {
+    if (!gender) return 'غير محدد';
+    
+    return gender === 'male' ? 'ذكر' : 
+           gender === 'female' ? 'أنثى' : 
+           'غير محدد';
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-2xl" dir="rtl">
@@ -73,6 +82,10 @@ export function ViewEmployeeDialog({ isOpen, onClose, employee }: ViewEmployeeDi
               <div className="border-b pb-2">
                 <span className="font-medium">القسم: </span>
                 <span>{employee.department || 'غير محدد'}</span>
+              </div>
+              <div className="border-b pb-2">
+                <span className="font-medium">الجنس: </span>
+                <span>{translateGender(employee.gender)}</span>
               </div>
             </div>
             <div className="space-y-2">
