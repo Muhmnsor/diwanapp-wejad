@@ -1,28 +1,34 @@
 
-import React, { forwardRef } from "react";
-import { Input } from "./input";
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
-interface TimeInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
-  onChange: (value: string) => void;
+interface TimeInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   value: string;
+  onChange: (value: string) => void;
 }
 
-export const TimeInput = forwardRef<HTMLInputElement, TimeInputProps>(
-  ({ onChange, value, ...props }, ref) => {
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      onChange(e.target.value);
-    };
+export function TimeInput({ 
+  className, 
+  value, 
+  onChange, 
+  disabled, 
+  ...props 
+}: TimeInputProps) {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(e.target.value);
+  };
 
-    return (
-      <Input
-        ref={ref}
-        type="time"
-        value={value}
-        onChange={handleChange}
-        {...props}
-      />
-    );
-  }
-);
-
-TimeInput.displayName = "TimeInput";
+  return (
+    <input
+      type="time"
+      className={cn(
+        "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+        className
+      )}
+      value={value}
+      onChange={handleChange}
+      disabled={disabled}
+      {...props}
+    />
+  );
+}

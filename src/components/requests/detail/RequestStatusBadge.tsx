@@ -1,58 +1,30 @@
 
-import React from "react";
-import { Badge } from "@/components/ui/badge";
+import React from 'react';
+import { Badge } from '@/components/ui/badge';
+import { RequestStatus } from '@/types/meeting';
 
 interface RequestStatusBadgeProps {
-  status: string;
+  status: RequestStatus;
 }
 
-export function RequestStatusBadge({ status }: RequestStatusBadgeProps) {
-  let variant: "default" | "secondary" | "destructive" | "outline" = "default";
-  let colorClass = "";
-
-  switch (status) {
-    case "completed":
-    case "approved":
-      variant = "outline";
-      colorClass = "bg-green-50 text-green-700 hover:bg-green-50";
-      break;
-    case "pending":
-      variant = "outline";
-      colorClass = "bg-blue-50 text-blue-700 hover:bg-blue-50";
-      break;
-    case "rejected":
-      variant = "outline";
-      colorClass = "bg-red-50 text-red-700 hover:bg-red-50";
-      break;
-    case "in-progress":
-      variant = "outline";
-      colorClass = "bg-amber-50 text-amber-700 hover:bg-amber-50";
-      break;
+export const RequestStatusBadge: React.FC<RequestStatusBadgeProps> = ({ status }) => {
+  // Use type assertion to handle string values that should conform to RequestStatus
+  const safeStatus = status as RequestStatus;
+  
+  switch (safeStatus) {
+    case 'pending':
+      return <Badge variant="secondary">قيد الانتظار</Badge>;
+    case 'in_progress':
+      return <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200">قيد التنفيذ</Badge>;
+    case 'approved':
+      return <Badge variant="success">تمت الموافقة</Badge>;
+    case 'completed':
+      return <Badge variant="success">مكتمل</Badge>;
+    case 'rejected':
+      return <Badge variant="destructive">مرفوض</Badge>;
+    case 'cancelled':
+      return <Badge variant="destructive" className="bg-gray-100 text-gray-800 hover:bg-gray-200">ملغي</Badge>;
     default:
-      variant = "outline";
-      colorClass = "bg-gray-50 text-gray-700 hover:bg-gray-50";
+      return <Badge>غير معروف</Badge>;
   }
-
-  return (
-    <Badge variant={variant} className={colorClass}>
-      {getStatusText(status)}
-    </Badge>
-  );
-}
-
-function getStatusText(status: string): string {
-  switch (status) {
-    case "completed":
-      return "مكتمل";
-    case "approved":
-      return "معتمد";
-    case "pending":
-      return "معلق";
-    case "rejected":
-      return "مرفوض";
-    case "in-progress":
-      return "قيد التنفيذ";
-    default:
-      return status;
-  }
-}
+};
