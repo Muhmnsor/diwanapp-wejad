@@ -1,8 +1,8 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Plus, Search } from "lucide-react";
 import { AddEmployeeDialog } from "../dialogs/AddEmployeeDialog";
 import { useEmployees } from "@/hooks/hr/useEmployees";
 import { EmployeesTable } from "./EmployeesTable";
@@ -13,7 +13,7 @@ interface EmployeesListProps {
 
 export function EmployeesList({ searchTerm = "" }: EmployeesListProps) {
   const [search, setSearch] = useState(searchTerm);
-  const { data: employees, isLoading, error, refetch } = useEmployees();
+  const { data: employees, isLoading, error } = useEmployees();
 
   const filteredEmployees = employees?.filter(
     (employee) =>
@@ -34,7 +34,7 @@ export function EmployeesList({ searchTerm = "" }: EmployeesListProps) {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <AddEmployeeDialog onSuccess={() => refetch()} />
+        <AddEmployeeDialog />
       </div>
 
       <Card>
@@ -42,13 +42,10 @@ export function EmployeesList({ searchTerm = "" }: EmployeesListProps) {
           <CardTitle>قائمة الموظفين</CardTitle>
         </CardHeader>
         <CardContent>
-          <EmployeesTable 
-            employees={filteredEmployees} 
-            isLoading={isLoading} 
-            onRefresh={() => refetch()}
-          />
+          <EmployeesTable employees={filteredEmployees} isLoading={isLoading} />
         </CardContent>
       </Card>
     </div>
   );
 }
+
