@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Users, CalendarClock, FileBarChart, Settings, LayoutDashboard, GraduationCap, DollarSign } from "lucide-react";
@@ -8,7 +9,7 @@ export function HRSecondaryHeader() {
   const isActive = (path: string) => currentPath.endsWith(path);
   return <div className="py-4 border-b mb-6 bg-transparent">
       <div className="container mx-auto px-4">
-        <div className="flex flex-wrap gap-2 justify-center md:justify-start" dir="rtl">
+        <div className="flex flex-wrap gap-2 justify-center" dir="rtl">
           <Button variant={isActive('overview') || currentPath === "/admin/hr" ? "default" : "outline"} size="sm" onClick={() => navigate("/admin/hr/overview")} className="flex items-center gap-2">
             <LayoutDashboard className="h-4 w-4" />
             <span>نظرة عامة</span>
