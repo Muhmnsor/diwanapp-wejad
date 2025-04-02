@@ -16,6 +16,7 @@ import DeveloperRoute from "@/components/DeveloperRoute";
 import MeetingsPage from "@/pages/meetings/MeetingsPage";
 import MeetingFolderPage from "@/components/meetings/folders/MeetingFolderPage";
 import MeetingDetailsPage from "@/pages/meetings/MeetingDetailsPage";
+import InternalMail from "@/pages/InternalMail";
 
 export const ProtectedRoutes = [
   <Route 
@@ -152,6 +153,15 @@ export const ProtectedRoutes = [
     element={
       <ProtectedRoute>
         <RequestsManagement />
+      </ProtectedRoute>
+    } 
+  />,
+  <Route 
+    key="admin-internal-mail"
+    path="/admin/internal-mail" 
+    element={
+      <ProtectedRoute>
+        <InternalMail />
       </ProtectedRoute>
     } 
   />
