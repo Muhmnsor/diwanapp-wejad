@@ -11,24 +11,6 @@ interface HRStats {
   upcomingLeaves: number;
   expiringContracts: number;
   pendingTrainings: number;
-  
-  // New fields
-  employeeGrowthRate?: number;
-  turnoverRate?: number;
-  turnoverChange?: number;
-  averageTenure?: number;
-  attendanceRateChange?: number;
-  leaveUtilizationRate?: number; 
-  leaveUtilizationChange?: number;
-  trainingBudgetUsed?: number;
-  trainingBudgetChange?: number;
-  pendingLeaveRequests?: number;
-  
-  // Sample historical data for sparklines
-  employeeCountHistory?: number[];
-  attendanceHistory?: number[];
-  leaveHistory?: number[];
-  turnoverHistory?: number[];
 }
 
 export function useHRStats() {
@@ -89,14 +71,6 @@ export function useHRStats() {
           
         if (upcomingLeavesError) throw upcomingLeavesError;
         
-        // Get pending leave requests
-        const { count: pendingLeaveRequests, error: pendingLeaveError } = await supabase
-          .from('hr_leave_requests')
-          .select('*', { count: 'exact', head: true })
-          .eq('status', 'pending');
-          
-        if (pendingLeaveError) throw pendingLeaveError;
-        
         // Get expiring contracts this month
         const oneMonthLater = new Date();
         oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
@@ -122,29 +96,6 @@ export function useHRStats() {
         const attendanceRate = totalEmployees > 0 ? 
           Math.round((presentToday / (totalEmployees - activeLeaves)) * 100) : 0;
         
-        // Calculate employee growth rate (simplified for demo)
-        const employeeGrowthRate = totalEmployees > 0 ? 
-          Math.round((newEmployees / totalEmployees) * 100) : 0;
-        
-        // For demonstration purposes, we're simulating some of the new metrics
-        // In a real application, these would be calculated from actual data
-        
-        // Sample trend data
-        const turnoverRate = 2.5; // 2.5% turnover rate
-        const turnoverChange = -0.3; // decreased by 0.3%
-        const averageTenure = 3.2; // 3.2 years average tenure
-        const attendanceRateChange = 2; // 2% increase in attendance rate
-        const leaveUtilizationRate = 68; // 68% of leave utilized
-        const leaveUtilizationChange = 5; // 5% increase in leave utilization
-        const trainingBudgetUsed = 45; // 45% of budget used
-        const trainingBudgetChange = 10; // 10% increase in budget utilization
-        
-        // Sample historical data for sparklines
-        const employeeCountHistory = [120, 122, 125, 128, 130, totalEmployees];
-        const attendanceHistory = [65, 68, 70, 72, 75, attendanceRate];
-        const leaveHistory = [8, 12, 10, 15, 8, activeLeaves];
-        const turnoverHistory = [3.2, 3.0, 2.8, 2.5, 2.2, 2.0];
-        
         return {
           totalEmployees: totalEmployees || 0,
           newEmployees: newEmployees || 0,
@@ -153,25 +104,7 @@ export function useHRStats() {
           activeLeaves: activeLeaves || 0,
           upcomingLeaves: upcomingLeaves || 0,
           expiringContracts: expiringContracts || 0,
-          pendingTrainings: pendingTrainings || 0,
-          
-          // New fields
-          employeeGrowthRate,
-          turnoverRate,
-          turnoverChange,
-          averageTenure,
-          attendanceRateChange,
-          leaveUtilizationRate,
-          leaveUtilizationChange,
-          trainingBudgetUsed,
-          trainingBudgetChange,
-          pendingLeaveRequests: pendingLeaveRequests || 0,
-          
-          // Historical data
-          employeeCountHistory,
-          attendanceHistory,
-          leaveHistory,
-          turnoverHistory
+          pendingTrainings: pendingTrainings || 0
         };
       } catch (error) {
         console.error('Error fetching HR stats:', error);
