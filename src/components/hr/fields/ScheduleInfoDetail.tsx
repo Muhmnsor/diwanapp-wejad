@@ -86,7 +86,7 @@ export function ScheduleInfoDetail({ scheduleId }: ScheduleInfoDetailProps) {
   // If we're still in initial loading state, show skeleton
   if (isLoading && !schedule) {
     return (
-      <div className="space-y-2" dir="rtl">
+      <div className="space-y-2">
         <Skeleton className="h-4 w-1/3" />
         <Skeleton className="h-4 w-1/2" />
         <Skeleton className="h-4 w-1/4" />
@@ -97,7 +97,7 @@ export function ScheduleInfoDetail({ scheduleId }: ScheduleInfoDetailProps) {
   // If there's an error, show error message
   if (error) {
     return (
-      <div className="text-sm text-red-500" dir="rtl">
+      <div className="text-sm text-red-500">
         {error}
       </div>
     );
@@ -106,7 +106,7 @@ export function ScheduleInfoDetail({ scheduleId }: ScheduleInfoDetailProps) {
   // If there's no schedule (and we're not loading), show no schedule message
   if (!schedule) {
     return (
-      <div className="text-sm text-muted-foreground" dir="rtl">
+      <div className="text-sm text-muted-foreground">
         لم يتم تعيين جدول عمل للموظف
       </div>
     );
@@ -115,7 +115,7 @@ export function ScheduleInfoDetail({ scheduleId }: ScheduleInfoDetailProps) {
   const workingDays = workDays.filter(d => d.is_working_day);
 
   return (
-    <div className="space-y-3" dir="rtl">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-primary" />

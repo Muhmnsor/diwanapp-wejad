@@ -39,7 +39,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-48" dir="rtl">
+      <div className="flex justify-center items-center h-48">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <span className="mr-2">جاري تحميل تفاصيل الطلب...</span>
       </div>
@@ -49,7 +49,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
   if (error) {
     console.error("Error loading request details:", error);
     return (
-      <Alert variant="destructive" dir="rtl">
+      <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>خطأ</AlertTitle>
         <AlertDescription>
@@ -61,7 +61,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
 
   if (!data || !data.request) {
     return (
-      <Alert dir="rtl">
+      <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>لم يتم العثور على الطلب</AlertTitle>
         <AlertDescription>
@@ -103,7 +103,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
 
   return (
     <>
-      <div className="space-y-6" dir="rtl">
+      <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold">تفاصيل الطلب</h2>
           <div className="flex gap-2">

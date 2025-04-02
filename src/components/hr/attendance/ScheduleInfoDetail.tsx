@@ -68,7 +68,7 @@ export function ScheduleInfoDetail({ employeeId }: ScheduleInfoDetailProps) {
   
   if (isLoading && !schedule) {
     return (
-      <Card dir="rtl">
+      <Card>
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-2">
             <Clock className="h-4 w-4 text-muted-foreground" />
@@ -83,7 +83,7 @@ export function ScheduleInfoDetail({ employeeId }: ScheduleInfoDetailProps) {
   
   if (error) {
     return (
-      <Card dir="rtl">
+      <Card>
         <CardContent className="p-4">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-red-500" />
@@ -96,7 +96,7 @@ export function ScheduleInfoDetail({ employeeId }: ScheduleInfoDetailProps) {
   
   if (!schedule) {
     return (
-      <Card dir="rtl">
+      <Card>
         <CardContent className="p-4">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-muted-foreground" />
@@ -114,7 +114,7 @@ export function ScheduleInfoDetail({ employeeId }: ScheduleInfoDetailProps) {
     .join("، ");
   
   return (
-    <Card dir="rtl">
+    <Card>
       <CardContent className="p-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
@@ -9,14 +8,12 @@ import { CalendarClock, FileText, Clock, PaperclipIcon, MessageSquareText, ListC
 import { ApprovalHistoryList } from "./ApprovalHistoryList";
 import { AttachmentsList } from "./AttachmentsList";
 import { RequestFormData } from "./RequestFormData";
-
 interface RequestDetailsCardProps {
   request: any;
   requestType: any;
   approvals: any[];
   attachments: any[];
 }
-
 export const RequestDetailsCard = ({
   request,
   requestType,
@@ -24,9 +21,7 @@ export const RequestDetailsCard = ({
   attachments
 }: RequestDetailsCardProps) => {
   if (!request) return null;
-  
-  return (
-    <Card className="w-full overflow-hidden" dir="rtl">
+  return <Card className="w-full overflow-hidden">
       <CardHeader className="bg-muted/20">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
           <div>
@@ -39,14 +34,14 @@ export const RequestDetailsCard = ({
           </div>
           <div className="flex items-center gap-2">
             <RequestStatusBadge status={request.status} />
-            {request.due_date && (
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Clock className="h-4 w-4 ml-1" />
+            {request.due_date && <div className="flex items-center text-sm text-muted-foreground">
+                <Clock className="h-4 w-4 mr-1" />
                 <span>
-                  {format(new Date(request.due_date), 'P', { locale: ar })}
+                  {format(new Date(request.due_date), 'P', {
+                locale: ar
+              })}
                 </span>
-              </div>
-            )}
+              </div>}
           </div>
         </div>
       </CardHeader>
@@ -70,15 +65,17 @@ export const RequestDetailsCard = ({
           <TabsContent value="details" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="flex items-center gap-2 text-sm">
-                <CalendarClock className="h-4 w-4 text-muted-foreground ml-1" />
+                <CalendarClock className="h-4 w-4 text-muted-foreground" />
                 <span className="text-muted-foreground">تاريخ الإنشاء:</span>
                 <span className="font-medium">
-                  {format(new Date(request.created_at), 'PPpp', { locale: ar })}
+                  {format(new Date(request.created_at), 'PPpp', {
+                  locale: ar
+                })}
                 </span>
               </div>
               
               <div className="flex items-center gap-2 text-sm">
-                <MessageSquareText className="h-4 w-4 text-muted-foreground ml-1" />
+                <MessageSquareText className="h-4 w-4 text-muted-foreground" />
                 <span className="text-muted-foreground">الحالة:</span>
                 <RequestStatusBadge status={request.status} />
               </div>
@@ -96,6 +93,5 @@ export const RequestDetailsCard = ({
           </TabsContent>
         </Tabs>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 };
