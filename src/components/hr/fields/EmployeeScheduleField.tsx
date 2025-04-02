@@ -13,10 +13,6 @@ export function EmployeeScheduleField({ value, onChange }: EmployeeScheduleField
   const { schedules, defaultSchedule, isLoadingSchedules } = useEmployeeSchedule();
   const [selectedValue, setSelectedValue] = useState<string>(value || "");
 
-  console.log("EmployeeScheduleField (fields) - Initial value:", value);
-  console.log("EmployeeScheduleField (fields) - Available schedules:", schedules);
-  console.log("EmployeeScheduleField (fields) - Default schedule:", defaultSchedule);
-
   // تعيين الجدول الافتراضي إذا لم يكن هناك قيمة محددة
   useEffect(() => {
     if ((!value || value === "") && defaultSchedule && defaultSchedule.id) {
@@ -47,11 +43,15 @@ export function EmployeeScheduleField({ value, onChange }: EmployeeScheduleField
           <SelectValue placeholder={isLoadingSchedules ? "جاري التحميل..." : "اختر جدول العمل"} />
         </SelectTrigger>
         <SelectContent>
-          {schedules?.map((schedule) => (
-            <SelectItem key={schedule.id} value={schedule.id}>
-              {schedule.name} {schedule.is_default && "(افتراضي)"}
-            </SelectItem>
-          ))}
+          {schedules && schedules.length > 0 ? (
+            schedules.map((schedule) => (
+              <SelectItem key={schedule.id} value={schedule.id}>
+                {schedule.name} {schedule.is_default && "(افتراضي)"}
+              </SelectItem>
+            ))
+          ) : (
+            <SelectItem value="no_schedules">لا توجد جداول عمل</SelectItem>
+          )}
         </SelectContent>
       </Select>
       <p className="text-xs text-muted-foreground">

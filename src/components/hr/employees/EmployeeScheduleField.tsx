@@ -48,11 +48,15 @@ export function EmployeeScheduleField({
           <SelectValue placeholder={isLoadingSchedules ? "جاري التحميل..." : "اختر جدول العمل"} />
         </SelectTrigger>
         <SelectContent>
-          {schedules?.map((schedule) => (
-            <SelectItem key={schedule.id} value={schedule.id}>
-              {schedule.name} {schedule.is_default && "(افتراضي)"}
-            </SelectItem>
-          ))}
+          {schedules && schedules.length > 0 ? (
+            schedules.map((schedule) => (
+              <SelectItem key={schedule.id} value={schedule.id}>
+                {schedule.name} {schedule.is_default && "(افتراضي)"}
+              </SelectItem>
+            ))
+          ) : (
+            <SelectItem value="no_schedules">لا توجد جداول عمل</SelectItem>
+          )}
         </SelectContent>
       </Select>
       <p className="text-xs text-muted-foreground">
