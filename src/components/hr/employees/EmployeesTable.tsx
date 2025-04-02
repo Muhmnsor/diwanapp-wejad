@@ -10,11 +10,12 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Edit, Trash, Calendar } from "lucide-react";
+import { Eye, Edit, Trash, Calendar, FileText } from "lucide-react";
 import { ViewEmployeeDialog } from "../dialogs/ViewEmployeeDialog";
 import { EditEmployeeDialog } from "../dialogs/EditEmployeeDialog";
 import { DeleteEmployeeDialog } from "../dialogs/DeleteEmployeeDialog";
 import { ManageScheduleDialog } from "../dialogs/ManageScheduleDialog";
+import { EmployeeContractsDialog } from "../dialogs/EmployeeContractsDialog";
 
 interface EmployeesTableProps {
   employees?: any[];
@@ -27,6 +28,7 @@ export function EmployeesTable({ employees, isLoading, onRefresh }: EmployeesTab
   const [editEmployeeOpen, setEditEmployeeOpen] = useState(false);
   const [deleteEmployeeOpen, setDeleteEmployeeOpen] = useState(false);
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [contractsDialogOpen, setContractsDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
 
   const handleViewEmployee = (employee: any) => {
@@ -47,6 +49,11 @@ export function EmployeesTable({ employees, isLoading, onRefresh }: EmployeesTab
   const handleManageSchedule = (employee: any) => {
     setSelectedEmployee(employee);
     setScheduleDialogOpen(true);
+  };
+  
+  const handleManageContracts = (employee: any) => {
+    setSelectedEmployee(employee);
+    setContractsDialogOpen(true);
   };
 
   if (isLoading) {
@@ -121,6 +128,15 @@ export function EmployeesTable({ employees, isLoading, onRefresh }: EmployeesTab
                   <Button
                     variant="ghost" 
                     size="sm"
+                    onClick={() => handleManageContracts(employee)}
+                    title="العقود"
+                  >
+                    <FileText className="h-4 w-4 text-purple-500" />
+                  </Button>
+                  
+                  <Button
+                    variant="ghost" 
+                    size="sm"
                     onClick={() => handleDeleteEmployee(employee)}
                     title="حذف"
                   >
@@ -167,6 +183,16 @@ export function EmployeesTable({ employees, isLoading, onRefresh }: EmployeesTab
             employee={selectedEmployee}
             onSuccess={() => {
               setScheduleDialogOpen(false);
+              if (onRefresh) onRefresh();
+            }}
+          />
+          
+          <EmployeeContractsDialog
+            isOpen={contractsDialogOpen}
+            onClose={() => setContractsDialogOpen(false)}
+            employee={selectedEmployee}
+            onSuccess={() => {
+              setContractsDialogOpen(false);
               if (onRefresh) onRefresh();
             }}
           />
