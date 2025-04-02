@@ -5,8 +5,21 @@ import { AttendanceReport } from "./AttendanceReport";
 import { EmployeeReport } from "./EmployeeReport";
 import { LeaveReport } from "./LeaveReport";
 import { Card } from "@/components/ui/card";
+import { DateRange } from "react-day-picker";
 
-export function HRReports() {
+interface HRReportsProps {
+  dateRange?: DateRange;
+  onDateRangeChange?: (range: DateRange | undefined) => void;
+  selectedEmployeeId?: string;
+  onEmployeeChange?: (employeeId: string | undefined) => void;
+}
+
+export function HRReports({ 
+  dateRange, 
+  onDateRangeChange,
+  selectedEmployeeId,
+  onEmployeeChange
+}: HRReportsProps) {
   return (
     <div className="space-y-4">
       <Card className="p-6">
@@ -18,7 +31,13 @@ export function HRReports() {
           </TabsList>
           
           <TabsContent value="attendance" className="space-y-4">
-            <AttendanceReport />
+            <AttendanceReport 
+              startDate={dateRange?.from} 
+              endDate={dateRange?.to}
+              employeeId={selectedEmployeeId}
+              onDateRangeChange={onDateRangeChange}
+              onEmployeeChange={onEmployeeChange}
+            />
           </TabsContent>
           
           <TabsContent value="employees" className="space-y-4">

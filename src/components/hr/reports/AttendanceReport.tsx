@@ -8,14 +8,27 @@ import { AttendanceStats } from "./components/AttendanceStats";
 import { AttendanceCharts } from "./components/AttendanceCharts";
 import { useAttendanceReport } from "@/hooks/hr/useAttendanceReport";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { EmployeeSelector } from "./components/EmployeeSelector";
+import { DateRange } from "react-day-picker";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Calendar, FileBarChart, UserSearch } from "lucide-react";
 
 interface AttendanceReportProps {
   startDate?: Date;
   endDate?: Date;
   employeeId?: string;
+  onDateRangeChange?: (range: DateRange | undefined) => void;
+  onEmployeeChange?: (employeeId: string | undefined) => void;
 }
 
-export function AttendanceReport({ startDate, endDate, employeeId }: AttendanceReportProps) {
+export function AttendanceReport({ 
+  startDate, 
+  endDate, 
+  employeeId,
+  onDateRangeChange,
+  onEmployeeChange
+}: AttendanceReportProps) {
   const [reportPeriod, setReportPeriod] = React.useState<"daily" | "weekly" | "monthly">("daily");
   
   // Format dates for display
@@ -31,31 +44,52 @@ export function AttendanceReport({ startDate, endDate, employeeId }: AttendanceR
   
   return (
     <Card>
-      <CardHeader className="flex flex-col sm:flex-row justify-between sm:items-center">
-        <CardTitle>
-          تقرير الحضور
-          {employeeName && <span className="block text-md font-semibold text-primary mt-1">{employeeName}</span>}
-          {startDate && endDate && (
-            <span className="block text-sm font-normal text-muted-foreground mt-1">
-              الفترة: {formattedStartDate} إلى {formattedEndDate}
-            </span>
-          )}
-        </CardTitle>
+      <CardHeader className="flex flex-col space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center">
+          <CardTitle>
+            تقرير الحضور
+            {employeeName && <span className="block text-md font-semibold text-primary mt-1">{employeeName}</span>}
+            {startDate && endDate && (
+              <span className="block text-sm font-normal text-muted-foreground mt-1">
+                الفترة: {formattedStartDate} إلى {formattedEndDate}
+              </span>
+            )}
+          </CardTitle>
+          
+          <Tabs value={reportPeriod} onValueChange={(value) => setReportPeriod(value as any)} className="mt-4 sm:mt-0">
+            <TabsList>
+              <TabsTrigger value="daily">يومي</TabsTrigger>
+              <TabsTrigger value="weekly">أسبوعي</TabsTrigger>
+              <TabsTrigger value="monthly">شهري</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
         
-        <Tabs value={reportPeriod} onValueChange={(value) => setReportPeriod(value as any)} className="mt-4 sm:mt-0">
-          <TabsList>
-            <TabsTrigger value="daily">يومي</TabsTrigger>
-            <TabsTrigger value="weekly">أسبوعي</TabsTrigger>
-            <TabsTrigger value="monthly">شهري</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex flex-col sm:flex-row justify-between gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <DateRangePicker
+              value={{ from: startDate, to: endDate }}
+              onChange={onDateRangeChange}
+              placeholder="اختر الفترة الزمنية"
+              align="right"
+              locale="ar"
+            />
+            
+            <EmployeeSelector
+              value={employeeId}
+              onChange={onEmployeeChange}
+            />
+          </div>
+        </div>
       </CardHeader>
       
       <CardContent>
         {!startDate || !endDate ? (
-          <div className="text-center text-muted-foreground py-10">
-            يرجى تحديد تاريخ البداية والنهاية لعرض التقرير
-          </div>
+          <EmptyState
+            icon={<Calendar className="h-12 w-12 text-muted-foreground" />}
+            title="يرجى تحديد الفترة الزمنية"
+            description="حدد تاريخ البداية والنهاية لعرض التقرير"
+          />
         ) : isLoading ? (
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -114,9 +148,11 @@ export function AttendanceReport({ startDate, endDate, employeeId }: AttendanceR
                 </table>
               </div>
             ) : (
-              <div className="text-center p-8 text-muted-foreground">
-                لا توجد بيانات للفترة المحددة
-              </div>
+              <EmptyState
+                icon={<FileBarChart className="h-12 w-12 text-muted-foreground" />}
+                title="لا توجد بيانات للفترة المحددة"
+                description={employeeId ? "لا يوجد سجلات حضور لهذا الموظف في الفترة المحددة" : "لا يوجد سجلات حضور في الفترة المحددة"}
+              />
             )}
           </>
         )}
