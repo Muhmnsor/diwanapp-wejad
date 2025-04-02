@@ -1,75 +1,164 @@
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Clock, AlertTriangle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
+import { ar } from "date-fns/locale";
+import { Clock, UserCheck, UserX, AlertTriangle } from "lucide-react";
 
 interface AttendanceStatsProps {
-  period: "daily" | "weekly" | "monthly";
-  employeeStats?: {
-    employee_name: string;
-    present: number;
-    absent: number;
-    late: number;
-    leave: number;
-  }[];
+  startDate?: Date;
+  endDate?: Date;
+  employeeId?: string;
 }
 
-export function AttendanceStats({ period, employeeStats }: AttendanceStatsProps) {
-  // If employee specific stats are provided, use them
-  const stats = employeeStats && employeeStats.length === 1
-    ? {
-        presentCount: employeeStats[0].present,
-        lateCount: employeeStats[0].late,
-        absentCount: employeeStats[0].absent,
-        averageWorkHours: period === "daily" ? 7.5 : period === "weekly" ? 37.5 : 150
+export function AttendanceStats({ startDate, endDate, employeeId }: AttendanceStatsProps) {
+  // Get attendance statistics within date range
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ['attendance-stats', startDate?.toISOString(), endDate?.toISOString(), employeeId],
+    queryFn: async () => {
+      if (!startDate || !endDate) return null;
+
+      console.log(`Fetching attendance stats from ${startDate} to ${endDate} for employee ${employeeId || 'all'}`);
+      
+      let query = supabase
+        .from('employee_attendance')
+        .select('*')
+        .gte('check_in_time', startDate.toISOString())
+        .lte('check_in_time', endDate.toISOString());
+      
+      // Add employee filter if provided
+      if (employeeId) {
+        query = query.eq('employee_id', employeeId);
       }
-    : {
-        presentCount: period === "daily" ? 18 : period === "weekly" ? 85 : 340,
-        lateCount: period === "daily" ? 3 : period === "weekly" ? 12 : 45,
-        absentCount: period === "daily" ? 2 : period === "weekly" ? 8 : 30,
-        averageWorkHours: period === "daily" ? 7.5 : period === "weekly" ? 37.5 : 150
+      
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error("Error fetching attendance stats:", error);
+        throw error;
+      }
+      
+      // Calculate statistics
+      const totalAttendance = data.length;
+      const lateAttendance = data.filter(record => record.late_minutes > 0).length;
+      const absenceDays = 0; // This would need a more complex query to determine absences
+      const problemDays = data.filter(record => record.weekend || record.holiday).length;
+      
+      return {
+        totalAttendance,
+        lateAttendance,
+        absenceDays,
+        problemDays
       };
-  
+    },
+    enabled: !!startDate && !!endDate
+  });
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} className="h-32 w-full" />
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">الحضور</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            إجمالي أيام الحضور
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.presentCount}</div>
-          <p className="text-xs text-muted-foreground">
-            {employeeStats && employeeStats.length === 1 ? "أيام الحضور" : "موظف حاضر"} خلال {period === "daily" ? "اليوم" : period === "weekly" ? "الأسبوع" : "الشهر"}
+          <div className="flex items-center justify-between">
+            <div className="text-2xl font-bold">
+              {stats?.totalAttendance || 0}
+              <span className="text-sm text-muted-foreground mr-1">يوم</span>
+            </div>
+            <UserCheck className="h-5 w-5 text-primary" />
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            {startDate && endDate ? (
+              <>
+                {format(startDate, "d MMM", { locale: ar })} -{" "}
+                {format(endDate, "d MMM yyyy", { locale: ar })}
+              </>
+            ) : (
+              "لا يوجد نطاق زمني محدد"
+            )}
           </p>
         </CardContent>
       </Card>
-      
+
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">التأخير</CardTitle>
-          <Clock className="h-4 w-4 text-muted-foreground" />
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            أيام التأخير
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.lateCount}</div>
-          <p className="text-xs text-muted-foreground">
-            {employeeStats && employeeStats.length === 1 ? "أيام التأخير" : "حالة تأخير"} خلال {period === "daily" ? "اليوم" : period === "weekly" ? "الأسبوع" : "الشهر"}
+          <div className="flex items-center justify-between">
+            <div className="text-2xl font-bold">
+              {stats?.lateAttendance || 0}
+              <span className="text-sm text-muted-foreground mr-1">يوم</span>
+            </div>
+            <Clock className="h-5 w-5 text-amber-500" />
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            {stats && stats.totalAttendance > 0 ? (
+              `${Math.round((stats.lateAttendance / stats.totalAttendance) * 100)}% من إجمالي أيام الحضور`
+            ) : (
+              "لا توجد بيانات"
+            )}
           </p>
         </CardContent>
       </Card>
-      
+
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">الغياب</CardTitle>
-          <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            أيام الغياب
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.absentCount}</div>
-          <p className="text-xs text-muted-foreground">
-            {employeeStats && employeeStats.length === 1 ? "أيام الغياب" : "حالة غياب"} خلال {period === "daily" ? "اليوم" : period === "weekly" ? "الأسبوع" : "الشهر"}
+          <div className="flex items-center justify-between">
+            <div className="text-2xl font-bold">
+              {stats?.absenceDays || 0}
+              <span className="text-sm text-muted-foreground mr-1">يوم</span>
+            </div>
+            <UserX className="h-5 w-5 text-destructive" />
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            تحتاج لتحسين قياس أيام الغياب
           </p>
         </CardContent>
       </Card>
-    </>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            أيام استثنائية
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="text-2xl font-bold">
+              {stats?.problemDays || 0}
+              <span className="text-sm text-muted-foreground mr-1">يوم</span>
+            </div>
+            <AlertTriangle className="h-5 w-5 text-blue-500" />
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            أيام العطل الرسمية وعطل نهاية الأسبوع
+          </p>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

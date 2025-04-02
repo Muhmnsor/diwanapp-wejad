@@ -1,113 +1,205 @@
 
 import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Skeleton } from "@/components/ui/skeleton";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import { format, eachDayOfInterval, isSameDay } from "date-fns";
+import { ar } from "date-fns/locale";
+import { EmptyState } from "@/components/ui/empty-state";
+import { BarChartIcon, PieChartIcon } from "lucide-react";
 
 interface AttendanceChartsProps {
-  period: "daily" | "weekly" | "monthly";
+  startDate?: Date;
+  endDate?: Date;
   employeeId?: string;
 }
 
-export function AttendanceCharts({ period, employeeId }: AttendanceChartsProps) {
-  // Sample data - in a real app, we would fetch this from an API
-  const getDailyData = () => {
-    if (employeeId) {
-      // Individual employee data has different structure
-      return [
-        { name: "الأسبوع 1", present: 5, late: 0, absent: 0 },
-        { name: "الأسبوع 2", present: 4, late: 1, absent: 0 },
-        { name: "الأسبوع 3", present: 3, late: 1, absent: 1 },
-        { name: "الأسبوع 4", present: 4, late: 0, absent: 1 },
-      ];
-    }
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+
+export function AttendanceCharts({ startDate, endDate, employeeId }: AttendanceChartsProps) {
+  // Fetch attendance data for charts
+  const { data: attendanceData, isLoading } = useQuery({
+    queryKey: ['attendance-charts', startDate?.toISOString(), endDate?.toISOString(), employeeId],
+    queryFn: async () => {
+      if (!startDate || !endDate) return null;
+      
+      console.log(`Fetching attendance data for charts from ${startDate} to ${endDate} for employee ${employeeId || 'all'}`);
+      
+      let query = supabase
+        .from('employee_attendance')
+        .select(`
+          id,
+          employee_id,
+          check_in_time,
+          check_out_time,
+          late_minutes,
+          weekend,
+          holiday,
+          employees (full_name)
+        `)
+        .gte('check_in_time', startDate.toISOString())
+        .lte('check_in_time', endDate.toISOString());
+      
+      // Add employee filter if provided
+      if (employeeId) {
+        query = query.eq('employee_id', employeeId);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error("Error fetching attendance chart data:", error);
+        throw error;
+      }
+      
+      return data;
+    },
+    enabled: !!startDate && !!endDate
+  });
+
+  // Process data for the daily attendance chart
+  const dailyAttendanceData = React.useMemo(() => {
+    if (!startDate || !endDate || !attendanceData) return [];
     
-    return [
-      { name: "8 ص", present: 10, late: 2, absent: 1 },
-      { name: "9 ص", present: 15, late: 3, absent: 1 },
-      { name: "10 ص", present: 18, late: 2, absent: 2 },
-      { name: "11 ص", present: 18, late: 1, absent: 2 },
-      { name: "12 م", present: 19, late: 0, absent: 2 },
-    ];
-  };
-  
-  const getWeeklyData = () => {
-    if (employeeId) {
-      return [
-        { name: "الأحد", present: 1, late: 0, absent: 0 },
-        { name: "الإثنين", present: 1, late: 0, absent: 0 },
-        { name: "الثلاثاء", present: 0, late: 1, absent: 0 },
-        { name: "الأربعاء", present: 1, late: 0, absent: 0 },
-        { name: "الخميس", present: 0, late: 0, absent: 1 },
-      ];
-    }
+    // Create an array of all days in the interval
+    const days = eachDayOfInterval({ start: startDate, end: endDate });
     
-    return [
-      { name: "الأحد", present: 18, late: 2, absent: 1 },
-      { name: "الإثنين", present: 17, late: 3, absent: 1 },
-      { name: "الثلاثاء", present: 16, late: 2, absent: 3 },
-      { name: "الأربعاء", present: 19, late: 1, absent: 1 },
-      { name: "الخميس", present: 15, late: 4, absent: 2 },
-    ];
-  };
-  
-  const getMonthlyData = () => {
-    if (employeeId) {
-      return [
-        { name: "يناير", present: 20, late: 2, absent: 1 },
-        { name: "فبراير", present: 18, late: 3, absent: 0 },
-        { name: "مارس", present: 21, late: 1, absent: 1 },
-        { name: "ابريل", present: 22, late: 0, absent: 0 },
-      ];
-    }
+    // Map each day to count attendances
+    return days.map(day => {
+      const dayAttendances = attendanceData.filter(record => {
+        const recordDate = new Date(record.check_in_time);
+        return isSameDay(day, recordDate);
+      });
+      
+      return {
+        date: format(day, 'yyyy-MM-dd'),
+        displayDate: format(day, 'dd MMM', { locale: ar }),
+        count: dayAttendances.length,
+        lateCount: dayAttendances.filter(record => record.late_minutes > 0).length
+      };
+    });
+  }, [startDate, endDate, attendanceData]);
+
+  // Process data for the employee attendance pie chart
+  const employeeAttendanceData = React.useMemo(() => {
+    if (!attendanceData || attendanceData.length === 0 || employeeId) return [];
     
-    return [
-      { name: "أسبوع 1", present: 85, late: 10, absent: 5 },
-      { name: "أسبوع 2", present: 82, late: 12, absent: 6 },
-      { name: "أسبوع 3", present: 88, late: 8, absent: 4 },
-      { name: "أسبوع 4", present: 85, late: 10, absent: 5 },
-    ];
-  };
-  
-  const chartData = period === "daily" 
-    ? getDailyData() 
-    : period === "weekly" 
-      ? getWeeklyData() 
-      : getMonthlyData();
-  
-  const chartTitle = employeeId 
-    ? "سجل الحضور والغياب للموظف" 
-    : "الحضور والغياب";
-  
+    // Group by employee
+    const employeeMap = new Map();
+    
+    attendanceData.forEach(record => {
+      const employeeName = record.employees?.full_name || 'غير معروف';
+      const employeeId = record.employee_id;
+      
+      if (!employeeMap.has(employeeId)) {
+        employeeMap.set(employeeId, {
+          name: employeeName,
+          value: 0
+        });
+      }
+      
+      employeeMap.get(employeeId).value += 1;
+    });
+    
+    // Convert map to array and sort
+    return Array.from(employeeMap.values())
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5); // Take top 5
+  }, [attendanceData, employeeId]);
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 gap-6">
+        <Skeleton className="h-[300px] w-full" />
+        <Skeleton className="h-[300px] w-full" />
+      </div>
+    );
+  }
+
+  if (!attendanceData || attendanceData.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-10">
+          <EmptyState
+            icon={<BarChartIcon className="h-8 w-8 text-muted-foreground" />}
+            title="لا توجد بيانات حضور"
+            description="لا توجد بيانات حضور خلال هذه الفترة"
+          />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <>
-      <Card className="col-span-2">
+    <div className="grid grid-cols-1 gap-6">
+      {/* Daily Attendance Chart */}
+      <Card>
         <CardHeader>
-          <CardTitle>{chartTitle}</CardTitle>
+          <CardTitle>الحضور اليومي</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={chartData}
-                margin={{
-                  top: 20,
-                  right: 30,
-                  left: 20,
-                  bottom: 5,
-                }}
+                data={dailyAttendanceData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
               >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
+                <XAxis 
+                  dataKey="displayDate" 
+                  angle={-45} 
+                  textAnchor="end" 
+                  height={70} 
+                />
                 <YAxis />
-                <Tooltip />
-                <Bar dataKey="present" fill="#4ade80" name="حضور" />
-                <Bar dataKey="late" fill="#facc15" name="تأخير" />
-                <Bar dataKey="absent" fill="#f87171" name="غياب" />
+                <Tooltip 
+                  formatter={(value, name) => {
+                    return [value, name === 'count' ? 'الحضور' : 'التأخير'];
+                  }}
+                  labelFormatter={(label) => `التاريخ: ${label}`}
+                />
+                <Bar dataKey="count" name="الحضور" fill="#82ca9d" />
+                <Bar dataKey="lateCount" name="التأخير" fill="#ffc658" />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>
-    </>
+
+      {/* Employee Attendance Distribution Pie Chart - Only show when not filtering for a specific employee */}
+      {!employeeId && employeeAttendanceData.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>توزيع الحضور حسب الموظفين</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={employeeAttendanceData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    nameKey="name"
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {employeeAttendanceData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value, name) => [value, name]} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }

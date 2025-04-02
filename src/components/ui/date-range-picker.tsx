@@ -17,7 +17,7 @@ interface DateRangePickerProps {
   value?: DateRange;
   onChange: (date: DateRange | undefined) => void;
   placeholder?: string;
-  align?: "center" | "start" | "end" | "left" | "right";
+  align?: "center" | "start" | "end";
   locale?: string;
 }
 
@@ -25,7 +25,7 @@ export function DateRangePicker({
   value,
   onChange,
   placeholder = "Select date range",
-  align = "left",
+  align = "start",
   locale = "en"
 }: DateRangePickerProps) {
   const isArabic = locale === "ar";
@@ -79,6 +79,7 @@ export function DateRangePicker({
             onSelect={onChange}
             numberOfMonths={2}
             locale={dateLocale}
+            className="pointer-events-auto"
           />
         </PopoverContent>
       </Popover>
