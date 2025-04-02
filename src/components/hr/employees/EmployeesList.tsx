@@ -50,7 +50,11 @@ export function EmployeesList({ searchTerm = "" }: EmployeesListProps) {
           <CardTitle>قائمة الموظفين</CardTitle>
         </CardHeader>
         <CardContent>
-          <EmployeesTable employees={filteredEmployees} isLoading={isLoading} />
+          <EmployeesTable 
+            employees={filteredEmployees} 
+            isLoading={isLoading} 
+            onRefresh={refetch}
+          />
         </CardContent>
       </Card>
 

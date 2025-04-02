@@ -2,277 +2,181 @@
 import React, { useState } from "react";
 import {
   Table,
+  TableBody,
+  TableCell,
+  TableHead,
   TableHeader,
   TableRow,
-  TableHead,
-  TableBody,
-  TableCell
 } from "@/components/ui/table";
-import { 
+import { Button } from "@/components/ui/button";
+import { MoreVertical, Eye, Edit, Trash } from "lucide-react";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { 
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MoreVertical, Eye, Edit, Trash } from "lucide-react";
-import { DeleteEmployeeDialog } from "@/components/hr/dialogs/DeleteEmployeeDialog";
+import { ViewEmployeeDialog } from "../dialogs/ViewEmployeeDialog";
+import { EditEmployeeDialog } from "../dialogs/EditEmployeeDialog";
+import { DeleteEmployeeDialog } from "../dialogs/DeleteEmployeeDialog";
 
-interface EmployeesTableProps {
-  employees?: any[];
-  isLoading: boolean;
+interface Employee {
+  id: string;
+  employee_number: string;
+  full_name: string;
+  email?: string;
+  position?: string;
+  department?: string;
+  joining_date?: string;
+  phone?: string;
+  schedule_id?: string;
+  status?: string;
 }
 
-export function EmployeesTable({ employees, isLoading }: EmployeesTableProps) {
-  const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+interface EmployeesTableProps {
+  employees?: Employee[];
+  isLoading: boolean;
+  onRefresh?: () => void;
+}
+
+export function EmployeesTable({ employees = [], isLoading, onRefresh }: EmployeesTableProps) {
+  const [viewEmployee, setViewEmployee] = useState<Employee | null>(null);
+  const [editEmployee, setEditEmployee] = useState<Employee | null>(null);
+  const [deleteEmployee, setDeleteEmployee] = useState<Employee | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
+  const handleViewEmployee = (employee: Employee) => {
+    setViewEmployee(employee);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleEditEmployee = (employee: Employee) => {
+    setEditEmployee(employee);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteEmployee = (employee: Employee) => {
+    setDeleteEmployee(employee);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleSuccess = () => {
+    if (onRefresh) onRefresh();
+  };
+
   if (isLoading) {
-    return <div className="flex justify-center p-4">جاري تحميل البيانات...</div>;
+    return (
+      <div className="h-64 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-muted-foreground">جاري تحميل البيانات...</p>
+        </div>
+      </div>
+    );
   }
 
-  if (!employees || employees.length === 0) {
-    return <div className="text-center p-4">لا يوجد موظفين</div>;
+  if (employees.length === 0) {
+    return (
+      <div className="h-64 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-xl font-medium mb-2">لا يوجد موظفين</p>
+          <p className="text-muted-foreground">يمكنك إضافة موظفين جدد باستخدام زر "إضافة موظف"</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>الاسم</TableHead>
-            <TableHead>المسمى الوظيفي</TableHead>
-            <TableHead>القسم</TableHead>
-            <TableHead>الحالة</TableHead>
-            <TableHead>تاريخ التعيين</TableHead>
-            <TableHead className="text-left">الإجراءات</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {employees.map((employee) => (
-            <TableRow key={employee.id}>
-              <TableCell className="font-medium">{employee.full_name}</TableCell>
-              <TableCell>{employee.position}</TableCell>
-              <TableCell>{employee.department}</TableCell>
-              <TableCell>
-                <Badge
-                  variant={employee.status === "active" ? "outline" : "secondary"}
-                  className={
-                    employee.status === "active"
-                      ? "bg-green-50 text-green-700 hover:bg-green-50"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-100"
-                  }
-                >
-                  {employee.status === "active" ? "يعمل" : "منتهي"}
-                </Badge>
-              </TableCell>
-              <TableCell>{new Date(employee.hire_date).toLocaleDateString("ar-SA")}</TableCell>
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <span className="sr-only">فتح القائمة</span>
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => {
-                      setSelectedEmployee(employee);
-                      setIsViewDialogOpen(true);
-                    }}>
-                      <Eye className="ml-2 h-4 w-4" />
-                      <span>عرض</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => {
-                      setSelectedEmployee(employee);
-                      setIsEditDialogOpen(true);
-                    }}>
-                      <Edit className="ml-2 h-4 w-4" />
-                      <span>تعديل</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      className="text-red-600"
-                      onClick={() => {
-                        setSelectedEmployee(employee);
-                        setIsDeleteDialogOpen(true);
-                      }}
-                    >
-                      <Trash className="ml-2 h-4 w-4" />
-                      <span>حذف</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>الرقم الوظيفي</TableHead>
+              <TableHead>الاسم</TableHead>
+              <TableHead>المنصب</TableHead>
+              <TableHead>القسم</TableHead>
+              <TableHead>تاريخ التعيين</TableHead>
+              <TableHead>الحالة</TableHead>
+              <TableHead>الإجراءات</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {employees.map((employee) => (
+              <TableRow key={employee.id}>
+                <TableCell className="font-medium">{employee.employee_number}</TableCell>
+                <TableCell>{employee.full_name}</TableCell>
+                <TableCell>{employee.position || "-"}</TableCell>
+                <TableCell>{employee.department || "-"}</TableCell>
+                <TableCell>
+                  {employee.joining_date 
+                    ? new Date(employee.joining_date).toLocaleDateString('ar-SA') 
+                    : "-"}
+                </TableCell>
+                <TableCell>
+                  {employee.status && (
+                    <Badge variant={employee.status === 'active' ? 'default' : 'secondary'}>
+                      {employee.status === 'active' ? 'نشط' : 'غير نشط'}
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleViewEmployee(employee)}>
+                        <Eye className="ml-2 h-4 w-4" />
+                        عرض
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleEditEmployee(employee)}>
+                        <Edit className="ml-2 h-4 w-4" />
+                        تعديل
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDeleteEmployee(employee)} className="text-red-600">
+                        <Trash className="ml-2 h-4 w-4" />
+                        حذف
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
-      {/* View Employee Dialog */}
-      {isViewDialogOpen && selectedEmployee && (
-        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-          <DialogContent dir="rtl" className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>تفاصيل الموظف</DialogTitle>
-              <DialogDescription>
-                عرض بيانات {selectedEmployee.full_name}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">الاسم</p>
-                  <p className="text-md">{selectedEmployee.full_name}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">المسمى الوظيفي</p>
-                  <p className="text-md">{selectedEmployee.position}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">القسم</p>
-                  <p className="text-md">{selectedEmployee.department}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">الحالة</p>
-                  <Badge
-                    variant={selectedEmployee.status === "active" ? "outline" : "secondary"}
-                    className={
-                      selectedEmployee.status === "active"
-                        ? "bg-green-50 text-green-700 hover:bg-green-50"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-100"
-                    }
-                  >
-                    {selectedEmployee.status === "active" ? "يعمل" : "منتهي"}
-                  </Badge>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">تاريخ التعيين</p>
-                  <p className="text-md">{new Date(selectedEmployee.hire_date).toLocaleDateString("ar-SA")}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">البريد الإلكتروني</p>
-                  <p className="text-md">{selectedEmployee.email || "-"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">رقم الهاتف</p>
-                  <p className="text-md">{selectedEmployee.phone || "-"}</p>
-                </div>
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button onClick={() => setIsViewDialogOpen(false)}>إغلاق</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {/* Edit Employee Dialog */}
-      {isEditDialogOpen && selectedEmployee && (
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent dir="rtl" className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>تعديل بيانات الموظف</DialogTitle>
-              <DialogDescription>
-                تعديل بيانات {selectedEmployee.full_name}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <form className="space-y-4 py-4">
-              <div className="grid grid-cols-1 gap-4">
-                <div className="space-y-2">
-                  <label htmlFor="full_name" className="text-sm font-medium">
-                    الاسم الكامل
-                  </label>
-                  <input
-                    id="full_name"
-                    defaultValue={selectedEmployee.full_name}
-                    className="w-full rounded-md border border-gray-300 p-2"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="position" className="text-sm font-medium">
-                    المسمى الوظيفي
-                  </label>
-                  <input
-                    id="position"
-                    defaultValue={selectedEmployee.position}
-                    className="w-full rounded-md border border-gray-300 p-2"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="department" className="text-sm font-medium">
-                    القسم
-                  </label>
-                  <input
-                    id="department"
-                    defaultValue={selectedEmployee.department}
-                    className="w-full rounded-md border border-gray-300 p-2"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-medium">
-                    البريد الإلكتروني
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    defaultValue={selectedEmployee.email || ""}
-                    className="w-full rounded-md border border-gray-300 p-2"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="phone" className="text-sm font-medium">
-                    رقم الهاتف
-                  </label>
-                  <input
-                    id="phone"
-                    defaultValue={selectedEmployee.phone || ""}
-                    className="w-full rounded-md border border-gray-300 p-2"
-                  />
-                </div>
-              </div>
-            </form>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>إلغاء</Button>
-              <Button onClick={() => {
-                // Here you would normally save the employee data
-                console.log("Save employee data");
-                setIsEditDialogOpen(false);
-              }}>
-                حفظ التغييرات
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {/* Delete Employee Dialog */}
-      {isDeleteDialogOpen && selectedEmployee && (
-        <DeleteEmployeeDialog
-          employee={selectedEmployee}
-          isOpen={isDeleteDialogOpen}
-          onClose={() => setIsDeleteDialogOpen(false)}
-          onSuccess={() => {
-            setIsDeleteDialogOpen(false);
-            // You might want to refresh the employees list here
-            console.log("Employee deleted successfully");
-          }}
-        />
-      )}
+      <ViewEmployeeDialog 
+        employee={viewEmployee} 
+        isOpen={isViewDialogOpen} 
+        onClose={() => setIsViewDialogOpen(false)} 
+      />
+      
+      <EditEmployeeDialog 
+        employee={editEmployee} 
+        isOpen={isEditDialogOpen} 
+        onClose={() => setIsEditDialogOpen(false)} 
+        onSuccess={() => {
+          handleSuccess();
+          setIsEditDialogOpen(false);
+        }} 
+      />
+      
+      <DeleteEmployeeDialog 
+        employee={deleteEmployee}
+        isOpen={isDeleteDialogOpen} 
+        onClose={() => setIsDeleteDialogOpen(false)} 
+        onSuccess={() => {
+          handleSuccess();
+          setIsDeleteDialogOpen(false);
+        }} 
+      />
     </>
   );
 }
