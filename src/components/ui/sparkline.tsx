@@ -54,6 +54,9 @@ export function SparklineSpot({
     spotColor: "rgba(74, 222, 128, 0.6)"
   }
 }: SparklineSpotProps) {
+  // The SparklinesSpots component needs data to be available,
+  // but it gets its data from its parent Sparklines context
+  // We need to ensure it's only rendered when there's valid data in the parent
   return (
     <SparklinesSpots
       size={size}
