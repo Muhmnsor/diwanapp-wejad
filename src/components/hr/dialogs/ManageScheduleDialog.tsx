@@ -46,11 +46,6 @@ export function ManageScheduleDialog({
       return;
     }
     
-    if (!scheduleId) {
-      toast.error("يرجى اختيار جدول العمل");
-      return;
-    }
-    
     setIsLoading(true);
     try {
       const result = await assignScheduleToEmployee(employee.id, scheduleId);

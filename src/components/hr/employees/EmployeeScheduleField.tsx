@@ -31,20 +31,16 @@ export function EmployeeScheduleField({
   }, [scheduleId, defaultSchedule, onScheduleChange, selectedValue]);
 
   const handleScheduleChange = (newValue: string) => {
-    if (!newValue) return; // Prevent empty values
     console.log("Schedule changed to:", newValue);
     setSelectedValue(newValue);
     onScheduleChange(newValue);
   };
 
-  // Make sure we never pass undefined or empty string as a value to SelectItem
-  const safeValue = selectedValue || undefined;
-
   return (
     <div className="space-y-2">
       <Label htmlFor="schedule_id">جدول العمل</Label>
       <Select
-        value={safeValue}
+        value={selectedValue}
         onValueChange={handleScheduleChange}
         disabled={isLoadingSchedules}
       >
@@ -52,15 +48,11 @@ export function EmployeeScheduleField({
           <SelectValue placeholder={isLoadingSchedules ? "جاري التحميل..." : "اختر جدول العمل"} />
         </SelectTrigger>
         <SelectContent>
-          {schedules && schedules.length > 0 ? (
-            schedules.map((schedule) => (
-              <SelectItem key={schedule.id} value={schedule.id}>
-                {schedule.name} {schedule.is_default && "(افتراضي)"}
-              </SelectItem>
-            ))
-          ) : (
-            <SelectItem value="no_schedules_placeholder">لا توجد جداول عمل</SelectItem>
-          )}
+          {schedules?.map((schedule) => (
+            <SelectItem key={schedule.id} value={schedule.id}>
+              {schedule.name} {schedule.is_default && "(افتراضي)"}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
       <p className="text-xs text-muted-foreground">
