@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { differenceInDays } from "date-fns";
 
 export interface LeaveRecord {
   id: string;
@@ -10,107 +11,142 @@ export interface LeaveRecord {
   start_date: string;
   end_date: string;
   duration: number;
-  status: string;
   reason: string | null;
+  status: string;
 }
 
 export interface LeaveReportData {
   records: LeaveRecord[];
   stats: {
-    totalLeaves: number;
+    totalRequests: number;
     approvedCount: number;
-    pendingCount: number;
     rejectedCount: number;
+    pendingCount: number;
+    totalDays: number;
     approvedPercentage: number;
-    pendingPercentage: number;
     rejectedPercentage: number;
-    byLeaveType?: { 
-      name: string; 
-      count: number; 
-      percentage: number;
-    }[];
+    pendingPercentage: number;
   };
+  leaveTypeStats?: {
+    leave_type: string;
+    count: number;
+    days: number;
+  }[];
   employeeStats?: {
     employee_name: string;
-    annual: number;
-    sick: number;
-    other: number;
-    total: number;
-  }[];
-  monthlyDistribution?: {
-    month: string;
     count: number;
+    days: number;
   }[];
-  trends?: {
-    annual: number[];
-    sick: number[];
-    other: number[];
-    total: number[];
-  };
 }
 
 export function useLeaveReport(startDate?: Date, endDate?: Date) {
   return useQuery<LeaveReportData, Error>({
     queryKey: ['leave-report', startDate?.toISOString(), endDate?.toISOString()],
     queryFn: async () => {
-      // Sample data for now - in a production app, this would fetch from the API
-      const leaveTypeData = [
-        { name: 'إجازة سنوية', count: 45 },
-        { name: 'إجازة مرضية', count: 28 },
-        { name: 'إجازة استثنائية', count: 12 },
-        { name: 'إجازة أمومة', count: 8 },
-        { name: 'إجازة زواج', count: 5 },
-        { name: 'إجازة حداد', count: 2 }
-      ];
+      // Construct date filters
+      let query = supabase
+        .from('hr_leave_requests')
+        .select(`
+          *,
+          employees:employee_id (
+            id,
+            full_name,
+            position,
+            department
+          )
+        `)
+        .order('created_at', { ascending: false });
       
-      const totalLeaves = leaveTypeData.reduce((sum, item) => sum + item.count, 0);
+      if (startDate) {
+        query = query.gte('start_date', startDate.toISOString().split('T')[0]);
+      }
       
-      const byLeaveType = leaveTypeData.map(item => ({
-        ...item,
-        percentage: (item.count / totalLeaves) * 100
+      if (endDate) {
+        query = query.lte('end_date', endDate.toISOString().split('T')[0]);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      
+      // Transform data
+      const records: LeaveRecord[] = (data || []).map(record => {
+        const startDate = new Date(record.start_date);
+        const endDate = new Date(record.end_date);
+        const duration = differenceInDays(endDate, startDate) + 1; // Include both start and end dates
+        
+        return {
+          id: record.id,
+          employee_id: record.employee_id,
+          employee_name: record.employees?.full_name || 'غير محدد',
+          leave_type: record.leave_type,
+          start_date: record.start_date,
+          end_date: record.end_date,
+          duration,
+          reason: record.reason,
+          status: record.status
+        };
+      });
+      
+      // Calculate statistics
+      const totalRequests = records.length;
+      const approvedCount = records.filter(r => r.status === 'approved').length;
+      const rejectedCount = records.filter(r => r.status === 'rejected').length;
+      const pendingCount = records.filter(r => r.status === 'pending').length;
+      const totalDays = records.reduce((sum, record) => sum + record.duration, 0);
+      
+      // Calculate leave type stats
+      const leaveTypeMap = new Map();
+      
+      records.forEach(record => {
+        if (!leaveTypeMap.has(record.leave_type)) {
+          leaveTypeMap.set(record.leave_type, { count: 0, days: 0 });
+        }
+        
+        const typeStats = leaveTypeMap.get(record.leave_type);
+        typeStats.count++;
+        typeStats.days += record.duration;
+      });
+      
+      const leaveTypeStats = Array.from(leaveTypeMap.entries()).map(([leave_type, stats]) => ({
+        leave_type,
+        count: stats.count,
+        days: stats.days
       }));
       
-      const monthNames = [
-        'يناير', 'فبراير', 'مارس', 'إبريل', 'مايو', 'يونيو',
-        'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
-      ];
+      // Calculate employee-specific stats
+      const employeeMap = new Map();
       
-      const monthlyDistribution = monthNames.map((month, index) => ({
-        month,
-        count: Math.floor(Math.random() * 20) + 5 // Random data between 5-25
-      }));
+      records.forEach(record => {
+        if (!employeeMap.has(record.employee_id)) {
+          employeeMap.set(record.employee_id, {
+            employee_name: record.employee_name,
+            count: 0,
+            days: 0
+          });
+        }
+        
+        const empStats = employeeMap.get(record.employee_id);
+        empStats.count++;
+        empStats.days += record.duration;
+      });
       
-      // Generate trend data for sparklines
-      const generateTrendData = () => Array(12).fill(0).map(() => Math.floor(Math.random() * 10) + 1);
-      
-      const trends = {
-        annual: generateTrendData(),
-        sick: generateTrendData(),
-        other: generateTrendData(),
-        total: generateTrendData(),
-      };
+      const employeeStats = Array.from(employeeMap.values());
       
       return {
-        records: [],
+        records,
         stats: {
-          totalLeaves,
-          approvedCount: 88,
-          pendingCount: 7,
-          rejectedCount: 5,
-          approvedPercentage: (88 / totalLeaves) * 100,
-          pendingPercentage: (7 / totalLeaves) * 100,
-          rejectedPercentage: (5 / totalLeaves) * 100,
-          byLeaveType
+          totalRequests,
+          approvedCount,
+          rejectedCount,
+          pendingCount,
+          totalDays,
+          approvedPercentage: totalRequests ? (approvedCount / totalRequests) * 100 : 0,
+          rejectedPercentage: totalRequests ? (rejectedCount / totalRequests) * 100 : 0,
+          pendingPercentage: totalRequests ? (pendingCount / totalRequests) * 100 : 0
         },
-        employeeStats: [
-          { employee_name: 'أحمد محمد', annual: 12, sick: 5, other: 2, total: 19 },
-          { employee_name: 'سارة العلي', annual: 15, sick: 2, other: 1, total: 18 },
-          { employee_name: 'محمد عبدالله', annual: 10, sick: 8, other: 3, total: 21 },
-          { employee_name: 'فاطمة الأحمد', annual: 7, sick: 6, other: 4, total: 17 },
-          { employee_name: 'عبدالله الخالد', annual: 14, sick: 3, other: 0, total: 17 }
-        ],
-        monthlyDistribution,
-        trends
+        leaveTypeStats,
+        employeeStats
       };
     },
     enabled: !!startDate && !!endDate
