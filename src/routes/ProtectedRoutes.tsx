@@ -18,7 +18,16 @@ import MeetingsPage from "@/pages/meetings/MeetingsPage";
 import MeetingFolderPage from "@/components/meetings/folders/MeetingFolderPage";
 import MeetingDetailsPage from "@/pages/meetings/MeetingDetailsPage";
 import InternalMail from "@/pages/InternalMail";
-import { HRDashboard } from "@/components/hr/pages";
+import {
+  HRDashboard,
+  HROverview,
+  HREmployees,
+  HRAttendance,
+  HRTraining,
+  HRCompensation,
+  HRReportsPage,
+  HRSettings
+} from "@/components/hr/pages";
 import Accounting from "@/pages/Accounting";
 
 export const ProtectedRoutes = [
@@ -168,6 +177,7 @@ export const ProtectedRoutes = [
       </ProtectedRoute>
     } 
   />,
+  // HR Dashboard with nested routes
   <Route 
     key="admin-hr"
     path="/admin/hr" 
@@ -176,7 +186,15 @@ export const ProtectedRoutes = [
         <HRDashboard />
       </ProtectedRoute>
     } 
-  />,
+  >
+    <Route path="overview" element={<HROverview />} />
+    <Route path="employees" element={<HREmployees />} />
+    <Route path="attendance" element={<HRAttendance />} />
+    <Route path="training" element={<HRTraining />} />
+    <Route path="compensation" element={<HRCompensation />} />
+    <Route path="reports" element={<HRReportsPage />} />
+    <Route path="settings" element={<HRSettings />} />
+  </Route>,
   <Route 
     key="admin-accounting"
     path="/admin/accounting" 
