@@ -24,9 +24,10 @@ export function StatCard({
   trendColor = "#4ade80",
   className
 }: StatCardProps) {
-  const hasTrend = trendData && trendData.length > 0;
-  const trendDirection = hasTrend ? getTrendDirection(trendData) : 'neutral';
-  const trendPercentage = hasTrend ? getTrendPercentage(trendData) : 0;
+  // Check if we have valid trend data (at least 2 points)
+  const hasValidTrend = trendData && trendData.length >= 2;
+  const trendDirection = hasValidTrend ? getTrendDirection(trendData) : 'neutral';
+  const trendPercentage = hasValidTrend ? getTrendPercentage(trendData) : 0;
 
   return (
     <Card className={`p-4 hover:shadow-md transition-shadow ${className}`}>
@@ -47,7 +48,7 @@ export function StatCard({
         </div>
       </div>
       
-      {hasTrend && (
+      {hasValidTrend && (
         <div className="mt-3 pt-3 border-t">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-1 space-x-reverse">
