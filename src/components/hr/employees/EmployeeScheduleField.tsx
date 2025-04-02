@@ -1,95 +1,50 @@
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEmployeeSchedule } from "@/hooks/hr/useEmployeeSchedule";
 
 interface EmployeeScheduleFieldProps {
-  employeeId?: string;
-  scheduleId: string | null;
-  onScheduleChange: (scheduleId: string) => void;
-  isReadOnly?: boolean;
+  employeeId: string;
+  scheduleId: string;
+  onScheduleChange: (value: string) => void;
 }
 
-export function EmployeeScheduleField({
-  employeeId,
-  scheduleId,
-  onScheduleChange,
-  isReadOnly = false,
+export function EmployeeScheduleField({ 
+  employeeId, 
+  scheduleId, 
+  onScheduleChange 
 }: EmployeeScheduleFieldProps) {
   const { schedules, defaultSchedule, isLoadingSchedules } = useEmployeeSchedule();
-  const [selectedSchedule, setSelectedSchedule] = useState<string>(scheduleId || "");
-  const initializedRef = useRef(false);
+  const [selectedValue, setSelectedValue] = useState<string>(scheduleId || "");
 
-  // Log for debugging
-  console.log("EmployeeScheduleField - Render with:", { 
-    employeeId, 
-    scheduleId, 
-    isReadOnly,
-    selectedSchedule,
-    defaultScheduleId: defaultSchedule?.id,
-    schedulesLoaded: schedules?.length
-  });
-
-  // Handle scheduleId changes from parent
+  // Set default schedule if no schedule is selected
   useEffect(() => {
-    if (scheduleId !== null && scheduleId !== undefined && scheduleId !== selectedSchedule) {
-      console.log("EmployeeScheduleField - External scheduleId changed to:", scheduleId);
-      setSelectedSchedule(scheduleId);
+    if ((!scheduleId || scheduleId === "") && defaultSchedule && defaultSchedule.id) {
+      console.log("Setting default schedule:", defaultSchedule.id);
+      setSelectedValue(defaultSchedule.id);
+      onScheduleChange(defaultSchedule.id);
+    } else if (scheduleId && scheduleId !== selectedValue) {
+      console.log("Updating from props:", scheduleId);
+      setSelectedValue(scheduleId);
     }
-  }, [scheduleId, selectedSchedule]);
+  }, [scheduleId, defaultSchedule, onScheduleChange, selectedValue]);
 
-  // Initialize with default if needed
-  useEffect(() => {
-    if (initializedRef.current) return;
-    
-    // If we have schedules loaded and there's no selected schedule yet
-    if (schedules?.length && !selectedSchedule && !scheduleId) {
-      if (defaultSchedule?.id) {
-        console.log("EmployeeScheduleField - Setting default schedule:", defaultSchedule.id);
-        setSelectedSchedule(defaultSchedule.id);
-        onScheduleChange(defaultSchedule.id);
-        initializedRef.current = true;
-      }
-    } else if (scheduleId) {
-      // Mark as initialized if we already have a scheduleId
-      initializedRef.current = true;
-    }
-  }, [schedules, defaultSchedule, selectedSchedule, scheduleId, onScheduleChange]);
+  const handleScheduleChange = (newValue: string) => {
+    console.log("Schedule changed to:", newValue);
+    setSelectedValue(newValue);
+    onScheduleChange(newValue);
+  };
 
-  const handleScheduleChange = useCallback((value: string) => {
-    console.log("EmployeeScheduleField - Schedule changed to:", value);
-    setSelectedSchedule(value);
-    onScheduleChange(value);
-  }, [onScheduleChange]);
-
-  // Find the current schedule in the list
-  const currentSchedule = schedules?.find(s => s.id === selectedSchedule);
-  
   return (
     <div className="space-y-2">
-      <div className="flex justify-between">
-        <Label htmlFor="scheduleSelect">جدول العمل</Label>
-        {currentSchedule && (
-          <Badge variant="outline" className="mr-2">
-            {currentSchedule.work_hours_per_day} ساعة / {currentSchedule.work_days_per_week} أيام
-          </Badge>
-        )}
-      </div>
-      
+      <Label htmlFor="schedule_id">جدول العمل</Label>
       <Select
-        value={selectedSchedule}
+        value={selectedValue}
         onValueChange={handleScheduleChange}
-        disabled={isReadOnly || isLoadingSchedules}
+        disabled={isLoadingSchedules}
       >
-        <SelectTrigger id="scheduleSelect">
+        <SelectTrigger id="schedule_id">
           <SelectValue placeholder={isLoadingSchedules ? "جاري التحميل..." : "اختر جدول العمل"} />
         </SelectTrigger>
         <SelectContent>
@@ -100,12 +55,9 @@ export function EmployeeScheduleField({
           ))}
         </SelectContent>
       </Select>
-      
-      {!selectedSchedule && !isLoadingSchedules && (
-        <p className="text-xs text-muted-foreground">
-          سيتم استخدام الجدول الافتراضي إذا لم يتم اختيار جدول.
-        </p>
-      )}
+      <p className="text-xs text-muted-foreground">
+        جدول العمل المخصص للموظف لاحتساب الحضور والانصراف
+      </p>
     </div>
   );
 }

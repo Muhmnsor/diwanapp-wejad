@@ -3,9 +3,11 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ContractsList } from "@/components/hr/contracts/ContractsList";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Calendar } from "lucide-react";
 import { EditContractDialog } from "@/components/hr/dialogs/EditContractDialog";
 import { UserEmployeeLink } from "@/components/hr/user-management/UserEmployeeLink";
+import { ScheduleInfoDetail } from "@/components/hr/fields/ScheduleInfoDetail";
+import { ManageScheduleDialog } from "@/components/hr/dialogs/ManageScheduleDialog";
 
 interface EmployeeContractsTabsProps {
   employeeId: string;
@@ -24,6 +26,7 @@ export function EmployeeContractsTabs({
 }: EmployeeContractsTabsProps) {
   const [addContractOpen, setAddContractOpen] = useState(false);
   const [userLinkOpen, setUserLinkOpen] = useState(false);
+  const [manageScheduleOpen, setManageScheduleOpen] = useState(false);
   
   return (
     <div className="space-y-4">
@@ -32,6 +35,7 @@ export function EmployeeContractsTabs({
           <TabsList>
             <TabsTrigger value="contracts">العقود</TabsTrigger>
             <TabsTrigger value="user-link">حساب المستخدم</TabsTrigger>
+            <TabsTrigger value="schedule">جدول العمل</TabsTrigger>
           </TabsList>
           
           <div>
@@ -48,6 +52,14 @@ export function EmployeeContractsTabs({
               <Button onClick={() => setUserLinkOpen(true)} size="sm">
                 <Plus className="h-4 w-4 ml-1" />
                 {currentUserId ? "تغيير ربط المستخدم" : "ربط مستخدم"}
+              </Button>
+            </TabsContent>
+            
+            {/* Show Manage Schedule button only on schedule tab */}
+            <TabsContent value="schedule" className="mt-0 p-0">
+              <Button onClick={() => setManageScheduleOpen(true)} size="sm">
+                <Calendar className="h-4 w-4 ml-1" />
+                تعديل جدول العمل
               </Button>
             </TabsContent>
           </div>
@@ -81,6 +93,18 @@ export function EmployeeContractsTabs({
             </div>
           </div>
         </TabsContent>
+        
+        <TabsContent value="schedule" className="pt-2">
+          <div className="border rounded-lg p-4 bg-muted/10">
+            <h3 className="text-lg font-medium mb-3">جدول العمل المخصص</h3>
+            <ScheduleInfoDetail scheduleId={null} />
+            <div className="mt-4">
+              <Button onClick={() => setManageScheduleOpen(true)} variant="outline" className="w-full">
+                تعديل جدول العمل
+              </Button>
+            </div>
+          </div>
+        </TabsContent>
       </Tabs>
       
       {/* Add Contract Dialog */}
@@ -103,6 +127,20 @@ export function EmployeeContractsTabs({
         currentUserId={currentUserId}
         onSuccess={() => {
           setUserLinkOpen(false);
+          if (onContractUpdated) onContractUpdated();
+        }}
+      />
+      
+      {/* Manage Schedule Dialog */}
+      <ManageScheduleDialog
+        isOpen={manageScheduleOpen}
+        onClose={() => setManageScheduleOpen(false)}
+        employee={{
+          id: employeeId,
+          full_name: employeeName
+        }}
+        onSuccess={() => {
+          setManageScheduleOpen(false);
           if (onContractUpdated) onContractUpdated();
         }}
       />
