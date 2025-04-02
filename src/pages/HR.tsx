@@ -13,10 +13,9 @@ const HR = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <TopHeader />
-      <div className="flex-grow container mx-auto px-4 py-8" dir="rtl">
+      <div className="flex-grow container mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="w-full">
-            <h1 className="text-2xl font-bold mb-6">نظام الموارد البشرية</h1>
             <HRTabs defaultTab={defaultTab} />
           </div>
         </div>

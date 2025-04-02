@@ -6,7 +6,6 @@ import { EmployeeReport } from "./EmployeeReport";
 import { LeaveReport } from "./LeaveReport";
 import { Card } from "@/components/ui/card";
 import { DateRange } from "react-day-picker";
-import { useState } from "react";
 
 interface HRReportsProps {
   dateRange?: DateRange;
@@ -21,26 +20,6 @@ export function HRReports({
   selectedEmployeeId,
   onEmployeeChange
 }: HRReportsProps) {
-  // Local state to manage the date range and employee selection if none provided
-  const [localDateRange, setLocalDateRange] = useState<DateRange | undefined>(dateRange);
-  const [localEmployeeId, setLocalEmployeeId] = useState<string | undefined>(selectedEmployeeId);
-
-  // Handle local date range change
-  const handleDateRangeChange = (range: DateRange | undefined) => {
-    setLocalDateRange(range);
-    if (onDateRangeChange) {
-      onDateRangeChange(range);
-    }
-  };
-
-  // Handle local employee change
-  const handleEmployeeChange = (employeeId: string | undefined) => {
-    setLocalEmployeeId(employeeId);
-    if (onEmployeeChange) {
-      onEmployeeChange(employeeId);
-    }
-  };
-
   return (
     <div className="space-y-4">
       <Card className="p-6">
@@ -53,11 +32,11 @@ export function HRReports({
           
           <TabsContent value="attendance" className="space-y-4">
             <AttendanceReport 
-              startDate={dateRange?.from || localDateRange?.from}
-              endDate={dateRange?.to || localDateRange?.to}
-              employeeId={selectedEmployeeId || localEmployeeId}
-              onDateRangeChange={handleDateRangeChange}
-              onEmployeeChange={handleEmployeeChange}
+              startDate={dateRange?.from} 
+              endDate={dateRange?.to}
+              employeeId={selectedEmployeeId}
+              onDateRangeChange={onDateRangeChange}
+              onEmployeeChange={onEmployeeChange}
             />
           </TabsContent>
           
