@@ -1,6 +1,15 @@
 
 import { useState } from "react";
-import { DeleteDialog } from "@/components/ui/delete-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -44,15 +53,22 @@ export function DeleteEmployeeDialog({ employee, isOpen, onClose, onSuccess }: D
   };
   
   return (
-    <DeleteDialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-      title="هل أنت متأكد من حذف هذا الموظف؟"
-      description={`سيتم حذف سجل الموظف "${employee.full_name}" بشكل نهائي. هذا الإجراء لا يمكن التراجع عنه.`}
-      onDelete={handleDelete}
-      isDeleting={isLoading}
-    />
+    <AlertDialog open={isOpen} onOpenChange={onClose}>
+      <AlertDialogContent dir="rtl">
+        <AlertDialogHeader>
+          <AlertDialogTitle>هل أنت متأكد من حذف هذا الموظف؟</AlertDialogTitle>
+          <AlertDialogDescription>
+            سيتم حذف سجل الموظف "{employee.full_name}" بشكل نهائي. 
+            هذا الإجراء لا يمكن التراجع عنه.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isLoading}>إلغاء</AlertDialogCancel>
+          <AlertDialogAction onClick={handleDelete} disabled={isLoading} className="bg-red-600 hover:bg-red-700">
+            {isLoading ? "جاري الحذف..." : "حذف"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

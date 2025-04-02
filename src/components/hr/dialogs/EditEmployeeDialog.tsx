@@ -1,5 +1,8 @@
 
 import { useState, useEffect } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -7,9 +10,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -20,234 +30,247 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-interface EditEmployeeDialogProps {
-  employee: any;
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess?: () => void;
+interface Employee {
+  id: string;
+  full_name: string;
+  employee_number: string;
+  position: string;
+  department: string;
+  email: string;
+  phone: string;
+  hire_date: string;
+  status: string;
 }
 
-export function EditEmployeeDialog({ employee, isOpen, onClose, onSuccess }: EditEmployeeDialogProps) {
-  const [formData, setFormData] = useState({
-    full_name: "",
-    employee_number: "",
-    position: "",
-    department: "",
-    email: "",
-    phone: "",
-    contract_type: "",
-    hire_date: "",
-    contract_end_date: "",
-    status: "",
-  });
-  
+interface EditEmployeeDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  employee: Employee;
+  onSuccess: () => void;
+}
+
+const formSchema = z.object({
+  full_name: z.string().min(2, { message: "الاسم مطلوب" }),
+  employee_number: z.string().optional(),
+  position: z.string().optional(),
+  department: z.string().optional(),
+  email: z.string().email({ message: "البريد الإلكتروني غير صالح" }).optional().or(z.literal('')),
+  phone: z.string().optional(),
+  hire_date: z.string().optional(),
+  status: z.string(),
+});
+
+export function EditEmployeeDialog({ isOpen, onClose, employee, onSuccess }: EditEmployeeDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   
-  // Set initial form data when employee changes
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      full_name: "",
+      employee_number: "",
+      position: "",
+      department: "",
+      email: "",
+      phone: "",
+      hire_date: "",
+      status: "active",
+    },
+  });
+
   useEffect(() => {
-    if (employee) {
-      // Format dates for input fields
-      const formattedHireDate = employee.hire_date ? employee.hire_date.split('T')[0] : '';
-      const formattedContractEndDate = employee.contract_end_date ? employee.contract_end_date.split('T')[0] : '';
-      
-      setFormData({
+    if (employee && isOpen) {
+      form.reset({
         full_name: employee.full_name || "",
         employee_number: employee.employee_number || "",
         position: employee.position || "",
         department: employee.department || "",
         email: employee.email || "",
         phone: employee.phone || "",
-        contract_type: employee.contract_type || "",
-        hire_date: formattedHireDate,
-        contract_end_date: formattedContractEndDate,
+        hire_date: employee.hire_date ? new Date(employee.hire_date).toISOString().split('T')[0] : "",
         status: employee.status || "active",
       });
     }
-  }, [employee]);
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-  
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!employee?.id) return;
-    
+  }, [employee, isOpen, form]);
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     
     try {
       const { error } = await supabase
         .from('employees')
-        .update(formData)
+        .update({
+          full_name: values.full_name,
+          employee_number: values.employee_number,
+          position: values.position,
+          department: values.department,
+          email: values.email,
+          phone: values.phone,
+          hire_date: values.hire_date,
+          status: values.status,
+          updated_at: new Date(),
+        })
         .eq('id', employee.id);
       
       if (error) throw error;
       
       toast.success("تم تحديث بيانات الموظف بنجاح");
-      if (onSuccess) onSuccess();
+      onSuccess();
     } catch (error) {
       console.error('Error updating employee:', error);
       toast.error("حدث خطأ أثناء تحديث بيانات الموظف");
     } finally {
       setIsLoading(false);
     }
-  };
-  
+  }
+
   return (
-    <Dialog 
-      open={isOpen} 
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
-      <DialogContent className="sm:max-w-md" dir="rtl">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent dir="rtl" className="max-w-md">
         <DialogHeader>
-          <DialogTitle>تعديل بيانات الموظف</DialogTitle>
+          <DialogTitle>تعديل معلومات الموظف</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <div className="grid grid-cols-1 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="full_name">الاسم الكامل</Label>
-              <Input
-                id="full_name"
-                name="full_name"
-                value={formData.full_name}
-                onChange={handleChange}
-                required
-              />
-            </div>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="full_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>الاسم الكامل</FormLabel>
+                  <FormControl>
+                    <Input placeholder="أدخل الاسم الكامل" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
-            <div className="space-y-2">
-              <Label htmlFor="employee_number">الرقم الوظيفي</Label>
-              <Input
-                id="employee_number"
-                name="employee_number"
-                value={formData.employee_number}
-                onChange={handleChange}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="employee_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>الرقم الوظيفي</FormLabel>
+                  <FormControl>
+                    <Input placeholder="أدخل الرقم الوظيفي" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
-            <div className="space-y-2">
-              <Label htmlFor="position">المسمى الوظيفي</Label>
-              <Input
-                id="position"
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
                 name="position"
-                value={formData.position}
-                onChange={handleChange}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>المسمى الوظيفي</FormLabel>
+                    <FormControl>
+                      <Input placeholder="المسمى الوظيفي" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="department">القسم</Label>
-              <Input
-                id="department"
+              
+              <FormField
+                control={form.control}
                 name="department"
-                value={formData.department}
-                onChange={handleChange}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>القسم</FormLabel>
+                    <FormControl>
+                      <Input placeholder="القسم" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="email">البريد الإلكتروني</Label>
-              <Input
-                id="email"
+              
+              <FormField
+                control={form.control}
                 name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>البريد الإلكتروني</FormLabel>
+                    <FormControl>
+                      <Input placeholder="البريد الإلكتروني" type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="phone">رقم الهاتف</Label>
-              <Input
-                id="phone"
+              
+              <FormField
+                control={form.control}
                 name="phone"
-                value={formData.phone}
-                onChange={handleChange}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>رقم الجوال</FormLabel>
+                    <FormControl>
+                      <Input placeholder="رقم الجوال" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="contract_type">نوع العقد</Label>
-              <Select
-                value={formData.contract_type}
-                onValueChange={(value) => handleSelectChange("contract_type", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="اختر نوع العقد" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="full_time">دوام كامل</SelectItem>
-                  <SelectItem value="part_time">دوام جزئي</SelectItem>
-                  <SelectItem value="contractor">متعاقد</SelectItem>
-                  <SelectItem value="temporary">مؤقت</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="hire_date">تاريخ التعيين</Label>
-              <Input
-                id="hire_date"
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
                 name="hire_date"
-                type="date"
-                value={formData.hire_date}
-                onChange={handleChange}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>تاريخ التعيين</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>الحالة</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر حالة الموظف" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="active">يعمل</SelectItem>
+                        <SelectItem value="inactive">منتهي</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="contract_end_date">تاريخ انتهاء العقد</Label>
-              <Input
-                id="contract_end_date"
-                name="contract_end_date"
-                type="date"
-                value={formData.contract_end_date}
-                onChange={handleChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="status">الحالة</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => handleSelectChange("status", value)}
+            <DialogFooter className="mt-6">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onClose}
+                disabled={isLoading}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="اختر الحالة" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">يعمل</SelectItem>
-                  <SelectItem value="inactive">منتهي</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <DialogFooter className="sm:justify-between">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onClose}
-              disabled={isLoading}
-            >
-              إلغاء
-            </Button>
-            <Button 
-              type="submit"
-              disabled={isLoading}
-            >
-              {isLoading ? "جاري الحفظ..." : "حفظ التغييرات"}
-            </Button>
-          </DialogFooter>
-        </form>
+                إلغاء
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "جاري الحفظ..." : "حفظ التغييرات"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

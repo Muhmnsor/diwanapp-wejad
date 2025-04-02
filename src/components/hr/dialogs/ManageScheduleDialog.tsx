@@ -64,16 +64,8 @@ export function ManageScheduleDialog({
     }
   };
 
-  // Fixed the dialog handling to properly manage the open state and close events
   return (
-    <Dialog 
-      open={isOpen} 
-      onOpenChange={(open) => {
-        if (!open) {
-          onClose();
-        }
-      }}
-    >
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md" dir="rtl">
         <DialogHeader>
           <DialogTitle>إدارة جدول العمل</DialogTitle>
