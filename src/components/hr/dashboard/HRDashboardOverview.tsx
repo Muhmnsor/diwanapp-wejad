@@ -1,136 +1,215 @@
 
 import React, { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useHRStats } from "@/hooks/hr/useHRStats";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useHRStats } from "@/hooks/hr/useHRStats";
-import { useEmployeeContracts } from "@/hooks/hr/useEmployeeContracts";
 import { Button } from "@/components/ui/button";
-import { ExportButton } from "@/components/admin/ExportButton";
-import { Sparklines, SparklinesLine, SparklinesSpots } from 'react-sparklines';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Users, 
   UserPlus, 
-  UserMinus, 
   CalendarClock, 
-  Clock, 
-  FileText, 
+  Briefcase, 
   TrendingUp, 
   TrendingDown, 
-  Minus, 
-  BarChart3, 
-  PieChart, 
-  CalendarDays
+  ClipboardCheck, 
+  Clock, 
+  UserCheck, 
+  AlertTriangle,
+  FileText,
+  Download,
+  Printer
 } from "lucide-react";
+import { Sparkline, SparklineSpot } from "@/components/ui/sparkline";
+import { useEmployeeReport } from "@/hooks/hr/useEmployeeReport";
+import { useAttendanceReport } from "@/hooks/hr/useAttendanceReport";
+import { useLeaveReport } from "@/hooks/hr/useLeaveReport";
+import { useEmployeeContracts } from "@/hooks/hr/useEmployeeContracts";
+import { format, subMonths } from "date-fns";
+import { 
+  BarChart, 
+  Bar, 
+  PieChart, 
+  Pie, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer, 
+  Cell,
+  LineChart,
+  Line 
+} from "recharts";
+
+const COLORS = ['#4ade80', '#facc15', '#f87171', '#60a5fa', '#c084fc', '#f472b6'];
 
 export function HRDashboardOverview() {
-  const [timeFrame, setTimeFrame] = useState<"day" | "week" | "month" | "quarter">("month");
-  const [department, setDepartment] = useState<string>("all");
-  const [startDate, setStartDate] = useState<Date | undefined>(
-    new Date(new Date().setMonth(new Date().getMonth() - 3))
-  );
-  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
+  const [dateRange, setDateRange] = useState({
+    start: subMonths(new Date(), 3),
+    end: new Date()
+  });
+  const [department, setDepartment] = useState("all");
+  const [timespan, setTimespan] = useState("month");
   
-  const { data: hrStats, isLoading } = useHRStats();
+  // Fetch HR statistics and reports
+  const { data: hrStats, isLoading: statsLoading } = useHRStats();
+  const { data: employeeReport } = useEmployeeReport(subMonths(new Date(), 3), new Date());
+  const { data: attendanceReport } = useAttendanceReport(subMonths(new Date(), 3), new Date());
+  const { data: leaveReport } = useLeaveReport(subMonths(new Date(), 3), new Date());
   const { expiringContracts, endingProbations } = useEmployeeContracts();
-  
-  // Sample data for the sparklines - in a real implementation these would come from your data hooks
-  const attendanceTrend = [75, 78, 82, 79, 85, 88, 86];
-  const turnoverTrend = [2.1, 1.9, 2.0, 2.2, 1.7, 1.5, 1.8];
-  const leaveUsageTrend = [15, 18, 22, 25, 20, 19, 23];
-  const avgServiceTrend = [3.2, 3.3, 3.5, 3.5, 3.6, 3.7, 3.8];
-  
-  // Convert trends to percentages for visual display
-  const attendanceChange = ((attendanceTrend[attendanceTrend.length - 1] - attendanceTrend[0]) / attendanceTrend[0] * 100).toFixed(1);
-  const turnoverChange = ((turnoverTrend[turnoverTrend.length - 1] - turnoverTrend[0]) / turnoverTrend[0] * 100).toFixed(1);
-  const leaveUsageChange = ((leaveUsageTrend[leaveUsageTrend.length - 1] - leaveUsageTrend[0]) / leaveUsageTrend[0] * 100).toFixed(1);
-  const avgServiceChange = ((avgServiceTrend[avgServiceTrend.length - 1] - avgServiceTrend[0]) / avgServiceTrend[0] * 100).toFixed(1);
-  
-  // Determine trend direction for styling
-  const getTrendIcon = (value: number) => {
-    if (value > 0) return <TrendingUp className="text-green-500 ml-1 h-4 w-4" />;
-    if (value < 0) return <TrendingDown className="text-red-500 ml-1 h-4 w-4" />;
-    return <Minus className="text-gray-500 ml-1 h-4 w-4" />;
-  };
-  
-  // Determine color class based on the metric and its value
-  const getTrendColorClass = (metricType: string, value: number) => {
-    // For attendance and avg service, higher is better
-    if (metricType === 'attendance' || metricType === 'service') {
-      return value >= 0 ? "text-green-500" : "text-red-500";
-    }
-    // For turnover, lower is better
-    if (metricType === 'turnover') {
-      return value <= 0 ? "text-green-500" : "text-red-500";
-    }
-    // For leave usage, context dependent (we'll assume neutral)
-    return "text-blue-500";
-  };
-  
-  // Sample attendance distribution data
-  const attendanceDistribution = {
-    present: 85,
-    absent: 5,
-    leave: 8,
-    late: 2
-  };
-  
-  // Sample leave type distribution data
-  const leaveTypeDistribution = {
-    annual: 65,
-    sick: 20,
-    emergency: 10,
-    other: 5
-  };
-  
-  // Sample new vs departing employees data
-  const employeeTurnover = {
-    new: [3, 2, 4, 1, 5, 3, 2, 4, 6, 3, 2, 4],
-    departing: [1, 2, 0, 3, 2, 1, 0, 2, 1, 0, 1, 2]
-  };
-  
-  // Filter handlers
-  const handleTimeFrameChange = (value: string) => {
-    setTimeFrame(value as "day" | "week" | "month" | "quarter");
-  };
-  
-  const handleDepartmentChange = (value: string) => {
-    setDepartment(value);
-  };
-  
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-muted-foreground">جاري تحميل البيانات...</p>
-      </div>
+
+  // Sample data for sparklines
+  const generateSparklineData = (base, variance, count = 10) => {
+    return Array.from({ length: count }, (_, i) => 
+      base + Math.random() * variance - variance/2
     );
-  }
+  };
+
+  // Sample data for trends
+  const attendanceTrend = generateSparklineData(90, 10);
+  const turnoverTrend = generateSparklineData(5, 3);
+  const avgServiceTrend = generateSparklineData(24, 6);
+  const leaveUsageTrend = generateSparklineData(65, 15);
+
+  // Calculate KPI values
+  const turnoverRate = 4.8; // Sample value in percentage
+  const avgServiceDuration = 26; // Sample value in months
+  const attendanceCompliance = 94.2; // Sample value in percentage
+  const leaveUsageRate = 68.5; // Sample value in percentage
+
+  // Compare with previous periods (sample values)
+  const turnoverChange = -0.7; // Percentage points
+  const avgServiceChange = 2.1; // Months
+  const attendanceChange = 1.3; // Percentage points
+  const leaveUsageChange = 5.2; // Percentage points
+
+  // Data for attendance distribution chart
+  const attendanceDistributionData = [
+    { name: 'حاضر', value: attendanceReport?.stats?.presentCount || 85 },
+    { name: 'متأخر', value: attendanceReport?.stats?.lateCount || 7 },
+    { name: 'غائب', value: attendanceReport?.stats?.absentCount || 3 },
+    { name: 'إجازة', value: attendanceReport?.stats?.leaveCount || 5 }
+  ];
+
+  // Data for attendance by day chart
+  const attendanceByDayData = [
+    { day: 'الأحد', present: 19, late: 1, absent: 0 },
+    { day: 'الإثنين', present: 18, late: 2, absent: 0 },
+    { day: 'الثلاثاء', present: 17, late: 2, absent: 1 },
+    { day: 'الأربعاء', present: 16, late: 3, absent: 1 },
+    { day: 'الخميس', present: 15, late: 3, absent: 2 }
+  ];
+
+  // Data for leave distribution chart
+  const leaveDistributionData = [
+    { name: 'سنوية', value: leaveReport?.leaveTypeStats?.[0]?.days || 24 },
+    { name: 'مرضية', value: leaveReport?.leaveTypeStats?.[1]?.days || 12 },
+    { name: 'طارئة', value: leaveReport?.leaveTypeStats?.[2]?.days || 5 },
+    { name: 'أخرى', value: leaveReport?.leaveTypeStats?.[3]?.days || 3 }
+  ];
   
+  // Data for employee trends chart
+  const employeeTrendsData = [
+    { month: 'يناير', joined: 2, left: 1 },
+    { month: 'فبراير', joined: 3, left: 0 },
+    { month: 'مارس', joined: 1, left: 1 },
+    { month: 'أبريل', joined: 2, left: 1 },
+    { month: 'مايو', joined: 3, left: 2 },
+    { month: 'يونيو', joined: 2, left: 0 }
+  ];
+
+  // Handle export functions
+  const handleExportPDF = () => {
+    console.log("Exporting dashboard as PDF");
+    // Implementation would go here
+  };
+
+  const handleExportExcel = () => {
+    console.log("Exporting data to Excel");
+    // Implementation would go here
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
-    <div className="space-y-6">
-      {/* KPI Cards Section */}
+    <div className="space-y-6 print:m-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
+        <h2 className="text-2xl font-bold">نظرة عامة على الموارد البشرية</h2>
+        
+        <div className="flex flex-wrap gap-2">
+          <Select value={department} onValueChange={setDepartment}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="القسم" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">كل الأقسام</SelectItem>
+              <SelectItem value="engineering">الهندسة</SelectItem>
+              <SelectItem value="marketing">التسويق</SelectItem>
+              <SelectItem value="hr">الموارد البشرية</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Select value={timespan} onValueChange={setTimespan}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="الفترة" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="week">أسبوع</SelectItem>
+              <SelectItem value="month">شهر</SelectItem>
+              <SelectItem value="quarter">ربع سنة</SelectItem>
+              <SelectItem value="year">سنة</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <div className="flex gap-2">
+            <Button size="icon" variant="outline" onClick={handleExportExcel}>
+              <FileText className="h-4 w-4" />
+            </Button>
+            <Button size="icon" variant="outline" onClick={handleExportPDF}>
+              <Download className="h-4 w-4" />
+            </Button>
+            <Button size="icon" variant="outline" onClick={handlePrint}>
+              <Printer className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Employee Turnover Rate */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">معدل دوران الموظفين</CardTitle>
-            <UserMinus className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{turnoverTrend[turnoverTrend.length - 1]}%</div>
-            <div className="mt-2 flex items-center text-xs">
-              <span className={getTrendColorClass('turnover', Number(turnoverChange))}>
-                {turnoverChange}% 
-              </span>
-              {getTrendIcon(Number(turnoverChange))}
-              <span className="mr-1 text-muted-foreground">مقارنة بالربع السابق</span>
+            <div className="text-2xl font-bold">{turnoverRate}%</div>
+            <div className="h-10 mt-2">
+              <Sparkline data={turnoverTrend}>
+                <SparklineSpot />
+              </Sparkline>
             </div>
-            <div className="mt-3 h-[40px]">
-              <Sparklines data={turnoverTrend} height={30}>
-                <SparklinesLine color="#8884d8" />
-                <SparklinesSpots />
-              </Sparklines>
+            <div className="flex items-center pt-1">
+              {turnoverChange < 0 ? (
+                <>
+                  <TrendingDown className="mr-1 h-3 w-3 text-green-500" />
+                  <p className="text-xs text-green-500">
+                    انخفاض {Math.abs(turnoverChange)}% عن الفترة السابقة
+                  </p>
+                </>
+              ) : (
+                <>
+                  <TrendingUp className="mr-1 h-3 w-3 text-red-500" />
+                  <p className="text-xs text-red-500">
+                    ارتفاع {turnoverChange}% عن الفترة السابقة
+                  </p>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -139,409 +218,477 @@ export function HRDashboardOverview() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">متوسط مدة الخدمة</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{avgServiceTrend[avgServiceTrend.length - 1]} سنوات</div>
-            <div className="mt-2 flex items-center text-xs">
-              <span className={getTrendColorClass('service', Number(avgServiceChange))}>
-                {avgServiceChange}% 
-              </span>
-              {getTrendIcon(Number(avgServiceChange))}
-              <span className="mr-1 text-muted-foreground">مقارنة بالعام السابق</span>
+            <div className="text-2xl font-bold">{avgServiceDuration} شهر</div>
+            <div className="h-10 mt-2">
+              <Sparkline data={avgServiceTrend}>
+                <SparklineSpot />
+              </Sparkline>
             </div>
-            <div className="mt-3 h-[40px]">
-              <Sparklines data={avgServiceTrend} height={30}>
-                <SparklinesLine color="#82ca9d" />
-                <SparklinesSpots />
-              </Sparklines>
+            <div className="flex items-center pt-1">
+              {avgServiceChange > 0 ? (
+                <>
+                  <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
+                  <p className="text-xs text-green-500">
+                    زيادة {avgServiceChange} شهر عن الفترة السابقة
+                  </p>
+                </>
+              ) : (
+                <>
+                  <TrendingDown className="mr-1 h-3 w-3 text-red-500" />
+                  <p className="text-xs text-red-500">
+                    انخفاض {Math.abs(avgServiceChange)} شهر عن الفترة السابقة
+                  </p>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Attendance Compliance Rate */}
+        {/* Attendance Compliance */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">معدل الالتزام بالحضور</CardTitle>
-            <CalendarClock className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">نسبة الالتزام بالحضور</CardTitle>
+            <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{attendanceTrend[attendanceTrend.length - 1]}%</div>
-            <div className="mt-2 flex items-center text-xs">
-              <span className={getTrendColorClass('attendance', Number(attendanceChange))}>
-                {attendanceChange}% 
-              </span>
-              {getTrendIcon(Number(attendanceChange))}
-              <span className="mr-1 text-muted-foreground">مقارنة بالشهر السابق</span>
+            <div className="text-2xl font-bold">{attendanceCompliance}%</div>
+            <div className="h-10 mt-2">
+              <Sparkline data={attendanceTrend}>
+                <SparklineSpot />
+              </Sparkline>
             </div>
-            <div className="mt-3 h-[40px]">
-              <Sparklines data={attendanceTrend} height={30}>
-                <SparklinesLine color="#ffc658" />
-                <SparklinesSpots />
-              </Sparklines>
+            <div className="flex items-center pt-1">
+              {attendanceChange > 0 ? (
+                <>
+                  <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
+                  <p className="text-xs text-green-500">
+                    تحسن {attendanceChange}% عن الشهر السابق
+                  </p>
+                </>
+              ) : (
+                <>
+                  <TrendingDown className="mr-1 h-3 w-3 text-red-500" />
+                  <p className="text-xs text-red-500">
+                    انخفاض {Math.abs(attendanceChange)}% عن الشهر السابق
+                  </p>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Leave Usage Rate */}
+        {/* Annual Leave Usage */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">معدل استخدام الإجازات</CardTitle>
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            <Briefcase className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{leaveUsageTrend[leaveUsageTrend.length - 1]}%</div>
-            <div className="mt-2 flex items-center text-xs">
-              <span className={getTrendColorClass('leaves', Number(leaveUsageChange))}>
-                {leaveUsageChange}% 
-              </span>
-              {getTrendIcon(Number(leaveUsageChange))}
-              <span className="mr-1 text-muted-foreground">مقارنة بالربع السابق</span>
+            <div className="text-2xl font-bold">{leaveUsageRate}%</div>
+            <div className="h-10 mt-2">
+              <Sparkline data={leaveUsageTrend}>
+                <SparklineSpot />
+              </Sparkline>
             </div>
-            <div className="mt-3 h-[40px]">
-              <Sparklines data={leaveUsageTrend} height={30}>
-                <SparklinesLine color="#ff7300" />
-                <SparklinesSpots />
-              </Sparklines>
+            <div className="flex items-center pt-1">
+              {leaveUsageChange > 0 ? (
+                <>
+                  <TrendingUp className="mr-1 h-3 w-3 text-blue-500" />
+                  <p className="text-xs text-blue-500">
+                    زيادة {leaveUsageChange}% عن الفترة السابقة
+                  </p>
+                </>
+              ) : (
+                <>
+                  <TrendingDown className="mr-1 h-3 w-3 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">
+                    انخفاض {Math.abs(leaveUsageChange)}% عن الفترة السابقة
+                  </p>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters Section */}
-      <div className="flex flex-col sm:flex-row justify-between space-y-4 sm:space-y-0 sm:space-x-4 sm:rtl:space-x-reverse bg-muted/40 p-4 rounded-lg">
-        <div className="flex flex-col sm:flex-row gap-4 rtl:space-x-reverse">
-          <div className="w-full sm:w-48">
-            <Select value={timeFrame} onValueChange={handleTimeFrameChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="الفترة الزمنية" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="day">يومي</SelectItem>
-                <SelectItem value="week">أسبوعي</SelectItem>
-                <SelectItem value="month">شهري</SelectItem>
-                <SelectItem value="quarter">ربع سنوي</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="w-full sm:w-48">
-            <Select value={department} onValueChange={handleDepartmentChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="القسم" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">جميع الأقسام</SelectItem>
-                <SelectItem value="engineering">الهندسة</SelectItem>
-                <SelectItem value="marketing">التسويق</SelectItem>
-                <SelectItem value="hr">الموارد البشرية</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-4 rtl:space-x-reverse">
-          <div className="w-full sm:w-40">
-            <DatePicker 
-              date={startDate} 
-              setDate={setStartDate} 
-              placeholder="من تاريخ"
-              locale="ar"
-            />
-          </div>
-          <div className="w-full sm:w-40">
-            <DatePicker 
-              date={endDate} 
-              setDate={setEndDate} 
-              placeholder="إلى تاريخ" 
-              locale="ar"
-            />
-          </div>
-        </div>
-        <div className="flex space-x-2 rtl:space-x-reverse">
-          <ExportButton 
-            data={[]} // This would be your actual data to export
-            filename="hr-dashboard-report"
-          />
-          <Button variant="outline" size="sm">
-            <FileText className="ml-2 h-4 w-4" />
-            تقرير مفصل
-          </Button>
-        </div>
-      </div>
-
-      {/* Interactive Dashboards */}
-      <Tabs defaultValue="attendance" className="space-y-4" dir="rtl">
-        <TabsList className="grid grid-cols-3 w-full sm:w-auto">
-          <TabsTrigger value="attendance" className="flex items-center gap-1">
-            <CalendarClock className="h-4 w-4" />
-            الحضور والغياب
-          </TabsTrigger>
-          <TabsTrigger value="leaves" className="flex items-center gap-1">
-            <CalendarDays className="h-4 w-4" />
-            الإجازات
-          </TabsTrigger>
-          <TabsTrigger value="contracts" className="flex items-center gap-1">
-            <FileText className="h-4 w-4" />
-            العقود والتوظيف
-          </TabsTrigger>
+      {/* Interactive Analysis Dashboards */}
+      <Tabs defaultValue="attendance" className="print:hidden">
+        <TabsList className="mb-4">
+          <TabsTrigger value="attendance">تحليل الحضور والغياب</TabsTrigger>
+          <TabsTrigger value="leave">تحليل الإجازات</TabsTrigger>
+          <TabsTrigger value="contracts">متابعة العقود والتوظيف</TabsTrigger>
         </TabsList>
-        
-        {/* Attendance Dashboard */}
-        <TabsContent value="attendance" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+
+        {/* Attendance Analysis Dashboard */}
+        <TabsContent value="attendance">
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Attendance Distribution */}
             <Card>
               <CardHeader>
-                <CardTitle>إحصائيات الحضور</CardTitle>
-                <CardDescription>
-                  توزيع حالات الموظفين لهذا الشهر
-                </CardDescription>
+                <CardTitle>توزيع حالات الحضور</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex justify-around text-center">
-                  <div>
-                    <div className="text-2xl font-bold text-green-500">{attendanceDistribution.present}%</div>
-                    <div className="text-sm text-muted-foreground">حاضر</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-red-500">{attendanceDistribution.absent}%</div>
-                    <div className="text-sm text-muted-foreground">غائب</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-blue-500">{attendanceDistribution.leave}%</div>
-                    <div className="text-sm text-muted-foreground">إجازة</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-amber-500">{attendanceDistribution.late}%</div>
-                    <div className="text-sm text-muted-foreground">متأخر</div>
-                  </div>
-                </div>
-                <div className="mt-6 text-center">
-                  <p className="text-sm text-muted-foreground">العرض البياني سيظهر هنا</p>
-                  <PieChart className="h-24 w-24 mx-auto mt-2 text-muted-foreground" />
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={attendanceDistributionData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        outerRadius={100}
+                        fill="#8884d8"
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {attendanceDistributionData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
-            
+
+            {/* Attendance by Day of Week */}
             <Card>
               <CardHeader>
-                <CardTitle>نسب الحضور اليومية</CardTitle>
-                <CardDescription>
-                  معدلات الحضور خلال أيام الأسبوع
-                </CardDescription>
+                <CardTitle>الحضور حسب أيام الأسبوع</CardTitle>
               </CardHeader>
-              <CardContent className="flex flex-col justify-center items-center h-[250px]">
-                <BarChart3 className="h-24 w-24 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground mt-4">الرسم البياني الشريطي سيظهر هنا</p>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={attendanceByDayData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="day" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="present" name="حاضر" fill="#4ade80" />
+                      <Bar dataKey="late" name="متأخر" fill="#facc15" />
+                      <Bar dataKey="absent" name="غائب" fill="#f87171" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </CardContent>
             </Card>
-            
-            <Card>
+
+            {/* Top Late Employees */}
+            <Card className="md:col-span-2">
               <CardHeader>
-                <CardTitle>الموظفون الأكثر تأخرًا</CardTitle>
-                <CardDescription>
-                  قائمة الموظفين حسب ساعات التأخير
-                </CardDescription>
+                <CardTitle>الموظفين الأكثر تأخرًا</CardTitle>
               </CardHeader>
-              <CardContent className="px-2">
-                <div className="space-y-4">
-                  {[1, 2, 3].map((_, index) => (
-                    <div key={index} className="flex justify-between items-center border-b pb-2">
-                      <div className="flex items-center">
-                        <div className="ml-2 h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                          <Users className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <div className="font-medium">موظف {index + 1}</div>
-                          <div className="text-xs text-muted-foreground">قسم {index % 2 === 0 ? 'الهندسة' : 'التسويق'}</div>
-                        </div>
-                      </div>
-                      <div className="text-sm font-semibold text-amber-500">
-                        {Math.floor(Math.random() * 5) + 2}:{Math.floor(Math.random() * 60).toString().padStart(2, '0')} ساعات
-                      </div>
-                    </div>
-                  ))}
+              <CardContent>
+                <div className="rounded-md border">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          الموظف
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          عدد مرات التأخير
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          إجمالي دقائق التأخير
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          آخر تأخير
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap">أحمد محمد</td>
+                        <td className="px-6 py-4 whitespace-nowrap">5</td>
+                        <td className="px-6 py-4 whitespace-nowrap">97 دقيقة</td>
+                        <td className="px-6 py-4 whitespace-nowrap">15 يونيو 2023</td>
+                      </tr>
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap">سارة خالد</td>
+                        <td className="px-6 py-4 whitespace-nowrap">4</td>
+                        <td className="px-6 py-4 whitespace-nowrap">72 دقيقة</td>
+                        <td className="px-6 py-4 whitespace-nowrap">18 يونيو 2023</td>
+                      </tr>
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap">فهد سعيد</td>
+                        <td className="px-6 py-4 whitespace-nowrap">3</td>
+                        <td className="px-6 py-4 whitespace-nowrap">45 دقيقة</td>
+                        <td className="px-6 py-4 whitespace-nowrap">10 يونيو 2023</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
-        
-        {/* Leaves Dashboard */}
-        <TabsContent value="leaves" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+
+        {/* Leave Analysis Dashboard */}
+        <TabsContent value="leave">
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Leave Distribution by Type */}
             <Card>
               <CardHeader>
                 <CardTitle>توزيع الإجازات حسب النوع</CardTitle>
-                <CardDescription>
-                  نسب استخدام الإجازات بأنواعها
-                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex justify-around text-center">
-                  <div>
-                    <div className="text-2xl font-bold text-indigo-500">{leaveTypeDistribution.annual}%</div>
-                    <div className="text-sm text-muted-foreground">سنوية</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-teal-500">{leaveTypeDistribution.sick}%</div>
-                    <div className="text-sm text-muted-foreground">مرضية</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-orange-500">{leaveTypeDistribution.emergency}%</div>
-                    <div className="text-sm text-muted-foreground">طارئة</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-gray-500">{leaveTypeDistribution.other}%</div>
-                    <div className="text-sm text-muted-foreground">أخرى</div>
-                  </div>
-                </div>
-                <div className="mt-6 text-center">
-                  <p className="text-sm text-muted-foreground">العرض البياني سيظهر هنا</p>
-                  <PieChart className="h-24 w-24 mx-auto mt-2 text-muted-foreground" />
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={leaveDistributionData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={true}
+                        outerRadius={100}
+                        fill="#8884d8"
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {leaveDistributionData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
-            
+
+            {/* Upcoming Leaves */}
             <Card>
               <CardHeader>
-                <CardTitle>ذروة طلبات الإجازات</CardTitle>
-                <CardDescription>
-                  أيام الإجازات الأكثر طلبًا (تقويم حراري)
-                </CardDescription>
+                <CardTitle>الإجازات المجدولة للأسبوعين القادمين</CardTitle>
               </CardHeader>
-              <CardContent className="flex flex-col justify-center items-center h-[250px]">
-                <CalendarDays className="h-24 w-24 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground mt-4">التقويم الحراري سيظهر هنا</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>الإجازات القادمة</CardTitle>
-                <CardDescription>
-                  الإجازات المجدولة للأسبوعين القادمين
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="px-2">
-                <div className="space-y-4">
-                  {[1, 2, 3].map((_, index) => (
-                    <div key={index} className="flex justify-between items-center border-b pb-2">
-                      <div className="flex items-center">
-                        <div className="ml-2 h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                          <Users className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <div className="font-medium">موظف {index + 1}</div>
-                          <div className="text-xs text-muted-foreground">إجازة {index % 2 === 0 ? 'سنوية' : 'مرضية'}</div>
-                        </div>
-                      </div>
-                      <div className="text-sm">
-                        <div className="font-semibold">
-                          {new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000).toLocaleDateString('ar-SA')}
-                        </div>
-                        <div className="text-xs text-muted-foreground text-left">
-                          {Math.floor(Math.random() * 5) + 1} أيام
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+              <CardContent>
+                <div className="rounded-md border">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          الموظف
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          نوع الإجازة
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          البداية
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          النهاية
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap">محمد أحمد</td>
+                        <td className="px-6 py-4 whitespace-nowrap">سنوية</td>
+                        <td className="px-6 py-4 whitespace-nowrap">25 يونيو 2023</td>
+                        <td className="px-6 py-4 whitespace-nowrap">30 يونيو 2023</td>
+                      </tr>
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap">نورة سعد</td>
+                        <td className="px-6 py-4 whitespace-nowrap">سنوية</td>
+                        <td className="px-6 py-4 whitespace-nowrap">27 يونيو 2023</td>
+                        <td className="px-6 py-4 whitespace-nowrap">1 يوليو 2023</td>
+                      </tr>
+                      <tr>
+                        <td className="px-6 py-4 whitespace-nowrap">خالد عبدالله</td>
+                        <td className="px-6 py-4 whitespace-nowrap">مرضية</td>
+                        <td className="px-6 py-4 whitespace-nowrap">24 يونيو 2023</td>
+                        <td className="px-6 py-4 whitespace-nowrap">26 يونيو 2023</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
-        
-        {/* Contracts Dashboard */}
-        <TabsContent value="contracts" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+
+        {/* Contracts and Employment Dashboard */}
+        <TabsContent value="contracts">
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Employee Trends */}
             <Card>
               <CardHeader>
-                <CardTitle>حركة التوظيف</CardTitle>
-                <CardDescription>
-                  الموظفون الجدد مقابل المغادرين
-                </CardDescription>
+                <CardTitle>تحليل التوظيف والمغادرة</CardTitle>
               </CardHeader>
-              <CardContent className="flex flex-col justify-center items-center h-[250px]">
-                <BarChart3 className="h-24 w-24 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground mt-4">الرسم البياني المقارن سيظهر هنا</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>العقود المنتهية قريبًا</CardTitle>
-                <CardDescription>
-                  العقود التي ستنتهي خلال 60 يومًا
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="px-2">
-                <div className="space-y-4">
-                  {expiringContracts?.slice(0, 3).map((contract, index) => (
-                    <div key={index} className="flex justify-between items-center border-b pb-2">
-                      <div className="flex items-center">
-                        <div className="ml-2 h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                          <Users className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <div className="font-medium">{contract.employees?.full_name || `موظف ${index + 1}`}</div>
-                          <div className="text-xs text-muted-foreground">{contract.employees?.department || 'قسم عام'}</div>
-                        </div>
-                      </div>
-                      <div className="text-sm">
-                        <div className="font-semibold text-amber-500">
-                          {new Date(contract.end_date).toLocaleDateString('ar-SA')}
-                        </div>
-                        <div className="text-xs text-muted-foreground text-left">
-                          {Math.floor((new Date(contract.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} يوم
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {expiringContracts?.length === 0 && (
-                    <p className="text-center text-muted-foreground py-4">لا توجد عقود منتهية قريبًا</p>
-                  )}
+              <CardContent>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={employeeTrendsData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="joined" name="انضم" fill="#4ade80" />
+                      <Bar dataKey="left" name="غادر" fill="#f87171" />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
-            
+
+            {/* Expiring Contracts */}
             <Card>
               <CardHeader>
-                <CardTitle>فترات التجربة المنتهية قريبًا</CardTitle>
-                <CardDescription>
-                  الموظفون الذين ستنتهي فترة تجربتهم قريبًا
-                </CardDescription>
+                <CardTitle>العقود التي ستنتهي قريبًا</CardTitle>
               </CardHeader>
-              <CardContent className="px-2">
-                <div className="space-y-4">
-                  {endingProbations?.slice(0, 3).map((probation, index) => (
-                    <div key={index} className="flex justify-between items-center border-b pb-2">
-                      <div className="flex items-center">
-                        <div className="ml-2 h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                          <UserPlus className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <div className="font-medium">{probation.employees?.full_name || `موظف ${index + 1}`}</div>
-                          <div className="text-xs text-muted-foreground">{probation.employees?.position || 'منصب عام'}</div>
-                        </div>
-                      </div>
-                      <div className="text-sm">
-                        <div className="font-semibold text-blue-500">
-                          {new Date(probation.probation_end_date).toLocaleDateString('ar-SA')}
-                        </div>
-                        <div className="text-xs text-muted-foreground text-left">
-                          {Math.floor((new Date(probation.probation_end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} يوم
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {endingProbations?.length === 0 && (
-                    <p className="text-center text-muted-foreground py-4">لا توجد فترات تجربة منتهية قريبًا</p>
-                  )}
+              <CardContent>
+                <div className="rounded-md border">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          الموظف
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          المنصب
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          تاريخ انتهاء العقد
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          المتبقي
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {(expiringContracts || []).slice(0, 3).map((contract, index) => (
+                        <tr key={index}>
+                          <td className="px-6 py-4 whitespace-nowrap">{contract.employees?.full_name}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">{contract.employees?.position}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">{format(new Date(contract.end_date), 'yyyy-MM-dd')}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {Math.ceil((new Date(contract.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} يوم
+                          </td>
+                        </tr>
+                      ))}
+                      {!expiringContracts?.length && (
+                        <tr>
+                          <td colSpan={4} className="px-6 py-4 text-center">لا توجد عقود ستنتهي قريبًا</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Ending Probation Periods */}
+            <Card>
+              <CardHeader>
+                <CardTitle>نهاية فترات التجربة</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          الموظف
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          المنصب
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          تاريخ انتهاء فترة التجربة
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          المتبقي
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {(endingProbations || []).slice(0, 3).map((probation, index) => (
+                        <tr key={index}>
+                          <td className="px-6 py-4 whitespace-nowrap">{probation.employees?.full_name}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">{probation.employees?.position}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">{format(new Date(probation.probation_end_date), 'yyyy-MM-dd')}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {Math.ceil((new Date(probation.probation_end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} يوم
+                          </td>
+                        </tr>
+                      ))}
+                      {!endingProbations?.length && (
+                        <tr>
+                          <td colSpan={4} className="px-6 py-4 text-center">لا توجد فترات تجربة ستنتهي قريبًا</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Summary Stats (Always visible, even in print mode) */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">إجمالي الموظفين</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{hrStats?.totalEmployees || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              {hrStats?.newEmployees || 0} موظف جديد في آخر 30 يومًا
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">الحضور اليوم</CardTitle>
+            <CalendarClock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{hrStats?.presentToday || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              معدل الحضور: {hrStats?.attendanceRate || 0}%
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">الإجازات النشطة</CardTitle>
+            <Briefcase className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{hrStats?.activeLeaves || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              {hrStats?.upcomingLeaves || 0} إجازة مجدولة للأسبوع القادم
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">العقود المنتهية قريبًا</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{hrStats?.expiringContracts || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              خلال الـ 30 يومًا القادمة
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
