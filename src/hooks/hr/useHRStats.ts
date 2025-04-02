@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -98,15 +97,22 @@ export function useHRStats() {
         const leavesTrend = generateSafeTrendData(activeLeaves);
         const turnoverTrend = generateSafeTrendData(turnoverRate);
 
+        // Ensure all trend arrays have at least 2 items to avoid issues with SparklineSpot
+        const ensureMinTrendLength = (trend: number[]) => {
+          if (!Array.isArray(trend)) return [0, 0];
+          if (trend.length < 2) return [...trend, trend[0] || 0];
+          return trend;
+        };
+
         return {
           employeeCount: employeeCount || 0,
           attendanceRate,
           activeLeaves,
           turnoverRate,
-          employeeTrend,
-          attendanceTrend,
-          leavesTrend,
-          turnoverTrend
+          employeeTrend: ensureMinTrendLength(employeeTrend),
+          attendanceTrend: ensureMinTrendLength(attendanceTrend),
+          leavesTrend: ensureMinTrendLength(leavesTrend),
+          turnoverTrend: ensureMinTrendLength(turnoverTrend)
         };
       } catch (error) {
         console.error("Error in HR stats query:", error);
@@ -116,10 +122,10 @@ export function useHRStats() {
           attendanceRate: 0,
           activeLeaves: 0,
           turnoverRate: 0,
-          employeeTrend: [0],
-          attendanceTrend: [0],
-          leavesTrend: [0],
-          turnoverTrend: [0]
+          employeeTrend: [0, 0],
+          attendanceTrend: [0, 0],
+          leavesTrend: [0, 0],
+          turnoverTrend: [0, 0]
         };
       }
     },
@@ -131,7 +137,7 @@ export function useHRStats() {
 function generateSafeTrendData(baseValue: number): number[] {
   // If we can't generate valid data, return an array with just the base value
   if (typeof baseValue !== 'number' || isNaN(baseValue)) {
-    return [0]; // Fallback to zero if baseValue is invalid
+    return [0, 0]; // Fallback to zero if baseValue is invalid, include two points
   }
   
   // Otherwise generate some random data based on the base value
@@ -146,12 +152,13 @@ function generateSafeTrendData(baseValue: number): number[] {
     result.push(typeof value === 'number' && !isNaN(value) ? value : 0);
   }
   
-  // Make sure array has at least one item
+  // Make sure array has at least two items
   if (result.length === 0) {
     result.push(baseValue >= 0 ? baseValue : 0);
+    result.push(baseValue >= 0 ? baseValue : 0);
+  } else if (result.length === 1) {
+    result.push(result[0]);
   }
   
   return result;
 }
-
-// Original generateTrendData is now replaced by the safer version above

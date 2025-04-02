@@ -53,6 +53,11 @@ export default function HROverview() {
     turnoverTrend: [0]
   };
 
+  // Helper function to check if trend data is valid for rendering spots
+  const canRenderSpots = (data: number[]) => {
+    return Array.isArray(data) && data.length > 1;
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -66,8 +71,12 @@ export default function HROverview() {
           <CardContent>
             <div className="text-2xl font-bold">{safeStats.employeeCount}</div>
             {safeStats.employeeTrend && safeStats.employeeTrend.length > 0 ? (
-              <Sparkline data={safeStats.employeeTrend} height={40} className="mt-2">
-                {safeStats.employeeTrend.length > 1 && <SparklineSpot />}
+              <Sparkline 
+                data={safeStats.employeeTrend} 
+                height={40} 
+                className="mt-2"
+              >
+                {canRenderSpots(safeStats.employeeTrend) && <SparklineSpot />}
               </Sparkline>
             ) : (
               <div className="h-10 text-xs text-muted-foreground mt-2">لا توجد بيانات للاتجاه</div>
@@ -85,8 +94,13 @@ export default function HROverview() {
           <CardContent>
             <div className="text-2xl font-bold">{safeStats.attendanceRate ? `${safeStats.attendanceRate.toFixed(1)}%` : '0%'}</div>
             {safeStats.attendanceTrend && safeStats.attendanceTrend.length > 0 ? (
-              <Sparkline data={safeStats.attendanceTrend} height={40} className="mt-2" color="#3b82f6">
-                {safeStats.attendanceTrend.length > 1 && (
+              <Sparkline 
+                data={safeStats.attendanceTrend} 
+                height={40} 
+                className="mt-2" 
+                color="#3b82f6"
+              >
+                {canRenderSpots(safeStats.attendanceTrend) && (
                   <SparklineSpot spotColors={{ endSpot: "#3b82f6", spotColor: "rgba(59, 130, 246, 0.6)" }} />
                 )}
               </Sparkline>
@@ -106,8 +120,13 @@ export default function HROverview() {
           <CardContent>
             <div className="text-2xl font-bold">{safeStats.activeLeaves}</div>
             {safeStats.leavesTrend && safeStats.leavesTrend.length > 0 ? (
-              <Sparkline data={safeStats.leavesTrend} height={40} className="mt-2" color="#f97316">
-                {safeStats.leavesTrend.length > 1 && (
+              <Sparkline 
+                data={safeStats.leavesTrend} 
+                height={40} 
+                className="mt-2" 
+                color="#f97316"
+              >
+                {canRenderSpots(safeStats.leavesTrend) && (
                   <SparklineSpot spotColors={{ endSpot: "#f97316", spotColor: "rgba(249, 115, 22, 0.6)" }} />
                 )}
               </Sparkline>
@@ -127,8 +146,13 @@ export default function HROverview() {
           <CardContent>
             <div className="text-2xl font-bold">{safeStats.turnoverRate ? `${safeStats.turnoverRate.toFixed(1)}%` : '0%'}</div>
             {safeStats.turnoverTrend && safeStats.turnoverTrend.length > 0 ? (
-              <Sparkline data={safeStats.turnoverTrend} height={40} className="mt-2" color="#ec4899">
-                {safeStats.turnoverTrend.length > 1 && (
+              <Sparkline 
+                data={safeStats.turnoverTrend} 
+                height={40} 
+                className="mt-2" 
+                color="#ec4899"
+              >
+                {canRenderSpots(safeStats.turnoverTrend) && (
                   <SparklineSpot spotColors={{ endSpot: "#ec4899", spotColor: "rgba(236, 72, 153, 0.6)" }} />
                 )}
               </Sparkline>

@@ -33,7 +33,7 @@ export function Sparkline({
     <div className={cn("w-full", className)} {...props}>
       <Sparklines data={data} limit={limit} height={height} margin={5}>
         <SparklinesLine color={color} />
-        {children}
+        {React.Children.toArray(children).filter(Boolean)}
       </Sparklines>
     </div>
   );
@@ -54,8 +54,7 @@ export function SparklineSpot({
     spotColor: "rgba(74, 222, 128, 0.6)"
   }
 }: SparklineSpotProps) {
-  // The SparklinesSpots component will be rendered conditionally in the parent component
-  // It gets its data from the Sparklines context
+  // Wrap in error boundary to catch any errors related to the SparklinesSpots component
   try {
     return (
       <SparklinesSpots
