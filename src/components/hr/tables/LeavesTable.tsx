@@ -30,6 +30,7 @@ interface LeaveRequest {
   created_at: string;
   employee: {
     full_name: string;
+    gender?: string;
   } | null;
 }
 
@@ -69,7 +70,7 @@ export function LeavesTable() {
         .from("hr_leave_requests")
         .select(`
           *,
-          employee:employee_id (full_name)
+          employee:employee_id (full_name, gender)
         `)
         .order("created_at", { ascending: false });
 

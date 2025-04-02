@@ -8,6 +8,10 @@ interface LeaveType {
   code: string;
   description?: string;
   is_active: boolean;
+  eligible_gender?: string;
+  max_days?: number;
+  is_paid?: boolean;
+  requires_approval?: boolean;
 }
 
 export function useLeaveTypes() {
