@@ -41,6 +41,12 @@ export interface LeaveReportData {
     month: string;
     count: number;
   }[];
+  trends?: {
+    annual: number[];
+    sick: number[];
+    other: number[];
+    total: number[];
+  };
 }
 
 export function useLeaveReport(startDate?: Date, endDate?: Date) {
@@ -74,6 +80,16 @@ export function useLeaveReport(startDate?: Date, endDate?: Date) {
         count: Math.floor(Math.random() * 20) + 5 // Random data between 5-25
       }));
       
+      // Generate trend data for sparklines
+      const generateTrendData = () => Array(12).fill(0).map(() => Math.floor(Math.random() * 10) + 1);
+      
+      const trends = {
+        annual: generateTrendData(),
+        sick: generateTrendData(),
+        other: generateTrendData(),
+        total: generateTrendData(),
+      };
+      
       return {
         records: [],
         stats: {
@@ -93,7 +109,8 @@ export function useLeaveReport(startDate?: Date, endDate?: Date) {
           { employee_name: 'فاطمة الأحمد', annual: 7, sick: 6, other: 4, total: 17 },
           { employee_name: 'عبدالله الخالد', annual: 14, sick: 3, other: 0, total: 17 }
         ],
-        monthlyDistribution
+        monthlyDistribution,
+        trends
       };
     },
     enabled: !!startDate && !!endDate

@@ -20,9 +20,12 @@ export function Sparkline({
   className,
   ...props
 }: SparklineProps) {
+  // Ensure data is not empty to prevent react-sparklines error
+  const safeData = data && data.length > 0 ? data : [0];
+  
   return (
     <div className={cn("w-full", className)} {...props}>
-      <Sparklines data={data} limit={limit} height={height} margin={5}>
+      <Sparklines data={safeData} limit={limit} height={height} margin={5}>
         <SparklinesLine color={color} />
         {children}
       </Sparklines>

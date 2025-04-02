@@ -2,7 +2,6 @@
 import React from 'react';
 import { HRTabs } from "@/components/hr/HRTabs";
 import { HelmetProvider, Helmet } from 'react-helmet-async';
-import { HRDashboard } from "@/components/hr/dashboard/HRDashboard";
 
 const HR = () => {
   return (
@@ -19,8 +18,7 @@ const HR = () => {
         </div>
         
         <div className="space-y-8">
-          <HRDashboard />
-          <HRTabs />
+          <HRTabs defaultTab="dashboard" />
         </div>
       </div>
     </HelmetProvider>
