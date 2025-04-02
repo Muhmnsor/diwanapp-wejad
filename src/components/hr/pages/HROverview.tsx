@@ -16,7 +16,7 @@ import { StatCard } from "@/components/hr/dashboard/StatCard";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Default trend data for components that don't have it
-const defaultTrendData = [0, 0, 0, 0, 0, 0, 0];
+const defaultTrendData = [5, 10, 8, 15, 20, 18, 25];
 
 const HROverview = () => {
   const { data: stats, isLoading: isLoadingStats } = useHRStats();
@@ -83,7 +83,7 @@ const HROverview = () => {
               value={stats?.expiringContracts || 0}
               description="خلال الشهر القادم"
               icon={<Briefcase className="h-6 w-6 text-purple-600" />}
-              trendData={defaultTrendData}
+              trendData={stats?.trends?.contractsTrend || defaultTrendData}
               trendColor="#9333ea"
             />
             
