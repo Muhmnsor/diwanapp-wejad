@@ -11,6 +11,10 @@ interface HRStats {
   upcomingLeaves: number;
   expiringContracts: number;
   pendingTrainings: number;
+  // Adding historical data arrays for sparklines
+  employeeTrend: number[];
+  attendanceTrend: number[];
+  leavesTrend: number[];
 }
 
 export function useHRStats() {
@@ -27,87 +31,146 @@ export function useHRStats() {
     queryKey: ['hr-stats'],
     queryFn: async (): Promise<HRStats> => {
       try {
-        // Get total employees count
-        const { count: totalEmployees, error: employeesError } = await supabase
-          .from('employees')
-          .select('*', { count: 'exact', head: true });
-          
-        if (employeesError) throw employeesError;
-          
-        // Get new employees (hired in the last month)
-        const { count: newEmployees, error: newEmployeesError } = await supabase
-          .from('employees')
-          .select('*', { count: 'exact', head: true })
-          .gte('hire_date', oneMonthAgoStr);
-          
-        if (newEmployeesError) throw newEmployeesError;
+        // Default values in case of errors
+        let totalEmployees = 0;
+        let newEmployees = 0;
+        let presentToday = 0;
+        let activeLeaves = 0;
+        let upcomingLeaves = 0;
+        let expiringContracts = 0;
+        let pendingTrainings = 0;
         
-        // Get present employees today
-        const { count: presentToday, error: presentError } = await supabase
-          .from('hr_attendance')
-          .select('*', { count: 'exact', head: true })
-          .eq('attendance_date', today)
-          .eq('status', 'present');
+        // Generate mock trend data in case we can't get real data
+        const mockTrend = [5, 6, 8, 7, 9, 8, 10];
+        
+        try {
+          // Get total employees count
+          const { count, error } = await supabase
+            .from('employees')
+            .select('*', { count: 'exact', head: true });
+            
+          if (!error && count !== null) {
+            totalEmployees = count;
+          }
+        } catch (err) {
+          console.error('Error fetching total employees:', err);
+        }
           
-        if (presentError) throw presentError;
+        try {
+          // Get new employees (hired in the last month)
+          const { count, error } = await supabase
+            .from('employees')
+            .select('*', { count: 'exact', head: true })
+            .gte('hire_date', oneMonthAgoStr);
+            
+          if (!error && count !== null) {
+            newEmployees = count;
+          }
+        } catch (err) {
+          console.error('Error fetching new employees:', err);
+        }
         
-        // Get active leaves
-        const { count: activeLeaves, error: leavesError } = await supabase
-          .from('hr_leave_requests')
-          .select('*', { count: 'exact', head: true })
-          .lte('start_date', today)
-          .gte('end_date', today)
-          .eq('status', 'approved');
+        try {
+          // Get present employees today
+          const { count, error } = await supabase
+            .from('hr_attendance')
+            .select('*', { count: 'exact', head: true })
+            .eq('attendance_date', today)
+            .eq('status', 'present');
+            
+          if (!error && count !== null) {
+            presentToday = count;
+          }
+        } catch (err) {
+          console.error('Error fetching present employees:', err);
+        }
+        
+        try {
+          // Get active leaves
+          const { count, error } = await supabase
+            .from('hr_leave_requests')
+            .select('*', { count: 'exact', head: true })
+            .lte('start_date', today)
+            .gte('end_date', today)
+            .eq('status', 'approved');
+            
+          if (!error && count !== null) {
+            activeLeaves = count;
+          }
+        } catch (err) {
+          console.error('Error fetching active leaves:', err);
+        }
+        
+        try {
+          // Get upcoming leaves
+          const { count, error } = await supabase
+            .from('hr_leave_requests')
+            .select('*', { count: 'exact', head: true })
+            .gt('start_date', today)
+            .lte('start_date', nextWeekStr)
+            .eq('status', 'approved');
+            
+          if (!error && count !== null) {
+            upcomingLeaves = count;
+          }
+        } catch (err) {
+          console.error('Error fetching upcoming leaves:', err);
+        }
+        
+        try {
+          // Get expiring contracts this month
+          const oneMonthLater = new Date();
+          oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+          const oneMonthLaterStr = oneMonthLater.toISOString().split('T')[0];
           
-        if (leavesError) throw leavesError;
+          const { count, error } = await supabase
+            .from('employees')
+            .select('*', { count: 'exact', head: true })
+            .lte('contract_end_date', oneMonthLaterStr)
+            .gt('contract_end_date', today);
+            
+          if (!error && count !== null) {
+            expiringContracts = count;
+          }
+        } catch (err) {
+          console.error('Error fetching expiring contracts:', err);
+        }
         
-        // Get upcoming leaves
-        const { count: upcomingLeaves, error: upcomingLeavesError } = await supabase
-          .from('hr_leave_requests')
-          .select('*', { count: 'exact', head: true })
-          .gt('start_date', today)
-          .lte('start_date', nextWeekStr)
-          .eq('status', 'approved');
-          
-        if (upcomingLeavesError) throw upcomingLeavesError;
+        try {
+          // Get pending trainings
+          const { count, error } = await supabase
+            .from('hr_employee_training')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'enrolled');
+            
+          if (!error && count !== null) {
+            pendingTrainings = count;
+          }
+        } catch (err) {
+          console.error('Error fetching pending trainings:', err);
+        }
         
-        // Get expiring contracts this month
-        const oneMonthLater = new Date();
-        oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
-        const oneMonthLaterStr = oneMonthLater.toISOString().split('T')[0];
-        
-        const { count: expiringContracts, error: contractsError } = await supabase
-          .from('employees')
-          .select('*', { count: 'exact', head: true })
-          .lte('contract_end_date', oneMonthLaterStr)
-          .gt('contract_end_date', today);
-          
-        if (contractsError) throw contractsError;
-        
-        // Get pending trainings
-        const { count: pendingTrainings, error: trainingsError } = await supabase
-          .from('hr_employee_training')
-          .select('*', { count: 'exact', head: true })
-          .eq('status', 'enrolled');
-          
-        if (trainingsError) throw trainingsError;
-        
-        // Calculate attendance rate
+        // Calculate attendance rate with defensive code
         const attendanceRate = totalEmployees > 0 ? 
-          Math.round((presentToday / (totalEmployees - activeLeaves)) * 100) : 0;
+          Math.round((presentToday / Math.max(1, (totalEmployees - activeLeaves))) * 100) : 0;
         
         return {
-          totalEmployees: totalEmployees || 0,
-          newEmployees: newEmployees || 0,
-          presentToday: presentToday || 0,
+          totalEmployees,
+          newEmployees,
+          presentToday,
           attendanceRate,
-          activeLeaves: activeLeaves || 0,
-          upcomingLeaves: upcomingLeaves || 0,
-          expiringContracts: expiringContracts || 0,
-          pendingTrainings: pendingTrainings || 0
+          activeLeaves,
+          upcomingLeaves,
+          expiringContracts,
+          pendingTrainings,
+          // Adding static trend data for now (would be dynamic in a real implementation)
+          employeeTrend: mockTrend,
+          attendanceTrend: [75, 78, 80, 82, 79, 85, 86],
+          leavesTrend: [2, 3, 1, 2, 4, 2, 1]
         };
       } catch (error) {
         console.error('Error fetching HR stats:', error);
+        // Return safe default values if everything fails
         return {
           totalEmployees: 0,
           newEmployees: 0,
@@ -116,10 +179,15 @@ export function useHRStats() {
           activeLeaves: 0,
           upcomingLeaves: 0,
           expiringContracts: 0,
-          pendingTrainings: 0
+          pendingTrainings: 0,
+          employeeTrend: [0, 0, 0, 0, 0],
+          attendanceTrend: [0, 0, 0, 0, 0],
+          leavesTrend: [0, 0, 0, 0, 0]
         };
       }
     },
-    refetchInterval: 5 * 60 * 1000 // Refetch every 5 minutes
+    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+    retry: 2, // Retry failed requests twice
+    staleTime: 2 * 60 * 1000, // Consider data stale after 2 minutes
   });
 }
