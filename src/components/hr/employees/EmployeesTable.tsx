@@ -16,10 +16,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MoreVertical, Eye, Edit, Trash } from "lucide-react";
+import { MoreVertical, Eye, Edit, Trash, Calendar } from "lucide-react";
 import { ViewEmployeeDialog } from "../dialogs/ViewEmployeeDialog";
 import { EditEmployeeDialog } from "../dialogs/EditEmployeeDialog";
 import { DeleteEmployeeDialog } from "../dialogs/DeleteEmployeeDialog";
+import { ManageScheduleDialog } from "../dialogs/ManageScheduleDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 interface EmployeesTableProps {
   employees?: any[];
@@ -31,6 +33,7 @@ export function EmployeesTable({ employees, isLoading, onRefresh }: EmployeesTab
   const [viewEmployeeOpen, setViewEmployeeOpen] = useState(false);
   const [editEmployeeOpen, setEditEmployeeOpen] = useState(false);
   const [deleteEmployeeOpen, setDeleteEmployeeOpen] = useState(false);
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
 
   const handleViewEmployee = (employee: any) => {
@@ -46,6 +49,11 @@ export function EmployeesTable({ employees, isLoading, onRefresh }: EmployeesTab
   const handleDeleteEmployee = (employee: any) => {
     setSelectedEmployee(employee);
     setDeleteEmployeeOpen(true);
+  };
+  
+  const handleManageSchedule = (employee: any) => {
+    setSelectedEmployee(employee);
+    setScheduleDialogOpen(true);
   };
 
   if (isLoading) {
@@ -105,6 +113,10 @@ export function EmployeesTable({ employees, isLoading, onRefresh }: EmployeesTab
                       <Edit className="ml-2 h-4 w-4" />
                       <span>تعديل</span>
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleManageSchedule(employee)}>
+                      <Calendar className="ml-2 h-4 w-4" />
+                      <span>إدارة جدول العمل</span>
+                    </DropdownMenuItem>
                     <DropdownMenuItem 
                       className="text-red-600"
                       onClick={() => handleDeleteEmployee(employee)}
@@ -146,6 +158,16 @@ export function EmployeesTable({ employees, isLoading, onRefresh }: EmployeesTab
               setDeleteEmployeeOpen(false);
               if (onRefresh) onRefresh();
             }} 
+          />
+          
+          <ManageScheduleDialog
+            isOpen={scheduleDialogOpen}
+            onClose={() => setScheduleDialogOpen(false)}
+            employee={selectedEmployee}
+            onSuccess={() => {
+              setScheduleDialogOpen(false);
+              if (onRefresh) onRefresh();
+            }}
           />
         </>
       )}

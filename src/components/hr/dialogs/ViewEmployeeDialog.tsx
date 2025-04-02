@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -7,291 +6,225 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useEmployeeSchedule } from "@/hooks/hr/useEmployeeSchedule";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { CalendarClock, FileText, User } from "lucide-react";
-import { useEmployeeContracts } from "@/hooks/hr/useEmployeeContracts";
-
-interface Employee {
-  id: string;
-  full_name: string;
-  employee_number: string;
-  position: string;
-  department: string;
-  email: string;
-  phone: string;
-  hire_date: string;
-  status: string;
-}
 
 interface ViewEmployeeDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  employee: Employee;
+  employee: any;
 }
 
-export function ViewEmployeeDialog({ isOpen, onClose, employee }: ViewEmployeeDialogProps) {
-  const [loading, setLoading] = useState(false);
-  const [employeeDetails, setEmployeeDetails] = useState<Employee | null>(null);
-  const [activeTab, setActiveTab] = useState("basic");
+export function ViewEmployeeDialog({ 
+  isOpen, 
+  onClose, 
+  employee 
+}: ViewEmployeeDialogProps) {
+  const [activeTab, setActiveTab] = useState("basic-info");
   
-  const { contracts, isLoading: contractsLoading } = useEmployeeContracts(employee?.id);
-
-  useEffect(() => {
-    if (isOpen && employee) {
-      setLoading(true);
-      const fetchEmployeeDetails = async () => {
-        try {
-          const { data, error } = await supabase
-            .from('employees')
-            .select('*')
-            .eq('id', employee.id)
-            .single();
-
-          if (error) throw error;
+  // Fetch employee schedule
+  const { data: workSchedule, isLoading: isLoadingSchedule } = useQuery({
+    queryKey: ["employee-schedule", employee?.id, employee?.schedule_id],
+    queryFn: async () => {
+      if (!employee?.id || !employee?.schedule_id) return null;
+      
+      try {
+        const { data, error } = await supabase
+          .from("hr_work_schedules")
+          .select("*")
+          .eq("id", employee.schedule_id)
+          .single();
           
-          setEmployeeDetails(data);
-        } catch (error) {
-          console.error('Error fetching employee details:', error);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      fetchEmployeeDetails();
-    }
-  }, [isOpen, employee]);
-
-  const fetchAttendanceRecords = async () => {
-    if (!employee?.id) return [];
-    
-    try {
-      const { data, error } = await supabase
-        .from('hr_attendance')
-        .select('*')
-        .eq('employee_id', employee.id)
-        .order('attendance_date', { ascending: false })
-        .limit(10);
-        
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      console.error('Error fetching attendance records:', error);
-      return [];
-    }
+        if (error) throw error;
+        return data;
+      } catch (error) {
+        console.error("Error fetching schedule:", error);
+        return null;
+      }
+    },
+    enabled: !!employee?.id && !!employee?.schedule_id,
+  });
+  
+  // Fetch work days
+  const { data: workDays, isLoading: isLoadingWorkDays } = useQuery({
+    queryKey: ["work-days", employee?.schedule_id],
+    queryFn: async () => {
+      if (!employee?.schedule_id) return [];
+      
+      try {
+        const { data, error } = await supabase
+          .from("hr_work_days")
+          .select("*")
+          .eq("schedule_id", employee.schedule_id)
+          .order("day_of_week", { ascending: true });
+          
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        console.error("Error fetching work days:", error);
+        return [];
+      }
+    },
+    enabled: !!employee?.schedule_id,
+  });
+  
+  // Convert day number to Arabic day name
+  const getDayName = (dayNumber: number) => {
+    const days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+    return days[dayNumber];
   };
-
-  const [attendanceRecords, setAttendanceRecords] = useState([]);
-  const [attendanceLoading, setAttendanceLoading] = useState(false);
-
-  useEffect(() => {
-    if (activeTab === 'attendance' && employee?.id) {
-      setAttendanceLoading(true);
-      fetchAttendanceRecords().then(records => {
-        setAttendanceRecords(records);
-        setAttendanceLoading(false);
-      });
-    }
-  }, [activeTab, employee?.id]);
-
-  if (!employee) return null;
+  
+  // Format time (HH:MM)
+  const formatTime = (timeString: string | null) => {
+    if (!timeString) return "-";
+    return timeString.substring(0, 5);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent dir="rtl" className="max-w-3xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px]" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="text-xl">معلومات الموظف</DialogTitle>
+          <DialogTitle>تفاصيل الموظف</DialogTitle>
         </DialogHeader>
         
-        <Tabs defaultValue="basic" value={activeTab} onValueChange={setActiveTab} className="mt-4">
-          <TabsList className="grid grid-cols-3 w-full">
-            <TabsTrigger value="basic" className="flex items-center gap-1">
-              <User className="h-4 w-4" />
-              المعلومات الأساسية
-            </TabsTrigger>
-            <TabsTrigger value="contracts" className="flex items-center gap-1">
-              <FileText className="h-4 w-4" />
-              العقود
-            </TabsTrigger>
-            <TabsTrigger value="attendance" className="flex items-center gap-1">
-              <CalendarClock className="h-4 w-4" />
-              الحضور
-            </TabsTrigger>
+        <Tabs defaultValue="basic-info" value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid grid-cols-3 mb-4">
+            <TabsTrigger value="basic-info">البيانات الأساسية</TabsTrigger>
+            <TabsTrigger value="contracts">العقود</TabsTrigger>
+            <TabsTrigger value="schedule">جدول العمل</TabsTrigger>
           </TabsList>
           
-          {/* Basic Information Tab */}
-          <TabsContent value="basic">
-            {loading ? (
-              <div className="flex justify-center py-4">جاري التحميل...</div>
-            ) : employeeDetails ? (
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <p className="text-sm text-muted-foreground">الاسم</p>
-                    <p className="font-semibold">{employeeDetails.full_name}</p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm text-muted-foreground">الرقم الوظيفي</p>
-                    <p>{employeeDetails.employee_number || '-'}</p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm text-muted-foreground">المسمى الوظيفي</p>
-                    <p>{employeeDetails.position || '-'}</p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm text-muted-foreground">القسم</p>
-                    <p>{employeeDetails.department || '-'}</p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm text-muted-foreground">البريد الإلكتروني</p>
-                    <p>{employeeDetails.email || '-'}</p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm text-muted-foreground">رقم الهاتف</p>
-                    <p>{employeeDetails.phone || '-'}</p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm text-muted-foreground">تاريخ التعيين</p>
-                    <p>{employeeDetails.hire_date ? new Date(employeeDetails.hire_date).toLocaleDateString('ar-SA') : '-'}</p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm text-muted-foreground">الحالة</p>
-                    <p>
-                      <Badge className={`inline-flex px-2 py-1 rounded-full text-xs ${
-                        employeeDetails.status === 'active' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {employeeDetails.status === 'active' ? 'يعمل' : 'منتهي'}
-                      </Badge>
-                    </p>
-                  </div>
-                </div>
+          <TabsContent value="basic-info" className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h3 className="font-bold text-sm text-muted-foreground">الاسم</h3>
+                <p>{employee?.full_name || "-"}</p>
               </div>
-            ) : (
-              <div className="text-center py-4">لا توجد بيانات متاحة</div>
-            )}
+              <div>
+                <h3 className="font-bold text-sm text-muted-foreground">الرقم الوظيفي</h3>
+                <p>{employee?.employee_number || "-"}</p>
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-muted-foreground">المسمى الوظيفي</h3>
+                <p>{employee?.position || "-"}</p>
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-muted-foreground">القسم</h3>
+                <p>{employee?.department || "-"}</p>
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-muted-foreground">رقم الهاتف</h3>
+                <p dir="ltr">{employee?.phone || "-"}</p>
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-muted-foreground">البريد الإلكتروني</h3>
+                <p dir="ltr">{employee?.email || "-"}</p>
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-muted-foreground">تاريخ التعيين</h3>
+                <p>{employee?.hire_date ? new Date(employee.hire_date).toLocaleDateString("ar-SA") : "-"}</p>
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-muted-foreground">الحالة</h3>
+                <Badge
+                  variant={employee?.status === "active" ? "outline" : "secondary"}
+                  className={
+                    employee?.status === "active"
+                      ? "bg-green-50 text-green-700 hover:bg-green-50"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-100"
+                  }
+                >
+                  {employee?.status === "active" ? "يعمل" : "منتهي"}
+                </Badge>
+              </div>
+            </div>
           </TabsContent>
           
-          {/* Contracts Tab */}
-          <TabsContent value="contracts">
-            {contractsLoading ? (
-              <div className="flex justify-center py-4">جاري تحميل بيانات العقود...</div>
-            ) : contracts && contracts.length > 0 ? (
-              <div className="space-y-4">
-                <div className="rounded-md border">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نوع العقد</th>
-                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تاريخ البدء</th>
-                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تاريخ الانتهاء</th>
-                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الراتب</th>
-                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الحالة</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {contracts.map((contract) => (
-                        <tr key={contract.id}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {contract.contract_type === 'permanent' ? 'دائم' : 
-                             contract.contract_type === 'temporary' ? 'مؤقت' : 
-                             contract.contract_type === 'contract' ? 'تعاقد' : contract.contract_type}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {new Date(contract.start_date).toLocaleDateString('ar-SA')}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {contract.end_date ? new Date(contract.end_date).toLocaleDateString('ar-SA') : 'غير محدد'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {contract.salary ? `${contract.salary} ر.س` : '-'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            <Badge className={`inline-flex px-2 py-1 rounded-full text-xs ${
-                              contract.status === 'active' ? 'bg-green-100 text-green-800' : 
-                              contract.status === 'expired' ? 'bg-yellow-100 text-yellow-800' : 
-                              'bg-red-100 text-red-800'
-                            }`}>
-                              {contract.status === 'active' ? 'ساري' : 
-                               contract.status === 'expired' ? 'منتهي' : 
-                               'ملغي'}
-                            </Badge>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-4">لا توجد عقود مسجلة لهذا الموظف</div>
-            )}
+          <TabsContent value="contracts" className="space-y-4">
+            <div className="border rounded-md p-4">
+              <p className="text-muted-foreground text-center">بيانات العقود غير متوفرة حالياً</p>
+            </div>
           </TabsContent>
           
-          {/* Attendance Tab */}
-          <TabsContent value="attendance">
-            {attendanceLoading ? (
-              <div className="flex justify-center py-4">جاري تحميل سجلات الحضور...</div>
-            ) : attendanceRecords && attendanceRecords.length > 0 ? (
+          <TabsContent value="schedule" className="space-y-4">
+            {isLoadingSchedule ? (
+              <div className="text-center p-4">جاري تحميل بيانات الجدول...</div>
+            ) : workSchedule ? (
               <div className="space-y-4">
-                <div className="rounded-md border">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">التاريخ</th>
-                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">وقت الحضور</th>
-                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">وقت الانصراف</th>
-                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الحالة</th>
-                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">ملاحظات</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {attendanceRecords.map((record: any) => (
-                        <tr key={record.id}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {new Date(record.attendance_date).toLocaleDateString('ar-SA')}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {record.check_in ? new Date(record.check_in).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }) : '-'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {record.check_out ? new Date(record.check_out).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }) : '-'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            <Badge className={`inline-flex px-2 py-1 rounded-full text-xs ${
-                              record.status === 'present' ? 'bg-green-100 text-green-800' : 
-                              record.status === 'late' ? 'bg-yellow-100 text-yellow-800' : 
-                              record.status === 'absent' ? 'bg-red-100 text-red-800' : 
-                              'bg-blue-100 text-blue-800'
-                            }`}>
-                              {record.status === 'present' ? 'حاضر' : 
-                               record.status === 'late' ? 'متأخر' : 
-                               record.status === 'absent' ? 'غائب' : 
-                               record.status === 'leave' ? 'إجازة' : record.status}
-                            </Badge>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {record.notes || '-'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="border rounded-md p-4">
+                  <h3 className="font-bold mb-2">{workSchedule.name}</h3>
+                  <p className="text-muted-foreground text-sm">{workSchedule.description}</p>
+                  
+                  <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div>
+                      <h4 className="text-sm text-muted-foreground">ساعات العمل اليومية</h4>
+                      <p className="font-medium">{workSchedule.work_hours_per_day} ساعة</p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm text-muted-foreground">أيام العمل الأسبوعية</h4>
+                      <p className="font-medium">{workSchedule.work_days_per_week} أيام</p>
+                    </div>
+                  </div>
                 </div>
+                
+                {isLoadingWorkDays ? (
+                  <div className="text-center">جاري تحميل أيام العمل...</div>
+                ) : workDays.length > 0 ? (
+                  <div className="border rounded-md overflow-hidden">
+                    <table className="w-full">
+                      <thead className="bg-muted">
+                        <tr>
+                          <th className="p-2 text-right">اليوم</th>
+                          <th className="p-2 text-right">يوم عمل</th>
+                          <th className="p-2 text-right">وقت البدء</th>
+                          <th className="p-2 text-right">وقت الانتهاء</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {workDays.map((day) => (
+                          <tr key={day.id} className="border-t">
+                            <td className="p-2">{getDayName(day.day_of_week)}</td>
+                            <td className="p-2">
+                              {day.is_working_day ? (
+                                <Badge className="bg-green-50 text-green-700 hover:bg-green-50">
+                                  نعم
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="bg-gray-50">
+                                  لا
+                                </Badge>
+                              )}
+                            </td>
+                            <td className="p-2">{day.is_working_day ? formatTime(day.start_time) : "-"}</td>
+                            <td className="p-2">{day.is_working_day ? formatTime(day.end_time) : "-"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center border rounded-md p-4">
+                    لا توجد بيانات أيام عمل مسجلة
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="text-center py-4">لا توجد سجلات حضور لهذا الموظف</div>
+              <div className="border rounded-md p-4 text-center">
+                <p className="text-muted-foreground">لم يتم تعيين جدول عمل لهذا الموظف</p>
+                <p className="text-xs mt-2">يمكنك تعيين جدول عمل من خلال خيار "إدارة جدول العمل" في قائمة الإجراءات</p>
+              </div>
             )}
           </TabsContent>
         </Tabs>
+        
+        <div className="flex justify-end mt-4">
+          <Button variant="outline" onClick={onClose}>
+            إغلاق
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
