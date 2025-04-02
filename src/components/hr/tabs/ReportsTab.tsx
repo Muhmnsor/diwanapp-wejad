@@ -1,226 +1,128 @@
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { DatePicker } from "@/components/ui/date-picker";
-import { Label } from "@/components/ui/label";
-import { FileText, Download, Users, Calendar, BarChart, Calendar as CalendarIcon, FileBarChart } from "lucide-react";
+import React, { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AttendanceReport } from "../reports/AttendanceReport";
 import { EmployeeReport } from "../reports/EmployeeReport";
 import { LeaveReport } from "../reports/LeaveReport";
-import { useToast } from "@/hooks/use-toast";
-import { format, subDays, subMonths } from "date-fns";
-import { ar } from "date-fns/locale";
+import { EmployeeSelector } from "../reports/components/EmployeeSelector";
+import { Button } from "@/components/ui/button";
+import { Download, Calendar } from "lucide-react";
+import { format } from "date-fns";
+import { toast } from "sonner";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 
 export function ReportsTab() {
-  const [reportType, setReportType] = useState<string>("attendance");
-  const [activeTab, setActiveTab] = useState<string>("generate");
-  const [startDate, setStartDate] = useState<Date | undefined>(subMonths(new Date(), 1)); // Default to 1 month ago
-  const [endDate, setEndDate] = useState<Date | undefined>(new Date()); // Default to today
-  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("attendance");
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | undefined>(undefined);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | undefined>(undefined);
 
-  const handleReportTypeChange = (value: string) => {
-    setReportType(value);
-  };
-  
-  const handleGenerateReport = () => {
-    if (!startDate || !endDate) {
-      toast({
-        title: "تحديد التاريخ مطلوب",
-        description: "يرجى تحديد تاريخ البداية والنهاية للتقرير",
-        variant: "destructive",
-      });
+  const handleExportReport = () => {
+    if (!dateRange) {
+      toast.error("يرجى تحديد نطاق تاريخ للتقرير");
       return;
     }
     
-    if (endDate < startDate) {
-      toast({
-        title: "خطأ في التاريخ",
-        description: "تاريخ النهاية يجب أن يكون بعد تاريخ البداية",
-        variant: "destructive",
-      });
-      return;
-    }
+    const reportName = activeTab === "attendance" 
+      ? "تقرير الحضور" 
+      : activeTab === "employees" 
+        ? "تقرير الموظفين" 
+        : "تقرير الإجازات";
     
-    setActiveTab("view");
+    toast.success(`تم تصدير ${reportName} بنجاح`);
   };
 
-  const handleQuickDateSelect = (period: string) => {
-    const today = new Date();
-    
-    switch (period) {
-      case "today":
-        setStartDate(today);
-        setEndDate(today);
-        break;
-      case "week":
-        setStartDate(subDays(today, 7));
-        setEndDate(today);
-        break;
-      case "month":
-        setStartDate(subMonths(today, 1));
-        setEndDate(today);
-        break;
-      case "quarter":
-        setStartDate(subMonths(today, 3));
-        setEndDate(today);
-        break;
-      case "year":
-        setStartDate(subMonths(today, 12));
-        setEndDate(today);
-        break;
-    }
-  };
-  
   return (
-    <div className="space-y-6">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-4 grid w-full grid-cols-2">
-          <TabsTrigger value="generate">إنشاء تقرير جديد</TabsTrigger>
-          <TabsTrigger value="view">عرض التقرير</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="generate" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-right">إنشاء تقرير جديد</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="block text-sm font-medium mb-2">نوع التقرير</Label>
-                  <Select value={reportType} onValueChange={handleReportTypeChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="اختر نوع التقرير" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="attendance" className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        تقرير الحضور
-                      </SelectItem>
-                      <SelectItem value="leaves" className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        تقرير الإجازات
-                      </SelectItem>
-                      <SelectItem value="employees" className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        تقرير الموظفين
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label className="block text-sm font-medium mb-2">الفترة الزمنية</Label>
-                  <div className="flex flex-wrap gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleQuickDateSelect("today")}
-                    >
-                      اليوم
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleQuickDateSelect("week")}
-                    >
-                      آخر أسبوع
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleQuickDateSelect("month")}
-                    >
-                      آخر شهر
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleQuickDateSelect("quarter")}
-                    >
-                      آخر 3 أشهر
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleQuickDateSelect("year")}
-                    >
-                      آخر سنة
-                    </Button>
-                  </div>
-                </div>
-                
-                <div>
-                  <Label className="block text-sm font-medium mb-2">تاريخ البداية</Label>
-                  <DatePicker 
-                    date={startDate} 
-                    setDate={setStartDate} 
-                    locale="ar" 
-                    placeholder="اختر تاريخ البداية" 
-                  />
-                </div>
-                
-                <div>
-                  <Label className="block text-sm font-medium mb-2">تاريخ النهاية</Label>
-                  <DatePicker 
-                    date={endDate} 
-                    setDate={setEndDate} 
-                    locale="ar" 
-                    placeholder="اختر تاريخ النهاية" 
-                  />
-                </div>
-                
-                {startDate && endDate && (
-                  <div className="md:col-span-2">
-                    <div className="p-4 bg-muted rounded-md">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <CalendarIcon className="h-4 w-4" />
-                        <span>
-                          سيتم إنشاء تقرير للفترة من {format(startDate, 'dd MMMM yyyy', { locale: ar })} إلى {format(endDate, 'dd MMMM yyyy', { locale: ar })}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <DateRangePicker
+                value={dateRange}
+                onChange={setDateRange}
+                placeholder="حدد فترة التقرير"
+                align="right"
+                locale="ar"
+              />
               
-              <div className="text-left md:text-right mt-4">
-                <Button onClick={handleGenerateReport}>
-                  <BarChart className="ml-2 h-4 w-4" />
-                  إنشاء التقرير
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="view" className="space-y-4">
-          {reportType === "attendance" && (
-            <AttendanceReport 
-              startDate={startDate} 
-              endDate={endDate} 
-            />
-          )}
+              <EmployeeSelector 
+                value={selectedEmployeeId} 
+                onChange={setSelectedEmployeeId} 
+              />
+            </div>
+            
+            <Button
+              onClick={handleExportReport}
+              variant="outline"
+              disabled={!dateRange}
+            >
+              <Download className="ml-2 h-4 w-4" />
+              تصدير التقرير
+            </Button>
+          </div>
           
-          {reportType === "leaves" && (
-            <LeaveReport 
-              startDate={startDate} 
-              endDate={endDate} 
-            />
-          )}
-          
-          {reportType === "employees" && (
-            <EmployeeReport 
-              startDate={startDate} 
-              endDate={endDate} 
-            />
-          )}
-          
-        </TabsContent>
-      </Tabs>
+          <Tabs defaultValue="attendance" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="attendance">تقارير الحضور</TabsTrigger>
+              <TabsTrigger value="employees">تقارير الموظفين</TabsTrigger>
+              <TabsTrigger value="leaves">تقارير الإجازات</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="attendance" className="space-y-4">
+              {dateRange ? (
+                <AttendanceReport 
+                  startDate={dateRange.from} 
+                  endDate={dateRange.to}
+                  employeeId={selectedEmployeeId}
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center p-10 text-center bg-muted rounded-lg">
+                  <Calendar className="h-10 w-10 text-muted-foreground mb-4" />
+                  <p className="text-lg font-medium">يرجى تحديد فترة التقرير</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    حدد تاريخ البداية والنهاية لعرض تقرير الحضور
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="employees" className="space-y-4">
+              {dateRange ? (
+                <EmployeeReport 
+                  startDate={dateRange.from} 
+                  endDate={dateRange.to} 
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center p-10 text-center bg-muted rounded-lg">
+                  <Calendar className="h-10 w-10 text-muted-foreground mb-4" />
+                  <p className="text-lg font-medium">يرجى تحديد فترة التقرير</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    حدد تاريخ البداية والنهاية لعرض تقرير الموظفين
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="leaves" className="space-y-4">
+              {dateRange ? (
+                <LeaveReport 
+                  startDate={dateRange.from} 
+                  endDate={dateRange.to} 
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center p-10 text-center bg-muted rounded-lg">
+                  <Calendar className="h-10 w-10 text-muted-foreground mb-4" />
+                  <p className="text-lg font-medium">يرجى تحديد فترة التقرير</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    حدد تاريخ البداية والنهاية لعرض تقرير الإجازات
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }

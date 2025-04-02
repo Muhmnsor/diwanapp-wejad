@@ -12,22 +12,29 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface AttendanceReportProps {
   startDate?: Date;
   endDate?: Date;
+  employeeId?: string;
 }
 
-export function AttendanceReport({ startDate, endDate }: AttendanceReportProps) {
+export function AttendanceReport({ startDate, endDate, employeeId }: AttendanceReportProps) {
   const [reportPeriod, setReportPeriod] = React.useState<"daily" | "weekly" | "monthly">("daily");
   
   // Format dates for display
   const formattedStartDate = startDate ? format(startDate, 'dd MMMM yyyy', { locale: ar }) : '';
   const formattedEndDate = endDate ? format(endDate, 'dd MMMM yyyy', { locale: ar }) : '';
   
-  const { data: reportData, isLoading } = useAttendanceReport(startDate, endDate);
+  const { data: reportData, isLoading } = useAttendanceReport(startDate, endDate, employeeId);
+  
+  // Get employee name if employee specific report
+  const employeeName = employeeId && reportData?.records.length > 0 
+    ? reportData.records[0].employee_name 
+    : '';
   
   return (
     <Card>
       <CardHeader className="flex flex-col sm:flex-row justify-between sm:items-center">
         <CardTitle>
           تقرير الحضور
+          {employeeName && <span className="block text-md font-semibold text-primary mt-1">{employeeName}</span>}
           {startDate && endDate && (
             <span className="block text-sm font-normal text-muted-foreground mt-1">
               الفترة: {formattedStartDate} إلى {formattedEndDate}
@@ -61,11 +68,11 @@ export function AttendanceReport({ startDate, endDate }: AttendanceReportProps) 
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <AttendanceStats period={reportPeriod} />
+              <AttendanceStats period={reportPeriod} employeeStats={reportData?.employeeStats} />
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <AttendanceCharts period={reportPeriod} />
+              <AttendanceCharts period={reportPeriod} employeeId={employeeId} />
             </div>
             
             {reportData && reportData.records.length > 0 ? (
@@ -73,7 +80,7 @@ export function AttendanceReport({ startDate, endDate }: AttendanceReportProps) 
                 <table className="min-w-full bg-white rounded-md overflow-hidden">
                   <thead className="bg-gray-100">
                     <tr>
-                      <th className="px-4 py-2 text-right">الموظف</th>
+                      {!employeeId && <th className="px-4 py-2 text-right">الموظف</th>}
                       <th className="px-4 py-2 text-right">التاريخ</th>
                       <th className="px-4 py-2 text-right">الحضور</th>
                       <th className="px-4 py-2 text-right">الانصراف</th>
@@ -84,7 +91,7 @@ export function AttendanceReport({ startDate, endDate }: AttendanceReportProps) 
                   <tbody>
                     {reportData.records.map((record) => (
                       <tr key={record.id} className="border-b">
-                        <td className="px-4 py-2 text-right">{record.employee_name}</td>
+                        {!employeeId && <td className="px-4 py-2 text-right">{record.employee_name}</td>}
                         <td className="px-4 py-2 text-right">{format(new Date(record.attendance_date), 'yyyy/MM/dd', { locale: ar })}</td>
                         <td className="px-4 py-2 text-right">{record.check_in || '-'}</td>
                         <td className="px-4 py-2 text-right">{record.check_out || '-'}</td>
