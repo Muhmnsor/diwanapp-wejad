@@ -1,16 +1,17 @@
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { Textarea } from "@/components/ui/textarea";
+import { useOrganizationalUnits } from "@/hooks/hr/useOrganizationalUnits";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 interface OrganizationalUnit {
-  id: string;
+  id?: string;
   name: string;
   description?: string;
   unit_type: string;
@@ -19,44 +20,32 @@ interface OrganizationalUnit {
 }
 
 interface OrganizationalUnitDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  editMode: boolean;
-  unit?: OrganizationalUnit | null;
-  units: OrganizationalUnit[];
-  onSuccess: () => void;
+  isOpen: boolean;
+  onClose: () => void;
+  unitToEdit?: OrganizationalUnit | null;
+  onUnitAdded?: () => void;
 }
 
-const UNIT_TYPES = [
-  { value: "department", label: "إدارة" },
-  { value: "division", label: "قسم" },
-  { value: "section", label: "شعبة" },
-  { value: "team", label: "فريق" },
-  { value: "unit", label: "وحدة" }
-];
-
-export function OrganizationalUnitDialog({ 
-  open, 
-  onOpenChange, 
-  editMode, 
-  unit,
-  units,
-  onSuccess
+export function OrganizationalUnitDialog({
+  isOpen,
+  onClose,
+  unitToEdit,
+  onUnitAdded
 }: OrganizationalUnitDialogProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [unitType, setUnitType] = useState("department");
   const [parentId, setParentId] = useState<string | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const { data: units, isLoading } = useOrganizationalUnits();
 
-  // Initialize form values when editing
   useEffect(() => {
-    if (editMode && unit) {
-      setName(unit.name || "");
-      setDescription(unit.description || "");
-      setUnitType(unit.unit_type || "department");
-      setParentId(unit.parent_id || undefined);
+    if (unitToEdit) {
+      setName(unitToEdit.name || "");
+      setDescription(unitToEdit.description || "");
+      setUnitType(unitToEdit.unit_type || "department");
+      setParentId(unitToEdit.parent_id);
     } else {
       // Reset form for new unit
       setName("");
@@ -64,147 +53,140 @@ export function OrganizationalUnitDialog({
       setUnitType("department");
       setParentId(undefined);
     }
-  }, [editMode, unit]);
+  }, [unitToEdit, isOpen]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  const handleSubmit = async () => {
+    if (!name.trim()) {
+      toast({
+        title: "خطأ",
+        description: "يرجى إدخال اسم الوحدة التنظيمية",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
-      if (editMode && unit) {
-        // Update existing unit
-        const { error } = await supabase
-          .from('organizational_units')
-          .update({
-            name,
-            description,
-            unit_type: unitType,
-            parent_id: parentId || null,
-            updated_at: new Date()
-          })
-          .eq('id', unit.id);
+      setIsSubmitting(true);
+      
+      const unitData: Partial<OrganizationalUnit> = {
+        name,
+        description,
+        unit_type: unitType,
+        // Set parent_id to null when "none" is selected
+        parent_id: parentId === "none" ? null : parentId,
+      };
 
-        if (error) throw error;
-        
-        toast({
-          title: "تم التحديث بنجاح",
-          description: "تم تحديث الوحدة التنظيمية بنجاح"
-        });
+      let result;
+      
+      if (unitToEdit?.id) {
+        // Update existing unit
+        result = await supabase
+          .from('organizational_units')
+          .update(unitData)
+          .eq('id', unitToEdit.id);
       } else {
         // Create new unit
-        const { error } = await supabase
+        result = await supabase
           .from('organizational_units')
-          .insert({
-            name,
-            description,
-            unit_type: unitType,
-            parent_id: parentId || null,
-            created_by: (await supabase.auth.getUser()).data.user?.id
-          });
-
-        if (error) throw error;
-        
-        toast({
-          title: "تمت الإضافة بنجاح",
-          description: "تم إضافة الوحدة التنظيمية بنجاح"
-        });
+          .insert([unitData]);
       }
 
-      onSuccess();
+      if (result.error) {
+        throw result.error;
+      }
+      
+      toast({
+        title: "تم بنجاح",
+        description: unitToEdit?.id ? "تم تحديث الوحدة التنظيمية" : "تم إضافة الوحدة التنظيمية",
+      });
+      
+      onUnitAdded?.();
+      onClose();
     } catch (error) {
       console.error("Error saving organizational unit:", error);
       toast({
-        title: "حدث خطأ",
+        title: "خطأ",
         description: "حدث خطأ أثناء حفظ الوحدة التنظيمية",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  // Filter out the current unit from parent options to prevent circular references
-  const parentOptions = editMode && unit 
-    ? units.filter(u => u.id !== unit.id) 
-    : units;
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>
-            {editMode ? "تعديل وحدة تنظيمية" : "إضافة وحدة تنظيمية جديدة"}
-          </DialogTitle>
+          <DialogTitle>{unitToEdit?.id ? "تعديل الوحدة التنظيمية" : "إضافة وحدة تنظيمية جديدة"}</DialogTitle>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">اسم الوحدة التنظيمية</Label>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right">
+              الاسم
+            </Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="أدخل اسم الوحدة التنظيمية"
-              required
+              className="col-span-3"
             />
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="unit-type">نوع الوحدة</Label>
-            <Select value={unitType} onValueChange={setUnitType} required>
-              <SelectTrigger id="unit-type">
-                <SelectValue placeholder="اختر نوع الوحدة" />
-              </SelectTrigger>
-              <SelectContent>
-                {UNIT_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="parent-id">الوحدة الأب</Label>
-            <Select 
-              value={parentId} 
-              onValueChange={setParentId}
-            >
-              <SelectTrigger id="parent-id">
-                <SelectValue placeholder="بدون وحدة أب" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">بدون وحدة أب</SelectItem>
-                {parentOptions.map((u) => (
-                  <SelectItem key={u.id} value={u.id}>
-                    {u.name} ({UNIT_TYPES.find(t => t.value === u.unit_type)?.label})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="description">الوصف</Label>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="description" className="text-right">
+              الوصف
+            </Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="أدخل وصف الوحدة التنظيمية (اختياري)"
-              rows={3}
+              className="col-span-3"
             />
           </div>
-          
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              إلغاء
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "جاري الحفظ..." : editMode ? "تحديث" : "إضافة"}
-            </Button>
-          </DialogFooter>
-        </form>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="type" className="text-right">
+              النوع
+            </Label>
+            <Select value={unitType} onValueChange={setUnitType}>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="اختر نوع الوحدة" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="department">قسم</SelectItem>
+                <SelectItem value="division">إدارة</SelectItem>
+                <SelectItem value="team">فريق</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="parent" className="text-right">
+              الوحدة الأم
+            </Label>
+            <Select 
+              value={parentId || "none"} 
+              onValueChange={setParentId}
+              disabled={isLoading}
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="اختر الوحدة الأم" />
+              </SelectTrigger>
+              <SelectContent>
+                {/* Use "none" instead of empty string for the value */}
+                <SelectItem value="none">بدون</SelectItem>
+                {units?.map((unit) => (
+                  <SelectItem key={unit.id} value={unit.id}>
+                    {unit.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button type="submit" onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? "جاري الحفظ..." : "حفظ"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
