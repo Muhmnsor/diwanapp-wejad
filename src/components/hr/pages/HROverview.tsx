@@ -1,249 +1,177 @@
 
-import { useHRStats, getTrendDirection } from "@/hooks/hr/useHRStats";
-import { 
-  Users, 
-  CalendarClock, 
-  Calendar, 
-  Briefcase, 
-  GraduationCap, 
-  AlertCircle,
-  UserPlus,
-  Building,
-  Clock,
-  ChartBar,
-  ChartPie,
-  BarChart,
-  LineChart
-} from "lucide-react";
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StatCard } from "@/components/hr/dashboard/StatCard";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useHRStats, getTrendDirection, getTrendPercentage } from "@/hooks/hr/useHRStats";
+import { ArrowUpIcon, ArrowDownIcon, MinusIcon } from "lucide-react";
 import { EmployeeDistributionChart } from "@/components/hr/dashboard/EmployeeDistributionChart";
-import { AttendanceTrendChart } from "@/components/hr/dashboard/AttendanceTrendChart";
 import { EmployeeStatusChart } from "@/components/hr/dashboard/EmployeeStatusChart";
+import { AttendanceTrendChart } from "@/components/hr/dashboard/AttendanceTrendChart";
 import { LeaveDistributionChart } from "@/components/hr/dashboard/LeaveDistributionChart";
-import { ContractExpiryAlert } from "@/components/hr/dashboard/ContractExpiryAlert";
+import { Badge } from "@/components/ui/badge";
 
-// Default trend data for components that don't have it
-const defaultTrendData = [5, 10, 8, 15, 20, 18, 25];
-
-const HROverview = () => {
-  const { data: stats, isLoading: isLoadingStats } = useHRStats();
+export const HROverview = () => {
+  const { data: stats, isLoading } = useHRStats();
+  
+  const renderTrendIcon = (trend: string) => {
+    switch (trend) {
+      case 'up':
+        return <ArrowUpIcon className="h-4 w-4 text-green-500" />;
+      case 'down':
+        return <ArrowDownIcon className="h-4 w-4 text-red-500" />;
+      default:
+        return <MinusIcon className="h-4 w-4 text-gray-500" />;
+    }
+  };
 
   return (
     <div className="space-y-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">نظرة عامة على شؤون الموظفين</h1>
-        <p className="text-muted-foreground">إحصائيات ومؤشرات أداء إدارة شؤون الموظفين</p>
-      </div>
-
-      {/* Main Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {isLoadingStats ? (
-          <>
-            <Card className="p-4"><Skeleton className="h-24 w-full" /></Card>
-            <Card className="p-4"><Skeleton className="h-24 w-full" /></Card>
-            <Card className="p-4"><Skeleton className="h-24 w-full" /></Card>
-          </>
-        ) : (
-          <>
-            <StatCard
-              title="الموظفين"
-              value={stats?.totalEmployees || 0}
-              description={`${stats?.newEmployees || 0} موظف جديد هذا الشهر`}
-              icon={<Users className="h-6 w-6 text-blue-600" />}
-              trendData={stats?.trends?.employeeTrend || defaultTrendData}
-              trendColor="#3b82f6"
-            />
-            
-            <StatCard
-              title="الحضور اليوم"
-              value={stats?.presentToday || 0}
-              description={`نسبة الحضور: ${stats?.attendanceRate || 0}%`}
-              icon={<CalendarClock className="h-6 w-6 text-green-600" />}
-              trendData={stats?.trends?.attendanceTrend || defaultTrendData}
-              trendColor="#22c55e"
-            />
-            
-            <StatCard
-              title="الإجازات النشطة"
-              value={stats?.activeLeaves || 0}
-              description={`${stats?.upcomingLeaves || 0} إجازة في الأسبوع القادم`}
-              icon={<Calendar className="h-6 w-6 text-amber-600" />}
-              trendData={stats?.trends?.leaveTrend || defaultTrendData}
-              trendColor="#f59e0b"
-            />
-          </>
-        )}
-      </div>
-
-      {/* Secondary Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {isLoadingStats ? (
-          <>
-            <Card className="p-4"><Skeleton className="h-24 w-full" /></Card>
-            <Card className="p-4"><Skeleton className="h-24 w-full" /></Card>
-            <Card className="p-4"><Skeleton className="h-24 w-full" /></Card>
-          </>
-        ) : (
-          <>
-            <StatCard
-              title="العقود المنتهية قريباً"
-              value={stats?.expiringContracts || 0}
-              description="خلال الشهر القادم"
-              icon={<Briefcase className="h-6 w-6 text-purple-600" />}
-              trendData={stats?.trends?.contractsTrend || defaultTrendData}
-              trendColor="#9333ea"
-            />
-            
-            <StatCard
-              title="التدريبات الحالية"
-              value={stats?.pendingTrainings || 0}
-              description="برامج تدريبية قيد التنفيذ"
-              icon={<GraduationCap className="h-6 w-6 text-cyan-600" />}
-              trendData={stats?.trends?.trainingTrend || defaultTrendData}
-              trendColor="#0891b2"
-            />
-            
-            <StatCard
-              title="المهام العاجلة"
-              value={stats?.urgentTasks || 3}
-              description="مهام تحتاج إلى متابعة فورية"
-              icon={<AlertCircle className="h-6 w-6 text-red-600" />}
-              trendData={stats?.trends?.tasksTrend || defaultTrendData}
-              trendColor="#dc2626"
-            />
-          </>
-        )}
-      </div>
-
-      {/* Detailed Analysis Tabs */}
-      <Card>
-        <CardHeader>
-          <CardTitle>تحليلات تفصيلية</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="employees" className="space-y-4">
-            <TabsList className="grid grid-cols-4 w-full">
-              <TabsTrigger value="employees">الموظفين</TabsTrigger>
-              <TabsTrigger value="attendance">الحضور</TabsTrigger>
-              <TabsTrigger value="leaves">الإجازات</TabsTrigger>
-              <TabsTrigger value="performance">الأداء</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="employees" className="space-y-4">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <EmployeeDistributionChart />
-                <EmployeeStatusChart />
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="attendance" className="space-y-4">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <AttendanceTrendChart />
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm font-medium">معدل الحضور اليومي</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {isLoadingStats ? (
-                      <Skeleton className="h-60 w-full" />
-                    ) : (
-                      <div className="h-60 flex items-center justify-center">
-                        <p className="text-muted-foreground">بيانات معدل الحضور اليومي</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="leaves" className="space-y-4">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <LeaveDistributionChart />
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm font-medium">استخدام رصيد الإجازات</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {isLoadingStats ? (
-                      <Skeleton className="h-60 w-full" />
-                    ) : (
-                      <div className="h-60 flex items-center justify-center">
-                        <p className="text-muted-foreground">بيانات استخدام رصيد الإجازات</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="performance" className="space-y-4">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm font-medium">مؤشرات الأداء</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {isLoadingStats ? (
-                      <Skeleton className="h-60 w-full" />
-                    ) : (
-                      <div className="h-60 flex items-center justify-center">
-                        <p className="text-muted-foreground">بيانات مؤشرات الأداء</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm font-medium">معدل دوران الموظفين</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {isLoadingStats ? (
-                      <Skeleton className="h-60 w-full" />
-                    ) : (
-                      <div className="h-60 flex items-center justify-center">
-                        <p className="text-muted-foreground">بيانات معدل دوران الموظفين</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-
-      {/* Alerts and Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <ContractExpiryAlert expiringContracts={stats?.expiringContractDetails || []} />
+      <h2 className="text-3xl font-bold tracking-tight">نظرة عامة الموارد البشرية</h2>
+      
+      {/* Stats Overview */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader>
-            <CardTitle>المهام العاجلة</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">إجمالي الموظفين</CardTitle>
+            <div className="flex items-center">
+              {!isLoading && renderTrendIcon(getTrendDirection(stats?.trends.employeeTrend || []))}
+            </div>
           </CardHeader>
           <CardContent>
-            {isLoadingStats ? (
-              <Skeleton className="h-32 w-full" />
+            <div className="text-2xl font-bold">{isLoading ? "..." : stats?.totalEmployees}</div>
+            {!isLoading && stats?.trends.employeeTrend && (
+              <p className="text-xs text-muted-foreground">
+                {getTrendPercentage(stats.trends.employeeTrend)}% من الشهر الماضي
+              </p>
+            )}
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">نسبة الحضور اليوم</CardTitle>
+            <div className="flex items-center">
+              {!isLoading && renderTrendIcon(getTrendDirection(stats?.trends.attendanceTrend || []))}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{isLoading ? "..." : `${stats?.attendanceRate}%`}</div>
+            {!isLoading && stats?.trends.attendanceTrend && (
+              <p className="text-xs text-muted-foreground">
+                {getTrendPercentage(stats.trends.attendanceTrend)}% من الأسبوع الماضي
+              </p>
+            )}
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">الإجازات النشطة</CardTitle>
+            <div className="flex items-center">
+              {!isLoading && renderTrendIcon(getTrendDirection(stats?.trends.leaveTrend || []))}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{isLoading ? "..." : stats?.activeLeaves}</div>
+            {!isLoading && stats?.trends.leaveTrend && (
+              <p className="text-xs text-muted-foreground">
+                {getTrendPercentage(stats.trends.leaveTrend)}% من الشهر الماضي
+              </p>
+            )}
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">العقود المنتهية قريباً</CardTitle>
+            <div className="flex items-center">
+              {!isLoading && renderTrendIcon(getTrendDirection(stats?.trends.contractsTrend || []))}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{isLoading ? "..." : stats?.expiringContracts}</div>
+            {!isLoading && stats?.trends.contractsTrend && (
+              <p className="text-xs text-muted-foreground">
+                {getTrendPercentage(stats.trends.contractsTrend)}% من الشهر الماضي
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+        <EmployeeDistributionChart />
+        <EmployeeStatusChart />
+      </div>
+      
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+        <AttendanceTrendChart />
+        <LeaveDistributionChart />
+      </div>
+      
+      {/* Alerts Section */}
+      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
+        {/* Expiring Contracts Alert */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">العقود المنتهية قريباً</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <p>جاري التحميل...</p>
             ) : (
-              stats?.urgentTasks ? (
-                <ul className="space-y-2">
-                  <li className="flex items-center justify-between border-b pb-2">
-                    <span>مراجعة طلبات الإجازة المعلقة</span>
-                    <Badge variant="outline" className="bg-amber-100 text-amber-800">عاجل</Badge>
-                  </li>
-                  <li className="flex items-center justify-between border-b pb-2">
-                    <span>إكمال تقييمات الأداء الشهرية</span>
-                    <Badge variant="outline" className="bg-red-100 text-red-800">متأخر</Badge>
-                  </li>
-                  <li className="flex items-center justify-between">
-                    <span>تحديث سجلات التدريب</span>
-                    <Badge variant="outline" className="bg-blue-100 text-blue-800">قيد التنفيذ</Badge>
-                  </li>
-                </ul>
-              ) : (
-                <p className="text-muted-foreground text-center py-8">لا توجد مهام عاجلة حالياً</p>
-              )
+              <div className="space-y-4">
+                {stats?.expiringContractDetails.map((contract) => (
+                  <div key={contract.id} className="flex items-center justify-between border-b pb-2">
+                    <div>
+                      <p className="font-medium">{contract.employeeName}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">{contract.contractType}</span>
+                        <Badge variant={contract.daysRemaining <= 7 ? "destructive" : "secondary"}>
+                          {contract.daysRemaining} يوم متبقي
+                        </Badge>
+                      </div>
+                    </div>
+                    <span className="text-sm">{contract.expiryDate}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        
+        {/* Urgent Tasks */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">المهام العاجلة</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <p>جاري التحميل...</p>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b pb-2">
+                  <div>
+                    <p className="font-medium">مراجعة طلبات الإجازة المعلقة</p>
+                    <Badge variant="destructive">عاجل</Badge>
+                  </div>
+                  <span className="text-sm">اليوم</span>
+                </div>
+                <div className="flex items-center justify-between border-b pb-2">
+                  <div>
+                    <p className="font-medium">إعداد تقارير الحضور الشهرية</p>
+                    <Badge variant="secondary">متوسط</Badge>
+                  </div>
+                  <span className="text-sm">غداً</span>
+                </div>
+                <div className="flex items-center justify-between border-b pb-2">
+                  <div>
+                    <p className="font-medium">تجديد عقود الموظفين المنتهية</p>
+                    <Badge variant="destructive">عاجل</Badge>
+                  </div>
+                  <span className="text-sm">خلال 3 أيام</span>
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>
