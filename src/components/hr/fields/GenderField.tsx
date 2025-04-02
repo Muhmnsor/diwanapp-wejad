@@ -1,14 +1,15 @@
+
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 interface GenderFieldProps {
   value: string | undefined;
   onChange: (value: string) => void;
 }
-export function GenderField({
-  value,
-  onChange
-}: GenderFieldProps) {
-  return <div className="space-y-2 py-0 my-0">
+
+export function GenderField({ value, onChange }: GenderFieldProps) {
+  return (
+    <div className="space-y-2">
       <Label htmlFor="gender">الجنس</Label>
       <Select value={value || ""} onValueChange={onChange}>
         <SelectTrigger id="gender">
@@ -19,5 +20,6 @@ export function GenderField({
           <SelectItem value="female">أنثى</SelectItem>
         </SelectContent>
       </Select>
-    </div>;
+    </div>
+  );
 }
