@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -47,7 +46,6 @@ export function OrganizationalUnitDialog({
       setUnitType(unitToEdit.unit_type || "department");
       setParentId(unitToEdit.parent_id);
     } else {
-      // Reset form for new unit
       setName("");
       setDescription("");
       setUnitType("department");
@@ -72,20 +70,17 @@ export function OrganizationalUnitDialog({
         name,
         description,
         unit_type: unitType,
-        // Set parent_id to null when "none" is selected
         parent_id: parentId === "none" ? null : parentId,
       };
 
       let result;
       
       if (unitToEdit?.id) {
-        // Update existing unit
         result = await supabase
           .from('organizational_units')
           .update(unitData)
           .eq('id', unitToEdit.id);
       } else {
-        // Create new unit
         result = await supabase
           .from('organizational_units')
           .insert([unitData]);
@@ -155,6 +150,7 @@ export function OrganizationalUnitDialog({
                 <SelectItem value="department">قسم</SelectItem>
                 <SelectItem value="division">إدارة</SelectItem>
                 <SelectItem value="team">فريق</SelectItem>
+                <SelectItem value="unit">وحدة</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -171,7 +167,6 @@ export function OrganizationalUnitDialog({
                 <SelectValue placeholder="اختر الوحدة الأم" />
               </SelectTrigger>
               <SelectContent>
-                {/* Use "none" instead of empty string for the value */}
                 <SelectItem value="none">بدون</SelectItem>
                 {units?.map((unit) => (
                   <SelectItem key={unit.id} value={unit.id}>

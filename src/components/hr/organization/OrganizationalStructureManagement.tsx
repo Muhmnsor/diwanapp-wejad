@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -93,6 +92,7 @@ export function OrganizationalStructureManagement() {
                     {selectedUnit.unit_type === "department" && "قسم"}
                     {selectedUnit.unit_type === "division" && "إدارة"}
                     {selectedUnit.unit_type === "team" && "فريق"}
+                    {selectedUnit.unit_type === "unit" && "وحدة"}
                   </p>
                 </div>
                 
