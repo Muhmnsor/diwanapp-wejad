@@ -2,22 +2,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-interface Employee {
-  id: string;
-  full_name: string;
-  position?: string;
-  department?: string;
-}
-
-interface EmployeeAssignment {
+interface OrganizationalUnitEmployee {
   id: string;
   employee_id: string;
   organizational_unit_id: string;
-  role?: string;
   is_primary: boolean;
-  start_date?: string;
-  end_date?: string;
-  employee: Employee;
+  created_at: string;
+  employee: {
+    id: string;
+    full_name: string;
+    email?: string;
+    position?: string;
+  };
 }
 
 export function useOrganizationalUnitEmployees(unitId: string) {
@@ -32,22 +28,26 @@ export function useOrganizationalUnitEmployees(unitId: string) {
           id,
           employee_id,
           organizational_unit_id,
-          role,
           is_primary,
-          start_date,
-          end_date,
-          employee:employees(id, full_name, position, department)
+          created_at,
+          employee:employees (
+            id,
+            full_name,
+            email,
+            position
+          )
         `)
-        .eq('organizational_unit_id', unitId);
+        .eq('organizational_unit_id', unitId)
+        .order('created_at');
         
       if (error) {
-        console.error("Error fetching unit employees:", error);
+        console.error("Error fetching organizational unit employees:", error);
         throw error;
       }
       
-      return data as EmployeeAssignment[];
+      return data as OrganizationalUnitEmployee[];
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: !!unitId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }

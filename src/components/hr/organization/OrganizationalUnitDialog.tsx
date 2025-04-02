@@ -1,210 +1,225 @@
 
-import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import React from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
+import { useOrganizationalUnits } from "@/hooks/hr/useOrganizationalUnits";
 import { supabase } from "@/integrations/supabase/client";
 
-interface OrganizationalUnit {
-  id: string;
-  name: string;
-  description?: string;
-  unit_type: string;
-  parent_id?: string;
-  is_active?: boolean;
-}
+const formSchema = z.object({
+  name: z.string().min(2, { message: "اسم الوحدة مطلوب" }),
+  description: z.string().optional(),
+  unit_type: z.string().min(1, { message: "نوع الوحدة مطلوب" }),
+  parent_id: z.string().optional(),
+  is_active: z.boolean().default(true),
+});
+
+type OrganizationalUnitFormValues = z.infer<typeof formSchema>;
 
 interface OrganizationalUnitDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  editMode: boolean;
-  unit?: OrganizationalUnit | null;
-  units: OrganizationalUnit[];
-  onSuccess: () => void;
+  onSuccess?: () => void;
 }
 
-const UNIT_TYPES = [
-  { value: "department", label: "إدارة" },
-  { value: "division", label: "قسم" },
-  { value: "section", label: "شعبة" },
-  { value: "team", label: "فريق" },
-  { value: "unit", label: "وحدة" }
-];
-
-export function OrganizationalUnitDialog({ 
-  open, 
-  onOpenChange, 
-  editMode, 
-  unit,
-  units,
+export function OrganizationalUnitDialog({
+  open,
+  onOpenChange,
   onSuccess
 }: OrganizationalUnitDialogProps) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [unitType, setUnitType] = useState("department");
-  const [parentId, setParentId] = useState<string | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState(false);
+  const { data: units, isLoading } = useOrganizationalUnits();
   const { toast } = useToast();
+  
+  const form = useForm<OrganizationalUnitFormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      unit_type: "department",
+      parent_id: "none",
+      is_active: true,
+    },
+  });
 
-  // Initialize form values when editing
-  useEffect(() => {
-    if (editMode && unit) {
-      setName(unit.name || "");
-      setDescription(unit.description || "");
-      setUnitType(unit.unit_type || "department");
-      setParentId(unit.parent_id || undefined);
-    } else {
-      // Reset form for new unit
-      setName("");
-      setDescription("");
-      setUnitType("department");
-      setParentId(undefined);
-    }
-  }, [editMode, unit]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
+  async function handleSubmit(values: OrganizationalUnitFormValues) {
     try {
-      if (editMode && unit) {
-        // Update existing unit
-        const { error } = await supabase
-          .from('organizational_units')
-          .update({
-            name,
-            description,
-            unit_type: unitType,
-            parent_id: parentId || null,
-            updated_at: new Date()
-          })
-          .eq('id', unit.id);
-
-        if (error) throw error;
-        
-        toast({
-          title: "تم التحديث بنجاح",
-          description: "تم تحديث الوحدة التنظيمية بنجاح"
+      // Convert "none" to null for parent_id
+      const parentId = values.parent_id === "none" ? null : values.parent_id;
+      
+      const { error } = await supabase
+        .from('organizational_units')
+        .insert({
+          name: values.name,
+          description: values.description || null,
+          unit_type: values.unit_type,
+          parent_id: parentId,
+          is_active: values.is_active,
         });
-      } else {
-        // Create new unit
-        const { error } = await supabase
-          .from('organizational_units')
-          .insert({
-            name,
-            description,
-            unit_type: unitType,
-            parent_id: parentId || null,
-            created_by: (await supabase.auth.getUser()).data.user?.id
-          });
 
-        if (error) throw error;
-        
-        toast({
-          title: "تمت الإضافة بنجاح",
-          description: "تم إضافة الوحدة التنظيمية بنجاح"
-        });
-      }
-
-      onSuccess();
+      if (error) throw error;
+      
+      toast({
+        title: "تم إضافة الوحدة التنظيمية",
+        description: "تمت إضافة الوحدة التنظيمية بنجاح",
+      });
+      
+      form.reset();
+      onOpenChange(false);
+      if (onSuccess) onSuccess();
     } catch (error) {
-      console.error("Error saving organizational unit:", error);
+      console.error("Error adding organizational unit:", error);
       toast({
         title: "حدث خطأ",
-        description: "حدث خطأ أثناء حفظ الوحدة التنظيمية",
-        variant: "destructive"
+        description: "حدث خطأ أثناء إضافة الوحدة التنظيمية",
+        variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
-  };
-
-  // Filter out the current unit from parent options to prevent circular references
-  const parentOptions = editMode && unit 
-    ? units.filter(u => u.id !== unit.id) 
-    : units;
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>
-            {editMode ? "تعديل وحدة تنظيمية" : "إضافة وحدة تنظيمية جديدة"}
-          </DialogTitle>
+          <DialogTitle>إضافة وحدة تنظيمية جديدة</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">اسم الوحدة التنظيمية</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="أدخل اسم الوحدة التنظيمية"
-              required
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>اسم الوحدة</FormLabel>
+                  <FormControl>
+                    <Input placeholder="أدخل اسم الوحدة التنظيمية" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="unit-type">نوع الوحدة</Label>
-            <Select value={unitType} onValueChange={setUnitType} required>
-              <SelectTrigger id="unit-type">
-                <SelectValue placeholder="اختر نوع الوحدة" />
-              </SelectTrigger>
-              <SelectContent>
-                {UNIT_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="parent-id">الوحدة الأب</Label>
-            <Select 
-              value={parentId} 
-              onValueChange={setParentId}
-            >
-              <SelectTrigger id="parent-id">
-                <SelectValue placeholder="بدون وحدة أب" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">بدون وحدة أب</SelectItem>
-                {parentOptions.map((u) => (
-                  <SelectItem key={u.id} value={u.id}>
-                    {u.name} ({UNIT_TYPES.find(t => t.value === u.unit_type)?.label})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="description">الوصف</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="أدخل وصف الوحدة التنظيمية (اختياري)"
-              rows={3}
+            
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>الوصف</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="وصف مختصر للوحدة التنظيمية (اختياري)" 
+                      className="resize-none" 
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              إلغاء
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "جاري الحفظ..." : editMode ? "تحديث" : "إضافة"}
-            </Button>
-          </DialogFooter>
-        </form>
+            
+            <FormField
+              control={form.control}
+              name="unit_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>نوع الوحدة</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="اختر نوع الوحدة" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="department">إدارة</SelectItem>
+                      <SelectItem value="division">قسم</SelectItem>
+                      <SelectItem value="team">فريق</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="parent_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>الوحدة الأم</FormLabel>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                    disabled={isLoading}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="اختر الوحدة الأم (اختياري)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">بدون وحدة أم</SelectItem>
+                      {units?.map((unit) => (
+                        <SelectItem key={unit.id} value={unit.id}>
+                          {unit.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="is_active"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <FormLabel>الحالة</FormLabel>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            
+            <DialogFooter>
+              <Button type="submit">إضافة</Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

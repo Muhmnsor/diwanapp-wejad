@@ -2,24 +2,32 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+interface Employee {
+  id: string;
+  full_name: string;
+  email?: string;
+  phone?: string;
+  position?: string;
+  join_date?: string;
+  is_active: boolean;
+}
+
 export function useEmployees() {
   return useQuery({
     queryKey: ['employees'],
     queryFn: async () => {
-      console.log("useEmployees - Fetching employees with schedule information");
       const { data, error } = await supabase
         .from('employees')
-        .select('*, schedule_id')
+        .select('*')
         .order('full_name');
         
       if (error) {
-        console.error("useEmployees - Error fetching employees:", error);
+        console.error("Error fetching employees:", error);
         throw error;
       }
       
-      console.log(`useEmployees - Retrieved ${data?.length || 0} employees`);
-      return data || [];
+      return data as Employee[];
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
