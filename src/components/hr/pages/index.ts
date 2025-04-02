@@ -1,9 +1,9 @@
 
-export { default as HRDashboard } from './HRDashboard';
-export { default as HROverview } from './HROverview';
-export { default as HREmployees } from './HREmployees';
-export { default as HRAttendance } from './HRAttendance';
-export { default as HRTraining } from './HRTraining';
-export { default as HRCompensation } from './HRCompensation';
-export { default as HRReportsPage } from './HRReportsPage';
-export { default as HRSettings } from './HRSettings';
+export { default as HRDashboard } from "../pages/HRDashboard";
+export { HREmployees } from "./HREmployees";
+export { HRAttendance } from "./HRAttendance";
+export { HRTraining } from "./HRTraining";
+export { HRCompensation } from "./HRCompensation";
+export { HRReportsPage } from "./HRReportsPage";
+export { HRSettings } from "./HRSettings";
+export { HROverview } from "./HROverview";
