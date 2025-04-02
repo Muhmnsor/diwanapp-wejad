@@ -1,5 +1,5 @@
 
-import { ROLE_MAPPING, APP_ROLE_ACCESS } from "@/utils/roleMapping";
+import { ROLE_MAPPING, APP_ROLE_ACCESS } from "@/components/admin/dashboard/getAppsList";
 
 /**
  * Check if a role exists in the role mapping and get its standardized English equivalent
@@ -61,7 +61,7 @@ export const debugRoleMapping = (roleName: string) => {
  */
 export const debugAppRoles = (appKey: string) => {
   try {
-    const allowedRoles = APP_ROLE_ACCESS[appKey] || [];
+    const allowedRoles = APP_ROLE_ACCESS[appKey as keyof typeof APP_ROLE_ACCESS] || [];
     
     // Create a reverse mapping (English to Arabic)
     const reverseMapping: Record<string, string[]> = {};
