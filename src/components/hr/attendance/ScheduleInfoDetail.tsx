@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useEmployeeSchedule } from "@/hooks/hr/useEmployeeSchedule";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,9 +14,19 @@ export function ScheduleInfoDetail({ employeeId }: ScheduleInfoDetailProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [schedule, setSchedule] = useState<any>(null);
   const [workDays, setWorkDays] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const { getEmployeeSchedule, getWorkDays } = useEmployeeSchedule();
+  const prevEmployeeIdRef = useRef<string | null>(null);
+  const dataLoadedRef = useRef(false);
 
   useEffect(() => {
+    // Check if we actually need to reload the data
+    const employeeChanged = employeeId !== prevEmployeeIdRef.current;
+    
+    if (!employeeChanged && dataLoadedRef.current) {
+      return; // Skip if employee hasn't changed and data is already loaded
+    }
+
     const loadScheduleData = async () => {
       if (!employeeId) {
         setIsLoading(false);
@@ -25,6 +35,9 @@ export function ScheduleInfoDetail({ employeeId }: ScheduleInfoDetailProps) {
 
       try {
         setIsLoading(true);
+        setError(null);
+        prevEmployeeIdRef.current = employeeId;
+        
         console.log("ScheduleInfoDetail (attendance) - Loading data for employee:", employeeId);
         
         const employeeSchedule = await getEmployeeSchedule(employeeId);
@@ -36,13 +49,15 @@ export function ScheduleInfoDetail({ employeeId }: ScheduleInfoDetailProps) {
           const days = await getWorkDays(employeeSchedule.id);
           console.log("ScheduleInfoDetail (attendance) - Work days:", days);
           setWorkDays(days || []);
+          dataLoadedRef.current = true;
         } else {
           console.log("ScheduleInfoDetail (attendance) - No schedule found");
           setSchedule(null);
           setWorkDays([]);
         }
-      } catch (error) {
-        console.error("ScheduleInfoDetail (attendance) - Error loading schedule data:", error);
+      } catch (err) {
+        console.error("ScheduleInfoDetail (attendance) - Error loading schedule data:", err);
+        setError("حدث خطأ أثناء تحميل بيانات الجدول");
       } finally {
         setIsLoading(false);
       }
@@ -51,7 +66,7 @@ export function ScheduleInfoDetail({ employeeId }: ScheduleInfoDetailProps) {
     loadScheduleData();
   }, [employeeId, getEmployeeSchedule, getWorkDays]);
   
-  if (isLoading) {
+  if (isLoading && !schedule) {
     return (
       <Card>
         <CardContent className="p-4">
@@ -61,6 +76,19 @@ export function ScheduleInfoDetail({ employeeId }: ScheduleInfoDetailProps) {
           </div>
           <Skeleton className="h-4 w-full mt-2" />
           <Skeleton className="h-4 w-3/4 mt-2" />
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-red-500" />
+            <p className="text-sm text-red-500">{error}</p>
+          </div>
         </CardContent>
       </Card>
     );

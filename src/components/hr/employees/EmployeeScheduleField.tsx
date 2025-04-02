@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -26,35 +26,53 @@ export function EmployeeScheduleField({
 }: EmployeeScheduleFieldProps) {
   const { schedules, defaultSchedule, isLoadingSchedules } = useEmployeeSchedule();
   const [selectedSchedule, setSelectedSchedule] = useState<string>(scheduleId || "");
+  const initializedRef = useRef(false);
 
-  console.log("EmployeeScheduleField - Initial props:", { employeeId, scheduleId, isReadOnly });
-  console.log("EmployeeScheduleField - Available schedules:", schedules);
-  console.log("EmployeeScheduleField - Default schedule:", defaultSchedule);
+  // Log for debugging
+  console.log("EmployeeScheduleField - Render with:", { 
+    employeeId, 
+    scheduleId, 
+    isReadOnly,
+    selectedSchedule,
+    defaultScheduleId: defaultSchedule?.id,
+    schedulesLoaded: schedules?.length
+  });
 
+  // Handle scheduleId changes from parent
   useEffect(() => {
-    // If scheduleId changes from outside (like when an employee is loaded), update the select
-    if (scheduleId !== selectedSchedule && scheduleId) {
-      console.log("EmployeeScheduleField - Updating selected schedule from props:", scheduleId);
+    if (scheduleId !== null && scheduleId !== undefined && scheduleId !== selectedSchedule) {
+      console.log("EmployeeScheduleField - External scheduleId changed to:", scheduleId);
       setSelectedSchedule(scheduleId);
     }
-    
-    // If scheduleId is null/empty and we have a default schedule, set it
-    if ((!scheduleId || scheduleId === "") && defaultSchedule?.id && !selectedSchedule) {
-      console.log("EmployeeScheduleField - Setting default schedule:", defaultSchedule.id);
-      setSelectedSchedule(defaultSchedule.id);
-      onScheduleChange(defaultSchedule.id);
-    }
-  }, [scheduleId, defaultSchedule, selectedSchedule, onScheduleChange]);
+  }, [scheduleId, selectedSchedule]);
 
-  const handleScheduleChange = (value: string) => {
+  // Initialize with default if needed
+  useEffect(() => {
+    if (initializedRef.current) return;
+    
+    // If we have schedules loaded and there's no selected schedule yet
+    if (schedules?.length && !selectedSchedule && !scheduleId) {
+      if (defaultSchedule?.id) {
+        console.log("EmployeeScheduleField - Setting default schedule:", defaultSchedule.id);
+        setSelectedSchedule(defaultSchedule.id);
+        onScheduleChange(defaultSchedule.id);
+        initializedRef.current = true;
+      }
+    } else if (scheduleId) {
+      // Mark as initialized if we already have a scheduleId
+      initializedRef.current = true;
+    }
+  }, [schedules, defaultSchedule, selectedSchedule, scheduleId, onScheduleChange]);
+
+  const handleScheduleChange = useCallback((value: string) => {
     console.log("EmployeeScheduleField - Schedule changed to:", value);
     setSelectedSchedule(value);
     onScheduleChange(value);
-  };
+  }, [onScheduleChange]);
 
+  // Find the current schedule in the list
   const currentSchedule = schedules?.find(s => s.id === selectedSchedule);
-  console.log("EmployeeScheduleField - Current schedule:", currentSchedule);
-
+  
   return (
     <div className="space-y-2">
       <div className="flex justify-between">

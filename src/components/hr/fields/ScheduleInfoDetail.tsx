@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useEmployeeSchedule } from "@/hooks/hr/useEmployeeSchedule";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Clock } from "lucide-react";
@@ -14,16 +14,31 @@ export function ScheduleInfoDetail({ scheduleId }: ScheduleInfoDetailProps) {
   const [schedule, setSchedule] = useState<any>(null);
   const [workDays, setWorkDays] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Use refs to track previous values and prevent unnecessary re-renders
+  const prevScheduleIdRef = useRef<string | null>(null);
+  const dataLoadedRef = useRef(false);
 
   useEffect(() => {
+    // Check if we actually need to reload the data
+    const scheduleChanged = scheduleId !== prevScheduleIdRef.current;
+    
+    if (!scheduleChanged && dataLoadedRef.current) {
+      return; // Skip if schedule hasn't changed and data is already loaded
+    }
+
     const loadScheduleDetails = async () => {
       if (!schedules) return;
       
       setIsLoading(true);
-      console.log("ScheduleInfoDetail - Loading schedule details for ID:", scheduleId);
+      setError(null);
+      prevScheduleIdRef.current = scheduleId;
       
       try {
-        // تحديد الجدول المستخدم (المحدد أو الافتراضي)
+        console.log("ScheduleInfoDetail - Loading details for scheduleId:", scheduleId);
+        
+        // Find the schedule in our local cache first
         let targetSchedule = null;
         
         if (scheduleId) {
@@ -39,22 +54,25 @@ export function ScheduleInfoDetail({ scheduleId }: ScheduleInfoDetailProps) {
         if (targetSchedule) {
           setSchedule(targetSchedule);
           
-          // تحميل تفاصيل أيام العمل
+          // Load work days
           const days = await getWorkDays(targetSchedule.id);
           console.log("ScheduleInfoDetail - Work days loaded:", days);
           setWorkDays(days || []);
+          dataLoadedRef.current = true;
         } else {
           console.log("ScheduleInfoDetail - No schedule found");
           setSchedule(null);
           setWorkDays([]);
         }
-      } catch (error) {
-        console.error('Error loading schedule details:', error);
+      } catch (err) {
+        console.error('Error loading schedule details:', err);
+        setError("حدث خطأ أثناء تحميل بيانات الجدول");
       } finally {
         setIsLoading(false);
       }
     };
 
+    // Only load if we have schedules data available
     if (schedules?.length) {
       loadScheduleDetails();
     }
@@ -65,7 +83,8 @@ export function ScheduleInfoDetail({ scheduleId }: ScheduleInfoDetailProps) {
     return days[dayOfWeek];
   };
 
-  if (isLoading) {
+  // If we're still in initial loading state, show skeleton
+  if (isLoading && !schedule) {
     return (
       <div className="space-y-2">
         <Skeleton className="h-4 w-1/3" />
@@ -75,6 +94,16 @@ export function ScheduleInfoDetail({ scheduleId }: ScheduleInfoDetailProps) {
     );
   }
 
+  // If there's an error, show error message
+  if (error) {
+    return (
+      <div className="text-sm text-red-500">
+        {error}
+      </div>
+    );
+  }
+
+  // If there's no schedule (and we're not loading), show no schedule message
   if (!schedule) {
     return (
       <div className="text-sm text-muted-foreground">
