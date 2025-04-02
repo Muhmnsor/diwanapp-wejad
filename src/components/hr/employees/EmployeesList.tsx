@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,6 +7,7 @@ import { Plus, Search } from "lucide-react";
 import { AddEmployeeDialog } from "../dialogs/AddEmployeeDialog";
 import { useEmployees } from "@/hooks/hr/useEmployees";
 import { EmployeesTable } from "./EmployeesTable";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface EmployeesListProps {
   searchTerm?: string;
@@ -13,6 +15,9 @@ interface EmployeesListProps {
 
 export function EmployeesList({ searchTerm = "" }: EmployeesListProps) {
   const [search, setSearch] = useState(searchTerm);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
+  
   const { data: employees, isLoading, error } = useEmployees();
 
   const filteredEmployees = employees?.filter(
@@ -21,6 +26,10 @@ export function EmployeesList({ searchTerm = "" }: EmployeesListProps) {
       employee.position?.toLowerCase().includes(search.toLowerCase()) ||
       employee.department?.toLowerCase().includes(search.toLowerCase())
   );
+  
+  const refreshEmployees = () => {
+    queryClient.invalidateQueries({ queryKey: ['employees'] });
+  };
 
   return (
     <div className="space-y-4">
@@ -34,7 +43,13 @@ export function EmployeesList({ searchTerm = "" }: EmployeesListProps) {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <AddEmployeeDialog />
+        <Button 
+          onClick={() => setIsAddDialogOpen(true)}
+          className="flex items-center gap-1"
+        >
+          <Plus className="h-4 w-4" />
+          إضافة موظف
+        </Button>
       </div>
 
       <Card>
@@ -42,10 +57,22 @@ export function EmployeesList({ searchTerm = "" }: EmployeesListProps) {
           <CardTitle>قائمة الموظفين</CardTitle>
         </CardHeader>
         <CardContent>
-          <EmployeesTable employees={filteredEmployees} isLoading={isLoading} />
+          <EmployeesTable 
+            employees={filteredEmployees} 
+            isLoading={isLoading} 
+            onRefresh={refreshEmployees}
+          />
         </CardContent>
       </Card>
+      
+      <AddEmployeeDialog 
+        isOpen={isAddDialogOpen}
+        onClose={() => setIsAddDialogOpen(false)}
+        onSuccess={() => {
+          setIsAddDialogOpen(false);
+          refreshEmployees();
+        }}
+      />
     </div>
   );
 }
-

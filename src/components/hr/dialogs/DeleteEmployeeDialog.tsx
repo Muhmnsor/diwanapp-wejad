@@ -41,6 +41,7 @@ export function DeleteEmployeeDialog({ employee, isOpen, onClose, onSuccess }: D
         
       if (error) throw error;
       
+      toast.success("تم حذف الموظف بنجاح");
       onSuccess();
     } catch (error) {
       console.error('Error deleting employee:', error);
