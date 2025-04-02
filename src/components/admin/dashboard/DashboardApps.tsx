@@ -38,12 +38,10 @@ export const DashboardApps = ({ apps }: DashboardAppsProps) => {
       </Card>
     );
   }
-  
-  console.log("Displaying apps:", apps.length, apps.map(app => app.title));
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" style={{ direction: 'rtl' }}>
-      {apps.map((app, index) => {
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" style={{ direction: 'rtl' }}>
+      {[...apps].reverse().map((app, index) => {
         const Icon = app.icon;
         return (
           <Card
