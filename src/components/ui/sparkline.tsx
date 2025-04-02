@@ -20,20 +20,11 @@ export function Sparkline({
   className,
   ...props
 }: SparklineProps) {
-  // Don't render sparkline if data is empty or undefined
-  if (!data || data.length === 0) {
-    return (
-      <div className={cn("w-full h-[30px] flex items-center justify-center text-muted-foreground text-xs", className)} {...props}>
-        No data available
-      </div>
-    );
-  }
-
   return (
     <div className={cn("w-full", className)} {...props}>
       <Sparklines data={data} limit={limit} height={height} margin={5}>
         <SparklinesLine color={color} />
-        {React.Children.toArray(children).filter(Boolean)}
+        {children}
       </Sparklines>
     </div>
   );
@@ -54,22 +45,16 @@ export function SparklineSpot({
     spotColor: "rgba(74, 222, 128, 0.6)"
   }
 }: SparklineSpotProps) {
-  // Wrap in error boundary to catch any errors related to the SparklinesSpots component
-  try {
-    return (
-      <SparklinesSpots
-        size={size}
-        style={{ 
-          fill: spotColors.spotColor, 
-          strokeWidth: 0 
-        }}
-        spotColors={{
-          endSpot: spotColors.endSpot
-        }}
-      />
-    );
-  } catch (error) {
-    console.error("Error rendering sparkline spots:", error);
-    return null; // Return null if there's an error
-  }
+  return (
+    <SparklinesSpots
+      size={size}
+      style={{ 
+        fill: spotColors.spotColor, 
+        strokeWidth: 0 
+      }}
+      spotColors={{
+        endSpot: spotColors.endSpot
+      }}
+    />
+  );
 }

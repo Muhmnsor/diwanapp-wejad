@@ -1,164 +1,125 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export interface HRStats {
-  employeeCount: number;
+interface HRStats {
+  totalEmployees: number;
+  newEmployees: number;
+  presentToday: number;
   attendanceRate: number;
   activeLeaves: number;
-  turnoverRate: number;
-  employeeTrend: number[];
-  attendanceTrend: number[];
-  leavesTrend: number[];
-  turnoverTrend: number[];
+  upcomingLeaves: number;
+  expiringContracts: number;
+  pendingTrainings: number;
 }
 
 export function useHRStats() {
+  const today = new Date().toISOString().split('T')[0];
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+  const oneMonthAgoStr = oneMonthAgo.toISOString().split('T')[0];
+  
+  const nextWeek = new Date();
+  nextWeek.setDate(nextWeek.getDate() + 7);
+  const nextWeekStr = nextWeek.toISOString().split('T')[0];
+
   return useQuery({
-    queryKey: ["hr-stats"],
+    queryKey: ['hr-stats'],
     queryFn: async (): Promise<HRStats> => {
       try {
-        // Fetch employee count
-        const { count: employeeCount, error: employeeError } = await supabase
-          .from("hr_employees")
-          .select("*", { count: "exact", head: true });
-
-        if (employeeError) {
-          console.error("Error fetching employee count:", employeeError);
-          throw employeeError;
-        }
-
-        // Fetch attendance records for the current month
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-
-        const { data: attendanceData, error: attendanceError } = await supabase
-          .from("hr_attendance")
-          .select("*")
-          .gte("attendance_date", startOfMonth)
-          .lte("attendance_date", endOfMonth);
-
-        if (attendanceError) {
-          console.error("Error fetching attendance data:", attendanceError);
-          throw attendanceError;
-        }
-
-        const totalAttendanceRecords = attendanceData?.length || 0;
-        const presentRecords = attendanceData?.filter(record => record.status === "present").length || 0;
-        const attendanceRate = totalAttendanceRecords > 0 
-          ? (presentRecords / totalAttendanceRecords) * 100 
-          : 0;
-
-        // Try fetching active leaves - handle if table doesn't exist yet
-        let activeLeaves = 0;
-        try {
-          const { data: leavesData, error: leavesError } = await supabase
-            .from("hr_leaves")
-            .select("*")
-            .lte("start_date", new Date().toISOString())
-            .gte("end_date", new Date().toISOString())
-            .eq("status", "approved");
-
-          if (!leavesError) {
-            activeLeaves = leavesData?.length || 0;
-          } else {
-            console.warn("Could not fetch leaves data, using default value:", leavesError);
-          }
-        } catch (error) {
-          console.warn("Error in leaves query, using default value:", error);
-        }
-
-        // For turnover rate, we would calculate based on employees who left divided by average headcount
-        // This is a simplified calculation for demo purposes
-        let turnoverRate = 0;
-        let formerEmployeeCount = 0;
+        // Get total employees count
+        const { count: totalEmployees, error: employeesError } = await supabase
+          .from('employees')
+          .select('*', { count: 'exact', head: true });
+          
+        if (employeesError) throw employeesError;
+          
+        // Get new employees (hired in the last month)
+        const { count: newEmployees, error: newEmployeesError } = await supabase
+          .from('employees')
+          .select('*', { count: 'exact', head: true })
+          .gte('hire_date', oneMonthAgoStr);
+          
+        if (newEmployeesError) throw newEmployeesError;
         
-        try {
-          const { data: formerEmployees, error: turnoverError } = await supabase
-            .from("hr_employees")
-            .select("*")
-            .eq("status", "inactive");
-
-          if (!turnoverError) {
-            formerEmployeeCount = formerEmployees?.length || 0;
-            turnoverRate = employeeCount > 0 
-              ? (formerEmployeeCount / (employeeCount + formerEmployeeCount)) * 100 
-              : 0;
-          } else {
-            console.warn("Could not fetch former employees, using default value:", turnoverError);
-          }
-        } catch (error) {
-          console.warn("Error in turnover query, using default value:", error);
-        }
-
-        // Generate safer trend data with fallbacks
-        const employeeTrend = generateSafeTrendData(employeeCount);
-        const attendanceTrend = generateSafeTrendData(attendanceRate);
-        const leavesTrend = generateSafeTrendData(activeLeaves);
-        const turnoverTrend = generateSafeTrendData(turnoverRate);
-
-        // Ensure all trend arrays have at least 2 items to avoid issues with SparklineSpot
-        const ensureMinTrendLength = (trend: number[]) => {
-          if (!Array.isArray(trend)) return [0, 0];
-          if (trend.length < 2) return [...trend, trend[0] || 0];
-          return trend;
-        };
-
+        // Get present employees today
+        const { count: presentToday, error: presentError } = await supabase
+          .from('hr_attendance')
+          .select('*', { count: 'exact', head: true })
+          .eq('attendance_date', today)
+          .eq('status', 'present');
+          
+        if (presentError) throw presentError;
+        
+        // Get active leaves
+        const { count: activeLeaves, error: leavesError } = await supabase
+          .from('hr_leave_requests')
+          .select('*', { count: 'exact', head: true })
+          .lte('start_date', today)
+          .gte('end_date', today)
+          .eq('status', 'approved');
+          
+        if (leavesError) throw leavesError;
+        
+        // Get upcoming leaves
+        const { count: upcomingLeaves, error: upcomingLeavesError } = await supabase
+          .from('hr_leave_requests')
+          .select('*', { count: 'exact', head: true })
+          .gt('start_date', today)
+          .lte('start_date', nextWeekStr)
+          .eq('status', 'approved');
+          
+        if (upcomingLeavesError) throw upcomingLeavesError;
+        
+        // Get expiring contracts this month
+        const oneMonthLater = new Date();
+        oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+        const oneMonthLaterStr = oneMonthLater.toISOString().split('T')[0];
+        
+        const { count: expiringContracts, error: contractsError } = await supabase
+          .from('employees')
+          .select('*', { count: 'exact', head: true })
+          .lte('contract_end_date', oneMonthLaterStr)
+          .gt('contract_end_date', today);
+          
+        if (contractsError) throw contractsError;
+        
+        // Get pending trainings
+        const { count: pendingTrainings, error: trainingsError } = await supabase
+          .from('hr_employee_training')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'enrolled');
+          
+        if (trainingsError) throw trainingsError;
+        
+        // Calculate attendance rate
+        const attendanceRate = totalEmployees > 0 ? 
+          Math.round((presentToday / (totalEmployees - activeLeaves)) * 100) : 0;
+        
         return {
-          employeeCount: employeeCount || 0,
+          totalEmployees: totalEmployees || 0,
+          newEmployees: newEmployees || 0,
+          presentToday: presentToday || 0,
           attendanceRate,
-          activeLeaves,
-          turnoverRate,
-          employeeTrend: ensureMinTrendLength(employeeTrend),
-          attendanceTrend: ensureMinTrendLength(attendanceTrend),
-          leavesTrend: ensureMinTrendLength(leavesTrend),
-          turnoverTrend: ensureMinTrendLength(turnoverTrend)
+          activeLeaves: activeLeaves || 0,
+          upcomingLeaves: upcomingLeaves || 0,
+          expiringContracts: expiringContracts || 0,
+          pendingTrainings: pendingTrainings || 0
         };
       } catch (error) {
-        console.error("Error in HR stats query:", error);
-        // Return a valid fallback object with default values
+        console.error('Error fetching HR stats:', error);
         return {
-          employeeCount: 0,
+          totalEmployees: 0,
+          newEmployees: 0,
+          presentToday: 0,
           attendanceRate: 0,
           activeLeaves: 0,
-          turnoverRate: 0,
-          employeeTrend: [0, 0],
-          attendanceTrend: [0, 0],
-          leavesTrend: [0, 0],
-          turnoverTrend: [0, 0]
+          upcomingLeaves: 0,
+          expiringContracts: 0,
+          pendingTrainings: 0
         };
       }
     },
-    refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
+    refetchInterval: 5 * 60 * 1000 // Refetch every 5 minutes
   });
-}
-
-// Helper function to generate trend data, always ensuring at least one data point
-function generateSafeTrendData(baseValue: number): number[] {
-  // If we can't generate valid data, return an array with just the base value
-  if (typeof baseValue !== 'number' || isNaN(baseValue)) {
-    return [0, 0]; // Fallback to zero if baseValue is invalid, include two points
-  }
-  
-  // Otherwise generate some random data based on the base value
-  const fluctuation = 0.15; // 15% fluctuation
-  const points = 7; // Last 7 days/weeks/months
-  
-  const result = [];
-  for (let i = 0; i < points; i++) {
-    const randomFactor = 1 + (Math.random() * fluctuation * 2 - fluctuation);
-    // Make sure we don't generate negative values for counts
-    const value = Math.max(0, baseValue * randomFactor);
-    result.push(typeof value === 'number' && !isNaN(value) ? value : 0);
-  }
-  
-  // Make sure array has at least two items
-  if (result.length === 0) {
-    result.push(baseValue >= 0 ? baseValue : 0);
-    result.push(baseValue >= 0 ? baseValue : 0);
-  } else if (result.length === 1) {
-    result.push(result[0]);
-  }
-  
-  return result;
 }
