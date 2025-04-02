@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GenderField } from "../fields/GenderField";
 import { EmployeeScheduleField } from "../fields/EmployeeScheduleField";
+import { OrganizationalUnitField } from "../fields/OrganizationalUnitField";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface EditEmployeeDialogProps {
   employee: any;
@@ -34,7 +36,12 @@ export function EditEmployeeDialog({
   const [position, setPosition] = useState("");
   const [gender, setGender] = useState<string>("");
   const [scheduleId, setScheduleId] = useState<string>("");
+  const [employeeNumber, setEmployeeNumber] = useState<string>("");
+  const [departmentId, setDepartmentId] = useState<string>("");
+  const [departmentName, setDepartmentName] = useState<string>("");
+  const [hireDate, setHireDate] = useState<Date | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentOrgUnitId, setCurrentOrgUnitId] = useState<string>("");
   
   useEffect(() => {
     if (employee) {
@@ -44,8 +51,39 @@ export function EditEmployeeDialog({
       setPosition(employee.position || "");
       setGender(employee.gender || "");
       setScheduleId(employee.schedule_id || "");
+      setEmployeeNumber(employee.employee_number || "");
+      setDepartmentName(employee.department || "");
+      
+      // Set hire date if available
+      if (employee.hire_date) {
+        setHireDate(new Date(employee.hire_date));
+      }
+      
+      // Fetch the current organizational unit assignment
+      fetchEmployeeOrgUnit(employee.id);
     }
   }, [employee]);
+  
+  // Fetch current organizational unit
+  const fetchEmployeeOrgUnit = async (employeeId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('employee_organizational_units')
+        .select('organizational_unit_id, is_primary')
+        .eq('employee_id', employeeId)
+        .eq('is_primary', true)
+        .maybeSingle();
+        
+      if (error) throw error;
+      
+      if (data) {
+        setCurrentOrgUnitId(data.organizational_unit_id);
+        setDepartmentId(data.organizational_unit_id);
+      }
+    } catch (error) {
+      console.error("Error fetching employee organizational unit:", error);
+    }
+  };
   
   const handleSubmit = async () => {
     if (!fullName) {
@@ -56,6 +94,7 @@ export function EditEmployeeDialog({
     setIsSubmitting(true);
     
     try {
+      // Update employee record
       const { error } = await supabase
         .from("employees")
         .update({
@@ -65,10 +104,68 @@ export function EditEmployeeDialog({
           position: position || null,
           gender: gender || null,
           schedule_id: scheduleId || null,
+          department: departmentName || null,
+          employee_number: employeeNumber || null,
+          hire_date: hireDate ? hireDate.toISOString().split('T')[0] : null,
         })
         .eq("id", employee.id);
       
       if (error) throw error;
+      
+      // If department has changed, update organizational unit assignment
+      if (departmentId && departmentId !== currentOrgUnitId) {
+        // First check if there's an existing primary assignment
+        if (currentOrgUnitId) {
+          // Update existing assignment to not be primary
+          const { error: updateError } = await supabase
+            .from("employee_organizational_units")
+            .update({ is_primary: false })
+            .eq("employee_id", employee.id)
+            .eq("organizational_unit_id", currentOrgUnitId);
+            
+          if (updateError) {
+            console.error("Error updating existing organizational unit:", updateError);
+          }
+        }
+        
+        // Check if assignment to the new department already exists
+        const { data: existingAssignment, error: checkError } = await supabase
+          .from("employee_organizational_units")
+          .select("id")
+          .eq("employee_id", employee.id)
+          .eq("organizational_unit_id", departmentId)
+          .maybeSingle();
+          
+        if (checkError) {
+          console.error("Error checking existing assignment:", checkError);
+        }
+        
+        if (existingAssignment) {
+          // Update the existing assignment to be primary
+          const { error: updateError } = await supabase
+            .from("employee_organizational_units")
+            .update({ is_primary: true })
+            .eq("id", existingAssignment.id);
+            
+          if (updateError) {
+            console.error("Error updating assignment to primary:", updateError);
+          }
+        } else {
+          // Create new assignment
+          const { error: insertError } = await supabase
+            .from("employee_organizational_units")
+            .insert({
+              employee_id: employee.id,
+              organizational_unit_id: departmentId,
+              is_primary: true,
+              start_date: new Date().toISOString().split('T')[0],
+            });
+            
+          if (insertError) {
+            console.error("Error creating new organizational unit assignment:", insertError);
+          }
+        }
+      }
       
       toast.success("تم تحديث بيانات الموظف بنجاح");
       if (onSuccess) onSuccess();
@@ -78,6 +175,13 @@ export function EditEmployeeDialog({
       toast.error("حدث خطأ أثناء تحديث بيانات الموظف");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+  
+  const handleDepartmentChange = (id: string, name?: string) => {
+    setDepartmentId(id);
+    if (name) {
+      setDepartmentName(name);
     }
   };
   
@@ -104,6 +208,46 @@ export function EditEmployeeDialog({
           </div>
           
           <div className="space-y-2">
+            <Label htmlFor="employeeNumber">الرقم الوظيفي</Label>
+            <Input
+              id="employeeNumber"
+              value={employeeNumber}
+              onChange={(e) => setEmployeeNumber(e.target.value)}
+              placeholder="أدخل الرقم الوظيفي"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="hireDate">تاريخ التعيين</Label>
+            <DatePicker
+              date={hireDate}
+              setDate={setHireDate}
+              locale="ar"
+              placeholder="اختر تاريخ التعيين"
+            />
+          </div>
+          
+          <OrganizationalUnitField
+            value={departmentId}
+            onChange={handleDepartmentChange}
+          />
+          
+          <GenderField 
+            value={gender} 
+            onChange={setGender} 
+          />
+          
+          <div className="space-y-2">
+            <Label htmlFor="position">المسمى الوظيفي</Label>
+            <Input
+              id="position"
+              value={position}
+              onChange={(e) => setPosition(e.target.value)}
+              placeholder="أدخل المسمى الوظيفي"
+            />
+          </div>
+          
+          <div className="space-y-2">
             <Label htmlFor="email">البريد الإلكتروني</Label>
             <Input
               id="email"
@@ -123,21 +267,6 @@ export function EditEmployeeDialog({
               placeholder="أدخل رقم الهاتف"
             />
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="position">المسمى الوظيفي</Label>
-            <Input
-              id="position"
-              value={position}
-              onChange={(e) => setPosition(e.target.value)}
-              placeholder="أدخل المسمى الوظيفي"
-            />
-          </div>
-          
-          <GenderField 
-            value={gender} 
-            onChange={setGender} 
-          />
           
           <EmployeeScheduleField
             value={scheduleId}

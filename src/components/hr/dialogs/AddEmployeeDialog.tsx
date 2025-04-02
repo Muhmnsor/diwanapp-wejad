@@ -15,6 +15,8 @@ import { Label } from "@/components/ui/label";
 import { GenderField } from "../fields/GenderField";
 import { useEmployeeSchedule } from "@/hooks/hr/useEmployeeSchedule";
 import { EmployeeScheduleField } from "../fields/EmployeeScheduleField";
+import { OrganizationalUnitField } from "../fields/OrganizationalUnitField";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface AddEmployeeDialogProps {
   isOpen: boolean;
@@ -29,6 +31,10 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
   const [position, setPosition] = useState("");
   const [gender, setGender] = useState<string>("");
   const [scheduleId, setScheduleId] = useState<string>("");
+  const [employeeNumber, setEmployeeNumber] = useState<string>("");
+  const [departmentId, setDepartmentId] = useState<string>("");
+  const [departmentName, setDepartmentName] = useState<string>("");
+  const [hireDate, setHireDate] = useState<Date | undefined>(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { defaultSchedule } = useEmployeeSchedule();
 
@@ -41,6 +47,7 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
     setIsSubmitting(true);
 
     try {
+      // Insert employee record
       const { data, error } = await supabase
         .from("employees")
         .insert({
@@ -50,12 +57,32 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
           position: position || null,
           gender: gender || null,
           schedule_id: scheduleId || null,
+          department: departmentName || null,
+          employee_number: employeeNumber || null,
+          hire_date: hireDate ? hireDate.toISOString().split('T')[0] : null,
           status: "active"
         })
         .select()
         .single();
 
       if (error) throw error;
+
+      // If department is selected, add to organizational unit assignment
+      if (departmentId && data?.id) {
+        const { error: unitError } = await supabase
+          .from("employee_organizational_units")
+          .insert({
+            employee_id: data.id,
+            organizational_unit_id: departmentId,
+            is_primary: true,
+            start_date: hireDate ? hireDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          });
+
+        if (unitError) {
+          console.error("Error assigning department:", unitError);
+          // Continue anyway, the employee is created
+        }
+      }
 
       toast.success("تم إضافة الموظف بنجاح");
       if (onSuccess) onSuccess();
@@ -67,6 +94,10 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
       setPosition("");
       setGender("");
       setScheduleId("");
+      setEmployeeNumber("");
+      setDepartmentId("");
+      setDepartmentName("");
+      setHireDate(new Date());
       
       onClose();
     } catch (error) {
@@ -74,6 +105,13 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
       toast.error("حدث خطأ أثناء إضافة الموظف");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDepartmentChange = (id: string, name?: string) => {
+    setDepartmentId(id);
+    if (name) {
+      setDepartmentName(name);
     }
   };
 
@@ -100,6 +138,46 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
           </div>
           
           <div className="space-y-2">
+            <Label htmlFor="employeeNumber">الرقم الوظيفي</Label>
+            <Input
+              id="employeeNumber"
+              value={employeeNumber}
+              onChange={(e) => setEmployeeNumber(e.target.value)}
+              placeholder="أدخل الرقم الوظيفي"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="hireDate">تاريخ التعيين</Label>
+            <DatePicker
+              date={hireDate}
+              setDate={setHireDate}
+              locale="ar"
+              placeholder="اختر تاريخ التعيين"
+            />
+          </div>
+          
+          <OrganizationalUnitField
+            value={departmentId}
+            onChange={handleDepartmentChange}
+          />
+          
+          <GenderField 
+            value={gender} 
+            onChange={setGender} 
+          />
+          
+          <div className="space-y-2">
+            <Label htmlFor="position">المسمى الوظيفي</Label>
+            <Input
+              id="position"
+              value={position}
+              onChange={(e) => setPosition(e.target.value)}
+              placeholder="أدخل المسمى الوظيفي"
+            />
+          </div>
+          
+          <div className="space-y-2">
             <Label htmlFor="email">البريد الإلكتروني</Label>
             <Input
               id="email"
@@ -119,21 +197,6 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
               placeholder="أدخل رقم الهاتف"
             />
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="position">المسمى الوظيفي</Label>
-            <Input
-              id="position"
-              value={position}
-              onChange={(e) => setPosition(e.target.value)}
-              placeholder="أدخل المسمى الوظيفي"
-            />
-          </div>
-
-          <GenderField 
-            value={gender} 
-            onChange={setGender} 
-          />
           
           <EmployeeScheduleField
             value={scheduleId}
