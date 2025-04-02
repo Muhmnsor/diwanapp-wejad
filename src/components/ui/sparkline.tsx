@@ -1,7 +1,7 @@
 
 import React, { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { Sparklines, SparklinesLine, SparklinesSpots } from "react-sparklines";
+import { Sparklines, SparklinesLine, SparklinesSpots, SparklinesReferenceLine } from "react-sparklines";
 
 interface SparklineProps extends React.HTMLAttributes<HTMLDivElement> {
   data: number[];
@@ -9,6 +9,8 @@ interface SparklineProps extends React.HTMLAttributes<HTMLDivElement> {
   height?: number;
   limit?: number;
   children?: ReactNode;
+  showReferenceLine?: boolean;
+  referenceValue?: "avg" | "min" | "max";
 }
 
 export function Sparkline({
@@ -18,12 +20,15 @@ export function Sparkline({
   limit,
   children,
   className,
+  showReferenceLine = false,
+  referenceValue,
   ...props
 }: SparklineProps) {
   return (
     <div className={cn("w-full", className)} {...props}>
       <Sparklines data={data} limit={limit} height={height} margin={5}>
         <SparklinesLine color={color} />
+        {showReferenceLine && <SparklinesReferenceLine type={referenceValue || "avg"} />}
         {children}
       </Sparklines>
     </div>
