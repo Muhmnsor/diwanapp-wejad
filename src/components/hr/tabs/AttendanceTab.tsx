@@ -5,22 +5,20 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Calendar } from "lucide-react";
 import { AddAttendanceDialog } from "../dialogs/AddAttendanceDialog";
 import { AttendanceTable } from "../tables/AttendanceTable";
-import { SelfAttendanceTab } from "./SelfAttendanceTab";
 
 export function AttendanceTab() {
   const [activeTab, setActiveTab] = useState("attendance");
   
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold">الحضور والإجازات</h2>
         <AddAttendanceDialog />
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full grid grid-cols-3">
+        <TabsList className="w-full grid grid-cols-2">
           <TabsTrigger value="attendance">سجلات الحضور</TabsTrigger>
-          <TabsTrigger value="self-attendance">التسجيل الذاتي</TabsTrigger>
           <TabsTrigger value="leaves">طلبات الإجازات</TabsTrigger>
         </TabsList>
         
@@ -33,10 +31,6 @@ export function AttendanceTab() {
               <AttendanceTable />
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="self-attendance" className="mt-4">
-          <SelfAttendanceTab />
         </TabsContent>
         
         <TabsContent value="leaves" className="mt-4">

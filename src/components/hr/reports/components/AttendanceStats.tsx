@@ -1,12 +1,7 @@
 
-import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
-import { ar } from "date-fns/locale";
-import { Clock, UserCheck, UserX, AlertTriangle } from "lucide-react";
+import { Clipboard, Clock, UserCheck, UserX, AlertTriangle } from "lucide-react";
+import { useAttendanceReport } from "@/hooks/hr/useAttendanceReport";
 
 interface AttendanceStatsProps {
   startDate?: Date;
@@ -14,151 +9,93 @@ interface AttendanceStatsProps {
   employeeId?: string;
 }
 
-export function AttendanceStats({ startDate, endDate, employeeId }: AttendanceStatsProps) {
-  // Get attendance statistics within date range
-  const { data: stats, isLoading } = useQuery({
-    queryKey: ['attendance-stats', startDate?.toISOString(), endDate?.toISOString(), employeeId],
-    queryFn: async () => {
-      if (!startDate || !endDate) return null;
-
-      console.log(`Fetching attendance stats from ${startDate} to ${endDate} for employee ${employeeId || 'all'}`);
-      
-      let query = supabase
-        .from('employee_attendance')
-        .select('*')
-        .gte('check_in_time', startDate.toISOString())
-        .lte('check_in_time', endDate.toISOString());
-      
-      // Add employee filter if provided
-      if (employeeId) {
-        query = query.eq('employee_id', employeeId);
-      }
-      
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error("Error fetching attendance stats:", error);
-        throw error;
-      }
-      
-      // Calculate statistics
-      const totalAttendance = data.length;
-      const lateAttendance = data.filter(record => record.late_minutes > 0).length;
-      const absenceDays = 0; // This would need a more complex query to determine absences
-      const problemDays = data.filter(record => record.weekend || record.holiday).length;
-      
-      return {
-        totalAttendance,
-        lateAttendance,
-        absenceDays,
-        problemDays
-      };
-    },
-    enabled: !!startDate && !!endDate
-  });
-
+export function AttendanceStats({ 
+  startDate, 
+  endDate, 
+  employeeId 
+}: AttendanceStatsProps) {
+  const { data, isLoading } = useAttendanceReport(startDate, endDate, employeeId);
+  
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[1, 2, 3, 4].map((i) => (
-          <Skeleton key={i} className="h-32 w-full" />
+        {[...Array(4)].map((_, index) => (
+          <Skeleton key={index} className="h-32 w-full" />
         ))}
       </div>
     );
   }
-
+  
+  if (!data) {
+    return null;
+  }
+  
+  const { stats } = data;
+  
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            إجمالي أيام الحضور
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="text-2xl font-bold">
-              {stats?.totalAttendance || 0}
-              <span className="text-sm text-muted-foreground mr-1">يوم</span>
-            </div>
-            <UserCheck className="h-5 w-5 text-primary" />
+    <div dir="rtl" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="bg-blue-50 p-4 rounded-lg">
+        <div className="flex items-center gap-3">
+          <div className="bg-blue-100 p-2 rounded-full">
+            <Clipboard className="h-5 w-5 text-blue-600" />
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            {startDate && endDate ? (
-              <>
-                {format(startDate, "d MMM", { locale: ar })} -{" "}
-                {format(endDate, "d MMM yyyy", { locale: ar })}
-              </>
-            ) : (
-              "لا يوجد نطاق زمني محدد"
-            )}
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            أيام التأخير
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="text-2xl font-bold">
-              {stats?.lateAttendance || 0}
-              <span className="text-sm text-muted-foreground mr-1">يوم</span>
-            </div>
-            <Clock className="h-5 w-5 text-amber-500" />
+          <div>
+            <p className="text-sm text-gray-500">إجمالي السجلات</p>
+            <p className="font-bold text-lg">{stats.totalRecords}</p>
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            {stats && stats.totalAttendance > 0 ? (
-              `${Math.round((stats.lateAttendance / stats.totalAttendance) * 100)}% من إجمالي أيام الحضور`
-            ) : (
-              "لا توجد بيانات"
-            )}
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            أيام الغياب
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="text-2xl font-bold">
-              {stats?.absenceDays || 0}
-              <span className="text-sm text-muted-foreground mr-1">يوم</span>
-            </div>
-            <UserX className="h-5 w-5 text-destructive" />
+        </div>
+      </div>
+      
+      <div className="bg-green-50 p-4 rounded-lg">
+        <div className="flex items-center gap-3">
+          <div className="bg-green-100 p-2 rounded-full">
+            <UserCheck className="h-5 w-5 text-green-600" />
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            تحتاج لتحسين قياس أيام الغياب
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            أيام استثنائية
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="text-2xl font-bold">
-              {stats?.problemDays || 0}
-              <span className="text-sm text-muted-foreground mr-1">يوم</span>
+          <div>
+            <p className="text-sm text-gray-500">الحضور</p>
+            <div className="flex items-center gap-2">
+              <p className="font-bold text-lg">{stats.presentCount}</p>
+              <p className="text-xs text-green-600">
+                ({stats.presentPercentage.toFixed(1)}%)
+              </p>
             </div>
-            <AlertTriangle className="h-5 w-5 text-blue-500" />
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            أيام العطل الرسمية وعطل نهاية الأسبوع
-          </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+      
+      <div className="bg-red-50 p-4 rounded-lg">
+        <div className="flex items-center gap-3">
+          <div className="bg-red-100 p-2 rounded-full">
+            <UserX className="h-5 w-5 text-red-600" />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">الغياب</p>
+            <div className="flex items-center gap-2">
+              <p className="font-bold text-lg">{stats.absentCount}</p>
+              <p className="text-xs text-red-600">
+                ({stats.absentPercentage.toFixed(1)}%)
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="bg-amber-50 p-4 rounded-lg">
+        <div className="flex items-center gap-3">
+          <div className="bg-amber-100 p-2 rounded-full">
+            <Clock className="h-5 w-5 text-amber-600" />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">تأخير</p>
+            <div className="flex items-center gap-2">
+              <p className="font-bold text-lg">{stats.lateCount}</p>
+              <p className="text-xs text-amber-600">
+                ({stats.latePercentage.toFixed(1)}%)
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

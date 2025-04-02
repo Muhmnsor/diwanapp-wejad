@@ -11,7 +11,7 @@ const HR = () => {
   const defaultTab = searchParams.get("tab") || "employees";
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col" dir="rtl">
       <TopHeader />
       <div className="flex-grow container mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-6">

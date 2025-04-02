@@ -8,6 +8,10 @@ interface Employee {
   job_title?: string;
   department?: string;
   email?: string;
+  phone?: string;
+  status?: string;
+  schedule_id?: string;
+  employee_number?: string;
 }
 
 export function useEmployees() {
@@ -18,7 +22,7 @@ export function useEmployees() {
       
       const { data, error } = await supabase
         .from("employees")
-        .select("id, full_name, job_title, department, email")
+        .select("id, full_name, job_title, department, email, phone, status, schedule_id, employee_number")
         .order("full_name");
       
       if (error) {
