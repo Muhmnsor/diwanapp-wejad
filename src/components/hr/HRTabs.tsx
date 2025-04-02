@@ -20,7 +20,7 @@ interface HRTabsProps {
 export function HRTabs({ defaultTab = "employees" }: HRTabsProps) {
   return (
     <Tabs defaultValue={defaultTab} className="space-y-4">
-      <TabsList className="grid grid-cols-4 w-full sm:w-auto">
+      <TabsList className="grid grid-cols-5 w-full sm:w-auto">
         <TabsTrigger value="employees" className="flex items-center gap-1">
           <Users className="h-4 w-4" />
           الموظفين
