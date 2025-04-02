@@ -54,19 +54,23 @@ export function SparklineSpot({
     spotColor: "rgba(74, 222, 128, 0.6)"
   }
 }: SparklineSpotProps) {
-  // The SparklinesSpots component needs data to be available,
-  // but it gets its data from its parent Sparklines context
-  // We need to ensure it's only rendered when there's valid data in the parent
-  return (
-    <SparklinesSpots
-      size={size}
-      style={{ 
-        fill: spotColors.spotColor, 
-        strokeWidth: 0 
-      }}
-      spotColors={{
-        endSpot: spotColors.endSpot
-      }}
-    />
-  );
+  // The SparklinesSpots component will be rendered conditionally in the parent component
+  // It gets its data from the Sparklines context
+  try {
+    return (
+      <SparklinesSpots
+        size={size}
+        style={{ 
+          fill: spotColors.spotColor, 
+          strokeWidth: 0 
+        }}
+        spotColors={{
+          endSpot: spotColors.endSpot
+        }}
+      />
+    );
+  } catch (error) {
+    console.error("Error rendering sparkline spots:", error);
+    return null; // Return null if there's an error
+  }
 }

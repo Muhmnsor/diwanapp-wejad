@@ -41,6 +41,18 @@ export default function HROverview() {
     );
   }
 
+  // Ensure stats is defined with fallback values
+  const safeStats = stats || {
+    employeeCount: 0,
+    attendanceRate: 0,
+    activeLeaves: 0,
+    turnoverRate: 0,
+    employeeTrend: [0],
+    attendanceTrend: [0],
+    leavesTrend: [0],
+    turnoverTrend: [0]
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -52,10 +64,10 @@ export default function HROverview() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.employeeCount || 0}</div>
-            {stats?.employeeTrend && stats.employeeTrend.length > 0 ? (
-              <Sparkline data={stats.employeeTrend} height={40} className="mt-2">
-                <SparklineSpot />
+            <div className="text-2xl font-bold">{safeStats.employeeCount}</div>
+            {safeStats.employeeTrend && safeStats.employeeTrend.length > 0 ? (
+              <Sparkline data={safeStats.employeeTrend} height={40} className="mt-2">
+                {safeStats.employeeTrend.length > 1 && <SparklineSpot />}
               </Sparkline>
             ) : (
               <div className="h-10 text-xs text-muted-foreground mt-2">لا توجد بيانات للاتجاه</div>
@@ -71,10 +83,12 @@ export default function HROverview() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.attendanceRate ? `${stats.attendanceRate.toFixed(1)}%` : '0%'}</div>
-            {stats?.attendanceTrend && stats.attendanceTrend.length > 0 ? (
-              <Sparkline data={stats.attendanceTrend} height={40} className="mt-2" color="#3b82f6">
-                <SparklineSpot spotColors={{ endSpot: "#3b82f6", spotColor: "rgba(59, 130, 246, 0.6)" }} />
+            <div className="text-2xl font-bold">{safeStats.attendanceRate ? `${safeStats.attendanceRate.toFixed(1)}%` : '0%'}</div>
+            {safeStats.attendanceTrend && safeStats.attendanceTrend.length > 0 ? (
+              <Sparkline data={safeStats.attendanceTrend} height={40} className="mt-2" color="#3b82f6">
+                {safeStats.attendanceTrend.length > 1 && (
+                  <SparklineSpot spotColors={{ endSpot: "#3b82f6", spotColor: "rgba(59, 130, 246, 0.6)" }} />
+                )}
               </Sparkline>
             ) : (
               <div className="h-10 text-xs text-muted-foreground mt-2">لا توجد بيانات للاتجاه</div>
@@ -90,10 +104,12 @@ export default function HROverview() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.activeLeaves || 0}</div>
-            {stats?.leavesTrend && stats.leavesTrend.length > 0 ? (
-              <Sparkline data={stats.leavesTrend} height={40} className="mt-2" color="#f97316">
-                <SparklineSpot spotColors={{ endSpot: "#f97316", spotColor: "rgba(249, 115, 22, 0.6)" }} />
+            <div className="text-2xl font-bold">{safeStats.activeLeaves}</div>
+            {safeStats.leavesTrend && safeStats.leavesTrend.length > 0 ? (
+              <Sparkline data={safeStats.leavesTrend} height={40} className="mt-2" color="#f97316">
+                {safeStats.leavesTrend.length > 1 && (
+                  <SparklineSpot spotColors={{ endSpot: "#f97316", spotColor: "rgba(249, 115, 22, 0.6)" }} />
+                )}
               </Sparkline>
             ) : (
               <div className="h-10 text-xs text-muted-foreground mt-2">لا توجد بيانات للاتجاه</div>
@@ -109,10 +125,12 @@ export default function HROverview() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.turnoverRate ? `${stats.turnoverRate.toFixed(1)}%` : '0%'}</div>
-            {stats?.turnoverTrend && stats.turnoverTrend.length > 0 ? (
-              <Sparkline data={stats.turnoverTrend} height={40} className="mt-2" color="#ec4899">
-                <SparklineSpot spotColors={{ endSpot: "#ec4899", spotColor: "rgba(236, 72, 153, 0.6)" }} />
+            <div className="text-2xl font-bold">{safeStats.turnoverRate ? `${safeStats.turnoverRate.toFixed(1)}%` : '0%'}</div>
+            {safeStats.turnoverTrend && safeStats.turnoverTrend.length > 0 ? (
+              <Sparkline data={safeStats.turnoverTrend} height={40} className="mt-2" color="#ec4899">
+                {safeStats.turnoverTrend.length > 1 && (
+                  <SparklineSpot spotColors={{ endSpot: "#ec4899", spotColor: "rgba(236, 72, 153, 0.6)" }} />
+                )}
               </Sparkline>
             ) : (
               <div className="h-10 text-xs text-muted-foreground mt-2">لا توجد بيانات للاتجاه</div>
