@@ -27,6 +27,7 @@ const ChartNode: React.FC<ChartNodeProps> = ({
       case 'division': return 'bg-green-100 border-green-300';
       case 'section': return 'bg-amber-100 border-amber-300';
       case 'team': return 'bg-orange-100 border-orange-300';
+      case 'unit': return 'bg-purple-100 border-purple-300';
       default: return 'bg-slate-100 border-slate-300';
     }
   };
