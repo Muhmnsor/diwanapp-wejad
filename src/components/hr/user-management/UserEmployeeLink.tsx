@@ -81,6 +81,8 @@ export function UserEmployeeLink({
             throw new Error(result.error?.message || "حدث خطأ أثناء ربط المستخدم بالموظف");
           }
         }
+
+        toast.success("تم ربط الموظف بحساب المستخدم بنجاح");
       }
 
       // After successful user-employee linking, refresh the page
@@ -91,13 +93,13 @@ export function UserEmployeeLink({
        console.log("Reloading page after user-employee link update");
       window.location.reload();
     }, 2000);
-
       
     } catch (error: any) {
       console.error('Error updating employee user link:', error);
       toast.error(error.message || "حدث خطأ أثناء تحديث ربط الحساب");
     } finally {
       setIsLoading(false);
+      onClose();
     }
   };
   
