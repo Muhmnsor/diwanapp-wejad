@@ -6,6 +6,7 @@ import { Calendar } from "lucide-react";
 import { AddAttendanceDialog } from "../dialogs/AddAttendanceDialog";
 import { AttendanceTable } from "../tables/AttendanceTable";
 import { SelfAttendanceTab } from "./SelfAttendanceTab";
+import { LeavesManagement } from "../leaves/LeavesManagement";
 
 export function AttendanceTab() {
   const [activeTab, setActiveTab] = useState("attendance");
@@ -21,7 +22,7 @@ export function AttendanceTab() {
         <TabsList className="w-full grid grid-cols-3">
           <TabsTrigger value="attendance">سجلات الحضور</TabsTrigger>
           <TabsTrigger value="self-attendance">التسجيل الذاتي</TabsTrigger>
-          <TabsTrigger value="leaves">طلبات الإجازات</TabsTrigger>
+          <TabsTrigger value="leaves">الإجازات</TabsTrigger>
         </TabsList>
         
         <TabsContent value="attendance" className="mt-4">
@@ -40,16 +41,7 @@ export function AttendanceTab() {
         </TabsContent>
         
         <TabsContent value="leaves" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-right">طلبات الإجازات</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center py-8">
-              <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
-              <p className="text-lg mb-2">سيتم هنا عرض وإدارة طلبات الإجازات</p>
-              <p className="text-sm text-muted-foreground">يمكنك رؤية الطلبات الجديدة والموافقة عليها ومتابعة حالتها</p>
-            </CardContent>
-          </Card>
+          <LeavesManagement />
         </TabsContent>
       </Tabs>
     </div>
