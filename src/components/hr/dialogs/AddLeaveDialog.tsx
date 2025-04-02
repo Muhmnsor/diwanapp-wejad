@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
+import { useLeaveTypes } from "@/hooks/hr/useLeaveTypes";
+import { Loader2 } from "lucide-react";
 
 const leaveFormSchema = z.object({
   employee_id: z.string(),
@@ -26,9 +28,8 @@ const leaveFormSchema = z.object({
 export function AddLeaveDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Using the correct auth store
-  const user = useAuthStore((state) => state.user);
+  const { user } = useAuthStore();
+  const { data: leaveTypes, isLoading: isLoadingLeaveTypes } = useLeaveTypes();
   
   const form = useForm({
     resolver: zodResolver(leaveFormSchema),
@@ -49,16 +50,18 @@ export function AddLeaveDialog() {
         start_date: data.start_date.toISOString().split('T')[0],
         end_date: data.end_date.toISOString().split('T')[0]
       };
-      
-      const { error } = await supabase.from("hr_leave_requests").insert(formattedData);
-      
+
+      const { error } = await supabase
+        .from("hr_leave_requests")
+        .insert(formattedData);
+
       if (error) throw error;
-      
+
       toast({
         title: "تم تقديم طلب الإجازة بنجاح",
         description: "سيتم مراجعة طلبك من قبل المسؤول"
       });
-      
+
       form.reset();
       setIsOpen(false);
     } catch (error) {
@@ -93,23 +96,38 @@ export function AddLeaveDialog() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>نوع الإجازة</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="اختر نوع الإجازة" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="annual">سنوية</SelectItem>
-                      <SelectItem value="sick">مرضية</SelectItem>
-                      <SelectItem value="emergency">طارئة</SelectItem>
-                      <SelectItem value="maternity">أمومة</SelectItem>
-                      <SelectItem value="unpaid">بدون راتب</SelectItem>
+                      {isLoadingLeaveTypes ? (
+                        <div className="flex justify-center items-center p-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        </div>
+                      ) : leaveTypes && leaveTypes.length > 0 ? (
+                        leaveTypes.map((type) => (
+                          <SelectItem key={type.id} value={type.code}>
+                            {type.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <>
+                          <SelectItem value="annual">سنوية</SelectItem>
+                          <SelectItem value="sick">مرضية</SelectItem>
+                          <SelectItem value="emergency">طارئة</SelectItem>
+                          <SelectItem value="maternity">أمومة</SelectItem>
+                          <SelectItem value="unpaid">بدون راتب</SelectItem>
+                        </>
+                      )}
                     </SelectContent>
                   </Select>
-                  <FormDescription>
-                    اختر نوع الإجازة المطلوبة
-                  </FormDescription>
+                  <FormDescription>اختر نوع الإجازة المطلوبة</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

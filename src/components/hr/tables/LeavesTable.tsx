@@ -14,9 +14,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Check, X } from "lucide-react";
+import { Check, X, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "@/hooks/use-toast";
+import { useLeaveTypes } from "@/hooks/hr/useLeaveTypes";
 
 interface LeaveRequest {
   id: string;
@@ -32,14 +33,6 @@ interface LeaveRequest {
   } | null;
 }
 
-const leaveTypeMap = {
-  annual: "سنوية",
-  sick: "مرضية",
-  emergency: "طارئة",
-  maternity: "أمومة",
-  unpaid: "بدون راتب",
-};
-
 const statusMap = {
   pending: { label: "قيد المراجعة", variant: "default" },
   approved: { label: "تمت الموافقة", variant: "success" },
@@ -49,8 +42,27 @@ const statusMap = {
 export function LeavesTable() {
   const { user } = useAuthStore();
   const [updating, setUpdating] = useState<string | null>(null);
+  const { data: leaveTypes } = useLeaveTypes();
 
-  const { data: leaves, refetch } = useQuery({
+  const getLeaveTypeName = (code: string) => {
+    if (leaveTypes) {
+      const leaveType = leaveTypes.find(type => type.code === code);
+      if (leaveType) return leaveType.name;
+    }
+    
+    // Fallback if types not loaded yet
+    const fallbackMap = {
+      annual: "سنوية",
+      sick: "مرضية",
+      emergency: "طارئة",
+      maternity: "أمومة",
+      unpaid: "بدون راتب",
+    };
+    
+    return fallbackMap[code] || code;
+  };
+
+  const { data: leaves, refetch, isLoading } = useQuery({
     queryKey: ["leaves"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -100,6 +112,14 @@ export function LeavesTable() {
 
   const isAdmin = user?.isAdmin || user?.role === "admin";
 
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-10">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   if (!leaves || leaves.length === 0) {
     return <div className="text-center py-10 text-muted-foreground">لا توجد طلبات إجازة</div>;
   }
@@ -122,7 +142,7 @@ export function LeavesTable() {
           {leaves.map((leave) => (
             <TableRow key={leave.id}>
               <TableCell>{leave.employee?.full_name || "غير معروف"}</TableCell>
-              <TableCell>{leaveTypeMap[leave.leave_type] || leave.leave_type}</TableCell>
+              <TableCell>{getLeaveTypeName(leave.leave_type)}</TableCell>
               <TableCell>
                 {format(new Date(leave.start_date), "d MMMM yyyy", { locale: ar })}
               </TableCell>
