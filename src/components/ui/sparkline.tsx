@@ -11,6 +11,14 @@ interface SparklineProps extends React.HTMLAttributes<HTMLDivElement> {
   children?: ReactNode;
 }
 
+// Ensure data is valid for sparklines (at least 2 points)
+const ensureValidData = (data: number[]): number[] => {
+  if (!data || data.length < 2) {
+    return [0, 0];
+  }
+  return data;
+};
+
 export function Sparkline({
   data,
   color = "#4ade80",
@@ -20,9 +28,11 @@ export function Sparkline({
   className,
   ...props
 }: SparklineProps) {
+  const validData = ensureValidData(data);
+  
   return (
     <div className={cn("w-full", className)} {...props}>
-      <Sparklines data={data} limit={limit} height={height} margin={5}>
+      <Sparklines data={validData} limit={limit} height={height} margin={5}>
         <SparklinesLine color={color} />
         {children}
       </Sparklines>
