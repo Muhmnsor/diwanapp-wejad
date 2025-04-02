@@ -1,8 +1,8 @@
 
-// src/components/hr/leaves/LeavesManagement.tsx
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarDays } from "lucide-react";
+import { LeavesTable } from "../tables/LeavesTable";
+import { AddLeaveDialog } from "../dialogs/AddLeaveDialog";
 
 export function LeavesManagement() {
   return (
@@ -12,21 +12,17 @@ export function LeavesManagement() {
           <CalendarDays className="h-5 w-5" />
           إدارة الإجازات
         </h2>
+        <AddLeaveDialog />
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>إدارة الإجازات والطلبات</CardTitle>
+          <CardTitle>طلبات الإجازات</CardTitle>
         </CardHeader>
-        <CardContent className="text-center py-8">
-          <CalendarDays className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
-          <p className="text-lg mb-2">قيد التطوير</p>
-          <p className="text-sm text-muted-foreground">
-            ستتمكن قريباً من إدارة طلبات الإجازات وتخصيص استحقاقات الموظفين
-          </p>
+        <CardContent>
+          <LeavesTable />
         </CardContent>
       </Card>
     </div>
   );
 }
-
