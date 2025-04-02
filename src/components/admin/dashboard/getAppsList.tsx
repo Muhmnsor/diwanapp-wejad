@@ -12,7 +12,8 @@ import {
   Code,
   BriefcaseIcon,
   Calculator,
-  CalendarClock
+  CalendarClock,
+  Mail
 } from "lucide-react";
 import { AppItem } from "./DashboardApps";
 import { NotificationCounts } from "@/hooks/dashboard/useNotificationCounts";
@@ -83,6 +84,9 @@ export const APP_ROLE_ACCESS = {
     'finance_manager', 'financial_manager', 'accountant'
   ],
   meetings: [
+    'admin', 'app_admin', 'developer'
+  ],
+  internal_mail: [
     'admin', 'app_admin', 'developer'
   ]
 };
@@ -290,6 +294,13 @@ const ALL_APPS: AppItem[] = [
     path: "/admin/meetings",
     description: "إدارة جدول الاجتماعات والمشاركين والمحاضر",
     notifications: 0
+  },
+  {
+    title: "البريد الداخلي",
+    icon: Mail,
+    path: "/admin/internal-mail",
+    description: "نظام البريد الداخلي والمراسلات",
+    notifications: 0
   }
 ];
 
@@ -468,6 +479,7 @@ const getAppKeyFromPath = (path: string): string | null => {
   if (path === '/admin/hr') return 'hr';
   if (path === '/admin/accounting') return 'accounting';
   if (path === '/admin/meetings') return 'meetings';
+  if (path === '/admin/internal-mail') return 'internal_mail';
   
   return null;
 };
@@ -481,6 +493,7 @@ const getNotificationCount = (path: string, counts: NotificationCounts): number 
   if (path === '/admin/hr') return counts.hr || 0;
   if (path === '/admin/accounting') return counts.accounting || 0;
   if (path === '/admin/meetings') return counts.meetings || 0;
+  if (path === '/admin/internal-mail') return counts.internal_mail || 0;
   
   return 0;
 };
