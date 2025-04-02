@@ -45,13 +45,7 @@ export function useOrganizationalUnitEmployees(unitId: string) {
         throw error;
       }
       
-      // Transform the nested employee object to match the expected interface
-      const transformedData = data.map(item => ({
-        ...item,
-        employee: item.employee as unknown as Employee
-      }));
-      
-      return transformedData as EmployeeAssignment[];
+      return data as EmployeeAssignment[];
     },
     enabled: !!unitId,
     staleTime: 2 * 60 * 1000, // 2 minutes

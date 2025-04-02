@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export interface OrganizationalHierarchyItem {
+interface OrganizationalHierarchyItem {
   id: string;
   name: string;
   description?: string;
@@ -24,14 +24,7 @@ export function useOrganizationalHierarchy() {
         throw error;
       }
       
-      // Transform the data if needed
-      const transformedData = data.map((item: any) => ({
-        ...item,
-        // Convert UUID[] to string[] if needed
-        path: Array.isArray(item.path) ? item.path : []
-      }));
-      
-      return transformedData as OrganizationalHierarchyItem[];
+      return data as OrganizationalHierarchyItem[];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
