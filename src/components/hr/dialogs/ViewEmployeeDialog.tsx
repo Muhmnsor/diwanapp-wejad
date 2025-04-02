@@ -1,197 +1,136 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import React from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ContractsTab } from "@/components/hr/tabs/ContractsTab";
-import { ScheduleInfoDetail } from "@/components/hr/fields/ScheduleInfoDetail";
-
-interface Employee {
-  id: string;
-  employee_number: string;
-  full_name: string;
-  position: string;
-  department: string;
-  hire_date: string;
-  status: string;
-  email: string;
-  phone: string;
-  schedule_id?: string; // إضافة هذه الخاصية
-}
 
 interface ViewEmployeeDialogProps {
-  employee: Employee;
-  isOpen: boolean;
-  onClose: () => void;
+  employeeId: string;
+  trigger: React.ReactNode;
 }
 
-export function ViewEmployeeDialog({ employee, isOpen, onClose }: ViewEmployeeDialogProps) {
-  // Fetch additional employee details like attendance, leaves, etc.
-  const { data: employeeDetails, isLoading } = useQuery({
-    queryKey: ['employee-details', employee.id],
+export function ViewEmployeeDialog({ employeeId, trigger }: ViewEmployeeDialogProps) {
+  const [open, setOpen] = React.useState(false);
+
+  const { data: employee, isLoading } = useQuery({
+    queryKey: ['employee', employeeId],
     queryFn: async () => {
-      try {
-        // Get leave requests count
-        const { count: leavesCount, error: leavesError } = await supabase
-          .from('hr_leave_requests')
-          .select('*', { count: 'exact', head: true })
-          .eq('employee_id', employee.id);
-          
-        if (leavesError) throw leavesError;
+      if (!open) return null;
+      
+      const { data, error } = await supabase
+        .from('employees')
+        .select(`
+          *,
+          hr_employee_contracts(*)
+        `)
+        .eq('id', employeeId)
+        .single();
         
-        // Get training count
-        const { count: trainingCount, error: trainingError } = await supabase
-          .from('hr_employee_training')
-          .select('*', { count: 'exact', head: true })
-          .eq('employee_id', employee.id);
-          
-        if (trainingError) throw trainingError;
-        
-        // Get attendance percentage
-        const { count: attendanceCount, error: attendanceError } = await supabase
-          .from('hr_attendance')
-          .select('*', { count: 'exact', head: true })
-          .eq('employee_id', employee.id)
-          .eq('status', 'present');
-          
-        if (attendanceError) throw attendanceError;
-          
-        return {
-          leavesCount: leavesCount || 0,
-          trainingCount: trainingCount || 0,
-          attendanceCount: attendanceCount || 0
-        };
-      } catch (error) {
-        console.error('Error fetching employee details:', error);
-        return {
-          leavesCount: 0,
-          trainingCount: 0,
-          attendanceCount: 0
-        };
-      }
+      if (error) throw error;
+      return data;
     },
-    enabled: isOpen
+    enabled: open,
   });
-  
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'active': return 'نشط';
-      case 'on_leave': return 'في إجازة';
-      case 'terminated': return 'منتهي';
-      default: return status;
-    }
-  };
-  
+
   return (
-<Dialog open={isOpen} onOpenChange={onClose}>
-  <DialogContent className="sm:max-w-[700px]" dir="rtl">
-    <DialogHeader>
-      <DialogTitle>تفاصيل الموظف</DialogTitle>
-    </DialogHeader>
-    
-    <div className="text-center mb-6">
-      <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold mx-auto mb-2">
-        {employee.full_name?.charAt(0) || "؟"}
-      </div>
-      <h2 className="text-xl font-bold">{employee.full_name}</h2>
-      <p className="text-muted-foreground">{employee.position}</p>
-    </div>
-    
-    <Tabs defaultValue="basic-info">
-      <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="basic-info">المعلومات الأساسية</TabsTrigger>
-        <TabsTrigger value="contracts">العقود</TabsTrigger>
-        <TabsTrigger value="statistics">الإحصائيات</TabsTrigger>
-      </TabsList>
-      
-      <TabsContent value="basic-info" className="pt-4">
-        <div className="grid grid-cols-2 gap-y-4">
-          <div>
-            <p className="text-sm text-muted-foreground">الرقم الوظيفي</p>
-            <p className="font-medium">{employee.employee_number}</p>
-          </div>
-          
-          <div>
-            <p className="text-sm text-muted-foreground">القسم</p>
-            <p className="font-medium">{employee.department || "-"}</p>
-          </div>
-          
-          <div>
-            <p className="text-sm text-muted-foreground">تاريخ التعيين</p>
-            <p className="font-medium">
-              {employee.hire_date ? new Date(employee.hire_date).toLocaleDateString('ar-SA') : "-"}
-            </p>
-          </div>
-          
-          <div>
-            <p className="text-sm text-muted-foreground">الحالة</p>
-            <p className="font-medium">
-              <span className={`px-2 py-1 rounded-full text-xs
-                ${employee.status === 'active' ? 'bg-green-100 text-green-800' : 
-                  employee.status === 'on_leave' ? 'bg-blue-100 text-blue-800' : 
-                  'bg-gray-100 text-gray-800'}`}>
-                {getStatusText(employee.status)}
-              </span>
-            </p>
-          </div>
-          
-          <div>
-            <p className="text-sm text-muted-foreground">البريد الإلكتروني</p>
-            <p className="font-medium">{employee.email || "-"}</p>
-          </div>
-          
-          <div>
-            <p className="text-sm text-muted-foreground">رقم الهاتف</p>
-            <p className="font-medium">{employee.phone || "-"}</p>
-          </div>
-          
-          <div className="col-span-2 mt-4 pt-4 border-t">
-            <p className="text-sm text-muted-foreground mb-2">جدول العمل</p>
-            <ScheduleInfoDetail scheduleId={employee.schedule_id} />
-          </div>
-        </div>
-      </TabsContent>
-      
-      <TabsContent value="contracts" className="pt-4">
-        <ContractsTab employeeId={employee.id} />
-      </TabsContent>
-      
-      <TabsContent value="statistics" className="pt-4">
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="sm:max-w-[500px]" dir="rtl">
+        <DialogHeader>
+          <DialogTitle>بيانات الموظف</DialogTitle>
+        </DialogHeader>
+        
         {isLoading ? (
-          <div className="flex justify-center py-4">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <div className="flex justify-center py-8">جاري تحميل البيانات...</div>
+        ) : employee ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="text-sm text-muted-foreground">الاسم الكامل</div>
+                <div className="font-medium">{employee.full_name}</div>
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">المسمى الوظيفي</div>
+                <div className="font-medium">{employee.position}</div>
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">القسم</div>
+                <div className="font-medium">{employee.department}</div>
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">الحالة</div>
+                <div className="font-medium">
+                  {employee.status === 'active' ? 'يعمل' : 'منتهي'}
+                </div>
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">تاريخ التعيين</div>
+                <div className="font-medium">
+                  {employee.hire_date && new Date(employee.hire_date).toLocaleDateString('ar-SA')}
+                </div>
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">البريد الإلكتروني</div>
+                <div className="font-medium">{employee.email || '-'}</div>
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">رقم الهاتف</div>
+                <div className="font-medium">{employee.phone || '-'}</div>
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">رقم الهوية</div>
+                <div className="font-medium">{employee.id_number || '-'}</div>
+              </div>
+            </div>
+
+            {employee.hr_employee_contracts && employee.hr_employee_contracts.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-lg font-medium mb-2">معلومات العقد</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-sm text-muted-foreground">نوع العقد</div>
+                    <div className="font-medium">
+                      {employee.hr_employee_contracts[0].contract_type === 'permanent' ? 'دائم' : 
+                       employee.hr_employee_contracts[0].contract_type === 'temporary' ? 'مؤقت' : 'متعاقد'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-muted-foreground">تاريخ بداية العقد</div>
+                    <div className="font-medium">
+                      {employee.hr_employee_contracts[0].start_date && 
+                        new Date(employee.hr_employee_contracts[0].start_date).toLocaleDateString('ar-SA')}
+                    </div>
+                  </div>
+                  {employee.hr_employee_contracts[0].end_date && (
+                    <div>
+                      <div className="text-sm text-muted-foreground">تاريخ نهاية العقد</div>
+                      <div className="font-medium">
+                        {new Date(employee.hr_employee_contracts[0].end_date).toLocaleDateString('ar-SA')}
+                      </div>
+                    </div>
+                  )}
+                  {employee.hr_employee_contracts[0].probation_end_date && (
+                    <div>
+                      <div className="text-sm text-muted-foreground">نهاية الفترة التجريبية</div>
+                      <div className="font-medium">
+                        {new Date(employee.hr_employee_contracts[0].probation_end_date).toLocaleDateString('ar-SA')}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-4 mt-2">
-            <div className="p-4 rounded-lg bg-blue-50 text-center">
-              <p className="text-2xl font-bold text-blue-600">
-                {employeeDetails?.leavesCount || 0}
-              </p>
-              <p className="text-sm text-muted-foreground">الإجازات</p>
-            </div>
-            <div className="p-4 rounded-lg bg-green-50 text-center">
-              <p className="text-2xl font-bold text-green-600">
-                {employeeDetails?.trainingCount || 0}
-              </p>
-              <p className="text-sm text-muted-foreground">التدريبات</p>
-            </div>
-            <div className="p-4 rounded-lg bg-amber-50 text-center">
-              <p className="text-2xl font-bold text-amber-600">
-                {employeeDetails?.attendanceCount || 0}
-              </p>
-              <p className="text-sm text-muted-foreground">أيام الحضور</p>
-            </div>
-          </div>
+          <div className="text-center py-4">لا توجد بيانات للموظف</div>
         )}
-      </TabsContent>
-    </Tabs>
-    
-    <DialogFooter>
-      <Button onClick={onClose}>إغلاق</Button>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
+      </DialogContent>
+    </Dialog>
   );
 }
