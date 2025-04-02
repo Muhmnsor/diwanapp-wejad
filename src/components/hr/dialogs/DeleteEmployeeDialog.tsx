@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,61 +10,66 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
-interface Employee {
-  id: string;
-  employee_number: string;
-  full_name: string;
-}
-
-interface DeleteEmployeeDialogProps {
-  employee: Employee;
+export interface DeleteEmployeeDialogProps {
+  employee: any;
+  employeeName: string;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export function DeleteEmployeeDialog({ employee, isOpen, onClose, onSuccess }: DeleteEmployeeDialogProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  
+export function DeleteEmployeeDialog({
+  employee,
+  employeeName,
+  isOpen,
+  onClose,
+  onSuccess,
+}: DeleteEmployeeDialogProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const handleDelete = async () => {
-    setIsLoading(true);
+    if (!employee?.id) return;
     
+    setIsDeleting(true);
     try {
-      // Delete employee record
       const { error } = await supabase
-        .from('employees')
+        .from("employees")
         .delete()
-        .eq('id', employee.id);
-        
+        .eq("id", employee.id);
+
       if (error) throw error;
-      
+
+      toast.success("تم حذف الموظف بنجاح");
       onSuccess();
     } catch (error) {
-      console.error('Error deleting employee:', error);
+      console.error("Error deleting employee:", error);
       toast.error("حدث خطأ أثناء حذف الموظف");
-      onClose();
     } finally {
-      setIsLoading(false);
+      setIsDeleting(false);
+      onClose();
     }
   };
-  
+
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent dir="rtl">
         <AlertDialogHeader>
           <AlertDialogTitle>هل أنت متأكد من حذف هذا الموظف؟</AlertDialogTitle>
           <AlertDialogDescription>
-            سيتم حذف سجل الموظف "{employee.full_name}" بشكل نهائي. 
-            هذا الإجراء لا يمكن التراجع عنه.
+            سيتم حذف جميع بيانات الموظف <strong>{employeeName}</strong> بشكل نهائي من النظام. هذا الإجراء لا يمكن التراجع عنه.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isLoading}>إلغاء</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete} disabled={isLoading} className="bg-red-600 hover:bg-red-700">
-            {isLoading ? "جاري الحذف..." : "حذف"}
+        <AlertDialogFooter className="flex justify-between">
+          <AlertDialogCancel>إلغاء</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={handleDelete}
+            className="bg-red-600 hover:bg-red-700"
+            disabled={isDeleting}
+          >
+            {isDeleting ? "جاري الحذف..." : "حذف الموظف"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

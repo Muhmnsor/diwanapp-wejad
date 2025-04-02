@@ -1,253 +1,196 @@
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+
+import React, { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuthStore } from "@/store/refactored-auth";
 import { toast } from "sonner";
-import { EmployeeScheduleField } from "@/components/hr/fields/EmployeeScheduleField";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 
-interface AddEmployeeDialogProps {
+export interface AddEmployeeDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
 
 export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDialogProps) {
-  const { user } = useAuthStore();
-  const [isLoading, setIsLoading] = useState(false);
-  const [users, setUsers] = useState<{ id: string, email: string }[]>([]);
   const [formData, setFormData] = useState({
-    employee_number: "",
     full_name: "",
     position: "",
     department: "",
-    hire_date: new Date().toISOString().split("T")[0],
-    contract_type: "full_time",
-    email: "",
+    status: "active",
+    hire_date: new Date().toISOString().split('T')[0],
+    contract_end_date: "",
     phone: "",
-    user_id: "no_user",
-    schedule_id: ""
+    email: "",
   });
-  
-  // Fetch users for linking
-  useEffect(() => {
-  const fetchUsers = async () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.full_name || !formData.position || !formData.department) {
+      toast.error("يرجى تعبئة جميع الحقول المطلوبة");
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
       const { data, error } = await supabase
-        .rpc('get_app_users');
-        
-      if (error) throw error;
-      setUsers(data || []);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    }
-  };
-  
-  if (isOpen) {
-    fetchUsers();
-  }
-}, [isOpen]);
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-  
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    
-    // If user is selected, auto-fill email if available
-    if (name === 'user_id' && value) {
-      const selectedUser = users.find(u => u.id === value);
-      if (selectedUser && selectedUser.email && !formData.email) {
-        setFormData(prev => ({ ...prev, email: selectedUser.email }));
-      }
-    }
-  };
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    try {
-      // Insert new employee record
-      const { data, error } = await supabase
-        .from('employees')
-        .insert({
-          ...formData,
-          user_id: formData.user_id === "no_user" ? null : formData.user_id,
-          status: 'active'
-        })
+        .from("employees")
+        .insert(formData)
         .select();
-        
+
       if (error) throw error;
-      
+
+      toast.success("تم إضافة الموظف بنجاح");
       onSuccess();
+      
+      // Reset form
+      setFormData({
+        full_name: "",
+        position: "",
+        department: "",
+        status: "active",
+        hire_date: new Date().toISOString().split('T')[0],
+        contract_end_date: "",
+        phone: "",
+        email: "",
+      });
     } catch (error) {
-      console.error('Error adding employee:', error);
+      console.error("Error adding employee:", error);
       toast.error("حدث خطأ أثناء إضافة الموظف");
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
-  
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[550px]" dir="rtl">
         <DialogHeader>
           <DialogTitle>إضافة موظف جديد</DialogTitle>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="employee_number">الرقم الوظيفي</Label>
-              <Input
-                id="employee_number"
-                name="employee_number"
-                value={formData.employee_number}
-                onChange={handleChange}
-                placeholder="أدخل الرقم الوظيفي"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="full_name">الاسم الكامل</Label>
-              <Input
-                id="full_name"
-                name="full_name"
-                value={formData.full_name}
-                onChange={handleChange}
-                placeholder="أدخل الاسم الكامل"
-                required
-              />
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="position">المنصب</Label>
-              <Input
-                id="position"
-                name="position"
-                value={formData.position}
-                onChange={handleChange}
-                placeholder="أدخل المنصب"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="department">القسم</Label>
-              <Input
-                id="department"
-                name="department"
-                value={formData.department}
-                onChange={handleChange}
-                placeholder="أدخل القسم"
-              />
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="hire_date">تاريخ التعيين</Label>
-              <Input
-                id="hire_date"
-                name="hire_date"
-                type="date"
-                value={formData.hire_date}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="contract_type">نوع العقد</Label>
-              <Select 
-                value={formData.contract_type} 
-                onValueChange={(value) => handleSelectChange("contract_type", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="اختر نوع العقد" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="full_time">دوام كامل</SelectItem>
-                  <SelectItem value="part_time">دوام جزئي</SelectItem>
-                  <SelectItem value="contractor">متعاقد</SelectItem>
-                  <SelectItem value="temporary">مؤقت</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">البريد الإلكتروني</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="أدخل البريد الإلكتروني"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="phone">رقم الهاتف</Label>
-              <Input
-                id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="أدخل رقم الهاتف"
-              />
-            </div>
-          </div>
-          
-          {/* User Linking Field */}
+
+        <div className="grid grid-cols-2 gap-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="user_id">ربط بحساب مستخدم</Label>
+            <Label htmlFor="name">الاسم الكامل *</Label>
+            <Input
+              id="name"
+              value={formData.full_name}
+              onChange={(e) => handleChange("full_name", e.target.value)}
+              placeholder="أدخل الاسم الكامل"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="position">المسمى الوظيفي *</Label>
+            <Input
+              id="position"
+              value={formData.position}
+              onChange={(e) => handleChange("position", e.target.value)}
+              placeholder="أدخل المسمى الوظيفي"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="department">القسم *</Label>
+            <Input
+              id="department"
+              value={formData.department}
+              onChange={(e) => handleChange("department", e.target.value)}
+              placeholder="أدخل القسم"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="status">الحالة</Label>
             <Select 
-              value={formData.user_id} 
-              onValueChange={(value) => handleSelectChange("user_id", value)}
+              value={formData.status} 
+              onValueChange={(value) => handleChange("status", value)}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="اختر حساب المستخدم (اختياري)" />
+              <SelectTrigger id="status">
+                <SelectValue placeholder="اختر حالة الموظف" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="no_user">بدون ربط</SelectItem>
-                {users.map(user => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.email}
-                  </SelectItem>
-                ))}
+                <SelectItem value="active">يعمل</SelectItem>
+                <SelectItem value="inactive">منتهي</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
-              ربط الموظف بحساب مستخدم يتيح له استخدام ميزات التسجيل الذاتي للحضور والانصراف
-            </p>
           </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="hire_date">تاريخ التعيين</Label>
+            <Input
+              id="hire_date"
+              type="date"
+              value={formData.hire_date}
+              onChange={(e) => handleChange("hire_date", e.target.value)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="contract_end_date">تاريخ انتهاء العقد</Label>
+            <Input
+              id="contract_end_date"
+              type="date"
+              value={formData.contract_end_date}
+              onChange={(e) => handleChange("contract_end_date", e.target.value)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="phone">رقم الهاتف</Label>
+            <Input
+              id="phone"
+              value={formData.phone}
+              onChange={(e) => handleChange("phone", e.target.value)}
+              placeholder="أدخل رقم الهاتف"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="email">البريد الإلكتروني</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleChange("email", e.target.value)}
+              placeholder="أدخل البريد الإلكتروني"
+            />
+          </div>
+        </div>
 
-          {/* Employee Schedule Field */}
-          <EmployeeScheduleField
-            value={formData.schedule_id}
-            onChange={(value) => handleSelectChange("schedule_id", value)}
-          />
-
-          <DialogFooter className="mt-4">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-              إلغاء
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "جاري الحفظ..." : "حفظ"}
-            </Button>
-          </DialogFooter>
-        </form>
+        <DialogFooter className="flex justify-between">
+          <Button variant="outline" onClick={onClose}>
+            إلغاء
+          </Button>
+          <Button 
+            onClick={handleSubmit} 
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "جاري الإضافة..." : "إضافة موظف"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -1,215 +1,185 @@
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+
+import React, { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { EmployeeScheduleField } from "@/components/hr/fields/EmployeeScheduleField";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 
-interface Employee {
-  id: string;
-  employee_number: string;
-  full_name: string;
-  position: string;
-  department: string;
-  hire_date: string;
-  status: string;
-  email: string;
-  phone: string;
-  contract_type?: string;
-  schedule_id?: string;
-}
-
-interface EditEmployeeDialogProps {
-  employee: Employee;
+export interface EditEmployeeDialogProps {
+  employee: any;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export function EditEmployeeDialog({ employee, isOpen, onClose, onSuccess }: EditEmployeeDialogProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<Partial<Employee>>({});
-  
-  useEffect(() => {
-    if (employee) {
-      setFormData({
-        employee_number: employee.employee_number,
-        full_name: employee.full_name,
-        position: employee.position || "",
-        department: employee.department || "",
-        hire_date: employee.hire_date || new Date().toISOString().split("T")[0],
-        contract_type: employee.contract_type || "full_time",
-        email: employee.email || "",
-        phone: employee.phone || "",
-        status: employee.status || "active",
-        schedule_id: employee.schedule_id || ""
-      });
+export function EditEmployeeDialog({ 
+  employee, 
+  isOpen, 
+  onClose, 
+  onSuccess 
+}: EditEmployeeDialogProps) {
+  const [formData, setFormData] = useState({
+    full_name: employee?.full_name || "",
+    position: employee?.position || "",
+    department: employee?.department || "",
+    status: employee?.status || "active",
+    hire_date: employee?.hire_date || "",
+    contract_end_date: employee?.contract_end_date || "",
+    phone: employee?.phone || "",
+    email: employee?.email || "",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.full_name || !formData.position || !formData.department) {
+      toast.error("يرجى تعبئة جميع الحقول المطلوبة");
+      return;
     }
-  }, [employee]);
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-  
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
+
+    setIsSubmitting(true);
+
     try {
-      // Update employee record
       const { error } = await supabase
-        .from('employees')
+        .from("employees")
         .update(formData)
-        .eq('id', employee.id);
-        
+        .eq("id", employee.id);
+
       if (error) throw error;
-      
+
+      toast.success("تم تحديث بيانات الموظف بنجاح");
       onSuccess();
     } catch (error) {
-      console.error('Error updating employee:', error);
+      console.error("Error updating employee:", error);
       toast.error("حدث خطأ أثناء تحديث بيانات الموظف");
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
-  
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[550px]" dir="rtl">
         <DialogHeader>
           <DialogTitle>تعديل بيانات الموظف</DialogTitle>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="employee_number">الرقم الوظيفي</Label>
-              <Input
-                id="employee_number"
-                name="employee_number"
-                value={formData.employee_number || ""}
-                onChange={handleChange}
-                placeholder="أدخل الرقم الوظيفي"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="full_name">الاسم الكامل</Label>
-              <Input
-                id="full_name"
-                name="full_name"
-                value={formData.full_name || ""}
-                onChange={handleChange}
-                placeholder="أدخل الاسم الكامل"
-                required
-              />
-            </div>
+
+        <div className="grid grid-cols-2 gap-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">الاسم الكامل *</Label>
+            <Input
+              id="name"
+              value={formData.full_name}
+              onChange={(e) => handleChange("full_name", e.target.value)}
+            />
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="position">المنصب</Label>
-              <Input
-                id="position"
-                name="position"
-                value={formData.position || ""}
-                onChange={handleChange}
-                placeholder="أدخل المنصب"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="department">القسم</Label>
-              <Input
-                id="department"
-                name="department"
-                value={formData.department || ""}
-                onChange={handleChange}
-                placeholder="أدخل القسم"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="position">المسمى الوظيفي *</Label>
+            <Input
+              id="position"
+              value={formData.position}
+              onChange={(e) => handleChange("position", e.target.value)}
+            />
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="hire_date">تاريخ التعيين</Label>
-              <Input
-                id="hire_date"
-                name="hire_date"
-                type="date"
-                value={formData.hire_date || ""}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="status">الحالة</Label>
-              <Select 
-                value={formData.status || "active"} 
-                onValueChange={(value) => handleSelectChange("status", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="اختر الحالة" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">نشط</SelectItem>
-                  <SelectItem value="on_leave">في إجازة</SelectItem>
-                  <SelectItem value="terminated">منتهي</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="department">القسم *</Label>
+            <Input
+              id="department"
+              value={formData.department}
+              onChange={(e) => handleChange("department", e.target.value)}
+            />
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">البريد الإلكتروني</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email || ""}
-                onChange={handleChange}
-                placeholder="أدخل البريد الإلكتروني"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="phone">رقم الهاتف</Label>
-              <Input
-                id="phone"
-                name="phone"
-                value={formData.phone || ""}
-                onChange={handleChange}
-                placeholder="أدخل رقم الهاتف"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="status">الحالة</Label>
+            <Select 
+              value={formData.status} 
+              onValueChange={(value) => handleChange("status", value)}
+            >
+              <SelectTrigger id="status">
+                <SelectValue placeholder="اختر حالة الموظف" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">يعمل</SelectItem>
+                <SelectItem value="inactive">منتهي</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
-          {/* Employee Schedule Field */}
-          <EmployeeScheduleField
-            value={formData.schedule_id || ""}
-            onChange={(value) => handleSelectChange("schedule_id", value)}
-          />
+          <div className="space-y-2">
+            <Label htmlFor="hire_date">تاريخ التعيين</Label>
+            <Input
+              id="hire_date"
+              type="date"
+              value={formData.hire_date ? formData.hire_date.split('T')[0] : ''}
+              onChange={(e) => handleChange("hire_date", e.target.value)}
+            />
+          </div>
           
-          <DialogFooter className="mt-4">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-              إلغاء
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "جاري الحفظ..." : "حفظ"}
-            </Button>
-          </DialogFooter>
-        </form>
+          <div className="space-y-2">
+            <Label htmlFor="contract_end_date">تاريخ انتهاء العقد</Label>
+            <Input
+              id="contract_end_date"
+              type="date"
+              value={formData.contract_end_date ? formData.contract_end_date.split('T')[0] : ''}
+              onChange={(e) => handleChange("contract_end_date", e.target.value)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="phone">رقم الهاتف</Label>
+            <Input
+              id="phone"
+              value={formData.phone}
+              onChange={(e) => handleChange("phone", e.target.value)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="email">البريد الإلكتروني</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleChange("email", e.target.value)}
+            />
+          </div>
+        </div>
+
+        <DialogFooter className="flex justify-between">
+          <Button variant="outline" onClick={onClose}>
+            إلغاء
+          </Button>
+          <Button 
+            onClick={handleSubmit} 
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "جاري الحفظ..." : "حفظ التغييرات"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
-import { HRTabs } from '@/components/hr/HRTabs';
 import { HRDashboardOverview } from '@/components/hr/dashboard/HRDashboardOverview';
 
 // Additional imports for other HR tabs
@@ -21,14 +20,14 @@ const HR = () => {
   const [activeTab, setActiveTab] = useState('overview');
 
   return (
-    <div className="container mx-auto py-6">
+    <div className="container mx-auto py-6" dir="rtl">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-right">إدارة الموارد البشرية</h1>
+        <h1 className="text-3xl font-bold">إدارة الموارد البشرية</h1>
         <div className="relative w-64">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="بحث..."
-            className="pl-10 pr-4 text-right"
+            className="pl-10 pr-4"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -36,7 +35,7 @@ const HR = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="w-full grid grid-cols-3 md:grid-cols-7 text-right">
+        <TabsList className="w-full grid grid-cols-3 md:grid-cols-7">
           <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
           <TabsTrigger value="employees">الموظفين</TabsTrigger>
           <TabsTrigger value="attendance">الحضور</TabsTrigger>
