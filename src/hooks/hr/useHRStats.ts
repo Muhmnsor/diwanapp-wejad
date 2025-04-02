@@ -12,11 +12,11 @@ interface HRStats {
   expiringContracts: number;
   pendingTrainings: number;
   // Trend data for sparklines
-  employeeTrend?: number[];
-  attendanceTrend?: number[];
-  leavesTrend?: number[];
-  contractsTrend?: number[];
-  trainingsTrend?: number[];
+  employeeTrend: number[];
+  attendanceTrend: number[];
+  leavesTrend: number[];
+  contractsTrend: number[];
+  trainingsTrend: number[];
 }
 
 export function useHRStats() {
@@ -105,11 +105,19 @@ export function useHRStats() {
         // Generate trend data (for demonstration - in a real app, this would come from historical data)
         // In this example we're simulating trend data by generating random variations
         const generateTrendData = (baseValue: number, variance: number = 2, length: number = 7): number[] => {
+          if (baseValue === 0) return Array(length).fill(0);
           return Array.from({ length }, () => {
             return Math.max(0, baseValue + Math.floor(Math.random() * variance * 2) - variance);
           });
         };
         
+        // Make sure we always have valid array data for trends
+        const employeeTrend = generateTrendData(totalEmployees || 0, 5, 10);
+        const attendanceTrend = generateTrendData(presentToday || 0, 3, 10);
+        const leavesTrend = generateTrendData(activeLeaves || 0, 2, 10);
+        const contractsTrend = generateTrendData(expiringContracts || 0, 1, 10);
+        const trainingsTrend = generateTrendData(pendingTrainings || 0, 2, 10);
+
         return {
           totalEmployees: totalEmployees || 0,
           newEmployees: newEmployees || 0,
@@ -119,15 +127,15 @@ export function useHRStats() {
           upcomingLeaves: upcomingLeaves || 0,
           expiringContracts: expiringContracts || 0,
           pendingTrainings: pendingTrainings || 0,
-          // Generate trend data based on current values
-          employeeTrend: generateTrendData(totalEmployees || 0, 5, 10),
-          attendanceTrend: generateTrendData(presentToday || 0, 3, 10),
-          leavesTrend: generateTrendData(activeLeaves || 0, 2, 10),
-          contractsTrend: generateTrendData(expiringContracts || 0, 1, 10),
-          trainingsTrend: generateTrendData(pendingTrainings || 0, 2, 10)
+          employeeTrend,
+          attendanceTrend,
+          leavesTrend,
+          contractsTrend,
+          trainingsTrend
         };
       } catch (error) {
         console.error('Error fetching HR stats:', error);
+        // Return default values with empty trend arrays to prevent errors
         return {
           totalEmployees: 0,
           newEmployees: 0,
@@ -136,7 +144,12 @@ export function useHRStats() {
           activeLeaves: 0,
           upcomingLeaves: 0,
           expiringContracts: 0,
-          pendingTrainings: 0
+          pendingTrainings: 0,
+          employeeTrend: [0],
+          attendanceTrend: [0],
+          leavesTrend: [0],
+          contractsTrend: [0],
+          trainingsTrend: [0]
         };
       }
     },

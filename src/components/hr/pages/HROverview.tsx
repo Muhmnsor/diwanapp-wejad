@@ -1,200 +1,153 @@
-
-import { Card } from "@/components/ui/card";
+import React from "react";
 import { useHRStats } from "@/hooks/hr/useHRStats";
-import { Users, CalendarClock, FileBarChart, Clock, AlertCircle, Calendar, Briefcase, GraduationCap } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sparkline, SparklineSpot } from "@/components/ui/sparkline";
+import { Users, CalendarClock, GraduationCap, BriefcaseIcon, AlertCircle } from "lucide-react";
 
 const HROverview = () => {
-  const { data: stats, isLoading: isLoadingStats } = useHRStats();
+  const { data: stats, isLoading, error } = useHRStats();
+
+  if (isLoading) {
+    return <div className="p-8 text-center">جاري تحميل البيانات...</div>;
+  }
+
+  if (error) {
+    return <div className="p-8 text-center text-red-500">حدث خطأ أثناء تحميل البيانات</div>;
+  }
 
   return (
     <div className="space-y-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">نظرة عامة على شؤون الموظفين</h1>
-        <p className="text-muted-foreground">إحصائيات ومؤشرات أداء إدارة شؤون الموظفين</p>
+      <h2 className="text-3xl font-bold mb-6">نظرة عامة</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Employee Stats Card */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">الموظفون</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.totalEmployees || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats?.newEmployees || 0} موظف جديد هذا الشهر
+            </p>
+            {stats?.employeeTrend && (
+              <div className="h-[40px] mt-3">
+                <Sparkline data={stats.employeeTrend} height={40} color="#4ade80">
+                  <SparklineSpot />
+                </Sparkline>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Attendance Card */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">الحضور</CardTitle>
+            <CalendarClock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.presentToday || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              نسبة الحضور {stats?.attendanceRate || 0}%
+            </p>
+            {stats?.attendanceTrend && (
+              <div className="h-[40px] mt-3">
+                <Sparkline data={stats.attendanceTrend} height={40} color="#3b82f6">
+                  <SparklineSpot spotColors={{ 
+                    endSpot: "#3b82f6", 
+                    spotColor: "rgba(59, 130, 246, 0.6)" 
+                  }} />
+                </Sparkline>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Leaves Card */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">الإجازات</CardTitle>
+            <CalendarClock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.activeLeaves || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats?.upcomingLeaves || 0} إجازة قادمة هذا الأسبوع
+            </p>
+            {stats?.leavesTrend && (
+              <div className="h-[40px] mt-3">
+                <Sparkline data={stats.leavesTrend} height={40} color="#f97316">
+                  <SparklineSpot spotColors={{ 
+                    endSpot: "#f97316", 
+                    spotColor: "rgba(249, 115, 22, 0.6)" 
+                  }} />
+                </Sparkline>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Training Card */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">التدريب</CardTitle>
+            <GraduationCap className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.pendingTrainings || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              تدريب قيد الانتظار
+            </p>
+            {stats?.trainingsTrend && (
+              <div className="h-[40px] mt-3">
+                <Sparkline data={stats.trainingsTrend} height={40} color="#a855f7">
+                  <SparklineSpot spotColors={{ 
+                    endSpot: "#a855f7", 
+                    spotColor: "rgba(168, 85, 247, 0.6)" 
+                  }} />
+                </Sparkline>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card className="p-4 flex items-center space-x-4 space-x-reverse">
-          <div className="p-2 bg-blue-100 rounded-full">
-            <Users className="h-6 w-6 text-blue-600" />
-          </div>
-          <div className="flex-1 rtl:text-right">
-            <p className="text-sm text-muted-foreground">الموظفين</p>
-            <h3 className="text-2xl font-bold">
-              {isLoadingStats ? "..." : stats?.totalEmployees || 0}
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              {isLoadingStats ? "..." : stats?.newEmployees || 0} موظف جديد هذا الشهر
-            </p>
-            {!isLoadingStats && stats?.employeeTrend && (
-              <Sparkline 
-                data={stats.employeeTrend} 
-                height={20} 
-                className="mt-2"
-                color="#4361ee"
-              >
-                <SparklineSpot 
-                  spotColors={{ 
-                    endSpot: "#4361ee", 
-                    spotColor: "rgba(67, 97, 238, 0.6)" 
-                  }} 
-                />
-              </Sparkline>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Contract Alerts */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">العقود المنتهية قريباً</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center space-x-2 space-x-reverse">
+              <AlertCircle className="h-5 w-5 text-amber-500" />
+              <span>{stats?.expiringContracts || 0} عقد ستنتهي خلال الشهر القادم</span>
+            </div>
+            {stats?.contractsTrend && (
+              <div className="h-[40px] mt-3">
+                <Sparkline data={stats.contractsTrend} height={40} color="#eab308">
+                  <SparklineSpot spotColors={{ 
+                    endSpot: "#eab308", 
+                    spotColor: "rgba(234, 179, 8, 0.6)" 
+                  }} />
+                </Sparkline>
+              </div>
             )}
-          </div>
+          </CardContent>
         </Card>
-        
-        <Card className="p-4 flex items-center space-x-4 space-x-reverse">
-          <div className="p-2 bg-green-100 rounded-full">
-            <CalendarClock className="h-6 w-6 text-green-600" />
-          </div>
-          <div className="flex-1 rtl:text-right">
-            <p className="text-sm text-muted-foreground">الحضور اليوم</p>
-            <h3 className="text-2xl font-bold">
-              {isLoadingStats ? "..." : stats?.presentToday || 0}
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              نسبة الحضور: {isLoadingStats ? "..." : `${stats?.attendanceRate || 0}%`}
-            </p>
-            {!isLoadingStats && stats?.attendanceTrend && (
-              <Sparkline 
-                data={stats.attendanceTrend} 
-                height={20} 
-                className="mt-2"
-                color="#10b981"
-              >
-                <SparklineSpot 
-                  spotColors={{ 
-                    endSpot: "#10b981", 
-                    spotColor: "rgba(16, 185, 129, 0.6)" 
-                  }} 
-                />
-              </Sparkline>
-            )}
-          </div>
-        </Card>
-        
-        <Card className="p-4 flex items-center space-x-4 space-x-reverse">
-          <div className="p-2 bg-amber-100 rounded-full">
-            <Calendar className="h-6 w-6 text-amber-600" />
-          </div>
-          <div className="flex-1 rtl:text-right">
-            <p className="text-sm text-muted-foreground">الإجازات النشطة</p>
-            <h3 className="text-2xl font-bold">
-              {isLoadingStats ? "..." : stats?.activeLeaves || 0}
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              {isLoadingStats ? "..." : stats?.upcomingLeaves || 0} إجازة في الأسبوع القادم
-            </p>
-            {!isLoadingStats && stats?.leavesTrend && (
-              <Sparkline 
-                data={stats.leavesTrend} 
-                height={20} 
-                className="mt-2"
-                color="#f59e0b"
-              >
-                <SparklineSpot 
-                  spotColors={{ 
-                    endSpot: "#f59e0b", 
-                    spotColor: "rgba(245, 158, 11, 0.6)" 
-                  }} 
-                />
-              </Sparkline>
-            )}
-          </div>
-        </Card>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 flex items-center space-x-4 space-x-reverse">
-          <div className="p-2 bg-purple-100 rounded-full">
-            <Briefcase className="h-6 w-6 text-purple-600" />
-          </div>
-          <div className="flex-1 rtl:text-right">
-            <p className="text-sm text-muted-foreground">العقود المنتهية قريباً</p>
-            <h3 className="text-2xl font-bold">
-              {isLoadingStats ? "..." : stats?.expiringContracts || 0}
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              خلال الشهر القادم
-            </p>
-            {!isLoadingStats && stats?.contractsTrend && (
-              <Sparkline 
-                data={stats.contractsTrend} 
-                height={20} 
-                className="mt-2"
-                color="#8b5cf6"
-              >
-                <SparklineSpot 
-                  spotColors={{ 
-                    endSpot: "#8b5cf6", 
-                    spotColor: "rgba(139, 92, 246, 0.6)" 
-                  }} 
-                />
-              </Sparkline>
-            )}
-          </div>
-        </Card>
-        
-        <Card className="p-4 flex items-center space-x-4 space-x-reverse">
-          <div className="p-2 bg-cyan-100 rounded-full">
-            <GraduationCap className="h-6 w-6 text-cyan-600" />
-          </div>
-          <div className="flex-1 rtl:text-right">
-            <p className="text-sm text-muted-foreground">التدريبات الحالية</p>
-            <h3 className="text-2xl font-bold">
-              {isLoadingStats ? "..." : stats?.pendingTrainings || 0}
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              برامج تدريبية قيد التنفيذ
-            </p>
-            {!isLoadingStats && stats?.trainingsTrend && (
-              <Sparkline 
-                data={stats.trainingsTrend} 
-                height={20} 
-                className="mt-2"
-                color="#06b6d4"
-              >
-                <SparklineSpot 
-                  spotColors={{ 
-                    endSpot: "#06b6d4", 
-                    spotColor: "rgba(6, 182, 212, 0.6)" 
-                  }} 
-                />
-              </Sparkline>
-            )}
-          </div>
-        </Card>
-        
-        <Card className="p-4 flex items-center space-x-4 space-x-reverse">
-          <div className="p-2 bg-red-100 rounded-full">
-            <AlertCircle className="h-6 w-6 text-red-600" />
-          </div>
-          <div className="flex-1 rtl:text-right">
-            <p className="text-sm text-muted-foreground">المهام العاجلة</p>
-            <h3 className="text-2xl font-bold">
-              3
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              مهام تحتاج إلى متابعة فورية
-            </p>
-            {/* Simple static trend data */}
-            <Sparkline 
-              data={[3, 5, 2, 6, 4, 3, 3]} 
-              height={20} 
-              className="mt-2"
-              color="#ef4444"
-            >
-              <SparklineSpot 
-                spotColors={{ 
-                  endSpot: "#ef4444", 
-                  spotColor: "rgba(239, 68, 68, 0.6)" 
-                }} 
-              />
-            </Sparkline>
-          </div>
+        {/* Other Analytics Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">التوزيع الوظيفي</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[200px] flex items-center justify-center text-muted-foreground">
+              سيتم إضافة رسم بياني للتوزيع الوظيفي هنا
+            </div>
+          </CardContent>
         </Card>
       </div>
     </div>
