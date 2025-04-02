@@ -18,6 +18,11 @@ export function ScheduleInfoDetail({ employeeId }: ScheduleInfoDetailProps) {
 
   useEffect(() => {
     const loadScheduleData = async () => {
+      if (!employeeId) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
         console.log("ScheduleInfoDetail (attendance) - Loading data for employee:", employeeId);
@@ -33,6 +38,8 @@ export function ScheduleInfoDetail({ employeeId }: ScheduleInfoDetailProps) {
           setWorkDays(days || []);
         } else {
           console.log("ScheduleInfoDetail (attendance) - No schedule found");
+          setSchedule(null);
+          setWorkDays([]);
         }
       } catch (error) {
         console.error("ScheduleInfoDetail (attendance) - Error loading schedule data:", error);
@@ -41,11 +48,7 @@ export function ScheduleInfoDetail({ employeeId }: ScheduleInfoDetailProps) {
       }
     };
     
-    if (employeeId) {
-      loadScheduleData();
-    } else {
-      console.log("ScheduleInfoDetail (attendance) - No employee ID provided");
-    }
+    loadScheduleData();
   }, [employeeId, getEmployeeSchedule, getWorkDays]);
   
   if (isLoading) {

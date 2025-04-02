@@ -37,7 +37,8 @@ export function useEmployeeSchedule() {
         return data as WorkSchedule[];
       } catch (err) {
         console.error("useEmployeeSchedule - Exception fetching schedules:", err);
-        throw err;
+        toast.error("فشل في تحميل جداول العمل");
+        return [];
       }
     },
   });
@@ -59,6 +60,7 @@ export function useEmployeeSchedule() {
 
       if (error) {
         console.error("useEmployeeSchedule - Error assigning schedule:", error);
+        toast.error("حدث خطأ أثناء تعيين جدول العمل للموظف");
         throw error;
       }
 
@@ -70,7 +72,6 @@ export function useEmployeeSchedule() {
       return { success: true };
     } catch (error) {
       console.error("useEmployeeSchedule - Exception assigning schedule to employee:", error);
-      toast.error("حدث خطأ أثناء تعيين جدول العمل للموظف");
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -79,6 +80,11 @@ export function useEmployeeSchedule() {
 
   // Get employee schedule
   const getEmployeeSchedule = async (employeeId: string) => {
+    if (!employeeId) {
+      console.warn("useEmployeeSchedule - Called getEmployeeSchedule with no employeeId");
+      return defaultSchedule;
+    }
+    
     console.log(`useEmployeeSchedule - Getting schedule for employee ${employeeId}`);
     
     try {
@@ -91,7 +97,7 @@ export function useEmployeeSchedule() {
 
       if (employeeError) {
         console.error("useEmployeeSchedule - Error getting employee:", employeeError);
-        throw employeeError;
+        return defaultSchedule;
       }
 
       console.log("useEmployeeSchedule - Employee data:", employee);
@@ -113,7 +119,7 @@ export function useEmployeeSchedule() {
 
       if (scheduleError) {
         console.error("useEmployeeSchedule - Error getting schedule:", scheduleError);
-        throw scheduleError;
+        return defaultSchedule;
       }
 
       console.log("useEmployeeSchedule - Got schedule:", schedule);
@@ -126,6 +132,11 @@ export function useEmployeeSchedule() {
 
   // Get work days for a schedule
   const getWorkDays = async (scheduleId: string) => {
+    if (!scheduleId) {
+      console.warn("useEmployeeSchedule - Called getWorkDays with no scheduleId");
+      return [];
+    }
+    
     console.log(`useEmployeeSchedule - Getting work days for schedule ${scheduleId}`);
     
     try {
@@ -137,11 +148,12 @@ export function useEmployeeSchedule() {
 
       if (error) {
         console.error("useEmployeeSchedule - Error getting work days:", error);
-        throw error;
+        toast.error("فشل في تحميل أيام العمل");
+        return [];
       }
       
       console.log("useEmployeeSchedule - Work days:", data);
-      return data;
+      return data || [];
     } catch (error) {
       console.error("useEmployeeSchedule - Error getting work days:", error);
       return [];

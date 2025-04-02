@@ -13,7 +13,7 @@ import { useEmployeeSchedule } from "@/hooks/hr/useEmployeeSchedule";
 
 interface EmployeeScheduleFieldProps {
   employeeId?: string;
-  scheduleId: string;
+  scheduleId: string | null;
   onScheduleChange: (scheduleId: string) => void;
   isReadOnly?: boolean;
 }
@@ -25,23 +25,24 @@ export function EmployeeScheduleField({
   isReadOnly = false,
 }: EmployeeScheduleFieldProps) {
   const { schedules, defaultSchedule, isLoadingSchedules } = useEmployeeSchedule();
-  const [selectedSchedule, setSelectedSchedule] = useState(scheduleId || "");
+  const [selectedSchedule, setSelectedSchedule] = useState<string>(scheduleId || "");
 
   console.log("EmployeeScheduleField - Initial props:", { employeeId, scheduleId, isReadOnly });
   console.log("EmployeeScheduleField - Available schedules:", schedules);
   console.log("EmployeeScheduleField - Default schedule:", defaultSchedule);
 
   useEffect(() => {
-    console.log("EmployeeScheduleField - Effect triggered with scheduleId:", scheduleId);
+    // If scheduleId changes from outside (like when an employee is loaded), update the select
+    if (scheduleId !== selectedSchedule && scheduleId) {
+      console.log("EmployeeScheduleField - Updating selected schedule from props:", scheduleId);
+      setSelectedSchedule(scheduleId);
+    }
     
-    // If scheduleId is empty and we have a default schedule, set it
+    // If scheduleId is null/empty and we have a default schedule, set it
     if ((!scheduleId || scheduleId === "") && defaultSchedule?.id && !selectedSchedule) {
       console.log("EmployeeScheduleField - Setting default schedule:", defaultSchedule.id);
       setSelectedSchedule(defaultSchedule.id);
       onScheduleChange(defaultSchedule.id);
-    } else if (scheduleId !== selectedSchedule && scheduleId) {
-      console.log("EmployeeScheduleField - Updating selected schedule from props:", scheduleId);
-      setSelectedSchedule(scheduleId);
     }
   }, [scheduleId, defaultSchedule, selectedSchedule, onScheduleChange]);
 
