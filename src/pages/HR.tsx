@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
-import { HRTabs } from '@/components/hr/HRTabs';
 import { HRDashboardOverview } from '@/components/hr/dashboard/HRDashboardOverview';
 
 // Additional imports for other HR tabs
