@@ -48,6 +48,7 @@ const formSchema = z.object({
   gender: z.enum(["ذكر", "أنثى"]),
   hire_date: z.string().optional(),
   status: z.string().default("active"),
+  employee_number: z.string().optional(),
 });
 
 export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDialogProps) {
@@ -63,6 +64,7 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
       gender: "ذكر",
       hire_date: "",
       status: "active",
+      employee_number: "",
     },
   });
 
@@ -115,6 +117,20 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="employee_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>الرقم الوظيفي</FormLabel>
+                  <FormControl>
+                    <Input placeholder="أدخل الرقم الوظيفي" {...field} />
+                  </FormControl>
+                  <FormMessage />
+               </FormItem>
+            )}
+          />
 
             <FormField
               control={form.control}
