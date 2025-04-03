@@ -1,18 +1,20 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarDays } from "lucide-react";
-import { LeavesTable } from "../tables/LeavesTable";
-import { AddLeaveDialog } from "../dialogs/AddLeaveDialog";
+import { useState } from "react";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { AddLeaveRequestDialog } from "./AddLeaveRequestDialog";
 
 export function LeavesManagement() {
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold flex items-center gap-2">
-          <CalendarDays className="h-5 w-5" />
-          إدارة الإجازات
-        </h2>
-        <AddLeaveDialog />
+        <h2 className="text-xl font-bold">إدارة الإجازات</h2>
+        <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" /> طلب إجازة
+        </Button>
       </div>
 
       <Card>
@@ -20,9 +22,17 @@ export function LeavesManagement() {
           <CardTitle>طلبات الإجازات</CardTitle>
         </CardHeader>
         <CardContent>
-          <LeavesTable />
+          {/* طلبات الإجازات ستظهر هنا لاحقاً */}
+          <div className="text-center py-4 text-muted-foreground">
+            لا توجد طلبات إجازات حالية
+          </div>
         </CardContent>
       </Card>
+
+      <AddLeaveRequestDialog 
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+      />
     </div>
   );
 }
