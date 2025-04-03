@@ -27,7 +27,13 @@ export function useLeaveEntitlements(employeeId?: string) {
       const { data, error } = await supabase
         .from("hr_leave_entitlements")
         .select(`
-          *,
+          id,
+          employee_id,
+          leave_type_id,
+          year,
+          entitled_days,
+          used_days,
+          remaining_days,
           leave_type:leave_type_id(name, code)
         `)
         .eq("employee_id", employeeId)
