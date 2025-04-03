@@ -64,6 +64,7 @@ export function EditEmployeeDialog({ isOpen, onClose, onSuccess, employee }: Edi
       gender: "ذكر",
       hire_date: "",
       status: "active",
+      employee_number: "",
     },
   });
 
@@ -81,6 +82,7 @@ export function EditEmployeeDialog({ isOpen, onClose, onSuccess, employee }: Edi
         gender: employee.gender || "ذكر",
         hire_date: employee.hire_date ? new Date(employee.hire_date).toISOString().split('T')[0] : "",
         status: employee.status || "active",
+        employee_number: employee.employee_number || "",
       });
     }
   }, [employee, isOpen, form]);
@@ -131,6 +133,20 @@ export function EditEmployeeDialog({ isOpen, onClose, onSuccess, employee }: Edi
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="employee_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>الرقم الوظيفي</FormLabel>
+                  <FormControl>
+                    <Input placeholder="أدخل الرقم الوظيفي" {...field} />
+                  </FormControl>
+                  <FormMessage />
+               </FormItem>
+            )}
+          />
 
             <FormField
               control={form.control}
