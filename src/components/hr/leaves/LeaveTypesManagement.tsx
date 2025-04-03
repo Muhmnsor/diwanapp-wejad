@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { DeleteDialog } from "@/components/ui/delete-dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface LeaveType {
   id: string;
@@ -38,7 +39,7 @@ interface LeaveType {
   is_active: boolean;
   created_at: string;
   created_by: string | null;
-  gender_eligibility: 'male' | 'female' | 'both' | null;
+  gender_eligibility: string;
 }
 
 export function LeaveTypesManagement() {
@@ -56,7 +57,7 @@ export function LeaveTypesManagement() {
     max_days_per_year: 0,
     requires_approval: true,
     is_active: true,
-    gender_eligibility: "both" as 'male' | 'female' | 'both',
+    gender_eligibility: "both",
   });
 
   // Fetch leave types
@@ -186,6 +187,13 @@ export function LeaveTypesManagement() {
     });
   };
 
+  const handleRadioChange = (value: string) => {
+    setFormData({
+      ...formData,
+      gender_eligibility: value,
+    });
+  };
+
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     addLeaveTypeMutation.mutate(formData);
@@ -211,6 +219,7 @@ export function LeaveTypesManagement() {
       max_days_per_year: leaveType.max_days_per_year || 0,
       requires_approval: leaveType.requires_approval,
       is_active: leaveType.is_active,
+      gender_eligibility: leaveType.gender_eligibility || "both",
     });
     setIsEditDialogOpen(true);
   };
@@ -229,12 +238,25 @@ export function LeaveTypesManagement() {
       max_days_per_year: 0,
       requires_approval: true,
       is_active: true,
+      gender_eligibility: "both",
     });
     setCurrentLeaveType(null);
   };
 
+  const getGenderEligibilityText = (eligibility: string) => {
+    switch (eligibility) {
+      case "male":
+        return "ذكور فقط";
+      case "female":
+        return "إناث فقط";
+      case "both":
+      default:
+        return "كلاهما";
+    }
+  };
+
   return (
-        <div className="space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold flex items-center gap-2">
           <CalendarCheck className="h-5 w-5" />
