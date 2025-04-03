@@ -1,62 +1,59 @@
 
-import { useEffect, useState } from "react";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import React from "react";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useEmployeeSchedule } from "@/hooks/hr/useEmployeeSchedule";
 
 interface EmployeeScheduleFieldProps {
-  value: string | null;
-  onChange: (value: string) => void;
+  form: any;
 }
 
-export function EmployeeScheduleField({ value, onChange }: EmployeeScheduleFieldProps) {
+export function EmployeeScheduleField({ form }: EmployeeScheduleFieldProps) {
   const { schedules, defaultSchedule, isLoadingSchedules } = useEmployeeSchedule();
-  const [selectedValue, setSelectedValue] = useState<string>(value || "");
-
-  console.log("EmployeeScheduleField (fields) - Initial value:", value);
-  console.log("EmployeeScheduleField (fields) - Available schedules:", schedules);
-  console.log("EmployeeScheduleField (fields) - Default schedule:", defaultSchedule);
-
-  // تعيين الجدول الافتراضي إذا لم يكن هناك قيمة محددة
-  useEffect(() => {
-    if ((!value || value === "") && defaultSchedule && defaultSchedule.id) {
-      console.log("EmployeeScheduleField (fields) - Setting default schedule:", defaultSchedule.id);
-      setSelectedValue(defaultSchedule.id);
-      onChange(defaultSchedule.id);
-    } else if (value && value !== selectedValue) {
-      console.log("EmployeeScheduleField (fields) - Updating from props:", value);
-      setSelectedValue(value);
-    }
-  }, [value, defaultSchedule, onChange, selectedValue]);
-
-  const handleScheduleChange = (newValue: string) => {
-    console.log("EmployeeScheduleField (fields) - Schedule changed to:", newValue);
-    setSelectedValue(newValue);
-    onChange(newValue);
-  };
 
   return (
-    <div className="space-y-2">
-      <Label htmlFor="schedule_id">جدول العمل</Label>
-      <Select
-        value={selectedValue}
-        onValueChange={handleScheduleChange}
-        disabled={isLoadingSchedules}
-      >
-        <SelectTrigger id="schedule_id">
-          <SelectValue placeholder={isLoadingSchedules ? "جاري التحميل..." : "اختر جدول العمل"} />
-        </SelectTrigger>
-        <SelectContent>
-          {schedules?.map((schedule) => (
-            <SelectItem key={schedule.id} value={schedule.id}>
-              {schedule.name} {schedule.is_default && "(افتراضي)"}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <p className="text-xs text-muted-foreground">
-        جدول العمل المخصص للموظف لاحتساب الحضور والانصراف
-      </p>
-    </div>
+    <FormField
+      control={form.control}
+      name="schedule_id"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>جدول العمل</FormLabel>
+          <FormControl>
+            <Select 
+              onValueChange={field.onChange} 
+              value={field.value} 
+              disabled={isLoadingSchedules}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={isLoadingSchedules ? "جاري التحميل..." : "اختر جدول العمل"} />
+              </SelectTrigger>
+              <SelectContent>
+                {schedules?.map((schedule) => (
+                  <SelectItem key={schedule.id} value={schedule.id}>
+                    {schedule.name} {schedule.is_default && "(افتراضي)"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormControl>
+          <FormMessage />
+          <p className="text-xs text-muted-foreground">
+            جدول العمل المخصص للموظف لاحتساب الحضور والانصراف
+          </p>
+        </FormItem>
+      )}
+    />
   );
 }

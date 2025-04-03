@@ -46,7 +46,7 @@ const formSchema = z.object({
   phone: z.string().optional(),
   department: z.string().min(1, "القسم مطلوب"),
   schedule_id: z.string().optional(),
-  gender: z.enum(["ذكر", "أنثى"]).optional(),
+  gender: z.enum(["ذكر", "أنثى"]),
 });
 
 export function EditEmployeeDialog({ isOpen, onClose, employee, onSuccess }: EditEmployeeDialogProps) {
@@ -58,11 +58,12 @@ export function EditEmployeeDialog({ isOpen, onClose, employee, onSuccess }: Edi
       email: "",
       phone: "",
       department: "",
-      schedule_id: undefined,
+      schedule_id: "",
       gender: "ذكر",
     },
   });
 
+  // Update form values when employee changes
   useEffect(() => {
     if (employee) {
       form.reset({
@@ -71,7 +72,7 @@ export function EditEmployeeDialog({ isOpen, onClose, employee, onSuccess }: Edi
         email: employee.email || "",
         phone: employee.phone || "",
         department: employee.department || "",
-        schedule_id: employee.schedule_id || undefined,
+        schedule_id: employee.schedule_id || "",
         gender: employee.gender || "ذكر",
       });
     }
@@ -80,22 +81,26 @@ export function EditEmployeeDialog({ isOpen, onClose, employee, onSuccess }: Edi
   const updateEmployee = useUpdateEmployee();
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!employee?.id) return;
+    
     try {
-      await updateEmployee.mutateAsync({
-        id: employee.id,
-        employeeData: values,
+      await updateEmployee.mutateAsync({ 
+        id: employee.id, 
+        employeeData: values
       });
+      
       toast({
-        title: "تم تحديث بيانات الموظف بنجاح",
-        description: `تم تحديث بيانات ${values.full_name}`,
+        title: "تم تحديث الموظف بنجاح",
+        description: `تم تحديث معلومات ${values.full_name}`,
       });
+      
       onSuccess?.();
       onClose();
     } catch (error) {
       console.error("Error updating employee:", error);
       toast({
-        title: "خطأ في تحديث بيانات الموظف",
-        description: "حدث خطأ أثناء تحديث بيانات الموظف، يرجى المحاولة مرة أخرى",
+        title: "خطأ في تحديث الموظف",
+        description: "حدث خطأ أثناء تحديث معلومات الموظف، يرجى المحاولة مرة أخرى",
         variant: "destructive",
       });
     }
@@ -105,7 +110,7 @@ export function EditEmployeeDialog({ isOpen, onClose, employee, onSuccess }: Edi
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>تعديل بيانات الموظف</DialogTitle>
+          <DialogTitle>تعديل معلومات الموظف</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -177,7 +182,7 @@ export function EditEmployeeDialog({ isOpen, onClose, employee, onSuccess }: Edi
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>الجنس</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="اختر الجنس" />
@@ -198,7 +203,7 @@ export function EditEmployeeDialog({ isOpen, onClose, employee, onSuccess }: Edi
 
             <DialogFooter>
               <Button type="submit" disabled={updateEmployee.isPending}>
-                {updateEmployee.isPending ? "جارٍ التحديث..." : "تحديث البيانات"}
+                {updateEmployee.isPending ? "جارٍ التحديث..." : "تحديث الموظف"}
               </Button>
             </DialogFooter>
           </form>
