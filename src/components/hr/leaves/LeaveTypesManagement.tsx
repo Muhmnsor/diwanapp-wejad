@@ -38,6 +38,7 @@ interface LeaveType {
   is_active: boolean;
   created_at: string;
   created_by: string | null;
+  gender_eligibility: 'male' | 'female' | 'both' | null;
 }
 
 export function LeaveTypesManagement() {
@@ -55,6 +56,7 @@ export function LeaveTypesManagement() {
     max_days_per_year: 0,
     requires_approval: true,
     is_active: true,
+    gender_eligibility: "both" as 'male' | 'female' | 'both',
   });
 
   // Fetch leave types
@@ -232,7 +234,7 @@ export function LeaveTypesManagement() {
   };
 
   return (
-    <div className="space-y-6">
+        <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold flex items-center gap-2">
           <CalendarCheck className="h-5 w-5" />
@@ -262,6 +264,7 @@ export function LeaveTypesManagement() {
                   <TableHead>الحد الأقصى</TableHead>
                   <TableHead>تتطلب موافقة</TableHead>
                   <TableHead>نشطة</TableHead>
+                  <TableHead>متاح لـ</TableHead>
                   <TableHead>الإجراءات</TableHead>
                 </TableRow>
               </TableHeader>
@@ -282,6 +285,7 @@ export function LeaveTypesManagement() {
                     <TableCell>{leaveType.max_days_per_year || "-"}</TableCell>
                     <TableCell>{leaveType.requires_approval ? "نعم" : "لا"}</TableCell>
                     <TableCell>{leaveType.is_active ? "نعم" : "لا"}</TableCell>
+                    <TableCell>{getGenderEligibilityText(leaveType.gender_eligibility)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Button
@@ -365,6 +369,27 @@ export function LeaveTypesManagement() {
                   value={formData.max_days_per_year}
                   onChange={handleNumberChange}
                 />
+              </div>
+              <div className="grid gap-2">
+                <Label>متاح لـ</Label>
+                <RadioGroup 
+                  value={formData.gender_eligibility} 
+                  onValueChange={handleRadioChange}
+                  className="flex flex-row gap-4"
+                >
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    <RadioGroupItem value="both" id="both" />
+                    <Label htmlFor="both">كلاهما</Label>
+                  </div>
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    <RadioGroupItem value="male" id="male" />
+                    <Label htmlFor="male">ذكور فقط</Label>
+                  </div>
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    <RadioGroupItem value="female" id="female" />
+                    <Label htmlFor="female">إناث فقط</Label>
+                  </div>
+                </RadioGroup>
               </div>
               <div className="flex items-center gap-2">
                 <Checkbox
@@ -457,6 +482,27 @@ export function LeaveTypesManagement() {
                   value={formData.max_days_per_year}
                   onChange={handleNumberChange}
                 />
+              </div>
+              <div className="grid gap-2">
+                <Label>متاح لـ</Label>
+                <RadioGroup 
+                  value={formData.gender_eligibility} 
+                  onValueChange={handleRadioChange}
+                  className="flex flex-row gap-4"
+                >
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    <RadioGroupItem value="both" id="edit-both" />
+                    <Label htmlFor="edit-both">كلاهما</Label>
+                  </div>
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    <RadioGroupItem value="male" id="edit-male" />
+                    <Label htmlFor="edit-male">ذكور فقط</Label>
+                  </div>
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    <RadioGroupItem value="female" id="edit-female" />
+                    <Label htmlFor="edit-female">إناث فقط</Label>
+                  </div>
+                </RadioGroup>
               </div>
               <div className="flex items-center gap-2">
                 <Checkbox
