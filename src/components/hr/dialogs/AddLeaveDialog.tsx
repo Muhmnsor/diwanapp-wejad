@@ -1,210 +1,222 @@
 
 import { useState } from "react";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarPlus } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuthStore } from "@/store/authStore";
-import { toast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle,
+  DialogFooter
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { DatePicker } from "@/components/ui/date-picker";
+import { CalendarPlus } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { useLeaveTypes } from "@/hooks/hr/useLeaveTypes";
-import { Loader2 } from "lucide-react";
-
-const leaveFormSchema = z.object({
-  employee_id: z.string(),
-  leave_type: z.string(),
-  start_date: z.date(),
-  end_date: z.date(),
-  reason: z.string().optional(),
-  status: z.string().default("pending")
-});
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 
 export function AddLeaveDialog() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user } = useAuthStore();
-  const { data: leaveTypes, isLoading: isLoadingLeaveTypes } = useLeaveTypes();
-  
-  const form = useForm({
-    resolver: zodResolver(leaveFormSchema),
-    defaultValues: {
-      employee_id: user?.id || "",
-      leave_type: "",
-      status: "pending",
-      reason: ""
-    }
+  const [formData, setFormData] = useState({
+    employee_id: "",
+    leave_type_id: "",
+    start_date: "",
+    end_date: "",
+    reason: "",
   });
-
-  const onSubmit = async (data) => {
-    setIsSubmitting(true);
+  
+  const { toast } = useToast();
+  const { data: leaveTypes, isLoading } = useLeaveTypes();
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleSubmit = async () => {
     try {
-      // Format dates for Supabase
-      const formattedData = {
-        ...data,
-        start_date: data.start_date.toISOString().split('T')[0],
-        end_date: data.end_date.toISOString().split('T')[0]
-      };
-
+      // Get the current user info
+      const { data: userInfo } = await supabase.auth.getUser();
+      
+      if (!userInfo?.user) {
+        throw new Error("تعذر الحصول على معلومات المستخدم");
+      }
+      
+      // Insert leave request
       const { error } = await supabase
         .from("hr_leave_requests")
-        .insert(formattedData);
-
+        .insert([{
+          employee_id: formData.employee_id,
+          leave_type_id: formData.leave_type_id,
+          start_date: formData.start_date,
+          end_date: formData.end_date,
+          reason: formData.reason,
+          status: "pending",
+          created_by: userInfo.user.id
+        }]);
+        
       if (error) throw error;
-
+      
       toast({
-        title: "تم تقديم طلب الإجازة بنجاح",
-        description: "سيتم مراجعة طلبك من قبل المسؤول"
+        title: "نجاح",
+        description: "تم إضافة طلب الإجازة بنجاح"
       });
-
-      form.reset();
+      
+      // Reset form and close dialog
+      setFormData({
+        employee_id: "",
+        leave_type_id: "",
+        start_date: "",
+        end_date: "",
+        reason: "",
+      });
       setIsOpen(false);
     } catch (error) {
-      console.error("Error submitting leave request:", error);
+      console.error("Error adding leave request:", error);
       toast({
-        title: "حدث خطأ",
-        description: "لم نتمكن من تقديم طلب الإجازة، يرجى المحاولة مرة أخرى",
+        title: "خطأ",
+        description: "حدث خطأ أثناء إضافة طلب الإجازة",
         variant: "destructive"
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
-
+  
+  // Get only leave types that match the employee's gender
+  const getFilteredLeaveTypes = () => {
+    // In a real application, you would fetch the employee's gender
+    // const employeeGender = "male"; // or "female"
+    
+    // For now we'll return all leave types
+    return leaveTypes || [];
+    
+    // Once you have employee gender data, you would filter like this:
+    // return leaveTypes?.filter(type => 
+    //   type.gender_eligibility === "all" || type.gender_eligibility === employeeGender
+    // ) || [];
+  };
+  
+  const filteredLeaveTypes = getFilteredLeaveTypes();
+  
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button className="gap-2">
-          <CalendarPlus className="h-4 w-4" />
-          إضافة طلب إجازة
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[550px]">
-        <DialogHeader>
-          <DialogTitle>تقديم طلب إجازة جديد</DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="leave_type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>نوع الإجازة</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر نوع الإجازة" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {isLoadingLeaveTypes ? (
-                        <div className="flex justify-center items-center p-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        </div>
-                      ) : leaveTypes && leaveTypes.length > 0 ? (
-                        leaveTypes.map((type) => (
-                          <SelectItem key={type.id} value={type.code}>
-                            {type.name}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <>
-                          <SelectItem value="annual">سنوية</SelectItem>
-                          <SelectItem value="sick">مرضية</SelectItem>
-                          <SelectItem value="emergency">طارئة</SelectItem>
-                          <SelectItem value="maternity">أمومة</SelectItem>
-                          <SelectItem value="unpaid">بدون راتب</SelectItem>
-                        </>
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>اختر نوع الإجازة المطلوبة</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+    <>
+      <Button onClick={() => setIsOpen(true)}>
+        <CalendarPlus className="h-4 w-4 ml-2" />
+        إضافة إجازة
+      </Button>
+      
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>إضافة طلب إجازة</DialogTitle>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="employee_id" className="text-right">
+                الموظف
+              </Label>
+              <Select 
+                onValueChange={(value) => handleSelectChange("employee_id", value)}
+                value={formData.employee_id}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="اختر الموظف" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="placeholder">اختر الموظف</SelectItem>
+                  {/* You would map through employees here */}
+                </SelectContent>
+              </Select>
+            </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="leave_type_id" className="text-right">
+                نوع الإجازة
+              </Label>
+              <Select 
+                onValueChange={(value) => handleSelectChange("leave_type_id", value)}
+                value={formData.leave_type_id}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="اختر نوع الإجازة" />
+                </SelectTrigger>
+                <SelectContent>
+                  {isLoading ? (
+                    <SelectItem value="loading">جاري التحميل...</SelectItem>
+                  ) : filteredLeaveTypes.length > 0 ? (
+                    filteredLeaveTypes.map((type) => (
+                      <SelectItem key={type.id} value={type.id}>
+                        {type.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-data">لا توجد أنواع إجازات</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="start_date" className="text-right">
+                تاريخ البداية
+              </Label>
+              <Input
+                id="start_date"
                 name="start_date"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>تاريخ البداية</FormLabel>
-                    <DatePicker
-                      date={field.value}
-                      setDate={field.onChange}
-                      placeholder="اختر تاريخ البداية"
-                      locale="ar"
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
+                type="date"
+                value={formData.start_date}
+                onChange={handleInputChange}
+                className="col-span-3"
               />
-              
-              <FormField
-                control={form.control}
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="end_date" className="text-right">
+                تاريخ النهاية
+              </Label>
+              <Input
+                id="end_date"
                 name="end_date"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>تاريخ النهاية</FormLabel>
-                    <DatePicker
-                      date={field.value}
-                      setDate={field.onChange}
-                      placeholder="اختر تاريخ النهاية"
-                      locale="ar"
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
+                type="date"
+                value={formData.end_date}
+                onChange={handleInputChange}
+                className="col-span-3"
               />
             </div>
             
-            <FormField
-              control={form.control}
-              name="reason"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>سبب الإجازة (اختياري)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="أدخل سبب طلب الإجازة"
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsOpen(false)}
-              >
-                إلغاء
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "جاري التقديم..." : "تقديم طلب الإجازة"}
-              </Button>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="reason" className="text-right">
+                السبب
+              </Label>
+              <Textarea
+                id="reason"
+                name="reason"
+                value={formData.reason}
+                onChange={handleInputChange}
+                className="col-span-3"
+              />
             </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          </div>
+          
+          <DialogFooter>
+            <Button type="submit" onClick={handleSubmit}>
+              إضافة
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
