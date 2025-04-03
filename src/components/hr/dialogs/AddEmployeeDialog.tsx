@@ -1,75 +1,95 @@
 
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useAddEmployee } from "@/hooks/hr/useEmployees";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { EmployeeScheduleField } from "../employees/EmployeeScheduleField";
+import { toast } from "sonner";
+import { useState } from "react";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { EmployeeScheduleField } from "@/components/hr/employees/EmployeeScheduleField";
+import { OrganizationalUnitField } from "@/components/hr/fields/OrganizationalUnitField";
 
 const employeeSchema = z.object({
-  full_name: z.string().min(2, { message: "الاسم مطلوب" }),
+  full_name: z.string().min(2, { message: "يجب أن يكون الاسم أكثر من حرفين" }),
   position: z.string().optional(),
-  email: z.string().email({ message: "البريد الإلكتروني غير صالح" }).optional().or(z.literal('')),
-  phone: z.string().optional(),
   department: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().email({ message: "يجب إدخال بريد إلكتروني صحيح" }).optional().or(z.literal("")),
   employee_number: z.string().optional(),
-  schedule_id: z.string().uuid().optional().nullable(),
-  contract_type: z.string().optional(),
   hire_date: z.string().optional(),
-  gender: z.enum(["male", "female"]).optional(),
-  status: z.enum(["active", "inactive", "on_leave"]).optional(),
+  status: z.string().default("active"),
+  gender: z.string().optional(),
+  schedule_id: z.string().optional(),
 });
 
-type EmployeeFormValues = z.infer<typeof employeeSchema>;
-
-interface AddEmployeeDialogProps {
-  isOpen: boolean;
+export type AddEmployeeDialogProps = {
   onClose: () => void;
   onSuccess: () => void;
-}
+};
 
-export const AddEmployeeDialog = ({ isOpen, onClose, onSuccess }: AddEmployeeDialogProps) => {
+export function AddEmployeeDialog({ onClose, onSuccess }: AddEmployeeDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: addEmployee } = useAddEmployee();
-  
-  const form = useForm<EmployeeFormValues>({
+
+  const form = useForm<z.infer<typeof employeeSchema>>({
     resolver: zodResolver(employeeSchema),
     defaultValues: {
       full_name: "",
       position: "",
-      email: "",
-      phone: "",
       department: "",
+      phone: "",
+      email: "",
       employee_number: "",
-      schedule_id: null,
-      contract_type: "full_time",
-      hire_date: new Date().toISOString().split("T")[0],
-      gender: "male",
+      hire_date: "",
       status: "active",
+      gender: "male",
     },
   });
-  
-  const onSubmit = async (data: EmployeeFormValues) => {
+
+  const onSubmit = async (data: z.infer<typeof employeeSchema>) => {
     setIsSubmitting(true);
     try {
-      await addEmployee(data);
-      form.reset();
+      // Insert employee record
+      const { data: employee, error } = await supabase
+        .from("employees")
+        .insert([data])
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success("تم إضافة الموظف بنجاح");
       onSuccess();
-    } catch (error) {
+      onClose();
+    } catch (error: any) {
       console.error("Error adding employee:", error);
+      toast.error(error.message || "حدث خطأ أثناء إضافة الموظف");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[425px] max-h-[85vh] overflow-y-auto">
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
           <DialogTitle>إضافة موظف جديد</DialogTitle>
         </DialogHeader>
@@ -90,20 +110,6 @@ export const AddEmployeeDialog = ({ isOpen, onClose, onSuccess }: AddEmployeeDia
               )}
             />
             
-            <FormField
-              control={form.control}
-              name="employee_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>الرقم الوظيفي</FormLabel>
-                  <FormControl>
-                    <Input placeholder="أدخل الرقم الوظيفي" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -112,43 +118,21 @@ export const AddEmployeeDialog = ({ isOpen, onClose, onSuccess }: AddEmployeeDia
                   <FormItem>
                     <FormLabel>المنصب</FormLabel>
                     <FormControl>
-                      <Input placeholder="المنصب الوظيفي" {...field} />
+                      <Input placeholder="أدخل المنصب" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               
-              <FormField
-                control={form.control}
+              <OrganizationalUnitField
+                form={form}
                 name="department"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>القسم</FormLabel>
-                    <FormControl>
-                      <Input placeholder="القسم" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="القسم"
               />
             </div>
             
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>البريد الإلكتروني</FormLabel>
-                    <FormControl>
-                      <Input placeholder="example@domain.com" type="email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
               <FormField
                 control={form.control}
                 name="phone"
@@ -156,7 +140,21 @@ export const AddEmployeeDialog = ({ isOpen, onClose, onSuccess }: AddEmployeeDia
                   <FormItem>
                     <FormLabel>رقم الهاتف</FormLabel>
                     <FormControl>
-                      <Input placeholder="05xxxxxxxx" {...field} />
+                      <Input placeholder="أدخل رقم الهاتف" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>البريد الإلكتروني</FormLabel>
+                    <FormControl>
+                      <Input placeholder="أدخل البريد الإلكتروني" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -164,39 +162,15 @@ export const AddEmployeeDialog = ({ isOpen, onClose, onSuccess }: AddEmployeeDia
               />
             </div>
             
-            <FormField
-              control={form.control}
-              name="schedule_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>جدول العمل</FormLabel>
-                  <FormControl>
-                    <EmployeeScheduleField
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="contract_type"
+                name="employee_number"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>نوع العقد</FormLabel>
+                    <FormLabel>الرقم الوظيفي</FormLabel>
                     <FormControl>
-                      <select
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                        {...field}
-                      >
-                        <option value="full_time">دوام كامل</option>
-                        <option value="part_time">دوام جزئي</option>
-                        <option value="contract">عقد مؤقت</option>
-                      </select>
+                      <Input placeholder="أدخل الرقم الوظيفي" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -208,7 +182,7 @@ export const AddEmployeeDialog = ({ isOpen, onClose, onSuccess }: AddEmployeeDia
                 name="hire_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>تاريخ التوظيف</FormLabel>
+                    <FormLabel>تاريخ التعيين</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -221,19 +195,24 @@ export const AddEmployeeDialog = ({ isOpen, onClose, onSuccess }: AddEmployeeDia
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="gender"
+                name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>الجنس</FormLabel>
-                    <FormControl>
-                      <select
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                        {...field}
-                      >
-                        <option value="male">ذكر</option>
-                        <option value="female">أنثى</option>
-                      </select>
-                    </FormControl>
+                    <FormLabel>الحالة</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر الحالة" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="active">نشط</SelectItem>
+                        <SelectItem value="inactive">غير نشط</SelectItem>
+                        <SelectItem value="on_leave">في إجازة</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -241,41 +220,51 @@ export const AddEmployeeDialog = ({ isOpen, onClose, onSuccess }: AddEmployeeDia
               
               <FormField
                 control={form.control}
-                name="status"
+                name="gender"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>الحالة</FormLabel>
-                    <FormControl>
-                      <select
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                        {...field}
-                      >
-                        <option value="active">نشط</option>
-                        <option value="inactive">غير نشط</option>
-                        <option value="on_leave">في إجازة</option>
-                      </select>
-                    </FormControl>
+                    <FormLabel>الجنس</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر الجنس" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="male">ذكر</SelectItem>
+                        <SelectItem value="female">أنثى</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
             
+            <FormField
+              control={form.control}
+              name="schedule_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <EmployeeScheduleField
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                className="w-full sm:w-auto"
-              >
+              <Button type="button" variant="outline" onClick={onClose}>
                 إلغاء
               </Button>
-              <Button 
-                type="submit" 
-                className="w-full sm:w-auto"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "جاري الإضافة..." : "إضافة موظف"}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "جاري الحفظ..." : "حفظ"}
               </Button>
             </DialogFooter>
           </form>
@@ -283,4 +272,4 @@ export const AddEmployeeDialog = ({ isOpen, onClose, onSuccess }: AddEmployeeDia
       </DialogContent>
     </Dialog>
   );
-};
+}
