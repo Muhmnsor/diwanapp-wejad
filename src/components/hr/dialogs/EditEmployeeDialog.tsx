@@ -35,8 +35,8 @@ import {
 interface EditEmployeeDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  employee: any;
   onSuccess?: () => void;
+  employee: any;
 }
 
 const formSchema = z.object({
@@ -47,9 +47,11 @@ const formSchema = z.object({
   department: z.string().min(1, "القسم مطلوب"),
   schedule_id: z.string().optional(),
   gender: z.enum(["ذكر", "أنثى"]),
+  hire_date: z.string().optional(),
+  status: z.string().default("active"),
 });
 
-export function EditEmployeeDialog({ isOpen, onClose, employee, onSuccess }: EditEmployeeDialogProps) {
+export function EditEmployeeDialog({ isOpen, onClose, onSuccess, employee }: EditEmployeeDialogProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -58,40 +60,41 @@ export function EditEmployeeDialog({ isOpen, onClose, employee, onSuccess }: Edi
       email: "",
       phone: "",
       department: "",
-      schedule_id: "",
+      schedule_id: undefined,
       gender: "ذكر",
+      hire_date: "",
+      status: "active",
     },
   });
 
-  // Update form values when employee changes
+  const updateEmployee = useUpdateEmployee();
+
   useEffect(() => {
-    if (employee) {
+    if (employee && isOpen) {
       form.reset({
         full_name: employee.full_name || "",
         position: employee.position || "",
         email: employee.email || "",
         phone: employee.phone || "",
         department: employee.department || "",
-        schedule_id: employee.schedule_id || "",
+        schedule_id: employee.schedule_id || undefined,
         gender: employee.gender || "ذكر",
+        hire_date: employee.hire_date ? new Date(employee.hire_date).toISOString().split('T')[0] : "",
+        status: employee.status || "active",
       });
     }
-  }, [employee, form]);
-
-  const updateEmployee = useUpdateEmployee();
+  }, [employee, isOpen, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!employee?.id) return;
-    
     try {
-      await updateEmployee.mutateAsync({ 
-        id: employee.id, 
-        employeeData: values
+      await updateEmployee.mutateAsync({
+        id: employee.id,
+        employeeData: values,
       });
       
       toast({
-        title: "تم تحديث الموظف بنجاح",
-        description: `تم تحديث معلومات ${values.full_name}`,
+        title: "تم تحديث بيانات الموظف بنجاح",
+        description: `تم تحديث بيانات ${values.full_name}`,
       });
       
       onSuccess?.();
@@ -99,8 +102,8 @@ export function EditEmployeeDialog({ isOpen, onClose, employee, onSuccess }: Edi
     } catch (error) {
       console.error("Error updating employee:", error);
       toast({
-        title: "خطأ في تحديث الموظف",
-        description: "حدث خطأ أثناء تحديث معلومات الموظف، يرجى المحاولة مرة أخرى",
+        title: "خطأ في تحديث بيانات الموظف",
+        description: "حدث خطأ أثناء تحديث بيانات الموظف، يرجى المحاولة مرة أخرى",
         variant: "destructive",
       });
     }
@@ -110,7 +113,7 @@ export function EditEmployeeDialog({ isOpen, onClose, employee, onSuccess }: Edi
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>تعديل معلومات الموظف</DialogTitle>
+          <DialogTitle>تعديل بيانات الموظف</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -199,11 +202,50 @@ export function EditEmployeeDialog({ isOpen, onClose, employee, onSuccess }: Edi
               />
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="hire_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>تاريخ التعيين</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>الحالة</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر الحالة" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="active">نشط</SelectItem>
+                        <SelectItem value="on_leave">في إجازة</SelectItem>
+                        <SelectItem value="terminated">منتهي</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <EmployeeScheduleField form={form} />
 
             <DialogFooter>
               <Button type="submit" disabled={updateEmployee.isPending}>
-                {updateEmployee.isPending ? "جارٍ التحديث..." : "تحديث الموظف"}
+                {updateEmployee.isPending ? "جارٍ التحديث..." : "تحديث بيانات الموظف"}
               </Button>
             </DialogFooter>
           </form>

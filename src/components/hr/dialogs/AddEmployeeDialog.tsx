@@ -46,6 +46,8 @@ const formSchema = z.object({
   department: z.string().min(1, "القسم مطلوب"),
   schedule_id: z.string().optional(),
   gender: z.enum(["ذكر", "أنثى"]),
+  hire_date: z.string().optional(),
+  status: z.string().default("active"),
 });
 
 export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDialogProps) {
@@ -59,6 +61,8 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
       department: "",
       schedule_id: undefined,
       gender: "ذكر",
+      hire_date: "",
+      status: "active",
     },
   });
 
@@ -174,6 +178,45 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
                       <SelectContent>
                         <SelectItem value="ذكر">ذكر</SelectItem>
                         <SelectItem value="أنثى">أنثى</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="hire_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>تاريخ التعيين</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>الحالة</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر الحالة" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="active">نشط</SelectItem>
+                        <SelectItem value="on_leave">في إجازة</SelectItem>
+                        <SelectItem value="terminated">منتهي</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
