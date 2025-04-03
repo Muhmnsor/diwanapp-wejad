@@ -5,43 +5,65 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useEmployeeSchedule } from "@/hooks/hr/useEmployeeSchedule";
 
 interface EmployeeScheduleFieldProps {
-  employeeId: string;
-  scheduleId: string;
-  onScheduleChange: (value: string) => void;
+  employeeId?: string;
+  scheduleId?: string;
+  onScheduleChange?: (value: string) => void;
+  // Add support for React Hook Form pattern
+  value?: string;
+  onChange?: (value: string) => void;
 }
 
 export function EmployeeScheduleField({ 
   employeeId, 
   scheduleId, 
-  onScheduleChange 
+  onScheduleChange,
+  value,
+  onChange
 }: EmployeeScheduleFieldProps) {
   const { schedules, defaultSchedule, isLoadingSchedules } = useEmployeeSchedule();
-  const [selectedValue, setSelectedValue] = useState<string>(scheduleId || "");
+  
+  // Determine which value to use (scheduleId from direct props or value from form)
+  const actualValue = value !== undefined ? value : scheduleId;
+  
+  const [selectedValue, setSelectedValue] = useState<string>(actualValue || "");
+
+  // Handler function that works with both prop patterns
+  const handleValueChange = (newValue: string) => {
+    console.log("Schedule changed to:", newValue);
+    setSelectedValue(newValue);
+    
+    // Call the appropriate handler
+    if (onChange) {
+      onChange(newValue);
+    } else if (onScheduleChange) {
+      onScheduleChange(newValue);
+    }
+  };
 
   // Set default schedule if no schedule is selected
   useEffect(() => {
-    if ((!scheduleId || scheduleId === "") && defaultSchedule && defaultSchedule.id) {
+    if ((!actualValue || actualValue === "") && defaultSchedule && defaultSchedule.id) {
       console.log("Setting default schedule:", defaultSchedule.id);
       setSelectedValue(defaultSchedule.id);
-      onScheduleChange(defaultSchedule.id);
-    } else if (scheduleId && scheduleId !== selectedValue) {
-      console.log("Updating from props:", scheduleId);
-      setSelectedValue(scheduleId);
+      
+      // Call the appropriate handler
+      if (onChange) {
+        onChange(defaultSchedule.id);
+      } else if (onScheduleChange) {
+        onScheduleChange(defaultSchedule.id);
+      }
+    } else if (actualValue && actualValue !== selectedValue) {
+      console.log("Updating from props:", actualValue);
+      setSelectedValue(actualValue);
     }
-  }, [scheduleId, defaultSchedule, onScheduleChange, selectedValue]);
-
-  const handleScheduleChange = (newValue: string) => {
-    console.log("Schedule changed to:", newValue);
-    setSelectedValue(newValue);
-    onScheduleChange(newValue);
-  };
+  }, [actualValue, defaultSchedule, onScheduleChange, onChange, selectedValue]);
 
   return (
     <div className="space-y-2">
       <Label htmlFor="schedule_id">جدول العمل</Label>
       <Select
         value={selectedValue}
-        onValueChange={handleScheduleChange}
+        onValueChange={handleValueChange}
         disabled={isLoadingSchedules}
       >
         <SelectTrigger id="schedule_id">
