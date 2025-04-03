@@ -2,12 +2,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-interface LeaveType {
+export interface LeaveType {
   id: string;
   name: string;
   code: string;
   description?: string;
   is_active: boolean;
+  eligible_gender?: 'male' | 'female' | 'both';
 }
 
 export function useLeaveTypes() {
