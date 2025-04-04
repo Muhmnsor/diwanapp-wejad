@@ -22,25 +22,47 @@ export const useTasksList = (projectId?: string, isWorkspace = false) => {
     try {
       console.log(`Fetching tasks for ${isWorkspace ? 'workspace' : isGeneral ? 'general' : 'project'} ID: ${projectId || 'none'}`);
       
-      let query = supabase.from('tasks').select('*');
+      // استعلام محسن يجلب معلومات المستخدم المكلف
+      let query = supabase
+      .from('tasks')
+      .select(`
+        *,
+        profiles:assigned_to (display_name, email),
+        stage:stage_id (name)
+        `);
       
-      if (isWorkspace) {
-        // Fetch tasks for a workspace
-        query = query.eq('workspace_id', projectId);
-      } else if (isGeneral) {
-        // Fetch general tasks
-        query = query.eq('is_general', true);
-      } else {
-        // Fetch project tasks
-        query = query.eq('project_id', projectId);
-      }
-      
-      const { data, error } = await query;
-      
-      if (error) throw error;
-      
-      if (data) {
-        const formattedTasks = data.map(task => ({
+    if (isWorkspace) {
+      // Fetch tasks for a workspace
+      query = query.eq('workspace_id', projectId);
+    } else if (isGeneral) {
+      // Fetch general tasks
+      query = query.eq('is_general', true);
+    } else {
+      // Fetch project tasks
+      query = query.eq('project_id', projectId);
+    }
+    
+    const { data, error } = await query;
+    
+    if (error) throw error;
+    
+    if (data) {
+      const formattedTasks = data.map(task => {
+        // استخراج اسم المستخدم المكلف من البيانات
+        let assigneeName = '';
+        if (task.profiles) {
+          if (Array.isArray(task.profiles)) {
+            // إذا كانت المعلومات في مصفوفة
+            if (task.profiles.length > 0) {
+              assigneeName = task.profiles[0].display_name || task.profiles[0].email || '';
+            }
+          } else {
+            // إذا كانت المعلومات في كائن مباشر
+            assigneeName = task.profiles.display_name || task.profiles.email || '';
+          }
+        }
+        
+        return {
           ...task,
           id: task.id,
           title: task.title,
@@ -49,21 +71,25 @@ export const useTasksList = (projectId?: string, isWorkspace = false) => {
           priority: task.priority || "medium",
           due_date: task.due_date,
           assigned_to: task.assigned_to,
+          // إضافة اسم المستخدم المكلف بالطريقتين للتوافقية
+          assignee_name: assigneeName,
+          assigned_user_name: assigneeName,
           project_id: task.project_id,
           stage_id: task.stage_id,
           created_at: task.created_at,
           category: task.category
-        }));
-        
-        setTasks(formattedTasks);
-      }
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
-      toast.error("حدث خطأ أثناء تحميل المهام");
-    } finally {
-      setIsLoading(false);
+        };
+      });
+      
+      setTasks(formattedTasks);
     }
-  }, [projectId, isGeneral, isWorkspace]);
+  } catch (error) {
+    console.error("Error fetching tasks:", error);
+    toast.error("حدث خطأ أثناء تحميل المهام");
+  } finally {
+    setIsLoading(false);
+  }
+}, [projectId, isGeneral, isWorkspace]);
   
   // Fetch project stages if this is a project view
   const fetchProjectStages = useCallback(async () => {
@@ -233,3 +259,4 @@ export const useTasksList = (projectId?: string, isWorkspace = false) => {
     deleteTask
   };
 };
+
