@@ -1,19 +1,71 @@
-
+// AddLeaveRequestDialog.tsx
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useLeaveTypes } from "@/hooks/hr/useLeaveTypes";
-import { useLeaveEntitlements } from "@/hooks/hr/useLeaveEntitlements";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CalendarDays, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Calendar } from "lucide-react";
-import { toast } from "sonner";
-import { format } from "date-fns";
-import { ar } from "date-fns/locale";
+import { toast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { useLeaveTypes } from "@/hooks/hr/useLeaveTypes";
+import { useEmployees } from "@/hooks/hr/useEmployees";
+import { useLeaveEntitlements } from "@/hooks/hr/useLeaveEntitlements";
+
+// Utility function to calculate days between dates
+function getDaysBetweenDates(startDate: Date, endDate: Date): number {
+  const oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+  
+  // Add 1 to include both start and end dates
+  return Math.round(Math.abs((end.getTime() - start.getTime()) / oneDay)) + 1;
+}
+
+// Utility function to map gender values
+function mapGenderToEligibility(gender: string): string {
+  if (gender === "ذكر") return "male";
+  if (gender === "أنثى") return "female";
+  return "both";
+}
+
+// Form schema for validation
+const leaveFormSchema = z.object({
+  employee_id: z.string({
+    required_error: "يجب اختيار الموظف",
+  }),
+  leave_type: z.string({
+    required_error: "يجب اختيار نوع الإجازة",
+  }),
+  start_date: z.date({
+    required_error: "يجب اختيار تاريخ البداية",
+  }),
+  end_date: z.date({
+    required_error: "يجب اختيار تاريخ النهاية",
+  }).refine(
+    (date) => date >= new Date(new Date().setHours(0, 0, 0, 0)),
+    {
+      message: "تاريخ النهاية يجب أن يكون اليوم أو بعده",
+    }
+  ),
+  reason: z.string().optional(),
+  status: z.string().default("pending"),
+})
+.refine(
+  (data) => data.end_date >= data.start_date,
+  {
+    message: "تاريخ النهاية يجب أن يكون بعد تاريخ البداية",
+    path: ["end_date"],
+  }
+);
 
 interface AddLeaveRequestDialogProps {
   open: boolean;
@@ -21,236 +73,370 @@ interface AddLeaveRequestDialogProps {
 }
 
 export function AddLeaveRequestDialog({ open, onOpenChange }: AddLeaveRequestDialogProps) {
-  const { data: leaveTypes, isLoading: isLoadingLeaveTypes } = useLeaveTypes();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [employeeId, setEmployeeId] = useState<string | null>(null);
-  const [gender, setGender] = useState<string | null>(null);
-  const { data: leaveEntitlements, isLoading: isLoadingEntitlements } = useLeaveEntitlements(employeeId || undefined);
-
-  const [formData, setFormData] = useState({
-    leave_type: "",
-    start_date: new Date(),
-    end_date: new Date(),
-    reason: "",
-    status: "pending",
-  });
-
-  // Get current user and fetch their employee record
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-
-        if (profile) {
-          const { data: employee } = await supabase
-            .from("employees")
-            .select("*")
-            .eq("email", profile.email)
-            .single();
-
-          if (employee) {
-            setEmployeeId(employee.id);
-            setGender(employee.gender);
-            console.log("Found employee:", employee.id, "with gender:", employee.gender);
-          } else {
-            console.log("No employee record found for this user");
-          }
-        }
-      }
-    };
-
-    if (open) {
-      getCurrentUser();
+  const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+  const [daysCount, setDaysCount] = useState<number | null>(null);
+  const [selectedLeaveType, setSelectedLeaveType] = useState<string | null>(null);
+  
+  const { data: employees, isLoading: isLoadingEmployees } = useEmployees();
+  const { data: leaveTypes, isLoading: isLoadingLeaveTypes } = useLeaveTypes();
+  const { data: leaveEntitlements, isLoading: isLoadingEntitlements } = useLeaveEntitlements(selectedEmployee?.id);
+  
+  const form = useForm<z.infer<typeof leaveFormSchema>>({
+    resolver: zodResolver(leaveFormSchema),
+    defaultValues: {
+      employee_id: "",
+      leave_type: "",
+      status: "pending",
+      reason: ""
     }
-  }, [open]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  });
+  
+  // Reset form when dialog opens/closes
+  useEffect(() => {
+    if (!open) {
+      form.reset();
+      setSelectedEmployee(null);
+      setSelectedLeaveType(null);
+      setDaysCount(null);
+    }
+  }, [open, form]);
+  
+  // Update days count when dates change
+  useEffect(() => {
+    const startDate = form.watch("start_date");
+    const endDate = form.watch("end_date");
+    
+    if (startDate && endDate) {
+      setDaysCount(getDaysBetweenDates(startDate, endDate));
+    } else {
+      setDaysCount(null);
+    }
+  }, [form.watch("start_date"), form.watch("end_date")]);
+  
+  // Get filtered leave types based on employee gender
+  const filteredLeaveTypes = leaveTypes?.filter(type => {
+    if (!selectedEmployee) return true;
+    const employeeGender = mapGenderToEligibility(selectedEmployee.gender);
+    return type.gender_eligibility === "both" || type.gender_eligibility === employeeGender;
+  });
+  
+  // Find leave entitlement for selected leave type
+  const selectedEntitlement = leaveEntitlements?.find(
+    entitlement => entitlement.leave_type_id === selectedLeaveType
+  );
+  
+  // Find leave type object by ID
+  const selectedLeaveTypeObject = leaveTypes?.find(
+    type => type.id === selectedLeaveType
+  );
+  
+  // Handle employee selection
+  const handleEmployeeChange = (employeeId: string) => {
+    form.setValue("employee_id", employeeId);
+    const employee = employees?.find(emp => emp.id === employeeId);
+    setSelectedEmployee(employee);
+    
+    // Reset leave type when employee changes
+    form.setValue("leave_type", "");
+    setSelectedLeaveType(null);
+  };
+  
+  // Handle leave type selection
+  const handleLeaveTypeChange = (leaveTypeId: string) => {
+    form.setValue("leave_type", leaveTypeId);
+    setSelectedLeaveType(leaveTypeId);
+  };
+  
+  // Handle form submission
+  const onSubmit = async (data: z.infer<typeof leaveFormSchema>) => {
     setIsSubmitting(true);
-
     try {
-      console.log("Submitting leave request with data:", formData);
-      console.log("Employee ID:", employeeId);
-      console.log("Gender:", gender);
-
-      // Validate that all required fields are filled
-      if (!formData.leave_type || !formData.start_date || !formData.end_date || !formData.reason) {
-        toast.error("يرجى ملء جميع الحقول المطلوبة");
-        setIsSubmitting(false);
-        return;
-      }
-
-      if (!employeeId) {
-        toast.error("لم يتم العثور على بيانات الموظف");
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Calculate days between start and end dates
-      const start = new Date(formData.start_date);
-      const end = new Date(formData.end_date);
-      const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
-      if (days <= 0) {
-        toast.error("تاريخ البداية يجب أن يكون قبل تاريخ النهاية");
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Check for leave entitlement
-      const entitlement = leaveEntitlements?.find(e => e.leave_type?.code === formData.leave_type);
+      // Format dates for Supabase
+      const formattedData = {
+        employee_id: data.employee_id,
+        leave_type: data.leave_type, // This should be the ID of the leave type
+        start_date: data.start_date.toISOString().split('T')[0],
+        end_date: data.end_date.toISOString().split('T')[0],
+        reason: data.reason,
+        status: data.status
+      };
       
-      if (!entitlement) {
-        toast.error("لم يتم العثور على رصيد إجازة لهذا النوع");
-        setIsSubmitting(false);
-        return;
-      }
-
-      if (entitlement.remaining_days < days) {
-        toast.error(`رصيد الإجازة غير كافي. الرصيد المتبقي: ${entitlement.remaining_days} يوم`);
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Get the leave type details to check eligibility
-      const selectedLeaveType = leaveTypes?.find(lt => lt.code === formData.leave_type);
+      console.log("Submitting leave request:", formattedData);
       
-      if (selectedLeaveType && selectedLeaveType.gender_eligibility && 
-          selectedLeaveType.gender_eligibility !== 'both' && 
-          selectedLeaveType.gender_eligibility !== gender) {
-        toast.error(`هذا النوع من الإجازات غير متاح لك`);
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Insert the leave request
-      const { data, error } = await supabase
+      const { data: result, error } = await supabase
         .from("hr_leave_requests")
-        .insert({
-          employee_id: employeeId,
-          leave_type: formData.leave_type,
-          start_date: formData.start_date,
-          end_date: formData.end_date,
-          days_count: days,
-          reason: formData.reason,
-          status: formData.status
-        })
-        .select();
-
+        .insert(formattedData)
+        .select()
+        .single();
+      
       if (error) {
         console.error("Error submitting leave request:", error);
-        toast.error("حدث خطأ أثناء تقديم طلب الإجازة");
-        return;
+        throw error;
       }
-
-      console.log("Leave request submitted successfully:", data);
-      toast.success("تم تقديم طلب الإجازة بنجاح");
-      onOpenChange(false);
       
-      // Reset form
-      setFormData({
-        leave_type: "",
-        start_date: new Date(),
-        end_date: new Date(),
-        reason: "",
-        status: "pending",
+      toast({
+        title: "تم تقديم طلب الإجازة بنجاح",
+        description: "تم إضافة طلب الإجازة وبانتظار الموافقة عليه"
       });
+      
+      form.reset();
+      onOpenChange(false);
     } catch (error) {
-      console.error("Error in handleSubmit:", error);
-      toast.error("حدث خطأ أثناء تقديم طلب الإجازة");
+      console.error("Error submitting leave request:", error);
+      toast({
+        title: "حدث خطأ أثناء تقديم طلب الإجازة",
+        description: "يرجى التحقق من المعلومات والمحاولة مرة أخرى",
+        variant: "destructive"
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const filteredLeaveTypes = leaveTypes?.filter(type => {
-    if (!gender || !type.gender_eligibility || type.gender_eligibility === 'both') {
-      return true;
-    }
-    return type.gender_eligibility === gender;
-  });
-
-  const getLeaveBalance = (leaveTypeCode: string) => {
-    const entitlement = leaveEntitlements?.find(e => e.leave_type?.code === leaveTypeCode);
-    return entitlement ? entitlement.remaining_days : 0;
-  };
-
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]" dir="rtl">
+      <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
-          <DialogTitle>طلب إجازة جديدة</DialogTitle>
+          <DialogTitle>إضافة طلب إجازة جديد</DialogTitle>
         </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          <div className="space-y-2">
-            <Label htmlFor="leave_type">نوع الإجازة</Label>
-            <Select
-              value={formData.leave_type}
-              onValueChange={(value) => setFormData({ ...formData, leave_type: value })}
-            >
-              <SelectTrigger id="leave_type" className="w-full">
-                <SelectValue placeholder="اختر نوع الإجازة" />
-              </SelectTrigger>
-              <SelectContent>
-                {isLoadingLeaveTypes ? (
-                  <div className="flex justify-center p-2">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  </div>
-                ) : (
-                  filteredLeaveTypes?.map((type) => (
-                    <SelectItem key={type.id} value={type.code}>
-                      {type.name} (الرصيد: {getLeaveBalance(type.code)})
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="start_date">تاريخ البداية</Label>
-              <DatePicker
-                date={formData.start_date}
-                setDate={(date) => date && setFormData({ ...formData, start_date: date })}
-                placeholder="اختر تاريخ البداية"
-                locale="ar"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="end_date">تاريخ النهاية</Label>
-              <DatePicker
-                date={formData.end_date}
-                setDate={(date) => date && setFormData({ ...formData, end_date: date })}
-                placeholder="اختر تاريخ النهاية"
-                locale="ar"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="reason">سبب الإجازة</Label>
-            <Textarea
-              id="reason"
-              placeholder="أدخل سبب طلب الإجازة"
-              value={formData.reason}
-              onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-              rows={3}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Employee Selection */}
+            <FormField
+              control={form.control}
+              name="employee_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>الموظف</FormLabel>
+                  <Select
+                    onValueChange={handleEmployeeChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="اختر الموظف" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {isLoadingEmployees ? (
+                        <div className="flex justify-center items-center p-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        </div>
+                      ) : employees && employees.length > 0 ? (
+                        employees.map((employee) => (
+                          <SelectItem key={employee.id} value={employee.id}>
+                            {employee.full_name} 
+                            {employee.gender && (
+                              <span className="mr-2 text-sm text-muted-foreground">
+                                ({employee.gender})
+                              </span>
+                            )}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="p-2 text-center text-sm text-muted-foreground">
+                          لا يوجد موظفين
+                        </div>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-
-          <Button type="submit" className="w-full" disabled={isSubmitting || isLoadingEntitlements}>
-            {isSubmitting && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-            تقديم طلب الإجازة
-          </Button>
-        </form>
+            
+            {selectedEmployee && (
+              <>
+                {/* Leave Type Selection */}
+                <FormField
+                  control={form.control}
+                  name="leave_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>نوع الإجازة</FormLabel>
+                      <Select
+                        onValueChange={handleLeaveTypeChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر نوع الإجازة" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {isLoadingLeaveTypes ? (
+                            <div className="flex justify-center items-center p-2">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            </div>
+                          ) : filteredLeaveTypes && filteredLeaveTypes.length > 0 ? (
+                            filteredLeaveTypes.map((type) => (
+                              <SelectItem key={type.id} value={type.id}>
+                                {type.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <div className="p-2 text-center text-sm text-muted-foreground">
+                              لا توجد أنواع إجازات متاحة
+                            </div>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        اختر نوع الإجازة المناسب للموظف
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {/* Leave Balance Information */}
+                {selectedLeaveTypeObject && (
+                  <Card className="border-dashed">
+                    <CardContent className="p-4">
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">نوع الإجازة:</span>
+                          <Badge variant="outline" className="font-normal">
+                            {selectedLeaveTypeObject.name}
+                          </Badge>
+                        </div>
+                        {isLoadingEntitlements ? (
+                          <div className="flex justify-center items-center p-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          </div>
+                        ) : selectedEntitlement ? (
+                          <>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm">الرصيد السنوي:</span>
+                              <Badge variant="outline" className="font-normal">
+                                {selectedEntitlement.entitled_days} يوم
+                              </Badge>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm">الرصيد المستخدم:</span>
+                              <Badge variant="outline" className="font-normal">
+                                {selectedEntitlement.used_days} يوم
+                              </Badge>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm">الرصيد المتبقي:</span>
+                              <Badge variant={selectedEntitlement.remaining_days > 0 ? "success" : "destructive"} className="font-normal">
+                                {selectedEntitlement.remaining_days} يوم
+                              </Badge>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-sm text-yellow-600">
+                            لا يوجد رصيد محدد لهذا النوع من الإجازات
+                          </div>
+                        )}
+                        {daysCount && (
+                          <div className="flex justify-between items-center mt-2 pt-2 border-t">
+                            <span className="text-sm">مدة الإجازة المطلوبة:</span>
+                            <Badge variant={
+                              selectedEntitlement && daysCount > selectedEntitlement.remaining_days
+                                ? "destructive"
+                                : "default"
+                            } className="font-normal">
+                              {daysCount} يوم
+                            </Badge>
+                          </div>
+                        )}
+                        {selectedEntitlement && daysCount && daysCount > selectedEntitlement.remaining_days && (
+                          <div className="text-sm text-destructive">
+                            تجاوز الرصيد المتاح!
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+                
+                {/* Date Selection */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="start_date"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>تاريخ البداية</FormLabel>
+                        <DatePicker
+                          date={field.value}
+                          setDate={field.onChange}
+                          placeholder="اختر تاريخ البداية"
+                          locale="ar"
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="end_date"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>تاريخ النهاية</FormLabel>
+                        <DatePicker
+                          date={field.value}
+                          setDate={field.onChange}
+                          placeholder="اختر تاريخ النهاية"
+                          locale="ar"
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                {/* Reason Field */}
+                <FormField
+                  control={form.control}
+                  name="reason"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>سبب الإجازة (اختياري)</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="أدخل سبب طلب الإجازة"
+                          className="resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
+            
+            {/* Form Actions */}
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
+                إلغاء
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting || 
+                  (!selectedEmployee) || 
+                  (!selectedLeaveType) || 
+                  (selectedEntitlement && daysCount && daysCount > selectedEntitlement.remaining_days)}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    جاري التقديم...
+                  </>
+                ) : "تقديم طلب الإجازة"}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
