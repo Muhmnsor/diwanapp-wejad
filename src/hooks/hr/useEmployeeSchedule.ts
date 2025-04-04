@@ -53,9 +53,9 @@ export function useEmployeeSchedule() {
 const getWorkDays = async (scheduleId: string) => {
   try {
     const { data, error } = await supabase
-      .from('hr_weekly_schedule')
+      .from('hr_work_days')
       .select('*')
-      .eq('schedule_type_id', scheduleId)
+      .eq('schedule_id', scheduleId)
       .order('day_of_week');
     
     if (error) throw error;
