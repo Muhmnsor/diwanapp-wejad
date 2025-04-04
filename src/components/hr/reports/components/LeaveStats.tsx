@@ -1,27 +1,36 @@
-
+// src/components/hr/reports/components/LeaveStats.tsx
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock, Briefcase } from "lucide-react";
+import { useLeaveStats } from "@/hooks/hr/useLeaveStats";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface LeaveStatsProps {
   period: "yearly" | "quarterly" | "monthly";
+  startDate?: Date;
+  endDate?: Date;
 }
 
-export function LeaveStats({ period }: LeaveStatsProps) {
-  // Sample data - in a real app, we would fetch this from an API
-  const getPeriodData = () => {
-    switch (period) {
-      case "yearly":
-        return { total: 120, approved: 110, rejected: 5, pending: 5 };
-      case "quarterly":
-        return { total: 40, approved: 35, rejected: 2, pending: 3 };
-      case "monthly":
-      default:
-        return { total: 15, approved: 12, rejected: 1, pending: 2 };
-    }
-  };
-  
-  const stats = getPeriodData();
+export function LeaveStats({ period, startDate, endDate }: LeaveStatsProps) {
+  const { data: stats, isLoading, isError } = useLeaveStats(period, startDate, endDate);
+
+  if (isLoading) {
+    return (
+      <>
+        <Skeleton className="h-[140px] w-full" />
+        <Skeleton className="h-[140px] w-full" />
+        <Skeleton className="h-[140px] w-full" />
+      </>
+    );
+  }
+
+  if (isError || !stats) {
+    return (
+      <div className="col-span-3 p-4 text-center text-red-500">
+        <p>حدث خطأ أثناء تحميل بيانات الإجازات</p>
+      </div>
+    );
+  }
   
   return (
     <>
@@ -46,7 +55,7 @@ export function LeaveStats({ period }: LeaveStatsProps) {
         <CardContent>
           <div className="text-2xl font-bold">{stats.approved}</div>
           <p className="text-xs text-muted-foreground">
-            {Math.round((stats.approved / stats.total) * 100)}% من إجمالي الإجازات
+            {stats.total ? Math.round((stats.approved / stats.total) * 100) : 0}% من إجمالي الإجازات
           </p>
         </CardContent>
       </Card>
@@ -59,7 +68,7 @@ export function LeaveStats({ period }: LeaveStatsProps) {
         <CardContent>
           <div className="text-2xl font-bold">{stats.pending}</div>
           <p className="text-xs text-muted-foreground">
-            {Math.round((stats.pending / stats.total) * 100)}% من إجمالي الإجازات
+            {stats.total ? Math.round((stats.pending / stats.total) * 100) : 0}% من إجمالي الإجازات
           </p>
         </CardContent>
       </Card>
