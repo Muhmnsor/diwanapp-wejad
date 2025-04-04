@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmployeeDistributionChart } from "../dashboard/EmployeeDistributionChart";
@@ -9,10 +8,13 @@ import { useEmployees } from "@/hooks/hr/useEmployees";
 import { useOrganizationalUnits } from "@/hooks/hr/useOrganizationalUnits";
 import { Building2, UserRound, Users, CheckCircle2 } from "lucide-react";
 import { OrganizationChart } from "../organization/OrganizationChart";
+import { useHRStats } from "@/hooks/hr/useHRStats";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const HROverview = () => {
   const { data: employees, isLoading: isLoadingEmployees } = useEmployees();
   const { data: units, isLoading: isLoadingUnits } = useOrganizationalUnits();
+  const { data: stats, isLoading: isLoadingStats } = useHRStats();
   
   const activeEmployeesCount = employees?.filter(e => e.status === 'active').length || 0;
   const organizationalUnitsCount = units?.length || 0;
@@ -32,7 +34,7 @@ const HROverview = () => {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {isLoadingEmployees ? "..." : employees?.length || 0}
+              {isLoadingEmployees ? <Skeleton className="h-8 w-16" /> : employees?.length || 0}
             </div>
             <p className="text-xs text-muted-foreground">
               {activeEmployeesCount} موظف نشط
@@ -47,7 +49,7 @@ const HROverview = () => {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {isLoadingUnits ? "..." : organizationalUnitsCount}
+              {isLoadingUnits ? <Skeleton className="h-8 w-16" /> : organizationalUnitsCount}
             </div>
             <p className="text-xs text-muted-foreground">عدد الوحدات التنظيمية</p>
           </CardContent>
@@ -59,8 +61,16 @@ const HROverview = () => {
             <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">85%</div>
-            <p className="text-xs text-muted-foreground">معدل الحضور</p>
+            <div className="text-3xl font-bold">
+              {isLoadingStats ? (
+                <Skeleton className="h-8 w-16" />
+              ) : (
+                `${stats?.attendanceRate || 0}%`
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {isLoadingStats ? <Skeleton className="h-4 w-24" /> : `${stats?.presentToday || 0} موظف حاضر`}
+            </p>
           </CardContent>
         </Card>
         
@@ -70,7 +80,9 @@ const HROverview = () => {
             <UserRound className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">5</div>
+            <div className="text-3xl font-bold">
+              {isLoadingStats ? <Skeleton className="h-8 w-16" /> : stats?.activeLeaves || 0}
+            </div>
             <p className="text-xs text-muted-foreground">موظفين في إجازة</p>
           </CardContent>
         </Card>
