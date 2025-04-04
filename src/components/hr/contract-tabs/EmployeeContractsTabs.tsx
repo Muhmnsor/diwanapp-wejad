@@ -97,8 +97,11 @@ export function EmployeeContractsTabs({
         <TabsContent value="schedule" className="pt-2">
           <div className="border rounded-lg p-4 bg-muted/10">
             <h3 className="text-lg font-medium mb-3">جدول العمل المخصص</h3>
-            <ScheduleInfoDetail scheduleId={null} />
-            <div className="mt-4">
+            {/* Pass the employee's schedule_id to ScheduleInfoDetail */}
+            <div className="text-sm">
+              يجب تعديل جدول العمل للموظف باستخدام زر التعديل أدناه  
+           </div>
+           <div className="mt-4"> 
               <Button onClick={() => setManageScheduleOpen(true)} variant="outline" className="w-full">
                 تعديل جدول العمل
               </Button>
