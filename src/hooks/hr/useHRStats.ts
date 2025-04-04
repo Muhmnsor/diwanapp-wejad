@@ -1,3 +1,5 @@
+// الكود الحالي يستخدم بيانات تجريبية للعديد من الإحصائيات
+// تحديث الدالة لجلب البيانات الفعلية
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,17 +44,17 @@ export function useHRStats() {
   return useQuery<HRStats, Error>({
     queryKey: ['hr-stats'],
     queryFn: async () => {
-      // In a real app, we would fetch this data from an API or database
-      // For now, we'll use sample data
-
-      // Fetch basic employee count
+      // التاريخ الحالي
+      const today = new Date().toISOString().split('T')[0];
+      
+      // استرداد عدد الموظفين الكلي
       const { count: totalEmployees, error: countError } = await supabase
         .from('employees')
         .select('*', { count: 'exact', head: true });
         
       if (countError) throw countError;
       
-      // Fetch new employees from the last month
+      // استرداد الموظفين الجدد (في آخر 30 يومًا)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
@@ -63,9 +65,7 @@ export function useHRStats() {
         
       if (newEmpError) throw newEmpError;
       
-      // Fetch today's attendance
-      const today = new Date().toISOString().split('T')[0];
-      
+      // استرداد الحضور اليوم
       const { count: presentToday, error: presentError } = await supabase
         .from('hr_attendance')
         .select('*', { count: 'exact', head: true })
@@ -74,57 +74,213 @@ export function useHRStats() {
         
       if (presentError) throw presentError;
       
-      // Sample data for the rest - in a real app, these would come from the database
+      // استرداد إجمالي عدد الموظفين النشطين لحساب معدل الحضور
+      const { count: activeEmployees, error: activeEmpError } = await supabase
+        .from('employees')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active');
+        
+      if (activeEmpError) throw activeEmpError;
+      
+      // حساب معدل الحضور
+      const attendanceRate = activeEmployees ? Math.round((presentToday / activeEmployees) * 100) : 0;
+      
+      // استرداد الإجازات النشطة اليوم
+      const { count: activeLeaves, error: leavesError } = await supabase
+        .from('hr_leave_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'approved')
+        .lte('start_date', today)
+        .gte('end_date', today);
+        
+      if (leavesError) throw leavesError;
+      
+      // استرداد الإجازات القادمة
+      const { count: upcomingLeaves, error: upcomingLeavesError } = await supabase
+        .from('hr_leave_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'approved')
+        .gt('start_date', today);
+        
+      if (upcomingLeavesError) throw upcomingLeavesError;
+      
+      // استرداد العقود المنتهية قريبًا (في آخر 30 يومًا)
+      const thirtyDaysLater = new Date();
+      thirtyDaysLater.setDate(thirtyDaysLater.getDate() + 30);
+      
+      const { count: expiringContracts, error: contractsError } = await supabase
+        .from('hr_employee_contracts')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active')
+        .lte('end_date', thirtyDaysLater.toISOString().split('T')[0])
+        .gte('end_date', today);
+        
+      if (contractsError) throw contractsError;
+      
+      // استرداد تفاصيل العقود المنتهية قريبًا
+      const { data: contractDetails, error: detailsError } = await supabase
+        .from('hr_employee_contracts')
+        .select(`
+          id,
+          end_date,
+          contract_type,
+          employees:employee_id (full_name)
+        `)
+        .eq('status', 'active')
+        .lte('end_date', thirtyDaysLater.toISOString().split('T')[0])
+        .gte('end_date', today)
+        .order('end_date');
+        
+      if (detailsError) throw detailsError;
+      
+      // تحويل بيانات العقود إلى التنسيق المطلوب
+      const expiringContractDetails = contractDetails.map(contract => {
+        const currentDate = new Date();
+        const expiryDate = new Date(contract.end_date);
+        const daysRemaining = Math.ceil((expiryDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        return {
+          id: contract.id,
+          employeeName: contract.employees?.full_name || 'غير معروف',
+          expiryDate: contract.end_date,
+          daysRemaining,
+          contractType: contract.contract_type
+        };
+      });
+      
+      // استرداد توزيع الموظفين حسب الإدارات
+      const { data: departmentData, error: deptError } = await supabase
+        .from('employees')
+        .select('department');
+        
+      if (deptError) throw deptError;
+      
+      // جمع البيانات حسب الإدارات
+      const departmentGroups = departmentData.reduce((acc, curr) => {
+        if (curr.department) {
+          acc[curr.department] = (acc[curr.department] || 0) + 1;
+        }
+        return acc;
+      }, {});
+      
+      // تحويل بيانات الإدارات إلى التنسيق المطلوب
+      const employeesByDepartment = Object.entries(departmentGroups).map(([name, value]) => ({ name, value }));
+      
+      // استرداد توزيع الموظفين حسب نوع العقد
+      const { data: contractTypeData, error: contractTypeError } = await supabase
+        .from('employees')
+        .select('contract_type');
+        
+      if (contractTypeError) throw contractTypeError;
+      
+      // جمع البيانات حسب نوع العقد
+      const contractTypeGroups = contractTypeData.reduce((acc, curr) => {
+        if (curr.contract_type) {
+          let label = '';
+          switch(curr.contract_type) {
+            case 'full_time': label = 'دوام كامل'; break;
+            case 'part_time': label = 'دوام جزئي'; break;
+            case 'contractor': label = 'متعاقد'; break;
+            default: label = curr.contract_type;
+          }
+          acc[label] = (acc[label] || 0) + 1;
+        }
+        return acc;
+      }, {});
+      
+      // تحويل بيانات نوع العقد إلى التنسيق المطلوب
+      const employeesByContractType = Object.entries(contractTypeGroups).map(([name, value]) => ({ name, value }));
+      
+      // استرداد بيانات الحضور لآخر أسبوع
+      const lastWeek = new Date();
+      lastWeek.setDate(lastWeek.getDate() - 7);
+      
+      const { data: weeklyAttendance, error: weeklyAttendanceError } = await supabase
+        .from('hr_attendance')
+        .select('attendance_date, status')
+        .gte('attendance_date', lastWeek.toISOString().split('T')[0]);
+        
+      if (weeklyAttendanceError) throw weeklyAttendanceError;
+      
+      // أيام الأسبوع بالعربية
+      const weekDays = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+      
+      // جمع بيانات الحضور الأسبوعية
+      const weeklyStats = {};
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dayName = weekDays[date.getDay()];
+        const dateStr = date.toISOString().split('T')[0];
+        
+        // تهيئة البيانات
+        weeklyStats[dateStr] = {
+          name: dayName,
+          present: 0,
+          late: 0,
+          absent: 0
+        };
+      }
+      
+      // ملء بيانات الحضور
+      weeklyAttendance.forEach(record => {
+        const dateStr = record.attendance_date;
+        if (weeklyStats[dateStr]) {
+          if (record.status === 'present') {
+            weeklyStats[dateStr].present++;
+          } else if (record.status === 'late') {
+            weeklyStats[dateStr].late++;
+          } else if (record.status === 'absent') {
+            weeklyStats[dateStr].absent++;
+          }
+        }
+      });
+      
+      // تحويل بيانات الحضور الأسبوعية إلى التنسيق المطلوب
+      const weeklyAttendanceData = Object.values(weeklyStats);
+      
+      // استرداد بيانات الإجازات حسب النوع
+      const { data: leaveTypesData, error: leaveTypesError } = await supabase
+        .from('hr_leave_requests')
+        .select('leave_type');
+        
+      if (leaveTypesError) throw leaveTypesError;
+      
+      // جمع بيانات الإجازات حسب النوع
+      const leaveTypeGroups = leaveTypesData.reduce((acc, curr) => {
+        if (curr.leave_type) {
+          acc[curr.leave_type] = (acc[curr.leave_type] || 0) + 1;
+        }
+        return acc;
+      }, {});
+      
+      // تحويل بيانات الإجازات إلى التنسيق المطلوب
+      const leavesByType = Object.entries(leaveTypeGroups).map(([name, value]) => ({ name, value }));
+      
+      // بناء كائن الإحصائيات النهائي
       return {
-        totalEmployees: totalEmployees || 28,
-        newEmployees: newEmployees || 3,
-        presentToday: presentToday || 22,
-        attendanceRate: 85,
-        activeLeaves: 4,
-        upcomingLeaves: 7,
-        expiringContracts: 5,
-        pendingTrainings: 12,
-        urgentTasks: 3,
-        expiringContractDetails: [
-          { id: '1', employeeName: 'أحمد محمد', expiryDate: '2023-08-15', daysRemaining: 5, contractType: 'دوام كامل' },
-          { id: '2', employeeName: 'فاطمة علي', expiryDate: '2023-08-22', daysRemaining: 12, contractType: 'دوام جزئي' },
-          { id: '3', employeeName: 'محمد خالد', expiryDate: '2023-08-30', daysRemaining: 20, contractType: 'دوام كامل' },
-          { id: '4', employeeName: 'نوره سالم', expiryDate: '2023-09-05', daysRemaining: 26, contractType: 'متعاقد' },
-          { id: '5', employeeName: 'عبدالله يوسف', expiryDate: '2023-09-10', daysRemaining: 31, contractType: 'دوام كامل' }
-        ],
-        employeesByDepartment: [
-          { name: 'الإدارة', value: 5 },
-          { name: 'تقنية المعلومات', value: 8 },
-          { name: 'الموارد البشرية', value: 4 },
-          { name: 'المالية', value: 3 },
-          { name: 'التسويق', value: 6 }
-        ],
-        employeesByContractType: [
-          { name: 'دوام كامل', value: 20 },
-          { name: 'دوام جزئي', value: 5 },
-          { name: 'متعاقد', value: 3 }
-        ],
-        weeklyAttendanceData: [
-          { name: 'الأحد', present: 22, late: 3, absent: 3 },
-          { name: 'الإثنين', present: 24, late: 2, absent: 2 },
-          { name: 'الثلاثاء', present: 23, late: 4, absent: 1 },
-          { name: 'الأربعاء', present: 25, late: 1, absent: 2 },
-          { name: 'الخميس', present: 20, late: 5, absent: 3 }
-        ],
-        leavesByType: [
-          { name: 'سنوية', value: 15 },
-          { name: 'مرضية', value: 8 },
-          { name: 'طارئة', value: 5 },
-          { name: 'أمومة', value: 2 },
-          { name: 'بدون راتب', value: 1 }
-        ],
+        totalEmployees: totalEmployees || 0,
+        newEmployees: newEmployees || 0,
+        presentToday: presentToday || 0,
+        attendanceRate: attendanceRate,
+        activeLeaves: activeLeaves || 0,
+        upcomingLeaves: upcomingLeaves || 0,
+        expiringContracts: expiringContracts || 0,
+        pendingTrainings: 0, // هذه البيانات تتطلب جداول إضافية
+        urgentTasks: 0, // هذه البيانات تتطلب جداول إضافية
+        expiringContractDetails,
+        employeesByDepartment,
+        employeesByContractType,
+        weeklyAttendanceData,
+        leavesByType,
         trends: {
-          employeeTrend: [23, 24, 25, 26, 28, 28, 28],
-          attendanceTrend: [80, 82, 85, 83, 86, 84, 85],
-          leaveTrend: [2, 3, 5, 4, 2, 3, 4],
-          contractsTrend: [1, 0, 2, 3, 4, 5, 5],
-          trainingTrend: [5, 8, 10, 12, 15, 13, 12],
-          tasksTrend: [1, 2, 3, 5, 4, 3, 3]
+          // هذه البيانات تتطلب تحليلًا أكثر تعقيدًا عبر الوقت
+          employeeTrend: [0, 0, 0, 0, 0, 0, 0],
+          attendanceTrend: [0, 0, 0, 0, 0, 0, 0],
+          leaveTrend: [0, 0, 0, 0, 0, 0, 0],
+          contractsTrend: [0, 0, 0, 0, 0, 0, 0],
+          trainingTrend: [0, 0, 0, 0, 0, 0, 0],
+          tasksTrend: [0, 0, 0, 0, 0, 0, 0]
         }
       };
     },
