@@ -141,7 +141,7 @@ export function ScheduleInfoDetail({ scheduleId }: ScheduleInfoDetailProps) {
               <div key={day.id} className="flex justify-between items-center">
                 <span>{getDayName(day.day_of_week)}</span>
                 <span>
-                  {day.start_time?.substring(0, 5)} - {day.end_time?.substring(0, 5)}
+                  {day.work_start_time?.substring(0, 5)} - {day.work_end_time?.substring(0, 5)}
                 </span>
               </div>
             ))}
