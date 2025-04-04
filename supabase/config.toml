@@ -27,3 +27,8 @@ enabled = true
 
 [functions.generate-recurring-tasks]
 verify_jwt = true
+
+[functions.mark-absent-employees]
+verify_jwt = false
+schedule = "@daily"
+
