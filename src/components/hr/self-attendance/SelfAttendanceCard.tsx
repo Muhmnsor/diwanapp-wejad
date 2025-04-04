@@ -1,16 +1,16 @@
-
 import { useState, useEffect } from "react";
 import { useSelfAttendance } from "@/hooks/hr/useSelfAttendance";
 import { useUserEmployeeLink } from "@/components/hr/useUserEmployeeLink";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Clock, LogIn, LogOut, UserIcon } from "lucide-react";
+import { Loader2, Clock, LogIn, LogOut, UserIcon, AlertCircle } from "lucide-react";
 import { formatDateWithDay, formatTime } from "@/utils/dateTimeUtils";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function SelfAttendanceCard() {
-  const { checkIn, checkOut, getTodayAttendance, getEmployeeInfo, isLoading: attendanceLoading } = useSelfAttendance();
+  const { checkIn, checkOut, getTodayAttendance, getEmployeeInfo, isLoading: attendanceLoading, canCheckIn } = useSelfAttendance();
   const { getCurrentUserEmployee, isFetching: employeeLinkFetching } = useUserEmployeeLink();
   const [employee, setEmployee] = useState<any>(null);
   const [attendanceRecord, setAttendanceRecord] = useState<any>(null);
@@ -19,45 +19,45 @@ export function SelfAttendanceCard() {
   const [isLinkedToEmployee, setIsLinkedToEmployee] = useState<boolean | null>(null);
 
   // Load employee and attendance data
-useEffect(() => {
-  const loadData = async () => {
-    setIsLoadingData(true);
-    
-    try {
-      // First check if user is linked to an employee
-      const linkResult = await getCurrentUserEmployee();
-      console.log("Employee link check in SelfAttendanceCard:", linkResult);
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoadingData(true);
       
-      // Set to false by default if there's any error
-      if (!linkResult.success) {
-        setIsLinkedToEmployee(false);
-        setIsLoadingData(false);
-        return;
-      }
-      
-      // Set accurate linking status
-      setIsLinkedToEmployee(linkResult.isLinked);
-      
-      if (linkResult.isLinked && linkResult.data) {
-        setEmployee(linkResult.data);
+      try {
+        // First check if user is linked to an employee
+        const linkResult = await getCurrentUserEmployee();
+        console.log("Employee link check in SelfAttendanceCard:", linkResult);
         
-        // Get attendance data
-        const attendanceResult = await getTodayAttendance();
-        if (attendanceResult.success) {
-          setAttendanceRecord(attendanceResult.data);
+        // Set to false by default if there's any error
+        if (!linkResult.success) {
+          setIsLinkedToEmployee(false);
+          setIsLoadingData(false);
+          return;
         }
+        
+        // Set accurate linking status
+        setIsLinkedToEmployee(linkResult.isLinked);
+        
+        if (linkResult.isLinked && linkResult.data) {
+          setEmployee(linkResult.data);
+          
+          // Get attendance data
+          const attendanceResult = await getTodayAttendance();
+          if (attendanceResult.success) {
+            setAttendanceRecord(attendanceResult.data);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading self-attendance data:", error);
+        setIsLinkedToEmployee(false);
+      } finally {
+        // Always finish loading, even on error
+        setIsLoadingData(false);
       }
-    } catch (error) {
-      console.error("Error loading self-attendance data:", error);
-      setIsLinkedToEmployee(false);
-    } finally {
-      // Always finish loading, even on error
-      setIsLoadingData(false);
-    }
-  };
+    };
 
-  loadData();
-}, [getCurrentUserEmployee, getTodayAttendance]);
+    loadData();
+  }, [getCurrentUserEmployee, getTodayAttendance]);
 
 
   // Update current time every minute
@@ -167,6 +167,39 @@ useEffect(() => {
   const formattedDate = formatDateWithDay(today.toISOString().split('T')[0]);
   const formattedTime = today.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
 
+  // Get check-in button status
+  const getCheckInButtonProps = () => {
+    const isDisabled = attendanceLoading || 
+                      (attendanceRecord && attendanceRecord.check_in) || 
+                      (!canCheckIn.allowed);
+                      
+    const tooltipText = (!canCheckIn.allowed) 
+                       ? canCheckIn.reason 
+                       : (attendanceRecord && attendanceRecord.check_in)
+                         ? "لقد سجلت حضورك مسبقاً اليوم"
+                         : "";
+                       
+    return { isDisabled, tooltipText };
+  };
+
+  // Get check-out button status
+  const getCheckOutButtonProps = () => {
+    const isDisabled = attendanceLoading || 
+                      !attendanceRecord || 
+                      (attendanceRecord && attendanceRecord.check_out);
+                      
+    const tooltipText = !attendanceRecord 
+                       ? "يجب تسجيل الحضور أولاً" 
+                       : (attendanceRecord && attendanceRecord.check_out)
+                         ? "لقد سجلت انصرافك مسبقاً اليوم"
+                         : "";
+                       
+    return { isDisabled, tooltipText };
+  };
+
+  const checkInProps = getCheckInButtonProps();
+  const checkOutProps = getCheckOutButtonProps();
+
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">
@@ -208,28 +241,61 @@ useEffect(() => {
         ) : (
           <div className="text-center p-4 border rounded-lg bg-muted/30">
             <p className="text-muted-foreground">لم تقم بتسجيل الحضور اليوم</p>
+            {!canCheckIn.allowed && (
+              <p className="text-amber-500 mt-2 text-sm flex items-center justify-center">
+                <AlertCircle className="h-4 w-4 ml-1" />
+                {canCheckIn.reason}
+              </p>
+            )}
           </div>
         )}
       </CardContent>
       <CardFooter className="flex justify-around">
-        <Button
-          variant="default"
-          disabled={attendanceLoading || (attendanceRecord && attendanceRecord.check_in)}
-          onClick={handleCheckIn}
-          className="flex-1 ml-2"
-        >
-          {attendanceLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <LogIn className="ml-2 h-4 w-4" />}
-          تسجيل الحضور
-        </Button>
-        <Button
-          variant="outline"
-          disabled={attendanceLoading || !attendanceRecord || (attendanceRecord && attendanceRecord.check_out)}
-          onClick={handleCheckOut}
-          className="flex-1 mr-2"
-        >
-          {attendanceLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <LogOut className="ml-2 h-4 w-4" />}
-          تسجيل الانصراف
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex-1 ml-2">
+                <Button
+                  variant="default"
+                  disabled={checkInProps.isDisabled}
+                  onClick={handleCheckIn}
+                  className="w-full"
+                >
+                  {attendanceLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <LogIn className="ml-2 h-4 w-4" />}
+                  تسجيل الحضور
+                </Button>
+              </div>
+            </TooltipTrigger>
+            {checkInProps.tooltipText && (
+              <TooltipContent>
+                <p>{checkInProps.tooltipText}</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
+        
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex-1 mr-2">
+                <Button
+                  variant="outline"
+                  disabled={checkOutProps.isDisabled}
+                  onClick={handleCheckOut}
+                  className="w-full"
+                >
+                  {attendanceLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <LogOut className="ml-2 h-4 w-4" />}
+                  تسجيل الانصراف
+                </Button>
+              </div>
+            </TooltipTrigger>
+            {checkOutProps.tooltipText && (
+              <TooltipContent>
+                <p>{checkOutProps.tooltipText}</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
       </CardFooter>
     </Card>
   );
