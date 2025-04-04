@@ -1,42 +1,72 @@
-
+// src/components/hr/reports/components/LeaveCharts.tsx
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import { useLeaveChartData } from "@/hooks/hr/useLeaveChartData";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Sample data - replace with actual data fetching in a production environment
-const leaveData = {
-  monthly: [
-    { name: "إجازة سنوية", value: 20 },
-    { name: "إجازة مرضية", value: 15 },
-    { name: "إجازة استثنائية", value: 5 },
-    { name: "إجازة أمومة", value: 2 },
-  ],
-  quarterly: [
-    { name: "إجازة سنوية", value: 65 },
-    { name: "إجازة مرضية", value: 38 },
-    { name: "إجازة استثنائية", value: 12 },
-    { name: "إجازة أمومة", value: 7 },
-  ],
-  yearly: [
-    { name: "إجازة سنوية", value: 240 },
-    { name: "إجازة مرضية", value: 120 },
-    { name: "إجازة استثنائية", value: 45 },
-    { name: "إجازة أمومة", value: 25 },
-  ]
-};
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
 interface LeaveChartsProps {
   period: "yearly" | "quarterly" | "monthly";
+  startDate?: Date;
+  endDate?: Date;
 }
 
-export function LeaveCharts({ period }: LeaveChartsProps) {
-  const data = leaveData[period];
+export function LeaveCharts({ period, startDate, endDate }: LeaveChartsProps) {
+  const { data: chartData, isLoading, isError } = useLeaveChartData(period, startDate, endDate);
   
-  // Fix the comparison error by using proper equality check for string literals
-  const isLongPeriod = period === "yearly" || period === "quarterly";
+  if (isLoading) {
+    return (
+      <>
+        <Card>
+          <CardHeader>
+            <CardTitle>توزيع الإجازات حسب النوع</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[300px] w-full" />
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>نسب الإجازات</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[300px] w-full" />
+          </CardContent>
+        </Card>
+      </>
+    );
+  }
+
+  if (isError || !chartData) {
+    return (
+      <Card className="col-span-2">
+        <CardContent>
+          <div className="h-[300px] flex items-center justify-center">
+            <p className="text-red-500">حدث خطأ أثناء تحميل بيانات الرسم البياني</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // Use the data for the current period
+  const data = chartData[period] || [];
+  
+  // If there's no data, show empty state
+  if (data.length === 0) {
+    return (
+      <Card className="col-span-2">
+        <CardContent>
+          <div className="h-[300px] flex items-center justify-center">
+            <p className="text-gray-500">لا توجد بيانات إجازات في هذه الفترة</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   
   return (
     <>
