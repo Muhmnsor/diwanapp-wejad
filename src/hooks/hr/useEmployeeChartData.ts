@@ -15,75 +15,96 @@ interface EmployeeChartData {
 
 const COLORS = ['#4ade80', '#facc15', '#f87171', '#60a5fa', '#c084fc', '#fb923c'];
 
-export function useEmployeeChartData(department: "all" | "engineering" | "marketing" | "hr") {
+export function useEmployeeChartData(department: string = "all") {
   return useQuery<EmployeeChartData, Error>({
     queryKey: ['employee-chart-data', department],
     queryFn: async () => {
-      // 1. اجلب كل الموظفين حسب القسم المطلوب
-      const employeeQuery = supabase.from('employees').select('*');
+      // 1. Get organizational units (departments)
+      const { data: orgUnits, error: orgUnitsError } = await supabase
+        .from('organizational_units')
+        .select('id, name, type');
       
-      if (department !== "all") {
-        let deptName;
-        switch (department) {
-          case "engineering": deptName = "الهندسة"; break;
-          case "marketing": deptName = "التسويق"; break;
-          case "hr": deptName = "الموارد البشرية"; break;
-        }
-        employeeQuery.eq('department', deptName);
-      }
+      if (orgUnitsError) throw orgUnitsError;
       
-      const { data: employees, error } = await employeeQuery;
+      // Filter for department-type units only
+      const departments = orgUnits.filter(unit => unit.type === 'department' || unit.type === 'قسم');
       
-      if (error) throw error;
+      // 2. Get employee-department assignments
+      const { data: assignments, error: assignmentsError } = await supabase
+        .from('employee_organizational_units')
+        .select(`
+          id,
+          employee_id,
+          organizational_unit_id,
+          is_primary,
+          employee:employees(id, full_name, contract_type)
+        `)
+        .eq('is_primary', true);
       
-      // 2. احصائيات توزيع الأقسام
+      if (assignmentsError) throw assignmentsError;
+      
+      // 3. Create department distribution data
       const departmentCounts: Record<string, number> = {};
       
-      // اجمع كل الأقسام الموجودة
-      employees.forEach(emp => {
-        if (!emp.department) return;
-        
-        departmentCounts[emp.department] = (departmentCounts[emp.department] || 0) + 1;
+      // Initialize all departments with zero count
+      departments.forEach(dept => {
+        departmentCounts[dept.name] = 0;
       });
       
-      // حول البيانات إلى التنسيق المطلوب للرسم البياني
-      const departmentDistribution = Object.entries(departmentCounts).map(([name, value], index) => ({
-        name,
-        value,
-        color: COLORS[index % COLORS.length]
-      }));
+      // Count employees per department
+      assignments.forEach(assignment => {
+        // Skip if missing department or employee data
+        if (!assignment.organizational_unit_id || !assignment.employee) return;
+        
+        // Find the department name
+        const dept = departments.find(d => d.id === assignment.organizational_unit_id);
+        if (dept) {
+          departmentCounts[dept.name] = (departmentCounts[dept.name] || 0) + 1;
+        }
+      });
       
-      // 3. احصائيات أنواع العقود
+      // Format for chart
+      const departmentDistribution = Object.entries(departmentCounts)
+        .filter(([_, count]) => count > 0) // Only include departments with employees
+        .map(([name, value], index) => ({
+          name,
+          value,
+          color: COLORS[index % COLORS.length]
+        }));
+      
+      // 4. Contract type distribution
       const contractCounts: Record<string, number> = {};
       
-      // اجمع كل أنواع العقود
-      employees.forEach(emp => {
-        if (!emp.contract_type) return;
+      // Count contract types
+      assignments.forEach(assignment => {
+        if (!assignment.employee || !assignment.employee[0]?.contract_type) return;
         
-        let contractType = emp.contract_type;
-        // ترجمة أنواع العقود
+        let contractType = assignment.employee[0].contract_type;
+        // Translate contract types
         switch (contractType) {
           case 'full_time': contractType = 'دوام كامل'; break;
           case 'part_time': contractType = 'دوام جزئي'; break;
           case 'contract': contractType = 'تعاقد'; break;
+          case 'temporary': contractType = 'مؤقت'; break;
+          case 'probation': contractType = 'تجريبي'; break;
         }
         
         contractCounts[contractType] = (contractCounts[contractType] || 0) + 1;
       });
       
-      // حول البيانات إلى التنسيق المطلوب للرسم البياني
-      const contractTypeDistribution = Object.entries(contractCounts).map(([name, value], index) => ({
-        name,
-        value,
-        color: COLORS[index % COLORS.length]
-      }));
+      // Format for chart
+      const contractTypeDistribution = Object.entries(contractCounts)
+        .map(([name, value], index) => ({
+          name,
+          value,
+          color: COLORS[index % COLORS.length]
+        }));
       
       return {
         departmentDistribution,
         contractTypeDistribution
       };
     },
-    refetchInterval: 5 * 60 * 1000, // تحديث كل 5 دقائق
+    refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
   });
 }
-
