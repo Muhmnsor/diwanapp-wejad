@@ -1,3 +1,4 @@
+import React from "react";
 import { useState, useEffect } from "react";
 import { useSelfAttendance } from "@/hooks/hr/useSelfAttendance";
 import { useUserEmployeeLink } from "@/components/hr/useUserEmployeeLink";
@@ -11,37 +12,33 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 export function SelfAttendanceCard() {
   const { checkIn, checkOut, getTodayAttendance, getEmployeeInfo, isLoading: attendanceLoading, canCheckIn } = useSelfAttendance();
-  const { getCurrentUserEmployee, isFetching: employeeLinkFetching } = useUserEmployeeLink();
+  const { checkUserEmployeeLink, linkUserToEmployee, unlinkUserFromEmployee, isFetching = false } = useUserEmployeeLink();
   const [employee, setEmployee] = useState<any>(null);
   const [attendanceRecord, setAttendanceRecord] = useState<any>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [isLinkedToEmployee, setIsLinkedToEmployee] = useState<boolean | null>(null);
+  const [linkedEmployee, setLinkedEmployee] = useState<any>(null);
 
-  // Load employee and attendance data
   useEffect(() => {
     const loadData = async () => {
       setIsLoadingData(true);
       
       try {
-        // First check if user is linked to an employee
-        const linkResult = await getCurrentUserEmployee();
+        const linkResult = await checkUserEmployeeLink();
         console.log("Employee link check in SelfAttendanceCard:", linkResult);
         
-        // Set to false by default if there's any error
         if (!linkResult.success) {
           setIsLinkedToEmployee(false);
           setIsLoadingData(false);
           return;
         }
         
-        // Set accurate linking status
         setIsLinkedToEmployee(linkResult.isLinked);
         
         if (linkResult.isLinked && linkResult.data) {
           setEmployee(linkResult.data);
           
-          // Get attendance data
           const attendanceResult = await getTodayAttendance();
           if (attendanceResult.success) {
             setAttendanceRecord(attendanceResult.data);
@@ -51,16 +48,13 @@ export function SelfAttendanceCard() {
         console.error("Error loading self-attendance data:", error);
         setIsLinkedToEmployee(false);
       } finally {
-        // Always finish loading, even on error
         setIsLoadingData(false);
       }
     };
 
     loadData();
-  }, [getCurrentUserEmployee, getTodayAttendance]);
+  }, [checkUserEmployeeLink, getTodayAttendance]);
 
-
-  // Update current time every minute
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -69,7 +63,6 @@ export function SelfAttendanceCard() {
     return () => clearInterval(timer);
   }, []);
 
-  // Handle check in
   const handleCheckIn = async () => {
     const result = await checkIn();
     if (result.success) {
@@ -77,7 +70,6 @@ export function SelfAttendanceCard() {
     }
   };
 
-  // Handle check out
   const handleCheckOut = async () => {
     const result = await checkOut();
     if (result.success) {
@@ -85,7 +77,6 @@ export function SelfAttendanceCard() {
     }
   };
 
-  // Format time from timestamp
   const formatTimestamp = (timestamp: string | null) => {
     if (!timestamp) return '-';
     try {
@@ -95,8 +86,7 @@ export function SelfAttendanceCard() {
     }
   };
 
-  // Loading state
-  if (isLoadingData || employeeLinkFetching) {
+  if (isLoadingData || isFetching) {
     return (
       <Card className="w-full max-w-md mx-auto">
         <CardHeader className="text-center">
@@ -117,7 +107,6 @@ export function SelfAttendanceCard() {
     );
   }
 
-  // User not linked to an employee
   if (isLinkedToEmployee === false) {
     return (
       <Card className="w-full max-w-md mx-auto">
@@ -145,7 +134,6 @@ export function SelfAttendanceCard() {
     );
   }
 
-  // No employee data found
   if (!employee) {
     return (
       <Card className="w-full max-w-md mx-auto">
@@ -162,12 +150,10 @@ export function SelfAttendanceCard() {
     );
   }
 
-  // Normal attendance card display
   const today = new Date();
   const formattedDate = formatDateWithDay(today.toISOString().split('T')[0]);
   const formattedTime = today.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
 
-  // Get check-in button status
   const getCheckInButtonProps = () => {
     const isDisabled = attendanceLoading || 
                       (attendanceRecord && attendanceRecord.check_in) || 
@@ -182,14 +168,13 @@ export function SelfAttendanceCard() {
     return { isDisabled, tooltipText };
   };
 
-  // Get check-out button status
   const getCheckOutButtonProps = () => {
     const isDisabled = attendanceLoading || 
                       !attendanceRecord || 
                       (attendanceRecord && attendanceRecord.check_out);
                       
     const tooltipText = !attendanceRecord 
-                       ? "يجب تسجيل الحضور أولاً" 
+                       ? "يجب تسجيل الحضو�� أولاً" 
                        : (attendanceRecord && attendanceRecord.check_out)
                          ? "لقد سجلت انصرافك مسبقاً اليوم"
                          : "";

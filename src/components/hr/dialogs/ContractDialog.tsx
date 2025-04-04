@@ -1,3 +1,4 @@
+import React from "react";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,6 @@ export function ContractDialog({ isOpen, onClose, employeeId, contract, onSave }
   const [isLoading, setIsLoading] = useState(false);
   const [contractFile, setContractFile] = useState<File | null>(null);
   
-  // Form state
   const [formData, setFormData] = useState({
     startDate: contract?.start_date ? new Date(contract.start_date) : new Date(),
     endDate: contract?.end_date ? new Date(contract.end_date) : null,
@@ -60,7 +60,6 @@ export function ContractDialog({ isOpen, onClose, employeeId, contract, onSave }
     setIsLoading(true);
     
     try {
-      // Format the dates for API
       const contractData = {
         employee_id: employeeId,
         start_date: formData.startDate.toISOString().split('T')[0],
@@ -269,7 +268,7 @@ export function ContractDialog({ isOpen, onClose, employeeId, contract, onSave }
                   <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                   جارِ الحفظ...
                 </>
-              ) : contract ? 'تحديث العقد' : 'إضافة العقد'}
+              ) : contract ? 'ت��ديث العقد' : 'إضافة العقد'}
             </Button>
           </DialogFooter>
         </form>

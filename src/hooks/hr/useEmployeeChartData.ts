@@ -1,3 +1,4 @@
+
 // src/hooks/hr/useEmployeeChartData.ts
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -22,15 +23,20 @@ export function useEmployeeChartData(department: string = "all") {
       // 1. Get organizational units (departments)
       const { data: orgUnits, error: orgUnitsError } = await supabase
         .from('organizational_units')
-        .select('id, name, type');
+        .select('id, name, type, unit_type');
       
       if (orgUnitsError) throw orgUnitsError;
       
       // Filter for department-type units only
-      const departments = orgUnits.filter(unit => unit.type === 'department' || unit.type === 'قسم');
+      const departments = orgUnits.filter(unit => 
+        unit.unit_type === 'department' || 
+        unit.type === 'department' || 
+        unit.unit_type === 'قسم' || 
+        unit.type === 'قسم'
+      );
       
       // 2. Get employee-department assignments
-      const { data: assignments, error: assignmentsError } = await supabase
+      let query = supabase
         .from('employee_organizational_units')
         .select(`
           id,
@@ -40,6 +46,17 @@ export function useEmployeeChartData(department: string = "all") {
           employee:employees(id, full_name, contract_type)
         `)
         .eq('is_primary', true);
+      
+      // If specific department is selected, filter by that department
+      if (department !== "all") {
+        // Find the department ID by name
+        const selectedDept = departments.find(dept => dept.name === department);
+        if (selectedDept) {
+          query = query.eq('organizational_unit_id', selectedDept.id);
+        }
+      }
+      
+      const { data: assignments, error: assignmentsError } = await query;
       
       if (assignmentsError) throw assignmentsError;
       
@@ -54,7 +71,9 @@ export function useEmployeeChartData(department: string = "all") {
       // Count employees per department
       assignments.forEach(assignment => {
         // Skip if missing department or employee data
-        if (!assignment.organizational_unit_id || !assignment.employee) return;
+        if (!assignment.organizational_unit_id || 
+            !assignment.employee || 
+            !assignment.employee[0]) return;
         
         // Find the department name
         const dept = departments.find(d => d.id === assignment.organizational_unit_id);
@@ -77,7 +96,8 @@ export function useEmployeeChartData(department: string = "all") {
       
       // Count contract types
       assignments.forEach(assignment => {
-        if (!assignment.employee || !assignment.employee[0]?.contract_type) return;
+        if (!assignment.employee || 
+            !assignment.employee[0]?.contract_type) return;
         
         let contractType = assignment.employee[0].contract_type;
         // Translate contract types

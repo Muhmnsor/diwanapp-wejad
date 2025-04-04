@@ -1,92 +1,101 @@
-
-import { useState } from "react";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarPlus } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuthStore } from "@/store/authStore";
-import { toast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+// src/components/hr/dialogs/AddLeaveDialog.tsx
+import React from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { DatePicker } from "@/components/ui/date-picker";
-import { useLeaveTypes } from "@/hooks/hr/useLeaveTypes";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
-const leaveFormSchema = z.object({
-  employee_id: z.string(),
-  leave_type: z.string(),
-  start_date: z.date(),
-  end_date: z.date(),
-  reason: z.string().optional(),
-  status: z.string().default("pending")
-});
-
-export function AddLeaveDialog() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user } = useAuthStore();
-  const { data: leaveTypes, isLoading: isLoadingLeaveTypes } = useLeaveTypes();
+// Update the form schema to include start_date and end_date
+export function AddLeaveDialog({ isOpen, onClose, employeeId, onSuccess }) {
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const { toast } = useToast();
   
-  const form = useForm({
+  // Define or update your form schema to include start_date and end_date
+  const leaveFormSchema = z.object({
+    leave_type: z.string(),
+    status: z.string(),
+    reason: z.string().optional(),
+    employee_id: z.string(),
+    start_date: z.string(), // Add this
+    end_date: z.string()    // Add this
+  });
+  
+  type LeaveFormValues = z.infer<typeof leaveFormSchema>;
+  
+  const form = useForm<LeaveFormValues>({
     resolver: zodResolver(leaveFormSchema),
     defaultValues: {
-      employee_id: user?.id || "",
       leave_type: "",
       status: "pending",
-      reason: ""
+      reason: "",
+      employee_id: employeeId,
+      start_date: "", // Add default value
+      end_date: ""    // Add default value
     }
   });
-
-  const onSubmit = async (data) => {
+  
+  const onSubmit = async (values: LeaveFormValues) => {
     setIsSubmitting(true);
     try {
-      // Format dates for Supabase
-      const formattedData = {
-        ...data,
-        start_date: data.start_date.toISOString().split('T')[0],
-        end_date: data.end_date.toISOString().split('T')[0]
-      };
-
+      // No need to add start_date and end_date, they're already part of values
       const { error } = await supabase
-        .from("hr_leave_requests")
-        .insert(formattedData);
-
+        .from('hr_leave_requests')
+        .insert({
+          ...values,
+          // Convert string dates to ISO format if needed
+          start_date: new Date(values.start_date).toISOString().split('T')[0],
+          end_date: new Date(values.end_date).toISOString().split('T')[0]
+        });
+      
       if (error) throw error;
-
+      
       toast({
-        title: "تم تقديم طلب الإجازة بنجاح",
-        description: "سيتم مراجعة طلبك من قبل المسؤول"
+        title: "تم إضافة الإجازة بنجاح",
       });
-
-      form.reset();
-      setIsOpen(false);
+      
+      onClose();
+      onSuccess();
     } catch (error) {
-      console.error("Error submitting leave request:", error);
+      console.error("Error adding leave:", error);
       toast({
-        title: "حدث خطأ",
-        description: "لم نتمكن من تقديم طلب الإجازة، يرجى المحاولة مرة أخرى",
-        variant: "destructive"
+        title: "حدث خطأ أثناء إضافة الإجازة",
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-
+  
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button className="gap-2">
-          <CalendarPlus className="h-4 w-4" />
-          إضافة طلب إجازة
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[550px]">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]" dir="rtl">
         <DialogHeader>
-          <DialogTitle>تقديم طلب إجازة جديد</DialogTitle>
+          <DialogTitle>إضافة إجازة</DialogTitle>
+          <DialogDescription>
+            إضافة طلب إجازة جديد للموظف.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -96,88 +105,80 @@ export function AddLeaveDialog() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>نوع الإجازة</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="اختر نوع الإجازة" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {isLoadingLeaveTypes ? (
-                        <div className="flex justify-center items-center p-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        </div>
-                      ) : leaveTypes && leaveTypes.length > 0 ? (
-                        leaveTypes.map((type) => (
-                          <SelectItem key={type.id} value={type.code}>
-                            {type.name}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <>
-                          <SelectItem value="annual">سنوية</SelectItem>
-                          <SelectItem value="sick">مرضية</SelectItem>
-                          <SelectItem value="emergency">طارئة</SelectItem>
-                          <SelectItem value="maternity">أمومة</SelectItem>
-                          <SelectItem value="unpaid">بدون راتب</SelectItem>
-                        </>
-                      )}
+                      <SelectItem value="سنوية">سنوية</SelectItem>
+                      <SelectItem value="مرضية">مرضية</SelectItem>
+                      <SelectItem value="طارئة">طارئة</SelectItem>
+                      <SelectItem value="أخرى">أخرى</SelectItem>
                     </SelectContent>
                   </Select>
-                  <FormDescription>اختر نوع الإجازة المطلوبة</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="start_date"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>تاريخ البداية</FormLabel>
-                    <DatePicker
-                      date={field.value}
-                      setDate={field.onChange}
-                      placeholder="اختر تاريخ البداية"
-                      locale="ar"
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="end_date"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>تاريخ النهاية</FormLabel>
-                    <DatePicker
-                      date={field.value}
-                      setDate={field.onChange}
-                      placeholder="اختر تاريخ النهاية"
-                      locale="ar"
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>الحالة</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="اختر الحالة" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="pending">معلقة</SelectItem>
+                      <SelectItem value="approved">موافقة</SelectItem>
+                      <SelectItem value="rejected">مرفوضة</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="start_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>تاريخ البداية</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="end_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>تاريخ النهاية</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="reason"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>سبب الإجازة (اختياري)</FormLabel>
+                  <FormLabel>السبب</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="أدخل سبب طلب الإجازة"
+                      placeholder="أدخل سبب الإجازة"
                       className="resize-none"
                       {...field}
                     />
@@ -186,22 +187,16 @@ export function AddLeaveDialog() {
                 </FormItem>
               )}
             />
-            
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsOpen(false)}
-              >
-                إلغاء
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "جاري التقديم..." : "تقديم طلب الإجازة"}
-              </Button>
-            </div>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  يرجى الانتظار
+                </>
+              ) : (
+                "إضافة الإجازة"
+              )}
+            </Button>
           </form>
         </Form>
       </DialogContent>

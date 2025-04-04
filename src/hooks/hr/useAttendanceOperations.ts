@@ -1,164 +1,315 @@
-
+// src/hooks/hr/useAttendanceOperations.ts
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuthStore } from "@/store/refactored-auth";
-import { toast } from "@/hooks/use-toast";
-import { useEmployeeSchedule } from "./useEmployeeSchedule";
-
-export interface AttendanceRecord {
-  id?: string;
-  employee_id: string;
-  attendance_date: string;
-  check_in: string;
-  check_out?: string | null;
-  status: string;
-  notes?: string | null;
-  created_by?: string | null;
-}
+import { useSchedules } from "./useSchedules";
 
 export function useAttendanceOperations() {
-  const [isLoading, setIsLoading] = useState(false);
-  const { user } = useAuthStore();
-  const { getEmployeeSchedule, getWorkDays } = useEmployeeSchedule();
+  const { schedules, defaultSchedule, isLoadingSchedules, getWorkDays, assignScheduleToEmployee } = useSchedules();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingIn, setIsCheckingIn] = useState(false);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
 
-  // Helper function to convert date and time to timestamp
-  const formatDateTimeToTimestamp = (date: string, time: string) => {
-    if (!date || !time) return null;
-    // Create a date object with the date and time
-    const dateTimeString = `${date}T${time}:00`;
-    return dateTimeString;
-  };
-
-  // Determine if an employee is late based on their schedule
-  const checkIfLate = async (
-    employeeId: string, 
-    attendanceDate: string, 
-    checkInTime: string
-  ) => {
+  // Add getEmployeeSchedule function that was missing
+  const getEmployeeSchedule = async (employeeId: string) => {
     try {
-      // Get the employee's schedule
-      const schedule = await getEmployeeSchedule(employeeId);
-      if (!schedule) return false; // No schedule, can't determine if late
+      const { data, error } = await supabase
+        .from('employees')
+        .select('schedule_id')
+        .eq('id', employeeId)
+        .single();
+        
+      if (error) throw error;
       
-      // Get the work days for this schedule
-      const workDays = await getWorkDays(schedule.id);
-      if (!workDays || workDays.length === 0) return false;
-      
-      // Convert attendance date to day of week (0-6, where 0 is Sunday)
-      const date = new Date(attendanceDate);
-      const dayOfWeek = date.getDay();
-      
-      // Find the work day configuration for this day
-      const workDay = workDays.find(d => d.day_of_week === dayOfWeek);
-      
-      // If not a working day or no start time, can't be late
-      if (!workDay || !workDay.is_working_day || !workDay.start_time) {
-        return false;
-      }
-      
-      // Compare check-in time with scheduled start time
-      const [startHour, startMinute] = workDay.start_time.split(':').map(Number);
-      const [checkHour, checkMinute] = checkInTime.split(':').map(Number);
-      
-      // Calculate minutes from midnight for both times
-      const startMinutes = startHour * 60 + startMinute;
-      const checkMinutes = checkHour * 60 + checkMinute;
-      
-      // Allow 10 minutes grace period
-      const graceMinutes = 10;
-      
-      // If check-in time is more than grace period after start time, employee is late
-      return checkMinutes > (startMinutes + graceMinutes);
+      return data?.schedule_id;
     } catch (error) {
-      console.error('Error checking if employee is late:', error);
-      return false;
+      console.error("Error fetching employee schedule:", error);
+      return null;
     }
   };
 
-  const addAttendanceRecord = async (record: AttendanceRecord) => {
-    if (!user) {
-      toast({
-        title: "خطأ",
-        description: "يجب تسجيل الدخول لإضافة سجل حضور",
-        variant: "destructive",
-      });
-      return { success: false };
-    }
-
-    setIsLoading(true);
+  const checkIn = async (employeeId: string) => {
+    setIsCheckingIn(true);
     try {
-      // If status is not explicitly set and we have check-in time, determine if late
-      if (!record.status && record.check_in) {
-        const isLate = await checkIfLate(
-          record.employee_id,
-          record.attendance_date,
-          record.check_in
-        );
-        
-        // Set status based on lateness
-        record.status = isLate ? 'late' : 'present';
-      }
-
-      // Ensure created_by is explicitly set to the current user's ID
-      // This is critical for our updated RLS policy that checks created_by
-      const formattedRecord = {
-        ...record,
-        check_in: formatDateTimeToTimestamp(record.attendance_date, record.check_in),
-        check_out: record.check_out ? formatDateTimeToTimestamp(record.attendance_date, record.check_out) : null,
-        created_by: user.id,
-        status: record.status || 'present' // Default to present if not set
-      };
-
-      // Check user HR permissions first
-      const { data: hasAccess, error: permissionError } = await supabase
-        .rpc('has_hr_access', { p_user_id: user.id });
-        
-      if (permissionError) {
-        console.error('Error checking HR permissions:', permissionError);
-        throw new Error('فشل التحقق من الصلاحيات');
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      
+      // Check if already checked in today
+      const { data: existingRecord, error: checkError } = await supabase
+        .from('hr_attendance')
+        .select('*')
+        .eq('employee_id', employeeId)
+        .eq('attendance_date', today)
+        .single();
+      
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError;
       }
       
-      if (!hasAccess) {
-        throw new Error('ليس لديك صلاحية إضافة سجلات الحضور');
+      if (existingRecord) {
+        return {
+          success: false,
+          error: 'تم تسجيل الحضور مسبقاً اليوم'
+        };
       }
-
-      console.log('Inserting attendance record with data:', formattedRecord);
       
+      // Get employee schedule
+      const scheduleId = await getEmployeeSchedule(employeeId);
+      const schedule = schedules.find(s => s.id === scheduleId) || defaultSchedule;
+      
+      // Check if today is a work day
+      const workDays = await getWorkDays(schedule.id);
+      const dayOfWeek = now.getDay();
+      const isWorkDay = workDays.includes(dayOfWeek);
+      
+      if (!isWorkDay) {
+        return {
+          success: false,
+          error: 'اليوم ليس يوم عمل وفقاً للجدول'
+        };
+      }
+      
+      // Calculate if late
+      const startTime = schedule.start_time;
+      const [startHour, startMinute] = startTime.split(':').map(Number);
+      const startDateTime = new Date(now);
+      startDateTime.setHours(startHour, startMinute, 0);
+      
+      const isLate = now > startDateTime;
+      
+      // Record attendance
       const { data, error } = await supabase
         .from('hr_attendance')
-        .insert(formattedRecord)
-        .select('*')
+        .insert({
+          employee_id: employeeId,
+          attendance_date: today,
+          check_in: now.toISOString(),
+          status: isLate ? 'late' : 'present',
+          notes: isLate ? 'تأخر عن موعد الحضور' : ''
+        })
+        .select()
         .single();
-
-      if (error) {
-        console.error('Error from Supabase:', error);
-        throw error;
-      }
-
-      console.log('Successfully added attendance record:', data);
       
-      toast({
-        title: "تم بنجاح",
-        description: "تم تسجيل الحضور بنجاح",
-      });
+      if (error) throw error;
       
-      return { success: true, data };
-    } catch (error: any) {
-      console.error('Error adding attendance record:', error);
-      toast({
-        title: "خطأ",
-        description: error.message || "حدث خطأ أثناء تسجيل الحضور",
-        variant: "destructive",
-      });
-      return { success: false, error };
+      return {
+        success: true,
+        data,
+        isLate
+      };
+    } catch (error) {
+      console.error("Error checking in:", error);
+      return {
+        success: false,
+        error: 'حدث خطأ أثناء تسجيل الحضور'
+      };
     } finally {
-      setIsLoading(false);
+      setIsCheckingIn(false);
     }
   };
-
+  
+  const checkOut = async (employeeId: string) => {
+    setIsCheckingOut(true);
+    try {
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      
+      // Get today's attendance record
+      const { data: existingRecord, error: checkError } = await supabase
+        .from('hr_attendance')
+        .select('*')
+        .eq('employee_id', employeeId)
+        .eq('attendance_date', today)
+        .single();
+      
+      if (checkError) {
+        if (checkError.code === 'PGRST116') {
+          return {
+            success: false,
+            error: 'لم يتم تسجيل الحضور اليوم'
+          };
+        }
+        throw checkError;
+      }
+      
+      if (existingRecord.check_out) {
+        return {
+          success: false,
+          error: 'تم تسجيل الانصراف مسبقاً'
+        };
+      }
+      
+      // Get employee schedule
+      const scheduleId = await getEmployeeSchedule(employeeId);
+      const schedule = schedules.find(s => s.id === scheduleId) || defaultSchedule;
+      
+      // Calculate if early departure
+      const endTime = schedule.end_time;
+      const [endHour, endMinute] = endTime.split(':').map(Number);
+      const endDateTime = new Date(now);
+      endDateTime.setHours(endHour, endMinute, 0);
+      
+      const isEarlyDeparture = now < endDateTime;
+      
+      // Update attendance record
+      const { data, error } = await supabase
+        .from('hr_attendance')
+        .update({
+          check_out: now.toISOString(),
+          notes: isEarlyDeparture 
+            ? (existingRecord.notes ? existingRecord.notes + ' | انصراف مبكر' : 'انصراف مبكر')
+            : existingRecord.notes
+        })
+        .eq('id', existingRecord.id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      return {
+        success: true,
+        data,
+        isEarlyDeparture
+      };
+    } catch (error) {
+      console.error("Error checking out:", error);
+      return {
+        success: false,
+        error: 'حدث خطأ أثناء تسجيل الانصراف'
+      };
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
+  
+  const markAbsent = async (employeeId: string, date: string, reason: string = '') => {
+    setIsSubmitting(true);
+    try {
+      // Check if already has attendance record for this date
+      const { data: existingRecord, error: checkError } = await supabase
+        .from('hr_attendance')
+        .select('*')
+        .eq('employee_id', employeeId)
+        .eq('attendance_date', date)
+        .single();
+      
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError;
+      }
+      
+      if (existingRecord) {
+        // Update existing record
+        const { data, error } = await supabase
+          .from('hr_attendance')
+          .update({
+            status: 'absent',
+            notes: reason
+          })
+          .eq('id', existingRecord.id)
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        return {
+          success: true,
+          data
+        };
+      } else {
+        // Create new record
+        const { data, error } = await supabase
+          .from('hr_attendance')
+          .insert({
+            employee_id: employeeId,
+            attendance_date: date,
+            status: 'absent',
+            notes: reason
+          })
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        return {
+          success: true,
+          data
+        };
+      }
+    } catch (error) {
+      console.error("Error marking absent:", error);
+      return {
+        success: false,
+        error: 'حدث خطأ أثناء تسجيل الغياب'
+      };
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  const updateAttendanceRecord = async (recordId: string, updates: any) => {
+    setIsSubmitting(true);
+    try {
+      const { data, error } = await supabase
+        .from('hr_attendance')
+        .update(updates)
+        .eq('id', recordId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      return {
+        success: true,
+        data
+      };
+    } catch (error) {
+      console.error("Error updating attendance record:", error);
+      return {
+        success: false,
+        error: 'حدث خطأ أثناء تحديث سجل الحضور'
+      };
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  const deleteAttendanceRecord = async (recordId: string) => {
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('hr_attendance')
+        .delete()
+        .eq('id', recordId);
+      
+      if (error) throw error;
+      
+      return {
+        success: true
+      };
+    } catch (error) {
+      console.error("Error deleting attendance record:", error);
+      return {
+        success: false,
+        error: 'حدث خطأ أثناء حذف سجل الحضور'
+      };
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
   return {
-    addAttendanceRecord,
-    isLoading,
-    checkIfLate
+    checkIn,
+    checkOut,
+    markAbsent,
+    updateAttendanceRecord,
+    deleteAttendanceRecord,
+    isSubmitting,
+    isCheckingIn,
+    isCheckingOut,
+    schedules,
+    defaultSchedule,
+    isLoadingSchedules,
+    getWorkDays,
+    assignScheduleToEmployee,
+    getEmployeeSchedule
   };
 }
