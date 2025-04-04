@@ -1,3 +1,4 @@
+// src/components/hr/reports/AttendanceReport.tsx
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,7 +7,13 @@ import { AttendanceStats } from "./components/AttendanceStats";
 import { AttendanceCharts } from "./components/AttendanceCharts";
 import { IndividualAttendanceReport } from "./components/IndividualAttendanceReport";
 
-export function AttendanceReport() {
+// Add props interface
+interface AttendanceReportProps {
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export function AttendanceReport({ startDate, endDate }: AttendanceReportProps) {
   const [period, setPeriod] = useState<"daily" | "weekly" | "monthly">("weekly");
   const [reportType, setReportType] = useState<"general" | "individual">("general");
   
@@ -40,16 +47,17 @@ export function AttendanceReport() {
         </div>
         
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <AttendanceStats period={period} />
+          <AttendanceStats period={period} startDate={startDate} endDate={endDate} />
         </div>
         
         <div className="grid gap-4 md:grid-cols-2">
-          <AttendanceCharts period={period} />
+          <AttendanceCharts period={period} startDate={startDate} endDate={endDate} />
         </div>
       </TabsContent>
       
       <TabsContent value="individual">
-        <IndividualAttendanceReport />
+        {/* Pass startDate and endDate to the IndividualAttendanceReport component */}
+        <IndividualAttendanceReport initialStartDate={startDate} initialEndDate={endDate} />
       </TabsContent>
     </div>
   );
