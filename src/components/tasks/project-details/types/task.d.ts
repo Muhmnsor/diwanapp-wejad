@@ -1,4 +1,5 @@
 
+
 export interface Task {
   id: string;
   title: string;
@@ -9,7 +10,8 @@ export interface Task {
   created_at: string;
   created_by?: string;
   assigned_to?: string;
-  assignee_name?: string;
+  assignee_name?: string;        // This field is already there
+  assigned_user_name?: string;   // Add this new field
   workspace_id?: string;
   project_id?: string;
   stage_id?: string;
