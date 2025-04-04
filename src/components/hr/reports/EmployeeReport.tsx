@@ -1,11 +1,16 @@
-
+// src/components/hr/reports/EmployeeReport.tsx
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmployeeCharts } from "./components/EmployeeCharts";
 import { EmployeeStats } from "./components/EmployeeStats";
 
-export function EmployeeReport() {
+interface EmployeeReportProps {
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export function EmployeeReport({ startDate, endDate }: EmployeeReportProps) {
   const [department, setDepartment] = useState<"all" | "engineering" | "marketing" | "hr">("all");
   
   return (
