@@ -115,6 +115,7 @@ export function ViewEmployeeDialog({ isOpen, onClose, employee }: ViewEmployeeDi
                 employeeName={employee.full_name}
                 contracts={contracts}
                 currentUserId={employee.user_id}
+                employee={employee}
                 onContractUpdated={handleContractUpdated}
               />
             )}
