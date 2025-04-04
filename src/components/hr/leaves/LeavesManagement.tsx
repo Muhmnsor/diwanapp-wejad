@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { AddLeaveRequestDialog } from "./AddLeaveRequestDialog";
+import { LeavesTable } from "../tables/LeavesTable";
 
 export function LeavesManagement() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -23,9 +24,8 @@ export function LeavesManagement() {
         </CardHeader>
         <CardContent>
           {/* طلبات الإجازات ستظهر هنا لاحقاً */}
-          <div className="text-center py-4 text-muted-foreground">
+           <LeavesTable />
             لا توجد طلبات إجازات حالية
-          </div>
         </CardContent>
       </Card>
 
