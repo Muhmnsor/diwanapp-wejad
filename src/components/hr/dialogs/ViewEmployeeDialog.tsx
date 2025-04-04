@@ -55,9 +55,10 @@ export function ViewEmployeeDialog({ isOpen, onClose, employee }: ViewEmployeeDi
   // Helper function to translate gender values
   const translateGender = (gender: string | null | undefined) => {
     if (!gender) return 'غير محدد';
-    
-    return gender === 'male' ? 'ذكر' : 
-           gender === 'female' ? 'أنثى' : 
+
+    // Handle both English and Arabic gender values
+    return gender === 'male' || gender === 'ذكر' ? 'ذكر' : 
+           gender === 'female' || gender === 'أنثى' ? 'أنثى' : 
            'غير محدد';
   };
 
