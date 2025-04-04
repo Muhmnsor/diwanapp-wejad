@@ -6793,6 +6793,30 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_tasks_with_details: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          title: string
+          description: string
+          status: string
+          due_date: string
+          assigned_to: string
+          assigned_user_name: string
+          priority: string
+          created_at: string
+          created_by: string
+          stage_id: string
+          stage_name: string
+          category: string
+          is_general: boolean
+          meeting_id: string
+          task_type: string
+          project_id: string
+          workspace_id: string
+          requires_deliverable: boolean
+        }[]
+      }
       get_user_incoming_requests: {
         Args: {
           p_user_id: string

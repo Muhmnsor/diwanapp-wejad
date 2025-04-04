@@ -1,11 +1,8 @@
 
-import { useTasksFetching } from "./useTasksFetching";
-import { useTaskStatusManagement } from "./useTaskStatusManagement";
-import { useTasksState } from "./useTasksState";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
-import { toast } from "sonner";
 import { Task } from "../types/task";
+import { toast } from "sonner";
 
 export const useTasksList = (
   projectId?: string, 
@@ -13,33 +10,154 @@ export const useTasksList = (
   isWorkspace: boolean = false
 ) => {
   // Hook for handling UI state
-  const {
-    activeTab,
-    setActiveTab,
-    isAddDialogOpen,
-    setIsAddDialogOpen,
-    projectStages,
-    handleStagesChange
-  } = useTasksState();
+  const [activeTab, setActiveTab] = useState("all");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [projectStages, setProjectStages] = useState<{ id: string; name: string }[]>([]);
 
-  // Hook for fetching tasks with separate parameters
-  const {
-    tasks,
-    isLoading,
-    tasksByStage,
-    setTasks,
-    setTasksByStage,
-    fetchTasks
-  } = useTasksFetching(projectId, meetingId, isWorkspace);
+  const handleStagesChange = (stages: { id: string; name: string }[]) => {
+    setProjectStages(stages);
+  };
+
+  // Task state
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [tasksByStage, setTasksByStage] = useState<Record<string, Task[]>>({});
+
+  // Fetch tasks with proper user profile information
+  const fetchTasks = async () => {
+    setIsLoading(true);
+    try {
+      console.log("Fetching tasks with params:", { projectId, meetingId, isWorkspace });
+      
+      let query = supabase
+        .from('tasks')
+        .select(`
+          *,
+          profiles:assigned_to (display_name, email),
+          stage:stage_id (name)
+        `);
+
+      // Filter based on what's provided - using clear logic for each task type
+      if (isWorkspace && projectId) {
+        // Case 1: Workspace tasks - specific to a workspace
+        console.log("Fetching workspace tasks for workspace ID:", projectId);
+        query = query.eq('workspace_id', projectId);
+      } else if (meetingId) {
+        // Case 2: Meeting tasks - tied to a specific meeting
+        console.log("Fetching meeting tasks for meeting ID:", meetingId);
+        query = query.eq('meeting_id', meetingId);
+      } else if (projectId) {
+        // Case 3: Project tasks - specific to a project
+        console.log("Fetching project tasks for project ID:", projectId);
+        query = query.eq('project_id', projectId);
+      } else {
+        // Case 4: General tasks - not tied to any specific entity
+        console.log("Fetching general tasks");
+        query = query.eq('is_general', true);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
+
+      if (error) {
+        console.error("Error fetching tasks:", error);
+        throw error;
+      }
+
+      console.log("Fetched tasks raw data:", data);
+
+      // Transform data to add user info and stage name
+      const transformedTasks = data.map(task => {
+        // Add proper debugging for assigned user
+        console.log("Task assigned_to:", task.assigned_to);
+        console.log("Task profiles:", task.profiles);
+
+        // Safely extract the assigned user name
+        let assignedUserName = '';
+        if (task.profiles) {
+          assignedUserName = task.profiles.display_name || task.profiles.email || '';
+          console.log("Extracted assigned user name:", assignedUserName);
+        }
+
+        // Safely extract stage name
+        let stageName = '';
+        if (task.stage) {
+          stageName = task.stage.name || '';
+        }
+
+        return {
+          ...task,
+          assigned_user_name: assignedUserName,
+          stage_name: stageName,
+        };
+      });
+
+      console.log("Transformed tasks with user names:", transformedTasks);
+
+      setTasks(transformedTasks);
+
+      // Group tasks by stage for project tasks with stages
+      if (projectId && !isWorkspace && !meetingId) {
+        const groupedTasks: Record<string, Task[]> = {};
+        transformedTasks.forEach(task => {
+          if (task.stage_id) {
+            if (!groupedTasks[task.stage_id]) {
+              groupedTasks[task.stage_id] = [];
+            }
+            groupedTasks[task.stage_id].push(task);
+          }
+        });
+        setTasksByStage(groupedTasks);
+      }
+
+      return transformedTasks;
+    } catch (error) {
+      console.error("Error in fetchTasks:", error);
+      toast.error("حدث خطأ أثناء تحميل المهام");
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Hook for task status management
-  const { handleStatusChange } = useTaskStatusManagement(
-    projectId,
-    tasks,
-    setTasks,
-    tasksByStage,
-    setTasksByStage
-  );
+  const handleStatusChange = async (taskId: string, newStatus: string) => {
+    try {
+      console.log("Updating task status:", taskId, "to", newStatus);
+      
+      const { error } = await supabase
+        .from('tasks')
+        .update({ status: newStatus })
+        .eq('id', taskId);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setTasks(prevTasks => 
+        prevTasks.map(task => 
+          task.id === taskId ? { ...task, status: newStatus } : task
+        )
+      );
+      
+      // Update tasksByStage
+      setTasksByStage(prev => {
+        const newTasksByStage = { ...prev };
+        
+        // Update the task in all stage groups
+        Object.keys(newTasksByStage).forEach(stageId => {
+          newTasksByStage[stageId] = newTasksByStage[stageId].map(task => 
+            task.id === taskId ? { ...task, status: newStatus } : task
+          );
+        });
+        
+        return newTasksByStage;
+      });
+      
+      toast.success("تم تحديث حالة المهمة بنجاح");
+    } catch (error) {
+      console.error("Error updating task status:", error);
+      toast.error("حدث خطأ أثناء تحديث حالة المهمة");
+    }
+  };
 
   // Update task function
   const updateTask = async (taskId: string, updateData: Partial<Task>) => {
@@ -184,6 +302,10 @@ export const useTasksList = (
       throw error;
     }
   };
+
+  useEffect(() => {
+    fetchTasks();
+  }, [projectId, meetingId, isWorkspace]);
 
   return {
     tasks,
