@@ -1,16 +1,15 @@
-// src/components/hr/dialogs/EditEmployeeDialog.tsx
-import React from "react";
+
+import React, { useEffect } from "react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
   FormControl,
@@ -20,109 +19,105 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
-import { DatePicker } from "@/components/ui/date-picker";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useSchedules } from "@/hooks/hr/useSchedules";
-import { OrganizationalUnitField } from "../fields/OrganizationalUnitField";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/use-toast";
+import { useUpdateEmployee } from "@/hooks/hr/useEmployees";
+import { EmployeeScheduleField } from "@/components/hr/fields/EmployeeScheduleField";
+import { OrganizationalUnitField } from "@/components/hr/fields/OrganizationalUnitField";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-const employeeFormSchema = z.object({
-  full_name: z.string().min(2, {
-    message: "Full name must be at least 2 characters.",
-  }),
-  email: z.string().email({
-    message: "Invalid email address.",
-  }),
-  phone: z.string().min(10, {
-    message: "Phone number must be at least 10 characters.",
-  }),
-  position: z.string().optional(),
-  department: z.string().optional(),
-  gender: z.enum(["ذكر", "أنثى"]).optional(),
-  status: z.enum(["active", "inactive"]).optional(),
-  hire_date: z.string().optional(),
+interface EditEmployeeDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
+  employee: any;
+}
+
+const formSchema = z.object({
+  full_name: z.string().min(3, "الاسم يجب أن يكون 3 أحرف على الأقل"),
+  position: z.string().min(1, "المنصب مطلوب"),
+  email: z.string().email("البريد الإلكتروني غير صالح").optional().or(z.literal("")),
+  phone: z.string().optional(),
+  department: z.string().min(1, "القسم مطلوب"),
   schedule_id: z.string().optional(),
+  gender: z.enum(["ذكر", "أنثى"]),
+  hire_date: z.string().optional(),
+  status: z.string().default("active"),
 });
 
-type EmployeeFormValues = z.infer<typeof employeeFormSchema>;
-
-export function EditEmployeeDialog({ isOpen, onClose, employee, onSuccess }) {
-  const { toast } = useToast();
-  const { schedules } = useSchedules();
-  
-  const form = useForm<EmployeeFormValues>({
-    resolver: zodResolver(employeeFormSchema),
-    defaultValues: async () => {
-      return {
-        full_name: employee?.full_name || "",
-        email: employee?.email || "",
-        phone: employee?.phone || "",
-        position: employee?.position || "",
-        department: employee?.department || "",
-        gender: employee?.gender || "",
-        status: employee?.status || "active",
-        hire_date: employee?.hire_date ? format(new Date(employee.hire_date), "yyyy-MM-dd") : "",
-        schedule_id: employee?.schedule_id || "",
-      };
-    }
+export function EditEmployeeDialog({ isOpen, onClose, onSuccess, employee }: EditEmployeeDialogProps) {
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      full_name: "",
+      position: "",
+      email: "",
+      phone: "",
+      department: "",
+      schedule_id: undefined,
+      gender: "ذكر",
+      hire_date: "",
+      status: "active",
+      employee_number: "",
+    },
   });
-  
-  const onSubmit = async (values) => {
-    const { 
-      full_name, 
-      email, 
-      phone, 
-      position, 
-      department, 
-      gender, 
-      status, 
-      hire_date,
-      schedule_id 
-    } = values;
-    
+
+  const updateEmployee = useUpdateEmployee();
+
+  useEffect(() => {
+    if (employee && isOpen) {
+      form.reset({
+        full_name: employee.full_name || "",
+        position: employee.position || "",
+        email: employee.email || "",
+        phone: employee.phone || "",
+        department: employee.department || "",
+        schedule_id: employee.schedule_id || undefined,
+        gender: employee.gender || "ذكر",
+        hire_date: employee.hire_date ? new Date(employee.hire_date).toISOString().split('T')[0] : "",
+        status: employee.status || "active",
+        employee_number: employee.employee_number || "",
+      });
+    }
+  }, [employee, isOpen, form]);
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const { data, error } = await supabase
-        .from('employees')
-        .update({
-          full_name,
-          email,
-          phone,
-          position,
-          department,
-          gender,
-          status,
-          hire_date,
-          schedule_id
-        })
-        .eq('id', employee.id);
-      
-      if (error) throw error;
-      
-      toast({
-        title: "تم تعديل بيانات الموظف بنجاح",
+      await updateEmployee.mutateAsync({
+        id: employee.id,
+        employeeData: values,
       });
       
+      toast({
+        title: "تم تحديث بيانات الموظف بنجاح",
+        description: `تم تحديث بيانات ${values.full_name}`,
+      });
+      
+      onSuccess?.();
       onClose();
-      onSuccess();
     } catch (error) {
       console.error("Error updating employee:", error);
       toast({
-        title: "حدث خطأ أثناء تعديل بيانات الموظف",
+        title: "خطأ في تحديث بيانات الموظف",
+        description: "حدث خطأ أثناء تحديث بيانات الموظف، يرجى المحاولة مرة أخرى",
         variant: "destructive",
       });
     }
   };
-  
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]" dir="rtl">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>تعديل بيانات الموظف</DialogTitle>
         </DialogHeader>
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -132,136 +127,143 @@ export function EditEmployeeDialog({ isOpen, onClose, employee, onSuccess }) {
                 <FormItem>
                   <FormLabel>الاسم الكامل</FormLabel>
                   <FormControl>
-                    <Input placeholder="الاسم الكامل" {...field} />
+                    <Input placeholder="أدخل اسم الموظف" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
-              name="email"
+              name="employee_number"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>البريد الإلكتروني</FormLabel>
+                  <FormLabel>الرقم الوظيفي</FormLabel>
                   <FormControl>
-                    <Input placeholder="البريد الإلكتروني" {...field} />
+                    <Input placeholder="أدخل الرقم الوظيفي" {...field} />
                   </FormControl>
                   <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>رقم الهاتف</FormLabel>
-                  <FormControl>
-                    <Input placeholder="رقم الهاتف" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+               </FormItem>
+            )}
+          />
+
             <FormField
               control={form.control}
               name="position"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>المسمى الوظيفي</FormLabel>
+                  <FormLabel>المنصب</FormLabel>
                   <FormControl>
-                    <Input placeholder="المسمى الوظيفي" {...field} />
+                    <Input placeholder="أدخل المنصب الوظيفي" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <OrganizationalUnitField form={form} />
-            <FormField
-              control={form.control}
-              name="gender"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>النوع</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>البريد الإلكتروني</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر النوع" />
-                      </SelectTrigger>
+                      <Input placeholder="أدخل البريد الإلكتروني" {...field} />
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="ذكر">ذكر</SelectItem>
-                      <SelectItem value="أنثى">أنثى</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel>نشط</FormLabel>
-                    <p className="text-sm text-muted-foreground">
-                      تفعيل / تعطيل حساب الموظف
-                    </p>
-                  </div>
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value === "active"}
-                      onCheckedChange={(checked) => {
-                        field.onChange(checked ? "active" : "inactive")
-                      }}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="hire_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>تاريخ التعيين</FormLabel>
-                  <DatePicker 
-                    date={field.value ? new Date(field.value) : undefined} 
-                    setDate={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")} 
-                    locale="ar" 
-                    placeholder="اختر تاريخ التعيين" 
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="schedule_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>الجدول الزمني</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>رقم الهاتف</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر الجدول الزمني" />
-                      </SelectTrigger>
+                      <Input placeholder="أدخل رقم الهاتف" {...field} />
                     </FormControl>
-                    <SelectContent>
-                      {schedules.map((schedule) => (
-                        <SelectItem key={schedule.id} value={schedule.id}>
-                          {schedule.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit">تعديل</Button>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <OrganizationalUnitField form={form} />
+
+              <FormField
+                control={form.control}
+                name="gender"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>الجنس</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر الجنس" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="ذكر">ذكر</SelectItem>
+                        <SelectItem value="أنثى">أنثى</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="hire_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>تاريخ التعيين</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>الحالة</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر الحالة" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="active">نشط</SelectItem>
+                        <SelectItem value="on_leave">في إجازة</SelectItem>
+                        <SelectItem value="terminated">منتهي</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <EmployeeScheduleField form={form} />
+
+            <DialogFooter>
+              <Button type="submit" disabled={updateEmployee.isPending}>
+                {updateEmployee.isPending ? "جارٍ التحديث..." : "تحديث بيانات الموظف"}
+              </Button>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>

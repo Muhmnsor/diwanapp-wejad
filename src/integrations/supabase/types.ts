@@ -6987,12 +6987,6 @@ export type Database = {
         }
         Returns: string
       }
-      mark_absent_employees: {
-        Args: {
-          p_date?: string
-        }
-        Returns: Json
-      }
       record_employee_attendance: {
         Args: {
           p_action: string

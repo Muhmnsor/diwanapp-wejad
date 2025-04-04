@@ -1,30 +1,34 @@
 
-// src/components/ui/time-input.tsx
-import React, { ChangeEvent, InputHTMLAttributes } from "react";
+import * as React from "react";
 import { cn } from "@/lib/utils";
 
-export interface TimeInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+interface TimeInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  value: string;
   onChange: (value: string) => void;
 }
 
-export const TimeInput = React.forwardRef<HTMLInputElement, TimeInputProps>(
-  ({ className, onChange, ...props }, ref) => {
-    const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-      onChange(event.target.value);
-    };
+export function TimeInput({ 
+  className, 
+  value, 
+  onChange, 
+  disabled, 
+  ...props 
+}: TimeInputProps) {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(e.target.value);
+  };
 
-    return (
-      <input
-        type="time"
-        className={cn(
-          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-          className
-        )}
-        onChange={handleChange}
-        ref={ref}
-        {...props}
-      />
-    );
-  }
-);
-TimeInput.displayName = "TimeInput";
+  return (
+    <input
+      type="time"
+      className={cn(
+        "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+        className
+      )}
+      value={value}
+      onChange={handleChange}
+      disabled={disabled}
+      {...props}
+    />
+  );
+}

@@ -6,11 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
-import { FileText, Download, Users, Calendar, BarChart, UserCheck } from "lucide-react";
+import { FileText, Download, Users, Calendar, BarChart } from "lucide-react";
 import { AttendanceReport } from "../reports/AttendanceReport";
 import { EmployeeReport } from "../reports/EmployeeReport";
 import { LeaveReport } from "../reports/LeaveReport";
-import { IndividualAttendanceReport } from "../reports/components/IndividualAttendanceReport";
 import { useToast } from "@/hooks/use-toast";
 
 export function ReportsTab() {
@@ -72,10 +71,6 @@ export function ReportsTab() {
                         <Calendar className="ml-2 h-4 w-4" />
                         <span>تقرير الحضور</span>
                       </SelectItem>
-                      <SelectItem value="individual_attendance" className="flex items-center">
-                        <UserCheck className="ml-2 h-4 w-4" />
-                        <span>تقرير حضور فردي</span>
-                      </SelectItem>
                       <SelectItem value="leaves" className="flex items-center">
                         <Calendar className="ml-2 h-4 w-4" />
                         <span>تقرير الإجازات</span>
@@ -127,20 +122,6 @@ export function ReportsTab() {
               startDate={startDate} 
               endDate={endDate} 
             />
-          )}
-          
-          {reportType === "individual_attendance" && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-right">تقرير الحضور الفردي</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <IndividualAttendanceReport 
-                  initialStartDate={startDate} 
-                  initialEndDate={endDate} 
-                />
-              </CardContent>
-            </Card>
           )}
           
           {reportType === "leaves" && (
