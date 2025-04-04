@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { useSelfAttendance } from "@/hooks/hr/useSelfAttendance";
 import { Button } from "@/components/ui/button";
-import { Loader2, LogIn, LogOut, UserX } from "lucide-react";
+import { Loader2, LogIn, LogOut, UserX, AlertCircle } from "lucide-react";
 import { formatTime } from "@/utils/dateTimeUtils";
 import { toast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -26,7 +25,7 @@ interface AttendanceRecord {
 }
 
 export function SelfAttendanceToolbar() {
-  const { checkIn, checkOut, getTodayAttendance, getEmployeeInfo, isLoading } = useSelfAttendance();
+  const { checkIn, checkOut, getTodayAttendance, getEmployeeInfo, isLoading, canCheckIn } = useSelfAttendance();
   const { getCurrentUserEmployee } = useUserEmployeeLink();
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [attendanceRecord, setAttendanceRecord] = useState<AttendanceRecord | null>(null);
@@ -35,57 +34,57 @@ export function SelfAttendanceToolbar() {
   const navigate = useNavigate();
 
   // Load employee and attendance data
-useEffect(() => {
-  const loadData = async () => {
-    setIsLoadingData(true);
-    try {
-      // First check if the current user is linked to an employee
-      const userEmployeeResult = await getCurrentUserEmployee();
-      
-      if (!userEmployeeResult.success || !userEmployeeResult.isLinked) {
-        console.log("Current user is not linked to an employee:", userEmployeeResult);
-        setNotLinked(true);
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoadingData(true);
+      try {
+        // First check if the current user is linked to an employee
+        const userEmployeeResult = await getCurrentUserEmployee();
+        
+        if (!userEmployeeResult.success || !userEmployeeResult.isLinked) {
+          console.log("Current user is not linked to an employee:", userEmployeeResult);
+          setNotLinked(true);
+          setEmployee(null);
+          setAttendanceRecord(null);
+          setIsLoadingData(false);
+          return;
+        }
+        
+        setNotLinked(false);
+        
+        // If linked, get employee info and attendance record
+        const employeeResult = await getEmployeeInfo();
+        if (employeeResult.success) {
+          setEmployee(employeeResult.data);
+        } else {
+          setEmployee(null);
+          console.error("Failed to get employee info:", employeeResult.error);
+        }
+
+        const attendanceResult = await getTodayAttendance();
+        if (attendanceResult.success) {
+          setAttendanceRecord(attendanceResult.data);
+        } else {
+          setAttendanceRecord(null);
+          console.error("Failed to get attendance:", attendanceResult.error);
+        }
+      } catch (error) {
+        console.error("Error loading attendance data:", error);
+        setNotLinked(true); // Default to not linked on error
         setEmployee(null);
         setAttendanceRecord(null);
+      } finally {
         setIsLoadingData(false);
-        return;
       }
-      
-      setNotLinked(false);
-      
-      // If linked, get employee info and attendance record
-      const employeeResult = await getEmployeeInfo();
-      if (employeeResult.success) {
-        setEmployee(employeeResult.data);
-      } else {
-        setEmployee(null);
-        console.error("Failed to get employee info:", employeeResult.error);
-      }
+    };
 
-      const attendanceResult = await getTodayAttendance();
-      if (attendanceResult.success) {
-        setAttendanceRecord(attendanceResult.data);
-      } else {
-        setAttendanceRecord(null);
-        console.error("Failed to get attendance:", attendanceResult.error);
-      }
-    } catch (error) {
-      console.error("Error loading attendance data:", error);
-      setNotLinked(true); // Default to not linked on error
-      setEmployee(null);
-      setAttendanceRecord(null);
-    } finally {
-      setIsLoadingData(false);
-    }
-  };
-
-  loadData();
-  
-  // Refresh data every 5 minutes
-  const intervalId = setInterval(loadData, 5 * 60 * 1000);
-  
-  return () => clearInterval(intervalId);
-}, []);
+    loadData();
+    
+    // Refresh data every 5 minutes
+    const intervalId = setInterval(loadData, 5 * 60 * 1000);
+    
+    return () => clearInterval(intervalId);
+  }, []);
 
 
   // Handle check in
@@ -188,6 +187,16 @@ useEffect(() => {
 
   // Determine button variant and handler
   const getButtonProps = () => {
+    // If check-in not allowed and button would be for check-in
+    if (!canCheckIn.allowed && (!attendanceRecord || !attendanceRecord.check_in)) {
+      return {
+        variant: "outline" as const,
+        onClick: () => {},
+        icon: <AlertCircle className="ml-2 h-4 w-4 text-amber-500" />,
+        disabled: true
+      };
+    }
+    
     if (!attendanceRecord || !attendanceRecord.check_in) {
       return {
         variant: "default" as const,
@@ -218,6 +227,10 @@ useEffect(() => {
   
   // Get tooltip content based on attendance state
   const getTooltipContent = () => {
+    if (!canCheckIn.allowed && (!attendanceRecord || !attendanceRecord.check_in)) {
+      return canCheckIn.reason || "لا يمكن تسجيل الحضور في هذا الوقت";
+    }
+    
     if (!employee) return "لم يتم العثور على بيانات الموظف";
     
     if (!attendanceRecord) return `مرحباً ${employee.full_name}`;
