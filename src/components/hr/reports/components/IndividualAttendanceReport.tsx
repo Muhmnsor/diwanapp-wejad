@@ -1,5 +1,5 @@
 // src/components/hr/reports/components/IndividualAttendanceReport.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, Clock, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
@@ -11,11 +11,23 @@ import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function IndividualAttendanceReport() {
+// Add props interface
+interface IndividualAttendanceReportProps {
+  initialStartDate?: Date;
+  initialEndDate?: Date;
+}
+
+export function IndividualAttendanceReport({ initialStartDate, initialEndDate }: IndividualAttendanceReportProps) {
   const [employeeId, setEmployeeId] = useState<string>("");
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [startDate, setStartDate] = useState<Date | undefined>(initialStartDate);
+  const [endDate, setEndDate] = useState<Date | undefined>(initialEndDate);
   const [isReportGenerated, setIsReportGenerated] = useState(false);
+  
+  // Initialize dates from props when available
+  useEffect(() => {
+    if (initialStartDate) setStartDate(initialStartDate);
+    if (initialEndDate) setEndDate(initialEndDate);
+  }, [initialStartDate, initialEndDate]);
   
   // Fetch employees list
   const { data: employees, isLoading: isLoadingEmployees } = useEmployees();
@@ -238,4 +250,3 @@ export function IndividualAttendanceReport() {
     </div>
   );
 }
-
