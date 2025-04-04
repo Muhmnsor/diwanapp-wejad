@@ -61,9 +61,6 @@ const getLeaveTypeName = (typeId: string) => {
   
   return fallbackMap[typeId] || typeId;
 };
-    
-    return fallbackMap[code] || code;
-  };
 
   const { data: leaves, refetch, isLoading } = useQuery({
     queryKey: ["leaves"],
