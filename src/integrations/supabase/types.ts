@@ -1832,7 +1832,6 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           description: string | null
-          eligible_gender: string | null
           gender_eligibility: string
           id: string
           is_active: boolean | null
@@ -1847,7 +1846,6 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           description?: string | null
-          eligible_gender?: string | null
           gender_eligibility?: string
           id?: string
           is_active?: boolean | null
@@ -1862,7 +1860,6 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           description?: string | null
-          eligible_gender?: string | null
           gender_eligibility?: string
           id?: string
           is_active?: boolean | null

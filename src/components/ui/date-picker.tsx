@@ -40,13 +40,14 @@ export function DatePicker({ date, setDate, className, placeholder = "Select dat
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto p-0 pointer-events-auto" align="start">
         <Calendar
           mode="single"
           selected={date}
           onSelect={setDate}
           initialFocus
           locale={locale === "ar" ? ar : undefined}
+          className="pointer-events-auto"
         />
       </PopoverContent>
     </Popover>
