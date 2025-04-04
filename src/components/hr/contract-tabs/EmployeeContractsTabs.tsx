@@ -14,6 +14,7 @@ interface EmployeeContractsTabsProps {
   employeeName: string;
   contracts: any[];
   currentUserId: string | null;
+  employee?: any;
   onContractUpdated?: () => void;
 }
 
@@ -22,6 +23,7 @@ export function EmployeeContractsTabs({
   employeeName,
   contracts,
   currentUserId,
+  employee,
   onContractUpdated
 }: EmployeeContractsTabsProps) {
   const [addContractOpen, setAddContractOpen] = useState(false);
