@@ -1,11 +1,16 @@
-
+// src/components/hr/reports/LeaveReport.tsx
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LeaveCharts } from "./components/LeaveCharts";
 import { LeaveStats } from "./components/LeaveStats";
 
-export function LeaveReport() {
+interface LeaveReportProps {
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export function LeaveReport({ startDate, endDate }: LeaveReportProps) {
   const [period, setPeriod] = useState<"yearly" | "quarterly" | "monthly">("monthly");
   
   return (
@@ -28,11 +33,11 @@ export function LeaveReport() {
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <LeaveStats period={period} />
+        <LeaveStats period={period} startDate={startDate} endDate={endDate} />
       </div>
       
       <div className="grid gap-4 md:grid-cols-2">
-        <LeaveCharts period={period} />
+        <LeaveCharts period={period} startDate={startDate} endDate={endDate} />
       </div>
     </div>
   );
