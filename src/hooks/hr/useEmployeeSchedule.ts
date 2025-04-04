@@ -49,11 +49,28 @@ export function useEmployeeSchedule() {
       return { success: false, error };
     }
   };
+// Function to get work days for a schedule
+const getWorkDays = async (scheduleId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('hr_weekly_schedule')
+      .select('*')
+      .eq('schedule_type_id', scheduleId)
+      .order('day_of_week');
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error("Error fetching work days:", error);
+    return [];
+  }
+};
 
-  return {
-    schedules,
-    defaultSchedule,
-    isLoadingSchedules,
-    assignScheduleToEmployee
-  };
+return {
+  schedules,
+  defaultSchedule,
+  isLoadingSchedules,
+  assignScheduleToEmployee,
+  getWorkDays
+};
 }
