@@ -1,6 +1,8 @@
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { Task } from "../types/task";
 import { TasksStageGroup } from "./TasksStageGroup";
+import { TaskCard } from "./TaskCard";
 import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
 import { TaskItem } from "./TaskItem";
 

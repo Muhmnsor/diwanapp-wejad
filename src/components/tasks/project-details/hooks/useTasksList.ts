@@ -233,4 +233,3 @@ export const useTasksList = (projectId?: string, isWorkspace = false) => {
     deleteTask
   };
 };
-

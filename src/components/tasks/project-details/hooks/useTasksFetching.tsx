@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "../types/task";
@@ -17,7 +18,6 @@ export const useTasksFetching = (
     try {
       console.log("Fetching tasks with params:", { projectId, meetingId, isWorkspace });
       
-      // Improve the query to join with profiles table for assigned_to user
       let query = supabase
         .from('tasks')
         .select(`
@@ -62,18 +62,8 @@ export const useTasksFetching = (
 
         // Safely extract the assigned user name
         let assignedUserName = '';
-        console.log("Profiles object:", task.profiles);
-        
-        // Handle different shapes of profiles data
         if (task.profiles) {
-          // Check if profiles is an array or single object
-          if (Array.isArray(task.profiles)) {
-            if (task.profiles.length > 0) {
-              assignedUserName = task.profiles[0].display_name || task.profiles[0].email || '';
-            }
-          } else if (typeof task.profiles === 'object') {
-            assignedUserName = task.profiles.display_name || task.profiles.email || '';
-          }
+          assignedUserName = task.profiles.display_name || task.profiles.email || '';
           console.log("Extracted assigned user name:", assignedUserName);
         }
 
@@ -85,8 +75,6 @@ export const useTasksFetching = (
 
         return {
           ...task,
-          // Set both fields for compatibility with different components
-          assignee_name: assignedUserName,
           assigned_user_name: assignedUserName,
           stage_name: stageName,
         };
