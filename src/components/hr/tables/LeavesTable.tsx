@@ -44,20 +44,23 @@ export function LeavesTable() {
   const [updating, setUpdating] = useState<string | null>(null);
   const { data: leaveTypes } = useLeaveTypes();
 
-  const getLeaveTypeName = (code: string) => {
-    if (leaveTypes) {
-      const leaveType = leaveTypes.find(type => type.code === code);
-      if (leaveType) return leaveType.name;
-    }
-    
-    // Fallback if types not loaded yet
-    const fallbackMap = {
-      annual: "سنوية",
-      sick: "مرضية",
-      emergency: "طارئة",
-      maternity: "أمومة",
-      unpaid: "بدون راتب",
-    };
+const getLeaveTypeName = (typeId: string) => {
+  if (leaveTypes) {
+    const leaveType = leaveTypes.find(type => type.id === typeId);
+    if (leaveType) return leaveType.name;
+  }
+  
+  // Fallback if types not loaded yet
+  const fallbackMap = {
+    annual: "سنوية",
+    sick: "مرضية",
+    emergency: "طارئة",
+    maternity: "أمومة",
+    unpaid: "بدون راتب",
+  };
+  
+  return fallbackMap[typeId] || typeId;
+};
     
     return fallbackMap[code] || code;
   };
