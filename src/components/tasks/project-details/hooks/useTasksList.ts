@@ -22,7 +22,13 @@ export const useTasksList = (projectId?: string, isWorkspace = false) => {
     try {
       console.log(`Fetching tasks for ${isWorkspace ? 'workspace' : isGeneral ? 'general' : 'project'} ID: ${projectId || 'none'}`);
       
-      let query = supabase.from('tasks').select('*');
+      let query = supabase
+        .from('tasks')
+        .select(`
+          *,
+          profiles:assigned_to (display_name, email),
+          stage:stage_id (name)
+        `);
       
      if (isWorkspace) {
       // Fetch tasks for a workspace
