@@ -1,29 +1,34 @@
-
+// src/components/hr/reports/components/EmployeeStats.tsx
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Briefcase, UserCheck } from "lucide-react";
+import { useEmployeeStats } from "@/hooks/hr/useEmployeeStats";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface EmployeeStatsProps {
   department: "all" | "engineering" | "marketing" | "hr";
 }
 
 export function EmployeeStats({ department }: EmployeeStatsProps) {
-  // Sample data - in a real app, we would fetch this from an API
-  const getDepartmentData = () => {
-    switch (department) {
-      case "engineering":
-        return { total: 15, active: 14, onLeave: 1 };
-      case "marketing":
-        return { total: 8, active: 7, onLeave: 1 };
-      case "hr":
-        return { total: 5, active: 5, onLeave: 0 };
-      case "all":
-      default:
-        return { total: 28, active: 26, onLeave: 2 };
-    }
-  };
-  
-  const stats = getDepartmentData();
+  const { data: stats, isLoading, isError } = useEmployeeStats(department);
+
+  if (isLoading) {
+    return (
+      <>
+        <Skeleton className="h-[140px] w-full" />
+        <Skeleton className="h-[140px] w-full" />
+        <Skeleton className="h-[140px] w-full" />
+      </>
+    );
+  }
+
+  if (isError || !stats) {
+    return (
+      <div className="col-span-3 p-4 text-center text-red-500">
+        <p>حدث خطأ أثناء تحميل بيانات الموظفين</p>
+      </div>
+    );
+  }
   
   return (
     <>
@@ -51,7 +56,7 @@ export function EmployeeStats({ department }: EmployeeStatsProps) {
         <CardContent>
           <div className="text-2xl font-bold">{stats.active}</div>
           <p className="text-xs text-muted-foreground">
-            {Math.round((stats.active / stats.total) * 100)}% من إجمالي الموظفين
+            {stats.total ? Math.round((stats.active / stats.total) * 100) : 0}% من إجمالي الموظفين
           </p>
         </CardContent>
       </Card>
@@ -64,7 +69,7 @@ export function EmployeeStats({ department }: EmployeeStatsProps) {
         <CardContent>
           <div className="text-2xl font-bold">{stats.onLeave}</div>
           <p className="text-xs text-muted-foreground">
-            {Math.round((stats.onLeave / stats.total) * 100)}% من إجمالي الموظفين
+            {stats.total ? Math.round((stats.onLeave / stats.total) * 100) : 0}% من إجمالي الموظفين
           </p>
         </CardContent>
       </Card>
