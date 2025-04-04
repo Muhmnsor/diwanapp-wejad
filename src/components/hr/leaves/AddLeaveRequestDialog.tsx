@@ -135,26 +135,36 @@ export function AddLeaveRequestDialog({
   }, [startDate, endDate, setValue]);
 
   const createLeaveMutation = useMutation({
-    mutationFn: async (values: LeaveRequestFormValues) => {
-      const { data, error } = await supabase
-        .from("hr_leave_requests")
-        .insert([
-          {
-            employee_id: values.employee_id,
-            leave_type_id: values.leave_type_id,
-            start_date: format(values.start_date, "yyyy-MM-dd"),
-            end_date: format(values.end_date, "yyyy-MM-dd"),
-            reason: values.reason,
-            status: "pending",
-            days_count: leaveDuration,
-          },
-        ])
-        .select()
-        .single();
+  mutationFn: async (values: LeaveRequestFormValues) => {
+    // Find the leave type object based on selected ID
+    const selectedLeaveType = leaveTypes.find(
+      type => type.id === values.leave_type_id
+    );
+    
+    // If no leave type found, throw error
+    if (!selectedLeaveType) {
+      throw new Error("نوع الإجازة غير موجود");
+    }
 
-      if (error) throw error;
-      return data;
-    },
+    const { data, error } = await supabase
+      .from("hr_leave_requests")
+      .insert([
+        {
+          employee_id: values.employee_id,
+          leave_type: selectedLeaveType.code, // Use code or name based on your database design
+          start_date: format(values.start_date, "yyyy-MM-dd"),
+          end_date: format(values.end_date, "yyyy-MM-dd"),
+          reason: values.reason,
+          status: "pending",
+          // Remove days_count as it doesn't exist in table
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
     onSuccess: () => {
       toast({
         title: "تم تقديم طلب الإجازة",
