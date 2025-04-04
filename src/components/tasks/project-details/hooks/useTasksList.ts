@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 export const useTasksList = (
   projectId?: string, 
-  meetingId?: string,  // إضافة معلمة meetingId
+  meetingId?: string,
   isWorkspace = false
 ) => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -17,7 +17,7 @@ export const useTasksList = (
   const [tasksByStage, setTasksByStage] = useState<Record<string, Task[]>>({});
   
   // تحديد ما إذا كانت هذه مهام عامة (بدون معرف مشروع)
-  const isGeneral = !projectId || projectId === "";
+  const isGeneral = !projectId && !meetingId && !isWorkspace;
   
   // جلب المهام
   const fetchTasks = useCallback(async () => {
@@ -30,7 +30,8 @@ export const useTasksList = (
         .from('tasks')
         .select(`
           *,
-          profiles:assigned_to (display_name, email)
+          profiles:assigned_to (display_name, email),
+          stage:stage_id (name)
         `);
       
       // تطبيق التصفية المناسبة بناءً على المعلمات المقدمة
@@ -42,7 +43,7 @@ export const useTasksList = (
         // حالة 2: مهام الاجتماع
         console.log("جلب مهام الاجتماع لمعرف:", meetingId);
         query = query.eq('meeting_id', meetingId);
-      } else if (projectId && !isGeneral) {
+      } else if (projectId && !isGeneral && !isWorkspace) {
         // حالة 3: مهام المشروع
         console.log("جلب مهام المشروع لمعرف:", projectId);
         query = query.eq('project_id', projectId);
@@ -63,31 +64,27 @@ export const useTasksList = (
       
       // تحويل البيانات وإضافة معلومات المستخدم المكلف
       const transformedTasks = data.map(task => {
-        console.log("معالجة المهمة:", task);
-        console.log("معلومات المكلف:", task.profiles);
+        console.log("معالجة المهمة:", task.id, task.title);
+        console.log("معلومات المكلف:", task.assigned_to, task.profiles);
         
         // استخراج اسم المستخدم المكلف بشكل آمن
-        let assigneeName = '';
-        
+        let assignedUserName = '';
         if (task.profiles) {
-          if (Array.isArray(task.profiles)) {
-            // إذا كانت البيانات على شكل مصفوفة
-            if (task.profiles.length > 0) {
-              assigneeName = task.profiles[0].display_name || task.profiles[0].email || '';
-            }
-          } else {
-            // إذا كانت البيانات على شكل كائن مباشر
-            assigneeName = task.profiles.display_name || task.profiles.email || '';
-          }
+          // إذا كانت المعلومات في كائن مباشر (الحالة الأكثر شيوعًا)
+          assignedUserName = task.profiles.display_name || task.profiles.email || '';
+          console.log("اسم المكلف المستخرج من الكائن:", assignedUserName);
         }
         
-        console.log("اسم المكلف المستخرج:", assigneeName);
+        // استخراج اسم المرحلة بشكل آمن
+        let stageName = '';
+        if (task.stage) {
+          stageName = task.stage.name || '';
+        }
         
         return {
           ...task,
-          // تعيين اسم المكلف بالطريقتين لضمان التوافقية مع المكونات المختلفة
-          assignee_name: assigneeName || '',
-          assigned_user_name: assigneeName || ''
+          assigned_user_name: assignedUserName,
+          stage_name: stageName
         };
       });
       
@@ -121,7 +118,7 @@ export const useTasksList = (
   
   // جلب مراحل المشروع إذا كان هذا عرض مشروع
   const fetchProjectStages = useCallback(async () => {
-    if (isGeneral || isWorkspace || !projectId) {
+    if (isGeneral || isWorkspace || !projectId || meetingId) {
       setProjectStages([]);
       return;
     }
@@ -172,7 +169,7 @@ export const useTasksList = (
     } catch (error) {
       console.error("خطأ في جلب مراحل المشروع:", error);
     }
-  }, [projectId, isGeneral, isWorkspace]);
+  }, [projectId, isGeneral, isWorkspace, meetingId]);
   
   // تجميع المهام حسب المرحلة
   useEffect(() => {
@@ -198,10 +195,10 @@ export const useTasksList = (
       setTasksByStage(grouped);
     };
     
-    if (!isGeneral && !isWorkspace) {
+    if (!isGeneral && !isWorkspace && projectId && !meetingId) {
       groupTasksByStage();
     }
-  }, [tasks, projectStages, isGeneral, isWorkspace]);
+  }, [tasks, projectStages, isGeneral, isWorkspace, projectId, meetingId]);
   
   // تحميل البيانات عند التثبيت وعند تغيير معرف المشروع
   useEffect(() => {
