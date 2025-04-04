@@ -23,9 +23,7 @@ export function LeavesManagement() {
           <CardTitle>طلبات الإجازات</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* طلبات الإجازات ستظهر هنا لاحقاً */}
            <LeavesTable />
-            لا توجد طلبات إجازات حالية
         </CardContent>
       </Card>
 
