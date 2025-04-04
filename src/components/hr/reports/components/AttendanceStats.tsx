@@ -1,21 +1,36 @@
-
+// src/components/hr/reports/components/AttendanceStats.tsx
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Clock, AlertTriangle } from "lucide-react";
+import { useAttendanceStats } from "@/hooks/hr/useAttendanceStats";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface AttendanceStatsProps {
   period: "daily" | "weekly" | "monthly";
+  startDate?: Date;
+  endDate?: Date;
 }
 
-export function AttendanceStats({ period }: AttendanceStatsProps) {
-  // In a real app, we would fetch this data from an API based on the period
-  // For now, we'll use sample data
-  const stats = {
-    presentCount: period === "daily" ? 18 : period === "weekly" ? 85 : 340,
-    lateCount: period === "daily" ? 3 : period === "weekly" ? 12 : 45,
-    absentCount: period === "daily" ? 2 : period === "weekly" ? 8 : 30,
-    averageWorkHours: period === "daily" ? 7.5 : period === "weekly" ? 37.5 : 150
-  };
+export function AttendanceStats({ period, startDate, endDate }: AttendanceStatsProps) {
+  const { data: stats, isLoading, isError } = useAttendanceStats(period, startDate, endDate);
+
+  if (isLoading) {
+    return (
+      <>
+        <Skeleton className="h-[140px] w-full" />
+        <Skeleton className="h-[140px] w-full" />
+        <Skeleton className="h-[140px] w-full" />
+      </>
+    );
+  }
+
+  if (isError || !stats) {
+    return (
+      <div className="col-span-3 p-4 text-center text-red-500">
+        <p>حدث خطأ أثناء تحميل بيانات الحضور</p>
+      </div>
+    );
+  }
   
   return (
     <>
