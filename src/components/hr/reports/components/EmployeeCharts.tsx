@@ -6,7 +6,7 @@ import { useEmployeeChartData } from "@/hooks/hr/useEmployeeChartData";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface EmployeeChartsProps {
-  department: "all" | "engineering" | "marketing" | "hr";
+  department: string; // Allow any string instead of enum
 }
 
 export function EmployeeCharts({ department }: EmployeeChartsProps) {
