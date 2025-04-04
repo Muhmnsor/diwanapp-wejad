@@ -61,11 +61,20 @@ export const useTasksFetching = (
         console.log("Task profiles:", task.profiles);
 
         // Safely extract the assigned user name
-        let assignedUserName = '';
-        if (task.profiles) {
-          assignedUserName = task.profiles.display_name || task.profiles.email || '';
-          console.log("Extracted assigned user name:", assignedUserName);
-        }
+       let assignedUserName = '';
+console.log("Profiles object:", task.profiles);
+// تأكد من أن profiles موجود وهو كائن
+if (task.profiles && typeof task.profiles === 'object') {
+  // تعامل مع حالة كون profiles كائنًا واحدًا أو مصفوفة
+  if (Array.isArray(task.profiles)) {
+    if (task.profiles.length > 0) {
+      assignedUserName = task.profiles[0].display_name || task.profiles[0].email || '';
+    }
+  } else {
+    assignedUserName = task.profiles.display_name || task.profiles.email || '';
+  }
+  console.log("Extracted assigned user name:", assignedUserName);
+}
 
         // Safely extract stage name
         let stageName = '';
