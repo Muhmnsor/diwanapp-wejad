@@ -103,7 +103,7 @@ const filteredMessages = Array.isArray(messages) ? messages.filter(message => {
     message.content.toLowerCase().includes(searchLower) ||
     message.recipients.some(r => r.name.toLowerCase().includes(searchLower))
   );
-  });
+}) : [];
 
   // تحديث البيانات عند تغيير المجلد
   useEffect(() => {
