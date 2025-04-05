@@ -2,22 +2,24 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText, Save, Paperclip, Eye, Download, Upload, Clock, Calendar, User as UserIcon } from "lucide-react";
+import { FileText, Save, Paperclip, Eye, Download, Upload, Clock, Calendar, MapPin, Link2, Users, FolderOpen, UserIcon } from "lucide-react";
 import { useMeeting } from "@/hooks/meetings/useMeeting";
 import { useMeetingParticipants } from "@/hooks/meetings/useMeetingParticipants";
 import { useMeetingAgendaItems, MeetingAgendaItem } from "@/hooks/meetings/useMeetingAgendaItems";
 import { useMeetingMinutes, useSaveMeetingMinutes, MeetingMinutes } from "@/hooks/meetings/useMeetingMinutes";
+import { useMeetingObjectives } from "@/hooks/meetings/useMeetingObjectives";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { useAuthStore } from "@/store/refactored-auth";
-import { CalendarDays, Clock, MapPin, Link2, Users, FolderOpen, User as UserIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { formatDateArabic } from "@/utils/formatters";
 
 interface MeetingMinutesTabProps {
   meetingId: string;
 }
+
 export const MeetingMinutesTab: React.FC<MeetingMinutesTabProps> = ({
   meetingId
 }) => {
@@ -26,18 +28,26 @@ export const MeetingMinutesTab: React.FC<MeetingMinutesTabProps> = ({
     data: meeting,
     isLoading: isMeetingLoading
   } = useMeeting(meetingId);
+  
   const {
     data: participants,
     isLoading: isParticipantsLoading
   } = useMeetingParticipants(meetingId);
+  
   const {
     data: agendaItems,
     isLoading: isAgendaItemsLoading
   } = useMeetingAgendaItems(meetingId);
+  
   const {
     data: existingMinutes,
     isLoading: isMinutesLoading
   } = useMeetingMinutes(meetingId);
+  
+  const {
+    data: objectives,
+    isLoading: isObjectivesLoading
+  } = useMeetingObjectives(meetingId);
 
   // Current user info
   const {
@@ -106,7 +116,42 @@ export const MeetingMinutesTab: React.FC<MeetingMinutesTabProps> = ({
   const togglePreviewMode = () => {
     setIsPreviewMode(!isPreviewMode);
   };
-  const isLoading = isMeetingLoading || isParticipantsLoading || isAgendaItemsLoading || isMinutesLoading;
+  
+  const isLoading = isMeetingLoading || isParticipantsLoading || isAgendaItemsLoading || isMinutesLoading || isObjectivesLoading;
+  
+  // Meeting status mapping
+  const getStatusText = (status: string) => {
+    switch(status) {
+      case 'scheduled': return 'مجدول';
+      case 'in_progress': return 'قيد التنفيذ';
+      case 'completed': return 'مكتمل';
+      case 'cancelled': return 'ملغى';
+      default: return 'غير محدد';
+    }
+  };
+  
+  // Meeting type mapping
+  const getMeetingTypeText = (type: string) => {
+    switch(type) {
+      case 'board': return 'مجلس إدارة';
+      case 'department': return 'قسم';
+      case 'team': return 'فريق عمل';
+      case 'committee': return 'لجنة';
+      case 'other': return 'أخرى';
+      default: return 'غير محدد';
+    }
+  };
+  
+  // Attendance type mapping
+  const getAttendanceTypeText = (type: string) => {
+    switch(type) {
+      case 'in_person': return 'حضوري';
+      case 'virtual': return 'عن بعد';
+      case 'hybrid': return 'مختلط';
+      default: return 'غير محدد';
+    }
+  };
+  
   if (isLoading) {
     return <Card>
         <CardHeader className="pb-3">
@@ -121,6 +166,7 @@ export const MeetingMinutesTab: React.FC<MeetingMinutesTabProps> = ({
         </CardContent>
       </Card>;
   }
+  
   return <Card className="mb-6">
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle>محضر الاجتماع</CardTitle>
@@ -137,127 +183,171 @@ export const MeetingMinutesTab: React.FC<MeetingMinutesTabProps> = ({
       
       <CardContent>
         <div className="space-y-6" dir="rtl">
-          {/* Meeting Details Section */}
-{/* Meeting Details Section */}
-<section className="border rounded-md p-4 bg-gray-50">
-  <h3 className="text-lg font-medium mb-4">تفاصيل الاجتماع</h3>
-  
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    {/* العنوان */}
-    <div className="p-3 bg-white rounded-md shadow-sm border-r-2 border-primary">
-      <p className="text-sm text-gray-500 mb-1">عنوان الاجتماع</p>
-      <p className="font-medium text-gray-800">{meeting?.title}</p>
-    </div>
-    
-    {/* التاريخ والوقت */}
-    <div className="p-3 bg-white rounded-md shadow-sm border-r-2 border-indigo-400">
-      <div className="flex items-center gap-2">
-        <CalendarDays className="h-4 w-4 text-indigo-500" />
-        <p className="text-sm text-gray-500">التاريخ والوقت</p>
-      </div>
-      <p className="font-medium text-gray-800 mt-1">
-        {formatDateArabic ? formatDateArabic(meeting?.date) : meeting?.date} - {meeting?.start_time} 
-        <span className="text-gray-500 text-sm mr-1">(لمدة {meeting?.duration} دقيقة)</span>
-      </p>
-    </div>
-    
-    {/* المكان */}
-    {meeting?.location && (
-      <div className="p-3 bg-white rounded-md shadow-sm border-r-2 border-blue-400">
-        <div className="flex items-center gap-2">
-          <MapPin className="h-4 w-4 text-blue-500" />
-          <p className="text-sm text-gray-500">المكان</p>
-        </div>
-        <p className="font-medium text-gray-800 mt-1">{meeting.location}</p>
-      </div>
-    )}
-    
-    {/* رابط الاجتماع */}
-    {meeting?.meeting_link && (
-      <div className="p-3 bg-white rounded-md shadow-sm border-r-2 border-purple-400">
-        <div className="flex items-center gap-2">
-          <Link2 className="h-4 w-4 text-purple-500" />
-          <p className="text-sm text-gray-500">رابط الاجتماع</p>
-        </div>
-        <a href={meeting.meeting_link} target="_blank" rel="noopener noreferrer" 
-           className="font-medium text-blue-600 hover:underline mt-1 block">
-          فتح الرابط
-        </a>
-      </div>
-    )}
-    
-    {/* نوع الحضور */}
-    <div className="p-3 bg-white rounded-md shadow-sm border-r-2 border-pink-400">
-      <div className="flex items-center gap-2">
-        <Users className="h-4 w-4 text-pink-500" />
-        <p className="text-sm text-gray-500">نوع الحضور</p>
-      </div>
-      <p className="font-medium text-gray-800 mt-1">
-        {meeting?.attendance_type === "in_person" ? "حضوري" : 
-         meeting?.attendance_type === "virtual" ? "عن بُعد" : "مختلط"}
-      </p>
-    </div>
-    
-    {/* نوع الاجتماع */}
-    <div className="p-3 bg-white rounded-md shadow-sm border-r-2 border-yellow-400">
-      <div className="flex items-center gap-2">
-        <div className="h-4 w-4 text-yellow-500 flex items-center justify-center">
-          <span className="text-xs">⚙️</span>
-        </div>
-        <p className="text-sm text-gray-500">نوع الاجتماع</p>
-      </div>
-      <p className="font-medium text-gray-800 mt-1">
-        {meeting?.meeting_type === "board" ? "مجلس إدارة" : 
-         meeting?.meeting_type === "department" ? "قسم" : 
-         meeting?.meeting_type === "team" ? "فريق عمل" : 
-         meeting?.meeting_type === "committee" ? "لجنة" : 
-         meeting?.meeting_type || "غير محدد"}
-      </p>
-    </div>
-    
-    {/* حالة الاجتماع */}
-    <div className="p-3 bg-white rounded-md shadow-sm border-r-2 border-green-400">
-      <div className="flex items-center gap-2">
-        <Clock className="h-4 w-4 text-green-500" />
-        <p className="text-sm text-gray-500">حالة الاجتماع</p>
-      </div>
-      <p className="font-medium text-gray-800 mt-1">
-        {meeting?.meeting_status === 'scheduled' ? 'مجدول' : 
-         meeting?.meeting_status === 'in_progress' ? 'قيد التنفيذ' : 
-         meeting?.meeting_status === 'completed' ? 'مكتمل' : 
-         meeting?.meeting_status === 'cancelled' ? 'ملغى' : 'غير محدد'}
-      </p>
-    </div>
-    
-    {/* التصنيف/المجلد */}
-    {meeting?.folder_name && (
-      <div className="p-3 bg-white rounded-md shadow-sm border-r-2 border-amber-400">
-        <div className="flex items-center gap-2">
-          <FolderOpen className="h-4 w-4 text-amber-500" />
-          <p className="text-sm text-gray-500">التصنيف</p>
-        </div>
-        <p className="font-medium text-gray-800 mt-1">{meeting.folder_name}</p>
-      </div>
-    )}
-    
-    {/* منشئ الاجتماع */}
-    {meeting?.creator && (
-      <div className="p-3 bg-white rounded-md shadow-sm border-r-2 border-teal-400">
-        <div className="flex items-center gap-2">
-          <UserIcon className="h-4 w-4 text-teal-500" />
-          <p className="text-sm text-gray-500">منشئ الاجتماع</p>
-        </div>
-        <p className="font-medium text-gray-800 mt-1">
-          {meeting.creator.display_name || meeting.creator.email}
-        </p>
-      </div>
-    )}
-  </div>
-</section>
-
+          {/* Enhanced Meeting Details Section */}
+          <section className="border rounded-md p-4 bg-gray-50">
+            <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              تفاصيل الاجتماع
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Title */}
+              <div className="col-span-3">
+                <p className="text-sm text-gray-500">عنوان الاجتماع</p>
+                <p className="font-medium text-lg">{meeting?.title}</p>
+              </div>
+              
+              {/* Date */}
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-primary flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-gray-500">تاريخ الاجتماع</p>
+                  <p className="font-medium">{formatDateArabic(meeting?.date)}</p>
+                </div>
+              </div>
+              
+              {/* Time */}
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-gray-500">الوقت والمدة</p>
+                  <p className="font-medium">{meeting?.start_time} (المدة: {meeting?.duration} دقيقة)</p>
+                </div>
+              </div>
+              
+              {/* Status */}
+              <div>
+                <p className="text-sm text-gray-500">حالة الاجتماع</p>
+                <Badge variant="outline" className="mt-1">
+                  {getStatusText(meeting?.meeting_status)}
+                </Badge>
+              </div>
+              
+              {/* Meeting Type */}
+              <div>
+                <p className="text-sm text-gray-500">نوع الاجتماع</p>
+                <p className="font-medium">{getMeetingTypeText(meeting?.meeting_type)}</p>
+              </div>
+              
+              {/* Attendance Type */}
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-primary flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-gray-500">نوع الحضور</p>
+                  <p className="font-medium">{getAttendanceTypeText(meeting?.attendance_type)}</p>
+                </div>
+              </div>
+              
+              {/* Folder/Classification */}
+              {meeting?.folder_name && (
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="h-4 w-4 text-primary flex-shrink-0" />
+                  <div>
+                    <p className="text-sm text-gray-500">التصنيف</p>
+                    <p className="font-medium">{meeting?.folder_name}</p>
+                  </div>
+                </div>
+              )}
+              
+              {/* Location (if available) */}
+              {meeting?.location && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+                  <div>
+                    <p className="text-sm text-gray-500">مكان الاجتماع</p>
+                    <p className="font-medium">{meeting?.location}</p>
+                  </div>
+                </div>
+              )}
+              
+              {/* Meeting Link (if available) */}
+              {meeting?.meeting_link && (
+                <div className="flex items-center gap-2">
+                  <Link2 className="h-4 w-4 text-primary flex-shrink-0" />
+                  <div>
+                    <p className="text-sm text-gray-500">رابط الاجتماع</p>
+                    <a href={meeting?.meeting_link} target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline">
+                      فتح الرابط
+                    </a>
+                  </div>
+                </div>
+              )}
+              
+              {/* Creator (if available) */}
+              {meeting?.creator && (
+                <div className="flex items-center gap-2">
+                  <UserIcon className="h-4 w-4 text-primary flex-shrink-0" />
+                  <div>
+                    <p className="text-sm text-gray-500">منشئ الاجتماع</p>
+                    <p className="font-medium">{meeting?.creator?.display_name || meeting?.creator?.email}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Objectives Section */}
+            {objectives && objectives.length > 0 && (
+              <div className="mt-4 pt-4 border-t">
+                <h4 className="font-medium mb-2">أهداف الاجتماع:</h4>
+                <ol className="list-decimal marker:text-primary list-inside space-y-1 pr-2">
+                  {objectives.map(objective => (
+                    <li key={objective.id} className="text-gray-800">
+                      {objective.content}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+          </section>
           
           {/* Participants Section */}
-          
+          <section className="border rounded-md p-4">
+            <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              المشاركون في الاجتماع
+            </h3>
+            {participants && participants.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table dir="rtl">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>الاسم</TableHead>
+                      <TableHead>الصفة</TableHead>
+                      <TableHead>الدور</TableHead>
+                      <TableHead>حالة الحضور</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {participants.map(participant => (
+                      <TableRow key={participant.id}>
+                        <TableCell className="font-medium">{participant.user_display_name}</TableCell>
+                        <TableCell>{participant.title || "-"}</TableCell>
+                        <TableCell>
+                          {participant.role === 'chairman' ? 'رئيس الاجتماع' : 
+                           participant.role === 'secretary' ? 'أمين السر' : 
+                           participant.role === 'member' ? 'عضو' : 
+                           participant.role === 'observer' ? 'مراقب' : 'مشارك'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={
+                            participant.attendance_status === 'attended' ? 'success' : 
+                            participant.attendance_status === 'absent' ? 'destructive' : 
+                            'secondary'
+                          }>
+                            {participant.attendance_status === 'attended' ? 'حضر' : 
+                             participant.attendance_status === 'absent' ? 'غائب' : 
+                             participant.attendance_status === 'confirmed' ? 'مؤكد' : 'معلق'}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <p className="text-gray-500 py-2">لا يوجد مشاركون مسجلون في هذا الاجتماع</p>
+            )}
+          </section>
           
           {/* Introduction Section */}
           <section className="border rounded-md p-4">
@@ -290,16 +380,52 @@ export const MeetingMinutesTab: React.FC<MeetingMinutesTabProps> = ({
           
           {/* Attachments Section */}
           <section className="border rounded-md p-4">
-            <h3 className="text-lg font-medium mb-3">المرفقات</h3>
-            <p className="text-gray-500 mb-2">
-              <Paperclip className="h-4 w-4 inline-block ml-1" />
-              المرفقات الداعمة (ستتوفر قريباً)
-            </p>
+            <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
+              <Paperclip className="h-5 w-5 text-primary" />
+              المرفقات
+            </h3>
             <div className="bg-gray-100 border border-dashed border-gray-300 rounded-md p-6 text-center">
               <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
               <p className="text-gray-500">ستتوفر إمكانية إضافة المرفقات قريباً</p>
             </div>
           </section>
+          
+          {/* Signature Table (show only for completed meetings) */}
+          {meeting?.meeting_status === 'completed' && minutes.conclusion && (
+            <section className="border rounded-md p-4">
+              <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                توقيعات الحضور
+              </h3>
+              <div className="overflow-x-auto">
+                <Table dir="rtl">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>الاسم</TableHead>
+                      <TableHead>الصفة</TableHead>
+                      <TableHead>التوقيع</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {participants && participants.filter(p => p.attendance_status === 'attended').map(participant => (
+                      <TableRow key={participant.id}>
+                        <TableCell className="font-medium">{participant.user_display_name}</TableCell>
+                        <TableCell>
+                          {participant.role === 'chairman' ? 'رئيس الاجتماع' : 
+                           participant.role === 'secretary' ? 'أمين السر' : 
+                           participant.role === 'member' ? 'عضو' : 
+                           participant.role === 'observer' ? 'مراقب' : 'مشارك'}
+                        </TableCell>
+                        <TableCell>
+                          <div className="h-10 border border-dashed border-gray-300 rounded"></div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </section>
+          )}
           
           {/* Author Information */}
           <section className="border rounded-md p-4 bg-gray-50">
@@ -308,6 +434,7 @@ export const MeetingMinutesTab: React.FC<MeetingMinutesTabProps> = ({
               <div className="flex items-center space-x-2 space-x-reverse">
                 <UserIcon className="h-5 w-5 text-gray-500" />
                 <span className="font-medium">{user?.display_name || user?.email || "مستخدم النظام"}</span>
+                {user?.position && <span className="text-gray-500">({user.position})</span>}
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center space-x-2 space-x-reverse">
