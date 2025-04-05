@@ -11,7 +11,7 @@ export const useMailSearch = (folder: string = 'inbox') => {
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   const search = useCallback(async (term: string) => {
-    if (!term || term.length < 3) {
+    if (!term || term.length < 2) {
       setSearchResults([]);
       return;
     }
@@ -23,6 +23,7 @@ export const useMailSearch = (folder: string = 'inbox') => {
         throw new Error("يجب تسجيل الدخول للبحث في الرسائل");
       }
       
+      const userId = user.data.user.id;
       let query;
       
       if (folder === 'sent') {
@@ -31,14 +32,14 @@ export const useMailSearch = (folder: string = 'inbox') => {
           .from('internal_messages')
           .select(`
             *,
-            sender:sender_id (id, display_name, email),
+            sender:profiles!sender_id (id, display_name, email),
             recipients:internal_message_recipients (
               recipient_id,
               recipient_type,
-              profiles:recipient_id (id, display_name, email)
+              profiles:profiles!recipient_id (id, display_name, email)
             )
           `)
-          .eq('sender_id', user.data.user.id)
+          .eq('sender_id', userId)
           .eq('is_draft', false)
           .or(`subject.ilike.%${term}%,content.ilike.%${term}%`);
       } else if (folder === 'drafts') {
@@ -47,41 +48,128 @@ export const useMailSearch = (folder: string = 'inbox') => {
           .from('internal_messages')
           .select(`
             *,
-            sender:sender_id (id, display_name, email),
+            sender:profiles!sender_id (id, display_name, email),
             recipients:internal_message_recipients (
               recipient_id,
               recipient_type,
-              profiles:recipient_id (id, display_name, email)
+              profiles:profiles!recipient_id (id, display_name, email)
             )
           `)
-          .eq('sender_id', user.data.user.id)
+          .eq('sender_id', userId)
           .eq('is_draft', true)
           .or(`subject.ilike.%${term}%,content.ilike.%${term}%`);
-      } else {
-        // البحث في البريد الوارد أو المهملات أو المميزة بنجمة
+      } else if (folder === 'trash') {
+        // البحث في المهملات
         query = supabase
+          .from('internal_message_recipients')
+          .select(`
+            id,
+            recipient_id,
+            message_id,
+            recipient_type,
+            read_status,
+            is_deleted,
+            message:message_id (
+              id,
+              subject,
+              content,
+              sender_id,
+              created_at,
+              is_draft,
+              folder,
+              is_starred,
+              sender:profiles!sender_id (id, display_name, email)
+            )
+          `)
+          .eq('recipient_id', userId)
+          .eq('is_deleted', true)
+          .or(`message.subject.ilike.%${term}%,message.content.ilike.%${term}%`);
+      } else if (folder === 'starred') {
+        // البحث في المميزة بنجمة (البريد الوارد)
+        const inboxQuery = supabase
+          .from('internal_message_recipients')
+          .select(`
+            id,
+            recipient_id,
+            message_id,
+            recipient_type,
+            read_status,
+            is_deleted,
+            message:message_id (
+              id,
+              subject,
+              content,
+              sender_id,
+              created_at,
+              is_draft,
+              folder,
+              is_starred,
+              sender:profiles!sender_id (id, display_name, email)
+            )
+          `)
+          .eq('recipient_id', userId)
+          .eq('is_deleted', false)
+          .eq('message.is_starred', true)
+          .or(`message.subject.ilike.%${term}%,message.content.ilike.%${term}%`);
+          
+        // البحث في المميزة بنجمة (البريد الصادر)
+        const sentQuery = supabase
           .from('internal_messages')
           .select(`
             *,
-            sender:sender_id (id, display_name, email),
-            recipients:internal_message_recipients!inner (
+            sender:profiles!sender_id (id, display_name, email),
+            recipients:internal_message_recipients (
               recipient_id,
               recipient_type,
-              read_status,
-              is_deleted,
-              profiles:recipient_id (id, display_name, email)
+              profiles:profiles!recipient_id (id, display_name, email)
             )
           `)
-          .eq('recipients.recipient_id', user.data.user.id)
-          .eq('recipients.is_deleted', folder === 'trash')
-          .eq('is_draft', false);
+          .eq('sender_id', userId)
+          .eq('is_draft', false)
+          .eq('is_starred', true)
+          .or(`subject.ilike.%${term}%,content.ilike.%${term}%`);
+          
+        const [inboxResult, sentResult] = await Promise.all([
+          inboxQuery,
+          sentQuery
+        ]);
         
-        if (folder === 'starred') {
-          query = query.eq('is_starred', true);
-        }
+        const inboxMessages = (inboxResult.data || []).map(processInboxMessage);
+        const sentMessages = (sentResult.data || []).map(processSentMessage);
         
-        query = query.or(`subject.ilike.%${term}%,content.ilike.%${term}%`)
-          .order('created_at', { ascending: false });
+        const combinedResults = [...inboxMessages, ...sentMessages].sort((a, b) => 
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+        
+        setSearchResults(combinedResults);
+        setIsSearching(false);
+        return;
+      } else {
+        // البحث في البريد الوارد (الافتراضي)
+        query = supabase
+          .from('internal_message_recipients')
+          .select(`
+            id,
+            recipient_id,
+            message_id,
+            recipient_type,
+            read_status,
+            is_deleted,
+            message:message_id (
+              id,
+              subject,
+              content,
+              sender_id,
+              created_at,
+              is_draft,
+              folder,
+              is_starred,
+              sender:profiles!sender_id (id, display_name, email)
+            )
+          `)
+          .eq('recipient_id', userId)
+          .eq('is_deleted', false)
+          .or(`message.subject.ilike.%${term}%,message.content.ilike.%${term}%`);
       }
       
       const { data, error } = await query;
@@ -89,30 +177,13 @@ export const useMailSearch = (folder: string = 'inbox') => {
       if (error) throw error;
       
       // تنسيق البيانات
-      const messages: Message[] = (data || []).map((msg: any) => {
-        return {
-          id: msg.id,
-          subject: msg.subject || 'بدون موضوع',
-          content: msg.content || '',
-          sender: {
-            id: msg.sender?.id || '',
-            name: msg.sender?.display_name || 'غير معروف',
-            avatar: null
-          },
-          recipients: msg.recipients?.map((r: any) => ({
-            id: r.recipient_id,
-            name: r.profiles?.display_name || 'غير معروف',
-            type: r.recipient_type,
-            email: r.profiles?.email || ''
-          })) || [],
-          date: msg.created_at,
-          folder: folder,
-          read: folder === 'sent' || folder === 'drafts' ? true : msg.recipients?.[0]?.read_status === 'read',
-          isStarred: msg.is_starred,
-          labels: [],
-          attachments: []
-        };
-      });
+      let messages: Message[] = [];
+      
+      if (folder === 'inbox' || folder === 'trash') {
+        messages = (data || []).map(processInboxMessage);
+      } else if (folder === 'sent' || folder === 'drafts') {
+        messages = (data || []).map(processSentMessage);
+      }
       
       setSearchResults(messages);
     } catch (error) {
@@ -132,5 +203,60 @@ export const useMailSearch = (folder: string = 'inbox') => {
     setSearchTerm,
     searchResults,
     isSearching,
+  };
+};
+
+// دالة لمعالجة رسائل البريد الوارد
+const processInboxMessage = (item: any): Message => {
+  const message = item.message || {};
+  return {
+    id: message.id,
+    subject: message.subject || 'بدون موضوع',
+    content: message.content || '',
+    sender: {
+      id: message.sender?.id || '',
+      name: message.sender?.display_name || 'غير معروف',
+      avatar: null
+    },
+    recipients: [
+      {
+        id: item.recipient_id,
+        name: '', // سيتم تعبئتها في واجهة المستخدم
+        type: item.recipient_type || 'to',
+        email: ''
+      }
+    ],
+    date: message.created_at,
+    folder: 'inbox',
+    read: item.read_status === 'read',
+    isStarred: message.is_starred || false,
+    labels: [],
+    attachments: []
+  };
+};
+
+// دالة لمعالجة رسائل البريد المرسل والمسودات
+const processSentMessage = (message: any): Message => {
+  return {
+    id: message.id,
+    subject: message.subject || 'بدون موضوع',
+    content: message.content || '',
+    sender: {
+      id: message.sender?.id || '',
+      name: message.sender?.display_name || 'غير معروف',
+      avatar: null
+    },
+    recipients: Array.isArray(message.recipients) ? message.recipients.map((r: any) => ({
+      id: r.recipient_id,
+      name: r.profiles?.display_name || 'غير معروف',
+      type: r.recipient_type || 'to',
+      email: r.profiles?.email || ''
+    })) : [],
+    date: message.created_at,
+    folder: message.is_draft ? 'drafts' : 'sent',
+    read: true, // الرسائل المرسلة تعتبر مقروءة دائمًا
+    isStarred: message.is_starred || false,
+    labels: [],
+    attachments: []
   };
 };

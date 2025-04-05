@@ -8,6 +8,8 @@ import { useMailboxMessages, MailFolder } from "@/hooks/mail/useMailboxMessages"
 import { useMessageOperations } from "@/hooks/mail/useMessageOperations";
 import { useMessageDetails } from "@/hooks/mail/useMessageDetails";
 import { useMailSearch } from "@/hooks/mail/useMailSearch";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface MessageRecipient {
   id: string;
@@ -47,6 +49,96 @@ export const InternalMailApp = () => {
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [searchMode, setSearchMode] = useState(false);
   
+  // استخدام استعلامات للحصول على عدد الرسائل في كل مجلد
+  const { data: folderCounts = { inbox: 0, sent: 0, drafts: 0, trash: 0, starred: 0 }, isLoading: isLoadingCounts } = 
+    useQuery({
+      queryKey: ['mail-folder-counts'],
+      queryFn: async () => {
+        try {
+          const user = await supabase.auth.getUser();
+          const userId = user.data.user?.id;
+          
+          if (!userId) {
+            throw new Error("User is not authenticated");
+          }
+          
+          // الحصول على عدد البريد الوارد
+          const { count: inboxCount, error: inboxError } = await supabase
+            .from('internal_message_recipients')
+            .select('*', { count: 'exact', head: true })
+            .eq('recipient_id', userId)
+            .eq('is_deleted', false);
+          
+          // الحصول على عدد البريد المرسل
+          const { count: sentCount, error: sentError } = await supabase
+            .from('internal_messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('sender_id', userId)
+            .eq('is_draft', false);
+          
+          // الحصول على عدد المسودات
+          const { count: draftsCount, error: draftsError } = await supabase
+            .from('internal_messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('sender_id', userId)
+            .eq('is_draft', true);
+          
+          // الحصول على عدد الرسائل في المهملات
+          const { count: trashCount, error: trashError } = await supabase
+            .from('internal_message_recipients')
+            .select('*', { count: 'exact', head: true })
+            .eq('recipient_id', userId)
+            .eq('is_deleted', true);
+          
+          // الحصول على عدد الرسائل المميزة بنجمة
+          const { count: starredInboxCount, error: starredInboxError } = await supabase
+            .from('internal_message_recipients')
+            .select(`
+              id,
+              message:message_id (
+                id,
+                is_starred
+              )
+            `, { count: 'exact', head: true })
+            .eq('recipient_id', userId)
+            .eq('is_deleted', false)
+            .eq('message.is_starred', true);
+          
+          const { count: starredSentCount, error: starredSentError } = await supabase
+            .from('internal_messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('sender_id', userId)
+            .eq('is_draft', false)
+            .eq('is_starred', true);
+          
+          // الحصول على عدد الرسائل غير المقروءة
+          const { count: unreadCount, error: unreadError } = await supabase
+            .from('internal_message_recipients')
+            .select('*', { count: 'exact', head: true })
+            .eq('recipient_id', userId)
+            .eq('is_deleted', false)
+            .eq('read_status', 'unread');
+          
+          if (inboxError || sentError || draftsError || trashError || starredInboxError || starredSentError || unreadError) {
+            throw new Error("Error fetching mail counts");
+          }
+          
+          return {
+            inbox: inboxCount || 0,
+            unread: unreadCount || 0,
+            sent: sentCount || 0,
+            drafts: draftsCount || 0,
+            trash: trashCount || 0,
+            starred: (starredInboxCount || 0) + (starredSentCount || 0)
+          };
+        } catch (error) {
+          console.error("Error fetching mail counts:", error);
+          return { inbox: 0, unread: 0, sent: 0, drafts: 0, trash: 0, starred: 0 };
+        }
+      },
+      staleTime: 1000 * 60 * 5, // تحديث كل 5 دقائق
+    });
+  
   const { 
     data: messages = [], 
     isLoading: isLoadingMessages, 
@@ -77,16 +169,14 @@ export const InternalMailApp = () => {
     ? searchResults
     : messages;
   
-  // عدد الرسائل غير المقروءة
-  const unreadCount = messages.filter(m => !m.read).length;
-  
   // حساب عدد الرسائل في كل مجلد
   const counts = {
-    inbox: messages.length,
-    unread: unreadCount,
-    sent: 0, // سيتم تحديثها عند فتح المجلد
-    drafts: 0, // سيتم تحديثها عند فتح المجلد
-    trash: 0, // سيتم تحديثها عند فتح المجلد
+    inbox: folderCounts.inbox,
+    unread: folderCounts.unread,
+    sent: folderCounts.sent,
+    drafts: folderCounts.drafts,
+    trash: folderCounts.trash,
+    starred: folderCounts.starred
   };
   
   // التعامل مع تغيير المجلد

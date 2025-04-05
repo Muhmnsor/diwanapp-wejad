@@ -23,6 +23,7 @@ interface MailSidebarProps {
     sent: number;
     drafts: number;
     trash: number;
+    starred: number;
   };
 }
 
@@ -36,6 +37,7 @@ export const MailSidebar: React.FC<MailSidebarProps> = ({
     { id: "sent", label: "البريد الصادر", icon: <Send className="h-4 w-4 ml-2" />, count: counts.sent },
     { id: "drafts", label: "المسودات", icon: <FileEdit className="h-4 w-4 ml-2" />, count: counts.drafts },
     { id: "trash", label: "المهملات", icon: <Trash2 className="h-4 w-4 ml-2" />, count: counts.trash },
+    { id: "starred", label: "المميزة بنجمة", icon: <Star className="h-4 w-4 ml-2 text-yellow-500" />, count: counts.starred },
   ];
   
   const labels = [
@@ -130,3 +132,4 @@ export const MailSidebar: React.FC<MailSidebarProps> = ({
     </ScrollArea>
   );
 };
+

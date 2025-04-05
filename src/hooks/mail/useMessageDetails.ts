@@ -17,12 +17,15 @@ export const useMessageDetails = (messageId?: string) => {
           .from('internal_messages')
           .select(`
             *,
-            sender:sender_id (id, display_name, email),
+            sender:profiles!sender_id (id, display_name, email),
             recipients:internal_message_recipients (
+              id,
               recipient_id,
               recipient_type,
               read_status,
-              profiles:recipient_id (id, display_name, email)
+              read_at,
+              is_deleted,
+              profiles:profiles!recipient_id (id, display_name, email)
             )
           `)
           .eq('id', messageId)
@@ -50,16 +53,20 @@ export const useMessageDetails = (messageId?: string) => {
         if (labelsError) throw labelsError;
         
         // تحديث حالة القراءة تلقائيًا
-        const { error: readError } = await supabase
-          .from('internal_message_recipients')
-          .update({ 
-            read_status: 'read',
-            read_at: new Date().toISOString()
-          })
-          .eq('message_id', messageId)
-          .eq('recipient_id', await supabase.auth.getUser().then(d => d.data.user?.id));
-        
-        if (readError) console.error("Error marking as read:", readError);
+        const currentUser = await supabase.auth.getUser();
+        if (currentUser.data.user) {
+          const userId = currentUser.data.user.id;
+          const { error: readError } = await supabase
+            .from('internal_message_recipients')
+            .update({ 
+              read_status: 'read',
+              read_at: new Date().toISOString()
+            })
+            .eq('message_id', messageId)
+            .eq('recipient_id', userId);
+          
+          if (readError) console.error("Error marking as read:", readError);
+        }
         
         // تنسيق البيانات للعرض
         const formattedMessage: Message = {
