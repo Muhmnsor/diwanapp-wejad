@@ -6,7 +6,8 @@ import { useMeetingObjectives } from "@/hooks/meetings/useMeetingObjectives";
 import { useMeetingAgendaItems } from "@/hooks/meetings/useMeetingAgendaItems";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { formatDateWithDay, formatTime12Hour } from "@/utils/dateTimeUtils";
+import { formatDateWithDay } from "@/utils/dateTimeUtils";
+import { formatTime12Hour } from "@/utils/dateTimeUtils";
 
 interface MeetingOverviewTabProps {
   meeting: Meeting;
