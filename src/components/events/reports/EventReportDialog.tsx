@@ -11,8 +11,6 @@ interface EventReportDialogProps {
   isOpen: boolean;
   onClose: () => void;
   eventId: string;
-  initialData?: any;
-  mode?: string;
 }
 
 export const EventReportDialog = ({
