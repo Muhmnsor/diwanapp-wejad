@@ -26,7 +26,7 @@ export interface JournalItem {
 }
 
 export const useJournalEntries = () => {
-  return useQuery({
+  const { data: entries = [], isLoading, error } = useQuery({
     queryKey: ["accounting_journal_entries"],
     queryFn: async () => {
       try {
@@ -65,4 +65,6 @@ export const useJournalEntries = () => {
       }
     },
   });
+
+  return { entries, isLoading, error };
 };

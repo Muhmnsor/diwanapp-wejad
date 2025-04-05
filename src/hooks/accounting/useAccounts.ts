@@ -16,7 +16,7 @@ export interface Account {
 }
 
 export const useAccounts = () => {
-  return useQuery({
+  const { data: accounts = [], isLoading, error } = useQuery({
     queryKey: ["accounting_accounts"],
     queryFn: async () => {
       try {
@@ -36,4 +36,6 @@ export const useAccounts = () => {
       }
     },
   });
+
+  return { accounts, isLoading, error };
 };
