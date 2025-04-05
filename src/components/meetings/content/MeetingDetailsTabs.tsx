@@ -13,9 +13,10 @@ import { useMeetingMinutes } from '@/hooks/meetings/useMeetingMinutes';
 interface MeetingDetailsTabsProps {
   meeting: Meeting;
   meetingId: string;
+  onBack: () => void; // إضافة وظيفة callback للرجوع
 }
 
-export const MeetingDetailsTabs: React.FC<MeetingDetailsTabsProps> = ({ meeting, meetingId }) => {
+export const MeetingDetailsTabs: React.FC<MeetingDetailsTabsProps> = ({ meeting, meetingId, onBack }) => {
   const { data: minutes, isLoading: isMinutesLoading } = useMeetingMinutes(meetingId);
   
   console.log('MeetingDetailsTabs - meeting:', meeting);
@@ -24,7 +25,16 @@ export const MeetingDetailsTabs: React.FC<MeetingDetailsTabsProps> = ({ meeting,
   
   return (
     <Tabs defaultValue="overview" className="w-full" dir="rtl">
-      <TabsList className="flex flex-row-reverse justify-center border-b rounded-none bg-white mb-6">
+      {/* إضافة عنوان الاجتماع وزر العودة فوق شريط التبويب */}
+      <div className="flex justify-between items-center mb-4">
+         <h1 className="text-2xl font-bold">{meeting.title}</h1>
+         <Button variant="ghost" size="sm" onClick={onBack} className="mr-4">
+           <ArrowLeft className="h-4 w-4 mr-2" />
+           عودة
+           </Button> 
+        </div>
+      
+      <TabsList className="flex justify-center border-b rounded-none bg-white mb-6">
         <TabsTrigger 
           value="tasks" 
           className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:font-medium"
