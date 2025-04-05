@@ -15,7 +15,6 @@ export interface Meeting {
   folder_name?: string;
   created_at?: string;
   updated_at?: string;
-  agenda_items?: AgendaItem[];
   folder?: {
     id: string;
     name: string;
@@ -24,16 +23,6 @@ export interface Meeting {
     display_name: string;
     email: string;
   };
-}
-
-export interface AgendaItem {
-  id: string;
-  meeting_id: string;
-  title: string;
-  description?: string;
-  order?: number;
-  created_at?: string;
-  updated_at?: string;
 }
 
 export type MeetingStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';

@@ -7,9 +7,10 @@ import { MeetingParticipantsContent } from '../participants/MeetingParticipantsC
 import { MeetingTasksTab } from './tabs/MeetingTasksTab';
 import { Meeting } from '@/types/meeting';
 import { ParticipantDialogBridge } from '../participants/ParticipantDialogBridge';
+import { EnhancedMeetingMinutes } from '../minutes/EnhancedMeetingMinutes';
+import { useMeetingMinutes } from '@/hooks/meetings/useMeetingMinutes';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import { useMeetingMinutes } from '@/hooks/meetings/useMeetingMinutes';
 
 interface MeetingDetailsTabsProps {
   meeting: Meeting;
@@ -77,7 +78,13 @@ export const MeetingDetailsTabs: React.FC<MeetingDetailsTabsProps> = ({ meeting,
       </TabsContent>
       
       <TabsContent value="minutes" dir="rtl">
-        <MeetingMinutesTab meetingId={meetingId} />
+        <EnhancedMeetingMinutes 
+          meetingId={meetingId} 
+          minutes={minutes}
+          isLoading={isMinutesLoading}
+        >
+          <MeetingMinutesTab meetingId={meetingId} />
+        </EnhancedMeetingMinutes>
       </TabsContent>
       
       <TabsContent value="tasks" dir="rtl">
@@ -86,4 +93,3 @@ export const MeetingDetailsTabs: React.FC<MeetingDetailsTabsProps> = ({ meeting,
     </Tabs>
   );
 };
-

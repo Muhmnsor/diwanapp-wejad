@@ -9,8 +9,7 @@ export const useMeeting = (meetingId: string) => {
     queryFn: async (): Promise<Meeting> => {
       console.log(`Fetching meeting details for ID: ${meetingId}`);
       
-      // First fetch the meeting data
-      const { data: meetingData, error: meetingError } = await supabase
+      const { data, error } = await supabase
         .from('meetings')
         .select(`
           *,
@@ -19,30 +18,17 @@ export const useMeeting = (meetingId: string) => {
         .eq('id', meetingId)
         .single();
         
-      if (meetingError) {
-        console.error("Error fetching meeting details:", meetingError);
-        throw meetingError;
+      if (error) {
+        console.error("Error fetching meeting details:", error);
+        throw error;
       }
 
-      // Then fetch the agenda items
-      const { data: agendaItems, error: agendaError } = await supabase
-        .from('meeting_agenda_items')
-        .select('*')
-        .eq('meeting_id', meetingId)
-        .order('order', { ascending: true });
-        
-      if (agendaError) {
-        console.error("Error fetching meeting agenda items:", agendaError);
-        // Don't throw error here, just log it and continue with the meeting data
-      }
-
-      // Transform folder data for easy access and add agenda items
+      // Transform folder data for easy access
       const meeting = {
-        ...meetingData,
-        folder_name: meetingData.folder ? 
-          (typeof meetingData.folder === 'object' ? meetingData.folder.name : null) 
-          : null,
-        agenda_items: agendaItems || []
+        ...data,
+        folder_name: data.folder ? 
+          (typeof data.folder === 'object' ? data.folder.name : null) 
+          : null
       };
 
       console.log(`Retrieved meeting details:`, meeting);

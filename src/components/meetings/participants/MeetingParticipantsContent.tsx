@@ -1,130 +1,267 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useMeetingParticipants } from '@/hooks/meetings/useMeetingParticipants';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { MeetingParticipantRoleBadge } from './MeetingParticipantRoleBadge';
+import { useUpdateParticipantAttendance } from '@/hooks/meetings/useUpdateParticipantAttendance';
+import { useUpdateParticipantRole } from '@/hooks/meetings/useUpdateParticipantRole';
+import { useDeleteMeetingParticipant } from '@/hooks/meetings/useDeleteMeetingParticipant';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Trash2, Edit } from 'lucide-react';
+import { DeleteDialog } from '@/components/ui/delete-dialog';
+import { MeetingParticipantRoleBadge } from './MeetingParticipantRoleBadge';
+import { AttendanceStatus, ParticipantRole } from '@/types/meeting';
+import { useMeetingRoles } from '@/hooks/meetings/useMeetingRoles';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { Bell, Trash } from 'lucide-react';
+import { useNotifications } from '@/contexts/NotificationContext';
+import { useNotificationLogs } from '@/hooks/useNotificationLogs';
+import { useNotificationsState } from '@/contexts/notifications/useNotificationsState';
+import { useInAppNotifications } from '@/contexts/notifications/useInAppNotifications';
+import { SendNotificationDialog } from './SendNotificationDialog';
+import { useNotifications as useNotificationsHook } from '@/hooks/useNotifications';
 
 interface MeetingParticipantsContentProps {
   meetingId: string;
-  view?: 'full' | 'compact';
-  onEdit?: (participantId: string) => void;
-  onDelete?: (participantId: string) => void;
 }
 
-export const MeetingParticipantsContent: React.FC<MeetingParticipantsContentProps> = ({ 
-  meetingId,
-  view = 'full',
-  onEdit, 
-  onDelete 
-}) => {
-  const { data: participants, isLoading, isError, error } = useMeetingParticipants(meetingId);
+export const MeetingParticipantsContent: React.FC<MeetingParticipantsContentProps> = ({ meetingId }) => {
+  const { data: participants, isLoading } = useMeetingParticipants(meetingId);
+  const { mutate: updateAttendance } = useUpdateParticipantAttendance();
+  const { mutate: updateRole } = useUpdateParticipantRole();
+  const { mutate: deleteParticipant, isPending: isDeleting } = useDeleteMeetingParticipant();
+  const { getRoleOptions } = useMeetingRoles();
+  const queryClient = useQueryClient();
+  const { createNotification } = useInAppNotifications();
+  const { sendNotification, isSending } = useNotificationsHook();
   
+  const roleOptions = getRoleOptions();
+  
+  // State for delete confirmation dialog
+  const [participantToDelete, setParticipantToDelete] = useState<{ id: string, name: string } | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  
+  // State for notification dialog
+  const [notificationDialogOpen, setNotificationDialogOpen] = useState(false);
+  const [selectedParticipant, setSelectedParticipant] = useState<any>(null);
+
+  const handleRoleChange = (participantId: string, newRole: string) => {
+    updateRole({ participantId, role: newRole });
+  };
+
+  const handleDeleteClick = (id: string, name: string) => {
+    setParticipantToDelete({ id, name });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (participantToDelete) {
+      console.log('Deleting participant:', participantToDelete.id);
+      
+      deleteParticipant(participantToDelete.id, {
+        onSuccess: () => {
+          setDeleteDialogOpen(false);
+          setParticipantToDelete(null);
+          toast.success('تم حذف المشارك بنجاح');
+          queryClient.invalidateQueries({ queryKey: ['meeting-participants', meetingId] });
+        },
+        onError: (error) => {
+          console.error('Error deleting participant:', error);
+          toast.error('حدث خطأ أثناء حذف المشارك');
+        }
+      });
+    }
+  };
+  
+  const handleNotificationClick = (participant: any) => {
+    setSelectedParticipant(participant);
+    setNotificationDialogOpen(true);
+  };
+  
+  const handleSendNotification = async (templateId: string, variables: Record<string, string>) => {
+    if (!selectedParticipant) return;
+    
+    let successMessage = '';
+    let hasPhone = !!selectedParticipant.phone;
+    let hasUserId = !!selectedParticipant.user_id;
+    
+    try {
+      // If participant has a user_id, send in-app notification
+      if (hasUserId) {
+        await createNotification({
+          user_id: selectedParticipant.user_id,
+          title: 'تذكير بالإجتماع',
+          message: variables.message || 'تذكير بموعد الإجتماع القادم',
+          notification_type: 'event'
+        });
+        
+        successMessage += 'تم إرسال إشعار داخلي ';
+      }
+      
+      // If participant has a phone, send WhatsApp notification
+      if (hasPhone) {
+        const result = await sendNotification({
+          type: 'reminder',
+          recipientPhone: selectedParticipant.phone,
+          templateId: templateId,
+          variables: variables
+        });
+        
+        if (result.success) {
+          successMessage += hasUserId ? 'ورسالة واتساب بنجاح' : 'تم إرسال رسالة واتساب بنجاح';
+        } else {
+          toast.error(`فشل إرسال رسالة الواتساب: ${result.message}`);
+          return;
+        }
+      }
+      
+      // If neither user_id nor phone, show error
+      if (!hasPhone && !hasUserId) {
+        toast.error('لا يمكن إرسال إشعار: المشارك ليس لديه رقم هاتف أو حساب في النظام');
+        return;
+      }
+      
+      toast.success(successMessage);
+      setNotificationDialogOpen(false);
+      
+    } catch (error) {
+      console.error('Error sending notification:', error);
+      toast.error('حدث خطأ أثناء إرسال الإشعار');
+    }
+  };
+
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
-        <span className="mr-3">جاري التحميل...</span>
-      </div>
-    );
+    return <div className="text-center p-4">جاري التحميل...</div>;
   }
 
-  if (isError) {
-    return (
-      <div className="p-6 text-center text-red-500">
-        حدث خطأ أثناء تحميل بيانات المشاركين: {error instanceof Error ? error.message : 'خطأ غير معروف'}
-      </div>
-    );
+  if (!participants?.length) {
+    return <div className="text-center p-4">لا يوجد مشاركين حتى الآن</div>;
   }
 
-  if (!participants || participants.length === 0) {
-    return (
-      <div className="p-6 text-center text-gray-500">
-        لم يتم إضافة أي مشاركين لهذا الاجتماع
-      </div>
-    );
-  }
-
-  // Determine which columns to show based on view
-  const showActions = view === 'full' && (onEdit || onDelete);
-  const showAttendanceStatus = view === 'full';
-  const showTitle = view === 'full';
-  const showPhone = view === 'full';
+  const getAttendanceButtonClass = (status: string, buttonStatus: AttendanceStatus) => {
+    return `px-3 py-1 rounded ${
+      status === buttonStatus
+        ? 'bg-primary text-primary-foreground'
+        : 'bg-secondary hover:bg-secondary/80'
+    }`;
+  };
 
   return (
-    <Table dir="rtl">
-      <TableHeader>
-        <TableRow>
-          <TableHead>الاسم</TableHead>
-          <TableHead>الدور</TableHead>
-          {showTitle && <TableHead>المسمى الوظيفي</TableHead>}
-          {showPhone && <TableHead>رقم الهاتف</TableHead>}
-          {showAttendanceStatus && <TableHead>حالة الحضور</TableHead>}
-          {showActions && <TableHead>الإجراءات</TableHead>}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {participants.map((participant) => (
-          <TableRow key={participant.id}>
-            <TableCell>{participant.user_display_name}</TableCell>
-            <TableCell>
-              <MeetingParticipantRoleBadge role={participant.role} />
-            </TableCell>
-            {showTitle && <TableCell>{participant.title || 'غير محدد'}</TableCell>}
-            {showPhone && <TableCell>{participant.phone || 'غير محدد'}</TableCell>}
-            {showAttendanceStatus && (
-              <TableCell>
-                <span className={`px-2 py-1 rounded text-xs ${
-                  participant.attendance_status === 'attended' 
-                    ? 'bg-green-100 text-green-800' 
-                    : participant.attendance_status === 'confirmed'
-                    ? 'bg-blue-100 text-blue-800'
-                    : participant.attendance_status === 'absent'
-                    ? 'bg-red-100 text-red-800'
-                    : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {participant.attendance_status === 'attended' 
-                    ? 'حضر' 
-                    : participant.attendance_status === 'confirmed'
-                    ? 'مؤكد'
-                    : participant.attendance_status === 'absent'
-                    ? 'غائب'
-                    : 'معلق'}
-                </span>
-              </TableCell>
-            )}
-            {showActions && (
-              <TableCell>
-                <div className="flex space-x-2">
-                  {onEdit && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => onEdit(participant.id)}
-                      className="h-8 w-8 p-0"
+    <>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-center">الاسم</TableHead>
+              <TableHead className="text-center">البريد الإلكتروني</TableHead>
+              <TableHead className="text-center">رقم الجوال</TableHead>
+              <TableHead className="text-center">الدور</TableHead>
+              <TableHead className="text-center">الصفة</TableHead>
+              <TableHead className="text-center">الحضور</TableHead>
+              <TableHead className="text-center">إشعارات</TableHead>
+              <TableHead className="text-center">إجراءات</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {participants.map((participant) => (
+              <TableRow key={participant.id}>
+                <TableCell className="text-center">{participant.user_display_name}</TableCell>
+                <TableCell className="text-center">{participant.user_email}</TableCell>
+                <TableCell className="text-center">{participant.phone || '-'}</TableCell>
+                <TableCell className="text-center">
+                  <Select 
+                    value={participant.role} 
+                    onValueChange={(value) => handleRoleChange(participant.id, value)}
+                  >
+                    <SelectTrigger className="w-[150px] mx-auto">
+                      <SelectValue>
+                        <MeetingParticipantRoleBadge role={participant.role as ParticipantRole} />
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roleOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell className="text-center">{participant.title || '-'}</TableCell>
+                <TableCell className="text-center">
+                  <div className="flex gap-2 justify-center">
+                    <button
+                      onClick={() => updateAttendance({ 
+                        participantId: participant.id,
+                        attendanceStatus: 'attended'
+                      })}
+                      className={getAttendanceButtonClass(participant.attendance_status, 'attended')}
                     >
-                      <Edit className="h-4 w-4" />
-                      <span className="sr-only">تعديل</span>
-                    </Button>
-                  )}
-                  {onDelete && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => onDelete(participant.id)}
-                      className="h-8 w-8 p-0 text-red-500 hover:text-red-500 hover:border-red-200"
+                      حضر
+                    </button>
+                    <button
+                      onClick={() => updateAttendance({ 
+                        participantId: participant.id,
+                        attendanceStatus: 'absent'
+                      })}
+                      className={getAttendanceButtonClass(participant.attendance_status, 'absent')}
                     >
-                      <Trash2 className="h-4 w-4" />
-                      <span className="sr-only">حذف</span>
-                    </Button>
-                  )}
-                </div>
-              </TableCell>
-            )}
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+                      غائب
+                    </button>
+                  </div>
+                </TableCell>
+                <TableCell className="text-center">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleNotificationClick(participant)}
+                    className="text-primary hover:text-primary hover:bg-primary/10"
+                    disabled={!participant.phone && !participant.user_id}
+                    title={
+                      !participant.phone && !participant.user_id
+                        ? 'لا يمكن إرسال إشعار: المشارك ليس لديه رقم هاتف أو حساب في النظام'
+                        : 'إرسال تذكير'
+                    }
+                  >
+                    <Bell className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+                <TableCell className="text-center">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteClick(participant.id, participant.user_display_name)}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <DeleteDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="حذف المشارك"
+        description={`هل أنت متأكد من حذف المشارك "${participantToDelete?.name}"؟ لا يمكن التراجع عن هذا الإجراء.`}
+        onDelete={handleDeleteConfirm}
+        isDeleting={isDeleting}
+      />
+      
+      {selectedParticipant && (
+        <SendNotificationDialog
+          open={notificationDialogOpen}
+          onOpenChange={setNotificationDialogOpen}
+          participant={selectedParticipant}
+          onSendNotification={handleSendNotification}
+          isSending={isSending}
+          meetingId={meetingId}
+        />
+      )}
+    </>
   );
 };
