@@ -9,14 +9,15 @@ import { Meeting } from '@/types/meeting';
 import { ParticipantDialogBridge } from '../participants/ParticipantDialogBridge';
 import { EnhancedMeetingMinutes } from '../minutes/EnhancedMeetingMinutes';
 import { useMeetingMinutes } from '@/hooks/meetings/useMeetingMinutes';
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 
 interface MeetingDetailsTabsProps {
   meeting: Meeting;
   meetingId: string;
-  onBack: () => void; // إضافة وظيفة callback للرجوع
 }
 
-export const MeetingDetailsTabs: React.FC<MeetingDetailsTabsProps> = ({ meeting, meetingId, onBack }) => {
+export const MeetingDetailsTabs: React.FC<MeetingDetailsTabsProps> = ({ meeting, meetingId }) => {
   const { data: minutes, isLoading: isMinutesLoading } = useMeetingMinutes(meetingId);
   
   console.log('MeetingDetailsTabs - meeting:', meeting);
@@ -25,15 +26,6 @@ export const MeetingDetailsTabs: React.FC<MeetingDetailsTabsProps> = ({ meeting,
   
   return (
     <Tabs defaultValue="overview" className="w-full" dir="rtl">
-      {/* إضافة عنوان الاجتماع وزر العودة فوق شريط التبويب */}
-      <div className="flex justify-between items-center mb-4">
-         <h1 className="text-2xl font-bold">{meeting.title}</h1>
-         <Button variant="ghost" size="sm" onClick={onBack} className="mr-4">
-           <ArrowLeft className="h-4 w-4 mr-2" />
-           عودة
-           </Button> 
-        </div>
-      
       <TabsList className="flex justify-center border-b rounded-none bg-white mb-6">
         <TabsTrigger 
           value="tasks" 
