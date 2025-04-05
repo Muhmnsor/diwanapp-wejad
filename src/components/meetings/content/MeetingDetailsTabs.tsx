@@ -5,7 +5,7 @@ import { MeetingOverviewTab } from './tabs/MeetingOverviewTab';
 import { MeetingMinutesTab } from './tabs/MeetingMinutesTab';
 import { MeetingParticipantsContent } from '../participants/MeetingParticipantsContent';
 import { MeetingTasksTab } from './tabs/MeetingTasksTab';
-import { Meeting } from '@/types/meeting';
+import { Meeting, MeetingStatus } from '@/types/meeting';
 import { ParticipantDialogBridge } from '../participants/ParticipantDialogBridge';
 import { EnhancedMeetingMinutes } from '../minutes/EnhancedMeetingMinutes';
 import { useMeetingMinutes } from '@/hooks/meetings/useMeetingMinutes';
@@ -48,7 +48,7 @@ export const MeetingDetailsTabs: React.FC<MeetingDetailsTabsProps> = ({
       <div className="flex items-center justify-between border-b mb-6">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">{meeting.title}</h1>
-          <MeetingStatusBadge status={meeting.meeting_status} />
+          <MeetingStatusBadge status={meeting.meeting_status as MeetingStatus} />
         </div>
         
         <div className="flex items-center">
@@ -144,3 +144,4 @@ export const MeetingDetailsTabs: React.FC<MeetingDetailsTabsProps> = ({
     </Tabs>
   );
 };
+

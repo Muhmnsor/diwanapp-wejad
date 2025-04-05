@@ -73,7 +73,6 @@ const MeetingDetailsPage = () => {
     <div className="min-h-screen flex flex-col rtl" dir="rtl">
       <AdminHeader />
       <div className="container mx-auto px-4 py-8 flex-grow">
-        {/* MeetingDetailsTabs now contains all the necessary UI elements */}
         <MeetingDetailsTabs
           meeting={meeting}
           meetingId={meetingId}
