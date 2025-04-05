@@ -274,7 +274,8 @@ export const useMessageOperations = () => {
               
             if (recipientsError) {
               console.error("Error inserting recipients:", recipientsError);
-               throw recipientsError;
+              throw recipientsError;
+            }
           }
           
           return { success: true, draftId: data.draftId };
