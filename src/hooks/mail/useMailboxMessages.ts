@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Message } from "@/components/mail/InternalMailApp";
@@ -38,7 +37,7 @@ export const useMailboxMessages = (folder: MailFolder = 'inbox') => {
                 id,
                 recipient_id,
                 recipient_type,
-                profiles:recipient_id (id, display_name, email)
+                profiles:profiles (id, display_name, email)
               )
             `)
             .eq('sender_id', userId)
@@ -62,7 +61,7 @@ export const useMailboxMessages = (folder: MailFolder = 'inbox') => {
                 id,
                 recipient_id,
                 recipient_type,
-                profiles:recipient_id (id, display_name, email)
+                profiles:profiles (id, display_name, email)
               )
             `)
             .eq('sender_id', userId)
@@ -80,7 +79,7 @@ export const useMailboxMessages = (folder: MailFolder = 'inbox') => {
               read_status,
               read_at,
               is_deleted,
-              message:message_id (
+              message:internal_messages!message_id (
                 id,
                 subject,
                 content,
@@ -94,7 +93,7 @@ export const useMailboxMessages = (folder: MailFolder = 'inbox') => {
             `)
             .eq('recipient_id', userId)
             .eq('is_deleted', true)
-            .order('message.created_at', { ascending: false });
+            .order('created_at', { ascending: false });
         } else if (folder === 'starred') {
           // الرسائل المميزة
           // البريد الوارد المميز بنجمة
@@ -108,7 +107,7 @@ export const useMailboxMessages = (folder: MailFolder = 'inbox') => {
               read_status,
               read_at,
               is_deleted,
-              message:message_id (
+              message:internal_messages!message_id (
                 id,
                 subject,
                 content,
@@ -123,7 +122,7 @@ export const useMailboxMessages = (folder: MailFolder = 'inbox') => {
             .eq('recipient_id', userId)
             .eq('is_deleted', false)
             .eq('message.is_starred', true)
-            .order('message.created_at', { ascending: false });
+            .order('created_at', { ascending: false });
             
           // البريد الصادر المميز بنجمة
           const sentQuery = supabase
@@ -142,7 +141,7 @@ export const useMailboxMessages = (folder: MailFolder = 'inbox') => {
                 id,
                 recipient_id,
                 recipient_type,
-                profiles:recipient_id (id, display_name, email)
+                profiles:profiles (id, display_name, email)
               )
             `)
             .eq('sender_id', userId)
@@ -156,8 +155,14 @@ export const useMailboxMessages = (folder: MailFolder = 'inbox') => {
             sentQuery
           ]);
           
-          const inboxMessages = (inboxResult.data || []).map(processInboxMessage);
-          const sentMessages = (sentResult.data || []).map(processSentMessage);
+          // تأكد من وجود البيانات قبل معالجتها
+          const inboxMessages = inboxResult.data && Array.isArray(inboxResult.data) 
+            ? inboxResult.data.map(processInboxMessage) 
+            : [];
+            
+          const sentMessages = sentResult.data && Array.isArray(sentResult.data)
+            ? sentResult.data.map(processSentMessage)
+            : [];
           
           // دمج النتائج وترتيبها حسب التاريخ
           const allMessages = [...inboxMessages, ...sentMessages].sort((a, b) => 
@@ -177,7 +182,7 @@ export const useMailboxMessages = (folder: MailFolder = 'inbox') => {
               read_status,
               read_at,
               is_deleted,
-              message:message_id (
+              message:internal_messages!message_id (
                 id,
                 subject,
                 content,
@@ -191,22 +196,26 @@ export const useMailboxMessages = (folder: MailFolder = 'inbox') => {
             `)
             .eq('recipient_id', userId)
             .eq('is_deleted', false)
-            .order('message.created_at', { ascending: false });
+            .order('created_at', { ascending: false });
         }
 
         const { data, error } = await query;
         
         if (error) {
+          console.error("Query error:", error);
           throw error;
         }
 
         // تحويل البيانات إلى الهيكل المطلوب
         let messages: Message[] = [];
         
-        if (folder === 'inbox' || folder === 'trash') {
-          messages = (data || []).map(processInboxMessage);
-        } else if (folder === 'sent' || folder === 'drafts') {
-          messages = (data || []).map(processSentMessage);
+        // تأكد من وجود البيانات قبل المعالجة
+        if (data && Array.isArray(data)) {
+          if (folder === 'inbox' || folder === 'trash') {
+            messages = data.map(processInboxMessage);
+          } else if (folder === 'sent' || folder === 'drafts') {
+            messages = data.map(processSentMessage);
+          }
         }
         
         return messages;
@@ -221,7 +230,23 @@ export const useMailboxMessages = (folder: MailFolder = 'inbox') => {
 
 // دالة لمعالجة رسائل البريد الوارد
 const processInboxMessage = (item: any): Message => {
-  const message = item.message || {};
+  if (!item || !item.message) {
+    return {
+      id: '',
+      subject: 'بدون موضوع',
+      content: '',
+      sender: { id: '', name: 'غير معروف', avatar: null },
+      recipients: [],
+      date: new Date().toISOString(),
+      folder: 'inbox',
+      read: false,
+      isStarred: false,
+      labels: [],
+      attachments: []
+    };
+  }
+  
+  const message = item.message;
   return {
     id: message.id,
     subject: message.subject || 'بدون موضوع',
@@ -250,6 +275,22 @@ const processInboxMessage = (item: any): Message => {
 
 // دالة لمعالجة رسائل البريد المرسل والمسودات
 const processSentMessage = (message: any): Message => {
+  if (!message) {
+    return {
+      id: '',
+      subject: 'بدون موضوع',
+      content: '',
+      sender: { id: '', name: 'غير معروف', avatar: null },
+      recipients: [],
+      date: new Date().toISOString(),
+      folder: 'sent',
+      read: true,
+      isStarred: false,
+      labels: [],
+      attachments: []
+    };
+  }
+  
   return {
     id: message.id,
     subject: message.subject || 'بدون موضوع',
