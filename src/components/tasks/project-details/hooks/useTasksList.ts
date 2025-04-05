@@ -1,10 +1,13 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "../types/task";
 import { toast } from "sonner";
 
-export const useTasksList = (projectId?: string, isWorkspace = false) => {
+export const useTasksList = (
+  projectId?: string, 
+  meetingId?: string,  // إضافة معلمة meetingId
+  isWorkspace = false
+) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -13,84 +16,110 @@ export const useTasksList = (projectId?: string, isWorkspace = false) => {
   const [projectStages, setProjectStages] = useState<{ id: string; name: string }[]>([]);
   const [tasksByStage, setTasksByStage] = useState<Record<string, Task[]>>({});
   
-  // Determine if this is a general tasks view (no project ID)
+  // تحديد ما إذا كانت هذه مهام عامة (بدون معرف مشروع)
   const isGeneral = !projectId || projectId === "";
   
-  // Fetch tasks
+  // جلب المهام
   const fetchTasks = useCallback(async () => {
     setIsLoading(true);
     try {
-      console.log(`Fetching tasks for ${isWorkspace ? 'workspace' : isGeneral ? 'general' : 'project'} ID: ${projectId || 'none'}`);
+      console.log(`جلب المهام: projectId=${projectId}, meetingId=${meetingId}, isWorkspace=${isWorkspace}, isGeneral=${isGeneral}`);
       
+      // استعلام محسّن مع ربط جدول المستخدمين للحصول على معلومات المكلف
       let query = supabase
         .from('tasks')
         .select(`
           *,
-          profiles:assigned_to (display_name, email),
-          stage:stage_id (name)
+          profiles:assigned_to (display_name, email)
         `);
       
-     if (isWorkspace) {
-      // Fetch tasks for a workspace
-      query = query.eq('workspace_id', projectId);
-    } else if (isGeneral) {
-      // Fetch general tasks
-      query = query.eq('is_general', true);
-    } else {
-      // Fetch project tasks
-      query = query.eq('project_id', projectId);
-    }
-    
-    const { data, error } = await query;
-    
-    if (error) throw error;
-    
-    if (data) {
-      const formattedTasks = data.map(task => {
-        // استخراج اسم المستخدم المكلف من البيانات
+      // تطبيق التصفية المناسبة بناءً على المعلمات المقدمة
+      if (isWorkspace && projectId) {
+        // حالة 1: مهام مساحة العمل
+        console.log("جلب مهام مساحة العمل لمعرف:", projectId);
+        query = query.eq('workspace_id', projectId);
+      } else if (meetingId) {
+        // حالة 2: مهام الاجتماع
+        console.log("جلب مهام الاجتماع لمعرف:", meetingId);
+        query = query.eq('meeting_id', meetingId);
+      } else if (projectId && !isGeneral) {
+        // حالة 3: مهام المشروع
+        console.log("جلب مهام المشروع لمعرف:", projectId);
+        query = query.eq('project_id', projectId);
+      } else {
+        // حالة 4: المهام العامة
+        console.log("جلب المهام العامة");
+        query = query.eq('is_general', true);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error("خطأ في جلب المهام:", error);
+        throw error;
+      }
+      
+      console.log("البيانات الخام للمهام:", data);
+      
+      // تحويل البيانات وإضافة معلومات المستخدم المكلف
+      const transformedTasks = data.map(task => {
+        console.log("معالجة المهمة:", task);
+        console.log("معلومات المكلف:", task.profiles);
+        
+        // استخراج اسم المستخدم المكلف بشكل آمن
         let assigneeName = '';
+        
         if (task.profiles) {
           if (Array.isArray(task.profiles)) {
-            // إذا كانت المعلومات في مصفوفة
+            // إذا كانت البيانات على شكل مصفوفة
             if (task.profiles.length > 0) {
               assigneeName = task.profiles[0].display_name || task.profiles[0].email || '';
             }
           } else {
-            // إذا كانت المعلومات في كائن مباشر
+            // إذا كانت البيانات على شكل كائن مباشر
             assigneeName = task.profiles.display_name || task.profiles.email || '';
           }
         }
         
+        console.log("اسم المكلف المستخرج:", assigneeName);
+        
         return {
           ...task,
-          id: task.id,
-          title: task.title,
-          description: task.description || "",
-          status: task.status || "pending",
-          priority: task.priority || "medium",
-          due_date: task.due_date,
-          assigned_to: task.assigned_to,
-          // إضافة اسم المستخدم المكلف بالطريقتين للتوافقية
-          assignee_name: assigneeName,
-          assigned_user_name: assigneeName,
-          project_id: task.project_id,
-          stage_id: task.stage_id,
-          created_at: task.created_at,
-          category: task.category
+          // تعيين اسم المكلف بالطريقتين لضمان التوافقية مع المكونات المختلفة
+          assignee_name: assigneeName || '',
+          assigned_user_name: assigneeName || ''
         };
       });
       
-      setTasks(formattedTasks);
+      console.log("المهام المحولة مع أسماء المكلفين:", transformedTasks);
+      
+      setTasks(transformedTasks);
+      
+      // تجميع المهام حسب المرحلة لمهام المشروع التي لها مراحل
+      if (projectId && !isWorkspace && !meetingId) {
+        const groupedTasks: Record<string, Task[]> = {};
+        transformedTasks.forEach(task => {
+          if (task.stage_id) {
+            if (!groupedTasks[task.stage_id]) {
+              groupedTasks[task.stage_id] = [];
+            }
+            groupedTasks[task.stage_id].push(task);
+          }
+        });
+        setTasksByStage(groupedTasks);
+      }
+      
+      return transformedTasks;
+    } catch (error) {
+      console.error("خطأ في fetchTasks:", error);
+      toast.error("حدث خطأ أثناء تحميل المهام");
+      return [];
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching tasks:", error);
-    toast.error("حدث خطأ أثناء تحميل المهام");
-  } finally {
-    setIsLoading(false);
-  }
-}, [projectId, isGeneral, isWorkspace]);
+  }, [projectId, meetingId, isWorkspace, isGeneral]);
   
-  // Fetch project stages if this is a project view
+  // جلب مراحل المشروع إذا كان هذا عرض مشروع
   const fetchProjectStages = useCallback(async () => {
     if (isGeneral || isWorkspace || !projectId) {
       setProjectStages([]);
@@ -111,7 +140,7 @@ export const useTasksList = (projectId?: string, isWorkspace = false) => {
           name: stage.name
         })));
       } else {
-        // Create default stages if none exist
+        // إنشاء مراحل افتراضية إذا لم تكن موجودة
         const defaultStages = [
           { name: "تخطيط", color: "blue" },
           { name: "تنفيذ", color: "amber" },
@@ -127,7 +156,7 @@ export const useTasksList = (projectId?: string, isWorkspace = false) => {
           });
         }
         
-        // Fetch again
+        // جلب المراحل مرة أخرى
         const { data: newData } = await supabase
           .from('project_stages')
           .select('*')
@@ -141,26 +170,26 @@ export const useTasksList = (projectId?: string, isWorkspace = false) => {
         }
       }
     } catch (error) {
-      console.error("Error fetching project stages:", error);
+      console.error("خطأ في جلب مراحل المشروع:", error);
     }
   }, [projectId, isGeneral, isWorkspace]);
   
-  // Group tasks by stage
+  // تجميع المهام حسب المرحلة
   useEffect(() => {
     const groupTasksByStage = () => {
       const grouped: Record<string, Task[]> = {};
       
-      // Initialize with empty arrays for all stages
+      // تهيئة مصفوفات فارغة لجميع المراحل
       projectStages.forEach(stage => {
         grouped[stage.id] = [];
       });
       
-      // Add tasks to their respective stages
+      // إضافة المهام إلى مراحلها المناسبة
       tasks.forEach(task => {
         if (task.stage_id && grouped[task.stage_id]) {
           grouped[task.stage_id].push(task);
         } else if (projectStages.length > 0) {
-          // If task has no stage, add to first stage
+          // إذا لم يكن للمهمة مرحلة، أضفها إلى المرحلة الأولى
           const firstStageId = projectStages[0].id;
           grouped[firstStageId] = [...(grouped[firstStageId] || []), task];
         }
@@ -174,13 +203,13 @@ export const useTasksList = (projectId?: string, isWorkspace = false) => {
     }
   }, [tasks, projectStages, isGeneral, isWorkspace]);
   
-  // Load data on mount and when projectId changes
+  // تحميل البيانات عند التثبيت وعند تغيير معرف المشروع
   useEffect(() => {
     fetchTasks();
     fetchProjectStages();
   }, [fetchTasks, fetchProjectStages]);
   
-  // Filter tasks based on active tab
+  // تصفية المهام بناءً على علامة التبويب النشطة
   useEffect(() => {
     if (activeTab === "all") {
       setFilteredTasks(tasks);
@@ -189,12 +218,12 @@ export const useTasksList = (projectId?: string, isWorkspace = false) => {
     }
   }, [tasks, activeTab]);
   
-  // Handle stage changes
+  // التعامل مع تغييرات المراحل
   const handleStagesChange = () => {
     fetchProjectStages();
   };
   
-  // Handle status change
+  // التعامل مع تغيير الحالة
   const handleStatusChange = async (taskId: string, newStatus: string) => {
     try {
       const { error } = await supabase
@@ -204,7 +233,7 @@ export const useTasksList = (projectId?: string, isWorkspace = false) => {
         
       if (error) throw error;
       
-      // Update local state
+      // تحديث الحالة المحلية
       setTasks(prev => 
         prev.map(task => 
           task.id === taskId 
@@ -215,12 +244,12 @@ export const useTasksList = (projectId?: string, isWorkspace = false) => {
       
       toast.success("تم تحديث حالة المهمة");
     } catch (error) {
-      console.error("Error updating task status:", error);
+      console.error("خطأ في تحديث حالة المهمة:", error);
       toast.error("حدث خطأ أثناء تحديث حالة المهمة");
     }
   };
   
-  // Delete task
+  // حذف مهمة
   const deleteTask = async (taskId: string) => {
     try {
       const { error } = await supabase
@@ -230,12 +259,12 @@ export const useTasksList = (projectId?: string, isWorkspace = false) => {
         
       if (error) throw error;
       
-      // Update local state
+      // تحديث الحالة المحلية
       setTasks(prev => prev.filter(task => task.id !== taskId));
       
       toast.success("تم حذف المهمة بنجاح");
     } catch (error) {
-      console.error("Error deleting task:", error);
+      console.error("خطأ في حذف المهمة:", error);
       toast.error("حدث خطأ أثناء حذف المهمة");
       throw error;
     }
@@ -258,4 +287,3 @@ export const useTasksList = (projectId?: string, isWorkspace = false) => {
     deleteTask
   };
 };
-
