@@ -1,3 +1,4 @@
+
 export const formatTime12Hour = (time: string) => {
   try {
     // تحويل الوقت إلى تنسيق 12 ساعة
@@ -25,13 +26,16 @@ export const formatDateWithDay = (dateStr: string) => {
     ];
 
     // تحويل التاريخ إلى كائن Date
-    const [year, month, day] = dateStr.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    const date = new Date(dateStr);
     
     // الحصول على اسم اليوم
     const dayName = days[date.getDay()];
     
-    // تنسيق التاريخ بالطريقة العربية
+    // تنسيق التاريخ بالطريقة العربية (يوم-شهر-سنة)
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    
     return `${dayName}، ${day}-${month}-${year}`;
   } catch (error) {
     console.error('Error formatting date:', error);
