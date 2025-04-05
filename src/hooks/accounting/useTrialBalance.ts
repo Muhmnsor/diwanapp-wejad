@@ -32,7 +32,21 @@ export const useTrialBalance = (date: Date = new Date()) => {
           .select("*")
           .order("code", { ascending: true });
           
-        if (accountsError) throw accountsError;
+        if (accountsError) {
+          console.error("Error fetching accounts:", accountsError);
+          throw accountsError;
+        }
+        
+        if (!accounts || accounts.length === 0) {
+          console.log("No accounting accounts found");
+          return {
+            entries: [],
+            totalDebit: 0,
+            totalCredit: 0,
+            date: formattedDate,
+            isBalanced: true
+          };
+        }
         
         // Get all journal entries up to the specified date
         const { data: journalEntries, error: entriesError } = await supabase
@@ -51,7 +65,10 @@ export const useTrialBalance = (date: Date = new Date()) => {
           .lte("date", formattedDate)
           .eq("status", "posted");
           
-        if (entriesError) throw entriesError;
+        if (entriesError) {
+          console.error("Error fetching journal entries:", entriesError);
+          throw entriesError;
+        }
         
         // Initialize trial balance entries
         const trialBalanceMap: Record<string, TrialBalanceEntry> = {};
@@ -69,25 +86,32 @@ export const useTrialBalance = (date: Date = new Date()) => {
         });
         
         // Calculate account balances from journal entries
-        journalEntries.forEach(entry => {
-          entry.items.forEach((item: any) => {
-            const account = trialBalanceMap[item.account_id];
-            if (!account) return;
-            
-            const debitAmount = Number(item.debit_amount);
-            const creditAmount = Number(item.credit_amount);
-            
-            if (account.account_type === 'asset' || account.account_type === 'expense') {
-              // For assets and expenses: Debit increases, Credit decreases
-              account.debit_balance += debitAmount;
-              account.credit_balance += creditAmount;
-            } else {
-              // For liabilities, equity, and revenue: Credit increases, Debit decreases
-              account.debit_balance += debitAmount;
-              account.credit_balance += creditAmount;
+        if (journalEntries && journalEntries.length > 0) {
+          journalEntries.forEach(entry => {
+            if (entry.items && Array.isArray(entry.items)) {
+              entry.items.forEach((item: any) => {
+                const account = trialBalanceMap[item.account_id];
+                if (!account) {
+                  console.log(`Account ${item.account_id} not found, skipping item`);
+                  return;
+                }
+                
+                const debitAmount = Number(item.debit_amount) || 0;
+                const creditAmount = Number(item.credit_amount) || 0;
+                
+                if (account.account_type === 'asset' || account.account_type === 'expense') {
+                  // For assets and expenses: Debit increases, Credit decreases
+                  account.debit_balance += debitAmount;
+                  account.credit_balance += creditAmount;
+                } else {
+                  // For liabilities, equity, and revenue: Credit increases, Debit decreases
+                  account.debit_balance += debitAmount;
+                  account.credit_balance += creditAmount;
+                }
+              });
             }
           });
-        });
+        }
         
         // Calculate final balances
         const entries = Object.values(trialBalanceMap).map(entry => {

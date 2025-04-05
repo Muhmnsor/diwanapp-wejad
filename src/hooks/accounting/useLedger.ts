@@ -26,7 +26,15 @@ export const useLedger = (startDate?: Date, endDate?: Date) => {
           .select("*")
           .order("code", { ascending: true });
           
-        if (accountsError) throw accountsError;
+        if (accountsError) {
+          console.error("Error fetching accounts:", accountsError);
+          throw accountsError;
+        }
+        
+        if (!accounts || accounts.length === 0) {
+          console.log("No accounting accounts found");
+          return [];
+        }
         
         // Get all journal entries between dates (if specified)
         let journalEntriesQuery = supabase
@@ -54,7 +62,10 @@ export const useLedger = (startDate?: Date, endDate?: Date) => {
         
         const { data: journalEntries, error: entriesError } = await journalEntriesQuery;
           
-        if (entriesError) throw entriesError;
+        if (entriesError) {
+          console.error("Error fetching journal entries:", entriesError);
+          throw entriesError;
+        }
         
         // Initialize ledger entries
         const ledger: Record<string, LedgerEntry> = {};
@@ -73,15 +84,22 @@ export const useLedger = (startDate?: Date, endDate?: Date) => {
         });
         
         // Process journal entries
-        journalEntries.forEach(entry => {
-          entry.items.forEach((item: any) => {
-            const account = ledger[item.account_id];
-            if (!account) return;
-            
-            account.debit_total += Number(item.debit_amount);
-            account.credit_total += Number(item.credit_amount);
+        if (journalEntries && journalEntries.length > 0) {
+          journalEntries.forEach(entry => {
+            if (entry.items && Array.isArray(entry.items)) {
+              entry.items.forEach((item: any) => {
+                const account = ledger[item.account_id];
+                if (!account) {
+                  console.log(`Account ${item.account_id} not found, skipping item`);
+                  return;
+                }
+                
+                account.debit_total += Number(item.debit_amount) || 0;
+                account.credit_total += Number(item.credit_amount) || 0;
+              });
+            }
           });
-        });
+        }
         
         // Calculate balances
         Object.values(ledger).forEach(entry => {

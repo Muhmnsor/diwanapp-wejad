@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Table,
@@ -7,57 +8,34 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Trash } from "lucide-react";
-import { useOpeningBalances } from "@/hooks/accounting/useOpeningBalances";
-import { useOpeningBalanceOperations } from "@/hooks/accounting/useOpeningBalanceOperations";
-import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/components/finance/reports/utils/formatters";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
-interface OpeningBalancesTableProps {
-  periodId: string;
+// Assuming we have an OpeningBalance interface
+interface OpeningBalance {
+  account_id: string;
+  account_code: string;
+  account_name: string;
+  account_type: string;
+  debit_amount: number;
+  credit_amount: number;
 }
 
-export const OpeningBalancesTable = ({ periodId }: OpeningBalancesTableProps) => {
-  const { openingBalances, isLoading } = useOpeningBalances(periodId);
-  const { deleteOpeningBalance } = useOpeningBalanceOperations();
-  const { toast } = useToast();
+interface OpeningBalancesTableProps {
+  entries: OpeningBalance[];
+  onEditEntry?: (entry: OpeningBalance) => void;
+  readOnly?: boolean;
+}
 
-  const handleDelete = async (id: string) => {
-    try {
-      const result = await deleteOpeningBalance(id, periodId);
-      
-      if (result.success) {
-        toast({
-          title: "تم حذف الرصيد الافتتاحي",
-          description: "تم حذف الرصيد الافتتاحي بنجاح",
-        });
-      } else {
-        toast({
-          title: "خطأ في العملية",
-          description: "فشل حذف الرصيد الافتتاحي",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "خطأ في العملية",
-        description: "حدث خطأ أثناء حذف الرصيد الافتتاحي",
-        variant: "destructive",
-      });
-    }
-  };
-
+export const OpeningBalancesTable = ({ entries, onEditEntry, readOnly = false }: OpeningBalancesTableProps) => {
   // Group by account type for better visual organization
-  const groupedBalances = openingBalances.reduce((acc, balance) => {
-    const type = balance.account?.account_type || "other";
+  const groupedEntries = entries.reduce((acc, entry) => {
+    const type = entry.account_type;
     if (!acc[type]) {
       acc[type] = [];
     }
-    acc[type].push(balance);
+    acc[type].push(entry);
     return acc;
-  }, {} as Record<string, typeof openingBalances>);
+  }, {} as Record<string, OpeningBalance[]>);
 
   // Account type labels in Arabic
   const accountTypeLabels: Record<string, string> = {
@@ -65,35 +43,19 @@ export const OpeningBalancesTable = ({ periodId }: OpeningBalancesTableProps) =>
     liability: "الالتزامات",
     equity: "حقوق الملكية",
     revenue: "الإيرادات",
-    expense: "المصروفات",
-    other: "أخرى"
+    expense: "المصروفات"
   };
 
   // Sort account types in logical order
-  const sortedAccountTypes = ["asset", "liability", "equity", "revenue", "expense", "other"];
-  
+  const sortedAccountTypes = ["asset", "liability", "equity", "revenue", "expense"];
+
   // Calculate totals
-  const totalDebits = openingBalances.reduce((sum, balance) => sum + balance.debit_amount, 0);
-  const totalCredits = openingBalances.reduce((sum, balance) => sum + balance.credit_amount, 0);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-40">
-        <p>جاري تحميل البيانات...</p>
-      </div>
-    );
-  }
-
-  if (!openingBalances || openingBalances.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-40">
-        <p className="text-muted-foreground mb-4">لا توجد أرصدة افتتاحية مسجلة بعد</p>
-      </div>
-    );
-  }
+  const totalDebit = entries.reduce((total, entry) => total + entry.debit_amount, 0);
+  const totalCredit = entries.reduce((total, entry) => total + entry.credit_amount, 0);
+  const isBalanced = Math.abs(totalDebit - totalCredit) < 0.001;
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border overflow-hidden">
       <Table dir="rtl">
         <TableHeader>
           <TableRow>
@@ -101,58 +63,50 @@ export const OpeningBalancesTable = ({ periodId }: OpeningBalancesTableProps) =>
             <TableHead className="text-right">اسم الحساب</TableHead>
             <TableHead className="text-right">مدين</TableHead>
             <TableHead className="text-right">دائن</TableHead>
-            <TableHead className="text-right">الإجراءات</TableHead>
+            {!readOnly && <TableHead className="text-right">الإجراءات</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedAccountTypes.filter(type => groupedBalances[type]).map(type => (
+          {sortedAccountTypes.filter(type => groupedEntries[type]).map(type => (
             <React.Fragment key={type}>
               <TableRow className="bg-muted/50">
-                <TableCell colSpan={5} className="font-bold">
+                <TableCell colSpan={readOnly ? 4 : 5} className="font-bold">
                   {accountTypeLabels[type]}
                 </TableCell>
               </TableRow>
-              {groupedBalances[type].map((balance) => (
-                <TableRow key={balance.id}>
-                  <TableCell>{balance.account?.code}</TableCell>
-                  <TableCell>{balance.account?.name}</TableCell>
-                  <TableCell>{formatCurrency(balance.debit_amount)}</TableCell>
-                  <TableCell>{formatCurrency(balance.credit_amount)}</TableCell>
+              {groupedEntries[type].map((entry) => (
+                <TableRow 
+                  key={entry.account_id} 
+                  className={!readOnly ? "cursor-pointer hover:bg-muted/30" : ""}
+                  onClick={!readOnly ? () => onEditEntry && onEditEntry(entry) : undefined}
+                >
+                  <TableCell>{entry.account_code}</TableCell>
+                  <TableCell>{entry.account_name}</TableCell>
                   <TableCell>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="sm" className="text-red-500">
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>هل أنت متأكد؟</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            سيؤدي هذا الإجراء إلى حذف الرصيد الافتتاحي لهذا الحساب. هذا الإجراء لا يمكن التراجع عنه.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={() => handleDelete(balance.id)}
-                            className="bg-red-500 hover:bg-red-600"
-                          >
-                            حذف
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    {entry.debit_amount > 0 ? formatCurrency(entry.debit_amount) : ""}
                   </TableCell>
+                  <TableCell>
+                    {entry.credit_amount > 0 ? formatCurrency(entry.credit_amount) : ""}
+                  </TableCell>
+                  {!readOnly && (
+                    <TableCell className="text-right">
+                      {/* Actions here if needed */}
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </React.Fragment>
           ))}
-          <TableRow className="font-bold">
-            <TableCell colSpan={2}>الإجماليات</TableCell>
-            <TableCell>{formatCurrency(totalDebits)}</TableCell>
-            <TableCell>{formatCurrency(totalCredits)}</TableCell>
-            <TableCell></TableCell>
+          <TableRow className={`font-bold ${isBalanced ? "bg-green-50" : "bg-red-50"}`}>
+            <TableCell colSpan={2} className="text-left">الإجماليات</TableCell>
+            <TableCell>{formatCurrency(totalDebit)}</TableCell>
+            <TableCell>{formatCurrency(totalCredit)}</TableCell>
+            {!readOnly && <TableCell></TableCell>}
+          </TableRow>
+          <TableRow className={isBalanced ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}>
+            <TableCell colSpan={readOnly ? 4 : 5} className="text-center">
+              {isBalanced ? "أرصدة متوازنة" : "أرصدة غير متوازنة"}
+            </TableCell>
           </TableRow>
         </TableBody>
       </Table>
