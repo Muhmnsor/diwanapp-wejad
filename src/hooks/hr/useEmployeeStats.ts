@@ -1,4 +1,3 @@
-// src/hooks/hr/useEmployeeStats.ts
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
@@ -8,23 +7,37 @@ interface EmployeeStatsData {
   onLeave: number;
 }
 
-export function useEmployeeStats(department: "all" | "engineering" | "marketing" | "hr") {
+export function useEmployeeStats(unitId: string) {
   return useQuery<EmployeeStatsData, Error>({
-    queryKey: ['employee-stats', department],
+    queryKey: ['employee-stats', unitId],
     queryFn: async () => {
-      // Get all employees or filter by department
+      let employeeIds: string[] = [];
+      
+      // If unitId is not 'all', get employees from the organizational unit
+      if (unitId !== 'all') {
+        const { data: assignments, error: unitError } = await supabase
+          .from('employee_organizational_units')
+          .select('employee_id')
+          .eq('organizational_unit_id', unitId);
+          
+        if (unitError) throw unitError;
+        
+        // Extract employee IDs
+        employeeIds = assignments.map(a => a.employee_id);
+        
+        // If no employees in this unit, return empty stats
+        if (employeeIds.length === 0) {
+          return { total: 0, active: 0, onLeave: 0 };
+        }
+      }
+      
+      // Get all employees or filter by the extracted IDs
       const employeeQuery = supabase
         .from('employees')
-        .select('id, status, department');
+        .select('id, status');
         
-      if (department !== "all") {
-        let deptName;
-        switch (department) {
-          case "engineering": deptName = "الهندسة"; break;
-          case "marketing": deptName = "التسويق"; break;
-          case "hr": deptName = "الموارد البشرية"; break;
-        }
-        employeeQuery.eq('department', deptName);
+      if (unitId !== 'all' && employeeIds.length > 0) {
+        employeeQuery.in('id', employeeIds);
       }
         
       const { data: employees, error } = await employeeQuery;
@@ -60,4 +73,3 @@ export function useEmployeeStats(department: "all" | "engineering" | "marketing"
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
 }
-
