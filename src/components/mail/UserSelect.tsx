@@ -1,138 +1,162 @@
 
-import React from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import React, { useState, useEffect } from "react";
 import {
   Command,
+  CommandDialog,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useUsersList } from "@/hooks/mail/useUsersList";
-import { User } from "@/types/user";
+import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
+
+interface User {
+  id: string;
+  name: string;
+  email?: string;
+}
 
 interface UserSelectProps {
-  value: string[];
-  onChange: (value: string[]) => void;
+  value: User[];
+  onChange: (value: User[]) => void;
   placeholder?: string;
-  label?: string;
-  disabled?: boolean;
-  type?: 'to' | 'cc' | 'bcc';
   className?: string;
 }
 
 export const UserSelect: React.FC<UserSelectProps> = ({
   value,
   onChange,
-  placeholder = "اختر مستخدمًا...",
-  label,
-  disabled = false,
-  type = 'to',
+  placeholder = "اختر المستخدمين...",
   className,
 }) => {
-  const [open, setOpen] = React.useState(false);
-  const { data: users = [], isLoading } = useUsersList();
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const selectedUsers = React.useMemo(() => {
-    return users.filter(user => value.includes(user.id));
-  }, [users, value]);
-  
-  const handleSelect = (userId: string) => {
-    if (value.includes(userId)) {
-      onChange(value.filter((id) => id !== userId));
-    } else {
-      onChange([...value, userId]);
-    }
+  // البحث عن المستخدمين
+  useEffect(() => {
+    if (!open) return;
+
+    const fetchUsers = async () => {
+      setIsLoading(true);
+      try {
+        let query = supabase
+          .from("profiles")
+          .select("id, display_name, email")
+          .limit(10);
+        
+        if (search) {
+          query = query.ilike("display_name", `%${search}%`);
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        
+        setUsers(
+          data.map((user) => ({
+            id: user.id,
+            name: user.display_name || user.email || "مستخدم",
+            email: user.email,
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, [open, search]);
+
+  const handleSelect = (user: User) => {
+    // تجنب الازدواجية
+    if (value.some((v) => v.id === user.id)) return;
+    onChange([...value, user]);
+    setSearch("");
   };
 
-  const handleRemoveUser = (userId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    onChange(value.filter((id) => id !== userId));
+  const handleRemove = (userId: string) => {
+    onChange(value.filter((v) => v.id !== userId));
   };
 
   return (
-    <div className={className}>
-      {label && <label className="block text-sm font-medium mb-1">{label}</label>}
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className={cn(
-              "w-full justify-between",
-              !value.length && "text-muted-foreground"
-            )}
-            disabled={disabled}
+    <div className={cn("relative", className)}>
+      <div
+        className="flex flex-wrap gap-1 p-2 min-h-10 border rounded-md bg-background cursor-text"
+        onClick={() => setOpen(true)}
+      >
+        {value.map((user) => (
+          <Badge
+            key={user.id}
+            variant="secondary"
+            className="px-2 py-1 flex items-center gap-1"
           >
-            <div className="flex flex-wrap gap-1 py-1">
-              {selectedUsers.length > 0 ? (
-                selectedUsers.map((user) => (
-                  <Badge 
-                    key={user.id} 
-                    variant="secondary"
-                    className="flex items-center gap-1 px-2"
-                  >
-                    {user.display_name || user.email}
-                    <span
-                      className="ml-1 rounded-full outline-none focus:ring-2 cursor-pointer"
-                      onClick={(e) => handleRemoveUser(user.id, e)}
-                    >
-                      ×
-                    </span>
-                  </Badge>
-                ))
-              ) : (
-                <span>{placeholder}</span>
-              )}
-            </div>
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start">
-          <Command>
-            <CommandInput placeholder="ابحث عن مستخدم..." />
-            <CommandList>
+            {user.name}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRemove(user.id);
+              }}
+              className="rounded-full hover:bg-gray-200 h-4 w-4 inline-flex items-center justify-center"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </Badge>
+        ))}
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="outline-none flex-1 min-w-[120px] bg-transparent text-sm"
+          placeholder={value.length === 0 ? placeholder : ""}
+          onFocus={() => setOpen(true)}
+        />
+      </div>
+
+      <CommandDialog open={open} onOpenChange={setOpen}>
+        <Command dir="rtl" className="rounded-lg p-0">
+          <CommandInput 
+            placeholder="ابحث عن مستخدم..." 
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandList>
+            <CommandEmpty>لا توجد نتائج مطابقة</CommandEmpty>
+            <CommandGroup>
               {isLoading ? (
-                <CommandEmpty>جاري التحميل...</CommandEmpty>
+                <div className="p-2 text-sm text-center">جاري البحث...</div>
               ) : (
-                <>
-                  <CommandEmpty>لا يوجد مستخدمين مطابقين</CommandEmpty>
-                  <CommandGroup>
-                    {users.map((user: User) => (
-                      <CommandItem
-                        key={user.id}
-                        value={user.id}
-                        onSelect={() => handleSelect(user.id)}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            value.includes(user.id) ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        <div className="flex flex-col">
-                          <span>{user.display_name || "مستخدم"}</span>
-                          <span className="text-xs text-muted-foreground">{user.email}</span>
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </>
+                users
+                  .filter(user => !value.some(v => v.id === user.id))
+                  .map((user) => (
+                    <CommandItem
+                      key={user.id}
+                      onSelect={() => handleSelect(user)}
+                      className="cursor-pointer"
+                    >
+                      <div className="mr-2 h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex flex-col">
+                        <span>{user.name}</span>
+                        {user.email && (
+                          <span className="text-xs text-gray-500">{user.email}</span>
+                        )}
+                      </div>
+                    </CommandItem>
+                  ))
               )}
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </CommandDialog>
     </div>
   );
 };

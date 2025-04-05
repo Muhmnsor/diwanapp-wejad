@@ -1,190 +1,228 @@
 
 import React from "react";
+import { Message } from "./InternalMailApp";
 import { Button } from "@/components/ui/button";
+import { ArrowLeft, Star, StarOff, Trash2, Reply, Forward, Printer } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { ArrowLeft, Star, StarOff, Trash, Reply, Forward, Download, Printer } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Message } from "./InternalMailApp";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface MailViewProps {
   message?: Message;
   isLoading: boolean;
   onBack: () => void;
-  folder?: string;
+  folder: string;
+  onStarToggle: (messageId: string, isCurrentlyStarred: boolean) => void;
+  onDelete: (messageId: string, currentFolder: string) => void;
+  onReply: (message: Message) => void;
+  onForward: (message: Message) => void;
+  onPrint: () => void;
 }
 
-export const MailView: React.FC<MailViewProps> = ({ 
-  message, 
-  isLoading, 
+export const MailView: React.FC<MailViewProps> = ({
+  message,
+  isLoading,
   onBack,
-  folder
+  folder,
+  onStarToggle,
+  onDelete,
+  onReply,
+  onForward,
+  onPrint
 }) => {
+  // إذا كان جاري التحميل أو لا توجد رسالة محددة
   if (isLoading) {
     return (
-      <div className="h-full p-4 md:p-6 space-y-4 bg-white">
-        <div className="flex items-center">
-          <Button variant="ghost" size="sm" onClick={onBack} className="mr-2">
-            <ArrowLeft className="h-4 w-4" />
+      <div className="flex flex-col h-full bg-gray-50 p-6">
+        <div className="flex items-center mb-4">
+          <Button variant="ghost" onClick={onBack} size="sm">
+            <ArrowLeft className="ml-2" size={16} />
+            العودة
           </Button>
-          <Skeleton className="h-8 w-56" />
         </div>
-        <div className="space-y-3 mt-4">
-          <Skeleton className="h-4 w-3/4" />
-          <div className="flex justify-between">
-            <Skeleton className="h-4 w-1/4" />
-            <Skeleton className="h-4 w-1/4" />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">جاري تحميل الرسالة...</p>
           </div>
         </div>
-        <Skeleton className="h-[200px] w-full mt-4" />
       </div>
     );
   }
 
+  // إذا لم تكن هناك رسالة محددة
   if (!message) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-white">
-        <div className="bg-muted/30 p-6 rounded-full mb-4">
-          <svg className="h-10 w-10 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-          </svg>
+      <div className="flex flex-col h-full bg-gray-50 p-6">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-16 w-16 text-gray-400 mx-auto mb-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
+            </svg>
+            <p className="text-lg text-gray-500">اختر رسالة لعرضها</p>
+          </div>
         </div>
-        <h3 className="text-lg font-medium">اختر رسالة لعرضها</h3>
-        <p className="text-muted-foreground mt-2">حدد رسالة من القائمة لعرض محتواها</p>
       </div>
     );
   }
 
   // تنسيق التاريخ
-  const formattedDate = format(new Date(message.date), "PPP p", { locale: ar });
-
-  // تحديد لون خلفية شارة المستلم
-  const getRecipientBgColor = (type: string = 'to') => {
-    switch (type) {
-      case 'cc':
-        return 'bg-blue-100 text-blue-700';
-      case 'bcc':
-        return 'bg-purple-100 text-purple-700';
-      default:
-        return 'bg-green-100 text-green-700';
-    }
-  };
-
-  // تحديد نص نوع المستلم
-  const getRecipientTypeText = (type: string = 'to') => {
-    switch (type) {
-      case 'cc':
-        return 'نسخة';
-      case 'bcc':
-        return 'نسخة مخفية';
-      default:
-        return 'إلى';
-    }
-  };
+  const formattedDate = format(new Date(message.date), "d MMMM yyyy, HH:mm", { locale: ar });
 
   return (
-    <div className="h-full flex flex-col bg-white">
-      {/* شريط الإجراءات */}
-      <div className="flex items-center justify-between border-b p-4">
-        <Button variant="ghost" size="sm" onClick={onBack} className="md:hidden">
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex gap-1">
-          <Button variant="ghost" size="icon">
-            {message.isStarred ? <StarOff className="h-4 w-4" /> : <Star className="h-4 w-4" />}
+    <div className="flex flex-col h-full bg-white" dir="rtl">
+      {/* رأس الرسالة مع أزرار العمليات */}
+      <div className="bg-gray-50 p-4 border-b">
+        <div className="flex justify-between items-center mb-2">
+          <Button variant="ghost" onClick={onBack} size="sm" className="ml-2">
+            <ArrowLeft className="ml-1" size={16} />
+            العودة
           </Button>
-          <Button variant="ghost" size="icon">
-            <Trash className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon">
-            <Reply className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon">
-            <Forward className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon">
-            <Printer className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onStarToggle(message.id, message.isStarred)}
+              title={message.isStarred ? "إلغاء الإضافة للمفضلة" : "إضافة للمفضلة"}
+            >
+              {message.isStarred ? <StarOff size={16} /> : <Star size={16} />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDelete(message.id, folder)}
+              title={folder === "trash" ? "حذف نهائي" : "نقل إلى المهملات"}
+            >
+              <Trash2 size={16} className={folder === "trash" ? "text-red-600" : ""} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onReply(message)}
+              title="رد"
+            >
+              <Reply size={16} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onForward(message)}
+              title="إعادة توجيه"
+            >
+              <Forward size={16} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onPrint}
+              title="طباعة"
+            >
+              <Printer size={16} />
+            </Button>
+          </div>
+        </div>
+        <h2 className="text-xl font-semibold mb-2">{message.subject}</h2>
+        <div className="flex items-start gap-3">
+          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+            {message.sender.name.charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-1">
+            <div className="flex justify-between">
+              <div>
+                <p className="font-medium">
+                  {message.sender.name}
+                  {message.sender.email && (
+                    <span className="text-muted-foreground mr-2 font-normal">
+                      &lt;{message.sender.email}&gt;
+                    </span>
+                  )}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  إلى:{" "}
+                  {message.recipients
+                    .filter(r => r.type === "to" || !r.type)
+                    .map(r => r.name)
+                    .join(", ")}
+                </p>
+              </div>
+              <div className="text-sm text-muted-foreground">{formattedDate}</div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* محتوى الرسالة */}
-      <div className="p-4 md:p-6 flex-1 overflow-y-auto">
-        {/* عنوان الرسالة */}
-        <h2 className="text-xl font-semibold mb-4">{message.subject}</h2>
+      <div className="flex-1 overflow-auto p-4">
+        <div className="whitespace-pre-wrap mb-6">{message.content}</div>
 
-        {/* معلومات المرسل والتاريخ */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
-          <div className="flex items-center">
-            <div className={`w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center`}>
-              {message.sender.avatar ? (
-                <img src={message.sender.avatar} alt={message.sender.name} className="w-full h-full rounded-full" />
-              ) : (
-                <span className="font-semibold text-primary">{message.sender.name.charAt(0).toUpperCase()}</span>
-              )}
-            </div>
-            <div className="mr-3">
-              <div className="font-medium">{message.sender.name}</div>
-              <div className="text-sm text-muted-foreground">{message.sender.email}</div>
-            </div>
-          </div>
-          <div className="text-sm text-muted-foreground mt-2 md:mt-0">
-            {formattedDate}
-          </div>
-        </div>
-
-        {/* المستلمين */}
-        {message.recipients.length > 0 && (
-          <div className="mb-6">
-            <p className="text-sm text-muted-foreground mb-2">المستلمون:</p>
-            <div className="flex flex-wrap gap-2">
-              {message.recipients.map((recipient, index) => (
-                <div key={index} className="flex items-center">
-                  <span className={cn(
-                    "inline-block py-1 px-2 rounded-full text-xs mr-1",
-                    getRecipientBgColor(recipient.type)
-                  )}>
-                    {getRecipientTypeText(recipient.type)}
-                  </span>
-                  <span className="text-sm">{recipient.name}</span>
+        {/* قسم المرفقات */}
+        {message.attachments.length > 0 && (
+          <div className="mt-6">
+            <Separator className="mb-4" />
+            <h3 className="text-sm font-medium mb-2">المرفقات ({message.attachments.length})</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {message.attachments.map((attachment) => (
+                <div
+                  key={attachment.id}
+                  className="bg-gray-50 border rounded-md p-2 flex items-center"
+                >
+                  <div className="bg-gray-100 p-2 rounded mr-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-gray-500"
+                    >
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{attachment.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {Math.round(attachment.size / 1024)} كيلوبايت
+                    </p>
+                  </div>
+                  <a
+                    href={attachment.path}
+                    download
+                    className="text-xs text-primary hover:underline ml-2 whitespace-nowrap"
+                  >
+                    تحميل
+                  </a>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* محتوى الرسالة */}
-        <div className="prose prose-sm max-w-none mt-6">
-          {message.content.includes('<') && message.content.includes('>') ? (
-            <div dangerouslySetInnerHTML={{ __html: message.content }} />
-          ) : (
-            <p className="whitespace-pre-wrap">{message.content}</p>
-          )}
-        </div>
-
-        {/* المرفقات */}
-        {message.attachments.length > 0 && (
-          <div className="mt-8">
-            <h3 className="font-medium mb-3">المرفقات ({message.attachments.length})</h3>
-            <div className="space-y-2">
-              {message.attachments.map((attachment) => (
-                <div key={attachment.id} className="flex items-center p-2 rounded-lg border">
-                  <div className="bg-muted p-2 rounded mr-3">
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{attachment.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {attachment.size > 0 ? `${(attachment.size / 1024).toFixed(2)} KB` : 'غير معروف'}
-                    </p>
-                  </div>
-                  <Button variant="ghost" size="sm" className="ml-2">
-                    <Download className="h-4 w-4" />
-                  </Button>
-                </div>
+        {/* التصنيفات */}
+        {message.labels.length > 0 && (
+          <div className="mt-6">
+            <Separator className="mb-4" />
+            <div className="flex flex-wrap gap-2">
+              {message.labels.map((label, index) => (
+                <Badge key={index} variant="outline">
+                  {label}
+                </Badge>
               ))}
             </div>
           </div>

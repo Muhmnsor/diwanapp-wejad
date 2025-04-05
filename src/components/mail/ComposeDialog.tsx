@@ -1,21 +1,27 @@
 
-import React, { useState, useEffect, useRef } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import React, { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { UserSelect } from "./UserSelect";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, X, Paperclip, PlusCircle, MinusCircle, Save } from "lucide-react";
-import { UserSelect } from "@/components/mail/UserSelect";
-import { useMessageOperations } from "@/hooks/mail/useMessageOperations";
-import { Message } from "./InternalMailApp";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
+import { Attachment } from "./InternalMailApp";
+import { Paperclip, X } from "lucide-react";
 
 interface ComposeDialogProps {
   isOpen: boolean;
   onClose: () => void;
   initialData?: {
-    type: 'new' | 'reply' | 'forward' | 'draft';
-    message?: Message;
+    type?: "new" | "reply" | "forward";
+    to?: any[];
+    cc?: any[];
+    bcc?: any[];
+    subject?: string;
+    content?: string;
+    attachments?: Attachment[];
   };
 }
 
@@ -24,359 +30,403 @@ export const ComposeDialog: React.FC<ComposeDialogProps> = ({
   onClose,
   initialData
 }) => {
+  const [to, setTo] = useState<any[]>([]);
+  const [cc, setCc] = useState<any[]>([]);
+  const [bcc, setBcc] = useState<any[]>([]);
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
-  const [attachments, setAttachments] = useState<File[]>([]);
-  const [recipientsTo, setRecipientsTo] = useState<string[]>([]);
-  const [recipientsCc, setRecipientsCc] = useState<string[]>([]);
-  const [recipientsBcc, setRecipientsBcc] = useState<string[]>([]);
   const [showCc, setShowCc] = useState(false);
   const [showBcc, setShowBcc] = useState(false);
-  const [draftId, setDraftId] = useState<string | undefined>(undefined);
-  const [isSaving, setIsSaving] = useState(false);
-  
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const { sendMessage, saveDraft } = useMessageOperations();
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [existingAttachments, setExistingAttachments] = useState<Attachment[]>([]);
+  const [isSending, setIsSending] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
-  // تهيئة البيانات بناءً على نوع الرسالة
+  // استجلاب بيانات المستخدم الحالي
   useEffect(() => {
-    if (initialData && isOpen) {
-      if (initialData.type === 'reply' && initialData.message) {
-        setSubject(`رد على: ${initialData.message.subject}`);
-        setRecipientsTo([initialData.message.sender.id]);
-        setContent(`
-          <br/>
-          <br/>
-          <blockquote style="padding-right: 1rem; border-right: 4px solid #e5e7eb; margin-right: 0; color: #6b7280;">
-            في ${new Date(initialData.message.date).toLocaleString('ar-EG')}, كتب ${initialData.message.sender.name}:
-            <br/>
-            ${initialData.message.content}
-          </blockquote>
-        `);
-      } else if (initialData.type === 'forward' && initialData.message) {
-        setSubject(`إعادة توجيه: ${initialData.message.subject}`);
-        setContent(`
-          <br/>
-          <br/>
-          ---------- رسالة معاد توجيهها ----------<br/>
-          من: ${initialData.message.sender.name}<br/>
-          تاريخ: ${new Date(initialData.message.date).toLocaleString('ar-EG')}<br/>
-          الموضوع: ${initialData.message.subject}<br/>
-          إلى: ${initialData.message.recipients.filter(r => r.type === 'to').map(r => r.name).join(', ')}<br/>
-          <br/>
-          ${initialData.message.content}
-        `);
-      } else if (initialData.type === 'draft' && initialData.message) {
-        setSubject(initialData.message.subject);
-        setContent(initialData.message.content);
+    const fetchCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+          
+        if (profileData) {
+          setCurrentUser({
+            id: user.id,
+            name: profileData.display_name || user.email,
+            email: user.email
+          });
+        }
+      }
+    };
+    
+    fetchCurrentUser();
+  }, []);
+
+  // تعبئة البيانات الأولية
+  useEffect(() => {
+    if (initialData) {
+      if (initialData.to) {
+        setTo(initialData.to);
         
-        // تعيين المستلمين
-        const toRecipients = initialData.message.recipients.filter(r => r.type === 'to').map(r => r.id);
-        const ccRecipients = initialData.message.recipients.filter(r => r.type === 'cc').map(r => r.id);
-        const bccRecipients = initialData.message.recipients.filter(r => r.type === 'bcc').map(r => r.id);
-        
-        setRecipientsTo(toRecipients);
-        
-        if (ccRecipients.length > 0) {
-          setRecipientsCc(ccRecipients);
+        // عرض حقول النسخ إذا كانت موجودة
+        if (initialData.cc && initialData.cc.length > 0) {
+          setCc(initialData.cc);
           setShowCc(true);
         }
         
-        if (bccRecipients.length > 0) {
-          setRecipientsBcc(bccRecipients);
+        if (initialData.bcc && initialData.bcc.length > 0) {
+          setBcc(initialData.bcc);
           setShowBcc(true);
         }
-        
-        setDraftId(initialData.message.id);
-      } else {
-        // رسالة جديدة
-        resetForm();
+      }
+      
+      if (initialData.subject) {
+        setSubject(initialData.subject);
+      }
+      
+      if (initialData.content) {
+        setContent(initialData.content);
+      }
+      
+      if (initialData.attachments) {
+        setExistingAttachments(initialData.attachments);
       }
     }
   }, [initialData, isOpen]);
 
-  const resetForm = () => {
+  // إعادة ضبط النموذج عند الإغلاق
+  const handleClose = () => {
+    setTo([]);
+    setCc([]);
+    setBcc([]);
     setSubject("");
     setContent("");
-    setAttachments([]);
-    setRecipientsTo([]);
-    setRecipientsCc([]);
-    setRecipientsBcc([]);
     setShowCc(false);
     setShowBcc(false);
-    setDraftId(undefined);
-  };
-
-  const handleClose = () => {
-    resetForm();
+    setAttachments([]);
+    setExistingAttachments([]);
     onClose();
   };
 
-  const handleSend = async () => {
-    // تنسيق المستلمين
-    const recipientIds = [
-      ...recipientsTo.map(id => ({ id, type: 'to' as const })),
-      ...recipientsCc.map(id => ({ id, type: 'cc' as const })),
-      ...recipientsBcc.map(id => ({ id, type: 'bcc' as const })),
-    ];
-    
-    sendMessage.mutate({
-      subject,
-      content,
-      recipientIds,
-      attachments
-    }, {
-      onSuccess: () => {
-        handleClose();
-      }
-    });
-  };
-
-  const handleSaveDraft = async () => {
-    setIsSaving(true);
-    
-    // تنسيق المستلمين
-    const recipientIds = [
-      ...recipientsTo.map(id => ({ id, type: 'to' as const })),
-      ...recipientsCc.map(id => ({ id, type: 'cc' as const })),
-      ...recipientsBcc.map(id => ({ id, type: 'bcc' as const })),
-    ];
-    
-    saveDraft.mutate({
-      draftId,
-      subject,
-      content,
-      recipientIds
-    }, {
-      onSuccess: (data) => {
-        if (data?.draftId) {
-          setDraftId(data.draftId);
-        }
-        setIsSaving(false);
-      },
-      onError: () => {
-        setIsSaving(false);
-      }
-    });
-  };
-
+  // معالجة إضافة المرفقات
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setAttachments(prev => [...prev, ...Array.from(e.target.files!)]);
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setAttachments(prev => [...prev, ...newFiles]);
     }
   };
 
-  const removeAttachment = (index: number) => {
+  // حذف مرفق
+  const handleRemoveAttachment = (index: number) => {
     setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
+  // حذف مرفق موجود
+  const handleRemoveExistingAttachment = (index: number) => {
+    setExistingAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // إرسال الرسالة
+  const handleSend = async () => {
+    if (!currentUser) {
+      toast({
+        title: "خطأ",
+        description: "يجب تسجيل الدخول أولا",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (to.length === 0) {
+      toast({
+        title: "خطأ",
+        description: "يجب تحديد مستلم واحد على الأقل",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!subject) {
+      toast({
+        title: "خطأ",
+        description: "يجب إدخال موضوع الرسالة",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsSending(true);
+    
+    try {
+      // إنشاء الرسالة في قاعدة البيانات
+      const { data: messageData, error: messageError } = await supabase
+        .from("internal_messages")
+        .insert({
+          subject,
+          content,
+          sender_id: currentUser.id,
+          folder: "sent",
+          is_draft: false,
+          has_attachments: attachments.length > 0 || existingAttachments.length > 0
+        })
+        .select()
+        .single();
+        
+      if (messageError) throw messageError;
+      
+      // إضافة المستلمين
+      const recipientPromises = [];
+      
+      // إضافة المستلمين الرئيسيين
+      for (const recipient of to) {
+        recipientPromises.push(
+          supabase.from("internal_message_recipients").insert({
+            message_id: messageData.id,
+            recipient_id: recipient.id,
+            recipient_type: "to"
+          })
+        );
+      }
+      
+      // إضافة المستلمين بنسخة
+      for (const recipient of cc) {
+        recipientPromises.push(
+          supabase.from("internal_message_recipients").insert({
+            message_id: messageData.id,
+            recipient_id: recipient.id,
+            recipient_type: "cc"
+          })
+        );
+      }
+      
+      // إضافة المستلمين بنسخة مخفية
+      for (const recipient of bcc) {
+        recipientPromises.push(
+          supabase.from("internal_message_recipients").insert({
+            message_id: messageData.id,
+            recipient_id: recipient.id,
+            recipient_type: "bcc"
+          })
+        );
+      }
+      
+      await Promise.all(recipientPromises);
+      
+      // معالجة المرفقات الجديدة
+      if (attachments.length > 0) {
+        for (const file of attachments) {
+          // رفع الملف إلى التخزين
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+          
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('mail-attachments')
+            .upload(fileName, file);
+            
+          if (uploadError) throw uploadError;
+          
+          // تسجيل المرفق في قاعدة البيانات
+          await supabase.from("internal_message_attachments").insert({
+            message_id: messageData.id,
+            file_name: file.name,
+            file_size: file.size,
+            file_type: file.type,
+            file_path: uploadData.path
+          });
+        }
+      }
+      
+      // إضافة المرفقات الموجودة
+      if (existingAttachments.length > 0) {
+        for (const attachment of existingAttachments) {
+          await supabase.from("internal_message_attachments").insert({
+            message_id: messageData.id,
+            file_name: attachment.name,
+            file_size: attachment.size,
+            file_type: attachment.type,
+            file_path: attachment.path
+          });
+        }
+      }
+      
+      toast({
+        title: "تم إرسال الرسالة بنجاح",
+        description: "تم إرسال الرسالة إلى المستلمين",
+      });
+      
+      handleClose();
+      
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast({
+        title: "حدث خطأ",
+        description: "تعذر إرسال الرسالة، يرجى المحاولة مرة أخرى",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-2xl" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="flex justify-between items-center">
-            <span>إنشاء رسالة جديدة</span>
-            <Button variant="ghost" size="icon" onClick={handleClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          </DialogTitle>
+          <DialogTitle>إنشاء رسالة جديدة</DialogTitle>
         </DialogHeader>
         
-        <div className="overflow-y-auto flex-1">
-          <div className="space-y-4 p-1">
-            <div>
-              <Label>إلى</Label>
-              <div className="flex items-center">
-                <UserSelect
-                  value={recipientsTo}
-                  onChange={setRecipientsTo}
-                  placeholder="اختر المستلمين..."
-                  type="to"
-                  className="flex-1"
-                />
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  size="sm" 
-                  className="mr-2"
-                  onClick={() => setShowCc(!showCc)}
-                >
-                  {showCc ? "إخفاء نسخة" : "إضافة نسخة"}
-                </Button>
+        <div className="space-y-4">
+          <div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="to">إلى</Label>
+              <div className="flex text-xs gap-2">
+                {!showCc && (
+                  <button 
+                    type="button" 
+                    onClick={() => setShowCc(true)}
+                    className="text-primary hover:underline"
+                  >
+                    إضافة نسخة
+                  </button>
+                )}
+                {!showBcc && (
+                  <button 
+                    type="button" 
+                    onClick={() => setShowBcc(true)}
+                    className="text-primary hover:underline"
+                  >
+                    إضافة نسخة مخفية
+                  </button>
+                )}
               </div>
             </div>
-            
-            {showCc && (
-              <div>
-                <Label>نسخة</Label>
-                <div className="flex items-center">
-                  <UserSelect
-                    value={recipientsCc}
-                    onChange={setRecipientsCc}
-                    placeholder="اختر المستلمين للنسخة..."
-                    type="cc"
-                    className="flex-1"
-                  />
+            <UserSelect 
+              value={to} 
+              onChange={setTo} 
+              placeholder="اختر المستلمين..."
+              className="mt-1"
+            />
+          </div>
+          
+          {showCc && (
+            <div>
+              <Label htmlFor="cc">نسخة</Label>
+              <UserSelect
+                value={cc}
+                onChange={setCc}
+                placeholder="اختر المستلمين للنسخة..."
+                className="mt-1"
+              />
+            </div>
+          )}
+          
+          {showBcc && (
+            <div>
+              <Label htmlFor="bcc">نسخة مخفية</Label>
+              <UserSelect
+                value={bcc}
+                onChange={setBcc}
+                placeholder="اختر المستلمين للنسخة المخفية..."
+                className="mt-1"
+              />
+            </div>
+          )}
+          
+          <div>
+            <Label htmlFor="subject">الموضوع</Label>
+            <Input
+              id="subject"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="أدخل موضوع الرسالة"
+              className="mt-1"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="content">محتوى الرسالة</Label>
+            <Textarea
+              id="content"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="اكتب رسالتك هنا..."
+              className="h-60 mt-1"
+            />
+          </div>
+          
+          <div>
+            <Label>المرفقات</Label>
+            <div className="mt-1 space-y-2">
+              {/* عرض المرفقات الموجودة */}
+              {existingAttachments.map((attachment, index) => (
+                <div key={`existing-${index}`} className="flex items-center bg-gray-50 p-2 rounded border">
+                  <Paperclip className="ml-2 h-4 w-4 text-gray-500" />
+                  <span className="flex-1 text-sm truncate">
+                    {attachment.name} ({Math.round(attachment.size / 1024)} KB)
+                  </span>
                   <Button 
                     type="button" 
                     variant="ghost" 
                     size="sm" 
-                    className="mr-2"
-                    onClick={() => setShowBcc(!showBcc)}
+                    onClick={() => handleRemoveExistingAttachment(index)}
+                    className="h-auto p-0 w-6"
                   >
-                    {showBcc ? "إخفاء نسخة مخفية" : "إضافة نسخة مخفية"}
+                    <X className="h-4 w-4" />
                   </Button>
                 </div>
-              </div>
-            )}
-            
-            {showBcc && (
-              <div>
-                <Label>نسخة مخفية</Label>
-                <UserSelect
-                  value={recipientsBcc}
-                  onChange={setRecipientsBcc}
-                  placeholder="اختر المستلمين للنسخة المخفية..."
-                  type="bcc"
-                  className="w-full"
+              ))}
+              
+              {/* عرض المرفقات الجديدة */}
+              {attachments.map((file, index) => (
+                <div key={`new-${index}`} className="flex items-center bg-gray-50 p-2 rounded border">
+                  <Paperclip className="ml-2 h-4 w-4 text-gray-500" />
+                  <span className="flex-1 text-sm truncate">
+                    {file.name} ({Math.round(file.size / 1024)} KB)
+                  </span>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => handleRemoveAttachment(index)}
+                    className="h-auto p-0 w-6"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              
+              <div className="flex items-center">
+                <Label 
+                  htmlFor="file-upload" 
+                  className="cursor-pointer bg-gray-50 text-primary hover:bg-gray-100 transition px-3 py-1 text-sm rounded"
+                >
+                  إضافة مرفق
+                </Label>
+                <Input 
+                  id="file-upload" 
+                  type="file" 
+                  onChange={handleFileChange} 
+                  className="hidden"
+                  multiple
                 />
               </div>
-            )}
-            
-            <div>
-              <Label>الموضوع</Label>
-              <Input 
-                placeholder="أدخل موضوع الرسالة" 
-                value={subject} 
-                onChange={(e) => setSubject(e.target.value)} 
-              />
             </div>
-            
-            <div>
-              <Textarea 
-                placeholder="محتوى الرسالة..." 
-                value={content} 
-                onChange={(e) => setContent(e.target.value)} 
-                className="min-h-[200px]" 
-              />
-            </div>
-            
-            {attachments.length > 0 && (
-              <div>
-                <Label>المرفقات</Label>
-                <div className="space-y-2 mt-2">
-                  {attachments.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 border rounded">
-                      <div className="flex items-center">
-                        <Paperclip className="h-4 w-4 ml-2 text-muted-foreground" />
-                        <span className="text-sm truncate max-w-[250px]">{file.name}</span>
-                        <span className="text-xs text-muted-foreground mr-2">
-                          ({file.size < 1024 * 1024
-                            ? `${(file.size / 1024).toFixed(1)} KB`
-                            : `${(file.size / (1024 * 1024)).toFixed(1)} MB`})
-                        </span>
-                      </div>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => removeAttachment(index)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
         
-        <div className="flex justify-between mt-4">
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center"
-            >
-              <Paperclip className="h-4 w-4 ml-2" />
-              إضافة مرفقات
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              className="hidden"
-              onChange={handleFileChange}
-            />
-            
-            {showCc ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setShowCc(false);
-                  setRecipientsCc([]);
-                }}
-              >
-                <MinusCircle className="h-4 w-4 ml-2" />
-                إزالة نسخة
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowCc(true)}
-              >
-                <PlusCircle className="h-4 w-4 ml-2" />
-                إضافة نسخة
-              </Button>
-            )}
-          </div>
-          
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleSaveDraft}
-              disabled={isSaving || sendMessage.isPending}
-            >
-              {isSaving ? (
-                <>
-                  <span className="animate-spin ml-2">⏳</span>
-                  جاري الحفظ...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 ml-2" />
-                  حفظ كمسودة
-                </>
-              )}
-            </Button>
-            <Button
-              type="button"
-              onClick={handleSend}
-              disabled={recipientsTo.length === 0 || !subject || !content || sendMessage.isPending}
-            >
-              {sendMessage.isPending ? (
-                <>
-                  <span className="animate-spin ml-2">⏳</span>
-                  جاري الإرسال...
-                </>
-              ) : (
-                <>
-                  <Send className="h-4 w-4 ml-2" />
-                  إرسال
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
+        <DialogFooter>
+          <Button onClick={handleClose} variant="outline" disabled={isSending}>
+            إلغاء
+          </Button>
+          <Button onClick={handleSend} disabled={isSending}>
+            {isSending ? "جارٍ الإرسال..." : "إرسال"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
