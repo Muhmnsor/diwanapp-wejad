@@ -6,9 +6,15 @@ import { InternalMailApp } from "@/components/mail/InternalMailApp";
 import { ComposeDialog } from "@/components/mail/ComposeDialog";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { LabelsManager } from "@/components/mail/LabelsManager";
 
 const InternalMail = () => {
   const [isComposeOpen, setIsComposeOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'mail' | 'labels'>('mail');
+  const [composeInitialData, setComposeInitialData] = useState<any>(undefined);
   const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,10 +36,18 @@ const InternalMail = () => {
     checkAuthentication();
 
     // الاستماع إلى حدث إنشاء رسالة جديدة
-    const handler = () => setIsComposeOpen(true);
+    const handler = (e: any) => {
+      setComposeInitialData(e.detail || undefined);
+      setIsComposeOpen(true);
+    };
     window.addEventListener('compose-new-mail', handler);
     return () => window.removeEventListener('compose-new-mail', handler);
   }, []);
+
+  const handleComposeNew = () => {
+    setComposeInitialData(undefined);
+    setIsComposeOpen(true);
+  };
 
   // إذا لم يتم المصادقة على المستخدم، عرض رسالة مناسبة
   if (isLoading) {
@@ -80,15 +94,37 @@ const InternalMail = () => {
       <AdminHeader />
       
       <div className="container mx-auto px-4 py-8 flex-grow" dir="rtl">
-        <h1 className="text-2xl font-bold mb-6">البريد الداخلي</h1>
-        <div className="bg-white rounded-lg overflow-hidden shadow-sm border h-[calc(100vh-250px)]">
-          <InternalMailApp />
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">البريد الداخلي</h1>
+          <div className="flex gap-2">
+            <Button onClick={handleComposeNew}>
+              <Plus className="h-4 w-4 ml-2" />
+              إنشاء رسالة جديدة
+            </Button>
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'mail' | 'labels')}>
+              <TabsList>
+                <TabsTrigger value="mail">البريد</TabsTrigger>
+                <TabsTrigger value="labels">التصنيفات</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </div>
+        
+        {activeTab === 'mail' ? (
+          <div className="bg-white rounded-lg overflow-hidden shadow-sm border h-[calc(100vh-250px)]">
+            <InternalMailApp />
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg overflow-hidden shadow-sm border p-6 h-[calc(100vh-250px)]">
+            <LabelsManager />
+          </div>
+        )}
       </div>
       
       <ComposeDialog
         isOpen={isComposeOpen}
         onClose={() => setIsComposeOpen(false)}
+        initialData={composeInitialData}
       />
       
       <Footer />
