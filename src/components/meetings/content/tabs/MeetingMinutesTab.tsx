@@ -14,7 +14,7 @@ import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { useAuthStore } from "@/store/refactored-auth";
 import { Badge } from "@/components/ui/badge";
-import { formatDateArabic } from "@/utils/formatters";
+import { formatTime12Hour, formatDateWithDay } from "@/utils/dateTimeUtils";
 
 interface MeetingMinutesTabProps {
   meetingId: string;
@@ -202,7 +202,7 @@ export const MeetingMinutesTab: React.FC<MeetingMinutesTabProps> = ({
                 <Calendar className="h-4 w-4 text-primary flex-shrink-0" />
                 <div>
                   <p className="text-sm text-gray-500">تاريخ الاجتماع</p>
-                  <p className="font-medium">{formatDateArabic(meeting?.date)}</p>
+                  <p className="font-medium">{formatDateWithDay(meeting?.date)}</p>
                 </div>
               </div>
               
@@ -211,7 +211,7 @@ export const MeetingMinutesTab: React.FC<MeetingMinutesTabProps> = ({
                 <Clock className="h-4 w-4 text-primary flex-shrink-0" />
                 <div>
                   <p className="text-sm text-gray-500">الوقت والمدة</p>
-                  <p className="font-medium">{meeting?.start_time} (المدة: {meeting?.duration} دقيقة)</p>
+                  <p className="font-medium">{formatTime12Hour(meeting?.start_time)} (المدة: {meeting?.duration} دقيقة)</p>
                 </div>
               </div>
               
