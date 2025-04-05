@@ -30,7 +30,7 @@ export const AccountingOverview = () => {
   
   // Get all accounting data
   const { data: balanceSheetData, isLoading: bsLoading } = useBalanceSheet(dateRange.to);
-  const { data: incomeData, isLoading: isLoading } = useIncomeStatement(dateRange.from, dateRange.to);
+  const { data: incomeData, isLoading: incomeLoading } = useIncomeStatement(dateRange.from, dateRange.to);
   const { entries: journalEntries, isLoading: jeLoading } = useJournalEntries();
   const { accounts, isLoading: accountsLoading } = useAccounts();
   
@@ -132,7 +132,7 @@ export const AccountingOverview = () => {
     });
   };
   
-  const isLoading = bsLoading || isLoading || jeLoading || accountsLoading;
+  const isLoading = bsLoading || incomeLoading || jeLoading || accountsLoading;
   
   // Format number as currency
   const formatCurrency = (amount: number) => {

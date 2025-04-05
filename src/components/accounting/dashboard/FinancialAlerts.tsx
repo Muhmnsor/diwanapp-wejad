@@ -5,7 +5,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert";
-import { BadgeDelta, BadgeInfo } from "lucide-react";
+import { AlertTriangle, Info, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface AlertItem {
@@ -62,9 +62,9 @@ export const FinancialAlerts = () => {
         >
           <div className="flex justify-between">
             <div className="flex items-center">
-              {alert.type === "warning" && <BadgeDelta className="h-5 w-5 text-amber-600 mr-2" />}
-              {alert.type === "info" && <BadgeInfo className="h-5 w-5 text-blue-600 mr-2" />}
-              {alert.type === "success" && <BadgeDelta className="h-5 w-5 text-green-600 mr-2" />}
+              {alert.type === "warning" && <AlertTriangle className="h-5 w-5 text-amber-600 mr-2" />}
+              {alert.type === "info" && <Info className="h-5 w-5 text-blue-600 mr-2" />}
+              {alert.type === "success" && <TrendingUp className="h-5 w-5 text-green-600 mr-2" />}
               
               <div>
                 <AlertTitle className="text-right mb-1">{alert.title}</AlertTitle>
