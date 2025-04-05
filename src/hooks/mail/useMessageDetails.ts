@@ -17,21 +17,27 @@ export const useMessageDetails = (messageId?: string) => {
           .from('internal_messages')
           .select(`
             *,
-            sender:profiles!sender_id (id, display_name, email),
-            recipients:internal_message_recipients (
-              id,
-              recipient_id,
-              recipient_type,
-              read_status,
-              read_at,
-              is_deleted,
-              profiles:profiles!recipient_id (id, display_name, email)
-            )
+            sender:profiles!sender_id (id, display_name, email)
           `)
           .eq('id', messageId)
           .single();
           
         if (messageError) throw messageError;
+        
+        if (!messageData) {
+          throw new Error("لم يتم العثور على الرسالة");
+        }
+        
+        // الحصول على المستلمين
+        const { data: recipients, error: recipientsError } = await supabase
+          .from('internal_message_recipients')
+          .select(`
+            id, recipient_type, read_status, read_at,
+            recipient:profiles!recipient_id (id, display_name, email)
+          `)
+          .eq('message_id', messageId);
+          
+        if (recipientsError) throw recipientsError;
         
         // الحصول على المرفقات
         const { data: attachments, error: attachmentsError } = await supabase
@@ -46,26 +52,32 @@ export const useMessageDetails = (messageId?: string) => {
           .from('internal_message_label_relations')
           .select(`
             *,
-            label:label_id (id, name, color)
+            label:internal_message_labels!label_id (id, name, color)
           `)
           .eq('message_id', messageId);
           
         if (labelsError) throw labelsError;
         
-        // تحديث حالة القراءة تلقائيًا
+        // تحديث حالة القراءة تلقائيًا إذا كنت مستلماً
         const currentUser = await supabase.auth.getUser();
         if (currentUser.data.user) {
           const userId = currentUser.data.user.id;
-          const { error: readError } = await supabase
-            .from('internal_message_recipients')
-            .update({ 
-              read_status: 'read',
-              read_at: new Date().toISOString()
-            })
-            .eq('message_id', messageId)
-            .eq('recipient_id', userId);
           
-          if (readError) console.error("Error marking as read:", readError);
+          // تحقق ما إذا كان المستخدم الحالي هو أحد المستلمين
+          const isRecipient = recipients?.some(r => r.recipient?.id === userId);
+          
+          if (isRecipient) {
+            const { error: readError } = await supabase
+              .from('internal_message_recipients')
+              .update({ 
+                read_status: 'read',
+                read_at: new Date().toISOString()
+              })
+              .eq('message_id', messageId)
+              .eq('recipient_id', userId);
+            
+            if (readError) console.error("Error marking as read:", readError);
+          }
         }
         
         // تنسيق البيانات للعرض
@@ -76,24 +88,25 @@ export const useMessageDetails = (messageId?: string) => {
           sender: {
             id: messageData.sender?.id || '',
             name: messageData.sender?.display_name || 'غير معروف',
+            email: messageData.sender?.email,
             avatar: null
           },
-          recipients: messageData.recipients?.map((r: any) => ({
-            id: r.recipient_id,
-            name: r.profiles?.display_name || 'غير معروف',
+          recipients: recipients?.map((r) => ({
+            id: r.recipient?.id || '',
+            name: r.recipient?.display_name || 'غير معروف',
             type: r.recipient_type,
-            email: r.profiles?.email || ''
+            email: r.recipient?.email || ''
           })) || [],
           date: messageData.created_at,
-          folder: messageData.folder,
-          read: true,
-          isStarred: messageData.is_starred,
-          labels: labelRelations?.map((lr: any) => lr.label?.name || '') || [],
+          folder: messageData.folder as "inbox" | "sent" | "drafts" | "trash" | "starred",
+          read: true, // نضع القيمة true لأننا حدثنا حالة القراءة
+          isStarred: messageData.is_starred || false,
+          labels: labelRelations?.map((lr) => lr.label?.name || '') || [],
           attachments: attachments?.map((attachment) => ({
             id: attachment.id,
             name: attachment.file_name,
-            size: attachment.file_size,
-            type: attachment.file_type,
+            size: attachment.file_size || 0,
+            type: attachment.file_type || '',
             path: attachment.file_path
           })) || []
         };

@@ -71,39 +71,39 @@ export const InternalMailApp: React.FC = () => {
   } = useMessageDetails(selectedMessageId);
 
   // عرض رسائل الخطأ
-useEffect(() => {
-  if (isErrorCounts && countsError) {
-    toast({
-      title: "خطأ في تحميل البيانات",
-      description: "حدث خطأ أثناء جلب عدد الرسائل. يرجى المحاولة مرة أخرى.",
-      variant: "destructive"
-    });
-    console.error("Error in counts:", countsError);
-  }
+  useEffect(() => {
+    if (isErrorCounts && countsError) {
+      toast({
+        title: "خطأ في تحميل البيانات",
+        description: "حدث خطأ أثناء جلب عدد الرسائل. يرجى المحاولة مرة أخرى.",
+        variant: "destructive"
+      });
+      console.error("Error in counts:", countsError);
+    }
 
-  if (isErrorMessages && messagesError) {
-    toast({
-      title: "خطأ في تحميل الرسائل",
-      description: "حدث خطأ أثناء جلب الرسائل. يرجى المحاولة مرة أخرى.",
-      variant: "destructive"
-    });
-    console.error("Error in messages:", messagesError);
-  }
-}, [isErrorCounts, countsError, isErrorMessages, messagesError]);
+    if (isErrorMessages && messagesError) {
+      toast({
+        title: "خطأ في تحميل الرسائل",
+        description: "حدث خطأ أثناء جلب الرسائل. يرجى المحاولة مرة أخرى.",
+        variant: "destructive"
+      });
+      console.error("Error in messages:", messagesError);
+    }
+  }, [isErrorCounts, countsError, isErrorMessages, messagesError]);
 
   // البحث في الرسائل
-const filteredMessages = Array.isArray(messages) ? messages.filter(message => {
-  if (!searchTerm) return true;
-  if (!message) return false;
-  
-  const searchLower = searchTerm.toLowerCase();
-  return (
-    message.subject.toLowerCase().includes(searchLower) ||
-    message.sender.name.toLowerCase().includes(searchLower) ||
-    message.content.toLowerCase().includes(searchLower) ||
-    message.recipients.some(r => r.name.toLowerCase().includes(searchLower))
-  );
-}) : [];
+  const filteredMessages = messages.filter(message => {
+    if (!searchTerm) return true;
+    if (!message) return false;
+    
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      message.subject.toLowerCase().includes(searchLower) ||
+      message.sender.name.toLowerCase().includes(searchLower) ||
+      message.content.toLowerCase().includes(searchLower) ||
+      message.recipients.some(r => r.name.toLowerCase().includes(searchLower))
+    );
+  });
 
   // تحديث البيانات عند تغيير المجلد
   useEffect(() => {
@@ -123,9 +123,8 @@ const filteredMessages = Array.isArray(messages) ? messages.filter(message => {
 
   useEffect(() => {
     console.log("Active folder:", activeFolder);
-    console.log("Messages:", messages);
-    console.log("Counts:", counts);
-  }, [activeFolder, messages, counts]);
+    console.log("Selected message ID:", selectedMessageId);
+  }, [activeFolder, selectedMessageId]);
 
   return (
     <div className="flex flex-col h-full">
