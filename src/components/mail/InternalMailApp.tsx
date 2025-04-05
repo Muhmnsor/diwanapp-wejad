@@ -171,14 +171,13 @@ export const InternalMailApp = () => {
   
   // حساب عدد الرسائل في كل مجلد
   const counts = {
-    inbox: folderCounts.inbox,
-    unread: folderCounts.unread,
-    sent: folderCounts.sent,
-    drafts: folderCounts.drafts,
-    trash: folderCounts.trash,
-    starred: folderCounts.starred
-  };
-  
+  inbox: folderCounts.inbox || 0,
+  unread: folderCounts.unread || 0,
+  sent: folderCounts.sent || 0,
+  drafts: folderCounts.drafts || 0,
+  trash: folderCounts.trash || 0,
+  starred: folderCounts.starred || 0
+};
   // التعامل مع تغيير المجلد
   const handleFolderChange = (folder: string) => {
     setActiveFolder(folder as MailFolder);
