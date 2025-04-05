@@ -7181,6 +7181,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_message_recipient: {
+        Args: {
+          message_id: string
+          user_id: string
+        }
+        Returns: boolean
+      }
+      is_message_sender: {
+        Args: {
+          message_id: string
+          user_id: string
+        }
+        Returns: boolean
+      }
       is_request_accessible: {
         Args: {
           request_id: string

@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -92,18 +91,17 @@ export const useMessageOperations = () => {
         throw error;
       }
     },
-
-  onSuccess: () => {
-  // تحديث البيانات بعد الإرسال الناجح
-  queryClient.invalidateQueries({ queryKey: ['mail-messages'] });
-  queryClient.invalidateQueries({ queryKey: ['mail-folder-counts'] });
-  queryClient.invalidateQueries({ queryKey: ['mail-messages', 'sent'] });
-  queryClient.invalidateQueries({ queryKey: ['mail-messages', 'inbox'] });
-  toast({
-    title: "تم الإرسال بنجاح",
-    description: "تم إرسال الرسالة بنجاح",
-  });
-}
+    onSuccess: () => {
+      // تحديث البيانات بعد الإرسال الناجح
+      queryClient.invalidateQueries({ queryKey: ['mail-messages'] });
+      queryClient.invalidateQueries({ queryKey: ['mail-folder-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['mail-messages', 'sent'] });
+      queryClient.invalidateQueries({ queryKey: ['mail-messages', 'inbox'] });
+      toast({
+        title: "تم الإرسال بنجاح",
+        description: "تم إرسال الرسالة بنجاح",
+      });
+    },
     onError: (error: any) => {
       toast({
         title: "فشل الإرسال",
