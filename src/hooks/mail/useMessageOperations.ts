@@ -9,13 +9,13 @@ export const useMessageOperations = () => {
   const { toast } = useToast();
 
   // إرسال رسالة جديدة
-  const sendMessage = useMutation({
-    mutationFn: async (data: {
-      subject: string;
-      content: string;
-      recipientIds: { id: string; type: 'to' | 'cc' | 'bcc' }[];
-      attachments?: File[];
-    }) => {
+ const sendMessage = useMutation({
+  mutationFn: async (data: {
+    subject: string;
+    content: string;
+    recipientIds: { id: string; type: 'to' | 'cc' | 'bcc' }[];
+    attachments?: File[];
+  }) => {
       try {
         const user = await supabase.auth.getUser();
         if (!user.data.user) {
@@ -91,26 +91,26 @@ export const useMessageOperations = () => {
         console.error("Error sending message:", error);
         throw error;
       }
-    },
-    onSuccess: () => {
-      // تحديث البيانات بعد الإرسال الناجح
-      queryClient.invalidateQueries({ queryKey: ['mail-messages'] });
-      queryClient.invalidateQueries({ queryKey: ['mail-folder-counts'] });
-      queryClient.invalidateQueries({ queryKey: ['mail-messages', 'sent'] });
-      queryClient.invalidateQueries({ queryKey: ['mail-messages', 'inbox'] });
-      toast({
-        title: "تم الإرسال بنجاح",
-        description: "تم إرسال الرسالة بنجاح",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "فشل الإرسال",
-        description: error.message || "حدث خطأ أثناء إرسال الرسالة",
-        variant: "destructive",
-      });
-    },
-  });
+},
+  onSuccess: () => {
+    // تحديث البيانات بعد الإرسال الناجح
+    queryClient.invalidateQueries({ queryKey: ['mail-messages'] });
+    queryClient.invalidateQueries({ queryKey: ['mail-folder-counts'] });
+    queryClient.invalidateQueries({ queryKey: ['mail-messages', 'sent'] });
+    queryClient.invalidateQueries({ queryKey: ['mail-messages', 'inbox'] });
+    toast({
+      title: "تم الإرسال بنجاح",
+      description: "تم إرسال الرسالة بنجاح",
+    });
+  },
+  onError: (error: any) => {
+    toast({
+      title: "فشل الإرسال",
+      description: error.message || "حدث خطأ أثناء إرسال الرسالة",
+      variant: "destructive",
+    });
+  },
+});
 
   // حذف رسالة
   const deleteMessage = useMutation({
