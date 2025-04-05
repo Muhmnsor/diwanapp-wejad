@@ -1,7 +1,8 @@
+
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import * as XLSX from 'xlsx';
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 interface ExportButtonProps {
   data: any;
@@ -87,22 +88,23 @@ export const ExportButton = ({ data, filename }: ExportButtonProps) => {
   };
 
   return (
-  <TooltipProvider>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleExport}
-          className="flex items-center gap-2"
-        >
-          <Download className="h-4 w-4" />
-          <span className="hidden md:inline">تصدير إلى Excel</span>
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>تصدير البيانات إلى ملف Excel</p>
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
-);
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+            className="flex items-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            <span className="hidden md:inline">تصدير إلى Excel</span>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>تصدير البيانات إلى ملف Excel</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};

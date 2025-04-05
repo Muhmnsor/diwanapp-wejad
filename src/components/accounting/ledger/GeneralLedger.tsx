@@ -59,12 +59,12 @@ export const GeneralLedger = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <Select value={accountType || ""} onValueChange={setAccountType}>
+              <Select value={accountType || "all"} onValueChange={(value) => setAccountType(value === "all" ? undefined : value)}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="نوع الحساب" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">كل الحسابات</SelectItem>
+                  <SelectItem value="all">كل الحسابات</SelectItem>
                   <SelectItem value="asset">الأصول</SelectItem>
                   <SelectItem value="liability">الالتزامات</SelectItem>
                   <SelectItem value="equity">حقوق الملكية</SelectItem>
