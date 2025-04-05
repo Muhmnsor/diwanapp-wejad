@@ -280,7 +280,12 @@ export const JournalEntryForm = ({ entry, onCancel, onSuccess }: JournalEntryFor
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="">بدون مركز تكلفة</SelectItem>
-                        {Array.isArray(costCenters) && costCenters.length > 0 && costCenters.map((costCenter) => (
+                       {costCentersError && <SelectItem value="" disabled>خطأ في تحميل مراكز التكلفة</SelectItem>}
+                       {!costCentersError && isLoadingCostCenters && <SelectItem value="" disabled>جاري التحميل...</SelectItem>}
+                       {!isLoadingCostCenters && Array.isArray(costCenters) && costCenters.length === 0 && (
+                          <SelectItem value="" disabled>لا توجد مراكز تكلفة</SelectItem>
+                        )}
+                        {Array.isArray(costCenters) && costCenters.map((costCenter) => (
                           <SelectItem key={costCenter.id} value={costCenter.id}>
                             {costCenter.code} - {costCenter.name}
                           </SelectItem>
