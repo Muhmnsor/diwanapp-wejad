@@ -4,7 +4,7 @@ import { useAccountsSummary } from "@/hooks/accounting/useAccountsSummary";
 import { formatCurrency } from "@/lib/utils";
 import { MonthlyComparisonChart } from "./dashboard/MonthlyComparisonChart";
 import { LatestTransactionsCard } from "./dashboard/LatestTransactionsCard";
-import { ArrowUpRight, ArrowDownRight, CircleDollarSign, Landmark, CircleBolt } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, CircleDollarSign, Landmark, CircleAlert } from "lucide-react";
 
 export const AccountingOverview = () => {
   const {
@@ -82,7 +82,7 @@ export const AccountingOverview = () => {
             <CardTitle className="text-sm font-medium text-right">
               الالتزامات
             </CardTitle>
-            <CircleBolt className="h-4 w-4 text-orange-500" />
+            <CircleAlert className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-right">
