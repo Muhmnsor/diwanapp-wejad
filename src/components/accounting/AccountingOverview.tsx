@@ -1,150 +1,82 @@
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  BarChart3,
-  DollarSign, 
-  ArrowUpCircle, 
-  ArrowDownCircle, 
-  CreditCard, 
-  BarChartHorizontal 
-} from "lucide-react";
-import { LatestTransactionsCard } from "./dashboard/LatestTransactionsCard";
-import { useAccountsSummary } from "@/hooks/accounting/useAccountsSummary";
 import { useJournalEntryStats } from "@/hooks/accounting/useJournalEntryStats";
+import { useAccountsSummary } from "@/hooks/accounting/useAccountsSummary";
 import { formatCurrency } from "@/lib/utils";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { DollarSign, ArrowUp, ArrowDown } from "lucide-react";
+import { MonthlyComparisonChart } from "./dashboard/MonthlyComparisonChart";
+import { LatestTransactionsCard } from "./dashboard/LatestTransactionsCard";
 
-export const AccountingOverview: React.FC = () => {
-  const { 
-    assetTotal, 
-    liabilityTotal, 
-    equityTotal, 
-    revenueTotal,
-    expenseTotal,
-    netIncome,
-    isLoading: isLoadingSummary
-  } = useAccountsSummary();
-
-  const { 
-    totalTransactions, 
-    totalPostedAmount, 
-    totalDraftAmount,
-    transactionsToday,
-    isLoading: isLoadingStats
-  } = useJournalEntryStats();
+export const AccountingOverview = () => {
+  const { totalTransactions, totalPostedAmount, totalDraftAmount, transactionsToday, isLoading: statsLoading } = useJournalEntryStats();
+  const { assetTotal, liabilityTotal, equityTotal, netIncome, isLoading: accountsLoading } = useAccountsSummary();
   
-  const isLoading = isLoadingSummary || isLoadingStats;
-
+  const isLoading = statsLoading || accountsLoading;
+  
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">إجمالي الأصول</CardTitle>
-            <DollarSign className="h-5 w-5 text-muted-foreground" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-right font-medium text-muted-foreground">
+              إجمالي الأصول
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-right">
               {isLoading ? "جاري التحميل..." : formatCurrency(assetTotal)}
             </div>
-            <p className="text-xs text-muted-foreground">إجمالي قيمة الأصول</p>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">إجمالي الخصوم</CardTitle>
-            <CreditCard className="h-5 w-5 text-muted-foreground" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-right font-medium text-muted-foreground">
+              إجمالي الخصوم
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-right">
               {isLoading ? "جاري التحميل..." : formatCurrency(liabilityTotal)}
             </div>
-            <p className="text-xs text-muted-foreground">إجمالي قيمة الخصوم</p>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">الإيرادات</CardTitle>
-            <ArrowUpCircle className="h-5 w-5 text-muted-foreground" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-right font-medium text-muted-foreground">
+              إجمالي حقوق الملكية
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? "جاري التحميل..." : formatCurrency(revenueTotal)}
+            <div className="text-2xl font-bold text-right">
+              {isLoading ? "جاري التحميل..." : formatCurrency(equityTotal)}
             </div>
-            <p className="text-xs text-muted-foreground">إجمالي الإيرادات</p>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">المصروفات</CardTitle>
-            <ArrowDownCircle className="h-5 w-5 text-muted-foreground" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-right font-medium text-muted-foreground">
+              صافي الدخل
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? "جاري التحميل..." : formatCurrency(expenseTotal)}
-            </div>
-            <p className="text-xs text-muted-foreground">إجمالي المصروفات</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">صافي الدخل</CardTitle>
-            <BarChartHorizontal className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${netIncome >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className="text-2xl font-bold text-right">
               {isLoading ? "جاري التحميل..." : formatCurrency(netIncome)}
             </div>
-            <p className="text-xs text-muted-foreground">الإيرادات - المصروفات</p>
           </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">عدد المعاملات</CardTitle>
-            <BarChart3 className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? "جاري التحميل..." : totalTransactions}
+          <CardFooter className="pt-0">
+            <div className={`flex items-center ${netIncome > 0 ? 'text-green-500' : 'text-red-500'} text-xs`}>
+              {netIncome > 0 ? <ArrowUp className="mr-1 h-4 w-4" /> : <ArrowDown className="mr-1 h-4 w-4" />}
+              <span>
+                {isLoading ? '' : netIncome > 0 ? 'زيادة في الأرباح' : 'نقص في الأرباح'}
+              </span>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {isLoading ? "جاري التحميل..." : `${transactionsToday} معاملة اليوم`}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">قيمة المعاملات المسجلة</CardTitle>
-            <DollarSign className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? "جاري التحميل..." : formatCurrency(totalPostedAmount)}
-            </div>
-            <p className="text-xs text-muted-foreground">إجمالي قيمة المعاملات المعتمدة</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">قيمة المعاملات المعلقة</CardTitle>
-            <DollarSign className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? "جاري التحميل..." : formatCurrency(totalDraftAmount)}
-            </div>
-            <p className="text-xs text-muted-foreground">إجمالي قيمة المعاملات غير المعتمدة</p>
-          </CardContent>
+          </CardFooter>
         </Card>
       </div>
-
+      
+      <MonthlyComparisonChart />
+      
       <LatestTransactionsCard />
     </div>
   );
