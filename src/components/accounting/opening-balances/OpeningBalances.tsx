@@ -6,6 +6,7 @@ import { useAccounts } from "@/hooks/accounting/useAccounts";
 import { OpeningBalanceForm } from "./OpeningBalanceForm";
 import { OpeningBalancesTable } from "./OpeningBalancesTable";
 import { useOpeningBalances } from "@/hooks/accounting/useOpeningBalances";
+import { EditOpeningBalanceDialog } from "./EditOpeningBalanceDialog";
 
 export const OpeningBalances = () => {
   const { periods, currentPeriod } = useAccountingPeriods();
@@ -14,7 +15,10 @@ export const OpeningBalances = () => {
     currentPeriod?.id
   );
   
-  const { openingBalances, isLoading } = useOpeningBalances(selectedPeriodId);
+  const [editingBalance, setEditingBalance] = useState<any>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  
+  const { openingBalances, isLoading, refetch } = useOpeningBalances(selectedPeriodId);
 
   // Transform the opening balances data for the table
   const prepareOpeningBalancesEntries = () => {
@@ -24,6 +28,8 @@ export const OpeningBalances = () => {
       const account = balance.account || { id: '', code: '', name: '', account_type: '' };
       
       return {
+        id: balance.id,
+        period_id: balance.period_id,
         account_id: balance.account_id,
         account_code: account.code,
         account_name: account.name,
@@ -35,6 +41,15 @@ export const OpeningBalances = () => {
   };
   
   const balanceEntries = prepareOpeningBalancesEntries();
+  
+  const handleEditBalance = (balance: any) => {
+    setEditingBalance(balance);
+    setIsEditDialogOpen(true);
+  };
+  
+  const handleEditSuccess = () => {
+    refetch();
+  };
   
   return (
     <>
@@ -49,10 +64,9 @@ export const OpeningBalances = () => {
           </CardHeader>
           <CardContent>
             <OpeningBalanceForm 
-              periods={periods}
               accounts={accounts}
               selectedPeriodId={selectedPeriodId}
-              onPeriodChange={setSelectedPeriodId}
+              onSuccess={refetch}
             />
           </CardContent>
         </Card>
@@ -63,11 +77,22 @@ export const OpeningBalances = () => {
               <CardTitle className="text-right">جدول الأرصدة الافتتاحية</CardTitle>
             </CardHeader>
             <CardContent>
-              <OpeningBalancesTable entries={balanceEntries} />
+              <OpeningBalancesTable 
+                entries={balanceEntries} 
+                onEditEntry={handleEditBalance} 
+                readOnly={false}
+              />
             </CardContent>
           </Card>
         )}
       </div>
+      
+      <EditOpeningBalanceDialog
+        isOpen={isEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
+        balance={editingBalance}
+        onSuccess={handleEditSuccess}
+      />
     </>
   );
 };

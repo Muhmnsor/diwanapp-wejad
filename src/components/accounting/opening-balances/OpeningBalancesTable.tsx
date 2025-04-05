@@ -9,15 +9,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency } from "@/components/finance/reports/utils/formatters";
+import { Button } from "@/components/ui/button";
+import { Edit2 } from "lucide-react";
 
 // Assuming we have an OpeningBalance interface
 interface OpeningBalance {
+  id: string;
   account_id: string;
   account_code: string;
   account_name: string;
   account_type: string;
   debit_amount: number;
   credit_amount: number;
+  period_id: string;
 }
 
 interface OpeningBalancesTableProps {
@@ -77,8 +81,7 @@ export const OpeningBalancesTable = ({ entries, onEditEntry, readOnly = false }:
               {groupedEntries[type].map((entry) => (
                 <TableRow 
                   key={entry.account_id} 
-                  className={!readOnly ? "cursor-pointer hover:bg-muted/30" : ""}
-                  onClick={!readOnly ? () => onEditEntry && onEditEntry(entry) : undefined}
+                  className={!readOnly ? "hover:bg-muted/30" : ""}
                 >
                   <TableCell>{entry.account_code}</TableCell>
                   <TableCell>{entry.account_name}</TableCell>
@@ -90,7 +93,13 @@ export const OpeningBalancesTable = ({ entries, onEditEntry, readOnly = false }:
                   </TableCell>
                   {!readOnly && (
                     <TableCell className="text-right">
-                      {/* Actions here if needed */}
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => onEditEntry && onEditEntry(entry)}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   )}
                 </TableRow>

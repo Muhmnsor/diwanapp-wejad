@@ -1,237 +1,172 @@
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle,
+  CardFooter
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AccountingPeriod } from "@/hooks/accounting/useAccountingPeriods";
-import { Account } from "@/hooks/accounting/useAccounts";
-import { useOpeningBalances } from "@/hooks/accounting/useOpeningBalances";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useOpeningBalanceOperations } from "@/hooks/accounting/useOpeningBalanceOperations";
-import { useToast } from "@/hooks/use-toast";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { formatCurrency } from "@/components/finance/reports/utils/formatters";
+import { toast } from "sonner";
 
 interface OpeningBalanceFormProps {
-  periods: AccountingPeriod[];
-  accounts: Account[];
+  accounts: any[];
   selectedPeriodId?: string;
-  onPeriodChange: (periodId: string) => void;
+  onSuccess: () => void;
 }
 
 export const OpeningBalanceForm = ({ 
-  periods, 
-  accounts, 
-  selectedPeriodId, 
-  onPeriodChange 
+  accounts = [], 
+  selectedPeriodId,
+  onSuccess
 }: OpeningBalanceFormProps) => {
-  const { toast } = useToast();
-  const { openingBalances, isLoading } = useOpeningBalances(selectedPeriodId);
-  const { saveOpeningBalance, isLoading: isSaving } = useOpeningBalanceOperations();
-  
-  const [selectedAccount, setSelectedAccount] = useState<string>("");
-  const [accountType, setAccountType] = useState<string>("");
-  const [debitAmount, setDebitAmount] = useState<string>("0");
-  const [creditAmount, setCreditAmount] = useState<string>("0");
-  
-  const openPeriods = periods.filter(p => !p.is_closed);
-  
+  const [selectedAccountId, setSelectedAccountId] = useState<string>("");
+  const [debitAmount, setDebitAmount] = useState<string>("");
+  const [creditAmount, setCreditAmount] = useState<string>("");
+  const { saveOpeningBalance, isLoading } = useOpeningBalanceOperations();
+
+  // Reset form when period changes
   useEffect(() => {
-    if (selectedAccount) {
-      const account = accounts.find(a => a.id === selectedAccount);
-      setAccountType(account?.account_type || "");
-      
-      // Check if there's already an opening balance for this account
-      const existingBalance = openingBalances.find(ob => ob.account_id === selectedAccount);
-      
-      if (existingBalance) {
-        setDebitAmount(existingBalance.debit_amount.toString());
-        setCreditAmount(existingBalance.credit_amount.toString());
-      } else {
-        setDebitAmount("0");
-        setCreditAmount("0");
-      }
+    setSelectedAccountId("");
+    setDebitAmount("");
+    setCreditAmount("");
+  }, [selectedPeriodId]);
+
+  const handleDebitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setDebitAmount(value);
+    
+    // If debit has a value, clear credit (accounting rule: an account can't be both debited and credited in the same entry)
+    if (value && parseFloat(value) > 0) {
+      setCreditAmount("");
     }
-  }, [selectedAccount, accounts, openingBalances]);
-  
+  };
+
+  const handleCreditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setCreditAmount(value);
+    
+    // If credit has a value, clear debit (accounting rule: an account can't be both debited and credited in the same entry)
+    if (value && parseFloat(value) > 0) {
+      setDebitAmount("");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedPeriodId || !selectedAccount) {
-      toast({
-        title: "خطأ في النموذج",
-        description: "يرجى اختيار الفترة والحساب",
-        variant: "destructive",
-      });
+    if (!selectedPeriodId) {
+      toast.error("الرجاء اختيار الفترة المحاسبية أولاً");
       return;
     }
-    
+
+    if (!selectedAccountId) {
+      toast.error("الرجاء اختيار حساب");
+      return;
+    }
+
+    if ((!debitAmount || parseFloat(debitAmount) === 0) && (!creditAmount || parseFloat(creditAmount) === 0)) {
+      toast.error("الرجاء إدخال قيمة للمدين أو الدائن");
+      return;
+    }
+
     try {
       const result = await saveOpeningBalance({
-        account_id: selectedAccount,
         period_id: selectedPeriodId,
-        debit_amount: parseFloat(debitAmount) || 0,
-        credit_amount: parseFloat(creditAmount) || 0,
+        account_id: selectedAccountId,
+        debit_amount: debitAmount ? parseFloat(debitAmount) : 0,
+        credit_amount: creditAmount ? parseFloat(creditAmount) : 0
       });
-      
+
       if (result.success) {
-        toast({
-          title: "تم حفظ الرصيد الافتتاحي",
-          description: "تم حفظ الرصيد الافتتاحي بنجاح",
-        });
-        
+        toast.success("تم حفظ الرصيد الافتتاحي بنجاح");
         // Reset form
-        setSelectedAccount("");
-        setDebitAmount("0");
-        setCreditAmount("0");
+        setSelectedAccountId("");
+        setDebitAmount("");
+        setCreditAmount("");
+        onSuccess();
       } else {
-        toast({
-          title: "خطأ في العملية",
-          description: "فشل حفظ الرصيد الافتتاحي",
-          variant: "destructive",
-        });
+        toast.error("حدث خطأ أثناء حفظ الرصيد الافتتاحي");
+        console.error("Error saving opening balance:", result.error);
       }
     } catch (error) {
-      toast({
-        title: "خطأ في العملية",
-        description: "حدث خطأ أثناء حفظ الرصيد الافتتاحي",
-        variant: "destructive",
-      });
+      toast.error("حدث خطأ أثناء حفظ الرصيد الافتتاحي");
+      console.error("Error saving opening balance:", error);
     }
   };
-  
-  // Calculate totals
-  const totalDebits = openingBalances.reduce((sum, balance) => sum + balance.debit_amount, 0);
-  const totalCredits = openingBalances.reduce((sum, balance) => sum + balance.credit_amount, 0);
-  const isBalanced = Math.abs(totalDebits - totalCredits) < 0.01; // Allow small rounding errors
-  
+
   return (
-    <div className="space-y-6 rtl">
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label>اختر الفترة المحاسبية</Label>
-          <Select
-            value={selectedPeriodId}
-            onValueChange={onPeriodChange}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="اختر الفترة" />
-            </SelectTrigger>
-            <SelectContent>
-              {openPeriods.map((period) => (
-                <SelectItem key={period.id} value={period.id}>
-                  {period.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        {selectedPeriodId && (
-          <form onSubmit={handleSubmit} className="space-y-4 border p-4 rounded-md">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>اختر الحساب</Label>
-                <Select
-                  value={selectedAccount}
-                  onValueChange={setSelectedAccount}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="اختر الحساب" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {accounts.map((account) => (
-                      <SelectItem key={account.id} value={account.id}>
-                        {account.code} - {account.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {accountType && (
-                <div className="space-y-2">
-                  <Label>نوع الحساب</Label>
-                  <Input
-                    value={accountType === "asset" ? "أصول" : 
-                           accountType === "liability" ? "التزامات" : 
-                           accountType === "equity" ? "حقوق ملكية" :
-                           accountType === "revenue" ? "إيرادات" : "مصروفات"}
-                    disabled
-                  />
-                </div>
-              )}
-            </div>
-            
-            {selectedAccount && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="debit">مدين</Label>
-                  <Input
-                    id="debit"
-                    type="number"
-                    value={debitAmount}
-                    onChange={(e) => {
-                      setDebitAmount(e.target.value);
-                      if (parseFloat(e.target.value) > 0) {
-                        setCreditAmount("0");
-                      }
-                    }}
-                    step="0.01"
-                    min="0"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="credit">دائن</Label>
-                  <Input
-                    id="credit"
-                    type="number"
-                    value={creditAmount}
-                    onChange={(e) => {
-                      setCreditAmount(e.target.value);
-                      if (parseFloat(e.target.value) > 0) {
-                        setDebitAmount("0");
-                      }
-                    }}
-                    step="0.01"
-                    min="0"
-                  />
-                </div>
-              </div>
-            )}
-            
-            <div className="flex justify-end">
-              <Button type="submit" disabled={isSaving || isLoading || !selectedAccount}>
-                {isSaving ? "جاري الحفظ..." : "حفظ الرصيد"}
-              </Button>
-            </div>
-          </form>
-        )}
-      </div>
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle className="text-right">إضافة رصيد افتتاحي</CardTitle>
+      </CardHeader>
       
-      {selectedPeriodId && openingBalances && openingBalances.length > 0 && (
-        <div className="border p-4 rounded-md">
-          <div className="flex justify-between mb-2">
-            <span className="font-bold">إجمالي المدين:</span>
-            <span>{formatCurrency(totalDebits)}</span>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4 text-right" dir="rtl">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="account">الحساب</Label>
+              <Select
+                value={selectedAccountId}
+                onValueChange={setSelectedAccountId}
+                disabled={!selectedPeriodId || accounts.length === 0}
+              >
+                <SelectTrigger id="account">
+                  <SelectValue placeholder="اختر الحساب" />
+                </SelectTrigger>
+                <SelectContent>
+                  {accounts.map((account) => (
+                    <SelectItem key={account.id} value={account.id}>
+                      {account.code} - {account.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label htmlFor="debit">مدين</Label>
+              <Input
+                id="debit"
+                type="text"
+                inputMode="decimal"
+                value={debitAmount}
+                onChange={handleDebitChange}
+                placeholder="0.00"
+                disabled={!selectedPeriodId || !selectedAccountId}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="credit">دائن</Label>
+              <Input
+                id="credit"
+                type="text"
+                inputMode="decimal"
+                value={creditAmount}
+                onChange={handleCreditChange}
+                placeholder="0.00"
+                disabled={!selectedPeriodId || !selectedAccountId}
+              />
+            </div>
           </div>
-          <div className="flex justify-between mb-2">
-            <span className="font-bold">إجمالي الدائن:</span>
-            <span>{formatCurrency(totalCredits)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-bold">الحالة:</span>
-            <span className={isBalanced ? "text-green-500" : "text-red-500"}>
-              {isBalanced ? "متوازن" : "غير متوازن"}
-            </span>
-          </div>
-        </div>
-      )}
-    </div>
+        </form>
+      </CardContent>
+      
+      <CardFooter className="flex justify-end">
+        <Button 
+          type="submit" 
+          onClick={handleSubmit}
+          disabled={!selectedPeriodId || !selectedAccountId || isLoading}
+        >
+          {isLoading ? "جاري الحفظ..." : "حفظ الرصيد"}
+        </Button>
+      </CardFooter>
+    </Card>
   );
 };

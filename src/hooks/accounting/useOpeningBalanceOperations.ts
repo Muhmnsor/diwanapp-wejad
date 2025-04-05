@@ -3,6 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { OpeningBalance } from "./useOpeningBalances";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export const useOpeningBalanceOperations = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -13,6 +14,7 @@ export const useOpeningBalanceOperations = () => {
   ) => {
     try {
       setIsLoading(true);
+      console.log("Saving opening balance:", openingBalanceData);
       
       // Check if an opening balance already exists for this account and period
       const { data: existing, error: checkError } = await supabase
@@ -22,7 +24,10 @@ export const useOpeningBalanceOperations = () => {
         .eq("period_id", openingBalanceData.period_id)
         .maybeSingle();
       
-      if (checkError) throw checkError;
+      if (checkError) {
+        console.error("Error checking existing balance:", checkError);
+        throw checkError;
+      }
       
       let result;
       
@@ -46,7 +51,10 @@ export const useOpeningBalanceOperations = () => {
           .single();
       }
       
-      if (result.error) throw result.error;
+      if (result.error) {
+        console.error("Error saving opening balance result:", result.error);
+        throw result.error;
+      }
       
       // Invalidate and refetch
       queryClient.invalidateQueries({ 
@@ -79,6 +87,8 @@ export const useOpeningBalanceOperations = () => {
         debit_amount: balance.debit_amount,
         credit_amount: balance.credit_amount,
       }));
+      
+      console.log("Saving multiple opening balances:", balancesToInsert);
       
       // Use upsert to handle existing records
       const { data, error } = await supabase
