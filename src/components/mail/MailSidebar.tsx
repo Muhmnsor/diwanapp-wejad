@@ -8,7 +8,8 @@ import {
   Trash2, 
   Star,
   Tag,
-  Filter
+  Filter,
+  Plus
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -47,6 +48,14 @@ export const MailSidebar: React.FC<MailSidebarProps> = ({
   return (
     <ScrollArea className="h-full p-4">
       <div className="space-y-6">
+        <Button 
+          className="w-full" 
+          onClick={() => window.dispatchEvent(new CustomEvent('compose-new-mail'))}
+        >
+          <Plus className="h-4 w-4 ml-1" />
+          إنشاء رسالة جديدة
+        </Button>
+        
         <div className="space-y-2">
           {folders.map((folder) => (
             <Button

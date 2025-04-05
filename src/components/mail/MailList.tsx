@@ -5,18 +5,51 @@ import { ar } from "date-fns/locale";
 import { Paperclip, Star, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Message } from "./InternalMailApp";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface MailListProps {
   messages: Message[];
   selectedId?: string;
   onSelectMessage: (message: Message) => void;
+  isLoading?: boolean;
 }
 
 export const MailList: React.FC<MailListProps> = ({ 
   messages, 
   selectedId,
-  onSelectMessage 
+  onSelectMessage,
+  isLoading = false
 }) => {
+  if (isLoading) {
+    return (
+      <div className="h-full">
+        <div className="px-4 py-3 border-b flex justify-between items-center bg-muted/20">
+          <div className="text-sm font-medium">
+            <Skeleton className="h-4 w-16" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-4 w-12" />
+          </div>
+        </div>
+
+        <ul className="divide-y">
+          {Array(5).fill(0).map((_, index) => (
+            <li key={index} className="px-4 py-3 hover:bg-muted/30">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+                <Skeleton className="h-4 w-full max-w-xs mb-1" />
+                <Skeleton className="h-3 w-full max-w-md" />
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
   if (messages.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
@@ -59,7 +92,7 @@ export const MailList: React.FC<MailListProps> = ({
                   {message.folder === "sent" ? (message.recipients[0]?.name || "مستلم") : message.sender.name}
                 </span>
                 <div className="flex items-center gap-1.5 shrink-0 text-xs text-muted-foreground">
-                  {message.hasAttachments && <Paperclip className="h-3 w-3 text-muted-foreground" />}
+                  {message.attachments.length > 0 && <Paperclip className="h-3 w-3 text-muted-foreground" />}
                   {formatDistanceToNow(new Date(message.date), { addSuffix: true, locale: ar })}
                 </div>
               </div>

@@ -10,6 +10,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
+import { UserSelect } from "./UserSelect";
+import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from "uuid";
 
 interface ComposeDialogProps {
   isOpen: boolean;
@@ -21,8 +24,8 @@ interface ComposeDialogProps {
 }
 
 const formSchema = z.object({
-  to: z.string().min(1, "يجب إدخال المستلم"),
-  cc: z.string().optional(),
+  to: z.array(z.string()).min(1, "يجب اختيار مستلم واحد على الأقل"),
+  cc: z.array(z.string()).optional(),
   subject: z.string().min(1, "يجب إدخال عنوان للرسالة"),
   content: z.string().min(1, "يجب إدخال محتوى الرسالة"),
 });
@@ -38,12 +41,13 @@ export const ComposeDialog: React.FC<ComposeDialogProps> = ({
   replyTo,
 }) => {
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      to: initialRecipient,
-      cc: "",
+      to: initialRecipient ? [initialRecipient] : [],
+      cc: [],
       subject: replyTo ? `رد: ${initialSubject}` : initialSubject,
       content: initialContent,
     },
@@ -60,13 +64,91 @@ export const ComposeDialog: React.FC<ComposeDialogProps> = ({
     setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const onSubmit = (data: FormValues) => {
-    console.log("Form data:", data);
-    console.log("Attachments:", attachments);
-    
-    // يمكن هنا إضافة منطق إرسال الرسالة إلى الخادم
-    toast.success("تم إرسال الرسالة بنجاح");
-    onClose();
+  const onSubmit = async (data: FormValues) => {
+    try {
+      setIsSubmitting(true);
+      
+      // احصل على معرف المستخدم الحالي
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("يجب تسجيل الدخول لإرسال الرسائل");
+      
+      // إنشاء معرف جديد للرسالة
+      const messageId = uuidv4();
+      
+      // إنشاء الرسالة
+      const { error: messageError } = await supabase
+        .from("internal_messages")
+        .insert({
+          id: messageId,
+          subject: data.subject,
+          content: data.content,
+          sender_id: user.id,
+          status: "sent",
+          is_draft: false,
+          has_attachments: attachments.length > 0,
+          folder: "sent"
+        });
+      
+      if (messageError) throw messageError;
+      
+      // إضافة المستلمين
+      const recipients = [
+        ...data.to.map(id => ({ 
+          message_id: messageId,
+          recipient_id: id,
+          recipient_type: "to" as const
+        })),
+        ...(data.cc || []).map(id => ({ 
+          message_id: messageId,
+          recipient_id: id,
+          recipient_type: "cc" as const
+        }))
+      ];
+      
+      if (recipients.length > 0) {
+        const { error: recipientsError } = await supabase
+          .from("internal_message_recipients")
+          .insert(recipients);
+          
+        if (recipientsError) throw recipientsError;
+      }
+      
+      // رفع المرفقات إذا وجدت
+      if (attachments.length > 0) {
+        for (const file of attachments) {
+          const filePath = `${user.id}/${messageId}/${file.name}`;
+          
+          // رفع الملف إلى التخزين
+          const { error: uploadError } = await supabase.storage
+            .from("mail_attachments")
+            .upload(filePath, file);
+            
+          if (uploadError) throw uploadError;
+          
+          // إضافة معلومات المرفق للقاعدة
+          const { error: attachmentError } = await supabase
+            .from("internal_message_attachments")
+            .insert({
+              message_id: messageId,
+              file_name: file.name,
+              file_path: filePath,
+              file_type: file.type,
+              file_size: file.size,
+              uploaded_by: user.id
+            });
+            
+          if (attachmentError) throw attachmentError;
+        }
+      }
+      
+      toast.success("تم إرسال الرسالة بنجاح");
+      onClose();
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error("حدث خطأ أثناء إرسال الرسالة");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -85,7 +167,12 @@ export const ComposeDialog: React.FC<ComposeDialogProps> = ({
                 <FormItem>
                   <FormLabel>إلى</FormLabel>
                   <FormControl>
-                    <Input placeholder="أدخل بريد المستلم" {...field} />
+                    <UserSelect 
+                      value={field.value} 
+                      onChange={field.onChange}
+                      placeholder="اختر المستلمين..." 
+                      type="to"
+                    />
                   </FormControl>
                 </FormItem>
               )}
@@ -98,7 +185,12 @@ export const ComposeDialog: React.FC<ComposeDialogProps> = ({
                 <FormItem>
                   <FormLabel>نسخة إلى</FormLabel>
                   <FormControl>
-                    <Input placeholder="أدخل بريد المستلم (اختياري)" {...field} />
+                    <UserSelect 
+                      value={field.value || []} 
+                      onChange={field.onChange}
+                      placeholder="اختر مستلمي النسخة..." 
+                      type="cc"
+                    />
                   </FormControl>
                 </FormItem>
               )}
@@ -173,10 +265,12 @@ export const ComposeDialog: React.FC<ComposeDialogProps> = ({
             </div>
             
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose}>
+              <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
                 إلغاء
               </Button>
-              <Button type="submit">إرسال</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "جاري الإرسال..." : "إرسال"}
+              </Button>
             </DialogFooter>
           </form>
         </Form>
