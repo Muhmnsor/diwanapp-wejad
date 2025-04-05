@@ -1,4 +1,3 @@
-
 // src/hooks/hr/useEmployeeStats.ts
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -9,34 +8,25 @@ interface EmployeeStatsData {
   onLeave: number;
 }
 
-export function useEmployeeStats(unitId: string | "all") {
+export function useEmployeeStats(department: "all" | "engineering" | "marketing" | "hr") {
   return useQuery<EmployeeStatsData, Error>({
-    queryKey: ['employee-stats', unitId],
+    queryKey: ['employee-stats', department],
     queryFn: async () => {
-      // Base query to get all employees
+      // Get all employees or filter by department
       const employeeQuery = supabase
         .from('employees')
         .select('id, status, department');
         
-      // If a specific unit is selected (not "all"), we need to join through employee_organizational_units
-      if (unitId !== "all") {
-        const { data: employeesInUnit, error: unitError } = await supabase
-          .from('employee_organizational_units')
-          .select('employee_id')
-          .eq('organizational_unit_id', unitId)
-          .eq('is_active', true);
-          
-        if (unitError) throw unitError;
-        
-        if (employeesInUnit && employeesInUnit.length > 0) {
-          const employeeIds = employeesInUnit.map(e => e.employee_id);
-          employeeQuery.in('id', employeeIds);
-        } else {
-          // If no employees in this unit, return empty stats
-          return { total: 0, active: 0, onLeave: 0 };
+      if (department !== "all") {
+        let deptName;
+        switch (department) {
+          case "engineering": deptName = "الهندسة"; break;
+          case "marketing": deptName = "التسويق"; break;
+          case "hr": deptName = "الموارد البشرية"; break;
         }
+        employeeQuery.eq('department', deptName);
       }
-      
+        
       const { data: employees, error } = await employeeQuery;
       
       if (error) throw error;
@@ -53,16 +43,16 @@ export function useEmployeeStats(unitId: string | "all") {
       if (leavesError) throw leavesError;
       
       // Create a set of employee IDs on leave
-      const employeesOnLeave = new Set(activeLeaves?.map(leave => leave.employee_id) || []);
+      const employeesOnLeave = new Set(activeLeaves.map(leave => leave.employee_id));
       
       // Count employees on leave from our filtered list
-      const onLeave = employees?.filter(emp => employeesOnLeave.has(emp.id)).length || 0;
+      const onLeave = employees.filter(emp => employeesOnLeave.has(emp.id)).length;
       
       // Active employees are those with 'active' status minus those on leave
-      const active = (employees?.filter(emp => emp.status === 'active').length || 0) - onLeave;
+      const active = employees.filter(emp => emp.status === 'active').length - onLeave;
       
       return {
-        total: employees?.length || 0,
+        total: employees.length,
         active,
         onLeave
       };
@@ -70,3 +60,4 @@ export function useEmployeeStats(unitId: string | "all") {
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
 }
+
