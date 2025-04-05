@@ -1,9 +1,10 @@
-// src/components/hr/reports/EmployeeReport.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmployeeCharts } from "./components/EmployeeCharts";
 import { EmployeeStats } from "./components/EmployeeStats";
+import { useOrganizationalUnitsByType } from "@/hooks/hr/useOrganizationalUnitsByType";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface EmployeeReportProps {
   startDate?: Date;
@@ -11,7 +12,15 @@ interface EmployeeReportProps {
 }
 
 export function EmployeeReport({ startDate, endDate }: EmployeeReportProps) {
-  const [department, setDepartment] = useState<"all" | "engineering" | "marketing" | "hr">("all");
+  const [selectedUnitId, setSelectedUnitId] = useState<string>("all");
+  const { data: units, isLoading } = useOrganizationalUnitsByType("department");
+  
+  // Reset selection when units change
+  useEffect(() => {
+    if (units && units.length > 0) {
+      setSelectedUnitId("all");
+    }
+  }, [units]);
   
   return (
     <div className="space-y-4">
@@ -23,22 +32,26 @@ export function EmployeeReport({ startDate, endDate }: EmployeeReportProps) {
           </p>
         </div>
         
-        <Tabs value={department} onValueChange={(v) => setDepartment(v as any)} className="w-[400px]">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="all">الكل</TabsTrigger>
-            <TabsTrigger value="engineering">الهندسة</TabsTrigger>
-            <TabsTrigger value="marketing">التسويق</TabsTrigger>
-            <TabsTrigger value="hr">الموارد البشرية</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        {isLoading ? (
+          <Skeleton className="h-10 w-[400px]" />
+        ) : (
+          <Tabs value={selectedUnitId} onValueChange={(v) => setSelectedUnitId(v)} className="w-[400px]">
+            <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${Math.min(units?.length + 1 || 2, 6)}, 1fr)` }}>
+              <TabsTrigger value="all">الكل</TabsTrigger>
+              {units?.map(unit => (
+                <TabsTrigger key={unit.id} value={unit.id}>{unit.name}</TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        )}
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <EmployeeStats department={department} />
+        <EmployeeStats unitId={selectedUnitId} />
       </div>
       
       <div className="grid gap-4 md:grid-cols-2">
-        <EmployeeCharts department={department} />
+        <EmployeeCharts unitId={selectedUnitId} />
       </div>
     </div>
   );
