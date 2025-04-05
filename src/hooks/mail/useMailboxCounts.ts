@@ -61,13 +61,27 @@ export const useMailboxCounts = () => {
         if (trashError) throw trashError;
         
         // عدد الرسائل المميزة بنجمة (من البريد الوارد والصادر)
-        const { count: starredMessagesCount, error: starredError } = await supabase
+        // الرسائل المرسلة المميزة بنجمة
+        const { count: starredSentCount, error: starredSentError } = await supabase
           .from('internal_messages')
           .select('*', { count: 'exact', head: true })
-          .eq('is_starred', true)
-          .or(`sender_id.eq.${userId},internal_message_recipients.recipient_id.eq.${userId}`);
+          .eq('sender_id', userId)
+          .eq('is_starred', true);
           
-        if (starredError) throw starredError;
+        if (starredSentError) throw starredSentError;
+          
+        // الرسائل المستلمة المميزة بنجمة
+        const { count: starredReceivedCount, error: starredReceivedError } = await supabase
+          .from('internal_message_recipients')
+          .select('*', { count: 'exact', head: true })
+          .eq('recipient_id', userId)
+          .eq('is_deleted', false)
+          .eq('internal_messages.is_starred', true);
+          
+        if (starredReceivedError) throw starredReceivedError;
+        
+        // إجمالي الرسائل المميزة بنجمة
+        const starredCount = (starredSentCount || 0) + (starredReceivedCount || 0);
         
         console.log("Mail counts retrieved:", {
           inbox: inboxCount || 0,
@@ -75,7 +89,7 @@ export const useMailboxCounts = () => {
           sent: sentCount || 0,
           drafts: draftsCount || 0,
           trash: trashCount || 0,
-          starred: starredMessagesCount || 0
+          starred: starredCount || 0
         });
         
         return {
@@ -84,7 +98,7 @@ export const useMailboxCounts = () => {
           sent: sentCount || 0,
           drafts: draftsCount || 0,
           trash: trashCount || 0,
-          starred: starredMessagesCount || 0
+          starred: starredCount || 0
         };
       } catch (err) {
         console.error("Error fetching mailbox counts:", err);

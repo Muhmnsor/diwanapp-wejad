@@ -15,18 +15,18 @@ export const useMailboxMessages = (folder: string) => {
         
         const userId = user.data.user.id;
         let messages: Message[] = [];
-        
+
+        // مختلف استراتيجيات الاستعلام بناء على نوع المجلد
         switch (folder) {
-          case 'inbox':
-            // جلب رسائل البريد الوارد (الرسائل المستلمة)
-            const { data: inboxData, error: inboxError } = await supabase
+          case 'inbox': {
+            // الرسائل الواردة (التي تلقاها المستخدم وليست محذوفة)
+            const { data: recipientMessages, error: inboxError } = await supabase
               .from('internal_message_recipients')
               .select(`
                 message_id,
                 read_status,
-                read_at,
                 recipient_type,
-                message:message_id (
+                internal_messages (
                   id,
                   subject,
                   content,
@@ -34,293 +34,200 @@ export const useMailboxMessages = (folder: string) => {
                   created_at,
                   is_starred,
                   has_attachments,
-                  sender:sender_id (
-                    id, 
-                    display_name,
-                    email
-                  )
+                  sender:profiles!sender_id (id, display_name, email)
                 )
               `)
               .eq('recipient_id', userId)
               .eq('is_deleted', false)
               .order('message_id.created_at', { ascending: false });
-              
-            if (inboxError) throw inboxError;
             
-            if (inboxData) {
-              // جلب المرفقات للرسائل
-              const messageIds = inboxData.map(item => item.message_id);
-              
-              // جلب المرفقات لكل الرسائل دفعة واحدة
-              const { data: attachmentsData } = await supabase
-                .from('internal_message_attachments')
-                .select('*')
-                .in('message_id', messageIds);
-                
-              // تنظيم المرفقات حسب رسائلها
-              const attachmentsByMessage: Record<string, any[]> = {};
-              attachmentsData?.forEach(attachment => {
-                if (!attachmentsByMessage[attachment.message_id]) {
-                  attachmentsByMessage[attachment.message_id] = [];
-                }
-                attachmentsByMessage[attachment.message_id].push({
-                  id: attachment.id,
-                  name: attachment.file_name,
-                  size: attachment.file_size,
-                  type: attachment.file_type,
-                  path: attachment.file_path
-                });
-              });
-              
-              // تحويل البيانات إلى الشكل المطلوب
-              messages = inboxData.map(item => {
-                // تجاهل الرسائل المحذوفة (على الرغم من أننا فلترناها في الاستعلام)
-                if (!item.message) return null;
+            if (inboxError) {
+              console.error("Error fetching inbox messages:", inboxError);
+              throw inboxError;
+            }
+
+            if (recipientMessages && recipientMessages.length > 0) {
+              messages = recipientMessages.map((item) => {
+                const message = item.internal_messages;
+                const sender = Array.isArray(message.sender) ? message.sender[0] : message.sender;
                 
                 return {
-                  id: item.message.id,
-                  subject: item.message.subject || 'بدون موضوع',
-                  content: item.message.content || '',
+                  id: message.id,
+                  subject: message.subject || "بدون موضوع",
+                  content: message.content || "",
                   sender: {
-                    id: item.message.sender?.id || '',
-                    name: item.message.sender?.display_name || 'غير معروف',
-                    email: item.message.sender?.email || '',
+                    id: sender?.id || "",
+                    name: sender?.display_name || "غير معروف",
+                    email: sender?.email,
                     avatar: null
                   },
-                  recipients: [], // سنضيف المستلمين لاحقاً
-                  date: item.message.created_at,
-                  folder: folder as "inbox" | "sent" | "drafts" | "trash" | "starred",
+                  recipients: [], // سيتم ملؤها لاحقاً
+                  date: message.created_at,
+                  folder: "inbox",
                   read: item.read_status === 'read',
-                  isStarred: item.message.is_starred || false,
-                  labels: [], // سنضيف التصنيفات لاحقاً
-                  attachments: attachmentsByMessage[item.message.id] || []
+                  isStarred: message.is_starred || false,
+                  labels: [],
+                  attachments: message.has_attachments ? [{ id: '1', name: 'مرفق', size: 0, type: '', path: '' }] : []
                 };
-              }).filter(Boolean) as Message[];
+              });
               
-              // جلب معلومات المستلمين لكل رسالة
+              // الحصول على المستلمين لكل رسالة
               for (const message of messages) {
-                const { data: recipientsData } = await supabase
+                const { data: recipients, error: recipientsError } = await supabase
                   .from('internal_message_recipients')
                   .select(`
                     recipient_id,
                     recipient_type,
-                    recipient:recipient_id (
-                      id,
-                      display_name,
-                      email
-                    )
+                    profiles!recipient_id (id, display_name, email)
                   `)
                   .eq('message_id', message.id);
-                  
-                if (recipientsData) {
-                  message.recipients = recipientsData.map(r => ({
-                    id: r.recipient_id,
-                    name: r.recipient?.display_name || 'غير معروف',
-                    type: r.recipient_type as 'to' | 'cc' | 'bcc',
-                    email: r.recipient?.email || ''
-                  }));
+                
+                if (!recipientsError && recipients) {
+                  message.recipients = recipients.map(rec => {
+                    const profile = rec.profiles;
+                    return {
+                      id: rec.recipient_id,
+                      name: profile?.display_name || "غير معروف",
+                      type: rec.recipient_type,
+                      email: profile?.email || ""
+                    };
+                  });
                 }
               }
             }
             break;
-            
-          case 'sent':
-            // جلب الرسائل المرسلة
-            const { data: sentData, error: sentError } = await supabase
+          }
+          
+          case 'sent': {
+            // الرسائل المرسلة من قبل المستخدم
+            const { data: sentMessages, error: sentError } = await supabase
               .from('internal_messages')
               .select(`
                 id,
                 subject,
                 content,
                 created_at,
+                is_draft,
                 is_starred,
-                has_attachments
+                has_attachments,
+                sender:profiles!sender_id (id, display_name, email)
               `)
               .eq('sender_id', userId)
               .eq('is_draft', false)
               .order('created_at', { ascending: false });
-              
-            if (sentError) throw sentError;
             
-            if (sentData) {
-              // جلب المرفقات للرسائل
-              const sentMessageIds = sentData.map(item => item.id);
-              
-              // جلب المرفقات لكل الرسائل دفعة واحدة
-              const { data: sentAttachmentsData } = await supabase
-                .from('internal_message_attachments')
-                .select('*')
-                .in('message_id', sentMessageIds);
-                
-              // تنظيم المرفقات حسب رسائلها
-              const sentAttachmentsByMessage: Record<string, any[]> = {};
-              sentAttachmentsData?.forEach(attachment => {
-                if (!sentAttachmentsByMessage[attachment.message_id]) {
-                  sentAttachmentsByMessage[attachment.message_id] = [];
-                }
-                sentAttachmentsByMessage[attachment.message_id].push({
-                  id: attachment.id,
-                  name: attachment.file_name,
-                  size: attachment.file_size,
-                  type: attachment.file_type,
-                  path: attachment.file_path
-                });
-              });
-              
-              // جلب معلومات بيانات المستخدم الحالي كمرسل
-              const { data: senderData } = await supabase
-                .from('profiles')
-                .select('id, display_name, email')
-                .eq('id', userId)
-                .single();
-              
-              // تحويل البيانات إلى الشكل المطلوب
-              messages = await Promise.all(sentData.map(async (item) => {
-                // جلب المستلمين لهذه الرسالة
-                const { data: sentRecipientsData } = await supabase
+            if (sentError) {
+              console.error("Error fetching sent messages:", sentError);
+              throw sentError;
+            }
+            
+            if (sentMessages && sentMessages.length > 0) {
+              messages = await Promise.all(sentMessages.map(async (message) => {
+                // الحصول على المستلمين للرسالة
+                const { data: recipients, error: recipientsError } = await supabase
                   .from('internal_message_recipients')
                   .select(`
                     recipient_id,
                     recipient_type,
-                    recipient:recipient_id (
-                      id,
-                      display_name,
-                      email
-                    )
+                    profiles!recipient_id (id, display_name, email)
                   `)
-                  .eq('message_id', item.id);
+                  .eq('message_id', message.id);
+                
+                let recipientsList = [];
+                if (!recipientsError && recipients) {
+                  recipientsList = recipients.map(rec => {
+                    const profile = rec.profiles;
+                    return {
+                      id: rec.recipient_id,
+                      name: profile?.display_name || "غير معروف",
+                      type: rec.recipient_type,
+                      email: profile?.email || ""
+                    };
+                  });
+                }
+
+                const sender = Array.isArray(message.sender) ? message.sender[0] : message.sender;
                 
                 return {
-                  id: item.id,
-                  subject: item.subject || 'بدون موضوع',
-                  content: item.content || '',
+                  id: message.id,
+                  subject: message.subject || "بدون موضوع",
+                  content: message.content || "",
                   sender: {
-                    id: userId,
-                    name: senderData?.display_name || 'أنا',
-                    email: senderData?.email || '',
+                    id: sender?.id || "",
+                    name: sender?.display_name || "غير معروف",
+                    email: sender?.email,
                     avatar: null
                   },
-                  recipients: sentRecipientsData?.map(r => ({
-                    id: r.recipient_id,
-                    name: r.recipient?.display_name || 'غير معروف',
-                    type: r.recipient_type as 'to' | 'cc' | 'bcc',
-                    email: r.recipient?.email || ''
-                  })) || [],
-                  date: item.created_at,
-                  folder: folder as "inbox" | "sent" | "drafts" | "trash" | "starred",
-                  read: true, // الرسائل المرسلة دائماً مقروءة
-                  isStarred: item.is_starred || false,
-                  labels: [], // سنضيف التصنيفات لاحقاً
-                  attachments: sentAttachmentsByMessage[item.id] || []
+                  recipients: recipientsList,
+                  date: message.created_at,
+                  folder: "sent",
+                  read: true, // الرسائل المرسلة تعتبر مقروءة دائماً
+                  isStarred: message.is_starred || false,
+                  labels: [],
+                  attachments: message.has_attachments ? [{ id: '1', name: 'مرفق', size: 0, type: '', path: '' }] : []
                 };
               }));
             }
             break;
-            
-          case 'drafts':
-            // جلب المسودات
-            const { data: draftsData, error: draftsError } = await supabase
+          }
+          
+          case 'drafts': {
+            // المسودات (الرسائل غير المرسلة)
+            const { data: drafts, error: draftsError } = await supabase
               .from('internal_messages')
               .select(`
                 id,
                 subject,
                 content,
                 created_at,
-                updated_at,
                 is_starred,
-                has_attachments
+                has_attachments,
+                sender:profiles!sender_id (id, display_name, email)
               `)
               .eq('sender_id', userId)
               .eq('is_draft', true)
-              .order('updated_at', { ascending: false });
-              
-            if (draftsError) throw draftsError;
+              .order('created_at', { ascending: false });
             
-            if (draftsData) {
-              // جلب المرفقات للمسودات
-              const draftIds = draftsData.map(item => item.id);
-              
-              // جلب المرفقات لكل المسودات دفعة واحدة
-              const { data: draftAttachmentsData } = await supabase
-                .from('internal_message_attachments')
-                .select('*')
-                .in('message_id', draftIds);
-                
-              // تنظيم المرفقات حسب مسوداتها
-              const draftAttachmentsByMessage: Record<string, any[]> = {};
-              draftAttachmentsData?.forEach(attachment => {
-                if (!draftAttachmentsByMessage[attachment.message_id]) {
-                  draftAttachmentsByMessage[attachment.message_id] = [];
-                }
-                draftAttachmentsByMessage[attachment.message_id].push({
-                  id: attachment.id,
-                  name: attachment.file_name,
-                  size: attachment.file_size,
-                  type: attachment.file_type,
-                  path: attachment.file_path
-                });
-              });
-              
-              // جلب معلومات بيانات المستخدم الحالي كمرسل
-              const { data: draftSenderData } = await supabase
-                .from('profiles')
-                .select('id, display_name, email')
-                .eq('id', userId)
-                .single();
-              
-              // تحويل البيانات إلى الشكل المطلوب
-              messages = await Promise.all(draftsData.map(async (item) => {
-                // جلب المستلمين لهذه المسودة
-                const { data: draftRecipientsData } = await supabase
-                  .from('internal_message_recipients')
-                  .select(`
-                    recipient_id,
-                    recipient_type,
-                    recipient:recipient_id (
-                      id,
-                      display_name,
-                      email
-                    )
-                  `)
-                  .eq('message_id', item.id);
+            if (draftsError) {
+              console.error("Error fetching draft messages:", draftsError);
+              throw draftsError;
+            }
+            
+            if (drafts && drafts.length > 0) {
+              messages = drafts.map(message => {
+                const sender = Array.isArray(message.sender) ? message.sender[0] : message.sender;
                 
                 return {
-                  id: item.id,
-                  subject: item.subject || 'بدون موضوع',
-                  content: item.content || '',
+                  id: message.id,
+                  subject: message.subject || "مسودة",
+                  content: message.content || "",
                   sender: {
-                    id: userId,
-                    name: draftSenderData?.display_name || 'أنا',
-                    email: draftSenderData?.email || '',
+                    id: sender?.id || "",
+                    name: sender?.display_name || "غير معروف",
+                    email: sender?.email,
                     avatar: null
                   },
-                  recipients: draftRecipientsData?.map(r => ({
-                    id: r.recipient_id,
-                    name: r.recipient?.display_name || 'غير معروف',
-                    type: r.recipient_type as 'to' | 'cc' | 'bcc',
-                    email: r.recipient?.email || ''
-                  })) || [],
-                  date: item.updated_at || item.created_at,
-                  folder: folder as "inbox" | "sent" | "drafts" | "trash" | "starred",
+                  recipients: [], // المسودات قد لا يكون لها مستلمون بعد
+                  date: message.created_at,
+                  folder: "drafts",
                   read: true,
-                  isStarred: item.is_starred || false,
+                  isStarred: message.is_starred || false,
                   labels: [],
-                  attachments: draftAttachmentsByMessage[item.id] || []
+                  attachments: message.has_attachments ? [{ id: '1', name: 'مرفق', size: 0, type: '', path: '' }] : []
                 };
-              }));
+              });
             }
             break;
-            
-          case 'trash':
-            // جلب الرسائل المحذوفة (الموجودة في المهملات)
-            const { data: trashData, error: trashError } = await supabase
+          }
+          
+          case 'trash': {
+            // الرسائل المحذوفة (سلة المهملات)
+            const { data: deletedMessages, error: trashError } = await supabase
               .from('internal_message_recipients')
               .select(`
                 message_id,
                 read_status,
-                read_at,
-                recipient_type,
-                message:message_id (
+                internal_messages (
                   id,
                   subject,
                   content,
@@ -328,127 +235,186 @@ export const useMailboxMessages = (folder: string) => {
                   created_at,
                   is_starred,
                   has_attachments,
-                  sender:sender_id (
-                    id, 
-                    display_name,
-                    email
-                  )
+                  sender:profiles!sender_id (id, display_name, email)
                 )
               `)
               .eq('recipient_id', userId)
               .eq('is_deleted', true)
-              .order('message_id.created_at', { ascending: false });
-              
-            if (trashError) throw trashError;
+              .order('message_id', { ascending: false });
             
-            if (trashData) {
-              // تحويل البيانات إلى الشكل المطلوب
-              messages = trashData.map(item => {
-                if (!item.message) return null;
+            if (trashError) {
+              console.error("Error fetching trash messages:", trashError);
+              throw trashError;
+            }
+            
+            if (deletedMessages && deletedMessages.length > 0) {
+              messages = deletedMessages.map(item => {
+                const message = item.internal_messages;
+                const sender = Array.isArray(message.sender) ? message.sender[0] : message.sender;
                 
                 return {
-                  id: item.message.id,
-                  subject: item.message.subject || 'بدون موضوع',
-                  content: item.message.content || '',
+                  id: message.id,
+                  subject: message.subject || "بدون موضوع",
+                  content: message.content || "",
                   sender: {
-                    id: item.message.sender?.id || '',
-                    name: item.message.sender?.display_name || 'غير معروف',
-                    email: item.message.sender?.email || '',
+                    id: sender?.id || "",
+                    name: sender?.display_name || "غير معروف",
+                    email: sender?.email,
                     avatar: null
                   },
-                  recipients: [], // سنضيفها لاحقًا إذا لزم الأمر
-                  date: item.message.created_at,
-                  folder: folder as "inbox" | "sent" | "drafts" | "trash" | "starred",
+                  recipients: [], // سيتم ملؤها لاحقاً إذا لزم الأمر
+                  date: message.created_at,
+                  folder: "trash",
                   read: item.read_status === 'read',
-                  isStarred: item.message.is_starred || false,
+                  isStarred: message.is_starred || false,
                   labels: [],
-                  attachments: []
+                  attachments: message.has_attachments ? [{ id: '1', name: 'مرفق', size: 0, type: '', path: '' }] : []
                 };
-              }).filter(Boolean) as Message[];
+              });
             }
             break;
-            
-          case 'starred':
-            // جلب الرسائل المميزة بنجمة
-            // البريد الوارد المميز بنجمة
-            const { data: starredInboxData, error: starredInboxError } = await supabase
+          }
+          
+          case 'starred': {
+            // الرسائل المميزة بنجمة
+            // أولاً نجلب الرسائل المرسلة المميزة بنجمة
+            const { data: starredSent, error: starredSentError } = await supabase
               .from('internal_messages')
               .select(`
                 id,
                 subject,
                 content,
-                sender_id,
                 created_at,
-                is_starred,
                 has_attachments,
-                sender:sender_id (
-                  id, 
-                  display_name,
-                  email
-                )
+                sender:profiles!sender_id (id, display_name, email)
               `)
+              .eq('sender_id', userId)
               .eq('is_starred', true)
               .order('created_at', { ascending: false });
-              
-            if (starredInboxError) throw starredInboxError;
             
-            if (starredInboxData) {
-              // البحث عن الرسائل المستلمة من بين الرسائل المميزة
-              const starredMessageIds = starredInboxData.map(item => item.id);
-              
-              // جلب سجلات المستلمين للرسائل المميزة
-              const { data: starredRecipientData } = await supabase
-                .from('internal_message_recipients')
-                .select(`
-                  message_id,
-                  recipient_id,
-                  recipient_type,
-                  read_status,
-                  is_deleted
-                `)
-                .in('message_id', starredMessageIds)
-                .eq('recipient_id', userId);
-                
-              // تنظيم بيانات المستلمين حسب الرسالة
-              const recipientsByMessageId: Record<string, any> = {};
-              starredRecipientData?.forEach(rec => {
-                recipientsByMessageId[rec.message_id] = rec;
-              });
-                
-              // تحويل البيانات إلى الشكل المطلوب
-              messages = starredInboxData
-                .filter(item => {
-                  // إعادة الرسائل التي تم إرسالها من المستخدم أو استلامها ولم يحذفها
-                  return item.sender_id === userId || 
-                    (recipientsByMessageId[item.id] && !recipientsByMessageId[item.id].is_deleted);
-                })
-                .map(item => {
-                  const isReceived = item.sender_id !== userId;
-                  
-                  return {
-                    id: item.id,
-                    subject: item.subject || 'بدون موضوع',
-                    content: item.content || '',
-                    sender: {
-                      id: item.sender?.id || '',
-                      name: item.sender?.display_name || 'غير معروف',
-                      email: item.sender?.email || '',
-                      avatar: null
-                    },
-                    recipients: [], // سنضيفها لاحقًا إذا لزم الأمر
-                    date: item.created_at,
-                    folder: folder as "inbox" | "sent" | "drafts" | "trash" | "starred",
-                    read: isReceived ? (recipientsByMessageId[item.id]?.read_status === 'read') : true,
-                    isStarred: true,
-                    labels: [],
-                    attachments: []
-                  };
-                });
+            if (starredSentError) {
+              console.error("Error fetching starred sent messages:", starredSentError);
+              throw starredSentError;
             }
-            break;
             
+            // ثم نجلب الرسائل المستلمة المميزة بنجمة
+            const { data: starredReceived, error: starredReceivedError } = await supabase
+              .from('internal_message_recipients')
+              .select(`
+                message_id,
+                read_status,
+                internal_messages!inner (
+                  id,
+                  subject,
+                  content,
+                  sender_id,
+                  created_at,
+                  is_starred,
+                  has_attachments,
+                  sender:profiles!sender_id (id, display_name, email)
+                )
+              `)
+              .eq('recipient_id', userId)
+              .eq('is_deleted', false)
+              .eq('internal_messages.is_starred', true)
+              .order('message_id', { ascending: false });
+            
+            if (starredReceivedError) {
+              console.error("Error fetching starred received messages:", starredReceivedError);
+              throw starredReceivedError;
+            }
+            
+            // دمج الرسائل المرسلة والمستلمة المميزة بنجمة
+            let starredMessages = [];
+            
+            if (starredSent && starredSent.length > 0) {
+              const sentMessages = await Promise.all(starredSent.map(async message => {
+                // الحصول على المستلمين للرسالة
+                const { data: recipients } = await supabase
+                  .from('internal_message_recipients')
+                  .select(`
+                    recipient_id,
+                    recipient_type,
+                    profiles!recipient_id (id, display_name, email)
+                  `)
+                  .eq('message_id', message.id);
+                
+                let recipientsList = [];
+                if (recipients) {
+                  recipientsList = recipients.map(rec => {
+                    const profile = rec.profiles;
+                    return {
+                      id: rec.recipient_id,
+                      name: profile?.display_name || "غير معروف",
+                      type: rec.recipient_type,
+                      email: profile?.email || ""
+                    };
+                  });
+                }
+
+                const sender = Array.isArray(message.sender) ? message.sender[0] : message.sender;
+                
+                return {
+                  id: message.id,
+                  subject: message.subject || "بدون موضوع",
+                  content: message.content || "",
+                  sender: {
+                    id: sender?.id || "",
+                    name: sender?.display_name || "غير معروف",
+                    email: sender?.email,
+                    avatar: null
+                  },
+                  recipients: recipientsList,
+                  date: message.created_at,
+                  folder: "sent",
+                  read: true,
+                  isStarred: true,
+                  labels: [],
+                  attachments: message.has_attachments ? [{ id: '1', name: 'مرفق', size: 0, type: '', path: '' }] : []
+                };
+              }));
+              
+              starredMessages = [...starredMessages, ...sentMessages];
+            }
+            
+            if (starredReceived && starredReceived.length > 0) {
+              const receivedMessages = starredReceived.map(item => {
+                const message = item.internal_messages;
+                const sender = Array.isArray(message.sender) ? message.sender[0] : message.sender;
+                
+                return {
+                  id: message.id,
+                  subject: message.subject || "بدون موضوع",
+                  content: message.content || "",
+                  sender: {
+                    id: sender?.id || "",
+                    name: sender?.display_name || "غير معروف",
+                    email: sender?.email,
+                    avatar: null
+                  },
+                  recipients: [], // سيتم ملؤها لاحقاً إذا لزم الأمر
+                  date: message.created_at,
+                  folder: "inbox",
+                  read: item.read_status === 'read',
+                  isStarred: true,
+                  labels: [],
+                  attachments: message.has_attachments ? [{ id: '1', name: 'مرفق', size: 0, type: '', path: '' }] : []
+                };
+              });
+              
+              starredMessages = [...starredMessages, ...receivedMessages];
+            }
+            
+            // ترتيب الرسائل المميزة بنجمة حسب التاريخ (الأحدث أولاً)
+            messages = starredMessages.sort((a, b) => 
+              new Date(b.date).getTime() - new Date(a.date).getTime()
+            );
+            
+            break;
+          }
+          
           default:
-            throw new Error("مجلد غير معروف");
+            break;
         }
         
         return messages;
@@ -457,6 +423,6 @@ export const useMailboxMessages = (folder: string) => {
         throw err;
       }
     },
-    staleTime: 30000, // تحديث كل 30 ثانية
+    staleTime: 30000, // تحديث البيانات كل 30 ثانية
   });
 };
