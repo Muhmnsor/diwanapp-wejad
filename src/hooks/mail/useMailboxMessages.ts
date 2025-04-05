@@ -15,32 +15,29 @@ export const useMailboxMessages = (folder: string) => {
         const userId = user.data.user.id;
         
         // جلب الرسائل حسب نوع المجلد
-        if (folder === "inbox") {
-          // البريد الوارد
-          const { data: messages, error } = await supabase
-            .from('internal_message_recipients')
-            .select(`
-              id,
-              message_id,
-              read_status,
-              message:message_id (
-                id,
-                subject,
-                content,
-                sender_id,
-                created_at,
-                is_starred,
-                has_attachments,
-                sender:profiles!sender_id (
-                  id, 
-                  display_name, 
-                  email
-                )
-              )
-            `)
-            .eq('recipient_id', userId)
-            .eq('is_deleted', false)
-            .order('id', { ascending: false });
+if (folder === "inbox") {
+  // البريد الوارد
+  const { data: messages, error } = await supa
+    .from('internal_message_recipients')
+    .select(`
+      internal_messages!inner (
+        id,
+        subject,
+        content,
+        created_at,
+        is_starred,
+        has_attachments,
+        sender:profiles!sender_id (
+          id, 
+          display_name,
+          email
+        )
+      ),
+      read_status
+    `)
+    .eq('recipient_id', userId)
+    .eq('is_deleted', false)
+    .order('created_at', { ascending: false });
           
           if (error) {
             console.error("Error fetching inbox messages:", error);
