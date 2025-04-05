@@ -13,6 +13,8 @@ import { useMeetingMinutes, useSaveMeetingMinutes, MeetingMinutes } from "@/hook
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { useAuthStore } from "@/store/refactored-auth";
+import { CalendarDays, Clock, MapPin, Link2, Users, FolderOpen, User as UserIcon } from "lucide-react";
+
 interface MeetingMinutesTabProps {
   meetingId: string;
 }
@@ -136,29 +138,123 @@ export const MeetingMinutesTab: React.FC<MeetingMinutesTabProps> = ({
       <CardContent>
         <div className="space-y-6" dir="rtl">
           {/* Meeting Details Section */}
-          <section className="border rounded-md p-4 bg-gray-50">
-            <h3 className="text-lg font-medium mb-3">تفاصيل الاجتماع</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-500">عنوان الاجتماع</p>
-                <p className="font-medium">{meeting?.title}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">التاريخ والوقت</p>
-                <p className="font-medium">
-                  {meeting?.date} - {meeting?.start_time} (لمدة {meeting?.duration} دقيقة)
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">المكان</p>
-                <p className="font-medium">{meeting?.location || meeting?.meeting_link || "غير محدد"}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">حالة الاجتماع</p>
-                <p className="font-medium">{meeting?.meeting_status === 'scheduled' ? 'مجدول' : meeting?.meeting_status === 'in_progress' ? 'قيد التنفيذ' : meeting?.meeting_status === 'completed' ? 'مكتمل' : meeting?.meeting_status === 'cancelled' ? 'ملغى' : 'غير محدد'}</p>
-              </div>
-            </div>
-          </section>
+{/* Meeting Details Section */}
+<section className="border rounded-md p-4 bg-gray-50">
+  <h3 className="text-lg font-medium mb-4">تفاصيل الاجتماع</h3>
+  
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {/* العنوان */}
+    <div className="p-3 bg-white rounded-md shadow-sm border-r-2 border-primary">
+      <p className="text-sm text-gray-500 mb-1">عنوان الاجتماع</p>
+      <p className="font-medium text-gray-800">{meeting?.title}</p>
+    </div>
+    
+    {/* التاريخ والوقت */}
+    <div className="p-3 bg-white rounded-md shadow-sm border-r-2 border-indigo-400">
+      <div className="flex items-center gap-2">
+        <CalendarDays className="h-4 w-4 text-indigo-500" />
+        <p className="text-sm text-gray-500">التاريخ والوقت</p>
+      </div>
+      <p className="font-medium text-gray-800 mt-1">
+        {formatDateArabic ? formatDateArabic(meeting?.date) : meeting?.date} - {meeting?.start_time} 
+        <span className="text-gray-500 text-sm mr-1">(لمدة {meeting?.duration} دقيقة)</span>
+      </p>
+    </div>
+    
+    {/* المكان */}
+    {meeting?.location && (
+      <div className="p-3 bg-white rounded-md shadow-sm border-r-2 border-blue-400">
+        <div className="flex items-center gap-2">
+          <MapPin className="h-4 w-4 text-blue-500" />
+          <p className="text-sm text-gray-500">المكان</p>
+        </div>
+        <p className="font-medium text-gray-800 mt-1">{meeting.location}</p>
+      </div>
+    )}
+    
+    {/* رابط الاجتماع */}
+    {meeting?.meeting_link && (
+      <div className="p-3 bg-white rounded-md shadow-sm border-r-2 border-purple-400">
+        <div className="flex items-center gap-2">
+          <Link2 className="h-4 w-4 text-purple-500" />
+          <p className="text-sm text-gray-500">رابط الاجتماع</p>
+        </div>
+        <a href={meeting.meeting_link} target="_blank" rel="noopener noreferrer" 
+           className="font-medium text-blue-600 hover:underline mt-1 block">
+          فتح الرابط
+        </a>
+      </div>
+    )}
+    
+    {/* نوع الحضور */}
+    <div className="p-3 bg-white rounded-md shadow-sm border-r-2 border-pink-400">
+      <div className="flex items-center gap-2">
+        <Users className="h-4 w-4 text-pink-500" />
+        <p className="text-sm text-gray-500">نوع الحضور</p>
+      </div>
+      <p className="font-medium text-gray-800 mt-1">
+        {meeting?.attendance_type === "in_person" ? "حضوري" : 
+         meeting?.attendance_type === "virtual" ? "عن بُعد" : "مختلط"}
+      </p>
+    </div>
+    
+    {/* نوع الاجتماع */}
+    <div className="p-3 bg-white rounded-md shadow-sm border-r-2 border-yellow-400">
+      <div className="flex items-center gap-2">
+        <div className="h-4 w-4 text-yellow-500 flex items-center justify-center">
+          <span className="text-xs">⚙️</span>
+        </div>
+        <p className="text-sm text-gray-500">نوع الاجتماع</p>
+      </div>
+      <p className="font-medium text-gray-800 mt-1">
+        {meeting?.meeting_type === "board" ? "مجلس إدارة" : 
+         meeting?.meeting_type === "department" ? "قسم" : 
+         meeting?.meeting_type === "team" ? "فريق عمل" : 
+         meeting?.meeting_type === "committee" ? "لجنة" : 
+         meeting?.meeting_type || "غير محدد"}
+      </p>
+    </div>
+    
+    {/* حالة الاجتماع */}
+    <div className="p-3 bg-white rounded-md shadow-sm border-r-2 border-green-400">
+      <div className="flex items-center gap-2">
+        <Clock className="h-4 w-4 text-green-500" />
+        <p className="text-sm text-gray-500">حالة الاجتماع</p>
+      </div>
+      <p className="font-medium text-gray-800 mt-1">
+        {meeting?.meeting_status === 'scheduled' ? 'مجدول' : 
+         meeting?.meeting_status === 'in_progress' ? 'قيد التنفيذ' : 
+         meeting?.meeting_status === 'completed' ? 'مكتمل' : 
+         meeting?.meeting_status === 'cancelled' ? 'ملغى' : 'غير محدد'}
+      </p>
+    </div>
+    
+    {/* التصنيف/المجلد */}
+    {meeting?.folder_name && (
+      <div className="p-3 bg-white rounded-md shadow-sm border-r-2 border-amber-400">
+        <div className="flex items-center gap-2">
+          <FolderOpen className="h-4 w-4 text-amber-500" />
+          <p className="text-sm text-gray-500">التصنيف</p>
+        </div>
+        <p className="font-medium text-gray-800 mt-1">{meeting.folder_name}</p>
+      </div>
+    )}
+    
+    {/* منشئ الاجتماع */}
+    {meeting?.creator && (
+      <div className="p-3 bg-white rounded-md shadow-sm border-r-2 border-teal-400">
+        <div className="flex items-center gap-2">
+          <UserIcon className="h-4 w-4 text-teal-500" />
+          <p className="text-sm text-gray-500">منشئ الاجتماع</p>
+        </div>
+        <p className="font-medium text-gray-800 mt-1">
+          {meeting.creator.display_name || meeting.creator.email}
+        </p>
+      </div>
+    )}
+  </div>
+</section>
+
           
           {/* Participants Section */}
           
