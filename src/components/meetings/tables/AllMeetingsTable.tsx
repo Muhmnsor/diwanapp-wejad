@@ -14,7 +14,7 @@ import { Eye, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MeetingStatusBadge } from "../status/MeetingStatusBadge";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/dateUtils";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ClipboardList } from "lucide-react";
 
