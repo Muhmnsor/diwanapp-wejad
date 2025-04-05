@@ -2,7 +2,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useJournalEntries } from "@/hooks/accounting/useJournalEntries";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
 export const LatestTransactionsCard = () => {
@@ -49,7 +49,7 @@ export const LatestTransactionsCard = () => {
               <tbody>
                 {latestTransactions.map((transaction) => (
                   <tr key={transaction.id} className="border-b">
-                    <td className="py-3 px-2">{formatDate(transaction.date)}</td>
+                    <td className="py-3 px-2">{transaction.date}</td>
                     <td className="py-3 px-2">{transaction.reference_number || "-"}</td>
                     <td className="py-3 px-2 max-w-xs truncate">
                       {transaction.description}
