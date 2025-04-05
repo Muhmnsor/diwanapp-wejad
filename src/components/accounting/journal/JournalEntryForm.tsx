@@ -66,6 +66,10 @@ export const JournalEntryForm = ({ entry, onCancel, onSuccess }: JournalEntryFor
     if (field === 'account_id') {
       updatedItems[index][field] = value;
     } 
+    // For cost_center_id, handle "none" value specially
+    else if (field === 'cost_center_id') {
+      updatedItems[index][field] = value === "none" ? "" : value;
+    }
     // For amounts, ensure they are numbers
     else if (field === 'debit_amount' || field === 'credit_amount') {
       updatedItems[index][field] = parseFloat(value) || 0;
@@ -272,18 +276,18 @@ export const JournalEntryForm = ({ entry, onCancel, onSuccess }: JournalEntryFor
                   </td>
                   <td className="p-2">
                     <Select
-                      value={item.cost_center_id}
+                      value={item.cost_center_id || "none"}
                       onValueChange={(value) => handleItemChange(index, "cost_center_id", value)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="اختر مركز التكلفة" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">بدون مركز تكلفة</SelectItem>
-                       {costCentersError && <SelectItem value="" disabled>خطأ في تحميل مراكز التكلفة</SelectItem>}
-                       {!costCentersError && isLoadingCostCenters && <SelectItem value="" disabled>جاري التحميل...</SelectItem>}
+                        <SelectItem value="none">بدون مركز تكلفة</SelectItem>
+                       {costCentersError && <SelectItem value="error" disabled>خطأ في تحميل مراكز التكلفة</SelectItem>}
+                       {!costCentersError && isLoadingCostCenters && <SelectItem value="loading" disabled>جاري التحميل...</SelectItem>}
                        {!isLoadingCostCenters && Array.isArray(costCenters) && costCenters.length === 0 && (
-                          <SelectItem value="" disabled>لا توجد مراكز تكلفة</SelectItem>
+                          <SelectItem value="empty" disabled>لا توجد مراكز تكلفة</SelectItem>
                         )}
                         {Array.isArray(costCenters) && costCenters.map((costCenter) => (
                           <SelectItem key={costCenter.id} value={costCenter.id}>
