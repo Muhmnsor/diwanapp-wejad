@@ -1,49 +1,54 @@
 
 import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useBalanceSheet } from "@/hooks/accounting/useBalanceSheet";
 import { Button } from "@/components/ui/button";
-import { useAccounts } from "@/hooks/accounting/useAccounts";
-import { FileDown } from "lucide-react";
+import { Calendar as CalendarIcon, FileDown } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { ar } from 'date-fns/locale';
+import { cn } from "@/lib/utils";
 
 export const BalanceSheet = () => {
-  const { accounts, isLoading, error } = useAccounts();
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const { data, isLoading, error } = useBalanceSheet(selectedDate);
 
-  // تنظيم الحسابات حسب النوع
-  const assetAccounts = accounts?.filter(account => account.account_type === 'asset') || [];
-  const liabilityAccounts = accounts?.filter(account => account.account_type === 'liability') || [];
-  const equityAccounts = accounts?.filter(account => account.account_type === 'equity') || [];
+  const handleDateChange = (date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date);
+    }
+  };
 
-  // حساب إجماليات كل قسم (في الواقع، هذه البيانات ستأتي من خدمة API تقوم بحساب الأرصدة)
-  const totalAssets = assetAccounts.length ? 1000000 : 0; // بيانات وهمية للعرض
-  const totalLiabilities = liabilityAccounts.length ? 650000 : 0; // بيانات وهمية للعرض
-  const totalEquity = equityAccounts.length ? 350000 : 0; // بيانات وهمية للعرض
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('ar-SA', {
+      style: 'currency',
+      currency: 'SAR',
+      minimumFractionDigits: 2
+    }).format(amount);
+  };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-40">
-        <p>جاري تحميل البيانات...</p>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-right">الميزانية العمومية</CardTitle>
+          <CardDescription className="text-right">جاري تحميل البيانات...</CardDescription>
+        </CardHeader>
+      </Card>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-40">
-        <p className="text-red-500">حدث خطأ أثناء تحميل البيانات</p>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-right">الميزانية العمومية</CardTitle>
+          <CardDescription className="text-right text-red-500">
+            حدث خطأ أثناء تحميل البيانات
+          </CardDescription>
+        </CardHeader>
+      </Card>
     );
   }
 
@@ -51,121 +56,162 @@ export const BalanceSheet = () => {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle className="text-right">الميزانية العمومية</CardTitle>
-          <CardDescription className="text-right">
-            عرض الأصول والالتزامات وحقوق الملكية كما في تاريخ {selectedDate}
-          </CardDescription>
-        </div>
-        <div className="flex items-center gap-4">
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-3 py-1 border rounded-md"
-          />
           <Button variant="outline" size="sm">
-            <FileDown className="h-4 w-4 ml-2" />
-            تصدير
+            <FileDown className="ml-2 h-4 w-4" />
+            تصدير التقرير
           </Button>
         </div>
+        
+        <div>
+          <CardTitle className="text-right">الميزانية العمومية</CardTitle>
+          <CardDescription className="text-right">
+            بتاريخ {format(selectedDate, 'PPP', { locale: ar })}
+          </CardDescription>
+        </div>
+        
+        <div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="ml-auto h-8 gap-1">
+                <CalendarIcon className="h-4 w-4" />
+                <span>اختيار التاريخ</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={handleDateChange}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
       </CardHeader>
+      
       <CardContent>
-        <div className="space-y-8">
-          {/* قسم الأصول */}
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Assets Column */}
           <div>
-            <h3 className="text-xl font-bold mb-3">الأصول</h3>
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="assets">
-                <AccordionTrigger className="text-lg font-semibold">
-                  الأصول ({assetAccounts.length})
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-2">
-                      <span className="font-medium">الحساب</span>
-                      <span className="font-medium text-left">الرصيد</span>
-                    </div>
-                    {assetAccounts.map((account) => (
-                      <div key={account.id} className="grid grid-cols-2 hover:bg-gray-50 rounded p-1">
-                        <span>{account.name}</span>
-                        <span className="text-left">{(Math.random() * 100000).toFixed(2)} ريال</span>
-                      </div>
+            <h3 className="text-xl font-semibold mb-4 text-right">الأصول</h3>
+            <div className="space-y-6">
+              {/* Current Assets */}
+              <div className="rounded-md border">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-muted">
+                      <th className="text-right p-2 border-b">الحساب</th>
+                      <th className="text-left p-2 border-b">المبلغ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data?.assets.map(account => (
+                      <tr key={account.id} className="border-b">
+                        <td className="p-2 pr-4">
+                          {account.code} - {account.name}
+                        </td>
+                        <td className="p-2 text-left">
+                          {formatCurrency(account.balance)}
+                        </td>
+                      </tr>
                     ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-            <div className="flex justify-between py-2 mt-2 border-t font-bold">
-              <span>إجمالي الأصول</span>
-              <span>{totalAssets.toLocaleString()} ريال</span>
+                    {/* Total Row */}
+                    <tr className="bg-muted">
+                      <td className="p-2 pr-4 font-bold">إجمالي الأصول</td>
+                      <td className="p-2 text-left font-bold">
+                        {formatCurrency(data?.totalAssets || 0)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-
-          {/* قسم الالتزامات */}
+          
+          {/* Liabilities and Equity Column */}
           <div>
-            <h3 className="text-xl font-bold mb-3">الالتزامات</h3>
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="liabilities">
-                <AccordionTrigger className="text-lg font-semibold">
-                  الالتزامات ({liabilityAccounts.length})
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-2">
-                      <span className="font-medium">الحساب</span>
-                      <span className="font-medium text-left">الرصيد</span>
-                    </div>
-                    {liabilityAccounts.map((account) => (
-                      <div key={account.id} className="grid grid-cols-2 hover:bg-gray-50 rounded p-1">
-                        <span>{account.name}</span>
-                        <span className="text-left">{(Math.random() * 50000).toFixed(2)} ريال</span>
-                      </div>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-            <div className="flex justify-between py-2 mt-2 border-t font-bold">
-              <span>إجمالي الالتزامات</span>
-              <span>{totalLiabilities.toLocaleString()} ريال</span>
-            </div>
-          </div>
-
-          {/* قسم حقوق الملكية */}
-          <div>
-            <h3 className="text-xl font-bold mb-3">حقوق الملكية</h3>
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="equity">
-                <AccordionTrigger className="text-lg font-semibold">
-                  حقوق الملكية ({equityAccounts.length})
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-2">
-                      <span className="font-medium">الحساب</span>
-                      <span className="font-medium text-left">الرصيد</span>
-                    </div>
-                    {equityAccounts.map((account) => (
-                      <div key={account.id} className="grid grid-cols-2 hover:bg-gray-50 rounded p-1">
-                        <span>{account.name}</span>
-                        <span className="text-left">{(Math.random() * 70000).toFixed(2)} ريال</span>
-                      </div>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-            <div className="flex justify-between py-2 mt-2 border-t font-bold">
-              <span>إجمالي حقوق الملكية</span>
-              <span>{totalEquity.toLocaleString()} ريال</span>
-            </div>
-          </div>
-
-          {/* الإجمالي */}
-          <div className="py-4 mt-4 border-t-2 border-black">
-            <div className="flex justify-between text-xl font-bold">
-              <span>إجمالي الالتزامات وحقوق الملكية</span>
-              <span>{(totalLiabilities + totalEquity).toLocaleString()} ريال</span>
+            <div className="space-y-6">
+              {/* Liabilities */}
+              <div>
+                <h3 className="text-xl font-semibold mb-4 text-right">الالتزامات</h3>
+                <div className="rounded-md border">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-muted">
+                        <th className="text-right p-2 border-b">الحساب</th>
+                        <th className="text-left p-2 border-b">المبلغ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data?.liabilities.map(account => (
+                        <tr key={account.id} className="border-b">
+                          <td className="p-2 pr-4">
+                            {account.code} - {account.name}
+                          </td>
+                          <td className="p-2 text-left">
+                            {formatCurrency(account.balance)}
+                          </td>
+                        </tr>
+                      ))}
+                      {/* Total Row */}
+                      <tr className="bg-muted">
+                        <td className="p-2 pr-4 font-bold">إجمالي الالتزامات</td>
+                        <td className="p-2 text-left font-bold">
+                          {formatCurrency(data?.totalLiabilities || 0)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              
+              {/* Equity */}
+              <div>
+                <h3 className="text-xl font-semibold mb-4 text-right">حقوق الملكية</h3>
+                <div className="rounded-md border">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-muted">
+                        <th className="text-right p-2 border-b">الحساب</th>
+                        <th className="text-left p-2 border-b">المبلغ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data?.equity.map(account => (
+                        <tr key={account.id} className="border-b">
+                          <td className="p-2 pr-4">
+                            {account.code} - {account.name}
+                          </td>
+                          <td className="p-2 text-left">
+                            {formatCurrency(account.balance)}
+                          </td>
+                        </tr>
+                      ))}
+                      {/* Total Row */}
+                      <tr className="bg-muted">
+                        <td className="p-2 pr-4 font-bold">إجمالي حقوق الملكية</td>
+                        <td className="p-2 text-left font-bold">
+                          {formatCurrency(data?.totalEquity || 0)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              
+              {/* Total Liabilities and Equity */}
+              <div className="rounded-md border bg-muted">
+                <table className="w-full">
+                  <tbody>
+                    <tr>
+                      <td className="p-3 pr-4 font-bold text-lg">إجمالي الالتزامات وحقوق الملكية</td>
+                      <td className="p-3 text-left font-bold text-lg">
+                        {formatCurrency((data?.totalLiabilities || 0) + (data?.totalEquity || 0))}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>

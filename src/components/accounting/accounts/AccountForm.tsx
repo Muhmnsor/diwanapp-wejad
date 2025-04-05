@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,9 +12,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useAccountsOperations } from "@/hooks/accounting/useAccountsOperations";
 import { useAccounts } from "@/hooks/accounting/useAccounts";
-import { useQueryClient } from "@tanstack/react-query";
 
 interface AccountFormProps {
   account?: any;
@@ -25,91 +23,63 @@ interface AccountFormProps {
 
 export const AccountForm = ({ account, onCancel, onSuccess }: AccountFormProps) => {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const { accounts } = useAccounts();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { createAccount, updateAccount } = useAccountsOperations();
 
-  const isEditing = !!account;
-
-  const { register, handleSubmit, formState: { errors }, reset, watch } = useForm({
-    defaultValues: {
-      code: account?.code || "",
-      name: account?.name || "",
-      account_type: account?.account_type || "asset",
-      parent_id: account?.parent_id || "",
-      notes: account?.notes || "",
-      is_active: account?.is_active !== undefined ? account.is_active : true,
-    },
+  const [formData, setFormData] = useState({
+    code: account?.code || "",
+    name: account?.name || "",
+    account_type: account?.account_type || "asset",
+    parent_id: account?.parent_id || "",
+    is_active: account?.is_active !== undefined ? account.is_active : true,
+    notes: account?.notes || "",
   });
 
-  // تصفية الحسابات لاختيار الحساب الرئيسي
-  const filteredAccounts = accounts?.filter(a => a.id !== account?.id) || [];
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const onSubmit = async (data: any) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.code || !formData.name || !formData.account_type) {
+      toast({
+        title: "خطأ في النموذج",
+        description: "يرجى ملء جميع الحقول المطلوبة",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
+
     try {
-      // حساب مستوى الحساب (Level)
-      let level = 0;
-      if (data.parent_id) {
-        const parentAccount = accounts?.find(a => a.id === data.parent_id);
-        if (parentAccount) {
-          level = parentAccount.level + 1;
-        }
-      }
-
-      if (isEditing) {
-        // تحديث حساب موجود
-        const { error } = await supabase
-          .from("accounting_accounts")
-          .update({
-            code: data.code,
-            name: data.name,
-            account_type: data.account_type,
-            parent_id: data.parent_id || null,
-            level,
-            notes: data.notes,
-            is_active: data.is_active,
-          })
-          .eq("id", account.id);
-
-        if (error) {
-          throw error;
-        }
-
+      if (account?.id) {
+        await updateAccount(account.id, formData);
         toast({
-          title: "تم تحديث الحساب بنجاح",
+          title: "تم تحديث الحساب",
+          description: "تم تحديث بيانات الحساب بنجاح",
         });
       } else {
-        // إنشاء حساب جديد
-        const { error } = await supabase
-          .from("accounting_accounts")
-          .insert({
-            code: data.code,
-            name: data.name,
-            account_type: data.account_type,
-            parent_id: data.parent_id || null,
-            level,
-            notes: data.notes,
-            is_active: data.is_active,
-          });
-
-        if (error) {
-          throw error;
-        }
-
+        await createAccount(formData);
         toast({
-          title: "تم إنشاء الحساب بنجاح",
+          title: "تم إنشاء الحساب",
+          description: "تم إضافة الحساب الجديد بنجاح",
         });
       }
-
-      // تحديث بيانات الحسابات
-      queryClient.invalidateQueries({ queryKey: ["accounting_accounts"] });
-      reset();
       onSuccess();
-    } catch (error: any) {
+    } catch (error) {
+      console.error("Error saving account:", error);
       toast({
-        title: "حدث خطأ",
-        description: error.message,
+        title: "خطأ في العملية",
+        description: "حدث خطأ أثناء حفظ البيانات",
         variant: "destructive",
       });
     } finally {
@@ -117,50 +87,45 @@ export const AccountForm = ({ account, onCancel, onSuccess }: AccountFormProps) 
     }
   };
 
+  // Filter accounts to get potential parents (exclude child accounts to prevent circular references)
+  const parentAccounts = accounts.filter(a => 
+    a.level <= 2 && (!account || a.id !== account.id)
+  );
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="flex flex-col space-y-2">
+    <form onSubmit={handleSubmit} className="space-y-4 rtl">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
           <Label htmlFor="code">رمز الحساب</Label>
           <Input
             id="code"
-            {...register("code", {
-              required: "رمز الحساب مطلوب",
-              pattern: {
-                value: /^[0-9]+$/,
-                message: "يرجى إدخال رمز رقمي",
-              },
-            })}
+            name="code"
+            placeholder="1100"
+            value={formData.code}
+            onChange={handleChange}
+            dir="ltr"
           />
-          {errors.code && (
-            <p className="text-sm text-red-500">{errors.code.message as string}</p>
-          )}
         </div>
-
-        <div className="flex flex-col space-y-2">
+        <div className="space-y-2">
           <Label htmlFor="name">اسم الحساب</Label>
           <Input
             id="name"
-            {...register("name", {
-              required: "اسم الحساب مطلوب",
-            })}
+            name="name"
+            placeholder="اسم الحساب"
+            value={formData.name}
+            onChange={handleChange}
           />
-          {errors.name && (
-            <p className="text-sm text-red-500">{errors.name.message as string}</p>
-          )}
         </div>
+      </div>
 
-        <div className="flex flex-col space-y-2">
-          <Label htmlFor="account_type">نوع الحساب</Label>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>نوع الحساب</Label>
           <Select
-            defaultValue={account?.account_type || "asset"}
-            onValueChange={(value) => {
-              register("account_type").onChange({
-                target: { value, name: "account_type" },
-              });
-            }}
+            value={formData.account_type}
+            onValueChange={(value) => handleSelectChange("account_type", value)}
           >
-            <SelectTrigger id="account_type">
+            <SelectTrigger>
               <SelectValue placeholder="اختر نوع الحساب" />
             </SelectTrigger>
             <SelectContent>
@@ -172,53 +137,49 @@ export const AccountForm = ({ account, onCancel, onSuccess }: AccountFormProps) 
             </SelectContent>
           </Select>
         </div>
-
-        <div className="flex flex-col space-y-2">
-          <Label htmlFor="parent_id">الحساب الرئيسي</Label>
+        
+        <div className="space-y-2">
+          <Label>الحساب الرئيسي</Label>
           <Select
-            defaultValue={account?.parent_id || ""}
-            onValueChange={(value) => {
-              register("parent_id").onChange({
-                target: { value, name: "parent_id" },
-              });
-            }}
+            value={formData.parent_id || ""}
+            onValueChange={(value) => handleSelectChange("parent_id", value)}
           >
-            <SelectTrigger id="parent_id">
+            <SelectTrigger>
               <SelectValue placeholder="اختر الحساب الرئيسي" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">- بدون حساب رئيسي -</SelectItem>
-              {filteredAccounts.map((account) => (
-                <SelectItem key={account.id} value={account.id}>
-                  {account.code} - {account.name}
+              <SelectItem value="">بدون حساب رئيسي</SelectItem>
+              {parentAccounts.map((parent) => (
+                <SelectItem key={parent.id} value={parent.id}>
+                  {parent.code} - {parent.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-
-        <div className="flex flex-col space-y-2 md:col-span-2">
-          <Label htmlFor="notes">ملاحظات</Label>
-          <Textarea id="notes" {...register("notes")} />
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            id="is_active"
-            className="h-4 w-4 rounded border-gray-300"
-            {...register("is_active")}
-          />
-          <Label htmlFor="is_active" className="mr-2">حساب نشط</Label>
-        </div>
       </div>
 
-      <div className="flex justify-end gap-4">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+      <div className="space-y-2">
+        <Label htmlFor="notes">ملاحظات</Label>
+        <Textarea
+          id="notes"
+          name="notes"
+          placeholder="ملاحظات إضافية (اختياري)"
+          value={formData.notes || ""}
+          onChange={handleChange}
+        />
+      </div>
+
+      <div className="flex justify-end gap-2 mt-6">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+        >
           إلغاء
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "جاري الحفظ..." : isEditing ? "تحديث الحساب" : "إضافة الحساب"}
+          {isSubmitting ? "جاري الحفظ..." : account ? "تحديث الحساب" : "إضافة الحساب"}
         </Button>
       </div>
     </form>
