@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export const GeneralLedger = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [accountType, setAccountType] = useState<string>("all");
+  const [accountType, setAccountType] = useState<string | undefined>(undefined);
   const [dateRange, setDateRange] = useState<{
     from: Date;
     to: Date;
@@ -29,7 +29,7 @@ export const GeneralLedger = () => {
       entry.account_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
       entry.account_name.toLowerCase().includes(searchTerm.toLowerCase());
       
-    const matchesType = !accountType || accountType === "all" || entry.account_type === accountType;
+    const matchesType = accountType === "all" || entry.account_type === accountType;
     
     return matchesSearch && matchesType;
   });
@@ -57,12 +57,12 @@ export const GeneralLedger = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <Select value={accountType || ""} onValueChange={setAccountType}>
+            <Select value={accountType || "all"} onValueChange={setAccountType}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="نوع الحساب" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">كل الحسابات</SelectItem>
+                <SelectItem value="all">كل الحسابات</SelectItem>
                 <SelectItem value="asset">الأصول</SelectItem>
                 <SelectItem value="liability">الالتزامات</SelectItem>
                 <SelectItem value="equity">حقوق الملكية</SelectItem>
@@ -72,7 +72,7 @@ export const GeneralLedger = () => {
             </Select>
             <Button variant="outline" size="icon" onClick={() => {
               setSearchTerm("");
-              setAccountType(undefined);
+              setAccountType("all");
             }}>
               <Filter className="h-4 w-4" />
             </Button>
