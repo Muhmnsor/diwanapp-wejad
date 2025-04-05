@@ -94,6 +94,12 @@ export const InternalMailApp: React.FC = () => {
     refetchCounts();
   };
 
+  useEffect(() => {
+    console.log("Active folder:", activeFolder);
+    console.log("Messages:", messages);
+    console.log("Counts:", counts);
+  }, [activeFolder, messages, counts]);
+
   return (
     <div className="flex flex-col h-full">
       <MailHeader 

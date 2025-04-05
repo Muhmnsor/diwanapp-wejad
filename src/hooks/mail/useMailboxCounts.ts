@@ -60,26 +60,23 @@ export const useMailboxCounts = () => {
           
         if (trashError) throw trashError;
         
-        // عدد الرسائل المميزة بنجمة
-        const { count: starredInboxCount, error: starredInboxError } = await supabase
-          .from('internal_message_recipients')
-          .select('message_id!inner(is_starred)', { count: 'exact', head: true })
-          .eq('recipient_id', userId)
-          .eq('is_deleted', false)
-          .eq('message_id.is_starred', true);
-          
-        if (starredInboxError) throw starredInboxError;
-        
-        const { count: starredSentCount, error: starredSentError } = await supabase
+        // عدد الرسائل المميزة بنجمة (من البريد الوارد والصادر)
+        const { count: starredMessagesCount, error: starredError } = await supabase
           .from('internal_messages')
           .select('*', { count: 'exact', head: true })
-          .eq('sender_id', userId)
-          .eq('is_draft', false)
-          .eq('is_starred', true);
+          .eq('is_starred', true)
+          .or(`sender_id.eq.${userId},internal_message_recipients.recipient_id.eq.${userId}`);
           
-        if (starredSentError) throw starredSentError;
+        if (starredError) throw starredError;
         
-        const starredCount = (starredInboxCount || 0) + (starredSentCount || 0);
+        console.log("Mail counts retrieved:", {
+          inbox: inboxCount || 0,
+          unread: unreadCount || 0,
+          sent: sentCount || 0,
+          drafts: draftsCount || 0,
+          trash: trashCount || 0,
+          starred: starredMessagesCount || 0
+        });
         
         return {
           inbox: inboxCount || 0,
@@ -87,11 +84,11 @@ export const useMailboxCounts = () => {
           sent: sentCount || 0,
           drafts: draftsCount || 0,
           trash: trashCount || 0,
-          starred: starredCount || 0
+          starred: starredMessagesCount || 0
         };
       } catch (err) {
         console.error("Error fetching mailbox counts:", err);
-        throw { 
+        return { 
           inbox: 0, 
           unread: 0, 
           sent: 0, 
