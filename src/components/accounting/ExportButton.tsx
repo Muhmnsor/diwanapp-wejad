@@ -87,6 +87,7 @@ export const ExportButton = ({ data, filename }: ExportButtonProps) => {
   };
 
   return (
+  <TooltipProvider>
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
@@ -103,5 +104,5 @@ export const ExportButton = ({ data, filename }: ExportButtonProps) => {
         <p>تصدير البيانات إلى ملف Excel</p>
       </TooltipContent>
     </Tooltip>
-  );
-};
+  </TooltipProvider>
+);
