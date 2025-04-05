@@ -141,40 +141,111 @@ export const JournalEntryForm = ({ entry, onCancel, onSuccess }: JournalEntryFor
 
     setIsSubmitting(true);
 
-    try {
-      // Clean up items for submission (remove _tempId)
-      const cleanedItems = formData.items.map(({ _tempId, ...item }) => ({
-        ...item,
-        debit_amount: Number(item.debit_amount),
-        credit_amount: Number(item.credit_amount),
-      }));
-      
-      const submissionData = {
-        ...formData,
-        items: cleanedItems,
-      };
-      
-      // Here we would normally have API calls to create or update
-      // For now, just simulate success
-      setTimeout(() => {
-        toast({
-          title: entry ? "تم تحديث القيد" : "تم إنشاء القيد",
-          description: entry ? "تم تحديث القيد المحاسبي بنجاح" : "تم إنشاء القيد المحاسبي بنجاح",
-        });
-        onSuccess();
-        setIsSubmitting(false);
-      }, 1000);
-    } catch (error) {
-      console.error("Error saving journal entry:", error);
-      toast({
-        title: "خطأ في العملية",
-        description: "حدث خطأ أثناء حفظ القيد المحاسبي",
-        variant: "destructive",
-      });
-      setIsSubmitting(false);
-    }
+try {
+  // Clean up items for submission (remove _tempId)
+  const cleanedItems = formData.items.map(({ _tempId, ...item }) => ({
+    ...item,
+    debit_amount: Number(item.debit_amount),
+    credit_amount: Number(item.credit_amount),
+  }));
+  
+  const submissionData = {
+    ...formData,
+    items: cleanedItems,
+    total_amount: totalDebit, // إضافة المبلغ الإجمالي
   };
-
+  // إذا كان هذا تحديثًا لقيد موجود
+  if (entry?.id) {
+    // تحديث القيد الرئيسي
+    const { data: updatedEntry, error: updateError } = await supabase
+      .from('accounting_journal_entries')
+      .update({
+        date: formData.date,
+        reference_number: formData.reference_number,
+        description: formData.description,
+        status: formData.status,
+        total_amount: totalDebit,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', entry.id)
+      .select()
+      .single();
+      
+    if (updateError) throw updateError;
+    
+    // حذف البنود القديمة
+    const { error: deleteItemsError } = await supabase
+      .from('accounting_journal_items')
+      .delete()
+      .eq('journal_entry_id', entry.id);
+      
+    if (deleteItemsError) throw deleteItemsError;
+    
+    // إضافة البنود الجديدة
+    const { error: insertItemsError } = await supabase
+      .from('accounting_journal_items')
+      .insert(
+        cleanedItems.map(item => ({
+          ...item,
+          journal_entry_id: entry.id
+        }))
+      );
+      
+    if (insertItemsError) throw insertItemsError;
+      
+    toast({
+      title: "تم تحديث القيد",
+      description: "تم تحديث القيد المحاسبي بنجاح",
+    });
+  } 
+  // إذا كان هذا قيدًا جديدًا
+  else {
+    // إنشاء القيد الرئيسي أولًا
+    const { data: newEntry, error: insertError } = await supabase
+      .from('accounting_journal_entries')
+      .insert({
+        date: formData.date,
+        reference_number: formData.reference_number,
+        description: formData.description,
+        status: formData.status,
+        total_amount: totalDebit,
+        created_by: (await supabase.auth.getUser()).data.user?.id
+      })
+      .select()
+      .single();
+      
+    if (insertError) throw insertError;
+    
+    // إضافة البنود
+    const { error: insertItemsError } = await supabase
+      .from('accounting_journal_items')
+      .insert(
+        cleanedItems.map(item => ({
+          ...item,
+          journal_entry_id: newEntry.id
+        }))
+      );
+      
+    if (insertItemsError) throw insertItemsError;
+    
+    toast({
+      title: "تم إنشاء القيد",
+      description: "تم إنشاء القيد المحاسبي بنجاح",
+    });
+  }
+  
+  onSuccess();
+  setIsSubmitting(false);
+} catch (error) {
+  console.error("Error saving journal entry:", error);
+  toast({
+    title: "خطأ في العملية",
+    description: "حدث خطأ أثناء حفظ القيد المحاسبي",
+    variant: "destructive",
+  });
+  setIsSubmitting(false);
+}
+  };
   return (
     <form onSubmit={handleSubmit} className="space-y-4 rtl">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
