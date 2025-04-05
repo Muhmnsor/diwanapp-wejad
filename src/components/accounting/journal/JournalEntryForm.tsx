@@ -20,7 +20,7 @@ interface JournalEntryFormProps {
 export const JournalEntryForm = ({ entry, onCancel, onSuccess }: JournalEntryFormProps) => {
   const { toast } = useToast();
   const { accounts } = useAccounts();
-  const { costCenters } = useCostCenters();
+  const { costCenters = [], isLoading: isLoadingCostCenters, error: costCentersError } = useCostCenters();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -285,7 +285,10 @@ export const JournalEntryForm = ({ entry, onCancel, onSuccess }: JournalEntryFor
                           <SelectItem key={costCenter.id} value={costCenter.id}>
                             {costCenter.code} - {costCenter.name}
                           </SelectItem>
-                        ))}
+                        ))
+                      ) : (
+                        <SelectItem value="">لا توجد مراكز تكلفة</SelectItem>
+                       )}
                       </SelectContent>
                     </Select>
                   </td>
