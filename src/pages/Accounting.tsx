@@ -2,13 +2,15 @@
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Book, Receipt, PieChart, Landmark } from "lucide-react";
+import { FileText, Book, Receipt, PieChart, Landmark, Settings, DollarSign, BarChartHorizontal } from "lucide-react";
 import { useState } from "react";
 import { AccountingDashboard } from "@/components/accounting/AccountingDashboard";
 import { ChartOfAccounts } from "@/components/accounting/ChartOfAccounts";
 import { JournalEntries } from "@/components/accounting/JournalEntries";
-import { FinancialReports } from "@/components/accounting/FinancialReports";
+import { FinancialReports } from "@/components/accounting/reports/FinancialReports";
+import { CostCenters } from "@/components/accounting/cost-centers/CostCenters";
+import { AccountingPeriods } from "@/components/accounting/periods/AccountingPeriods";
+import { OpeningBalances } from "@/components/accounting/opening-balances/OpeningBalances";
 
 const Accounting = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -24,7 +26,7 @@ const Accounting = () => {
         </div>
 
         <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
-          <TabsList className="grid grid-cols-5 w-full mb-8">
+          <TabsList className="grid grid-cols-7 w-full mb-8">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <PieChart className="h-4 w-4" />
               <span>نظرة عامة</span>
@@ -37,12 +39,20 @@ const Accounting = () => {
               <Receipt className="h-4 w-4" />
               <span>القيود المحاسبية</span>
             </TabsTrigger>
+            <TabsTrigger value="cost-centers" className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              <span>مراكز التكلفة</span>
+            </TabsTrigger>
+            <TabsTrigger value="periods" className="flex items-center gap-2">
+              <BarChartHorizontal className="h-4 w-4" />
+              <span>الفترات المحاسبية</span>
+            </TabsTrigger>
             <TabsTrigger value="reports" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               <span>التقارير</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Landmark className="h-4 w-4" />
+              <Settings className="h-4 w-4" />
               <span>الإعدادات</span>
             </TabsTrigger>
           </TabsList>
@@ -58,20 +68,64 @@ const Accounting = () => {
           <TabsContent value="journal" className="space-y-4">
             <JournalEntries />
           </TabsContent>
+          
+          <TabsContent value="cost-centers" className="space-y-4">
+            <CostCenters />
+          </TabsContent>
+          
+          <TabsContent value="periods" className="space-y-4">
+            <AccountingPeriods />
+            <OpeningBalances />
+          </TabsContent>
 
           <TabsContent value="reports" className="space-y-4">
             <FinancialReports />
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-right">إعدادات النظام المحاسبي</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-right">إعدادات النظام المحاسبي ستكون متاحة قريبًا...</p>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-white p-6 rounded-lg shadow-sm">
+                <h3 className="text-lg font-medium mb-4">الإعدادات العامة</h3>
+                <p className="text-sm text-muted-foreground mb-6">
+                  إعدادات النظام المحاسبي الأساسية
+                </p>
+                <div className="space-y-4 text-right">
+                  <div>
+                    <h4 className="font-medium">العملة الأساسية</h4>
+                    <p className="text-sm text-muted-foreground">ريال سعودي (SAR)</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium">السنة المالية</h4>
+                    <p className="text-sm text-muted-foreground">من 1 يناير إلى 31 ديسمبر</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium">نظام الترقيم</h4>
+                    <p className="text-sm text-muted-foreground">تسلسلي سنوي</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white p-6 rounded-lg shadow-sm">
+                <h3 className="text-lg font-medium mb-4">تنزيل البيانات</h3>
+                <p className="text-sm text-muted-foreground mb-6">
+                  تصدير البيانات المحاسبية لاستخدامها خارج النظام
+                </p>
+                <div className="flex flex-col space-y-2">
+                  <button className="p-2 border rounded hover:bg-gray-50 text-right flex justify-between items-center">
+                    <span className="text-sm">تصدير بيانات الحسابات</span>
+                    <FileText className="h-4 w-4" />
+                  </button>
+                  <button className="p-2 border rounded hover:bg-gray-50 text-right flex justify-between items-center">
+                    <span className="text-sm">تصدير قائمة القيود المحاسبية</span>
+                    <FileText className="h-4 w-4" />
+                  </button>
+                  <button className="p-2 border rounded hover:bg-gray-50 text-right flex justify-between items-center">
+                    <span className="text-sm">تصدير التقارير المالية</span>
+                    <FileText className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </main>
