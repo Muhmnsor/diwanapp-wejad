@@ -281,14 +281,15 @@ export const JournalEntryForm = ({ entry, onCancel, onSuccess }: JournalEntryFor
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="">بدون مركز تكلفة</SelectItem>
-                        {costCenters?.map((costCenter) => (
-                          <SelectItem key={costCenter.id} value={costCenter.id}>
-                            {costCenter.code} - {costCenter.name}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="">لا توجد مراكز تكلفة</SelectItem>
-                       )}
+                        {costCenters && costCenters.length > 0 ? (
+                          costCenters.map((costCenter) => (
+                            <SelectItem key={costCenter.id} value={costCenter.id}>
+                              {costCenter.code} - {costCenter.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="">لا توجد مراكز تكلفة</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </td>
