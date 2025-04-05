@@ -60,7 +60,7 @@ export const useMailboxCounts = () => {
           
         if (trashError) throw trashError;
         
-        // عدد الرسائل المميزة بنجمة (من البريد الوارد والصادر)
+        // عدد الرسائل المميزة بنجمة
         // الرسائل المرسلة المميزة بنجمة
         const { count: starredSentCount, error: starredSentError } = await supabase
           .from('internal_messages')
@@ -73,7 +73,7 @@ export const useMailboxCounts = () => {
         // الرسائل المستلمة المميزة بنجمة
         const { count: starredReceivedCount, error: starredReceivedError } = await supabase
           .from('internal_message_recipients')
-          .select('*', { count: 'exact', head: true })
+          .select('internal_messages!inner(id)', { count: 'exact', head: true })
           .eq('recipient_id', userId)
           .eq('is_deleted', false)
           .eq('internal_messages.is_starred', true);

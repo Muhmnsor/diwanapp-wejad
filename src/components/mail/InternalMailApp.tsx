@@ -8,6 +8,7 @@ import { MailView } from "./MailView";
 import { useMailboxMessages } from "@/hooks/mail/useMailboxMessages";
 import { useMailboxCounts } from "@/hooks/mail/useMailboxCounts";
 import { useMessageDetails } from "@/hooks/mail/useMessageDetails";
+import { toast } from "@/components/ui/use-toast";
 
 export interface Attachment {
   id: string;
@@ -51,12 +52,16 @@ export const InternalMailApp: React.FC = () => {
   const { 
     data: counts = { inbox: 0, unread: 0, sent: 0, drafts: 0, trash: 0, starred: 0 }, 
     refetch: refetchCounts,
-    isLoading: isLoadingCounts 
+    isLoading: isLoadingCounts,
+    isError: isErrorCounts,
+    error: countsError
   } = useMailboxCounts();
   
   const { 
     data: messages = [], 
     isLoading: isLoadingMessages,
+    isError: isErrorMessages,
+    error: messagesError,
     refetch: refetchMessages 
   } = useMailboxMessages(activeFolder);
   
@@ -64,6 +69,27 @@ export const InternalMailApp: React.FC = () => {
     data: selectedMessage,
     isLoading: isLoadingDetails
   } = useMessageDetails(selectedMessageId);
+
+  // عرض رسائل الخطأ
+  useEffect(() => {
+    if (isErrorCounts && countsError) {
+      toast({
+        title: "خطأ في تحميل البيانات",
+        description: "حدث خطأ أثناء جلب عدد الرسائل. يرجى المحاولة مرة أخرى.",
+        variant: "destructive"
+      });
+      console.error("Error in counts:", countsError);
+    }
+
+    if (isErrorMessages && messagesError) {
+      toast({
+        title: "خطأ في تحميل الرسائل",
+        description: "حدث خطأ أثناء جلب الرسائل. يرجى المحاولة مرة أخرى.",
+        variant: "destructive"
+      });
+      console.error("Error in messages:", messagesError);
+    }
+  }, [isErrorCounts, countsError, isErrorMessages, messagesError]);
 
   // البحث في الرسائل
   const filteredMessages = messages.filter(message => {
