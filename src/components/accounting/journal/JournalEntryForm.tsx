@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +19,7 @@ interface JournalEntryFormProps {
 export const JournalEntryForm = ({ entry, onCancel, onSuccess }: JournalEntryFormProps) => {
   const { toast } = useToast();
   const { accounts } = useAccounts();
-  const { costCenters = [], isLoading: isLoadingCostCenters, error: costCentersError } = useCostCenters();
+  const { costCenters, isLoading: isLoadingCostCenters, error: costCentersError } = useCostCenters();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -256,7 +255,7 @@ export const JournalEntryForm = ({ entry, onCancel, onSuccess }: JournalEntryFor
                         <SelectValue placeholder="اختر الحساب" />
                       </SelectTrigger>
                       <SelectContent>
-                        {accounts.map((account) => (
+                        {accounts?.map((account) => (
                           <SelectItem key={account.id} value={account.id}>
                             {account.code} - {account.name}
                           </SelectItem>
@@ -281,15 +280,11 @@ export const JournalEntryForm = ({ entry, onCancel, onSuccess }: JournalEntryFor
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="">بدون مركز تكلفة</SelectItem>
-                        {costCenters && costCenters.length > 0 ? (
-                          costCenters.map((costCenter) => (
-                            <SelectItem key={costCenter.id} value={costCenter.id}>
-                              {costCenter.code} - {costCenter.name}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <SelectItem value="">لا توجد مراكز تكلفة</SelectItem>
-                        )}
+                        {Array.isArray(costCenters) && costCenters.length > 0 && costCenters.map((costCenter) => (
+                          <SelectItem key={costCenter.id} value={costCenter.id}>
+                            {costCenter.code} - {costCenter.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </td>
