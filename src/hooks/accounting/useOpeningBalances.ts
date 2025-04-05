@@ -19,7 +19,7 @@ export interface OpeningBalance {
 }
 
 export const useOpeningBalances = (periodId?: string) => {
-  const { data: openingBalances = [], isLoading, error } = useQuery({
+  const { data: openingBalances = [], isLoading, error, refetch } = useQuery({
     queryKey: ["accounting_opening_balances", periodId],
     queryFn: async () => {
       try {
@@ -54,5 +54,5 @@ export const useOpeningBalances = (periodId?: string) => {
     enabled: !!periodId, // Only run if periodId is provided
   });
 
-  return { openingBalances, isLoading, error };
+  return { openingBalances, isLoading, error, refetch };
 };

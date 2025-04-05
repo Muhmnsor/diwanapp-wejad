@@ -133,12 +133,13 @@ export const OpeningBalanceForm = ({
               <Label htmlFor="debit">مدين</Label>
               <Input
                 id="debit"
-                type="text"
-                inputMode="decimal"
+                type="number"
                 value={debitAmount}
                 onChange={handleDebitChange}
                 placeholder="0.00"
                 disabled={!selectedPeriodId || !selectedAccountId}
+                step="0.01"
+                min="0"
               />
             </div>
             
@@ -146,12 +147,13 @@ export const OpeningBalanceForm = ({
               <Label htmlFor="credit">دائن</Label>
               <Input
                 id="credit"
-                type="text"
-                inputMode="decimal"
+                type="number"
                 value={creditAmount}
                 onChange={handleCreditChange}
                 placeholder="0.00"
                 disabled={!selectedPeriodId || !selectedAccountId}
+                step="0.01"
+                min="0"
               />
             </div>
           </div>

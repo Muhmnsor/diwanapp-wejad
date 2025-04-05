@@ -123,12 +123,13 @@ export const EditOpeningBalanceDialog = ({
             <Label htmlFor="debit" className="text-right block">مدين</Label>
             <Input
               id="debit"
-              type="text"
-              inputMode="decimal"
+              type="number"
               value={debitAmount}
               onChange={handleDebitChange}
               placeholder="0.00"
               className="text-right"
+              step="0.01"
+              min="0"
             />
           </div>
           
@@ -136,12 +137,13 @@ export const EditOpeningBalanceDialog = ({
             <Label htmlFor="credit" className="text-right block">دائن</Label>
             <Input
               id="credit"
-              type="text"
-              inputMode="decimal"
+              type="number"
               value={creditAmount}
               onChange={handleCreditChange}
               placeholder="0.00"
               className="text-right"
+              step="0.01"
+              min="0"
             />
           </div>
         </div>
