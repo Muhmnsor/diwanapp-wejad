@@ -7,6 +7,8 @@ import { useMeetingObjectives } from "@/hooks/meetings/useMeetingObjectives";
 import { useMeetingAgendaItems } from "@/hooks/meetings/useMeetingAgendaItems";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { formatDateWithDay, formatTime12Hour } from "@/utils/dateTimeUtils";
+
 interface MeetingOverviewTabProps {
   meeting: Meeting;
   meetingId: string;
@@ -48,7 +50,7 @@ export const MeetingOverviewTab: React.FC<MeetingOverviewTabProps> = ({
               </div>
               <div>
                 <p className="text-sm text-gray-500 mb-1">الوقت والمدة</p>
-                <p className="font-semibold">{meeting.start_time} (المدة: {meeting.duration} دقيقة)</p>
+                <p className="font-semibold">{formatTime12Hour(meeting.start_time)} (المدة: {meeting.duration} دقيقة)</p>
               </div>
             </div>
           </CardContent>
