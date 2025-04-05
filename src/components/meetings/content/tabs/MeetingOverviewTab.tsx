@@ -2,12 +2,13 @@ import React from "react";
 import { Meeting } from "@/types/meeting";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarDays, Clock, MapPin, Link2, Users, FolderOpen } from "lucide-react";
-import { formatDateArabic } from "@/utils/formatters";
 import { useMeetingObjectives } from "@/hooks/meetings/useMeetingObjectives";
 import { useMeetingAgendaItems } from "@/hooks/meetings/useMeetingAgendaItems";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { formatDateWithDay, formatTime12Hour } from "@/utils/dateTimeUtils";
+import { formatTime12Hour } from "@/utils/dateTimeUtils";
+
 interface MeetingOverviewTabProps {
   meeting: Meeting;
   meetingId: string;
