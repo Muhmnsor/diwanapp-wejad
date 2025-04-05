@@ -272,7 +272,9 @@ export const useMessageOperations = () => {
               .from('internal_message_recipients')
               .insert(recipientsToInsert);
               
-            if (recipientsError) throw recipientsError;
+            if (recipientsError) {
+              console.error("Error inserting recipients:", recipientsError);
+               throw recipientsError;
           }
           
           return { success: true, draftId: data.draftId };
