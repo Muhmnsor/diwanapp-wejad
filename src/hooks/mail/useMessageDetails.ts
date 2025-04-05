@@ -17,7 +17,7 @@ export const useMessageDetails = (messageId?: string) => {
           .from('internal_messages')
           .select(`
             *,
-            sender:profiles!sender_id (id, display_name, email)
+            sender:profiles(id, display_name, email)
           `)
           .eq('id', messageId)
           .single();
@@ -33,7 +33,7 @@ export const useMessageDetails = (messageId?: string) => {
           .from('internal_message_recipients')
           .select(`
             id, recipient_type, read_status, read_at,
-            recipient:profiles!recipient_id (id, display_name, email)
+            recipient:profiles(id, display_name, email)
           `)
           .eq('message_id', messageId);
           
@@ -52,7 +52,7 @@ export const useMessageDetails = (messageId?: string) => {
           .from('internal_message_label_relations')
           .select(`
             *,
-            label:internal_message_labels!label_id (id, name, color)
+            label:internal_message_labels(id, name, color)
           `)
           .eq('message_id', messageId);
           
