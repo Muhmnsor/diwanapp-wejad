@@ -14,35 +14,7 @@ import {
   X
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-interface Message {
-  id: string;
-  subject: string;
-  sender: {
-    name: string;
-    id: string;
-    avatar?: string;
-  };
-  recipients: {
-    name: string;
-    id: string;
-    type: 'to' | 'cc' | 'bcc';
-  }[];
-  content: string;
-  attachments: {
-    id: string;
-    name: string;
-    size: number;
-    type: string;
-    url: string;
-  }[];
-  read: boolean;
-  starred: boolean;
-  labels: string[];
-  date: string;
-  folder: 'inbox' | 'sent' | 'drafts' | 'trash';
-  hasAttachments: boolean;
-}
+import { Message } from "./InternalMailApp";
 
 interface MailViewProps {
   message: Message;

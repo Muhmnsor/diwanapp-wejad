@@ -4,23 +4,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 import { Paperclip, Star, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-interface Message {
-  id: string;
-  subject: string;
-  sender: {
-    name: string;
-    id: string;
-    avatar?: string;
-  };
-  content: string;
-  attachments: any[];
-  read: boolean;
-  starred: boolean;
-  date: string;
-  folder: 'inbox' | 'sent' | 'drafts' | 'trash';
-  hasAttachments: boolean;
-}
+import { Message } from "./InternalMailApp";
 
 interface MailListProps {
   messages: Message[];
@@ -72,7 +56,7 @@ export const MailList: React.FC<MailListProps> = ({
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
                 <span className={cn("text-sm truncate max-w-[70%]", !message.read && "font-semibold")}>
-                  {message.folder === "sent" ? message.recipients[0]?.name : message.sender.name}
+                  {message.folder === "sent" ? (message.recipients[0]?.name || "مستلم") : message.sender.name}
                 </span>
                 <div className="flex items-center gap-1.5 shrink-0 text-xs text-muted-foreground">
                   {message.hasAttachments && <Paperclip className="h-3 w-3 text-muted-foreground" />}
