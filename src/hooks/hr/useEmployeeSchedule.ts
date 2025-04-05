@@ -72,5 +72,6 @@ return {
   isLoadingSchedules,
   assignScheduleToEmployee,
   getWorkDays
+  getEmployeeSchedule
 };
 }
