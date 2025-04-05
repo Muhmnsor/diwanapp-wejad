@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { format, subMonths } from "date-fns";
 import {
   Popover,
   PopoverContent,
@@ -12,47 +12,19 @@ import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ErrorBoundary } from "@/components/accounting/ErrorBoundary";
 import { formatCurrency } from "@/components/finance/reports/utils/formatters";
+import { useCashFlow } from "@/hooks/accounting/useCashFlow";
+import { DateRange } from "react-day-picker";
 
-// This is a placeholder component - will be expanded with real data
 export const CashFlowStatement = () => {
-  const [date, setDate] = useState<Date>(new Date());
-  const [isLoading, setIsLoading] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: subMonths(new Date(), 1),
+    to: new Date(),
+  });
 
-  // Placeholder data for cash flow statement
-  const cashFlowData = {
-    operatingActivities: [
-      { name: "الربح الصافي", amount: 25000 },
-      { name: "الاستهلاك", amount: 5000 },
-      { name: "التغير في الذمم المدينة", amount: -3000 },
-      { name: "التغير في المخزون", amount: -2000 },
-      { name: "التغير في الذمم الدائنة", amount: 1500 },
-    ],
-    investingActivities: [
-      { name: "شراء معدات", amount: -15000 },
-      { name: "بيع أصول", amount: 3000 },
-    ],
-    financingActivities: [
-      { name: "توزيعات أرباح", amount: -5000 },
-      { name: "إصدار أسهم", amount: 10000 },
-    ],
-  };
-
-  const operatingTotal = cashFlowData.operatingActivities.reduce(
-    (sum, item) => sum + item.amount,
-    0
+  const { data, isLoading, error } = useCashFlow(
+    dateRange?.from || subMonths(new Date(), 1),
+    dateRange?.to || new Date()
   );
-  
-  const investingTotal = cashFlowData.investingActivities.reduce(
-    (sum, item) => sum + item.amount,
-    0
-  );
-  
-  const financingTotal = cashFlowData.financingActivities.reduce(
-    (sum, item) => sum + item.amount,
-    0
-  );
-  
-  const netCashFlow = operatingTotal + investingTotal + financingTotal;
 
   return (
     <ErrorBoundary>
@@ -66,18 +38,29 @@ export const CashFlowStatement = () => {
                   variant={"outline"}
                   className={cn(
                     "justify-start text-left font-normal",
-                    !date && "text-muted-foreground"
+                    !dateRange && "text-muted-foreground"
                   )}
                 >
                   <CalendarIcon className="ml-2 h-4 w-4" />
-                  {date ? format(date, "yyyy-MM-dd") : <span>اختر تاريخ</span>}
+                  {dateRange?.from ? (
+                    dateRange.to ? (
+                      <>
+                        {format(dateRange.from, "yyyy-MM-dd")} إلى{" "}
+                        {format(dateRange.to, "yyyy-MM-dd")}
+                      </>
+                    ) : (
+                      format(dateRange.from, "yyyy-MM-dd")
+                    )
+                  ) : (
+                    <span>اختر فترة</span>
+                  )}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
                 <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={(newDate) => newDate && setDate(newDate)}
+                  mode="range"
+                  selected={dateRange}
+                  onSelect={setDateRange}
                   initialFocus
                 />
               </PopoverContent>
@@ -89,21 +72,35 @@ export const CashFlowStatement = () => {
             <div className="flex justify-center items-center py-10">
               <p>جاري تحميل البيانات...</p>
             </div>
+          ) : error ? (
+            <div className="flex justify-center items-center py-10">
+              <p className="text-red-500">حدث خطأ أثناء تحميل البيانات</p>
+            </div>
+          ) : !data ? (
+            <div className="flex justify-center items-center py-10">
+              <p>لا توجد بيانات متاحة</p>
+            </div>
           ) : (
             <div className="space-y-6">
               <div className="space-y-2">
                 <h3 className="text-lg font-semibold text-right">الأنشطة التشغيلية</h3>
                 <div className="space-y-1">
-                  {cashFlowData.operatingActivities.map((item, index) => (
-                    <div key={index} className="flex justify-between">
-                      <span className={item.amount < 0 ? "text-red-600" : ""}>
-                        {formatCurrency(item.amount)}
-                      </span>
-                      <span>{item.name}</span>
+                  {data.operatingActivities.length > 0 ? (
+                    data.operatingActivities.map((item, index) => (
+                      <div key={index} className="flex justify-between">
+                        <span>
+                          {formatCurrency(item.amount)}
+                        </span>
+                        <span>{item.description}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-muted-foreground">
+                      لا توجد أنشطة تشغيلية خلال هذه الفترة
                     </div>
-                  ))}
+                  )}
                   <div className="flex justify-between font-bold border-t pt-1 mt-1">
-                    <span>{formatCurrency(operatingTotal)}</span>
+                    <span>{formatCurrency(data.totalOperating)}</span>
                     <span>إجمالي الأنشطة التشغيلية</span>
                   </div>
                 </div>
@@ -112,16 +109,22 @@ export const CashFlowStatement = () => {
               <div className="space-y-2">
                 <h3 className="text-lg font-semibold text-right">الأنشطة الاستثمارية</h3>
                 <div className="space-y-1">
-                  {cashFlowData.investingActivities.map((item, index) => (
-                    <div key={index} className="flex justify-between">
-                      <span className={item.amount < 0 ? "text-red-600" : ""}>
-                        {formatCurrency(item.amount)}
-                      </span>
-                      <span>{item.name}</span>
+                  {data.investingActivities.length > 0 ? (
+                    data.investingActivities.map((item, index) => (
+                      <div key={index} className="flex justify-between">
+                        <span>
+                          {formatCurrency(item.amount)}
+                        </span>
+                        <span>{item.description}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-muted-foreground">
+                      لا توجد أنشطة استثمارية خلال هذه الفترة
                     </div>
-                  ))}
+                  )}
                   <div className="flex justify-between font-bold border-t pt-1 mt-1">
-                    <span>{formatCurrency(investingTotal)}</span>
+                    <span>{formatCurrency(data.totalInvesting)}</span>
                     <span>إجمالي الأنشطة الاستثمارية</span>
                   </div>
                 </div>
@@ -130,26 +133,43 @@ export const CashFlowStatement = () => {
               <div className="space-y-2">
                 <h3 className="text-lg font-semibold text-right">الأنشطة التمويلية</h3>
                 <div className="space-y-1">
-                  {cashFlowData.financingActivities.map((item, index) => (
-                    <div key={index} className="flex justify-between">
-                      <span className={item.amount < 0 ? "text-red-600" : ""}>
-                        {formatCurrency(item.amount)}
-                      </span>
-                      <span>{item.name}</span>
+                  {data.financingActivities.length > 0 ? (
+                    data.financingActivities.map((item, index) => (
+                      <div key={index} className="flex justify-between">
+                        <span>
+                          {formatCurrency(item.amount)}
+                        </span>
+                        <span>{item.description}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-muted-foreground">
+                      لا توجد أنشطة تمويلية خلال هذه الفترة
                     </div>
-                  ))}
+                  )}
                   <div className="flex justify-between font-bold border-t pt-1 mt-1">
-                    <span>{formatCurrency(financingTotal)}</span>
+                    <span>{formatCurrency(data.totalFinancing)}</span>
                     <span>إجمالي الأنشطة التمويلية</span>
                   </div>
                 </div>
               </div>
 
               <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2">
-                <span className={netCashFlow < 0 ? "text-red-600" : "text-green-600"}>
-                  {formatCurrency(netCashFlow)}
+                <span className={data.netChange < 0 ? "text-red-600" : "text-green-600"}>
+                  {formatCurrency(data.netChange)}
                 </span>
                 <span>صافي التغير في النقد</span>
+              </div>
+              
+              <div className="space-y-2 border-t pt-4">
+                <div className="flex justify-between">
+                  <span>{formatCurrency(data.beginningBalance)}</span>
+                  <span>الرصيد في بداية الفترة</span>
+                </div>
+                <div className="flex justify-between font-bold">
+                  <span>{formatCurrency(data.endingBalance)}</span>
+                  <span>الرصيد في نهاية الفترة</span>
+                </div>
               </div>
             </div>
           )}
