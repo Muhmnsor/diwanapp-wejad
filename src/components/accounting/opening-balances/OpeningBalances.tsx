@@ -5,6 +5,7 @@ import { useAccountingPeriods } from "@/hooks/accounting/useAccountingPeriods";
 import { useAccounts } from "@/hooks/accounting/useAccounts";
 import { OpeningBalanceForm } from "./OpeningBalanceForm";
 import { OpeningBalancesTable } from "./OpeningBalancesTable";
+import { useOpeningBalances } from "@/hooks/accounting/useOpeningBalances";
 
 export const OpeningBalances = () => {
   const { periods, currentPeriod } = useAccountingPeriods();
@@ -12,6 +13,28 @@ export const OpeningBalances = () => {
   const [selectedPeriodId, setSelectedPeriodId] = useState<string | undefined>(
     currentPeriod?.id
   );
+  
+  const { openingBalances, isLoading } = useOpeningBalances(selectedPeriodId);
+
+  // Transform the opening balances data for the table
+  const prepareOpeningBalancesEntries = () => {
+    if (!openingBalances || !accounts) return [];
+
+    return openingBalances.map(balance => {
+      const account = balance.account || { id: '', code: '', name: '', account_type: '' };
+      
+      return {
+        account_id: balance.account_id,
+        account_code: account.code,
+        account_name: account.name,
+        account_type: account.account_type,
+        debit_amount: Number(balance.debit_amount) || 0,
+        credit_amount: Number(balance.credit_amount) || 0
+      };
+    });
+  };
+  
+  const balanceEntries = prepareOpeningBalancesEntries();
   
   return (
     <>
@@ -40,7 +63,7 @@ export const OpeningBalances = () => {
               <CardTitle className="text-right">جدول الأرصدة الافتتاحية</CardTitle>
             </CardHeader>
             <CardContent>
-              <OpeningBalancesTable periodId={selectedPeriodId} />
+              <OpeningBalancesTable entries={balanceEntries} />
             </CardContent>
           </Card>
         )}
