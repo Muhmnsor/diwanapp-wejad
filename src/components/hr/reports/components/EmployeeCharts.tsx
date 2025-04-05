@@ -1,3 +1,4 @@
+
 // src/components/hr/reports/components/EmployeeCharts.tsx
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,17 +7,17 @@ import { useEmployeeChartData } from "@/hooks/hr/useEmployeeChartData";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface EmployeeChartsProps {
-  department: "all" | "engineering" | "marketing" | "hr";
+  unitId: string | "all";
 }
 
-export function EmployeeCharts({ department }: EmployeeChartsProps) {
-  const { data: chartData, isLoading, isError } = useEmployeeChartData(department);
+export function EmployeeCharts({ unitId }: EmployeeChartsProps) {
+  const { data: chartData, isLoading, isError } = useEmployeeChartData(unitId);
   
   if (isLoading) {
     return (
       <>
         <Skeleton className="h-[300px] w-full" />
-        {department === "all" && <Skeleton className="h-[300px] w-full" />}
+        {unitId === "all" && <Skeleton className="h-[300px] w-full" />}
       </>
     );
   }
@@ -43,7 +44,7 @@ export function EmployeeCharts({ department }: EmployeeChartsProps) {
       <Card className="col-span-2">
         <CardContent>
           <div className="h-[300px] flex items-center justify-center">
-            <p className="text-gray-500">لا توجد بيانات موظفين في هذا القسم</p>
+            <p className="text-gray-500">لا توجد بيانات موظفين في هذه الوحدة التنظيمية</p>
           </div>
         </CardContent>
       </Card>
@@ -52,10 +53,10 @@ export function EmployeeCharts({ department }: EmployeeChartsProps) {
   
   return (
     <>
-      {department === "all" && departmentData.length > 0 && (
+      {unitId === "all" && departmentData.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>توزيع الموظفين حسب الأقسام</CardTitle>
+            <CardTitle>توزيع الموظفين حسب الإدارات</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
@@ -86,7 +87,7 @@ export function EmployeeCharts({ department }: EmployeeChartsProps) {
       )}
       
       {contractTypeData.length > 0 && (
-        <Card className={department === "all" ? "" : "col-span-2"}>
+        <Card className={unitId === "all" ? "" : "col-span-2"}>
           <CardHeader>
             <CardTitle>توزيع الموظفين حسب نوع العقد</CardTitle>
           </CardHeader>

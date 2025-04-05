@@ -1,3 +1,4 @@
+
 // src/components/hr/reports/components/EmployeeStats.tsx
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,11 +7,11 @@ import { useEmployeeStats } from "@/hooks/hr/useEmployeeStats";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface EmployeeStatsProps {
-  department: "all" | "engineering" | "marketing" | "hr";
+  unitId: string | "all";
 }
 
-export function EmployeeStats({ department }: EmployeeStatsProps) {
-  const { data: stats, isLoading, isError } = useEmployeeStats(department);
+export function EmployeeStats({ unitId }: EmployeeStatsProps) {
+  const { data: stats, isLoading, isError } = useEmployeeStats(unitId);
 
   if (isLoading) {
     return (
@@ -40,10 +41,7 @@ export function EmployeeStats({ department }: EmployeeStatsProps) {
         <CardContent>
           <div className="text-2xl font-bold">{stats.total}</div>
           <p className="text-xs text-muted-foreground">
-            {department === "all" ? "في جميع الأقسام" : `في قسم ${
-              department === "engineering" ? "الهندسة" : 
-              department === "marketing" ? "التسويق" : "الموارد البشرية"
-            }`}
+            {unitId === "all" ? "في جميع الإدارات" : "في الإدارة المختارة"}
           </p>
         </CardContent>
       </Card>

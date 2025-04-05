@@ -1,9 +1,11 @@
+
 // src/components/hr/reports/EmployeeReport.tsx
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { EmployeeCharts } from "./components/EmployeeCharts";
 import { EmployeeStats } from "./components/EmployeeStats";
+import { OrganizationalUnitsTabs } from "./OrganizationalUnitsTabs";
 
 interface EmployeeReportProps {
   startDate?: Date;
@@ -11,7 +13,7 @@ interface EmployeeReportProps {
 }
 
 export function EmployeeReport({ startDate, endDate }: EmployeeReportProps) {
-  const [department, setDepartment] = useState<"all" | "engineering" | "marketing" | "hr">("all");
+  const [selectedUnitId, setSelectedUnitId] = useState<string>("all");
   
   return (
     <div className="space-y-4">
@@ -19,26 +21,24 @@ export function EmployeeReport({ startDate, endDate }: EmployeeReportProps) {
         <div className="space-y-1">
           <h2 className="text-2xl font-bold tracking-tight">تقارير الموظفين</h2>
           <p className="text-muted-foreground">
-            متابعة إحصائيات وبيانات الموظفين حسب الأقسام
+            متابعة إحصائيات وبيانات الموظفين حسب الإدارات
           </p>
         </div>
         
-        <Tabs value={department} onValueChange={(v) => setDepartment(v as any)} className="w-[400px]">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="all">الكل</TabsTrigger>
-            <TabsTrigger value="engineering">الهندسة</TabsTrigger>
-            <TabsTrigger value="marketing">التسويق</TabsTrigger>
-            <TabsTrigger value="hr">الموارد البشرية</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <OrganizationalUnitsTabs 
+          unitId={selectedUnitId}
+          onUnitChange={setSelectedUnitId}
+          unitType="department"
+          maxTabs={3}
+        />
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <EmployeeStats department={department} />
+        <EmployeeStats unitId={selectedUnitId} />
       </div>
       
       <div className="grid gap-4 md:grid-cols-2">
-        <EmployeeCharts department={department} />
+        <EmployeeCharts unitId={selectedUnitId} />
       </div>
     </div>
   );
