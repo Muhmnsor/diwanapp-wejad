@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -149,6 +150,7 @@ export const useMessageOperations = () => {
     onSuccess: (_, variables) => {
       // تحديث البيانات بعد الحذف الناجح
       queryClient.invalidateQueries({ queryKey: ['mail-messages', variables.folder] });
+      queryClient.invalidateQueries({ queryKey: ['mail-folder-counts'] });
       toast({
         title: "تم الحذف بنجاح",
         description: variables.folder === 'trash' 
@@ -193,6 +195,7 @@ export const useMessageOperations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mail-messages'] });
+      queryClient.invalidateQueries({ queryKey: ['mail-folder-counts'] });
     },
   });
 
@@ -220,6 +223,7 @@ export const useMessageOperations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mail-messages'] });
+      queryClient.invalidateQueries({ queryKey: ['mail-folder-counts'] });
     },
   });
 
