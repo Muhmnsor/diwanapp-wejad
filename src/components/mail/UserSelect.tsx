@@ -83,13 +83,13 @@ export const UserSelect: React.FC<UserSelectProps> = ({
                     className="flex items-center gap-1 px-2"
                   >
                     {user.display_name || user.email}
-                    <button
-                      type="button"
-                      className="ml-1 rounded-full outline-none focus:ring-2"
+                    {/* Fix: Changed from button to span to avoid button-inside-button issue */}
+                    <span
+                      className="ml-1 rounded-full outline-none focus:ring-2 cursor-pointer"
                       onClick={(e) => handleRemoveUser(user.id, e)}
                     >
                       ×
-                    </button>
+                    </span>
                   </Badge>
                 ))
               ) : (
