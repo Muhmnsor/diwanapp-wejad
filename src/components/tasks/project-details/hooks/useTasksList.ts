@@ -43,18 +43,26 @@ export const useTasksList = (projectId?: string, meetingId?: string, isWorkspace
       const formattedTasks = data.map(task => {
         // استخراج اسم المستخدم المكلف من البيانات
         let assigneeName = '';
-        if (task.profiles) {
-          if (Array.isArray(task.profiles)) {
+        if (task.assigned_user) {
+          if (Array.isArray(task.assigned_user)) {
             // إذا كانت المعلومات في مصفوفة
+            if (task.assigned_user.length > 0) {
+              assigneeName = task.assigned_user[0].display_name || task.assigned_user[0].email || '';
+            }
+          } else {
+            // إذا كانت المعلومات في كائن مباشر
+            assigneeName = task.assigned_user.display_name || task.assigned_user.email || '';
+          }
+        } else if (task.profiles) {
+          // For backwards compatibility
+          if (Array.isArray(task.profiles)) {
             if (task.profiles.length > 0) {
               assigneeName = task.profiles[0].display_name || task.profiles[0].email || '';
             }
           } else {
-            // إذا كانت المعلومات في كائن مباشر
             assigneeName = task.profiles.display_name || task.profiles.email || '';
           }
         }
-        
         return {
           ...task,
           id: task.id,
