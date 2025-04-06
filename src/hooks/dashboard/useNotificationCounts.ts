@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/store/refactored-auth";
@@ -9,6 +8,13 @@ export interface NotificationCounts {
   approval_requests: number;
   documents: number;
   meetings: number;
+  // Add the new notification types
+  hr: number;
+  accounting: number;
+  internal_mail: number;
+  subscriptions: number;
+  ideas: number;
+  finance: number;
   [key: string]: number;
 }
 
@@ -17,7 +23,14 @@ const defaultCounts: NotificationCounts = {
   tasks: 0,
   approval_requests: 0,
   documents: 0,
-  meetings: 0
+  meetings: 0,
+  // Add default values for the new notification types
+  hr: 0,
+  accounting: 0,
+  internal_mail: 0,
+  subscriptions: 0,
+  ideas: 0,
+  finance: 0
 };
 
 export const useNotificationCounts = () => {
@@ -93,22 +106,29 @@ export const useNotificationCounts = () => {
           console.error("Error fetching meetings count:", meetingsError);
           throw meetingsError;
         }
+        
+        // New queries for the additional modules could be added here in the future
+        // For now, we'll just use 0 as default values
 
-        console.log("Successfully fetched notification counts:", {
+        // Build the final result object
+        const result: NotificationCounts = {
           notifications: notificationsCount || 0,
           tasks: tasksCount || 0,
           approval_requests: approvalsCount || 0,
           documents: documentsCount || 0,
-          meetings: meetingsCount || 0
-        });
-
-        return {
-          notifications: notificationsCount || 0,
-          tasks: tasksCount || 0,
-          approval_requests: approvalsCount || 0,
-          documents: documentsCount || 0,
-          meetings: meetingsCount || 0
+          meetings: meetingsCount || 0,
+          // Set default values for the new notification types
+          hr: 0,
+          accounting: 0, 
+          internal_mail: 0,
+          subscriptions: 0,
+          ideas: 0,
+          finance: 0
         };
+
+        console.log("Successfully fetched notification counts:", result);
+
+        return result;
       } catch (error) {
         console.error('Error fetching notification counts:', error);
         // Return default counts in case of error to prevent UI from breaking
