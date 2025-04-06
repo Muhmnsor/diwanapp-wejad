@@ -270,48 +270,48 @@ export const DatabaseDocumentation = () => {
             />
             
             <DatabaseTable 
-              name: "roles",
-              description: "جدول الأدوار",
-              columns: [
+              name="roles"
+              description="جدول الأدوار"
+              columns={[
                 { name: "id", type: "uuid", description: "المعرف الفريد" },
                 { name: "name", type: "text", description: "اسم الدور" },
                 { name: "description", type: "text", description: "وصف الدور" }
-              ]
+              ]}
             />
             
             <DatabaseTable 
-              name: "user_roles",
-              description: "جدول أدوار المستخدمين",
-              columns: [
+              name="user_roles"
+              description="جدول أدوار المستخدمين"
+              columns={[
                 { name: "user_id", type: "uuid", description: "معرف المستخدم" },
                 { name: "role_id", type: "uuid", description: "معرف الدور" }
-              ]
+              ]}
             />
             
             <DatabaseTable 
-              name: "permissions",
-              description: "جدول الصلاحيات",
-              columns: [
+              name="permissions"
+              description="جدول الصلاحيات"
+              columns={[
                 { name: "id", type: "uuid", description: "المعرف الفريد" },
                 { name: "name", type: "text", description: "اسم الصلاحية" },
                 { name: "description", type: "text", description: "وصف الصلاحية" },
                 { name: "module", type: "text", description: "الوحدة المرتبطة" }
-              ]
+              ]}
             />
             
             <DatabaseTable 
-              name: "role_permissions",
-              description: "جدول صلاحيات الأدوار",
-              columns: [
+              name="role_permissions"
+              description="جدول صلاحيات الأدوار"
+              columns={[
                 { name: "role_id", type: "uuid", description: "معرف الدور" },
                 { name: "permission_id", type: "uuid", description: "معرف الصلاحية" }
-              ]
+              ]}
             />
             
             <DatabaseTable 
-              name: "developer_settings",
-              description: "جدول إعدادات المطورين",
-              columns: [
+              name="developer_settings"
+              description="جدول إعدادات المطورين"
+              columns={[
                 { name: "id", type: "uuid", description: "المعرف الفريد" },
                 { name: "user_id", type: "uuid", description: "معرف المستخدم" },
                 { name: "is_enabled", type: "boolean", description: "هل مفعلة" },
@@ -319,7 +319,7 @@ export const DatabaseDocumentation = () => {
                 { name: "cache_time_minutes", type: "integer", description: "وقت التخزين المؤقت بالدقائق" },
                 { name: "update_interval_seconds", type: "integer", description: "فترة التحديث بالثواني" },
                 { name: "show_toolbar", type: "boolean", description: "هل يظهر شريط أدوات المطور" }
-              ]
+              ]}
             />
           </TabsContent>
         </Tabs>
