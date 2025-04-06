@@ -54,36 +54,31 @@ export const useTasksFetching = (
       console.log("Fetched tasks raw data:", data);
 
       // Transform data to add user info and stage name
-      const transformedTasks = data.map(task => {
-        // Add proper debugging for assigned user
-        console.log("Task assigned_to:", task.assigned_to);
-        console.log("Task profiles:", task.profiles);
+const transformedTasks = data.map(task => {
+  // Safely extract the assigned user name
+  let assignedUserName = '';
+  if (task.assigned_user) {
+    if (Array.isArray(task.assigned_user) && task.assigned_user.length > 0) {
+      assignedUserName = task.assigned_user[0].display_name || task.assigned_user[0].email || '';
+    } else {
+      assignedUserName = task.assigned_user.display_name || task.assigned_user.email || '';
+    }
+  }
 
-        // Safely extract the assigned user name
-        let assignedUserName = '';
-        if (task.assigned_user) {
-            // Handle if assigned_user is array or object
-            if (Array.isArray(task.assigned_user) && task.assigned_user.length > 0) {
-              assignedUserName = task.assigned_user[0].display_name || task.assigned_user[0].email || '';
-           } else if (typeof task.assigned_user === 'object') {
-             assignedUserName = task.assigned_user.display_name || task.assigned_user.email || '';
-           } 
-          console.log("Extracted assigned user name:", assignedUserName);
-        }
+  // Safely extract stage name
+  let stageName = '';
+  if (task.stage) {
+    stageName = task.stage.name || '';
+  }
 
-        // Safely extract stage name
-        let stageName = '';
-        if (task.stage) {
-          stageName = task.stage.name || '';
-        }
+  return {
+    ...task,
+    assigned_user_name: assignedUserName,
+    stage_name: stageName,
+  };
+});
 
-        return {
-          ...task,
-          assigned_user_name: assignedUserName,
-          stage_name: stageName,
-        };
-      });
-
+      
       console.log("Transformed tasks with user names:", transformedTasks);
 
       setTasks(transformedTasks);
