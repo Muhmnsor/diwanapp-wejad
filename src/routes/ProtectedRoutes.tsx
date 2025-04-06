@@ -29,7 +29,6 @@ import {
   HRSettings
 } from "@/components/hr/pages";
 import Accounting from "@/pages/Accounting";
-import DigitalAccounts from "@/pages/DigitalAccounts";
 
 export const ProtectedRoutes = [
   <Route 
@@ -175,15 +174,6 @@ export const ProtectedRoutes = [
     element={
       <ProtectedRoute>
         <InternalMail />
-      </ProtectedRoute>
-    } 
-  />,
-  <Route 
-    key="digital-accounts"
-    path="/digital-accounts" 
-    element={
-      <ProtectedRoute>
-        <DigitalAccounts />
       </ProtectedRoute>
     } 
   />,
