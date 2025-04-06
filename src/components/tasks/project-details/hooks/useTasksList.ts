@@ -22,11 +22,7 @@ export const useTasksList = (projectId?: string, meetingId?: string, isWorkspace
     try {
       console.log(`Fetching tasks for ${isWorkspace ? 'workspace' : isGeneral ? 'general' : 'project'} ID: ${projectId || 'none'}`);
       
-      let query = supabase.from('tasks').select(`
-        *,
-        assigned_user:assigned_to (display_name, email),
-        stage:stage_id (name)
-     `);
+      let query = supabase.from('tasks').select('*');
       
      if (isWorkspace) {
       // Fetch tasks for a workspace
@@ -47,26 +43,18 @@ export const useTasksList = (projectId?: string, meetingId?: string, isWorkspace
       const formattedTasks = data.map(task => {
         // استخراج اسم المستخدم المكلف من البيانات
         let assigneeName = '';
-        if (task.assigned_user) {
-          if (Array.isArray(task.assigned_user)) {
-            // إذا كانت المعلومات في مصفوفة
-            if (task.assigned_user.length > 0) {
-              assigneeName = task.assigned_user[0].display_name || task.assigned_user[0].email || '';
-            }
-          } else {
-            // إذا كانت المعلومات في كائن مباشر
-            assigneeName = task.assigned_user.display_name || task.assigned_user.email || '';
-          }
-        } else if (task.profiles) {
-          // For backwards compatibility
+        if (task.profiles) {
           if (Array.isArray(task.profiles)) {
+            // إذا كانت المعلومات في مصفوفة
             if (task.profiles.length > 0) {
               assigneeName = task.profiles[0].display_name || task.profiles[0].email || '';
             }
           } else {
+            // إذا كانت المعلومات في كائن مباشر
             assigneeName = task.profiles.display_name || task.profiles.email || '';
           }
         }
+        
         return {
           ...task,
           id: task.id,

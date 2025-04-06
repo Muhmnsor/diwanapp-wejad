@@ -1,3 +1,4 @@
+
 export interface Task {
   id: string;
   title: string;
@@ -9,7 +10,6 @@ export interface Task {
   created_by?: string;
   assigned_to?: string;
   assignee_name?: string;
-  assigned_user_name?: string; // Thêm thuộc tính này để hiển thị tên người được giao
   workspace_id?: string;
   project_id?: string;
   stage_id?: string;
