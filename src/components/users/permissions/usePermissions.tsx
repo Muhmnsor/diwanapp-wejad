@@ -18,7 +18,12 @@ const MODULE_TO_APP_MAP: Record<string, string[]> = {
   "المتجر الإلكتروني": ["store"],
   "الإشعارات": ["notifications"],
   "الطلبات": ["requests"],
-  "أدوات المطور": ["developer"]
+  "أدوات المطور": ["developer"],
+  "شؤون الموظفين": ["hr"],
+  "المحاسبة": ["accounting"],
+  "الاجتماعات": ["meetings"],
+  "البريد الداخلي": ["internal_mail"],
+  "الاشتراكات": ["subscriptions"]
 };
 
 export const usePermissions = (role: Role) => {
