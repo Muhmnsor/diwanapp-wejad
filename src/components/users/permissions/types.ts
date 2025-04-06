@@ -56,6 +56,11 @@ export const MODULE_TRANSLATIONS: Record<string, string> = {
   'finance': 'المالية',
   'website': 'الموقع الإلكتروني',
   'store': 'المتجر الإلكتروني',
+  'hr': 'شؤون الموظفين',
+  'accounting': 'المحاسبة',
+  'meetings': 'الاجتماعات',
+  'internal_mail': 'البريد الداخلي',
+  'subscriptions': 'الاشتراكات',
   
   // Arabic to English (for technical mapping)
   'الفعاليات': 'events',
@@ -69,8 +74,14 @@ export const MODULE_TRANSLATIONS: Record<string, string> = {
   'الطلبات': 'requests',
   'المالية': 'finance',
   'الموقع الإلكتروني': 'website',
-  'المتجر الإلكتروني': 'store'
+  'المتجر الإلكتروني': 'store',
+  'شؤون الموظفين': 'hr',
+  'المحاسبة': 'accounting',
+  'الاجتماعات': 'meetings',
+  'البريد الداخلي': 'internal_mail',
+  'الاشتراكات': 'subscriptions'
 };
+
 
 // Standardized permission categories with translations
 export const PERMISSION_CATEGORIES: Record<string, string> = {
