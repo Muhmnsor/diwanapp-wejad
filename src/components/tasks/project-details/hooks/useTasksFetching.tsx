@@ -64,7 +64,7 @@ const transformedTasks = data.map(task => {
       assignedUserName = task.assigned_user.display_name || task.assigned_user.email || '';
     }
   }
-
+  
   // Safely extract stage name
   let stageName = '';
   if (task.stage) {
