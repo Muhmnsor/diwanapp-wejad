@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Task } from "../types/task";
 import { toast } from "sonner";
 
-export const useTasksList = (projectId?: string, isWorkspace = false) => {
+export const useTasksList = (projectId?: string, meetingId?: string, isWorkspace = false) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
