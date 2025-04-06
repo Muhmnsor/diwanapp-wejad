@@ -2,134 +2,368 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion } from "@/components/ui/accordion";
 import { DocumentationSection } from "../components/DocumentationSection";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const ComponentsDocumentation = () => {
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>توثيق المكونات الرئيسية</CardTitle>
-          <CardDescription>
-            شرح تفصيلي للمكونات الرئيسية في النظام
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Accordion type="single" collapsible className="w-full">
-            <DocumentationSection
-              title="نظام إدارة الفعاليات"
-              content={[
-                { title: "إنشاء الفعاليات", description: "إنشاء وتحرير الفعاليات مع تحديد التفاصيل الكاملة والصور والموقع." },
-                { title: "التسجيل في الفعاليات", description: "نظام تسجيل متكامل مع خيارات الحقول المطلوبة والتحقق." },
-                { title: "إدارة الحضور", description: "تسجيل الحضور عبر QR أو رقم التسجيل مع الإحصائيات." },
-                { title: "التقييم والملاحظات", description: "جمع التقييمات والملاحظات مع تحليل النتائج." },
-                { title: "إصدار الشهادات", description: "إصدار شهادات الحضور والمشاركة مع التحقق." },
-                { title: "إدارة التواصل", description: "إرسال التنبيهات والرسائل للمشاركين عبر الواتساب." },
-              ]}
-            />
-            
-            <DocumentationSection
-              title="نظام إدارة المشاريع"
-              content={[
-                { title: "إنشاء المشاريع", description: "إنشاء المشاريع مع تحديد الأهداف والجدول الزمني والميزانية." },
-                { title: "إدارة الأنشطة", description: "تخطيط وجدولة الأنشطة مع متابعة التنفيذ." },
-                { title: "إدارة المشاركين", description: "تسجيل وإدارة المشاركين في المشروع." },
-                { title: "متابعة التقدم", description: "لوحات متابعة ومؤشرات أداء تفاعلية." },
-                { title: "التقارير", description: "إنشاء تقارير تفصيلية عن سير المشروع." },
-                { title: "إدارة المراحل", description: "تقسيم المشروع إلى مراحل مع تتبع الإنجاز." },
-              ]}
-            />
-
-            <DocumentationSection
-              title="نظام المحافظ"
-              content={[
-                { title: "إنشاء المحافظ", description: "إنشاء وتنظيم محافظ المشاريع." },
-                { title: "مساحات العمل", description: "إدارة مساحات العمل والفرق." },
-                { title: "المهام والمتابعة", description: "إدارة مهام المحفظة ومتابعة التقدم." },
-                { title: "التكامل مع Asana", description: "مزامنة البيانات مع منصة Asana." },
-                { title: "التقارير", description: "تقارير وإحصائيات أداء المحافظ." },
-              ]}
-            />
-
-            <DocumentationSection
-              title="نظام إدارة المهام"
-              content={[
-                { title: "إنشاء المهام", description: "إنشاء مهام مع تحديد التفاصيل والمواعيد." },
-                { title: "المهام الفرعية", description: "تقسيم المهام إلى مهام فرعية." },
-                { title: "التسليمات", description: "إدارة تسليمات المهام والمرفقات." },
-                { title: "المناقشات", description: "نظام تعليقات ومناقشات للمهام." },
-                { title: "المهام المتكررة", description: "إنشاء وجدولة المهام المتكررة." },
-                { title: "متابعة الأداء", description: "قياس ومتابعة أداء المهام والفريق." },
-              ]}
-            />
-
-            <DocumentationSection
-              title="نظام الأفكار والمبادرات"
-              content={[
-                { title: "تقديم الأفكار", description: "نظام متكامل لتقديم ومناقشة الأفكار." },
-                { title: "التصويت والتقييم", description: "آلية تصويت وتقييم للأفكار المقترحة." },
-                { title: "المناقشات", description: "منصة للمناقشات وإبداء الآراء." },
-                { title: "مسار الموافقات", description: "متابعة مسار الموافقات على المبادرات." },
-                { title: "التنفيذ", description: "تحويل الأفكار إلى مشاريع وخطط تنفيذية." },
-              ]}
-            />
-
-            <DocumentationSection
-              title="نظام إدارة الشهادات"
-              content={[
-                { title: "قوالب الشهادات", description: "إنشاء وتحرير قوالب الشهادات." },
-                { title: "التوقيعات", description: "إدارة التوقيعات المعتمدة." },
-                { title: "الإصدار", description: "إصدار الشهادات للمستفيدين." },
-                { title: "التحقق", description: "نظام التحقق من صحة الشهادات." },
-                { title: "السجلات", description: "حفظ سجلات الشهادات والتحقق." },
-              ]}
-            />
-
-            <DocumentationSection
-              title="نظام الإشعارات والرسائل"
-              content={[
-                { title: "قوالب الرسائل", description: "إدارة قوالب الرسائل والإشعارات." },
-                { title: "تكامل الواتساب", description: "إرسال الرسائل عبر الواتساب." },
-                { title: "الإشعارات الداخلية", description: "نظام الإشعارات داخل التطبيق." },
-                { title: "التفضيلات", description: "إدارة تفضيلات الإشعارات للمستخدمين." },
-                { title: "سجلات الإرسال", description: "متابعة سجلات إرسال الإشعارات." },
-              ]}
-            />
-
-            <DocumentationSection
-              title="نظام إدارة الموارد المالية"
-              content={[
-                { title: "إدارة الموارد", description: "تسجيل وإدارة الموارد المالية." },
-                { title: "المصروفات", description: "تتبع وإدارة المصروفات." },
-                { title: "الميزانيات", description: "تخطيط وإدارة الميزانيات." },
-                { title: "التقارير المالية", description: "إعداد التقارير والتحليلات المالية." },
-                { title: "المستهدفات", description: "تحديد ومتابعة المستهدفات المالية." },
-              ]}
-            />
-
-            <DocumentationSection
-              title="نظام إدارة المستندات"
-              content={[
-                { title: "تنظيم المستندات", description: "تصنيف وتنظيم المستندات." },
-                { title: "متابعة الصلاحية", description: "تتبع صلاحية المستندات." },
-                { title: "الأرشفة", description: "أرشفة المستندات وحفظها." },
-                { title: "البحث", description: "نظام بحث متقدم في المستندات." },
-                { title: "التنبيهات", description: "تنبيهات تجديد المستندات." },
-              ]}
-            />
-
-            <DocumentationSection
-              title="نظام إدارة الصلاحيات"
-              content={[
-                { title: "الأدوار", description: "تعريف وإدارة الأدوار." },
-                { title: "الصلاحيات", description: "تحديد الصلاحيات لكل دور." },
-                { title: "المستخدمين", description: "إدارة المستخدمين وأدوارهم." },
-                { title: "الوصول", description: "التحكم في صلاحيات الوصول." },
-                { title: "السجلات", description: "سجلات الوصول والتغييرات." },
-              ]}
-            />
-          </Accordion>
-        </CardContent>
-      </Card>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>توثيق المكونات</CardTitle>
+        <CardDescription>توثيق شامل لكافة المكونات والوحدات في النظام</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="core">
+          <TabsList className="grid grid-cols-3 mb-4">
+            <TabsTrigger value="core">المكونات الأساسية</TabsTrigger>
+            <TabsTrigger value="hr">الموارد البشرية</TabsTrigger>
+            <TabsTrigger value="finance">المالية</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="core" className="space-y-4">
+            <Accordion type="single" collapsible className="w-full">
+              <DocumentationSection 
+                title="مكونات إدارة الفعاليات" 
+                content={[
+                  {
+                    title: "EventCard",
+                    description: "بطاقة عرض الفعالية في صفحة الأحداث والفعاليات"
+                  },
+                  {
+                    title: "EventDetailsView",
+                    description: "عرض تفاصيل الفعالية الكاملة"
+                  },
+                  {
+                    title: "EventRegistrationForm",
+                    description: "نموذج التسجيل في الفعالية"
+                  },
+                  {
+                    title: "EventFeedbackForm",
+                    description: "نموذج تقييم الفعالية"
+                  },
+                  {
+                    title: "EventDashboard",
+                    description: "لوحة معلومات الفعالية للمشرفين"
+                  }
+                ]}
+              />
+              
+              <DocumentationSection 
+                title="مكونات إدارة المشاريع" 
+                content={[
+                  {
+                    title: "ProjectCard",
+                    description: "بطاقة عرض المشروع في صفحة المشاريع"
+                  },
+                  {
+                    title: "ProjectDetailsView",
+                    description: "عرض تفاصيل المشروع الكامل"
+                  },
+                  {
+                    title: "ProjectActivitiesList",
+                    description: "قائمة أنشطة المشروع"
+                  },
+                  {
+                    title: "ProjectDashboardTabs",
+                    description: "تبويبات لوحة معلومات المشروع"
+                  }
+                ]}
+              />
+              
+              <DocumentationSection 
+                title="مكونات إدارة المستخدمين" 
+                content={[
+                  {
+                    title: "UserNav",
+                    description: "قائمة التنقل الخاصة بالمستخدم"
+                  },
+                  {
+                    title: "UsersManagement",
+                    description: "إدارة المستخدمين في النظام"
+                  },
+                  {
+                    title: "AdminNavLinks",
+                    description: "روابط التنقل لمدير النظام"
+                  }
+                ]}
+              />
+              
+              <DocumentationSection 
+                title="مكونات الإشعارات" 
+                content={[
+                  {
+                    title: "NotificationBell",
+                    description: "جرس الإشعارات في الشريط العلوي"
+                  },
+                  {
+                    title: "NotificationList",
+                    description: "قائمة الإشعارات"
+                  },
+                  {
+                    title: "NotificationItem",
+                    description: "عنصر الإشعار الفردي"
+                  }
+                ]}
+              />
+              
+              <DocumentationSection 
+                title="مكونات لوحة المعلومات" 
+                content={[
+                  {
+                    title: "DashboardOverview",
+                    description: "نظرة عامة على لوحة المعلومات"
+                  },
+                  {
+                    title: "DashboardCharts",
+                    description: "الرسوم البيانية في لوحة المعلومات"
+                  },
+                  {
+                    title: "DashboardStats",
+                    description: "إحصاءات لوحة المعلومات"
+                  }
+                ]}
+              />
+              
+              <DocumentationSection 
+                title="مكونات الشهادات" 
+                content={[
+                  {
+                    title: "CertificateTemplates",
+                    description: "قوالب الشهادات"
+                  },
+                  {
+                    title: "CertificateSignatures",
+                    description: "توقيعات الشهادات"
+                  },
+                  {
+                    title: "CertificateVerification",
+                    description: "التحقق من صحة الشهادات"
+                  }
+                ]}
+              />
+            </Accordion>
+          </TabsContent>
+          
+          <TabsContent value="hr" className="space-y-4">
+            <Accordion type="single" collapsible className="w-full">
+              <DocumentationSection 
+                title="مكونات إدارة الموظفين" 
+                content={[
+                  {
+                    title: "EmployeesList",
+                    description: "قائمة الموظفين في النظام"
+                  },
+                  {
+                    title: "EmployeeScheduleField",
+                    description: "حقل لتعيين جدول الموظف"
+                  },
+                  {
+                    title: "HREmployees",
+                    description: "صفحة إدارة الموظفين"
+                  }
+                ]}
+              />
+              
+              <DocumentationSection 
+                title="مكونات الحضور والانصراف" 
+                content={[
+                  {
+                    title: "AttendanceManagement",
+                    description: "إدارة الحضور والانصراف"
+                  },
+                  {
+                    title: "AttendanceTable",
+                    description: "جدول سجلات الحضور"
+                  },
+                  {
+                    title: "HRAttendance",
+                    description: "صفحة سجلات الحضور"
+                  }
+                ]}
+              />
+              
+              <DocumentationSection 
+                title="مكونات العقود" 
+                content={[
+                  {
+                    title: "EmployeeContractsTabs",
+                    description: "تبويبات عقود الموظفين"
+                  },
+                  {
+                    title: "ContractsTab",
+                    description: "تبويب العقود"
+                  },
+                  {
+                    title: "ViewContractDialog",
+                    description: "نافذة عرض تفاصيل العقد"
+                  }
+                ]}
+              />
+              
+              <DocumentationSection 
+                title="مكونات الإجازات" 
+                content={[
+                  {
+                    title: "LeavesManagement",
+                    description: "إدارة الإجازات"
+                  },
+                  {
+                    title: "LeavesTable",
+                    description: "جدول الإجازات"
+                  },
+                  {
+                    title: "AddLeaveDialog",
+                    description: "نافذة إضافة إجازة جديدة"
+                  }
+                ]}
+              />
+              
+              <DocumentationSection 
+                title="مكونات التدريب" 
+                content={[
+                  {
+                    title: "HRTraining",
+                    description: "صفحة إدارة التدريب"
+                  },
+                  {
+                    title: "TrainingTab",
+                    description: "تبويب التدريب"
+                  }
+                ]}
+              />
+              
+              <DocumentationSection 
+                title="مكونات التقارير" 
+                content={[
+                  {
+                    title: "HRReportsPage",
+                    description: "صفحة تقارير الموارد البشرية"
+                  },
+                  {
+                    title: "AttendanceReport",
+                    description: "تقرير الحضور"
+                  },
+                  {
+                    title: "LeaveReport",
+                    description: "تقرير الإجازات"
+                  }
+                ]}
+              />
+            </Accordion>
+          </TabsContent>
+          
+          <TabsContent value="finance" className="space-y-4">
+            <Accordion type="single" collapsible className="w-full">
+              <DocumentationSection 
+                title="مكونات المحاسبة" 
+                content={[
+                  {
+                    title: "AccountingDashboard",
+                    description: "لوحة معلومات المحاسبة"
+                  },
+                  {
+                    title: "JournalEntries",
+                    description: "قيود اليومية"
+                  },
+                  {
+                    title: "GeneralLedger",
+                    description: "دفتر الأستاذ العام"
+                  },
+                  {
+                    title: "TrialBalance",
+                    description: "ميزان المراجعة"
+                  }
+                ]}
+              />
+              
+              <DocumentationSection 
+                title="مكونات الموارد المالية" 
+                content={[
+                  {
+                    title: "ResourceForm",
+                    description: "نموذج إضافة موارد مالية"
+                  },
+                  {
+                    title: "ResourcesTab",
+                    description: "تبويب الموارد المالية"
+                  },
+                  {
+                    title: "ResourcesReportCard",
+                    description: "بطاقة تقرير الموارد المالية"
+                  }
+                ]}
+              />
+              
+              <DocumentationSection 
+                title="مكونات المصروفات" 
+                content={[
+                  {
+                    title: "ExpensesTable",
+                    description: "جدول المصروفات"
+                  },
+                  {
+                    title: "ExpensesTab",
+                    description: "تبويب المصروفات"
+                  },
+                  {
+                    title: "DeleteExpenseDialog",
+                    description: "نافذة حذف مصروف"
+                  }
+                ]}
+              />
+              
+              <DocumentationSection 
+                title="مكونات الالتزامات" 
+                content={[
+                  {
+                    title: "ObligationsTable",
+                    description: "جدول الالتزامات المالية"
+                  },
+                  {
+                    title: "ObligationBalancesTable",
+                    description: "جدول أرصدة الالتزامات"
+                  },
+                  {
+                    title: "ObligationExpensesTable",
+                    description: "جدول مصروفات الالتزامات"
+                  }
+                ]}
+              />
+              
+              <DocumentationSection 
+                title="مكونات الميزانية" 
+                content={[
+                  {
+                    title: "BudgetItemsTable",
+                    description: "جدول عناصر الميزانية"
+                  },
+                  {
+                    title: "BudgetDistribution",
+                    description: "توزيع الميزانية"
+                  }
+                ]}
+              />
+              
+              <DocumentationSection 
+                title="مكونات التقارير المالية" 
+                content={[
+                  {
+                    title: "FinancialReports",
+                    description: "التقارير المالية"
+                  },
+                  {
+                    title: "ComparisonReportCard",
+                    description: "بطاقة تقرير المقارنة"
+                  },
+                  {
+                    title: "FinancialSummaryCard",
+                    description: "بطاقة ملخص المالي"
+                  }
+                ]}
+              />
+            </Accordion>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 };
