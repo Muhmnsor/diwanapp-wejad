@@ -44,12 +44,12 @@ export function useSelfAttendance() {
         
         // Check if today is a working day according to the schedule
         const { data: workDay, error: workDayError } = await supabase
-          .from('hr_weekly_schedule')
-          .select('is_working_day, work_start_time')
-          .eq('schedule_type_id', scheduleId)
+          .from('hr_work_days')
+          .select('is_working_day, start_time, end_time')
+          .eq('schedule_id', scheduleId)
           .eq('day_of_week', dayOfWeek)
           .single();
-          
+        
         if (workDayError || !workDay) {
           setCanCheckIn({ allowed: false, reason: "لم يتم العثور على جدول العمل لهذا اليوم" });
           return;
@@ -62,7 +62,7 @@ export function useSelfAttendance() {
         }
         
         // If no start time is set, allow check-in
-        if (!workDay.work_start_time) {
+        if (!workDay.start_time) {
           setCanCheckIn({ allowed: true });
           return;
         }
@@ -71,7 +71,7 @@ export function useSelfAttendance() {
         const now = new Date();
         
         // Parse the work_start_time (format: "HH:MM:SS")
-        const [hours, minutes] = workDay.work_start_time.split(':').map(Number);
+        const [hours, minutes] = workDay.start_time.split(':').map(Number);
         
         // Create start time Date object for today
         const workStartTime = new Date();
