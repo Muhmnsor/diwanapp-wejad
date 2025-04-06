@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "../types/task";
@@ -21,10 +22,10 @@ export const useTasksFetching = (
         .from('tasks')
         .select(`
           *,
-          assigned_user:assigned_to (display_name, email),
+          profiles:assigned_to (display_name, email),
           stage:stage_id (name)
-       `);
-      
+        `);
+
       // Filter based on what's provided - using clear logic for each task type
       if (isWorkspace && projectId) {
         // Case 1: Workspace tasks - specific to a workspace
@@ -54,31 +55,31 @@ export const useTasksFetching = (
       console.log("Fetched tasks raw data:", data);
 
       // Transform data to add user info and stage name
-const transformedTasks = data.map(task => {
-  // Safely extract the assigned user name
-  let assignedUserName = '';
-  if (task.assigned_user) {
-    if (Array.isArray(task.assigned_user) && task.assigned_user.length > 0) {
-      assignedUserName = task.assigned_user[0].display_name || task.assigned_user[0].email || '';
-    } else {
-      assignedUserName = task.assigned_user.display_name || task.assigned_user.email || '';
-    }
-  }
-  
-  // Safely extract stage name
-  let stageName = '';
-  if (task.stage) {
-    stageName = task.stage.name || '';
-  }
+      const transformedTasks = data.map(task => {
+        // Add proper debugging for assigned user
+        console.log("Task assigned_to:", task.assigned_to);
+        console.log("Task profiles:", task.profiles);
 
-  return {
-    ...task,
-    assigned_user_name: assignedUserName,
-    stage_name: stageName,
-  };
-});
+        // Safely extract the assigned user name
+        let assignedUserName = '';
+        if (task.profiles) {
+          assignedUserName = task.profiles.display_name || task.profiles.email || '';
+          console.log("Extracted assigned user name:", assignedUserName);
+        }
 
-      
+        // Safely extract stage name
+        let stageName = '';
+        if (task.stage) {
+          stageName = task.stage.name || '';
+        }
+
+        return {
+          ...task,
+          assigned_user_name: assignedUserName,
+          stage_name: stageName,
+        };
+      });
+
       console.log("Transformed tasks with user names:", transformedTasks);
 
       setTasks(transformedTasks);
