@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "../types/task";
@@ -63,7 +62,14 @@ export const useTasksFetching = (
         // Safely extract the assigned user name
         let assignedUserName = '';
         if (task.profiles) {
-          assignedUserName = task.profiles.display_name || task.profiles.email || '';
+          // Check if profiles is an array or an object
+          if (Array.isArray(task.profiles) && task.profiles.length > 0) {
+            // If it's an array, use the first item
+            assignedUserName = task.profiles[0]?.display_name || task.profiles[0]?.email || '';
+          } else {
+            // If it's an object, use it directly
+            assignedUserName = task.profiles.display_name || task.profiles.email || '';
+          }
           console.log("Extracted assigned user name:", assignedUserName);
         }
 
