@@ -21,7 +21,7 @@ export const useTasksFetching = (
         .from('tasks')
         .select(`
           *,
-          profiles:assigned_to (display_name, email),
+          assigned_user:assigned_to (display_name, email),
           stage:stage_id (name)
         `);
 
@@ -61,15 +61,8 @@ export const useTasksFetching = (
 
         // Safely extract the assigned user name
         let assignedUserName = '';
-        if (task.profiles) {
-          // Check if profiles is an array or an object
-          if (Array.isArray(task.profiles) && task.profiles.length > 0) {
-            // If it's an array, use the first item
-            assignedUserName = task.profiles[0]?.display_name || task.profiles[0]?.email || '';
-          } else {
-            // If it's an object, use it directly
-            assignedUserName = task.profiles.display_name || task.profiles.email || '';
-          }
+        if (task.assigned_user) {
+          assignedUserName = task.assigned_user.display_name || task.assigned_user.email || '';
           console.log("Extracted assigned user name:", assignedUserName);
         }
 
