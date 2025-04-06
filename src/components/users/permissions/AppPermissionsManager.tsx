@@ -26,7 +26,7 @@ const AVAILABLE_APPS: AppInfo[] = [
     description: "إدارة وتنظيم الفعاليات والأنشطة"
   },
   {
-    name: "إدارة المستندات",
+    name: "إدارة الوثائق",
     key: "documents",
     description: "إدارة وتنظيم المستندات والملفات"
   },
@@ -41,9 +41,9 @@ const AVAILABLE_APPS: AppInfo[] = [
     description: "إدارة وتنظيم الأفكار والمقترحات"
   },
   {
-    name: "إدارة الأموال",
+    name: "إدارة التقديرات",
     key: "finance",
-    description: "إدارة الميزانية والمصروفات"
+    description: "إدارة تقديرات المشاريع"
   },
   {
     name: "إدارة المستخدمين",
@@ -58,7 +58,7 @@ const AVAILABLE_APPS: AppInfo[] = [
   {
     name: "المتجر الإلكتروني",
     key: "store",
-    description: "إدارة المنتجات والطلبات في المتجر الإلكتروني"
+    description: "إدارة منتجات التبرع في المتجر الإلكتروني"
   },
   {
     name: "الإشعارات",
@@ -74,6 +74,32 @@ const AVAILABLE_APPS: AppInfo[] = [
     name: "المطورين",
     key: "developer",
     description: "إعدادات وأدوات المطورين"
+  },
+  // Adding the new applications
+  {
+    name: "إدارة شؤون الموظفين",
+    key: "hr",
+    description: "إدارة المعلومات والعمليات المتعلقة بالموظفين"
+  },
+  {
+    name: "إدارة المحاسبة",
+    key: "accounting",
+    description: "إدارة الميزانية والشؤون المالية"
+  },
+  {
+    name: "إدارة الاجتماعات",
+    key: "meetings",
+    description: "إدارة جدول الاجتماعات والمشاركين والمحاضر"
+  },
+  {
+    name: "البريد الداخلي",
+    key: "internal_mail",
+    description: "نظام البريد الداخلي والمراسلات"
+  },
+  {
+    name: "الاشتراكات",
+    key: "subscriptions",
+    description: "إدارة اشتراكات المستخدمين والمتابعين"
   }
 ];
 
