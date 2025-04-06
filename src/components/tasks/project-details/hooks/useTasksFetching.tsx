@@ -23,7 +23,7 @@ export const useTasksFetching = (
           *,
           assigned_user:assigned_to (display_name, email),
           stage:stage_id (name)
-       ');
+       `);
 
       // Filter based on what's provided - using clear logic for each task type
       if (isWorkspace && projectId) {
