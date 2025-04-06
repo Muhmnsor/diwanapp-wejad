@@ -21,9 +21,10 @@ export const useTasksFetching = (
         .from('tasks')
         .select(`
           *,
-          assigned_user:assigned_to (display_name, email),
+          profiles:profiles!inner(id, display_name, email),
           stage:stage_id (name)
-        `);
+        `)
+       .eq('profiles.id', 'assigned_to');
 
       // Filter based on what's provided - using clear logic for each task type
       if (isWorkspace && projectId) {
