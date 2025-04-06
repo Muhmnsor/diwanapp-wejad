@@ -1,3 +1,4 @@
+
 import { Route } from "react-router-dom";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Settings from "@/pages/Settings";
@@ -28,7 +29,6 @@ import {
   HRSettings
 } from "@/components/hr/pages";
 import Accounting from "@/pages/Accounting";
-import { DigitalAccounts } from "@/components/digital-accounts/DigitalAccounts";
 
 export const ProtectedRoutes = [
   <Route 
@@ -82,15 +82,6 @@ export const ProtectedRoutes = [
     element={
       <ProtectedRoute>
         <Documents />
-      </ProtectedRoute>
-    } 
-  />,
-  <Route 
-    key="digital-accounts"
-    path="/digital-accounts" 
-    element={
-      <ProtectedRoute>
-        <DigitalAccounts />
       </ProtectedRoute>
     } 
   />,
@@ -186,6 +177,7 @@ export const ProtectedRoutes = [
       </ProtectedRoute>
     } 
   />,
+  // HR Dashboard with nested routes
   <Route 
     key="admin-hr"
     path="/admin/hr" 
