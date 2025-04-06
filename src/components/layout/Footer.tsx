@@ -62,6 +62,23 @@ export const Footer = () => {
           </div>
         </div>
       </div>
+
+      {/* New Section - Development Credit */}
+      <div className="border-t border-[#C8C8C9] dark:border-[#2A2F3C] py-4">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-center items-center text-sm text-[#9F9EA1]" dir="rtl">
+            <span>تطوير منصة وِجاد</span>
+            <a 
+              href="https://twitter.com/xwejad" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="mr-2 text-primary hover:text-primary/80 transition-colors"
+            >
+              @xwejad
+            </a>
+          </div>
+        </div>
+      </div>
     </footer>
   );
 };
