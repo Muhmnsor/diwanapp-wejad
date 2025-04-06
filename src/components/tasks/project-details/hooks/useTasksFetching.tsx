@@ -21,10 +21,9 @@ export const useTasksFetching = (
         .from('tasks')
         .select(`
           *,
-          profiles:profiles!inner(id, display_name, email),
+          assigned_user:assigned_to (display_name, email),
           stage:stage_id (name)
-        `)
-       .eq('profiles.id', 'assigned_to');
+       ');
 
       // Filter based on what's provided - using clear logic for each task type
       if (isWorkspace && projectId) {
@@ -63,7 +62,12 @@ export const useTasksFetching = (
         // Safely extract the assigned user name
         let assignedUserName = '';
         if (task.assigned_user) {
-          assignedUserName = task.assigned_user.display_name || task.assigned_user.email || '';
+            // Handle if assigned_user is array or object
+            if (Array.isArray(task.assigned_user) && task.assigned_user.length > 0) {
+              assignedUserName = task.assigned_user[0].display_name || task.assigned_user[0].email || '';
+           } else if (typeof task.assigned_user === 'object') {
+             assignedUserName = task.assigned_user.display_name || task.assigned_user.email || '';
+           } 
           console.log("Extracted assigned user name:", assignedUserName);
         }
 
