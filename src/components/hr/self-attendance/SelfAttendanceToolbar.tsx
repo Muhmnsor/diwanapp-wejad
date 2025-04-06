@@ -1,410 +1,314 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuthStore } from "@/store/refactored-auth";
-import { Clock, CheckCheck, XCircle } from "lucide-react";
 import { format } from "date-fns";
-import { ar } from "date-fns/locale";
+import { Clock, LogIn, LogOut } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { useEmployeeSchedule } from "@/hooks/hr/useEmployeeSchedule";
+
+// Define the type for the employee prop
+interface Employee {
+  id: string;
+  full_name: string;
+  schedule_id?: string;
+  [key: string]: any;
+}
 
 interface SelfAttendanceToolbarProps {
-  employee: any;
+  employee: Employee | null;
 }
 
 export function SelfAttendanceToolbar({ employee }: SelfAttendanceToolbarProps) {
   const [todayAttendance, setTodayAttendance] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [canCheckIn, setCanCheckIn] = useState(false);
-  const [canCheckOut, setCanCheckOut] = useState(false);
-  const [workSchedule, setWorkSchedule] = useState<any>(null);
-  const [workDay, setWorkDay] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [checkingStatus, setCheckingStatus] = useState<boolean>(true);
   const { toast } = useToast();
-  const { user } = useAuthStore();
-
-  // Fetch today's attendance record
-  useEffect(() => {
-    const fetchTodayAttendance = async () => {
-      if (!employee?.id) return;
-
-      const today = new Date();
-      const formattedDate = format(today, "yyyy-MM-dd");
-
-      try {
-        const { data, error } = await supabase
-          .from("hr_attendance")
-          .select("*")
-          .eq("employee_id", employee.id)
-          .eq("attendance_date", formattedDate)
-          .maybeSingle();
-
-        if (error) throw error;
-
-        setTodayAttendance(data);
-        console.log("Today's attendance:", data);
-      } catch (error) {
-        console.error("Failed to fetch attendance:", error);
-      }
-    };
-
-    fetchTodayAttendance();
-  }, [employee?.id]);
-
-  // Fetch employee schedule information
-  useEffect(() => {
-    const fetchScheduleInfo = async () => {
-      if (!employee?.id) return;
-
-      try {
-        // First check if employee has schedule_id
-        if (employee.schedule_id) {
-          const { data: schedule, error: scheduleError } = await supabase
-            .from("hr_work_schedules")
-            .select("*")
-            .eq("id", employee.schedule_id)
-            .single();
-
-          if (scheduleError) throw scheduleError;
-
-          setWorkSchedule(schedule);
-          console.log("Employee schedule:", schedule);
-
-          // Get work day info for today
-          const today = new Date().getDay(); // 0 is Sunday, 1 is Monday, etc.
-          
-          const { data: workDayData, error: workDayError } = await supabase
-            .from("hr_work_days")
-            .select("*")
-            .eq("schedule_id", schedule.id)
-            .eq("day_of_week", today)
-            .single();
-
-          if (workDayError) throw workDayError;
-
-          setWorkDay(workDayData);
-          console.log("Work day info:", workDayData);
-        } else {
-          console.log("Employee has no assigned schedule");
-        }
-      } catch (error) {
-        console.error("Failed to fetch schedule information:", error);
-      }
-    };
-
-    fetchScheduleInfo();
-  }, [employee?.id]);
-
+  const { getWorkDays } = useEmployeeSchedule();
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  const [canCheckIn, setCanCheckIn] = useState<boolean>(false);
+  const [canCheckOut, setCanCheckOut] = useState<boolean>(false);
+  const [message, setMessage] = useState<string>("");
+  
   // Update current time every minute
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
-    }, 60000); // Update every minute
-
+    }, 60000);
+    
     return () => clearInterval(timer);
   }, []);
-
-  // Determine if employee can check in or check out based on schedule
+  
+  // Load today's attendance record when employee data is available
   useEffect(() => {
-    if (!workDay) {
-      setCanCheckIn(false);
-      setCanCheckOut(false);
-      return;
-    }
-
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    const currentTimeInMinutes = currentHour * 60 + currentMinute;
-
-    // Format is "HH:MM:SS"
-    let startTimeInMinutes = 0;
-    let endTimeInMinutes = 0;
-    
-    if (workDay.start_time) {
-      const [startHour, startMinute] = workDay.start_time.split(':').map(Number);
-      startTimeInMinutes = startHour * 60 + startMinute;
-    }
-    
-    if (workDay.end_time) {
-      const [endHour, endMinute] = workDay.end_time.split(':').map(Number);
-      endTimeInMinutes = endHour * 60 + endMinute;
-    }
-
-    // Allow check-in 30 minutes before shift start until 2 hours after shift start
-    const earlyCheckInWindow = startTimeInMinutes - 30;
-    const lateCheckInWindow = startTimeInMinutes + 120;
-
-    // Allow check-out from 30 minutes before shift end until 2 hours after shift end
-    const earlyCheckOutWindow = endTimeInMinutes - 30;
-    const lateCheckOutWindow = endTimeInMinutes + 120;
-
-    // Check if today is a working day
-    if (!workDay.is_working_day) {
-      console.log("Today is not a working day");
-      setCanCheckIn(false);
-      setCanCheckOut(false);
-      return;
-    }
-
-    console.log("Current time in minutes:", currentTimeInMinutes);
-    console.log("Check-in window:", earlyCheckInWindow, "to", lateCheckInWindow);
-    console.log("Check-out window:", earlyCheckOutWindow, "to", lateCheckOutWindow);
-
-    // Can check in if in the check-in window and haven't already checked in
-    setCanCheckIn(
-      currentTimeInMinutes >= earlyCheckInWindow && 
-      currentTimeInMinutes <= lateCheckInWindow && 
-      !todayAttendance?.check_in
-    );
-
-    // Can check out if already checked in and in the check-out window
-    setCanCheckOut(
-      !!todayAttendance?.check_in && 
-      !todayAttendance?.check_out &&
-      currentTimeInMinutes >= earlyCheckOutWindow && 
-      currentTimeInMinutes <= lateCheckOutWindow
-    );
-
-  }, [workDay, todayAttendance, currentTime]);
-
-  const handleCheckIn = async () => {
-    if (!employee?.id || !user?.id) return;
-
-    setIsLoading(true);
-    try {
-      const now = new Date();
-      const checkInTime = format(now, "HH:mm");
-      const today = format(now, "yyyy-MM-dd");
-
-      // Check if already checked in today
-      if (todayAttendance?.check_in) {
-        toast({
-          title: "تم تسجيل الحضور مسبقًا",
-          description: "لقد قمت بتسجيل الحضور اليوم بالفعل",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
+    const loadTodayAttendance = async () => {
+      if (!employee?.id) return;
+      
+      setCheckingStatus(true);
+      const today = format(new Date(), 'yyyy-MM-dd');
+      
+      try {
+        const { data, error } = await supabase
+          .from('hr_attendance')
+          .select('*')
+          .eq('employee_id', employee.id)
+          .eq('attendance_date', today)
+          .single();
+          
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error fetching attendance:', error);
+          toast({
+            title: "خطأ في تحميل بيانات الحضور",
+            description: error.message,
+            variant: "destructive"
+          });
+        }
+        
+        setTodayAttendance(data || null);
+        
+      } catch (error) {
+        console.error('Failed to fetch attendance:', error);
+      } finally {
+        setCheckingStatus(false);
       }
-
-      const { data, error } = await supabase
-        .from("hr_attendance")
-        .insert({
-          employee_id: employee.id,
-          attendance_date: today,
-          check_in: format(now, "yyyy-MM-dd'T'HH:mm:ss"),
-          status: "present",
-          created_by: user.id,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setTodayAttendance(data);
-      toast({
-        title: "تم تسجيل الحضور",
-        description: `تم تسجيل حضورك الساعة ${checkInTime}`,
-      });
-    } catch (error: any) {
-      console.error("Error checking in:", error);
-      toast({
-        title: "خطأ في تسجيل الحضور",
-        description: error.message || "حدث خطأ أثناء محاولة تسجيل الحضور",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCheckOut = async () => {
-    if (!employee?.id || !todayAttendance?.id || !user?.id) return;
-
-    setIsLoading(true);
-    try {
-      const now = new Date();
-      const checkOutTime = format(now, "HH:mm");
-
-      // Check if already checked out
-      if (todayAttendance.check_out) {
-        toast({
-          title: "تم تسجيل الانصراف مسبقًا",
-          description: "لقد قمت بتسجيل الانصراف اليوم بالفعل",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("hr_attendance")
-        .update({
-          check_out: format(now, "yyyy-MM-dd'T'HH:mm:ss"),
-        })
-        .eq("id", todayAttendance.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setTodayAttendance(data);
-      toast({
-        title: "تم تسجيل الانصراف",
-        description: `تم تسجيل انصرافك الساعة ${checkOutTime}`,
-      });
-    } catch (error: any) {
-      console.error("Error checking out:", error);
-      toast({
-        title: "خطأ في تسجيل الانصراف",
-        description: error.message || "حدث خطأ أثناء محاولة تسجيل الانصراف",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const formatTime = (time: string): string => {
-    if (!time) return "";
-    // Extract hours and minutes from ISO string
-    return time.substring(11, 16);
-  };
-
-  const getAttendanceStatus = () => {
-    if (!workDay || !workDay.is_working_day) {
-      return {
-        message: "اليوم ليس يوم عمل",
-        color: "text-muted-foreground"
-      };
-    }
-
-    if (!todayAttendance) {
-      if (canCheckIn) {
-        return {
-          message: "يمكنك تسجيل الحضور الآن",
-          color: "text-blue-600"
-        };
-      }
-      return {
-        message: "لم يتم تسجيل الحضور اليوم",
-        color: "text-muted-foreground"
-      };
-    }
-
-    if (todayAttendance.check_in && !todayAttendance.check_out) {
-      if (canCheckOut) {
-        return {
-          message: "يمكنك تسجيل الانصراف الآن",
-          color: "text-yellow-600"
-        };
-      }
-      return {
-        message: `تم تسجيل الحضور الساعة ${formatTime(todayAttendance.check_in)}`,
-        color: "text-green-600"
-      };
-    }
-
-    if (todayAttendance.check_in && todayAttendance.check_out) {
-      return {
-        message: `تم تسجيل الحضور والانصراف اليوم`,
-        color: "text-green-600"
-      };
-    }
-
-    return {
-      message: "حالة غير معروفة",
-      color: "text-muted-foreground"
     };
+    
+    loadTodayAttendance();
+  }, [employee?.id]);
+  
+  // Check if the employee can check-in/out based on the schedule
+  useEffect(() => {
+    const checkAttendanceEligibility = async () => {
+      if (!employee?.id) return;
+      
+      try {
+        // Get the current day of the week (0 = Sunday, 1 = Monday, etc.)
+        const currentDayOfWeek = currentTime.getDay();
+        const scheduleId = employee.schedule_id;
+        
+        if (!scheduleId) {
+          setMessage("لم يتم تعيين جدول عمل لك");
+          return;
+        }
+        
+        const workDays = await getWorkDays(scheduleId);
+        const todaySchedule = workDays.find((day: any) => day.day_of_week === currentDayOfWeek);
+        
+        // If today is not a working day or no schedule found
+        if (!todaySchedule || !todaySchedule.is_working_day) {
+          setMessage("اليوم ليس يوم عمل حسب جدولك");
+          return;
+        }
+        
+        // Parse start and end times and add 30 minutes buffer before start time
+        const startTime = parseTimeString(todaySchedule.start_time);
+        const endTime = parseTimeString(todaySchedule.end_time);
+        
+        // Set buffer time (30 min before work starts, and up to 2 hours after work ends)
+        const checkInStartBuffer = new Date(startTime);
+        checkInStartBuffer.setMinutes(checkInStartBuffer.getMinutes() - 30);
+        
+        const checkOutEndBuffer = new Date(endTime);
+        checkOutEndBuffer.setHours(checkOutEndBuffer.getHours() + 2);
+        
+        const now = new Date();
+        now.setSeconds(0, 0); // Reset seconds for more accurate comparison
+        
+        // Check if we can check in (from 30 minutes before start time until end time)
+        if (now >= checkInStartBuffer && now <= endTime && !todayAttendance) {
+          setCanCheckIn(true);
+          setMessage(`يمكنك تسجيل الحضور (وقت الدوام: ${formatTime(startTime)} - ${formatTime(endTime)})`);
+        } 
+        // Check if we can check out (from start time until 2 hours after end time)
+        else if (todayAttendance && !todayAttendance.check_out && now >= startTime && now <= checkOutEndBuffer) {
+          setCanCheckOut(true);
+          setMessage(`يمكنك تسجيل الانصراف (وقت الدوام: ${formatTime(startTime)} - ${formatTime(endTime)})`);
+        }
+        // We're outside the allowed time ranges
+        else if (!todayAttendance) {
+          setMessage(`وقت الدوام: ${formatTime(startTime)} - ${formatTime(endTime)}`);
+        }
+        
+      } catch (error) {
+        console.error('Error checking attendance eligibility:', error);
+        setMessage("حدث خطأ في التحقق من أهلية تسجيل الحضور");
+      }
+    };
+    
+    checkAttendanceEligibility();
+    
+    // Refresh eligibility every 5 minutes
+    const interval = setInterval(checkAttendanceEligibility, 300000);
+    return () => clearInterval(interval);
+    
+  }, [employee, todayAttendance, currentTime]);
+  
+  const handleCheckIn = async () => {
+    if (!employee?.id) return;
+    
+    setIsLoading(true);
+    const now = new Date();
+    const today = format(now, 'yyyy-MM-dd');
+    
+    try {
+      const { data, error } = await supabase
+        .from('hr_attendance')
+        .insert([
+          {
+            employee_id: employee.id,
+            attendance_date: today,
+            check_in: now.toISOString(),
+            status: 'present'
+          }
+        ])
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      setTodayAttendance(data);
+      toast({
+        title: "تم تسجيل الحضور بنجاح",
+        description: format(now, 'HH:mm:ss'),
+      });
+      
+      setCanCheckIn(false);
+      setCanCheckOut(true);
+      
+    } catch (error: any) {
+      console.error('Error checking in:', error);
+      toast({
+        title: "فشل تسجيل الحضور",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
-
-  const { message, color } = getAttendanceStatus();
-
+  
+  const handleCheckOut = async () => {
+    if (!employee?.id || !todayAttendance?.id) return;
+    
+    setIsLoading(true);
+    const now = new Date();
+    
+    try {
+      const { error } = await supabase
+        .from('hr_attendance')
+        .update({
+          check_out: now.toISOString(),
+          updated_at: now.toISOString()
+        })
+        .eq('id', todayAttendance.id);
+        
+      if (error) throw error;
+      
+      // Refresh the attendance record
+      const { data: updatedAttendance } = await supabase
+        .from('hr_attendance')
+        .select('*')
+        .eq('id', todayAttendance.id)
+        .single();
+        
+      setTodayAttendance(updatedAttendance);
+      toast({
+        title: "تم تسجيل الانصراف بنجاح",
+        description: format(now, 'HH:mm:ss'),
+      });
+      
+      setCanCheckOut(false);
+      
+    } catch (error: any) {
+      console.error('Error checking out:', error);
+      toast({
+        title: "فشل تسجيل الانصراف",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Helper function to parse time string (e.g., "08:30:00" to Date object)
+  const parseTimeString = (timeString: string | null): Date => {
+    if (!timeString) return new Date();
+    
+    const now = new Date();
+    const [hours, minutes] = timeString.split(':').map(Number);
+    
+    now.setHours(hours || 0, minutes || 0, 0, 0);
+    return now;
+  };
+  
+  // Format time as HH:MM
+  const formatTime = (date: Date): string => {
+    return format(date, 'HH:mm');
+  };
+  
+  if (checkingStatus) {
+    return (
+      <div className="flex justify-center py-4">
+        <div className="animate-pulse flex space-x-4">
+          <div className="h-10 w-24 bg-slate-200 rounded"></div>
+          <div className="h-10 w-24 bg-slate-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+  
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <Clock className="h-5 w-5 text-muted-foreground ml-2" />
-          <span className={color}>{message}</span>
-        </div>
-        <div className="text-muted-foreground">
-          {format(currentTime, "HH:mm", { locale: ar })}
-        </div>
-      </div>
-
-      {todayAttendance && (
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col items-center border rounded-md p-3">
-            <span className="text-sm text-muted-foreground">الحضور</span>
-            <span className="font-bold">
-              {todayAttendance.check_in
-                ? formatTime(todayAttendance.check_in)
-                : "---"}
-            </span>
-          </div>
-          <div className="flex flex-col items-center border rounded-md p-3">
-            <span className="text-sm text-muted-foreground">الانصراف</span>
-            <span className="font-bold">
-              {todayAttendance.check_out
-                ? formatTime(todayAttendance.check_out)
-                : "---"}
-            </span>
-          </div>
-        </div>
-      )}
-
-      <div className="flex gap-3">
-        {!todayAttendance?.check_out && (
-          <>
-            {canCheckIn && (
-              <Button
-                onClick={handleCheckIn}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white shadow-lg"
-                disabled={isLoading || !canCheckIn}
-              >
-                <CheckCheck className="ml-2 h-4 w-4" />
-                تسجيل الحضور
-              </Button>
-            )}
-            
-            {canCheckOut && (
-              <Button
-                onClick={handleCheckOut}
-                variant="destructive"
-                className="flex-1 shadow-lg"
-                disabled={isLoading || !canCheckOut}
-              >
-                <XCircle className="ml-2 h-4 w-4" />
-                تسجيل الانصراف
-              </Button>
-            )}
-          </>
-        )}
-
-        {(!canCheckIn && !canCheckOut && !todayAttendance?.check_out) && (
-          <Button 
-            disabled 
-            className="flex-1 opacity-70"
-          >
-            <Clock className="ml-2 h-4 w-4" />
-            لا يمكن تسجيل الحضور/الانصراف حاليًا
-          </Button>
-        )}
-      </div>
-
-      {workSchedule && workDay && (
-        <div className="text-sm text-muted-foreground border-t pt-3 mt-3">
-          <div>جدول العمل: {workSchedule.name}</div>
-          {workDay.is_working_day ? (
-            <div>
-              ساعات العمل: {workDay.start_time?.substring(0, 5)} إلى {workDay.end_time?.substring(0, 5)}
+    <div className="space-y-4">
+      <div className="flex flex-col space-y-2">
+        <p className="text-sm text-center">{message}</p>
+        
+        {todayAttendance ? (
+          <div className="bg-muted/50 p-3 rounded-md text-sm space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="font-medium">وقت الحضور:</span>
+              <span className="text-primary flex items-center">
+                <Clock className="w-4 h-4 ml-1" />
+                {todayAttendance.check_in 
+                  ? format(new Date(todayAttendance.check_in), 'HH:mm:ss') 
+                  : '-'}
+              </span>
             </div>
-          ) : (
-            <div>اليوم ليس يوم عمل</div>
-          )}
-        </div>
-      )}
+            
+            <div className="flex justify-between items-center">
+              <span className="font-medium">وقت الانصراف:</span>
+              <span className="text-primary flex items-center">
+                <Clock className="w-4 h-4 ml-1" />
+                {todayAttendance.check_out 
+                  ? format(new Date(todayAttendance.check_out), 'HH:mm:ss') 
+                  : '-'}
+              </span>
+            </div>
+          </div>
+        ) : null}
+      </div>
+      
+      <div className="flex justify-center gap-4">
+        <Button
+          variant="outline"
+          disabled={!canCheckIn || isLoading}
+          onClick={handleCheckIn}
+          className="flex-1"
+        >
+          <LogIn className="mr-2 h-4 w-4" />
+          تسجيل الحضور
+        </Button>
+        
+        <Button
+          variant="outline"
+          disabled={!canCheckOut || isLoading}
+          onClick={handleCheckOut}
+          className="flex-1"
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          تسجيل الانصراف
+        </Button>
+      </div>
     </div>
   );
 }
