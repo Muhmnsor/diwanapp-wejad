@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "../types/task";
@@ -21,97 +22,67 @@ export const useTasksList = (projectId?: string, meetingId?: string, isWorkspace
     try {
       console.log(`Fetching tasks for ${isWorkspace ? 'workspace' : isGeneral ? 'general' : 'project'} ID: ${projectId || 'none'}`);
       
-      // *** IMPORTANT CHANGE: Modified query to include assigned user data ***
-      let query = supabase
-        .from('tasks')
-        .select(`
-          *,
-          assigned_user:assigned_to (id, display_name, email)
-        `);
+      let query = supabase.from('tasks').select('*');
       
-      if (isWorkspace) {
-        // Fetch tasks for a workspace
-        query = query.eq('workspace_id', projectId);
-      } else if (meetingId) {
-        // Fetch tasks for a meeting
-        query = query.eq('meeting_id', meetingId);
-      } else if (isGeneral) {
-        // Fetch general tasks
-        query = query.eq('is_general', true);
-      } else {
-        // Fetch project tasks
-        query = query.eq('project_id', projectId);
-      }
-    
-      const { data, error } = await query;
-    
-      if (error) throw error;
-      
-      console.log("Raw task data from Supabase:", data);
-    
-      if (data) {
-        const formattedTasks = data.map(task => {
-          // استخراج اسم المستخدم المكلف من البيانات
-          let assigneeName = '';
-          
-          // DEBUG: Log the assigned_user data structure to see what we're getting
-          console.log(`Task ${task.id} assigned_user data:`, task.assigned_user);
-          
-          if (task.assigned_user) {
-            if (Array.isArray(task.assigned_user)) {
-              // إذا كانت المعلومات في مصفوفة
-              if (task.assigned_user.length > 0) {
-                console.log(`Task ${task.id} has array user data:`, task.assigned_user[0]);
-                assigneeName = task.assigned_user[0].display_name || task.assigned_user[0].email || '';
-              }
-            } else {
-              // إذا كانت المعلومات في كائن مباشر
-              console.log(`Task ${task.id} has object user data:`, task.assigned_user);
-              assigneeName = task.assigned_user.display_name || task.assigned_user.email || '';
-            }
-          } else if (task.profiles) {
-            // Fallback to profiles if it exists
-            console.log(`Task ${task.id} falling back to profiles data:`, task.profiles);
-            if (Array.isArray(task.profiles)) {
-              if (task.profiles.length > 0) {
-                assigneeName = task.profiles[0].display_name || task.profiles[0].email || '';
-              }
-            } else {
-              assigneeName = task.profiles.display_name || task.profiles.email || '';
-            }
-          }
-          
-          console.log(`Task ${task.id} final assignee name:`, assigneeName);
-          
-          return {
-            ...task,
-            id: task.id,
-            title: task.title,
-            description: task.description || "",
-            status: task.status || "pending",
-            priority: task.priority || "medium",
-            due_date: task.due_date,
-            assigned_to: task.assigned_to,
-            // إضافة اسم المستخدم المكلف بالطريقتين للتوافقية
-            assignee_name: assigneeName,
-            assigned_user_name: assigneeName,
-            project_id: task.project_id,
-            stage_id: task.stage_id,
-            created_at: task.created_at,
-            category: task.category
-          };
-        });
-        
-        console.log("Formatted tasks with assignee names:", formattedTasks);
-        setTasks(formattedTasks);
-      }
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
-      toast.error("حدث خطأ أثناء تحميل المهام");
-    } finally {
-      setIsLoading(false);
+     if (isWorkspace) {
+      // Fetch tasks for a workspace
+      query = query.eq('workspace_id', projectId);
+    } else if (isGeneral) {
+      // Fetch general tasks
+      query = query.eq('is_general', true);
+    } else {
+      // Fetch project tasks
+      query = query.eq('project_id', projectId);
     }
-  }, [projectId, isGeneral, isWorkspace, meetingId]);
+    
+    const { data, error } = await query;
+    
+    if (error) throw error;
+    
+    if (data) {
+      const formattedTasks = data.map(task => {
+        // استخراج اسم المستخدم المكلف من البيانات
+        let assigneeName = '';
+        if (task.profiles) {
+          if (Array.isArray(task.profiles)) {
+            // إذا كانت المعلومات في مصفوفة
+            if (task.profiles.length > 0) {
+              assigneeName = task.profiles[0].display_name || task.profiles[0].email || '';
+            }
+          } else {
+            // إذا كانت المعلومات في كائن مباشر
+            assigneeName = task.profiles.display_name || task.profiles.email || '';
+          }
+        }
+        
+        return {
+          ...task,
+          id: task.id,
+          title: task.title,
+          description: task.description || "",
+          status: task.status || "pending",
+          priority: task.priority || "medium",
+          due_date: task.due_date,
+          assigned_to: task.assigned_to,
+          // إضافة اسم المستخدم المكلف بالطريقتين للتوافقية
+          assignee_name: assigneeName,
+          assigned_user_name: assigneeName,
+          project_id: task.project_id,
+          stage_id: task.stage_id,
+          created_at: task.created_at,
+          category: task.category
+        };
+      });
+      
+      setTasks(formattedTasks);
+    }
+  } catch (error) {
+    console.error("Error fetching tasks:", error);
+    toast.error("حدث خطأ أثناء تحميل المهام");
+  } finally {
+    setIsLoading(false);
+  }
+}, [projectId, isGeneral, isWorkspace]);
   
   // Fetch project stages if this is a project view
   const fetchProjectStages = useCallback(async () => {
@@ -281,3 +252,4 @@ export const useTasksList = (projectId?: string, meetingId?: string, isWorkspace
     deleteTask
   };
 };
+
