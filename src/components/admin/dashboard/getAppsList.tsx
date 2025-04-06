@@ -13,7 +13,8 @@ import {
   BriefcaseIcon,
   Calculator,
   CalendarClock,
-  Mail
+  Mail,
+  Bookmark
 } from "lucide-react";
 import { AppItem } from "./DashboardApps";
 import { NotificationCounts } from "@/hooks/dashboard/useNotificationCounts";
@@ -84,10 +85,15 @@ export const APP_ROLE_ACCESS = {
     'finance_manager', 'financial_manager', 'accountant'
   ],
   meetings: [
-    'admin', 'app_admin', 'developer'
+    'admin', 'app_admin', 'developer',
+    'meeting_organizer', 'meeting_participant'
   ],
   internal_mail: [
     'admin', 'app_admin', 'developer'
+  ],
+  subscriptions: [
+    'admin', 'app_admin', 'developer',
+    'subscription_manager'
   ]
 };
 
@@ -131,6 +137,9 @@ export const ROLE_MAPPING = {
   'مدير_الطلبات': 'request_manager',
   'مدير_الموافقات': 'approval_manager',
   'مطور': 'developer',
+  'منظم_الاجتماعات': 'meeting_organizer',
+  'مشارك_في_الاجتماعات': 'meeting_participant',
+  'مدير_الاشتراكات': 'subscription_manager',
   
   // Variations of Arabic role names (with spaces, different formats)
   'المدير': 'admin',
@@ -154,6 +163,9 @@ export const ROLE_MAPPING = {
   'مدير الابتكار': 'innovation_manager',
   'مدير مالي': 'finance_manager',
   'مدير الموارد البشرية': 'hr_manager',
+  'منظم الاجتماعات': 'meeting_organizer',
+  'مشارك في الاجتماعات': 'meeting_participant',
+  'مدير الاشتراكات': 'subscription_manager',
   
   // English to English (for direct matching)
   'admin': 'admin',
@@ -192,7 +204,10 @@ export const ROLE_MAPPING = {
   'communication_manager': 'communication_manager',
   'request_manager': 'request_manager',
   'approval_manager': 'approval_manager',
-  'developer': 'developer'
+  'developer': 'developer',
+  'meeting_organizer': 'meeting_organizer',
+  'meeting_participant': 'meeting_participant',
+  'subscription_manager': 'subscription_manager'
 };
 
 // Define the list of all available applications
@@ -300,6 +315,13 @@ const ALL_APPS: AppItem[] = [
     icon: Mail,
     path: "/admin/internal-mail",
     description: "نظام البريد الداخلي والمراسلات",
+    notifications: 0
+  },
+  {
+    title: "إدارة الاشتراكات",
+    icon: Bookmark,
+    path: "/admin/subscriptions",
+    description: "إدارة الاشتراكات والعضويات",
     notifications: 0
   }
 ];
@@ -480,20 +502,26 @@ const getAppKeyFromPath = (path: string): string | null => {
   if (path === '/admin/accounting') return 'accounting';
   if (path === '/admin/meetings') return 'meetings';
   if (path === '/admin/internal-mail') return 'internal_mail';
+  if (path === '/admin/subscriptions') return 'subscriptions';
   
   return null;
 };
 
 // Helper function to get notification count for an app
 const getNotificationCount = (path: string, counts: NotificationCounts): number => {
-  if (path === '/tasks') return counts.tasks;
-  if (path === '/ideas') return counts.ideas;
-  if (path === '/finance') return counts.finance;
   if (path === '/notifications') return counts.notifications;
+  if (path === '/tasks') return counts.tasks;
+  if (path === '/requests') return counts.approval_requests;
+  if (path === '/documents') return counts.documents;
+  if (path === '/admin/meetings') return counts.meetings;
+  
+  // Safe access for the new properties (they may not exist in the counts object yet)
   if (path === '/admin/hr') return counts.hr || 0;
   if (path === '/admin/accounting') return counts.accounting || 0;
-  if (path === '/admin/meetings') return counts.meetings || 0;
   if (path === '/admin/internal-mail') return counts.internal_mail || 0;
+  if (path === '/admin/subscriptions') return counts.subscriptions || 0;
+  if (path === '/ideas') return counts.ideas || 0;
+  if (path === '/finance') return counts.finance || 0;
   
   return 0;
 };
