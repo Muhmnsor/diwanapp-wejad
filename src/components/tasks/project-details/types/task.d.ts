@@ -10,7 +10,6 @@ export interface Task {
   created_by?: string;
   assigned_to?: string;
   assignee_name?: string;
-  assigned_user_name?: string;
   workspace_id?: string;
   project_id?: string;
   stage_id?: string;
@@ -18,9 +17,6 @@ export interface Task {
   requires_deliverable?: boolean;
   is_recurring?: boolean;
   recurring_id?: string;
-  meeting_id?: string;
-  assigned_user?: any;
-  profiles?: any;
 }
 
 export interface Subtask {
