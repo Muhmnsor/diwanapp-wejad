@@ -20,73 +20,107 @@ export const useTasksList = (projectId?: string, meetingId?: string, isWorkspace
   const fetchTasks = useCallback(async () => {
     setIsLoading(true);
     try {
-      console.log(`Fetching tasks for ${isWorkspace ? 'workspace' : isGeneral ? 'general' : 'project'} ID: ${projectId || 'none'}`);
+      console.log(`Fetching tasks for ${isWorkspace ? 'workspace' : meetingId ? 'meeting' : isGeneral ? 'general' : 'project'} ID: ${projectId || meetingId || 'none'}`);
       
-      let query = supabase.from('tasks').select('*');
+      // MAIN CHANGE: Modify query to include assigned user data through proper join
+      let query = supabase
+        .from('tasks')
+        .select(`
+          *,
+          assigned_user:assigned_to (display_name, email)
+        `);
       
-     if (isWorkspace) {
-      // Fetch tasks for a workspace
-      query = query.eq('workspace_id', projectId);
-    } else if (isGeneral) {
-      // Fetch general tasks
-      query = query.eq('is_general', true);
-    } else {
-      // Fetch project tasks
-      query = query.eq('project_id', projectId);
-    }
-    
-    const { data, error } = await query;
-    
-    if (error) throw error;
-    
-    if (data) {
-      const formattedTasks = data.map(task => {
-        // استخراج اسم المستخدم المكلف من البيانات
-        let assigneeName = '';
-        if (task.profiles) {
-          if (Array.isArray(task.profiles)) {
-            // إذا كانت المعلومات في مصفوفة
-            if (task.profiles.length > 0) {
-              assigneeName = task.profiles[0].display_name || task.profiles[0].email || '';
+      if (isWorkspace && projectId) {
+        // Fetch tasks for a workspace
+        query = query.eq('workspace_id', projectId);
+      } else if (meetingId) {
+        // Fetch tasks for a meeting
+        query = query.eq('meeting_id', meetingId);
+      } else if (isGeneral) {
+        // Fetch general tasks
+        query = query.eq('is_general', true);
+      } else if (projectId) {
+        // Fetch project tasks
+        query = query.eq('project_id', projectId);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      
+      console.log("Raw task data received:", data && data.length);
+      
+      if (data) {
+        const formattedTasks = data.map(task => {
+          // استخراج اسم المستخدم المكلف من البيانات
+          let assigneeName = '';
+          
+          // Use assigned_user data from the join when available
+          if (task.assigned_user) {
+            console.log(`Task ${task.id} assigned_user:`, task.assigned_user);
+            if (Array.isArray(task.assigned_user)) {
+              // إذا كانت المعلومات في مصفوفة
+              if (task.assigned_user.length > 0) {
+                assigneeName = task.assigned_user[0].display_name || task.assigned_user[0].email || '';
+              }
+            } else {
+              // إذا كانت المعلومات في كائن مباشر
+              assigneeName = task.assigned_user.display_name || task.assigned_user.email || '';
             }
-          } else {
-            // إذا كانت المعلومات في كائن مباشر
-            assigneeName = task.profiles.display_name || task.profiles.email || '';
           }
-        }
+          // Fallback to profiles if assigned_user is not available but profiles is
+          else if (task.profiles) {
+            console.log(`Task ${task.id} profiles:`, task.profiles);
+            if (Array.isArray(task.profiles)) {
+              if (task.profiles.length > 0) {
+                assigneeName = task.profiles[0].display_name || task.profiles[0].email || '';
+              }
+            } else {
+              assigneeName = task.profiles.display_name || task.profiles.email || '';
+            }
+          }
+          
+          // Check if assigned_to starts with "custom:" for custom assignees
+          if (task.assigned_to && typeof task.assigned_to === 'string' && task.assigned_to.startsWith('custom:')) {
+            assigneeName = task.assigned_to.replace('custom:', '');
+          }
+          
+          console.log(`Task ${task.id} final assigneeName:`, assigneeName);
+          
+          return {
+            ...task,
+            id: task.id,
+            title: task.title,
+            description: task.description || "",
+            status: task.status || "pending",
+            priority: task.priority || "medium",
+            due_date: task.due_date,
+            assigned_to: task.assigned_to,
+            // إضافة اسم المستخدم المكلف بالطريقتين للتوافقية
+            assignee_name: assigneeName,
+            assigned_user_name: assigneeName,
+            project_id: task.project_id,
+            stage_id: task.stage_id,
+            created_at: task.created_at,
+            category: task.category,
+            meeting_id: task.meeting_id
+          };
+        });
         
-        return {
-          ...task,
-          id: task.id,
-          title: task.title,
-          description: task.description || "",
-          status: task.status || "pending",
-          priority: task.priority || "medium",
-          due_date: task.due_date,
-          assigned_to: task.assigned_to,
-          // إضافة اسم المستخدم المكلف بالطريقتين للتوافقية
-          assignee_name: assigneeName,
-          assigned_user_name: assigneeName,
-          project_id: task.project_id,
-          stage_id: task.stage_id,
-          created_at: task.created_at,
-          category: task.category
-        };
-      });
-      
-      setTasks(formattedTasks);
+        setTasks(formattedTasks);
+        console.log("Formatted tasks with assignee names:", formattedTasks);
+      }
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      toast.error("حدث خطأ أثناء تحميل المهام");
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching tasks:", error);
-    toast.error("حدث خطأ أثناء تحميل المهام");
-  } finally {
-    setIsLoading(false);
-  }
-}, [projectId, isGeneral, isWorkspace]);
+  }, [projectId, isGeneral, isWorkspace, meetingId]);
   
   // Fetch project stages if this is a project view
   const fetchProjectStages = useCallback(async () => {
-    if (isGeneral || isWorkspace || !projectId) {
+    if (isGeneral || isWorkspace || !projectId || meetingId) {
       setProjectStages([]);
       return;
     }
@@ -137,7 +171,7 @@ export const useTasksList = (projectId?: string, meetingId?: string, isWorkspace
     } catch (error) {
       console.error("Error fetching project stages:", error);
     }
-  }, [projectId, isGeneral, isWorkspace]);
+  }, [projectId, isGeneral, isWorkspace, meetingId]);
   
   // Group tasks by stage
   useEffect(() => {
@@ -163,10 +197,10 @@ export const useTasksList = (projectId?: string, meetingId?: string, isWorkspace
       setTasksByStage(grouped);
     };
     
-    if (!isGeneral && !isWorkspace) {
+    if (!isGeneral && !isWorkspace && !meetingId) {
       groupTasksByStage();
     }
-  }, [tasks, projectStages, isGeneral, isWorkspace]);
+  }, [tasks, projectStages, isGeneral, isWorkspace, meetingId]);
   
   // Load data on mount and when projectId changes
   useEffect(() => {
@@ -252,4 +286,3 @@ export const useTasksList = (projectId?: string, meetingId?: string, isWorkspace
     deleteTask
   };
 };
-
