@@ -63,9 +63,6 @@ export const useTasksList = (projectId?: string, meetingId?: string, isWorkspace
           status: task.status || "pending",
           priority: task.priority || "medium",
           due_date: task.due_date,
-          assigned_to: task.assigned_to,
-          // إضافة اسم المستخدم المكلف بالطريقتين للتوافقية
-          assignee_name: assigneeName,
           assigned_user_name: assigneeName,
           project_id: task.project_id,
           stage_id: task.stage_id,
