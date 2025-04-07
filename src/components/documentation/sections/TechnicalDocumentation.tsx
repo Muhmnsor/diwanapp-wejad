@@ -17,7 +17,8 @@ const canCreateEvents = permissions.includes('events_create');
 // التحقق من الدخول للنظام
 if (!isAuthenticated) {
   return <Navigate to="/login" />;
-}`;
+}
+`;
 
   const tanstackQueryCode = `
 // استخدام useQuery للحصول على البيانات
@@ -36,7 +37,8 @@ const mutation = useMutation({
 });
 
 // تنفيذ العملية
-mutation.mutate(newEventData);`;
+mutation.mutate(newEventData);
+`;
 
   return (
     <div className="space-y-6">
@@ -415,32 +417,32 @@ mutation.mutate(newEventData);`;
                         <TableRow>
                           <TableCell className="font-mono text-xs">useEvents</TableCell>
                           <TableCell>جلب قائمة الفعاليات مع خيارات التصفية والفرز</TableCell>
-                          <TableCell><code>const {"{ data, isLoading }"} = useEvents({"{ category: 'social' }"})</code></TableCell>
+                          <TableCell><code>const { data, isLoading } = useEvents({ category: 'social' })</code></TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className="font-mono text-xs">useEvent</TableCell>
                           <TableCell>جلب تفاصيل فعالية محددة بمعرفها</TableCell>
-                          <TableCell><code>const {"{ data, isLoading }"} = useEvent(eventId)</code></TableCell>
+                          <TableCell><code>const { data, isLoading } = useEvent(eventId)</code></TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className="font-mono text-xs">useCreateEvent</TableCell>
                           <TableCell>إنشاء فعالية جديدة</TableCell>
-                          <TableCell><code>const {"{ mutate, isLoading }"} = useCreateEvent()</code></TableCell>
+                          <TableCell><code>const { mutate, isLoading } = useCreateEvent()</code></TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className="font-mono text-xs">useUpdateEvent</TableCell>
                           <TableCell>تحديث بيانات فعالية موجودة</TableCell>
-                          <TableCell><code>const {"{ mutate }"} = useUpdateEvent()</code></TableCell>
+                          <TableCell><code>const { mutate } = useUpdateEvent()</code></TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className="font-mono text-xs">useDeleteEvent</TableCell>
                           <TableCell>حذف فعالية</TableCell>
-                          <TableCell><code>const {"{ mutate }"} = useDeleteEvent()</code></TableCell>
+                          <TableCell><code>const { mutate } = useDeleteEvent()</code></TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell className="font-mono text-xs">useRegisterForEvent</TableCell>
                           <TableCell>تسجيل مشارك في فعالية</TableCell>
-                          <TableCell><code>const {"{ mutate }"} = useRegisterForEvent()</code></TableCell>
+                          <TableCell><code>const { mutate } = useRegisterForEvent()</code></TableCell>
                         </TableRow>
                       </TableBody>
                     </Table>

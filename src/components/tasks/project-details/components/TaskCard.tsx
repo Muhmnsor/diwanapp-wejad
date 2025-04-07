@@ -99,9 +99,6 @@ export const TaskCard = ({
     }
   };
   
-  // Get the assigned username, checking both fields that might contain it
-  const assignedUserName = task.assigned_user_name || task.assignee_name || '';
-  
   return (
     <Card className="hover:shadow-md transition-shadow duration-200">
       <CardContent className="p-4">
@@ -160,10 +157,10 @@ export const TaskCard = ({
               </div>
             )}
             
-            {task.assigned_to && assignedUserName && (
+            {task.assigned_to && task.assigned_user_name && (
               <div className="flex items-center">
                 <User className="h-4 w-4 mr-1" />
-                <span>تم تعيينه إلى: {assignedUserName}</span>
+                <span>تم تعيينه إلى: {task.assigned_user_name}</span>
               </div>
             )}
           </div>
