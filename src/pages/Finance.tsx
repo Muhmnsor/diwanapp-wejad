@@ -2,7 +2,18 @@ import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart, BarChart, Wallet, ArrowDownCircle, ArrowUpCircle, DollarSign, Target, FileText, FileCheck, Receipt } from "lucide-react";
+import { 
+  PieChart, 
+  BarChart, 
+  Wallet, 
+  ArrowDownCircle, 
+  ArrowUpCircle, 
+  DollarSign, 
+  Target, 
+  FileText, 
+  FileCheck,
+  Receipt 
+} from "lucide-react";
 import { useState } from "react";
 import { FinanceDashboard } from "@/components/finance/FinanceDashboard";
 import { ResourcesTab } from "@/components/finance/ResourcesTab";
@@ -10,7 +21,8 @@ import { ExpensesTab } from "@/components/finance/ExpensesTab";
 import { TargetsTab } from "@/components/finance/TargetsTab";
 import { ReportsTab } from "@/components/finance/ReportsTab";
 import { ObligationsTab } from "@/components/finance/obligations/ObligationsTab";
-import { InvoicesVouchersTab } from "@/components/finance/invoices/InvoicesVouchersTab";
+import { ReceiptsTab } from "@/components/finance/receipts/ReceiptsTab";
+import { InvoicesVouchersTab } from "@/components/finance/invoices-vouchers/InvoicesVouchersTab";
 
 const Finance = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -24,7 +36,7 @@ const Finance = () => {
         </div>
 
         <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
-          <TabsList className="grid grid-cols-7 w-full mb-8">
+          <TabsList className="grid grid-cols-8 w-full mb-8">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <PieChart className="h-4 w-4" />
               <span>نظرة عامة</span>
@@ -37,6 +49,14 @@ const Finance = () => {
               <ArrowDownCircle className="h-4 w-4" />
               <span>المصروفات</span>
             </TabsTrigger>
+            <TabsTrigger value="receipts" className="flex items-center gap-2">
+              <Receipt className="h-4 w-4" />
+              <span>سندات القبض</span>
+            </TabsTrigger>
+            <TabsTrigger value="invoices-vouchers" className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              <span>الفواتير والسندات</span>
+            </TabsTrigger>
             <TabsTrigger value="obligations" className="flex items-center gap-2">
               <FileCheck className="h-4 w-4" />
               <span>الالتزامات</span>
@@ -44,10 +64,6 @@ const Finance = () => {
             <TabsTrigger value="targets" className="flex items-center gap-2">
               <Target className="h-4 w-4" />
               <span>المستهدفات</span>
-            </TabsTrigger>
-            <TabsTrigger value="invoices" className="flex items-center gap-2">
-              <Receipt className="h-4 w-4" />
-              <span>الفواتير والسندات</span>
             </TabsTrigger>
             <TabsTrigger value="reports" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
@@ -66,6 +82,14 @@ const Finance = () => {
           <TabsContent value="expenses" className="space-y-4">
             <ExpensesTab />
           </TabsContent>
+          
+          <TabsContent value="receipts" className="space-y-4">
+            <ReceiptsTab />
+          </TabsContent>
+          
+          <TabsContent value="invoices-vouchers" className="space-y-4">
+            <InvoicesVouchersTab />
+          </TabsContent>
 
           <TabsContent value="obligations" className="space-y-4">
             <ObligationsTab />
@@ -73,10 +97,6 @@ const Finance = () => {
 
           <TabsContent value="targets" className="space-y-4">
             <TargetsTab />
-          </TabsContent>
-          
-          <TabsContent value="invoices" className="space-y-4">
-            <InvoicesVouchersTab />
           </TabsContent>
 
           <TabsContent value="reports" className="space-y-4">
