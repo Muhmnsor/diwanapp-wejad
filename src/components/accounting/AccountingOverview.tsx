@@ -13,6 +13,7 @@ import { LatestTransactionsCard } from "./dashboard/LatestTransactionsCard";
 import { useAccountsSummary } from "@/hooks/accounting/useAccountsSummary";
 import { useJournalEntryStats } from "@/hooks/accounting/useJournalEntryStats";
 import { formatCurrency } from "@/lib/utils";
+import { MonthlyComparisonChart } from "./charts/MonthlyComparisonChart";
 
 export const AccountingOverview: React.FC = () => {
   const { 
@@ -144,7 +145,18 @@ export const AccountingOverview: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-
+      
+  <div className="space-y-6">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* All your existing cards... */}
+    </div>
+    
+    {/* Add the Monthly Comparison Chart here */}
+    <MonthlyComparisonChart />
+    
+    <LatestTransactionsCard />
+  </div>
+      
       <LatestTransactionsCard />
     </div>
   );
