@@ -17,73 +17,71 @@ export const useTasksList = (projectId?: string, isWorkspace = false) => {
   const isGeneral = !projectId || projectId === "";
   
   // Fetch tasks
-  const fetchTasks = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      console.log(
-        `Fetching tasks for ${isWorkspace ? 'workspace' : isGeneral ? 'general' : 'project'} ID: ${projectId || 'none'}`
-      );
-  
-      let query = supabase.from('tasks').select('*');
-  
-      if (isWorkspace) {
-        // Fetch tasks for a workspace
-        query = query.eq('workspace_id', projectId);
-      } else if (isGeneral) {
-        // Fetch general tasks
-        query = query.eq('is_general', true);
-      } else {
-        // Fetch project tasks
-        query = query.eq('project_id', projectId);
-      }
-  
-      const { data, error } = await query;
-  
-      if (error) throw error;
-  
-      if (data) {
-        // Use Promise.all to await the async operations inside the map
-        const formattedTasks = await Promise.all(
-          data.map(async (task) => {
-            if (task.assigned_to.startsWith('custom:')) {
-              return {
-                ...task,
-                assigned_user_name: task.assigned_to.replace('custom:', '')
-              };
-            }
-  
-            // Fetch user data for the assigned user
-            const { data: userData, error: userError } = await supabase
-              .from('profiles')
-              .select('display_name, email')
-              .eq('id', task.assigned_to)
-              .single();
-  
-            if (!userError && userData) {
-              return {
-                ...task,
-                assigned_user_name: userData.display_name || userData.email
-              };
-            }
-  
-            // Return the task with a fallback in case of error
-            return {
-              ...task,
-              assigned_user_name: ''
-            };
-          })
-        );
-  
-        setTasks(formattedTasks);
-      }
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
-      toast.error("حدث خطأ أثناء تحميل المهام");
-    } finally {
-      setIsLoading(false);
+  // Modified fetchTasks function
+const fetchTasks = useCallback(async () => {
+  setIsLoading(true);
+  try {
+    console.log(
+      `Fetching tasks for ${isWorkspace ? 'workspace' : isGeneral ? 'general' : 'project'} ID: ${projectId || 'none'}`
+    );
+
+    // Build query with joined profile data and stage data
+    let query = supabase
+      .from('tasks')
+      .select(`
+        *,
+        profiles:assigned_to (display_name, email),
+        stage:stage_id (name)
+      `);
+
+    // Apply the appropriate filter
+    if (isWorkspace) {
+      query = query.eq('workspace_id', projectId);
+    } else if (isGeneral) {
+      query = query.eq('is_general', true);
+    } else {
+      query = query.eq('project_id', projectId);
     }
-  }, [projectId, isGeneral, isWorkspace]);
-  
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    if (data) {
+      // Transform data to extract profiles and stage information
+      const formattedTasks = data.map(task => {
+        // Handle custom assignees (no database lookup needed)
+        if (task.assigned_to && task.assigned_to.startsWith('custom:')) {
+          return {
+            ...task,
+            assigned_user_name: task.assigned_to.replace('custom:', ''),
+            stage_name: task.stage?.name || ''
+          };
+        }
+
+        // Extract profile info from the joined data
+        let assignedUserName = '';
+        if (task.profiles) {
+          assignedUserName = task.profiles.display_name || task.profiles.email || '';
+        }
+
+        return {
+          ...task,
+          assigned_user_name: assignedUserName,
+          stage_name: task.stage?.name || ''
+        };
+      });
+
+      setTasks(formattedTasks);
+    }
+  } catch (error) {
+    console.error("Error fetching tasks:", error);
+    toast.error("حدث خطأ أثناء تحميل المهام");
+  } finally {
+    setIsLoading(false);
+  }
+}, [projectId, isGeneral, isWorkspace]);
+
   
   // Fetch project stages if this is a project view
   const fetchProjectStages = useCallback(async () => {
