@@ -25,16 +25,8 @@ const fetchTasks = useCallback(async () => {
       `Fetching tasks for ${isWorkspace ? 'workspace' : isGeneral ? 'general' : 'project'} ID: ${projectId || 'none'}`
     );
 
-    // Build query with joined profile data and stage data
-    let query = supabase
-      .from('tasks')
-      .select(`
-        *,
-        profiles:assigned_to (display_name, email),
-        stage:stage_id (name)
-      `);
+    let query = supabase.from('tasks').select('*');
 
-    // Apply the appropriate filter
     if (isWorkspace) {
       query = query.eq('workspace_id', projectId);
     } else if (isGeneral) {
@@ -43,32 +35,56 @@ const fetchTasks = useCallback(async () => {
       query = query.eq('project_id', projectId);
     }
 
-    const { data, error } = await query;
-
+    const { data: tasksData, error } = await query;
     if (error) throw error;
 
-    if (data) {
-      // Transform data to extract profiles and stage information
-      const formattedTasks = data.map(task => {
-        // Handle custom assignees (no database lookup needed)
-        if (task.assigned_to && task.assigned_to.startsWith('custom:')) {
+    if (tasksData) {
+      // Filter out tasks with non-custom assigned_to values
+      const userIds = tasksData
+        .filter(task => !task.assigned_to.startsWith('custom:'))
+        .map(task => task.assigned_to);
+      // Get distinct user IDs
+      const distinctUserIds = [...new Set(userIds)];
+
+      // Fetch all profiles for these user IDs in one go
+      let profilesMap = {};
+      if (distinctUserIds.length > 0) {
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, display_name, email')
+          .in('id', distinctUserIds);
+
+        if (!profilesError && profilesData) {
+          // Build a mapping from user ID to profile info
+          profilesMap = profilesData.reduce((acc, profile) => {
+            acc[profile.id] = profile;
+            return acc;
+          }, {});
+        }
+      }
+
+      // Format tasks using the pre-fetched profiles
+      const formattedTasks = tasksData.map((task) => {
+        if (task.assigned_to.startsWith('custom:')) {
           return {
             ...task,
-            assigned_user_name: task.assigned_to.replace('custom:', ''),
-            stage_name: task.stage?.name || ''
+            assigned_user_name: task.assigned_to.replace('custom:', '')
           };
         }
 
-        // Extract profile info from the joined data
-        let assignedUserName = '';
-        if (task.profiles) {
-          assignedUserName = task.profiles.display_name || task.profiles.email || '';
+        // Use the mapping to get the profile data
+        const userProfile = profilesMap[task.assigned_to];
+        if (userProfile) {
+          return {
+            ...task,
+            assigned_user_name: userProfile.display_name || userProfile.email
+          };
         }
 
+        // Fallback if no profile is found
         return {
           ...task,
-          assigned_user_name: assignedUserName,
-          stage_name: task.stage?.name || ''
+          assigned_user_name: ''
         };
       });
 
@@ -81,6 +97,7 @@ const fetchTasks = useCallback(async () => {
     setIsLoading(false);
   }
 }, [projectId, isGeneral, isWorkspace]);
+
 
   
   // Fetch project stages if this is a project view
