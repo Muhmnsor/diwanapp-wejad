@@ -293,10 +293,10 @@ export const TaskItem = ({
         </TableCell>
         <TableCell>{getPriorityBadge(task.priority)}</TableCell>
         <TableCell>
-          {task.assignee_name ? (
+          {task.assigned_user_name ? (
             <div className="flex items-center">
               <Users className="h-3.5 w-3.5 ml-1.5 text-gray-500" />
-              {task.assignee_name}
+              {task.assigned_user_name}
             </div>
           ) : (
             <span className="text-gray-400">غير محدد</span>
