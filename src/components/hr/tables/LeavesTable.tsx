@@ -14,10 +14,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Check, X, Loader2 } from "lucide-react";
+import { Check, X, Loader2, AlertCircle } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useLeaveTypes } from "@/hooks/hr/useLeaveTypes";
+import { useLeaveEntitlementService } from "@/hooks/hr/useLeaveEntitlementService";
 
 interface LeaveRequest {
   id: string;
@@ -28,6 +29,7 @@ interface LeaveRequest {
   reason: string | null;
   status: string;
   created_at: string;
+  days_count: number;
   employee: {
     full_name: string;
   } | null;
@@ -43,24 +45,25 @@ export function LeavesTable() {
   const { user } = useAuthStore();
   const [updating, setUpdating] = useState<string | null>(null);
   const { data: leaveTypes } = useLeaveTypes();
+  const { updateLeaveBalance } = useLeaveEntitlementService();
 
-const getLeaveTypeName = (typeId: string) => {
-  if (leaveTypes) {
-    const leaveType = leaveTypes.find(type => type.id === typeId);
-    if (leaveType) return leaveType.name;
-  }
-  
-  // Fallback if types not loaded yet
-  const fallbackMap = {
-    annual: "سنوية",
-    sick: "مرضية",
-    emergency: "طارئة",
-    maternity: "أمومة",
-    unpaid: "بدون راتب",
+  const getLeaveTypeName = (typeId: string) => {
+    if (leaveTypes) {
+      const leaveType = leaveTypes.find(type => type.id === typeId);
+      if (leaveType) return leaveType.name;
+    }
+    
+    // Fallback if types not loaded yet
+    const fallbackMap: Record<string, string> = {
+      annual: "سنوية",
+      sick: "مرضية",
+      emergency: "طارئة",
+      maternity: "أمومة",
+      unpaid: "بدون راتب",
+    };
+    
+    return fallbackMap[typeId as keyof typeof fallbackMap] || typeId;
   };
-  
-  return fallbackMap[typeId] || typeId;
-};
 
   const { data: leaves, refetch, isLoading } = useQuery({
     queryKey: ["leaves"],
@@ -85,12 +88,32 @@ const getLeaveTypeName = (typeId: string) => {
   const updateLeaveStatus = async (id: string, status: string) => {
     setUpdating(id);
     try {
-      const { error } = await supabase
+      // 1. Get the leave request details
+      const { data: leaveRequest, error: fetchError } = await supabase
+        .from("hr_leave_requests")
+        .select("*")
+        .eq("id", id)
+        .single();
+        
+      if (fetchError) throw fetchError;
+      
+      // 2. Update the leave request status
+      const { error: updateError } = await supabase
         .from("hr_leave_requests")
         .update({ status })
         .eq("id", id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+      
+      // 3. If approved, update the leave balance
+      if (status === "approved") {
+        await updateLeaveBalance.mutateAsync({
+          employeeId: leaveRequest.employee_id,
+          leaveTypeId: leaveRequest.leave_type,
+          days: leaveRequest.days_count || 1, // Default to 1 if days_count isn't set
+          isApproval: true
+        });
+      }
 
       toast({
         title: "تم تحديث حالة الإجازة",
@@ -133,6 +156,7 @@ const getLeaveTypeName = (typeId: string) => {
             <TableHead>نوع الإجازة</TableHead>
             <TableHead>تاريخ البداية</TableHead>
             <TableHead>تاريخ النهاية</TableHead>
+            <TableHead>مدة الإجازة</TableHead>
             <TableHead>السبب</TableHead>
             <TableHead>الحالة</TableHead>
             {isAdmin && <TableHead>الإجراءات</TableHead>}
@@ -149,10 +173,13 @@ const getLeaveTypeName = (typeId: string) => {
               <TableCell>
                 {format(new Date(leave.end_date), "d MMMM yyyy", { locale: ar })}
               </TableCell>
+              <TableCell>
+                {leave.days_count || 1} {leave.days_count === 1 ? "يوم" : "أيام"}
+              </TableCell>
               <TableCell>{leave.reason || "غير محدد"}</TableCell>
               <TableCell>
-                <Badge variant={statusMap[leave.status]?.variant as any || "default"}>
-                  {statusMap[leave.status]?.label || leave.status}
+                <Badge variant={statusMap[leave.status as keyof typeof statusMap]?.variant as "default" | "destructive" | "outline" | "secondary" || "default"}>
+                  {statusMap[leave.status as keyof typeof statusMap]?.label || leave.status}
                 </Badge>
               </TableCell>
               {isAdmin && (
@@ -165,6 +192,7 @@ const getLeaveTypeName = (typeId: string) => {
                         className="h-8 w-8 p-0"
                         onClick={() => updateLeaveStatus(leave.id, "approved")}
                         disabled={updating === leave.id}
+                        title="موافقة"
                       >
                         <Check className="h-4 w-4 text-green-500" />
                       </Button>
@@ -174,6 +202,7 @@ const getLeaveTypeName = (typeId: string) => {
                         className="h-8 w-8 p-0"
                         onClick={() => updateLeaveStatus(leave.id, "rejected")}
                         disabled={updating === leave.id}
+                        title="رفض"
                       >
                         <X className="h-4 w-4 text-red-500" />
                       </Button>

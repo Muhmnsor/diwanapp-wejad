@@ -1,56 +1,66 @@
-// src/hooks/hr/useLeaveStats.ts
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
 
-interface LeaveStatsData {
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+export interface LeaveStats {
   total: number;
   approved: number;
-  rejected: number;
   pending: number;
+  rejected: number;
 }
 
-export function useLeaveStats(period: "yearly" | "quarterly" | "monthly", startDate?: Date, endDate?: Date) {
-  return useQuery<LeaveStatsData, Error>({
-    queryKey: ['leave-stats', period, startDate?.toISOString(), endDate?.toISOString()],
+export function useLeaveStats(
+  period: "yearly" | "quarterly" | "monthly" = "yearly",
+  startDate?: Date,
+  endDate?: Date
+) {
+  return useQuery({
+    queryKey: ["leave-stats", period, startDate?.toISOString(), endDate?.toISOString()],
     queryFn: async () => {
-      // Calculate date range based on period if not explicitly provided
-      let start = startDate;
-      let end = endDate || new Date();
-      
-      if (!start) {
-        start = new Date();
-        if (period === 'yearly') {
-          start.setFullYear(start.getFullYear() - 1);
-        } else if (period === 'quarterly') {
-          start.setMonth(start.getMonth() - 3);
-        } else if (period === 'monthly') {
-          start.setMonth(start.getMonth() - 1);
+      // Calculate date range based on period
+      let queryStartDate = startDate;
+      let queryEndDate = endDate;
+
+      if (!queryStartDate || !queryEndDate) {
+        const now = new Date();
+        
+        if (period === "yearly") {
+          queryStartDate = new Date(now.getFullYear(), 0, 1);
+          queryEndDate = new Date(now.getFullYear(), 11, 31);
+        } else if (period === "quarterly") {
+          const quarter = Math.floor(now.getMonth() / 3);
+          queryStartDate = new Date(now.getFullYear(), quarter * 3, 1);
+          queryEndDate = new Date(now.getFullYear(), (quarter + 1) * 3, 0);
+        } else if (period === "monthly") {
+          queryStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          queryEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
         }
       }
-      
-      // Fetch leave requests for the period
+
+      // Format dates for Supabase
+      const formattedStartDate = queryStartDate?.toISOString().split('T')[0];
+      const formattedEndDate = queryEndDate?.toISOString().split('T')[0];
+
       const { data, error } = await supabase
         .from('hr_leave_requests')
-        .select('*')
-        .gte('start_date', start.toISOString().split('T')[0])
-        .lte('start_date', end.toISOString().split('T')[0]);
+        .select('status')
+        .gte('created_at', formattedStartDate)
+        .lte('created_at', formattedEndDate);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching leave stats:", error);
+        throw error;
+      }
 
-      // Calculate statistics
-      const total = data?.length || 0;
-      const approved = data?.filter(r => r.status === 'approved').length || 0;
-      const rejected = data?.filter(r => r.status === 'rejected').length || 0;
-      const pending = data?.filter(r => r.status === 'pending').length || 0;
-      
-      return {
-        total,
-        approved,
-        rejected,
-        pending
+      // Count stats
+      const stats: LeaveStats = {
+        total: data.length,
+        approved: data.filter(leave => leave.status === 'approved').length,
+        pending: data.filter(leave => leave.status === 'pending').length,
+        rejected: data.filter(leave => leave.status === 'rejected').length
       };
-    },
-    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+
+      return stats;
+    }
   });
 }
-
