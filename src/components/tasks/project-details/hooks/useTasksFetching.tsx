@@ -76,6 +76,7 @@ export const useTasksFetching = (
         return {
           ...task,
           assigned_user_name: assignedUserName,
+          assignee_name: assignedUserName, // Add this field for compatibility
           stage_name: stageName,
         };
       });
