@@ -34,7 +34,7 @@ interface LeaveRequest {
 }
 
 const statusMap = {
-  pending: { label: "قيد المراجعة", variant: "default" },
+  pending: { label: "قيد المراجعة", variant: "warning" },
   approved: { label: "تمت الموافقة", variant: "success" },
   rejected: { label: "مرفوض", variant: "destructive" },
 };
