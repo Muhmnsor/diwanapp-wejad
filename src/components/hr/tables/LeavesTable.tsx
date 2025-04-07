@@ -18,7 +18,6 @@ import { Check, X, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "@/hooks/use-toast";
 import { useLeaveTypes } from "@/hooks/hr/useLeaveTypes";
-import { updateLeaveBalance } from "@/services/leaveEntitlementService";
 
 interface LeaveRequest {
   id: string;
@@ -86,78 +85,12 @@ const getLeaveTypeName = (typeId: string) => {
   const updateLeaveStatus = async (id: string, status: string) => {
     setUpdating(id);
     try {
-      // Get the leave request details first
-      const { data: leaveRequest, error: fetchError } = await supabase
-        .from("hr_leave_requests")
-        .select("*")
-        .eq("id", id)
-        .single();
-      
-      if (fetchError) throw fetchError;
-      
-      // Check leave balance if approving
-      if (status === "approved") {
-        // Check if employee has sufficient balance
-        const { data: leaveType } = await supabase
-          .from("hr_leave_types")
-          .select("id")
-          .eq("name", leaveRequest.leave_type)
-          .maybeSingle();
-        
-        if (leaveType) {
-          const response = await fetch("/api/hr/check-leave-balance", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              employeeId: leaveRequest.employee_id,
-              leaveTypeId: leaveType.id,
-              startDate: leaveRequest.start_date,
-              endDate: leaveRequest.end_date
-            })
-          });
-          
-          const balanceCheck = await response.json();
-          
-          if (!balanceCheck.hasBalance) {
-            toast({
-              title: "رصيد الإجازة غير كافي",
-              description: `الرصيد المتاح: ${balanceCheck.available} يوم، المطلوب: ${balanceCheck.required} يوم`,
-              variant: "destructive",
-            });
-            setUpdating(null);
-            return;
-          }
-        }
-      }
-      
-      // Update the leave request status
-      const { error: updateError } = await supabase
+      const { error } = await supabase
         .from("hr_leave_requests")
         .update({ status })
         .eq("id", id);
 
-      if (updateError) throw updateError;
-      
-      // Update the balance if approved or if rejecting a previously approved request
-      if (status === "approved" || (status === "rejected" && leaveRequest.status === "approved")) {
-        // Get leave type ID
-        const { data: leaveType } = await supabase
-          .from("hr_leave_types")
-          .select("id")
-          .eq("name", leaveRequest.leave_type)
-          .maybeSingle();
-        
-        if (leaveType) {
-          const action = status === "approved" ? "increase" : "decrease";
-          await updateLeaveBalance(
-            leaveRequest.employee_id,
-            leaveType.id,
-            leaveRequest.start_date,
-            leaveRequest.end_date,
-            action
-          );
-        }
-      }
+      if (error) throw error;
 
       toast({
         title: "تم تحديث حالة الإجازة",
@@ -206,7 +139,7 @@ const getLeaveTypeName = (typeId: string) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {leaves?.map((leave) => (
+          {leaves.map((leave) => (
             <TableRow key={leave.id}>
               <TableCell>{leave.employee?.full_name || "غير معروف"}</TableCell>
               <TableCell>{getLeaveTypeName(leave.leave_type)}</TableCell>
