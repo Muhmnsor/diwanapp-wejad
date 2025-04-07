@@ -13,9 +13,11 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { FileDown, FileText, Landmark, BarChartHorizontal } from "lucide-react";
+import { FileDown, FileText, Landmark, BarChartHorizontal, BookOpen, DollarSign } from "lucide-react";
 import { BalanceSheet } from "./reports/BalanceSheet";
 import { IncomeStatement } from "./reports/IncomeStatement";
+import { GeneralLedger } from "./ledger/GeneralLedger";
+import { TrialBalance } from "./trial-balance/TrialBalance";
 
 export const FinancialReports = () => {
   const [activeTab, setActiveTab] = useState("balance-sheet");
@@ -33,7 +35,7 @@ export const FinancialReports = () => {
         className="w-full"
         dir="rtl"
       >
-        <TabsList className="grid grid-cols-3 w-full max-w-md mb-8">
+        <TabsList className="grid grid-cols-5 w-full mb-8">
           <TabsTrigger value="balance-sheet" className="flex items-center gap-2">
             <Landmark className="h-4 w-4" />
             <span>الميزانية العمومية</span>
@@ -43,8 +45,16 @@ export const FinancialReports = () => {
             <span>قائمة الدخل</span>
           </TabsTrigger>
           <TabsTrigger value="cash-flow" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
+            <DollarSign className="h-4 w-4" />
             <span>التدفقات النقدية</span>
+          </TabsTrigger>
+          <TabsTrigger value="general-ledger" className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4" />
+            <span>دفتر الأستاذ</span>
+          </TabsTrigger>
+          <TabsTrigger value="trial-balance" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            <span>ميزان المراجعة</span>
           </TabsTrigger>
         </TabsList>
 
@@ -68,6 +78,14 @@ export const FinancialReports = () => {
               <p>سيتم توفير تقرير التدفقات النقدية قريبًا</p>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="general-ledger" className="space-y-4">
+          <GeneralLedger />
+        </TabsContent>
+
+        <TabsContent value="trial-balance" className="space-y-4">
+          <TrialBalance />
         </TabsContent>
       </Tabs>
     </>
