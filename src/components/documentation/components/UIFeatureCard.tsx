@@ -1,48 +1,28 @@
 
-import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Code } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { CheckCircle2 } from "lucide-react";
 
 interface UIFeatureCardProps {
   title: string;
   description: string;
-  code: string;
+  features: string[];
 }
 
-export const UIFeatureCard: React.FC<UIFeatureCardProps> = ({
-  title,
-  description,
-  code
-}) => {
-  const [showCode, setShowCode] = useState(false);
-  
+export const UIFeatureCard = ({ title, description, features }: UIFeatureCardProps) => {
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="bg-secondary/10">
-        <CardTitle className="text-lg">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="p-4">
-          <p className="text-sm text-muted-foreground">{description}</p>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setShowCode(!showCode)}
-            className="mt-2 text-xs"
-          >
-            <Code className="h-3 w-3 mr-1" />
-            {showCode ? "إخفاء الكود" : "عرض الكود"}
-          </Button>
-        </div>
+    <Card>
+      <CardContent className="p-6">
+        <h3 className="text-lg font-semibold mb-2">{title}</h3>
+        <p className="text-muted-foreground mb-4">{description}</p>
         
-        {showCode && (
-          <div className="border-t bg-secondary/10 p-3 overflow-x-auto">
-            <pre className="text-xs font-mono" dir="ltr">
-              <code>{code}</code>
-            </pre>
-          </div>
-        )}
+        <ul className="space-y-2">
+          {features.map((feature, index) => (
+            <li key={index} className="flex items-start gap-2">
+              <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+              <span>{feature}</span>
+            </li>
+          ))}
+        </ul>
       </CardContent>
     </Card>
   );
