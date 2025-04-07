@@ -76,6 +76,7 @@ export const useTasksFetching = (
         return {
           ...task,
           assignee_name: assignedUserName,
+          assigned_user_name: assignedUserName,
           stage_name: stageName,
         };
       });
