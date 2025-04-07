@@ -153,10 +153,7 @@ export const AccountingOverview: React.FC = () => {
     
     {/* Add the Monthly Comparison Chart here */}
     <MonthlyComparisonChart />
-    
-    <LatestTransactionsCard />
-  </div>
-      
+
       <LatestTransactionsCard />
     </div>
   );
