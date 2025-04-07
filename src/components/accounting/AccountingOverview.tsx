@@ -145,15 +145,12 @@ export const AccountingOverview: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-  return (    
+
   <div className="space-y-6">
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {/* All your existing cards... */}
-    </div>
     
     {/* Add the Monthly Comparison Chart here */}
     <MonthlyComparisonChart />
-
       <LatestTransactionsCard />
     </div>
   );
