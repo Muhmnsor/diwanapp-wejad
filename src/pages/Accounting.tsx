@@ -26,6 +26,7 @@ import { JournalEntries } from "@/components/accounting/JournalEntries";
 import { FinancialReports } from "@/components/accounting/reports/FinancialReports";
 import { CostCenters } from "@/components/accounting/cost-centers/CostCenters";
 import { AccountingPeriods } from "@/components/accounting/periods/AccountingPeriods";
+import { ChartOfAccounts } from "@/components/accounting/ChartOfAccounts";
 
 const Accounting = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -100,14 +101,7 @@ const Accounting = () => {
           </TabsContent>
 
           <TabsContent value="chart-of-accounts" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-right">شجرة الحسابات</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center py-10">
-                <p>سيتم إضافة شجرة الحسابات قريبًا</p>
-              </CardContent>
-            </Card>
+            <ChartOfAccounts />
           </TabsContent>
 
           <TabsContent value="cost-centers" className="space-y-4">
