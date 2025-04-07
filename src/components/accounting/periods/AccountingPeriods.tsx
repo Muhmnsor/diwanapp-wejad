@@ -6,6 +6,7 @@ import { Plus, Calendar } from "lucide-react";
 import { useAccountingPeriods } from "@/hooks/accounting/useAccountingPeriods";
 import { AccountingPeriodForm } from "./AccountingPeriodForm";
 import { AccountingPeriodsTable } from "./AccountingPeriodsTable";
+import { OpeningBalances } from "../opening-balances/OpeningBalances";
 
 export const AccountingPeriods = () => {
   const [showForm, setShowForm] = useState(false);
@@ -70,6 +71,16 @@ export const AccountingPeriods = () => {
           />
         </CardContent>
       </Card>
+      
+{/* إضافة قسم الأرصدة الافتتاحية */}
+<Card className="mt-6">
+  <CardHeader>
+    <CardTitle className="text-right">الأرصدة الافتتاحية</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <OpeningBalances />
+  </CardContent>
+</Card>
     </>
   );
 };
