@@ -1,95 +1,218 @@
 
-import { useState } from "react";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarPlus } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuthStore } from "@/store/authStore";
-import { toast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useEffect, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useForm } from "react-hook-form";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { DatePicker } from "@/components/ui/date-picker";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { useLeaveTypes } from "@/hooks/hr/useLeaveTypes";
-import { Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2 } from "lucide-react";
+import { format, addDays, isBefore } from "date-fns";
+import { cn } from "@/lib/utils";
+import { useLeaveBalance } from "@/hooks/hr/useLeaveBalance";
+import { useEmployees } from "@/hooks/hr/useEmployees";
+import { useHRPermissions } from "@/hooks/hr/useHRPermissions";
+import { useAuthStore } from "@/store/refactored-auth";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
-const leaveFormSchema = z.object({
-  employee_id: z.string(),
-  leave_type: z.string(),
-  start_date: z.date(),
-  end_date: z.date(),
-  reason: z.string().optional(),
-  status: z.string().default("pending")
-});
+interface AddLeaveDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
+}
 
-export function AddLeaveDialog() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+interface LeaveFormValues {
+  employee_id: string;
+  leave_type: string;
+  start_date: Date;
+  end_date: Date;
+  reason: string;
+}
+
+export default function AddLeaveDialog({
+  open,
+  onClose,
+  onSuccess,
+}: AddLeaveDialogProps) {
+  const { data: employees, isLoading: isLoadingEmployees } = useEmployees();
+  const { data: permissions } = useHRPermissions();
   const { user } = useAuthStore();
-  const { data: leaveTypes, isLoading: isLoadingLeaveTypes } = useLeaveTypes();
-  
-  const form = useForm({
-    resolver: zodResolver(leaveFormSchema),
-    defaultValues: {
-      employee_id: user?.id || "",
-      leave_type: "",
-      status: "pending",
-      reason: ""
+  const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
+  const [selectedLeaveType, setSelectedLeaveType] = useState<string | null>(null);
+  const [employeeIdFromUser, setEmployeeIdFromUser] = useState<string | null>(null);
+
+  // Find current user's employee ID if they are an employee
+  useEffect(() => {
+    if (user && employees) {
+      const userEmployee = employees.find(emp => emp.user_id === user.id);
+      if (userEmployee) {
+        setEmployeeIdFromUser(userEmployee.id);
+        setSelectedEmployee(userEmployee.id);
+      }
     }
+  }, [user, employees]);
+
+  // Get leave types and leave balance
+  const { data: leaveTypes = [], isLoading: isLoadingLeaveTypes } = useLeaveTypes();
+  const { data: leaveBalance = {}, isLoading: isLoadingBalance } = useLeaveBalance(selectedEmployee || undefined);
+
+  const canManageOtherLeaves = permissions?.canManageLeaves || false;
+  const showEmployeeSelection = canManageOtherLeaves;
+
+  const form = useForm<LeaveFormValues>({
+    defaultValues: {
+      employee_id: "",
+      leave_type: "",
+      start_date: new Date(),
+      end_date: addDays(new Date(), 1),
+      reason: "",
+    },
   });
 
-  const onSubmit = async (data) => {
-    setIsSubmitting(true);
-    try {
-      // Format dates for Supabase
-      const formattedData = {
-        ...data,
-        start_date: data.start_date.toISOString().split('T')[0],
-        end_date: data.end_date.toISOString().split('T')[0]
+  useEffect(() => {
+    if (selectedEmployee) {
+      form.setValue("employee_id", selectedEmployee);
+    }
+  }, [selectedEmployee, form]);
+
+  // Update query client after leave request submission
+  const queryClient = useQueryClient();
+  
+  const mutation = useMutation({
+    mutationFn: async (values: LeaveFormValues) => {
+      if (!values.employee_id) {
+        throw new Error("Employee ID is required");
+      }
+
+      const leaveRequest = {
+        employee_id: values.employee_id,
+        leave_type: values.leave_type,
+        start_date: format(values.start_date, 'yyyy-MM-dd'),
+        end_date: format(values.end_date, 'yyyy-MM-dd'),
+        reason: values.reason,
+        status: "pending",
       };
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("hr_leave_requests")
-        .insert(formattedData);
+        .insert([leaveRequest])
+        .select()
+        .single();
 
       if (error) throw error;
-
-      toast({
-        title: "تم تقديم طلب الإجازة بنجاح",
-        description: "سيتم مراجعة طلبك من قبل المسؤول"
-      });
-
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("تم تقديم طلب الإجازة بنجاح");
+      queryClient.invalidateQueries({ queryKey: ["leave-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["leave-stats"] });
       form.reset();
-      setIsOpen(false);
-    } catch (error) {
+      if (onSuccess) onSuccess();
+      onClose();
+    },
+    onError: (error) => {
       console.error("Error submitting leave request:", error);
-      toast({
-        title: "حدث خطأ",
-        description: "لم نتمكن من تقديم طلب الإجازة، يرجى المحاولة مرة أخرى",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
+      toast.error("حدث خطأ أثناء تقديم طلب الإجازة");
+    },
+  });
+
+  const handleSubmit = form.handleSubmit((values) => {
+    mutation.mutate(values);
+  });
+
+  const selectedLeaveBalance = selectedLeaveType ? leaveBalance[selectedLeaveType] : null;
+  const isBalanceExceeded = selectedLeaveBalance && calculateDays() > selectedLeaveBalance.remainingDays;
+  
+  function calculateDays() {
+    const startDate = form.watch("start_date");
+    const endDate = form.watch("end_date");
+    
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      // Calculate the difference in days
+      const diffTime = end.getTime() - start.getTime();
+      return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
     }
-  };
+    
+    return 0;
+  }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button className="gap-2">
-          <CalendarPlus className="h-4 w-4" />
-          إضافة طلب إجازة
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[550px]">
-        <DialogHeader>
-          <DialogTitle>تقديم طلب إجازة جديد</DialogTitle>
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[500px] p-0 overflow-auto max-h-screen">
+        <DialogHeader className="p-6 pb-2">
+          <DialogTitle className="text-xl">إضافة طلب إجازة</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4 px-6">
+            {showEmployeeSelection && (
+              <FormField
+                control={form.control}
+                name="employee_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>الموظف</FormLabel>
+                    <Select 
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        setSelectedEmployee(value);
+                      }}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر الموظف" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {isLoadingEmployees ? (
+                          <div className="flex items-center justify-center p-2">
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            <span>جاري تحميل الموظفين...</span>
+                          </div>
+                        ) : (
+                          employees?.map((employee) => (
+                            <SelectItem key={employee.id} value={employee.id}>
+                              {employee.full_name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
             <FormField
               control={form.control}
               name="leave_type"
@@ -97,8 +220,11 @@ export function AddLeaveDialog() {
                 <FormItem>
                   <FormLabel>نوع الإجازة</FormLabel>
                   <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      setSelectedLeaveType(value);
+                    }}
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -107,45 +233,65 @@ export function AddLeaveDialog() {
                     </FormControl>
                     <SelectContent>
                       {isLoadingLeaveTypes ? (
-                        <div className="flex justify-center items-center p-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                        <div className="flex items-center justify-center p-2">
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          <span>جاري تحميل أنواع الإجازات...</span>
                         </div>
-                      ) : leaveTypes && leaveTypes.length > 0 ? (
+                      ) : (
                         leaveTypes.map((type) => (
-                          <SelectItem key={type.id} value={type.code}>
+                          <SelectItem key={type.id} value={type.id}>
                             {type.name}
                           </SelectItem>
                         ))
-                      ) : (
-                        <>
-                          <SelectItem value="annual">سنوية</SelectItem>
-                          <SelectItem value="sick">مرضية</SelectItem>
-                          <SelectItem value="emergency">طارئة</SelectItem>
-                          <SelectItem value="maternity">أمومة</SelectItem>
-                          <SelectItem value="unpaid">بدون راتب</SelectItem>
-                        </>
                       )}
                     </SelectContent>
                   </Select>
-                  <FormDescription>اختر نوع الإجازة المطلوبة</FormDescription>
                   <FormMessage />
+                  {selectedLeaveType && !isLoadingBalance && (
+                    <FormDescription>
+                      رصيد الإجازة المتبقي: {selectedLeaveBalance?.remainingDays || 0} يوم
+                    </FormDescription>
+                  )}
                 </FormItem>
               )}
             />
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="start_date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>تاريخ البداية</FormLabel>
-                    <DatePicker
-                      date={field.value}
-                      setDate={field.onChange}
-                      placeholder="اختر تاريخ البداية"
-                      locale="ar"
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "yyyy-MM-dd")
+                            ) : (
+                              <span>اختر تاريخ</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => date < new Date("1900-01-01")}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -157,27 +303,68 @@ export function AddLeaveDialog() {
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>تاريخ النهاية</FormLabel>
-                    <DatePicker
-                      date={field.value}
-                      setDate={field.onChange}
-                      placeholder="اختر تاريخ النهاية"
-                      locale="ar"
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "yyyy-MM-dd")
+                            ) : (
+                              <span>اختر تاريخ</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => 
+                            date < new Date("1900-01-01") || 
+                            (form.watch("start_date") && isBefore(date, form.watch("start_date")))
+                          }
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-            
+
+            {calculateDays() > 0 && (
+              <div className="text-sm">
+                عدد أيام الإجازة: {calculateDays()} يوم
+              </div>
+            )}
+
+            {isBalanceExceeded && (
+              <Alert variant="destructive">
+                <AlertTitle>تجاوز رصيد الإجازة</AlertTitle>
+                <AlertDescription>
+                  عدد أيام الإجازة المطلوبة ({calculateDays()} يوم) يتجاوز الرصيد المتبقي ({selectedLeaveBalance?.remainingDays} يوم)
+                </AlertDescription>
+              </Alert>
+            )}
+
             <FormField
               control={form.control}
               name="reason"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>سبب الإجازة (اختياري)</FormLabel>
+                  <FormLabel>سبب الإجازة</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="أدخل سبب طلب الإجازة"
+                      placeholder="أدخل سبب الإجازة"
                       className="resize-none"
                       {...field}
                     />
@@ -186,22 +373,37 @@ export function AddLeaveDialog() {
                 </FormItem>
               )}
             />
-            
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsOpen(false)}
+
+            <DialogFooter className="py-2">
+              <Button 
+                variant="outline" 
+                type="button" 
+                onClick={onClose}
+                className="mt-2"
               >
                 إلغاء
               </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
+              <Button 
+                type="submit" 
+                className="mt-2" 
+                disabled={
+                  mutation.isPending || 
+                  isBalanceExceeded || 
+                  isLoadingBalance || 
+                  !form.watch("leave_type") || 
+                  !form.watch("employee_id")
+                }
               >
-                {isSubmitting ? "جاري التقديم..." : "تقديم طلب الإجازة"}
+                {mutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    جاري التقديم...
+                  </>
+                ) : (
+                  "تقديم الطلب"
+                )}
               </Button>
-            </div>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>
