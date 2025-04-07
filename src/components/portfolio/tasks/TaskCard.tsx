@@ -33,7 +33,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
 
         <TaskMetadata 
           dueDate={task.due_date}
-          assignedTo={task.assignee_name}
+          assignedTo={task.assigned_to}
           updatedAt={task.updated_at}
           taskId={task.id}
         />

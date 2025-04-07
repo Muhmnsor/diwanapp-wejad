@@ -9,7 +9,6 @@ export interface Task {
   priority: string | null;
   due_date: string | null;
   assigned_to: string | null;
-  assignee_name?: string;
   created_at: string;
   created_by?: string;
   updated_at?: string;
