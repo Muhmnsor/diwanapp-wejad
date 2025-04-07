@@ -1,8 +1,7 @@
-
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Book, Receipt, PieChart, Landmark, Settings, DollarSign, BarChartHorizontal } from "lucide-react";
+import { FileText, Book, Receipt, PieChart, Landmark, Settings, DollarSign, BarChartHorizontal, FileInvoice, CreditCard } from "lucide-react";
 import { useState } from "react";
 import { AccountingDashboard } from "@/components/accounting/AccountingDashboard";
 import { ChartOfAccounts } from "@/components/accounting/ChartOfAccounts";
@@ -11,6 +10,9 @@ import { FinancialReports } from "@/components/accounting/reports/FinancialRepor
 import { CostCenters } from "@/components/accounting/cost-centers/CostCenters";
 import { AccountingPeriods } from "@/components/accounting/periods/AccountingPeriods";
 import { OpeningBalances } from "@/components/accounting/opening-balances/OpeningBalances";
+import { Invoices } from "@/components/accounting/invoices/Invoices";
+import { Receipts } from "@/components/accounting/receipts/Receipts";
+import { Vouchers } from "@/components/accounting/vouchers/Vouchers";
 
 const Accounting = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -26,7 +28,7 @@ const Accounting = () => {
         </div>
 
         <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
-          <TabsList className="grid grid-cols-7 w-full mb-8">
+          <TabsList className="grid grid-cols-10 w-full mb-8">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <PieChart className="h-4 w-4" />
               <span>نظرة عامة</span>
@@ -39,13 +41,25 @@ const Accounting = () => {
               <Receipt className="h-4 w-4" />
               <span>القيود المحاسبية</span>
             </TabsTrigger>
+            <TabsTrigger value="invoices" className="flex items-center gap-2">
+              <FileInvoice className="h-4 w-4" />
+              <span>الفواتير</span>
+            </TabsTrigger>
+            <TabsTrigger value="receipts" className="flex items-center gap-2">
+              <Landmark className="h-4 w-4" />
+              <span>سندات القبض</span>
+            </TabsTrigger>
+            <TabsTrigger value="vouchers" className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              <span>سندات الصرف</span>
+            </TabsTrigger>
             <TabsTrigger value="cost-centers" className="flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
               <span>مراكز التكلفة</span>
             </TabsTrigger>
             <TabsTrigger value="periods" className="flex items-center gap-2">
               <BarChartHorizontal className="h-4 w-4" />
-              <span>الفترات المحاسبية</span>
+              <span>الفترات</span>
             </TabsTrigger>
             <TabsTrigger value="reports" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
@@ -67,6 +81,18 @@ const Accounting = () => {
 
           <TabsContent value="journal" className="space-y-4">
             <JournalEntries />
+          </TabsContent>
+          
+          <TabsContent value="invoices" className="space-y-4">
+            <Invoices />
+          </TabsContent>
+          
+          <TabsContent value="receipts" className="space-y-4">
+            <Receipts />
+          </TabsContent>
+          
+          <TabsContent value="vouchers" className="space-y-4">
+            <Vouchers />
           </TabsContent>
           
           <TabsContent value="cost-centers" className="space-y-4">
