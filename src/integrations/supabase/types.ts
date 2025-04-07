@@ -86,90 +86,6 @@ export type Database = {
         }
         Relationships: []
       }
-      accounting_invoices: {
-        Row: {
-          account_id: string | null
-          cost_center_id: string | null
-          created_at: string | null
-          customer_address: string | null
-          customer_email: string | null
-          customer_name: string
-          customer_phone: string | null
-          date: string
-          due_date: string
-          id: string
-          invoice_number: string
-          invoice_type: string
-          items: Json
-          notes: string | null
-          status: string
-          subtotal: number
-          tax_amount: number
-          tax_rate: number
-          total_amount: number
-          updated_at: string | null
-        }
-        Insert: {
-          account_id?: string | null
-          cost_center_id?: string | null
-          created_at?: string | null
-          customer_address?: string | null
-          customer_email?: string | null
-          customer_name: string
-          customer_phone?: string | null
-          date: string
-          due_date: string
-          id?: string
-          invoice_number: string
-          invoice_type: string
-          items?: Json
-          notes?: string | null
-          status: string
-          subtotal?: number
-          tax_amount?: number
-          tax_rate?: number
-          total_amount?: number
-          updated_at?: string | null
-        }
-        Update: {
-          account_id?: string | null
-          cost_center_id?: string | null
-          created_at?: string | null
-          customer_address?: string | null
-          customer_email?: string | null
-          customer_name?: string
-          customer_phone?: string | null
-          date?: string
-          due_date?: string
-          id?: string
-          invoice_number?: string
-          invoice_type?: string
-          items?: Json
-          notes?: string | null
-          status?: string
-          subtotal?: number
-          tax_amount?: number
-          tax_rate?: number
-          total_amount?: number
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "accounting_invoices_account_id_fkey"
-            columns: ["account_id"]
-            isOneToOne: false
-            referencedRelation: "accounting_accounts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "accounting_invoices_cost_center_id_fkey"
-            columns: ["cost_center_id"]
-            isOneToOne: false
-            referencedRelation: "accounting_cost_centers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       accounting_journal_entries: {
         Row: {
           approved_by: string | null
@@ -178,14 +94,10 @@ export type Database = {
           date: string
           description: string
           id: string
-          invoice_id: string | null
-          is_invoice_entry: boolean | null
-          is_voucher_entry: boolean | null
           reference_number: string | null
           status: string
           total_amount: number | null
           updated_at: string
-          voucher_id: string | null
         }
         Insert: {
           approved_by?: string | null
@@ -194,14 +106,10 @@ export type Database = {
           date: string
           description: string
           id?: string
-          invoice_id?: string | null
-          is_invoice_entry?: boolean | null
-          is_voucher_entry?: boolean | null
           reference_number?: string | null
           status?: string
           total_amount?: number | null
           updated_at?: string
-          voucher_id?: string | null
         }
         Update: {
           approved_by?: string | null
@@ -210,31 +118,12 @@ export type Database = {
           date?: string
           description?: string
           id?: string
-          invoice_id?: string | null
-          is_invoice_entry?: boolean | null
-          is_voucher_entry?: boolean | null
           reference_number?: string | null
           status?: string
           total_amount?: number | null
           updated_at?: string
-          voucher_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "accounting_journal_entries_invoice_id_fkey"
-            columns: ["invoice_id"]
-            isOneToOne: false
-            referencedRelation: "accounting_invoices"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "accounting_journal_entries_voucher_id_fkey"
-            columns: ["voucher_id"]
-            isOneToOne: false
-            referencedRelation: "accounting_payment_vouchers"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       accounting_journal_items: {
         Row: {
@@ -326,88 +215,6 @@ export type Database = {
           },
         ]
       }
-      accounting_payment_vouchers: {
-        Row: {
-          account_id: string | null
-          bank_account_number: string | null
-          beneficiary_name: string
-          check_number: string | null
-          cost_center_id: string | null
-          created_at: string | null
-          date: string
-          id: string
-          invoice_id: string | null
-          items: Json
-          notes: string | null
-          payment_method: string
-          status: string
-          total_amount: number
-          updated_at: string | null
-          voucher_number: string
-          voucher_type: string
-        }
-        Insert: {
-          account_id?: string | null
-          bank_account_number?: string | null
-          beneficiary_name: string
-          check_number?: string | null
-          cost_center_id?: string | null
-          created_at?: string | null
-          date: string
-          id?: string
-          invoice_id?: string | null
-          items?: Json
-          notes?: string | null
-          payment_method: string
-          status: string
-          total_amount?: number
-          updated_at?: string | null
-          voucher_number: string
-          voucher_type: string
-        }
-        Update: {
-          account_id?: string | null
-          bank_account_number?: string | null
-          beneficiary_name?: string
-          check_number?: string | null
-          cost_center_id?: string | null
-          created_at?: string | null
-          date?: string
-          id?: string
-          invoice_id?: string | null
-          items?: Json
-          notes?: string | null
-          payment_method?: string
-          status?: string
-          total_amount?: number
-          updated_at?: string | null
-          voucher_number?: string
-          voucher_type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "accounting_payment_vouchers_account_id_fkey"
-            columns: ["account_id"]
-            isOneToOne: false
-            referencedRelation: "accounting_accounts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "accounting_payment_vouchers_cost_center_id_fkey"
-            columns: ["cost_center_id"]
-            isOneToOne: false
-            referencedRelation: "accounting_cost_centers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "accounting_payment_vouchers_invoice_id_fkey"
-            columns: ["invoice_id"]
-            isOneToOne: false
-            referencedRelation: "accounting_invoices"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       accounting_periods: {
         Row: {
           created_at: string
@@ -437,97 +244,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      accounting_receipts: {
-        Row: {
-          account_id: string | null
-          bank_account_number: string | null
-          check_number: string | null
-          cost_center_id: string | null
-          created_at: string | null
-          date: string
-          id: string
-          invoice_id: string | null
-          items: Json
-          notes: string | null
-          payer_address: string | null
-          payer_email: string | null
-          payer_name: string
-          payer_phone: string | null
-          payment_method: string
-          receipt_number: string
-          receipt_type: string
-          status: string
-          total_amount: number
-          updated_at: string | null
-        }
-        Insert: {
-          account_id?: string | null
-          bank_account_number?: string | null
-          check_number?: string | null
-          cost_center_id?: string | null
-          created_at?: string | null
-          date: string
-          id?: string
-          invoice_id?: string | null
-          items?: Json
-          notes?: string | null
-          payer_address?: string | null
-          payer_email?: string | null
-          payer_name: string
-          payer_phone?: string | null
-          payment_method: string
-          receipt_number: string
-          receipt_type: string
-          status?: string
-          total_amount: number
-          updated_at?: string | null
-        }
-        Update: {
-          account_id?: string | null
-          bank_account_number?: string | null
-          check_number?: string | null
-          cost_center_id?: string | null
-          created_at?: string | null
-          date?: string
-          id?: string
-          invoice_id?: string | null
-          items?: Json
-          notes?: string | null
-          payer_address?: string | null
-          payer_email?: string | null
-          payer_name?: string
-          payer_phone?: string | null
-          payment_method?: string
-          receipt_number?: string
-          receipt_type?: string
-          status?: string
-          total_amount?: number
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "accounting_receipts_account_id_fkey"
-            columns: ["account_id"]
-            isOneToOne: false
-            referencedRelation: "accounting_accounts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "accounting_receipts_cost_center_id_fkey"
-            columns: ["cost_center_id"]
-            isOneToOne: false
-            referencedRelation: "accounting_cost_centers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "accounting_receipts_invoice_id_fkey"
-            columns: ["invoice_id"]
-            isOneToOne: false
-            referencedRelation: "accounting_invoices"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       activity_feedback: {
         Row: {
@@ -7288,22 +7004,34 @@ export type Database = {
     }
     Functions: {
       anonymize_user_data: {
-        Args: { user_id: string }
+        Args: {
+          user_id: string
+        }
         Returns: undefined
       }
-      approve_request: {
-        Args:
-          | { p_request_id: string; p_step_id: string; p_comments?: string }
-          | {
+      approve_request:
+        | {
+            Args: {
+              p_request_id: string
+              p_step_id: string
+              p_comments?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
               p_request_id: string
               p_step_id: string
               p_comments?: string
               p_metadata?: Json
             }
-        Returns: Json
-      }
+            Returns: Json
+          }
       assign_user_role: {
-        Args: { p_user_id: string; p_role_id: string }
+        Args: {
+          p_user_id: string
+          p_role_id: string
+        }
         Returns: boolean
       }
       calculate_leave_balance: {
@@ -7315,7 +7043,9 @@ export type Database = {
         Returns: Json
       }
       can_delete_request: {
-        Args: { p_request_id: string }
+        Args: {
+          p_request_id: string
+        }
         Returns: boolean
       }
       check_admin_role: {
@@ -7323,7 +7053,9 @@ export type Database = {
         Returns: boolean
       }
       check_if_request_accessible: {
-        Args: { request_id: string }
+        Args: {
+          request_id: string
+        }
         Returns: boolean
       }
       check_if_user_is_admin: {
@@ -7331,15 +7063,21 @@ export type Database = {
         Returns: boolean
       }
       check_if_user_is_request_approver: {
-        Args: { request_id: string }
+        Args: {
+          request_id: string
+        }
         Returns: boolean
       }
       check_if_user_is_step_approver: {
-        Args: { step_id: string }
+        Args: {
+          step_id: string
+        }
         Returns: boolean
       }
       check_table_exists: {
-        Args: { table_name: string }
+        Args: {
+          table_name: string
+        }
         Returns: {
           table_exists: boolean
         }[]
@@ -7360,39 +7098,61 @@ export type Database = {
         }[]
       }
       debug_request_workflow: {
-        Args: { request_id: string }
+        Args: {
+          request_id: string
+        }
         Returns: Json
       }
       delete_draft_project: {
-        Args: { p_project_id: string; p_user_id: string }
+        Args: {
+          p_project_id: string
+          p_user_id: string
+        }
         Returns: boolean
       }
       delete_project: {
-        Args: { p_project_id: string; p_user_id: string }
+        Args: {
+          p_project_id: string
+          p_user_id: string
+        }
         Returns: boolean
       }
       delete_request: {
-        Args: { p_request_id: string }
+        Args: {
+          p_request_id: string
+        }
         Returns: Json
       }
       delete_request_type: {
-        Args: { p_request_type_id: string }
+        Args: {
+          p_request_type_id: string
+        }
         Returns: Json
       }
       delete_task: {
-        Args: { p_task_id: string; p_user_id: string }
+        Args: {
+          p_task_id: string
+          p_user_id: string
+        }
         Returns: boolean
       }
       delete_user_roles: {
-        Args: { p_user_id: string }
+        Args: {
+          p_user_id: string
+        }
         Returns: boolean
       }
       delete_workspace: {
-        Args: { p_workspace_id: string; p_user_id: string }
+        Args: {
+          p_workspace_id: string
+          p_user_id: string
+        }
         Returns: boolean
       }
       diagnose_workflow_issues: {
-        Args: { p_request_id: string }
+        Args: {
+          p_request_id: string
+        }
         Returns: Json
       }
       fix_orphaned_request_types: {
@@ -7400,13 +7160,25 @@ export type Database = {
         Returns: Json
       }
       fix_request_status: {
-        Args: { p_request_id: string }
+        Args: {
+          p_request_id: string
+        }
         Returns: Json
       }
-      generate_next_registration_number: {
-        Args: { event_id: string } | { p_type: string; p_id: string }
-        Returns: string
-      }
+      generate_next_registration_number:
+        | {
+            Args: {
+              event_id: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_type: string
+              p_id: string
+            }
+            Returns: string
+          }
       generate_recurring_tasks: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -7433,7 +7205,9 @@ export type Database = {
         Returns: Json[]
       }
       get_app_keys_for_module: {
-        Args: { module_name: string }
+        Args: {
+          module_name: string
+        }
         Returns: string[]
       }
       get_app_users: {
@@ -7457,7 +7231,9 @@ export type Database = {
         }[]
       }
       get_organizational_unit_children: {
-        Args: { unit_id: string }
+        Args: {
+          unit_id: string
+        }
         Returns: {
           id: string
           name: string
@@ -7468,11 +7244,15 @@ export type Database = {
         }[]
       }
       get_request_details: {
-        Args: { p_request_id: string }
+        Args: {
+          p_request_id: string
+        }
         Returns: Json
       }
       get_request_pdf_export_data: {
-        Args: { p_request_id: string }
+        Args: {
+          p_request_id: string
+        }
         Returns: Json
       }
       get_request_statistics: {
@@ -7508,11 +7288,16 @@ export type Database = {
         }[]
       }
       get_user_incoming_requests: {
-        Args: { p_user_id: string }
+        Args: {
+          p_user_id: string
+        }
         Returns: Json[]
       }
       get_user_messages: {
-        Args: { p_user_id: string; p_folder?: string }
+        Args: {
+          p_user_id: string
+          p_folder?: string
+        }
         Returns: {
           id: string
           subject: string
@@ -7528,22 +7313,30 @@ export type Database = {
         }[]
       }
       get_user_opinion_requests: {
-        Args: { p_user_id: string }
+        Args: {
+          p_user_id: string
+        }
         Returns: Json[]
       }
       get_user_outgoing_requests: {
-        Args: { p_user_id: string }
+        Args: {
+          p_user_id: string
+        }
         Returns: Json[]
       }
       get_user_permissions: {
-        Args: { p_user_id: string }
+        Args: {
+          p_user_id: string
+        }
         Returns: {
           app: string
           permission: string
         }[]
       }
       get_user_role: {
-        Args: { p_user_id: string }
+        Args: {
+          p_user_id: string
+        }
         Returns: string
       }
       handle_user_management: {
@@ -7555,75 +7348,129 @@ export type Database = {
         Returns: Json
       }
       has_developer_role: {
-        Args: { p_user_id: string }
+        Args: {
+          p_user_id: string
+        }
         Returns: boolean
       }
       has_hr_access: {
-        Args: { p_user_id: string }
+        Args: {
+          p_user_id: string
+        }
         Returns: boolean
       }
       insert_request_bypass_rls: {
-        Args: { request_data: Json }
+        Args: {
+          request_data: Json
+        }
         Returns: Json
       }
       insert_workflow_steps: {
-        Args: { steps: Json[] }
+        Args: {
+          steps: Json[]
+        }
         Returns: Json
       }
-      is_admin: {
-        Args: Record<PropertyKey, never> | { user_id: string }
-        Returns: boolean
-      }
-      is_admin_user: {
-        Args: Record<PropertyKey, never> | { user_id: string }
-        Returns: boolean
-      }
+      is_admin:
+        | {
+            Args: Record<PropertyKey, never>
+            Returns: boolean
+          }
+        | {
+            Args: {
+              user_id: string
+            }
+            Returns: boolean
+          }
+      is_admin_user:
+        | {
+            Args: Record<PropertyKey, never>
+            Returns: boolean
+          }
+        | {
+            Args: {
+              user_id: string
+            }
+            Returns: boolean
+          }
       is_approver_for_current_request: {
-        Args: { request_id: string }
+        Args: {
+          request_id: string
+        }
         Returns: boolean
       }
       is_approver_for_request: {
-        Args: { request_id: string }
+        Args: {
+          request_id: string
+        }
         Returns: boolean
       }
       is_approver_for_step: {
-        Args: { step_id: string }
+        Args: {
+          step_id: string
+        }
         Returns: boolean
       }
       is_developer: {
-        Args: { user_id: string }
+        Args: {
+          user_id: string
+        }
         Returns: boolean
       }
       is_message_recipient: {
-        Args: { message_id: string; user_id: string }
+        Args: {
+          message_id: string
+          user_id: string
+        }
         Returns: boolean
       }
       is_message_sender: {
-        Args: { message_id: string; user_id: string }
+        Args: {
+          message_id: string
+          user_id: string
+        }
         Returns: boolean
       }
       is_request_accessible: {
-        Args: { request_id: string }
+        Args: {
+          request_id: string
+        }
         Returns: boolean
       }
       is_request_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
-      is_request_approver: {
-        Args: { step_id: string; user_id: string } | { step_id: string }
-        Returns: boolean
-      }
+      is_request_approver:
+        | {
+            Args: {
+              step_id: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              step_id: string
+              user_id: string
+            }
+            Returns: boolean
+          }
       is_request_creator: {
-        Args: { request_id: string }
+        Args: {
+          request_id: string
+        }
         Returns: boolean
       }
       is_request_requester: {
-        Args: { request_id: string }
+        Args: {
+          request_id: string
+        }
         Returns: boolean
       }
       is_step_approver: {
-        Args: { step_id: string }
+        Args: {
+          step_id: string
+        }
         Returns: boolean
       }
       log_request_approval_action: {
@@ -7640,11 +7487,18 @@ export type Database = {
         Returns: string
       }
       log_request_view: {
-        Args: { p_request_id: string; p_metadata?: Json }
+        Args: {
+          p_request_id: string
+          p_metadata?: Json
+        }
         Returns: string
       }
       log_user_activity: {
-        Args: { user_id: string; activity_type: string; details: string }
+        Args: {
+          user_id: string
+          activity_type: string
+          details: string
+        }
         Returns: string
       }
       log_workflow_operation: {
@@ -7661,34 +7515,54 @@ export type Database = {
         Returns: string
       }
       mark_absent_employees: {
-        Args: { p_date?: string }
+        Args: {
+          p_date?: string
+        }
         Returns: Json
       }
       record_employee_attendance: {
-        Args: { p_action: string; p_employee_id?: string }
+        Args: {
+          p_action: string
+          p_employee_id?: string
+        }
         Returns: Json
       }
       record_request_pdf_export: {
-        Args: { p_request_id: string; p_exported_by: string }
+        Args: {
+          p_request_id: string
+          p_exported_by: string
+        }
         Returns: string
       }
-      reject_request: {
-        Args:
-          | { p_request_id: string; p_step_id: string; p_comments: string }
-          | {
+      reject_request:
+        | {
+            Args: {
+              p_request_id: string
+              p_step_id: string
+              p_comments: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
               p_request_id: string
               p_step_id: string
               p_comments: string
               p_metadata?: Json
             }
-        Returns: Json
-      }
+            Returns: Json
+          }
       set_default_workflow: {
-        Args: { p_request_type_id: string; p_workflow_id: string }
+        Args: {
+          p_request_type_id: string
+          p_workflow_id: string
+        }
         Returns: boolean
       }
       soft_delete_user: {
-        Args: { user_id: string }
+        Args: {
+          user_id: string
+        }
         Returns: boolean
       }
       sync_role_app_permissions: {
@@ -7700,23 +7574,37 @@ export type Database = {
         Returns: string
       }
       update_request_after_approval: {
-        Args: { p_request_id: string; p_step_id: string }
+        Args: {
+          p_request_id: string
+          p_step_id: string
+        }
         Returns: Json
       }
       update_request_after_rejection: {
-        Args: { p_request_id: string; p_step_id: string }
+        Args: {
+          p_request_id: string
+          p_step_id: string
+        }
         Returns: Json
       }
       update_workspace_members_count: {
-        Args: { workspace_id: string }
+        Args: {
+          workspace_id: string
+        }
         Returns: undefined
       }
       upsert_request_type: {
-        Args: { request_type_data: Json; is_update?: boolean }
+        Args: {
+          request_type_data: Json
+          is_update?: boolean
+        }
         Returns: Json
       }
       upsert_workflow: {
-        Args: { workflow_data: Json; is_update?: boolean }
+        Args: {
+          workflow_data: Json
+          is_update?: boolean
+        }
         Returns: Json
       }
     }
@@ -7729,29 +7617,27 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type PublicSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+  PublicTableNameOrOptions extends
+    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
     | { schema: keyof Database },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+        Database[PublicTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
+        PublicSchema["Views"])
+    ? (PublicSchema["Tables"] &
+        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -7759,22 +7645,20 @@ export type Tables<
     : never
 
 export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
     | { schema: keyof Database },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -7782,22 +7666,20 @@ export type TablesInsert<
     : never
 
 export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+  PublicTableNameOrOptions extends
+    | keyof PublicSchema["Tables"]
     | { schema: keyof Database },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
+    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -7805,23 +7687,21 @@ export type TablesUpdate<
     : never
 
 export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
+  PublicEnumNameOrOptions extends
+    | keyof PublicSchema["Enums"]
     | { schema: keyof Database },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+> = PublicEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
+    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
+    | keyof PublicSchema["CompositeTypes"]
     | { schema: keyof Database },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof Database
@@ -7830,12 +7710,6 @@ export type CompositeTypes<
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
   ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
+    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
-
-export const Constants = {
-  public: {
-    Enums: {},
-  },
-} as const
