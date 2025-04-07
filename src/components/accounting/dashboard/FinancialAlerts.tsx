@@ -1,4 +1,4 @@
-// src/components/accounting/dashboard/FinancialAlerts.tsx
+
 import { useState } from "react";
 import {
   Alert,
@@ -7,35 +7,51 @@ import {
 } from "@/components/ui/alert";
 import { AlertTriangle, Info, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useFinancialAlerts } from "@/hooks/accounting/useFinancialAlerts";
+
+interface AlertItem {
+  id: string;
+  title: string;
+  description: string;
+  type: "warning" | "info" | "success";
+  date: Date;
+}
 
 export const FinancialAlerts = () => {
-  const { alerts: fetchedAlerts, loading } = useFinancialAlerts();
-  // استخدام الـ useState للاحتفاظ بالإشعارات التي لم يتم إغلاقها
-  const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
-  
-  // تصفية الإشعارات المغلقة
-  const visibleAlerts = fetchedAlerts.filter(alert => !dismissedAlerts.includes(alert.id));
-  
+  const [alerts, setAlerts] = useState<AlertItem[]>([
+    {
+      id: "1",
+      title: "اقتراب موعد إغلاق الفترة المحاسبية",
+      description: "الفترة المحاسبية الحالية ستنتهي خلال 5 أيام. تأكد من ترحيل جميع القيود المعلقة.",
+      type: "warning",
+      date: new Date(),
+    },
+    {
+      id: "2",
+      title: "تغير في النسب المالية",
+      description: "نسبة السيولة انخفضت بمقدار 5% مقارنة بالشهر الماضي.",
+      type: "info",
+      date: new Date(),
+    },
+    {
+      id: "3",
+      title: "زيادة في الإيرادات",
+      description: "ارتفعت الإيرادات بنسبة 10% مقارنة بالشهر الماضي.",
+      type: "success",
+      date: new Date(Date.now() - 86400000),
+    },
+  ]);
+
   const dismissAlert = (alertId: string) => {
-    setDismissedAlerts(prev => [...prev, alertId]);
+    setAlerts(alerts.filter(alert => alert.id !== alertId));
   };
 
-  if (loading) {
-    return (
-      <div className="h-24 flex items-center justify-center">
-        <p className="text-gray-500">جاري تحميل البيانات المالية...</p>
-      </div>
-    );
-  }
-
-  if (visibleAlerts.length === 0) {
+  if (alerts.length === 0) {
     return null;
   }
 
   return (
     <div className="space-y-3 mb-6">
-      {visibleAlerts.map((alert) => (
+      {alerts.map((alert) => (
         <Alert 
           key={alert.id}
           className={`
