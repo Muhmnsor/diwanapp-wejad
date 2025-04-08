@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -59,11 +58,11 @@ const IncomingOutgoingMail = () => {
     setIsAddMailOpen(true);
   };
   
-const handleDownload = (mail: Mail) => {
-  // استخدام وظيفة التنزيل المناسبة
-  if (mail.hasAttachments) {
-    // الحصول على المرفقات وتنزيل الأول منها
-    getAttachments(mail.id).then(attachments => {
+  const handleDownload = async (mail: Mail) => {
+    // استخدام وظيفة التنزيل المناسبة
+    if (mail.hasAttachments) {
+      // الحصول على المرفقات وتنزيل الأول منها
+      const attachments = await getAttachments(mail.id);
       if (attachments && attachments.length > 0) {
         downloadAttachment(attachments[0].file_path, attachments[0].file_name);
       } else {
@@ -73,61 +72,61 @@ const handleDownload = (mail: Mail) => {
           description: "لم يتم العثور على مرفقات لهذه المعاملة"
         });
       }
-    });
-  } else {
-    // عرض رسالة عدم وجود مرفقات
-    toast({
-      variant: "destructive",
-      title: "لا توجد مرفقات",
-      description: "هذه المعاملة لا تحتوي على مرفقات للتنزيل"
-    });
-  }
-};
+    } else {
+      // عرض رسالة عدم وجود مرفقات
+      toast({
+        variant: "destructive",
+        title: "لا توجد مرفقات",
+        description: "هذه المعاملة لا تحتوي على مرفقات للتنزيل"
+      });
+    }
+  };
 
+  const getFilteredMails = () => {
+    let mails: Correspondence[] = [];
+    
+    if (activeTab === "incoming") {
+      mails = incomingMail || [];
+    } else if (activeTab === "outgoing") {
+      mails = outgoingMail || [];
+    } else if (activeTab === "letters") {
+      mails = letters || [];
+    }
+    
+    // Filter by search query
+    if (searchQuery) {
+      mails = mails.filter(mail => 
+        mail.subject?.includes(searchQuery) || 
+        mail.sender?.includes(searchQuery) ||
+        mail.recipient?.includes(searchQuery) ||
+        mail.number?.includes(searchQuery)
+      );
+    }
+    
+    // Filter by status
+    if (statusFilter !== "all") {
+      mails = mails.filter(mail => mail.status === statusFilter);
+    }
+    
+    // Filter by date
+    if (dateFilter === "today") {
+      mails = mails.filter(mail => mail.date === "2025-04-08");
+    } else if (dateFilter === "week") {
+      mails = mails.filter(mail => [
+        "2025-04-01", "2025-04-02", "2025-04-03", "2025-04-04",
+        "2025-04-05", "2025-04-06", "2025-04-07", "2025-04-08"
+      ].includes(mail.date));
+    }
+    
+    // Convert to Mail type with hasAttachments property
+    return mails.map(mail => ({
+      ...mail,
+      hasAttachments: hasAttachments(mail.id)
+    }));
+  };
 
-   const getFilteredMails = () => {
-  let mails: Correspondence[] = [];
-  
-  if (activeTab === "incoming") {
-    mails = incomingMail || [];
-  } else if (activeTab === "outgoing") {
-    mails = outgoingMail || [];
-  } else if (activeTab === "letters") {
-    mails = letters || [];
-  }
-  
-  // Filter by search query
-  if (searchQuery) {
-    mails = mails.filter(mail => 
-      mail.subject?.includes(searchQuery) || 
-      mail.sender?.includes(searchQuery) ||
-      mail.recipient?.includes(searchQuery) ||
-      mail.number?.includes(searchQuery)
-    );
-  }
-  
-  // Filter by status
-  if (statusFilter !== "all") {
-    mails = mails.filter(mail => mail.status === statusFilter);
-  }
-  
-  // Filter by date
-  if (dateFilter === "today") {
-    mails = mails.filter(mail => mail.date === "2025-04-08");
-  } else if (dateFilter === "week") {
-    mails = mails.filter(mail => [
-      "2025-04-01", "2025-04-02", "2025-04-03", "2025-04-04",
-      "2025-04-05", "2025-04-06", "2025-04-07", "2025-04-08"
-    ].includes(mail.date));
-  }
-  
-  // Convert to Mail type with hasAttachments property
-  return mails.map(mail => ({
-    ...mail,
-    hasAttachments: hasAttachments(mail.id)
-  }));
-};
-
+  // استدعاء الدالة مرة واحدة لتخزين القيمة
+  const filteredMails = getFilteredMails();
   
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
@@ -234,7 +233,7 @@ const handleDownload = (mail: Mail) => {
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                     <p className="mt-2 text-muted-foreground">جاري تحميل المعاملات...</p>
                   </div>
-                ) : filteredMails.length > 0 ? (
+                ) : filteredMails && filteredMails.length > 0 ? (
                   <CorrespondenceTable 
                     mails={filteredMails}
                     onView={handleViewMail}
@@ -265,7 +264,7 @@ const handleDownload = (mail: Mail) => {
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                     <p className="mt-2 text-muted-foreground">جاري تحميل المعاملات...</p>
                   </div>
-                ) : filteredMails.length > 0 ? (
+                ) : filteredMails && filteredMails.length > 0 ? (
                   <CorrespondenceTable 
                     mails={filteredMails}
                     onView={handleViewMail}
@@ -296,7 +295,7 @@ const handleDownload = (mail: Mail) => {
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                     <p className="mt-2 text-muted-foreground">جاري تحميل الخطابات...</p>
                   </div>
-                ) : filteredMails.length > 0 ? (
+                ) : filteredMails && filteredMails.length > 0 ? (
                   <CorrespondenceTable 
                     mails={filteredMails}
                     onView={handleViewMail}
@@ -402,18 +401,17 @@ const handleDownload = (mail: Mail) => {
         </Tabs>
       </div>
       
-     <CorrespondenceViewDialog 
-  isOpen={isMailViewOpen}
-  onClose={() => setIsMailViewOpen(false)}
-  mail={selectedMail}
-/>
+      <CorrespondenceViewDialog 
+        isOpen={isMailViewOpen}
+        onClose={() => setIsMailViewOpen(false)}
+        mail={selectedMail}
+      />
 
-<AddCorrespondenceDialog 
-  isOpen={isAddMailOpen}
-  onClose={() => setIsAddMailOpen(false)}
-  type={activeTab === "incoming" ? "incoming" : activeTab === "outgoing" ? "outgoing" : "letter"}
-/>
-
+      <AddCorrespondenceDialog 
+        isOpen={isAddMailOpen}
+        onClose={() => setIsAddMailOpen(false)}
+        type={activeTab === "incoming" ? "incoming" : activeTab === "outgoing" ? "outgoing" : "letter"}
+      />
       
       <Footer />
     </div>
