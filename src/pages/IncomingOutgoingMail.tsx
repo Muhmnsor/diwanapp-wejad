@@ -38,6 +38,7 @@ interface Mail {
 }
 
 const IncomingOutgoingMail = () => {
+  const { loading, incomingMail, outgoingMail, letters, downloadAttachment } = useCorrespondence();
   const [activeTab, setActiveTab] = useState<string>("incoming");
   const [selectedMail, setSelectedMail] = useState<Mail | null>(null);
   const [isMailViewOpen, setIsMailViewOpen] = useState(false);
@@ -46,11 +47,6 @@ const IncomingOutgoingMail = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("all");
   const { toast } = useToast();
-
-  const IncomingOutgoingMail = () => {
-  const { loading, incomingMail, outgoingMail, letters, downloadAttachment } = useCorrespondence();
-  const [activeTab, setActiveTab] = useState<string>("incoming");
-  
   
   const handleViewMail = (mail: Mail) => {
     setSelectedMail(mail);
@@ -61,7 +57,7 @@ const IncomingOutgoingMail = () => {
     setIsAddMailOpen(true);
   };
   
-   const handleDownload = (mail: Mail) => {
+  const handleDownload = (mail: Mail) => {
     // الحصول على الملف الرئيسي للتنزيل
     const mainFilePath = `/documents/${mail.type}/${mail.number.replace(/\//g, '_')}.pdf`;
     downloadAttachment(mainFilePath, `${mail.number}.pdf`);

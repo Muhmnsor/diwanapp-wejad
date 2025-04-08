@@ -971,6 +971,257 @@ export type Database = {
           },
         ]
       }
+      correspondence: {
+        Row: {
+          assigned_to: string | null
+          content: string | null
+          created_by: string | null
+          creation_date: string | null
+          date: string
+          id: string
+          is_confidential: boolean | null
+          number: string
+          priority: string | null
+          recipient: string
+          related_correspondence_id: string | null
+          sender: string
+          status: string
+          subject: string
+          tags: string[] | null
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          content?: string | null
+          created_by?: string | null
+          creation_date?: string | null
+          date: string
+          id?: string
+          is_confidential?: boolean | null
+          number: string
+          priority?: string | null
+          recipient: string
+          related_correspondence_id?: string | null
+          sender: string
+          status: string
+          subject: string
+          tags?: string[] | null
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          content?: string | null
+          created_by?: string | null
+          creation_date?: string | null
+          date?: string
+          id?: string
+          is_confidential?: boolean | null
+          number?: string
+          priority?: string | null
+          recipient?: string
+          related_correspondence_id?: string | null
+          sender?: string
+          status?: string
+          subject?: string
+          tags?: string[] | null
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "correspondence_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "auth_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "correspondence_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "auth_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "correspondence_related_correspondence_id_fkey"
+            columns: ["related_correspondence_id"]
+            isOneToOne: false
+            referencedRelation: "correspondence"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      correspondence_attachments: {
+        Row: {
+          correspondence_id: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          is_main_document: boolean | null
+          uploaded_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          correspondence_id: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          is_main_document?: boolean | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          correspondence_id?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          is_main_document?: boolean | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "correspondence_attachments_correspondence_id_fkey"
+            columns: ["correspondence_id"]
+            isOneToOne: false
+            referencedRelation: "correspondence"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "correspondence_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "auth_users_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      correspondence_distribution: {
+        Row: {
+          correspondence_id: string
+          distributed_by: string | null
+          distributed_to: string | null
+          distributed_to_department: string | null
+          distribution_date: string | null
+          id: string
+          instructions: string | null
+          is_read: boolean | null
+          read_at: string | null
+          response_date: string | null
+          response_deadline: string | null
+          response_text: string | null
+          status: string | null
+        }
+        Insert: {
+          correspondence_id: string
+          distributed_by?: string | null
+          distributed_to?: string | null
+          distributed_to_department?: string | null
+          distribution_date?: string | null
+          id?: string
+          instructions?: string | null
+          is_read?: boolean | null
+          read_at?: string | null
+          response_date?: string | null
+          response_deadline?: string | null
+          response_text?: string | null
+          status?: string | null
+        }
+        Update: {
+          correspondence_id?: string
+          distributed_by?: string | null
+          distributed_to?: string | null
+          distributed_to_department?: string | null
+          distribution_date?: string | null
+          id?: string
+          instructions?: string | null
+          is_read?: boolean | null
+          read_at?: string | null
+          response_date?: string | null
+          response_deadline?: string | null
+          response_text?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "correspondence_distribution_correspondence_id_fkey"
+            columns: ["correspondence_id"]
+            isOneToOne: false
+            referencedRelation: "correspondence"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "correspondence_distribution_distributed_by_fkey"
+            columns: ["distributed_by"]
+            isOneToOne: false
+            referencedRelation: "auth_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "correspondence_distribution_distributed_to_fkey"
+            columns: ["distributed_to"]
+            isOneToOne: false
+            referencedRelation: "auth_users_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      correspondence_history: {
+        Row: {
+          action_by: string | null
+          action_date: string | null
+          action_details: string | null
+          action_type: string
+          correspondence_id: string
+          id: string
+          new_status: string | null
+          previous_status: string | null
+        }
+        Insert: {
+          action_by?: string | null
+          action_date?: string | null
+          action_details?: string | null
+          action_type: string
+          correspondence_id: string
+          id?: string
+          new_status?: string | null
+          previous_status?: string | null
+        }
+        Update: {
+          action_by?: string | null
+          action_date?: string | null
+          action_details?: string | null
+          action_type?: string
+          correspondence_id?: string
+          id?: string
+          new_status?: string | null
+          previous_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "correspondence_history_action_by_fkey"
+            columns: ["action_by"]
+            isOneToOne: false
+            referencedRelation: "auth_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "correspondence_history_correspondence_id_fkey"
+            columns: ["correspondence_id"]
+            isOneToOne: false
+            referencedRelation: "correspondence"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       department_projects: {
         Row: {
           asana_gid: string | null
@@ -1199,6 +1450,41 @@ export type Database = {
           {
             foreignKeyName: "documents_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "auth_users_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      electronic_signatures: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          signature_image: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          signature_image?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          signature_image?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "electronic_signatures_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "auth_users_view"
             referencedColumns: ["id"]
@@ -3240,6 +3526,53 @@ export type Database = {
           {
             foreignKeyName: "internal_messages_sender_id_fkey"
             columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "auth_users_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      letter_templates: {
+        Row: {
+          content: string
+          created_at: string | null
+          created_by: string | null
+          default_formatting: Json | null
+          id: string
+          is_active: boolean | null
+          template_type: string
+          title: string
+          updated_at: string | null
+          variables: Json | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          default_formatting?: Json | null
+          id?: string
+          is_active?: boolean | null
+          template_type: string
+          title: string
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          default_formatting?: Json | null
+          id?: string
+          is_active?: boolean | null
+          template_type?: string
+          title?: string
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "letter_templates_created_by_fkey"
+            columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "auth_users_view"
             referencedColumns: ["id"]
@@ -7402,6 +7735,10 @@ export type Database = {
       fix_request_status: {
         Args: { p_request_id: string }
         Returns: Json
+      }
+      generate_correspondence_number: {
+        Args: { p_type: string }
+        Returns: string
       }
       generate_next_registration_number: {
         Args: { event_id: string } | { p_type: string; p_id: string }
