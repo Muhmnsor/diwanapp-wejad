@@ -84,7 +84,7 @@ export const APP_ROLE_ACCESS = {
   'admin', 'app_admin', 'developer',
   'document_manager', 'document_reviewer', 'document_creator',
   'office_manager', 'correspondence_manager'
-]
+  ],
   accounting: [
     'admin', 'app_admin', 'developer',
     'finance_manager', 'financial_manager', 'accountant'
