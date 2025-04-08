@@ -61,17 +61,95 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  
+  // Get form data
+  const formData = new FormData(e.currentTarget);
+  const subject = formData.get('subject') as string;
+  const date = formData.get('date') as string;
+  const sender = type === 'incoming' 
+    ? formData.get('sender') as string 
+    : formData.get('sender_select') as string;
+  const recipient = type === 'incoming' 
+    ? formData.get('recipient_select') as string 
+    : formData.get('recipient') as string;
+  const status = formData.get('status') as string;
+  const content = formData.get('content') as string;
+  const notes = formData.get('notes') as string;
+  
+  try {
+    // Create correspondence number (simple example - would be more sophisticated in production)
+    const number = `${type.substring(0, 3)}-${Date.now().toString().substring(6)}`;
     
-    // Form validation and submission will be implemented
+    // Insert into database
+    const { data: correspondence, error: corrError } = await supabase
+      .from('correspondence')
+      .insert([
+        {
+          number,
+          subject,
+          date,
+          sender,
+          recipient,
+          status,
+          content,
+          notes,
+          type,
+          creation_date: new Date().toISOString()
+        }
+      ])
+      .select()
+      .single();
+    
+    if (corrError) throw corrError;
+    
+    // Upload attachments if any
+    if (files.length > 0) {
+      for (const file of files) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${correspondence.id}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `correspondence/${fileName}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('attachments')
+          .upload(filePath, file);
+        
+        if (uploadError) throw uploadError;
+        
+        // Link attachment to correspondence
+        await supabase
+          .from('correspondence_attachments')
+          .insert([
+            {
+              correspondence_id: correspondence.id,
+              file_name: file.name,
+              file_path: filePath,
+              file_size: file.size,
+              file_type: file.type
+            }
+          ]);
+      }
+    }
+    
     toast({
       title: "تمت إضافة المعاملة بنجاح",
-      description: "سيتم توجيهك إلى صفحة المعاملات.",
+      description: `تم إضافة المعاملة برقم ${number}`,
     });
     
+    // Clear the form
+    setFiles([]);
     onClose();
-  };
+  } catch (error) {
+    console.error('Error adding correspondence:', error);
+    toast({
+      variant: "destructive",
+      title: "خطأ في إضافة المعاملة",
+      description: "حدث خطأ أثناء إضافة المعاملة، يرجى المحاولة مرة أخرى.",
+    });
+  }
+};
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -104,21 +182,21 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
                   <Input id="sender" placeholder="الجهة المرسلة" required />
                 </div>
                 
-                <div>
-                  <Label htmlFor="recipient">موجهة إلى</Label>
-                  <Select>
-                    <Select name="recipient_select">
-                      <SelectTrigger id="recipient">
-                      <SelectValue placeholder="اختر المستلم" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="general_manager">المدير العام</SelectItem>
-                      <SelectItem value="hr_manager">مدير الموارد البشرية</SelectItem>
-                      <SelectItem value="projects_manager">مدير المشاريع</SelectItem>
-                      <SelectItem value="finance_manager">المدير المالي</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+<div>
+  <Label htmlFor="recipient">موجهة إلى</Label>
+  <Select name="recipient">
+    <SelectTrigger id="recipient">
+      <SelectValue placeholder="اختر المستلم" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="general_manager">المدير العام</SelectItem>
+      <SelectItem value="hr_manager">مدير الموارد البشرية</SelectItem>
+      <SelectItem value="projects_manager">مدير المشاريع</SelectItem>
+      <SelectItem value="finance_manager">المدير المالي</SelectItem>
+    </SelectContent>
+  </Select>
+</div>
+
               </>
             ) : (
               <>
@@ -147,34 +225,35 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
           </div>
           
           <div>
-            <Label htmlFor="status">حالة المعاملة</Label>
-            <Select>
-              <Select name="status">
-                <SelectValue placeholder="اختر حالة المعاملة" />
-              </SelectTrigger>
-              <SelectContent>
-                {type === 'incoming' && (
-                  <>
-                    <SelectItem value="قيد المعالجة">قيد المعالجة</SelectItem>
-                    <SelectItem value="مكتمل">مكتمل</SelectItem>
-                    <SelectItem value="معلق">معلق</SelectItem>
-                  </>
-                )}
-                {type === 'outgoing' && (
-                  <>
-                    <SelectItem value="مرسل">مرسل</SelectItem>
-                    <SelectItem value="قيد الإعداد">قيد الإعداد</SelectItem>
-                  </>
-                )}
-                {type === 'letter' && (
-                  <>
-                    <SelectItem value="معتمد">معتمد</SelectItem>
-                    <SelectItem value="مسودة">مسودة</SelectItem>
-                  </>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
+  <Label htmlFor="status">حالة المعاملة</Label>
+  <Select name="status">
+    <SelectTrigger id="status">
+      <SelectValue placeholder="اختر حالة المعاملة" />
+    </SelectTrigger>
+    <SelectContent>
+      {type === 'incoming' && (
+        <>
+          <SelectItem value="قيد المعالجة">قيد المعالجة</SelectItem>
+          <SelectItem value="مكتمل">مكتمل</SelectItem>
+          <SelectItem value="معلق">معلق</SelectItem>
+        </>
+      )}
+      {type === 'outgoing' && (
+        <>
+          <SelectItem value="مرسل">مرسل</SelectItem>
+          <SelectItem value="قيد الإعداد">قيد الإعداد</SelectItem>
+        </>
+      )}
+      {type === 'letter' && (
+        <>
+          <SelectItem value="معتمد">معتمد</SelectItem>
+          <SelectItem value="مسودة">مسودة</SelectItem>
+        </>
+      )}
+    </SelectContent>
+  </Select>
+</div>
+
           
           <div>
             <Label htmlFor="content">محتوى المعاملة</Label>
