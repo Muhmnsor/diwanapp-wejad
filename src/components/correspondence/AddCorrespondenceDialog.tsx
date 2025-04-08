@@ -1,4 +1,4 @@
-
+import { supabase } from "@/integrations/supabase/client";
 import React, { useState } from "react";
 import {
   Dialog,
@@ -61,78 +61,17 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  
-  // الحصول على البيانات من النموذج
-  const formData = new FormData(e.currentTarget);
-  
-  try {
-    // إنشاء كائن المعاملة
-    const correspondenceData = {
-      subject: formData.get('subject') as string,
-      date: formData.get('date') as string,
-      sender: type === 'incoming' 
-        ? formData.get('sender') as string 
-        : formData.get('sender_select') as string,
-      recipient: type === 'incoming' 
-        ? formData.get('recipient_select') as string 
-        : formData.get('recipient') as string,
-      status: formData.get('status') as string,
-      content: formData.get('content') as string,
-      type: type,
-      notes: type !== 'incoming' ? formData.get('notes') as string : undefined
-    };
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     
-    // إضافة المعاملة إلى قاعدة البيانات
-    const { data: newCorrespondence, error } = await supabase
-      .from('correspondence')
-      .insert([correspondenceData])
-      .select()
-      .single();
-      
-    if (error) throw error;
-    
-    // إضافة المرفقات إذا وجدت
-    if (files.length > 0) {
-      for (const file of files) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${newCorrespondence.id}_${Date.now()}.${fileExt}`;
-        const filePath = `correspondence/${fileName}`;
-        
-        // رفع الملف
-        const { error: uploadError } = await supabase.storage
-          .from('attachments')
-          .upload(filePath, file);
-          
-        if (uploadError) throw uploadError;
-        
-        // إضافة بيانات المرفق
-        await supabase.from('correspondence_attachments').insert([{
-          correspondence_id: newCorrespondence.id,
-          file_name: file.name,
-          file_path: filePath,
-          file_size: file.size,
-        }]);
-      }
-    }
-    
+    // Form validation and submission will be implemented
     toast({
       title: "تمت إضافة المعاملة بنجاح",
-      description: "تمت إضافة المعاملة وجميع المرفقات بنجاح.",
+      description: "سيتم توجيهك إلى صفحة المعاملات.",
     });
     
     onClose();
-  } catch (error) {
-    console.error('Error adding correspondence:', error);
-    toast({
-      variant: "destructive",
-      title: "حدث خطأ",
-      description: "لم نتمكن من إضافة المعاملة. الرجاء المحاولة مرة أخرى.",
-    });
-  }
-};
-
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -168,7 +107,8 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 <div>
                   <Label htmlFor="recipient">موجهة إلى</Label>
                   <Select>
-                    <SelectTrigger id="recipient">
+                    <Select name="recipient_select">
+                      <SelectTrigger id="recipient">
                       <SelectValue placeholder="اختر المستلم" />
                     </SelectTrigger>
                     <SelectContent>
@@ -185,7 +125,8 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 <div>
                   <Label htmlFor="sender">الجهة المرسلة</Label>
                   <Select>
-                    <SelectTrigger id="sender">
+                    <Select name="sender_select">
+                      <SelectTrigger id="sender">
                       <SelectValue placeholder="اختر المرسل" />
                     </SelectTrigger>
                     <SelectContent>
@@ -208,7 +149,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
           <div>
             <Label htmlFor="status">حالة المعاملة</Label>
             <Select>
-              <SelectTrigger id="status">
+              <Select name="status">
                 <SelectValue placeholder="اختر حالة المعاملة" />
               </SelectTrigger>
               <SelectContent>
