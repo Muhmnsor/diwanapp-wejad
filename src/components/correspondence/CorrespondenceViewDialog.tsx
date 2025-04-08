@@ -1,65 +1,145 @@
-
-import React from 'react';
+// src/components/correspondence/CorrespondenceViewDialog.tsx
+import React, { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, Paperclip, Printer, Share } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AttachmentsList } from "@/components/requests/detail/AttachmentsList";
-
-interface Mail {
-  id: string;
-  number: string;
-  subject: string;
-  sender: string;
-  recipient: string;
-  date: string;
-  status: string;
-  type: string;
-  hasAttachments: boolean;
-}
+import { Separator } from "@/components/ui/separator";
+import { Download, Eye, FileText, Users, Clock, MessageSquare } from "lucide-react";
+import { Correspondence, CorrespondenceAttachment, useAttachments } from "@/hooks/useCorrespondence";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CorrespondenceViewDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  mail: Mail | null;
+  mail: Correspondence | null;
 }
 
 export const CorrespondenceViewDialog: React.FC<CorrespondenceViewDialogProps> = ({ 
   isOpen, 
-  onClose,
+  onClose, 
   mail 
 }) => {
-  if (!mail) return null;
+  const [activeTab, setActiveTab] = useState("details");
+  const [attachments, setAttachments] = useState<CorrespondenceAttachment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState<any[]>([]);
+  const [distributions, setDistributions] = useState<any[]>([]);
   
-  // Demo attachment data
-  const attachments = mail.hasAttachments ? [
-    {
-      id: "att1",
-      filename: "خطاب_الوارد_2023.pdf",
-      content_type: "application/pdf",
-      file_size: 1024 * 1024 * 2.5, // 2.5MB
-      created_at: new Date().toISOString(),
-      uploaded_by: "مدير النظام",
-      url: "#"
-    },
-    {
-      id: "att2",
-      filename: "مرفقات_إضافية.docx",
-      content_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      file_size: 1024 * 512, // 512KB
-      created_at: new Date().toISOString(),
-      uploaded_by: "مدير النظام",
-      url: "#"
-    }
-  ] : [];
+  const { downloadAttachment, getAttachmentUrl } = useAttachments();
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedAttachment, setSelectedAttachment] = useState<CorrespondenceAttachment | null>(null);
 
+  useEffect(() => {
+    if (mail && isOpen) {
+      fetchAttachments();
+      fetchHistory();
+      fetchDistributions();
+    }
+  }, [mail, isOpen]);
+
+  const fetchAttachments = async () => {
+    if (!mail) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('correspondence_attachments')
+        .select('*')
+        .eq('correspondence_id', mail.id);
+        
+      if (error) {
+        console.error('Error fetching attachments:', error);
+        return;
+      }
+      
+      setAttachments(data || []);
+    } catch (err) {
+      console.error('Error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const fetchHistory = async () => {
+    if (!mail) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('correspondence_history')
+        .select('*')
+        .eq('correspondence_id', mail.id)
+        .order('action_date', { ascending: false });
+        
+      if (error) {
+        console.error('Error fetching history:', error);
+        return;
+      }
+      
+      setHistory(data || []);
+    } catch (err) {
+      console.error('Error:', err);
+    }
+  };
+  
+  const fetchDistributions = async () => {
+    if (!mail) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('correspondence_distribution')
+        .select('*')
+        .eq('correspondence_id', mail.id);
+        
+      if (error) {
+        console.error('Error fetching distributions:', error);
+        return;
+      }
+      
+      setDistributions(data || []);
+    } catch (err) {
+      console.error('Error:', err);
+    }
+  };
+  
+  const handleViewAttachment = async (attachment: CorrespondenceAttachment) => {
+    setSelectedAttachment(attachment);
+    const result = await getAttachmentUrl(attachment.file_path);
+    if (result.success) {
+      setPreviewUrl(result.url);
+    }
+  };
+  
+  const handleDownloadAttachment = async (attachment: CorrespondenceAttachment) => {
+    await downloadAttachment(attachment.file_path, attachment.file_name);
+  };
+  
+  const getFormattedDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ar-SA', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+  
+  const formatFileSize = (size: number) => {
+    if (size < 1024) {
+      return `${size} B`;
+    } else if (size < 1024 * 1024) {
+      return `${(size / 1024).toFixed(1)} KB`;
+    } else {
+      return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+    }
+  };
+  
   // Function to get badge variant based on status
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -82,126 +162,241 @@ export const CorrespondenceViewDialog: React.FC<CorrespondenceViewDialogProps> =
     }
   };
   
+  if (!mail) return null;
+  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" dir="rtl">
-        <DialogHeader className="space-y-3">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-2xl">{mail.subject}</DialogTitle>
+      <DialogContent className="max-w-4xl h-[85vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="flex items-center justify-between">
+            <span>معاملة رقم: {mail.number}</span>
             <Badge className={`${getStatusBadge(mail.status)} border font-medium`}>
               {mail.status}
             </Badge>
-          </div>
-          <DialogDescription>
-            <div className="grid grid-cols-2 gap-x-12 gap-y-2 text-sm">
-              <div className="flex justify-between border-b pb-1">
-                <span className="font-semibold">رقم المعاملة:</span>
-                <span>{mail.number}</span>
-              </div>
-              <div className="flex justify-between border-b pb-1">
-                <span className="font-semibold">التاريخ:</span>
-                <span>{mail.date}</span>
-              </div>
-              <div className="flex justify-between border-b pb-1">
-                <span className="font-semibold">المرسل:</span>
-                <span>{mail.sender}</span>
-              </div>
-              <div className="flex justify-between border-b pb-1">
-                <span className="font-semibold">المستلم:</span>
-                <span>{mail.recipient}</span>
-              </div>
-            </div>
-          </DialogDescription>
+          </DialogTitle>
+          <DialogDescription className="text-lg font-bold">{mail.subject}</DialogDescription>
         </DialogHeader>
         
-        <div className="my-4">
-          <Tabs defaultValue="details">
-            <TabsList className="mb-4">
-              <TabsTrigger value="details">تفاصيل المعاملة</TabsTrigger>
-              {mail.hasAttachments && <TabsTrigger value="attachments">المرفقات</TabsTrigger>}
-              <TabsTrigger value="history">سجل المعاملة</TabsTrigger>
-            </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+          <TabsList className="w-full">
+            <TabsTrigger value="details" className="flex items-center gap-1">
+              <FileText className="h-4 w-4" />
+              <span>تفاصيل المعاملة</span>
+            </TabsTrigger>
+            <TabsTrigger value="attachments" className="flex items-center gap-1">
+              <FileText className="h-4 w-4" />
+              <span>المرفقات ({attachments.length})</span>
+            </TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center gap-1">
+              <Clock className="h-4 w-4" />
+              <span>سجل الإجراءات</span>
+            </TabsTrigger>
+            <TabsTrigger value="distribution" className="flex items-center gap-1">
+              <Users className="h-4 w-4" />
+              <span>التوزيع</span>
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="details" className="flex-1 overflow-auto mt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground">المرسل</h4>
+                <p className="text-lg">{mail.sender}</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground">المستلم</h4>
+                <p className="text-lg">{mail.recipient}</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground">التاريخ</h4>
+                <p className="text-lg">{getFormattedDate(mail.date)}</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground">الأولوية</h4>
+                <p className="text-lg">{mail.priority || 'عادية'}</p>
+              </div>
+            </div>
             
-            <TabsContent value="details" className="p-4 border rounded-md">
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg">محتوى المعاملة</h3>
-                <div className="bg-gray-50 p-4 rounded-md min-h-[200px]">
-                  <p>هذا هو نص محتوى المعاملة. في النظام الفعلي، سيتم عرض النص الكامل للمعاملة هنا مع إمكانية عرض المستندات المرفقة والتعامل معها.</p>
-                  <p className="mt-4">يمكن أن تشمل التفاصيل المزيد من المعلومات عن المعاملة مثل التعليمات المطلوبة، والإجراءات المتخذة، والتوجيهات من المسؤولين.</p>
-                </div>
-                
-                {mail.type === "incoming" && (
-                  <div>
-                    <h3 className="font-semibold text-lg mb-2">الإجراءات المطلوبة</h3>
-                    <div className="bg-blue-50 p-4 rounded-md">
-                      <p>1. توجيه المعاملة إلى إدارة المشاريع للإطلاع.</p>
-                      <p>2. الرد على الجهة بما تم إنجازه.</p>
-                      <p>3. حفظ صورة من الرد في ملف المعاملة.</p>
-                    </div>
+            <Separator className="my-4" />
+            
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground mb-2">محتوى المعاملة</h4>
+              <div className="p-4 border rounded-md bg-muted/30 whitespace-pre-wrap">
+                {mail.content || 'لا يوجد محتوى مسجل للمعاملة'}
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="attachments" className="flex-1 overflow-hidden mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="overflow-auto border rounded-md">
+              <div className="p-3 bg-muted font-medium">المرفقات</div>
+              {loading ? (
+                <div className="p-4 text-center">جاري تحميل المرفقات...</div>
+              ) : attachments.length === 0 ? (
+                <div className="p-4 text-center text-muted-foreground">لا توجد مرفقات</div>
+              ) : (
+                <ul className="divide-y">
+                  {attachments.map((attachment) => (
+                    <li key={attachment.id} className="p-3 hover:bg-muted/50 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">{attachment.file_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatFileSize(attachment.file_size)} • 
+                            {attachment.is_main_document && <span className="text-primary mr-1">مستند رئيسي</span>}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleViewAttachment(attachment)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDownloadAttachment(attachment)}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            
+            <div className="border rounded-md overflow-hidden flex flex-col">
+              <div className="p-3 bg-muted font-medium">
+                {selectedAttachment ? (
+                  <div className="flex justify-between items-center">
+                    <span>معاينة: {selectedAttachment.file_name}</span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleDownloadAttachment(selectedAttachment)}
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <span>معاينة المرفق</span>
+                )}
+              </div>
+              
+              <div className="flex-1 bg-muted/10 flex items-center justify-center">
+                {previewUrl ? (
+                  <iframe 
+                    src={previewUrl} 
+                    className="w-full h-full" 
+                    title="File preview" 
+                  />
+                ) : (
+                  <div className="text-center p-8 text-muted-foreground">
+                    <FileText className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                    <p>اختر ملفاً للمعاينة</p>
                   </div>
                 )}
               </div>
-            </TabsContent>
-            
-            {mail.hasAttachments && (
-              <TabsContent value="attachments" className="p-4 border rounded-md">
-                <h3 className="font-semibold text-lg mb-4">مرفقات المعاملة</h3>
-                <AttachmentsList attachments={attachments} />
-              </TabsContent>
-            )}
-            
-            <TabsContent value="history" className="p-4 border rounded-md">
-              <h3 className="font-semibold text-lg mb-4">سجل المعاملة</h3>
-              <div className="space-y-3">
-                <div className="relative flex gap-4 pb-5 border-r-2 border-gray-200 pr-4">
-                  <div className="absolute right-0 transform -translate-x-1/2 -translate-y-1/2 bg-white border-2 border-primary rounded-full w-3 h-3"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">تم إنشاء المعاملة</p>
-                    <p className="text-xs text-muted-foreground">2025-04-01 08:30 - بواسطة: موظف الاستقبال</p>
-                  </div>
-                </div>
-                
-                <div className="relative flex gap-4 pb-5 border-r-2 border-gray-200 pr-4">
-                  <div className="absolute right-0 transform -translate-x-1/2 -translate-y-1/2 bg-white border-2 border-primary rounded-full w-3 h-3"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">تم توجيه المعاملة إلى المدير العام</p>
-                    <p className="text-xs text-muted-foreground">2025-04-01 09:15 - بواسطة: مدير الإدارة</p>
-                  </div>
-                </div>
-                
-                <div className="relative flex gap-4 border-r-2 border-gray-200 pr-4">
-                  <div className="absolute right-0 transform -translate-x-1/2 -translate-y-1/2 bg-white border-2 border-primary rounded-full w-3 h-3"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">تم تحويل الحالة إلى قيد المعالجة</p>
-                    <p className="text-xs text-muted-foreground">2025-04-03 11:45 - بواسطة: المدير العام</p>
-                  </div>
-                </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="history" className="flex-1 overflow-auto mt-4">
+            {history.length === 0 ? (
+              <div className="text-center p-8 text-muted-foreground">
+                <Clock className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                <p>لا يوجد سجل للإجراءات</p>
               </div>
-            </TabsContent>
-          </Tabs>
-        </div>
+            ) : (
+              <ul className="divide-y">
+                {history.map((item) => (
+                  <li key={item.id} className="py-3 border-b last:border-0">
+                    <div className="flex justify-between">
+                      <div className="font-medium">{item.action_type}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {new Date(item.action_date).toLocaleString('ar-SA')}
+                      </div>
+                    </div>
+                    {item.action_details && (
+                      <p className="mt-1 text-sm">{item.action_details}</p>
+                    )}
+                    {item.previous_status && item.new_status && (
+                      <div className="mt-1 flex gap-2 text-sm">
+                        <span>تغيير الحالة من:</span>
+                        <Badge className={getStatusBadge(item.previous_status)}>
+                          {item.previous_status}
+                        </Badge>
+                        <span>إلى:</span>
+                        <Badge className={getStatusBadge(item.new_status)}>
+                          {item.new_status}
+                        </Badge>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="distribution" className="flex-1 overflow-auto mt-4">
+            {distributions.length === 0 ? (
+              <div className="text-center p-8 text-muted-foreground">
+                <Users className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                <p>لم يتم توزيع المعاملة بعد</p>
+              </div>
+            ) : (
+              <ul className="divide-y">
+                {distributions.map((item) => (
+                  <li key={item.id} className="py-3 border-b last:border-0">
+                    <div className="flex justify-between">
+                      <div className="font-medium">{item.distributed_to_department || 'موظف'}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {new Date(item.distribution_date).toLocaleString('ar-SA')}
+                      </div>
+                    </div>
+                    <div className="mt-1 flex gap-2 items-center">
+                      <span className="text-sm text-muted-foreground">الحالة:</span>
+                      <Badge className={getStatusBadge(item.status)}>
+                        {item.status}
+                      </Badge>
+                    </div>
+                    {item.instructions && (
+                      <div className="mt-2">
+                        <h4 className="text-sm font-medium">التعليمات:</h4>
+                        <p className="text-sm mt-1 p-2 bg-muted/30 rounded">{item.instructions}</p>
+                      </div>
+                    )}
+                    {item.response_text && (
+                      <div className="mt-2">
+                        <h4 className="text-sm font-medium">الرد:</h4>
+                        <p className="text-sm mt-1 p-2 bg-muted/30 rounded">{item.response_text}</p>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </TabsContent>
+        </Tabs>
         
-        <div className="flex justify-between mt-6">
-          <div className="flex space-x-2 space-x-reverse">
-            <Button variant="outline" size="sm" onClick={onClose}>
-              إغلاق
+        <DialogFooter className="flex justify-between gap-2">
+          <Button variant="outline" onClick={onClose}>إغلاق</Button>
+          
+          <div className="flex gap-2">
+            <Button variant="outline">
+              <MessageSquare className="h-4 w-4 ml-1" />
+              إضافة تعليق
             </Button>
-          </div>
-          <div className="flex space-x-2 space-x-reverse">
-            <Button variant="outline" size="sm">
-              <Printer className="h-4 w-4 ml-1" />
-              طباعة
-            </Button>
-            <Button variant="outline" size="sm">
+            <Button>
               <Download className="h-4 w-4 ml-1" />
               تنزيل
             </Button>
-            <Button variant="outline" size="sm">
-              <Share className="h-4 w-4 ml-1" />
-              مشاركة
-            </Button>
           </div>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
