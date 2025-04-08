@@ -80,6 +80,11 @@ export const APP_ROLE_ACCESS = {
     'admin', 'app_admin', 'developer',
     'hr_manager'
   ],
+  correspondence: [
+  'admin', 'app_admin', 'developer',
+  'document_manager', 'document_reviewer', 'document_creator',
+  'office_manager', 'correspondence_manager'
+]
   accounting: [
     'admin', 'app_admin', 'developer',
     'finance_manager', 'financial_manager', 'accountant'
@@ -297,6 +302,13 @@ const ALL_APPS: AppItem[] = [
     notifications: 0
   },
   {
+  title: "الصادر والوارد",
+  icon: Inbox,
+  path: "/admin/correspondence",
+  description: "نظام إدارة الصادر والوارد والخطابات الرسمية",
+  notifications: 0
+  },
+  {
     title: "إدارة المحاسبة",
     icon: Calculator,
     path: "/admin/accounting",
@@ -453,7 +465,8 @@ export const getAppsList = async (notificationCounts: NotificationCounts, user?:
     if (!appKey) continue;
     
     let hasAccess = false;
-    
+
+
     // Admin/developer gets access to all apps
     if (isAdmin) {
       hasAccess = true;
@@ -503,7 +516,7 @@ const getAppKeyFromPath = (path: string): string | null => {
   if (path === '/admin/meetings') return 'meetings';
   if (path === '/admin/internal-mail') return 'internal_mail';
   if (path === '/admin/subscriptions') return 'subscriptions';
-  
+  if (path === '/admin/correspondence') return 'correspondence';
   return null;
 };
 
@@ -522,6 +535,7 @@ const getNotificationCount = (path: string, counts: NotificationCounts): number 
   if (path === '/admin/subscriptions') return counts.subscriptions || 0;
   if (path === '/ideas') return counts.ideas || 0;
   if (path === '/finance') return counts.finance || 0;
+  if (path === '/admin/correspondence') return counts.correspondence || 0;
   
   return 0;
 };
