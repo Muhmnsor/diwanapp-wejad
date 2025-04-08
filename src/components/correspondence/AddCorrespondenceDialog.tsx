@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PlusCircle } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
+import { useCorrespondence } from "@/hooks/useCorrespondence";
 
 interface AddCorrespondenceDialogProps {
   isOpen: boolean;
@@ -27,8 +28,27 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
   onClose,
   type 
 }) => {
-  const [files, setFiles] = useState<File[]>([]);
+   const [files, setFiles] = useState<File[]>([]);
   const { toast } = useToast();
+  const { addCorrespondence } = useCorrespondence();
+  const [formData, setFormData] = useState({
+    subject: '',
+    date: new Date().toISOString().split('T')[0],
+    sender: '',
+    recipient: '',
+    status: '',
+    content: '',
+    notes: ''
+  });
+
+   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
+  };
+  
+  const handleSelectChange = (id: string, value: string) => {
+    setFormData(prev => ({ ...prev, [id]: value }));
+  };
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -54,16 +74,46 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
     }
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+      const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "تم الإضافة بنجاح",
-      description: "تمت إضافة المعاملة بنجاح في النظام.",
-    });
-    onClose();
+    
+    // تحضير البيانات للإدخال
+    const now = new Date().toISOString();
+    const correspondenceData = {
+      subject: formData.subject,
+      date: formData.date,
+      sender: formData.sender,
+      recipient: formData.recipient,
+      status: formData.status,
+      content: formData.content,
+      type: type,
+      number: `${type === 'incoming' ? 'وارد' : type === 'outgoing' ? 'صادر' : 'خطاب'}/2025/${Math.floor(Math.random() * 900) + 100}`, // توليد رقم عشوائي للمعاملة (في النظام الفعلي سيتم إنشاؤه بطريقة أخرى)
+      priority: 'عادي',
+      is_confidential: false,
+      tags: [],
+      creation_date: now,
+      updated_at: now
+    };
+
+    const result = await addCorrespondence(correspondenceData, files);
+
+         if (result.success) {
+      // إعادة تعيين النموذج
+      setFormData({
+        subject: '',
+        date: new Date().toISOString().split('T')[0],
+        sender: '',
+        recipient: '',
+        status: '',
+        content: '',
+        notes: ''
+      });
+      setFiles([]);
+      onClose();
+    }
   };
   
-  return (
+return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
@@ -73,16 +123,16 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
           </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleFormSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="subject">موضوع المعاملة</Label>
-              <Input id="subject" placeholder="أدخل موضوع المعاملة" required />
+              <Input id="subject" {...register("subject", { required: true })} placeholder="أدخل موضوع المعاملة" required />
             </div>
             
             <div>
               <Label htmlFor="date">تاريخ المعاملة</Label>
-              <Input id="date" type="date" required />
+              <Input id="date" type="date" {...register("date", { required: true })} required />
             </div>
           </div>
           
@@ -91,12 +141,12 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
               <>
                 <div>
                   <Label htmlFor="sender">الجهة المرسلة</Label>
-                  <Input id="sender" placeholder="الجهة المرسلة" required />
+                  <Input id="sender" {...register("sender", { required: true })} placeholder="الجهة المرسلة" required />
                 </div>
                 
                 <div>
                   <Label htmlFor="recipient">موجهة إلى</Label>
-                  <Select>
+                  <Select onValueChange={(value) => setValue("recipient", value)}>
                     <SelectTrigger id="recipient">
                       <SelectValue placeholder="اختر المستلم" />
                     </SelectTrigger>
@@ -113,7 +163,7 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
               <>
                 <div>
                   <Label htmlFor="sender">الجهة المرسلة</Label>
-                  <Select>
+                  <Select onValueChange={(value) => setValue("sender", value)}>
                     <SelectTrigger id="sender">
                       <SelectValue placeholder="اختر المرسل" />
                     </SelectTrigger>
@@ -128,7 +178,7 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
                 
                 <div>
                   <Label htmlFor="recipient">الجهة المستلمة</Label>
-                  <Input id="recipient" placeholder="الجهة المستلمة" required />
+                  <Input id="recipient" {...register("recipient", { required: true })} placeholder="الجهة المستلمة" required />
                 </div>
               </>
             )}
@@ -136,7 +186,7 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
           
           <div>
             <Label htmlFor="status">حالة المعاملة</Label>
-            <Select>
+            <Select onValueChange={(value) => setValue("status", value)}>
               <SelectTrigger id="status">
                 <SelectValue placeholder="اختر حالة المعاملة" />
               </SelectTrigger>
@@ -166,7 +216,7 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
           
           <div>
             <Label htmlFor="content">محتوى المعاملة</Label>
-            <Textarea id="content" placeholder="أدخل محتوى المعاملة" rows={5} required />
+            <Textarea id="content" {...register("content", { required: true })} placeholder="أدخل محتوى المعاملة" rows={5} required />
           </div>
           
           <div>
@@ -202,7 +252,7 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
           {type !== 'incoming' && (
             <div>
               <Label htmlFor="notes">ملاحظات إضافية</Label>
-              <Textarea id="notes" placeholder="أية ملاحظات إضافية" />
+              <Textarea id="notes" {...register("notes")} placeholder="أية ملاحظات إضافية" />
             </div>
           )}
           
