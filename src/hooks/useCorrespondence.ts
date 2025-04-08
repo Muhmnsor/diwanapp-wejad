@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
 
 interface Correspondence {
   id: string;
@@ -39,6 +40,9 @@ interface History {
 
 export const useCorrespondence = () => {
   const [correspondence, setCorrespondence] = useState<Correspondence[]>([]);
+  const [incomingMail, setIncomingMail] = useState<Correspondence[]>([]);
+  const [outgoingMail, setOutgoingMail] = useState<Correspondence[]>([]);
+  const [letters, setLetters] = useState<Correspondence[]>([]);
   const [attachments, setAttachments] = useState<{[key: string]: CorrespondenceAttachment[]}>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -59,7 +63,7 @@ export const useCorrespondence = () => {
         }
 
         // Transform data into the required format if needed
-        const formattedData = correspondenceData.map(item => ({
+        const formattedData = correspondenceData?.map(item => ({
           id: item.id,
           number: item.number,
           subject: item.subject,
@@ -70,9 +74,14 @@ export const useCorrespondence = () => {
           type: item.type,
           content: item.content,
           creation_date: item.creation_date
-        }));
+        })) || [];
         
         setCorrespondence(formattedData);
+
+        // Filter the correspondence data by type
+        setIncomingMail(formattedData.filter(item => item.type === 'incoming') || []);
+        setOutgoingMail(formattedData.filter(item => item.type === 'outgoing') || []);
+        setLetters(formattedData.filter(item => item.type === 'letter') || []);
 
         // Fetch attachments for all correspondence
         const attachmentsMap: {[key: string]: CorrespondenceAttachment[]} = {};
@@ -157,7 +166,14 @@ export const useCorrespondence = () => {
         .from('attachments')
         .download(filePath);
         
-      if (error) throw error;
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "خطأ في تنزيل الملف",
+          description: "لم نتمكن من تنزيل الملف. الرجاء المحاولة مرة أخرى."
+        });
+        throw error;
+      }
       
       // Create a download link
       const url = URL.createObjectURL(data);
@@ -168,6 +184,11 @@ export const useCorrespondence = () => {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+
+      toast({
+        title: "تم تنزيل الملف بنجاح",
+        description: `تم تنزيل ${fileName} بنجاح`
+      });
       
       return true;
     } catch (err) {
@@ -178,6 +199,9 @@ export const useCorrespondence = () => {
 
   return {
     correspondence,
+    incomingMail,
+    outgoingMail,
+    letters,
     attachments,
     loading,
     error,

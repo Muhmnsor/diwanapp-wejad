@@ -19,11 +19,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CorrespondenceTable } from "@/components/correspondence/CorrespondenceTable";
-import { CorrespondenceViewDialog } from "@/components/correspondence/CorrespondenceViewDialog";
-import { AddCorrespondenceDialog } from "@/components/correspondence/AddCorrespondenceDialog";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCorrespondence } from "@/hooks/useCorrespondence";
+import { useCorrespondence, Correspondence } from "@/hooks/useCorrespondence";
 
 interface Mail {
   id: string;
@@ -38,8 +36,6 @@ interface Mail {
 }
 
 const IncomingOutgoingMail = () => {
-  // Use the hook once at the top level
-  const { correspondence, attachments, loading, error, hasAttachments } = useCorrespondence();
   const [activeTab, setActiveTab] = useState<string>("incoming");
   const [selectedMail, setSelectedMail] = useState<Mail | null>(null);
   const [isMailViewOpen, setIsMailViewOpen] = useState(false);
@@ -48,11 +44,7 @@ const IncomingOutgoingMail = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("all");
   const { toast } = useToast();
-  
-  // Create mail arrays by filtering correspondence by type
-  const incomingMail = correspondence?.filter(mail => mail.type === 'incoming') || [];
-  const outgoingMail = correspondence?.filter(mail => mail.type === 'outgoing') || [];
-  const letters = correspondence?.filter(mail => mail.type === 'letter') || [];
+  const { loading, incomingMail, outgoingMail, letters, hasAttachments, downloadAttachment } = useCorrespondence();
   
   const handleViewMail = (mail: Mail) => {
     setSelectedMail(mail);
@@ -64,33 +56,29 @@ const IncomingOutgoingMail = () => {
   };
   
   const handleDownload = (mail: Mail) => {
-    // Download attachment logic
+    // Get the main file for download
     const mainFilePath = `/documents/${mail.type}/${mail.number.replace(/\//g, '_')}.pdf`;
-    // We need to implement downloadAttachment function or use appropriate method
-    toast({
-      title: "تنزيل المرفق",
-      description: "جاري تنزيل المرفق...",
-    });
+    downloadAttachment(mainFilePath, `${mail.number}.pdf`);
   };
   
-  const getFilteredMails = () => {
-    let mails: Mail[] = [];
+  const getFilteredMails = (): Mail[] => {
+    let mails: Correspondence[] = [];
     
     if (activeTab === "incoming") {
-      mails = incomingMail;
+      mails = incomingMail || [];
     } else if (activeTab === "outgoing") {
-      mails = outgoingMail;
+      mails = outgoingMail || [];
     } else if (activeTab === "letters") {
-      mails = letters;
+      mails = letters || [];
     }
     
     // Filter by search query
     if (searchQuery) {
       mails = mails.filter(mail => 
-        mail.subject.includes(searchQuery) || 
-        mail.sender.includes(searchQuery) ||
-        mail.recipient.includes(searchQuery) ||
-        mail.number.includes(searchQuery)
+        mail.subject?.includes(searchQuery) || 
+        mail.sender?.includes(searchQuery) ||
+        mail.recipient?.includes(searchQuery) ||
+        mail.number?.includes(searchQuery)
       );
     }
     
@@ -104,48 +92,19 @@ const IncomingOutgoingMail = () => {
       mails = mails.filter(mail => mail.date === "2025-04-08");
     } else if (dateFilter === "week") {
       mails = mails.filter(mail => [
-        "2025-04-01", "2025-04-02", "2025-04-03", "2025-04-04", 
+        "2025-04-01", "2025-04-02", "2025-04-03", "2025-04-04",
         "2025-04-05", "2025-04-06", "2025-04-07", "2025-04-08"
       ].includes(mail.date));
     }
     
-    return mails;
+    // Convert to Mail type with hasAttachments property
+    return mails.map(mail => ({
+      ...mail,
+      hasAttachments: hasAttachments(mail.id)
+    }));
   };
   
   const filteredMails = getFilteredMails();
-  
-  // Display loading state if data is still loading
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col" dir="rtl">
-        <AdminHeader />
-        <div className="container mx-auto p-6 flex-grow">
-          <h1 className="text-3xl font-bold mb-6">نظام الصادر والوارد</h1>
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            <span className="mr-3">جاري التحميل...</span>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-  
-  // Display error state if there was an error fetching data
-  if (error) {
-    return (
-      <div className="min-h-screen flex flex-col" dir="rtl">
-        <AdminHeader />
-        <div className="container mx-auto p-6 flex-grow">
-          <h1 className="text-3xl font-bold mb-6">نظام الصادر والوارد</h1>
-          <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4">
-            <p>حدث خطأ أثناء تحميل البيانات. يرجى المحاولة مرة أخرى لاحقاً.</p>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
   
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
@@ -243,11 +202,16 @@ const IncomingOutgoingMail = () => {
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-center">
                   <CardTitle>المعاملات الواردة</CardTitle>
-                  <Badge>{incomingMail.length} معاملة</Badge>
+                  <Badge>{incomingMail ? incomingMail.length : 0} معاملة</Badge>
                 </div>
               </CardHeader>
               <CardContent>
-                {filteredMails.length > 0 ? (
+                {loading ? (
+                  <div className="text-center py-8">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <p className="mt-2 text-muted-foreground">جاري تحميل المعاملات...</p>
+                  </div>
+                ) : filteredMails.length > 0 ? (
                   <CorrespondenceTable 
                     mails={filteredMails}
                     onView={handleViewMail}
@@ -269,11 +233,16 @@ const IncomingOutgoingMail = () => {
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-center">
                   <CardTitle>المعاملات الصادرة</CardTitle>
-                  <Badge>{outgoingMail.length} معاملة</Badge>
+                  <Badge>{outgoingMail ? outgoingMail.length : 0} معاملة</Badge>
                 </div>
               </CardHeader>
               <CardContent>
-                {filteredMails.length > 0 ? (
+                {loading ? (
+                  <div className="text-center py-8">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <p className="mt-2 text-muted-foreground">جاري تحميل المعاملات...</p>
+                  </div>
+                ) : filteredMails.length > 0 ? (
                   <CorrespondenceTable 
                     mails={filteredMails}
                     onView={handleViewMail}
@@ -295,11 +264,16 @@ const IncomingOutgoingMail = () => {
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-center">
                   <CardTitle>الخطابات</CardTitle>
-                  <Badge>{letters.length} خطاب</Badge>
+                  <Badge>{letters ? letters.length : 0} خطاب</Badge>
                 </div>
               </CardHeader>
               <CardContent>
-                {filteredMails.length > 0 ? (
+                {loading ? (
+                  <div className="text-center py-8">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <p className="mt-2 text-muted-foreground">جاري تحميل الخطابات...</p>
+                  </div>
+                ) : filteredMails.length > 0 ? (
                   <CorrespondenceTable 
                     mails={filteredMails}
                     onView={handleViewMail}
@@ -405,17 +379,8 @@ const IncomingOutgoingMail = () => {
         </Tabs>
       </div>
       
-      <CorrespondenceViewDialog 
-        isOpen={isMailViewOpen}
-        onClose={() => setIsMailViewOpen(false)}
-        mail={selectedMail}
-      />
-      
-      <AddCorrespondenceDialog 
-        isOpen={isAddMailOpen}
-        onClose={() => setIsAddMailOpen(false)}
-        type={activeTab === "incoming" ? "incoming" : activeTab === "outgoing" ? "outgoing" : "letter"}
-      />
+      {/* Placeholder for dialogs that will be implemented */}
+      {/* Dialog components will be created in separate files */}
       
       <Footer />
     </div>
