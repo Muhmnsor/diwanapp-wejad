@@ -23,6 +23,7 @@ import { CorrespondenceViewDialog } from "@/components/correspondence/Correspond
 import { AddCorrespondenceDialog } from "@/components/correspondence/AddCorrespondenceDialog";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useCorrespondence } from "@/hooks/useCorrespondence";
 
 interface Mail {
   id: string;
@@ -46,22 +47,10 @@ const IncomingOutgoingMail = () => {
   const [dateFilter, setDateFilter] = useState<string>("all");
   const { toast } = useToast();
 
-  // Dummy data for demonstration
-  const incomingMail: Mail[] = [
-    { id: "1", number: "وارد/2025/001", subject: "طلب تعاون مع جهة خارجية", sender: "وزارة الثقافة", recipient: "مدير العام", date: "2025-04-01", status: "قيد المعالجة", type: "incoming", hasAttachments: true },
-    { id: "2", number: "وارد/2025/002", subject: "دعوة لحضور ورشة عمل", sender: "مؤسسة التدريب", recipient: "مدير الموارد البشرية", date: "2025-04-03", status: "مكتمل", type: "incoming", hasAttachments: false },
-    { id: "3", number: "وارد/2025/003", subject: "طلب معلومات عن المشاريع", sender: "وزارة التخطيط", recipient: "مدير المشاريع", date: "2025-04-05", status: "معلق", type: "incoming", hasAttachments: true },
-  ];
+  const IncomingOutgoingMail = () => {
+  const { loading, incomingMail, outgoingMail, letters, downloadAttachment } = useCorrespondence();
+  const [activeTab, setActiveTab] = useState<string>("incoming");
   
-  const outgoingMail: Mail[] = [
-    { id: "4", number: "صادر/2025/001", subject: "رد على طلب التعاون", sender: "المدير العام", recipient: "وزارة الثقافة", date: "2025-04-02", status: "مرسل", type: "outgoing", hasAttachments: true },
-    { id: "5", number: "صادر/2025/002", subject: "تأكيد حضور الورشة", sender: "مدير الموارد البشرية", recipient: "مؤسسة التدريب", date: "2025-04-04", status: "قيد الإعداد", type: "outgoing", hasAttachments: false },
-  ];
-
-  const letters: Mail[] = [
-    { id: "6", number: "خطاب/2025/001", subject: "خطاب تعريف بالمنظمة", sender: "المدير العام", recipient: "الجهات المعنية", date: "2025-04-01", status: "معتمد", type: "letter", hasAttachments: true },
-    { id: "7", number: "خطاب/2025/002", subject: "خطاب توصية", sender: "مدير الموارد البشرية", recipient: "الجهات المعنية", date: "2025-04-05", status: "مسودة", type: "letter", hasAttachments: false },
-  ];
   
   const handleViewMail = (mail: Mail) => {
     setSelectedMail(mail);
@@ -72,11 +61,10 @@ const IncomingOutgoingMail = () => {
     setIsAddMailOpen(true);
   };
   
-  const handleDownload = (mail: Mail) => {
-    toast({
-      title: "جاري التنزيل",
-      description: `يتم الآن تنزيل المعاملة رقم ${mail.number}`,
-    });
+   const handleDownload = (mail: Mail) => {
+    // الحصول على الملف الرئيسي للتنزيل
+    const mainFilePath = `/documents/${mail.type}/${mail.number.replace(/\//g, '_')}.pdf`;
+    downloadAttachment(mainFilePath, `${mail.number}.pdf`);
   };
   
   const getFilteredMails = () => {
