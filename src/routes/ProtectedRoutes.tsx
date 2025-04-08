@@ -194,6 +194,7 @@ export const ProtectedRoutes = [
     <Route path="compensation" element={<HRCompensation />} />
     <Route path="reports" element={<HRReportsPage />} />
     <Route path="settings" element={<HRSettings />} />
+    <Route path="/admin/correspondence" element={<IncomingOutgoingMail />} />
   </Route>,
   <Route 
     key="admin-accounting"
