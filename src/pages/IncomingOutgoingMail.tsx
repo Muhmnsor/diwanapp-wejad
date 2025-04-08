@@ -1,68 +1,391 @@
 
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
-import { useCorrespondence, Correspondence, Attachment } from "@/hooks/correspondence/useCorrespondence";
+import { useToast } from "@/components/ui/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Archive, 
+  Send, 
+  FileText, 
+  Search,
+  BarChart4,
+  Plus,
+  Download,
+  Eye,
+  Filter
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { CorrespondenceTable } from "@/components/correspondence/CorrespondenceTable";
-import { CorrespondenceViewDialog } from "@/components/correspondence/CorrespondenceViewDialog"; 
+import { CorrespondenceViewDialog } from "@/components/correspondence/CorrespondenceViewDialog";
+import { AddCorrespondenceDialog } from "@/components/correspondence/AddCorrespondenceDialog";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+interface Mail {
+  id: string;
+  number: string;
+  subject: string;
+  sender: string;
+  recipient: string;
+  date: string;
+  status: string;
+  type: string;
+  hasAttachments: boolean;
+}
 
 const IncomingOutgoingMail = () => {
-  const { 
-    correspondence, 
-    isLoading, 
-    downloadAttachment,
-    viewCorrespondence 
-  } = useCorrespondence();
+  const [activeTab, setActiveTab] = useState<string>("incoming");
+  const [selectedMail, setSelectedMail] = useState<Mail | null>(null);
+  const [isMailViewOpen, setIsMailViewOpen] = useState(false);
+  const [isAddMailOpen, setIsAddMailOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateFilter, setDateFilter] = useState<string>("all");
+  const { toast } = useToast();
 
-  const [selectedCorrespondence, setSelectedCorrespondence] = useState<Correspondence | null>(null);
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  // Dummy data for demonstration
+  const incomingMail: Mail[] = [
+    { id: "1", number: "وارد/2025/001", subject: "طلب تعاون مع جهة خارجية", sender: "وزارة الثقافة", recipient: "مدير العام", date: "2025-04-01", status: "قيد المعالجة", type: "incoming", hasAttachments: true },
+    { id: "2", number: "وارد/2025/002", subject: "دعوة لحضور ورشة عمل", sender: "مؤسسة التدريب", recipient: "مدير الموارد البشرية", date: "2025-04-03", status: "مكتمل", type: "incoming", hasAttachments: false },
+    { id: "3", number: "وارد/2025/003", subject: "طلب معلومات عن المشاريع", sender: "وزارة التخطيط", recipient: "مدير المشاريع", date: "2025-04-05", status: "معلق", type: "incoming", hasAttachments: true },
+  ];
+  
+  const outgoingMail: Mail[] = [
+    { id: "4", number: "صادر/2025/001", subject: "رد على طلب التعاون", sender: "المدير العام", recipient: "وزارة الثقافة", date: "2025-04-02", status: "مرسل", type: "outgoing", hasAttachments: true },
+    { id: "5", number: "صادر/2025/002", subject: "تأكيد حضور الورشة", sender: "مدير الموارد البشرية", recipient: "مؤسسة التدريب", date: "2025-04-04", status: "قيد الإعداد", type: "outgoing", hasAttachments: false },
+  ];
 
-  const handleView = async (mail: Correspondence) => {
-    try {
-      const details = await viewCorrespondence(mail.id);
-      setSelectedCorrespondence(details);
-      setIsViewDialogOpen(true);
-    } catch (error) {
-      console.error("Error fetching correspondence details:", error);
-    }
+  const letters: Mail[] = [
+    { id: "6", number: "خطاب/2025/001", subject: "خطاب تعريف بالمنظمة", sender: "المدير العام", recipient: "الجهات المعنية", date: "2025-04-01", status: "معتمد", type: "letter", hasAttachments: true },
+    { id: "7", number: "خطاب/2025/002", subject: "خطاب توصية", sender: "مدير الموارد البشرية", recipient: "الجهات المعنية", date: "2025-04-05", status: "مسودة", type: "letter", hasAttachments: false },
+  ];
+  
+  const handleViewMail = (mail: Mail) => {
+    setSelectedMail(mail);
+    setIsMailViewOpen(true);
   };
-
-  const handleDownload = (mail: Correspondence) => {
-    if (mail.attachments && mail.attachments.length > 0) {
-      // If there's only one attachment, download it directly
-      if (mail.attachments.length === 1) {
-        downloadAttachment(mail.attachments[0]);
-      } 
-      // If there are multiple attachments, open the dialog to let user choose
-      else {
-        handleView(mail);
-      }
-    }
+  
+  const handleAddMail = () => {
+    setIsAddMailOpen(true);
   };
-
+  
+  const handleDownload = (mail: Mail) => {
+    toast({
+      title: "جاري التنزيل",
+      description: `يتم الآن تنزيل المعاملة رقم ${mail.number}`,
+    });
+  };
+  
+  const getFilteredMails = () => {
+    let mails: Mail[] = [];
+    
+    if (activeTab === "incoming") {
+      mails = incomingMail;
+    } else if (activeTab === "outgoing") {
+      mails = outgoingMail;
+    } else if (activeTab === "letters") {
+      mails = letters;
+    }
+    
+    // Filter by search query
+    if (searchQuery) {
+      mails = mails.filter(mail => 
+        mail.subject.includes(searchQuery) || 
+        mail.sender.includes(searchQuery) ||
+        mail.recipient.includes(searchQuery) ||
+        mail.number.includes(searchQuery)
+      );
+    }
+    
+    // Filter by status
+    if (statusFilter !== "all") {
+      mails = mails.filter(mail => mail.status === statusFilter);
+    }
+    
+    // Filter by date (simplified - would need proper date filtering in production)
+    if (dateFilter === "today") {
+      mails = mails.filter(mail => mail.date === "2025-04-08");
+    } else if (dateFilter === "week") {
+      mails = mails.filter(mail => ["2025-04-01", "2025-04-02", "2025-04-03", "2025-04-04", "2025-04-05", "2025-04-06", "2025-04-07", "2025-04-08"].includes(mail.date));
+    }
+    
+    return mails;
+  };
+  
+  const filteredMails = getFilteredMails();
+  
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col" dir="rtl">
       <AdminHeader />
       
-      <div className="container mx-auto px-4 py-8 flex-grow" dir="rtl">
-        <h1 className="text-2xl font-bold mb-6">الصادر والوارد</h1>
-        
-        <div className="bg-white rounded-lg overflow-hidden shadow-sm border">
-          <CorrespondenceTable 
-            mails={correspondence || []} 
-            onView={handleView}
-            onDownload={handleDownload}
-            isLoading={isLoading}
-          />
+      <div className="container mx-auto p-6 flex-grow">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">نظام الصادر والوارد</h1>
+          
+          <div className="flex gap-2">
+            <Button
+              onClick={handleAddMail}
+              className="flex items-center gap-1 bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4" />
+              <span>إضافة معاملة جديدة</span>
+            </Button>
+          </div>
         </div>
-
-        <CorrespondenceViewDialog 
-          isOpen={isViewDialogOpen}
-          onClose={() => setIsViewDialogOpen(false)}
-          correspondence={selectedCorrespondence}
-          onDownload={downloadAttachment}
-        />
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid grid-cols-5 mb-8">
+            <TabsTrigger value="incoming" className="flex gap-2 items-center">
+              <Archive className="h-4 w-4" />
+              <span>الوارد</span>
+            </TabsTrigger>
+            <TabsTrigger value="outgoing" className="flex gap-2 items-center">
+              <Send className="h-4 w-4" />
+              <span>الصادر</span>
+            </TabsTrigger>
+            <TabsTrigger value="letters" className="flex gap-2 items-center">
+              <FileText className="h-4 w-4" />
+              <span>الخطابات</span>
+            </TabsTrigger>
+            <TabsTrigger value="search" className="flex gap-2 items-center">
+              <Search className="h-4 w-4" />
+              <span>البحث والاستعلام</span>
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="flex gap-2 items-center">
+              <BarChart4 className="h-4 w-4" />
+              <span>التقارير</span>
+            </TabsTrigger>
+          </TabsList>
+          
+          <div className="mb-6 flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="البحث في المعاملات..." 
+                className="pr-10" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-2">
+              <div className="w-40">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="الحالة" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">جميع الحالات</SelectItem>
+                    <SelectItem value="قيد المعالجة">قيد المعالجة</SelectItem>
+                    <SelectItem value="مكتمل">مكتمل</SelectItem>
+                    <SelectItem value="معلق">معلق</SelectItem>
+                    <SelectItem value="مرسل">مرسل</SelectItem>
+                    <SelectItem value="قيد الإعداد">قيد الإعداد</SelectItem>
+                    <SelectItem value="معتمد">معتمد</SelectItem>
+                    <SelectItem value="مسودة">مسودة</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="w-40">
+                <Select value={dateFilter} onValueChange={setDateFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="التاريخ" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">كل الأوقات</SelectItem>
+                    <SelectItem value="today">اليوم</SelectItem>
+                    <SelectItem value="week">هذا الأسبوع</SelectItem>
+                    <SelectItem value="month">هذا الشهر</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button variant="outline">
+                <Filter className="h-4 w-4 ml-1" />
+                <span>فلترة متقدمة</span>
+              </Button>
+            </div>
+          </div>
+          
+          <TabsContent value="incoming" className="space-y-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-center">
+                  <CardTitle>المعاملات الواردة</CardTitle>
+                  <Badge>{incomingMail.length} معاملة</Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {filteredMails.length > 0 ? (
+                  <CorrespondenceTable 
+                    mails={filteredMails}
+                    onView={handleViewMail}
+                    onDownload={handleDownload}
+                  />
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">
+                      لا توجد معاملات تطابق معايير البحث
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="outgoing" className="space-y-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-center">
+                  <CardTitle>المعاملات الصادرة</CardTitle>
+                  <Badge>{outgoingMail.length} معاملة</Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {filteredMails.length > 0 ? (
+                  <CorrespondenceTable 
+                    mails={filteredMails}
+                    onView={handleViewMail}
+                    onDownload={handleDownload}
+                  />
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">
+                      لا توجد معاملات تطابق معايير البحث
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="letters" className="space-y-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-center">
+                  <CardTitle>الخطابات</CardTitle>
+                  <Badge>{letters.length} خطاب</Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {filteredMails.length > 0 ? (
+                  <CorrespondenceTable 
+                    mails={filteredMails}
+                    onView={handleViewMail}
+                    onDownload={handleDownload}
+                  />
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">
+                      لا توجد خطابات تطابق معايير البحث
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="search" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>البحث والاستعلام</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">رقم المعاملة</label>
+                      <Input placeholder="أدخل رقم المعاملة" />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">الفترة من</label>
+                      <Input type="date" />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">الفترة إلى</label>
+                      <Input type="date" />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">الموضوع</label>
+                      <Input placeholder="أدخل موضوع المعاملة" />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">الجهة</label>
+                      <Input placeholder="أدخل اسم الجهة" />
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end">
+                    <Button>
+                      <Search className="h-4 w-4 ml-1" />
+                      بحث
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="reports" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>التقارير</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Button variant="outline" className="h-auto p-4 flex flex-col items-center gap-2">
+                    <BarChart4 className="h-8 w-8 text-primary" />
+                    <div className="text-center">
+                      <h3 className="font-medium">تقرير المعاملات الواردة</h3>
+                      <p className="text-sm text-muted-foreground">إحصائيات وبيانات عن المعاملات الواردة</p>
+                    </div>
+                  </Button>
+                  
+                  <Button variant="outline" className="h-auto p-4 flex flex-col items-center gap-2">
+                    <BarChart4 className="h-8 w-8 text-primary" />
+                    <div className="text-center">
+                      <h3 className="font-medium">تقرير المعاملات الصادرة</h3>
+                      <p className="text-sm text-muted-foreground">إحصائيات وبيانات عن المعاملات الصادرة</p>
+                    </div>
+                  </Button>
+                  
+                  <Button variant="outline" className="h-auto p-4 flex flex-col items-center gap-2">
+                    <BarChart4 className="h-8 w-8 text-primary" />
+                    <div className="text-center">
+                      <h3 className="font-medium">تقرير الخطابات</h3>
+                      <p className="text-sm text-muted-foreground">إحصائيات وبيانات عن الخطابات</p>
+                    </div>
+                  </Button>
+                  
+                  <Button variant="outline" className="h-auto p-4 flex flex-col items-center gap-2">
+                    <BarChart4 className="h-8 w-8 text-primary" />
+                    <div className="text-center">
+                      <h3 className="font-medium">تقرير أداء المعاملات</h3>
+                      <p className="text-sm text-muted-foreground">تقارير عن وقت معالجة المعاملات</p>
+                    </div>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
+      
+      <CorrespondenceViewDialog 
+        isOpen={isMailViewOpen}
+        onClose={() => setIsMailViewOpen(false)}
+        mail={selectedMail}
+      />
+      
+      <AddCorrespondenceDialog 
+        isOpen={isAddMailOpen}
+        onClose={() => setIsAddMailOpen(false)}
+        type={activeTab === "incoming" ? "incoming" : activeTab === "outgoing" ? "outgoing" : "letter"}
+      />
       
       <Footer />
     </div>

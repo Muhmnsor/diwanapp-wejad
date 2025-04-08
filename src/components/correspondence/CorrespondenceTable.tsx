@@ -11,22 +11,29 @@ import {
 import { Button } from "@/components/ui/button";
 import { Eye, Download, Paperclip } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
-import { Correspondence } from '@/hooks/correspondence/useCorrespondence';
+
+interface Mail {
+  id: string;
+  number: string;
+  subject: string;
+  sender: string;
+  recipient: string;
+  date: string;
+  status: string;
+  type: string;
+  hasAttachments: boolean;
+}
 
 interface CorrespondenceTableProps {
-  mails: Correspondence[];
-  onView: (mail: Correspondence) => void;
-  onDownload: (mail: Correspondence) => void;
-  isLoading?: boolean;
+  mails: Mail[];
+  onView: (mail: Mail) => void;
+  onDownload: (mail: Mail) => void;
 }
 
 export const CorrespondenceTable: React.FC<CorrespondenceTableProps> = ({ 
   mails, 
   onView,
-  onDownload,
-  isLoading = false
+  onDownload
 }) => {
   // Function to get badge variant based on status
   const getStatusBadge = (status: string) => {
@@ -49,32 +56,6 @@ export const CorrespondenceTable: React.FC<CorrespondenceTableProps> = ({
         return 'bg-gray-100 text-gray-800 border-gray-300';
     }
   };
-
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), 'dd/MM/yyyy', { locale: ar });
-    } catch {
-      return dateString;
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="p-8 text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-        <h2 className="text-xl font-semibold">جاري تحميل البيانات...</h2>
-      </div>
-    );
-  }
-
-  if (mails.length === 0) {
-    return (
-      <div className="p-8 text-center">
-        <h2 className="text-xl font-semibold">لا توجد معاملات</h2>
-        <p className="text-muted-foreground mt-2">لم يتم العثور على أي معاملات في السجل</p>
-      </div>
-    );
-  }
 
   return (
     <div className="rounded-md border">
@@ -104,7 +85,7 @@ export const CorrespondenceTable: React.FC<CorrespondenceTableProps> = ({
               </TableCell>
               <TableCell>{mail.sender}</TableCell>
               <TableCell>{mail.recipient}</TableCell>
-              <TableCell>{formatDate(mail.date)}</TableCell>
+              <TableCell>{mail.date}</TableCell>
               <TableCell>
                 <Badge className={`${getStatusBadge(mail.status)} border font-medium`}>
                   {mail.status}
@@ -120,16 +101,14 @@ export const CorrespondenceTable: React.FC<CorrespondenceTableProps> = ({
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
-                  {mail.hasAttachments && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onDownload(mail)}
-                      className="text-primary hover:text-primary hover:bg-primary/10"
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDownload(mail)}
+                    className="text-primary hover:text-primary hover:bg-primary/10"
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
                 </div>
               </TableCell>
             </TableRow>
