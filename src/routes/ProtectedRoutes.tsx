@@ -18,6 +18,8 @@ import MeetingsPage from "@/pages/meetings/MeetingsPage";
 import MeetingFolderPage from "@/components/meetings/folders/MeetingFolderPage";
 import MeetingDetailsPage from "@/pages/meetings/MeetingDetailsPage";
 import InternalMail from "@/pages/InternalMail";
+import IncomingOutgoingMail from "@/pages/IncomingOutgoingMail";
+
 import {
   HRDashboard,
   HROverview,
@@ -159,6 +161,15 @@ export const ProtectedRoutes = [
       </ProtectedRoute>
     } 
   />,
+  <Route 
+  key="admin-correspondence"
+  path="/admin/correspondence" 
+  element={
+    <ProtectedRoute>
+      <IncomingOutgoingMail />
+    </ProtectedRoute>
+  } 
+/>,
   <Route 
     key="requests"
     path="/requests" 
