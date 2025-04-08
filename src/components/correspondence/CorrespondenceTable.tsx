@@ -1,4 +1,4 @@
-
+// src/components/correspondence/CorrespondenceTable.tsx
 import React from 'react';
 import {
   Table,
@@ -11,23 +11,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Eye, Download, Paperclip } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Correspondence } from "@/hooks/useCorrespondence";
 
-interface Mail {
-  id: string;
-  number: string;
-  subject: string;
-  sender: string;
-  recipient: string;
-  date: string;
-  status: string;
-  type: string;
+interface CorrespondenceWithAttachments extends Correspondence {
   hasAttachments: boolean;
 }
 
 interface CorrespondenceTableProps {
-  mails: Mail[];
-  onView: (mail: Mail) => void;
-  onDownload: (mail: Mail) => void;
+  mails: CorrespondenceWithAttachments[];
+  onView: (mail: CorrespondenceWithAttachments) => void;
+  onDownload: (mail: CorrespondenceWithAttachments) => void;
 }
 
 export const CorrespondenceTable: React.FC<CorrespondenceTableProps> = ({ 
