@@ -1,216 +1,333 @@
-
+// src/components/correspondence/AddCorrespondenceDialog.tsx
 import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle } from 'lucide-react';
-import { useToast } from "@/components/ui/use-toast";
+import { Switch } from "@/components/ui/switch";
+import { PlusCircle, X, Upload, FileUp } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAddCorrespondence, useAttachments } from '@/hooks/useCorrespondence';
+import { useToast } from '@/components/ui/use-toast';
 
 interface AddCorrespondenceDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  type: 'incoming' | 'outgoing' | 'letter'; // نوع المعاملة
+  type: string;
 }
 
 export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = ({ 
   isOpen, 
-  onClose,
+  onClose, 
   type 
 }) => {
-  const [files, setFiles] = useState<File[]>([]);
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("details");
+  const [formData, setFormData] = useState({
+    subject: '',
+    sender: '',
+    recipient: '',
+    status: type === 'incoming' ? 'قيد المعالجة' : 'مسودة',
+    type: type,
+    date: new Date().toISOString().split('T')[0],
+    content: '',
+    priority: 'normal',
+    is_confidential: false
+  });
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const { uploadAttachment } = useAttachments();
+  const { addCorrespondence, adding } = useAddCorrespondence();
   
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleSwitchChange = (name: string, checked: boolean) => {
+    setFormData(prev => ({ ...prev, [name]: checked }));
+  };
+  
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
-      setFiles(prev => [...prev, ...newFiles]);
+      setSelectedFiles(prev => [...prev, ...newFiles]);
     }
   };
   
-  const removeFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
   
-  const getDialogTitle = () => {
-    switch (type) {
-      case 'incoming':
-        return 'إضافة معاملة واردة';
-      case 'outgoing':
-        return 'إضافة معاملة صادرة';
-      case 'letter':
-        return 'إضافة خطاب';
-      default:
-        return 'إضافة معاملة';
+  const handleSubmit = async () => {
+    // Validation
+    if (!formData.subject || !formData.sender || !formData.recipient) {
+      toast({
+        title: "خطأ في البيانات",
+        description: "يرجى ملء جميع الحقول المطلوبة",
+        variant: "destructive"
+      });
+      return;
     }
-  };
-  
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast({
-      title: "تم الإضافة بنجاح",
-      description: "تمت إضافة المعاملة بنجاح في النظام.",
-    });
-    onClose();
+    
+    // Submit data
+    const result = await addCorrespondence(formData, selectedFiles);
+    
+    if (result.success) {
+      toast({
+        title: "تمت الإضافة بنجاح",
+        description: "تمت إضافة المعاملة بنجاح"
+      });
+      onClose();
+    } else {
+      toast({
+        title: "حدث خطأ",
+        description: result.error,
+        variant: "destructive"
+      });
+    }
   };
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>{getDialogTitle()}</DialogTitle>
-          <DialogDescription>
-            أدخل بيانات المعاملة بالتفصيل، وأرفق الملفات المطلوبة.
-          </DialogDescription>
+          <DialogTitle>
+            {type === 'incoming' ? 'إضافة معاملة واردة جديدة' : 
+             type === 'outgoing' ? 'إضافة معاملة صادرة جديدة' : 
+             'إضافة خطاب جديد'}
+          </DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="subject">موضوع المعاملة</Label>
-              <Input id="subject" placeholder="أدخل موضوع المعاملة" required />
-            </div>
-            
-            <div>
-              <Label htmlFor="date">تاريخ المعاملة</Label>
-              <Input id="date" type="date" required />
-            </div>
-          </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
+          <TabsList className="w-full">
+            <TabsTrigger value="details">بيانات المعاملة</TabsTrigger>
+            <TabsTrigger value="attachments">المرفقات</TabsTrigger>
+          </TabsList>
           
-          <div className="grid grid-cols-2 gap-4">
-            {type === 'incoming' ? (
-              <>
-                <div>
-                  <Label htmlFor="sender">الجهة المرسلة</Label>
-                  <Input id="sender" placeholder="الجهة المرسلة" required />
-                </div>
-                
-                <div>
-                  <Label htmlFor="recipient">موجهة إلى</Label>
-                  <Select>
-                    <SelectTrigger id="recipient">
-                      <SelectValue placeholder="اختر المستلم" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="general_manager">المدير العام</SelectItem>
-                      <SelectItem value="hr_manager">مدير الموارد البشرية</SelectItem>
-                      <SelectItem value="projects_manager">مدير المشاريع</SelectItem>
-                      <SelectItem value="finance_manager">المدير المالي</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </>
-            ) : (
-              <>
-                <div>
-                  <Label htmlFor="sender">الجهة المرسلة</Label>
-                  <Select>
-                    <SelectTrigger id="sender">
-                      <SelectValue placeholder="اختر المرسل" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="general_manager">المدير العام</SelectItem>
-                      <SelectItem value="hr_manager">مدير الموارد البشرية</SelectItem>
-                      <SelectItem value="projects_manager">مدير المشاريع</SelectItem>
-                      <SelectItem value="finance_manager">المدير المالي</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="recipient">الجهة المستلمة</Label>
-                  <Input id="recipient" placeholder="الجهة المستلمة" required />
-                </div>
-              </>
-            )}
-          </div>
-          
-          <div>
-            <Label htmlFor="status">حالة المعاملة</Label>
-            <Select>
-              <SelectTrigger id="status">
-                <SelectValue placeholder="اختر حالة المعاملة" />
-              </SelectTrigger>
-              <SelectContent>
-                {type === 'incoming' && (
-                  <>
-                    <SelectItem value="in_process">قيد المعالجة</SelectItem>
-                    <SelectItem value="completed">مكتمل</SelectItem>
-                    <SelectItem value="pending">معلق</SelectItem>
-                  </>
-                )}
-                {type === 'outgoing' && (
-                  <>
-                    <SelectItem value="sent">مرسل</SelectItem>
-                    <SelectItem value="in_preparation">قيد الإعداد</SelectItem>
-                  </>
-                )}
-                {type === 'letter' && (
-                  <>
-                    <SelectItem value="approved">معتمد</SelectItem>
-                    <SelectItem value="draft">مسودة</SelectItem>
-                  </>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <Label htmlFor="content">محتوى المعاملة</Label>
-            <Textarea id="content" placeholder="أدخل محتوى المعاملة" rows={5} required />
-          </div>
-          
-          <div>
-            <Label>المرفقات</Label>
-            <div className="mt-2 p-4 border border-dashed rounded-md">
+          <TabsContent value="details" className="space-y-4 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                {files.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md">
-                    <div className="text-sm font-medium">{file.name} ({(file.size / 1024).toFixed(2)} KB)</div>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => removeFile(index)} 
-                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      إزالة
-                    </Button>
+                <Label htmlFor="subject">الموضوع *</Label>
+                <Input 
+                  id="subject" 
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleInputChange}
+                  placeholder="أدخل موضوع المعاملة" 
+                />
+              </div>
+              
+              {type === 'incoming' ? (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="sender">الجهة المرسلة *</Label>
+                    <Input 
+                      id="sender" 
+                      name="sender"
+                      value={formData.sender}
+                      onChange={handleInputChange}
+                      placeholder="أدخل اسم الجهة المرسلة" 
+                    />
                   </div>
-                ))}
-                
-                <div className="flex items-center justify-center p-4">
-                  <label htmlFor="file-upload" className="cursor-pointer flex items-center text-primary">
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    <span>إضافة مرفق</span>
-                    <input id="file-upload" type="file" className="sr-only" onChange={handleFileChange} multiple />
-                  </label>
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="recipient">الجهة المستلمة *</Label>
+                    <Input 
+                      id="recipient" 
+                      name="recipient"
+                      value={formData.recipient}
+                      onChange={handleInputChange}
+                      placeholder="أدخل اسم الجهة المستلمة" 
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="sender">الجهة المرسلة *</Label>
+                    <Input 
+                      id="sender" 
+                      name="sender"
+                      value={formData.sender}
+                      onChange={handleInputChange}
+                      placeholder="أدخل اسم الجهة المرسلة" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="recipient">الجهة المستلمة *</Label>
+                    <Input 
+                      id="recipient" 
+                      name="recipient"
+                      value={formData.recipient}
+                      onChange={handleInputChange}
+                      placeholder="أدخل اسم الجهة المستلمة" 
+                    />
+                  </div>
+                </>
+              )}
+              
+              <div className="space-y-2">
+                <Label htmlFor="date">التاريخ *</Label>
+                <Input 
+                  id="date" 
+                  name="date"
+                  type="date" 
+                  value={formData.date}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="status">الحالة</Label>
+                <Select 
+                  value={formData.status} 
+                  onValueChange={(value) => handleSelectChange('status', value)}
+                >
+                  <SelectTrigger id="status">
+                    <SelectValue placeholder="اختر الحالة" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {type === 'incoming' ? (
+                      <>
+                        <SelectItem value="قيد المعالجة">قيد المعالجة</SelectItem>
+                        <SelectItem value="مكتمل">مكتمل</SelectItem>
+                        <SelectItem value="معلق">معلق</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="مسودة">مسودة</SelectItem>
+                        <SelectItem value="قيد الإعداد">قيد الإعداد</SelectItem>
+                        <SelectItem value="معتمد">معتمد</SelectItem>
+                        <SelectItem value="مرسل">مرسل</SelectItem>
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="priority">الأولوية</Label>
+                <Select 
+                  value={formData.priority} 
+                  onValueChange={(value) => handleSelectChange('priority', value)}
+                >
+                  <SelectTrigger id="priority">
+                    <SelectValue placeholder="اختر الأولوية" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">منخفضة</SelectItem>
+                    <SelectItem value="normal">عادية</SelectItem>
+                    <SelectItem value="high">عالية</SelectItem>
+                    <SelectItem value="urgent">عاجلة</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex items-center space-x-2 space-x-reverse">
+                <Switch 
+                  id="is_confidential" 
+                  checked={formData.is_confidential}
+                  onCheckedChange={(checked) => handleSwitchChange('is_confidential', checked)}
+                />
+                <Label htmlFor="is_confidential">معاملة سرية</Label>
               </div>
             </div>
-          </div>
-          
-          {type !== 'incoming' && (
-            <div>
-              <Label htmlFor="notes">ملاحظات إضافية</Label>
-              <Textarea id="notes" placeholder="أية ملاحظات إضافية" />
+            
+            <div className="space-y-2">
+              <Label htmlFor="content">المحتوى</Label>
+              <Textarea 
+                id="content" 
+                name="content"
+                placeholder="أدخل نص المعاملة أو ملاحظات عليها"
+                rows={6}
+                value={formData.content}
+                onChange={handleInputChange}
+              />
             </div>
-          )}
+          </TabsContent>
           
-          <DialogFooter className="mt-6 gap-2 sm:justify-start">
-            <Button type="submit">إضافة المعاملة</Button>
-            <Button type="button" variant="outline" onClick={onClose}>إلغاء</Button>
-          </DialogFooter>
-        </form>
+          <TabsContent value="attachments" className="py-4">
+            <div className="space-y-4">
+              <div className="border-2 border-dashed rounded-md p-8 text-center hover:bg-muted/50 cursor-pointer transition-colors relative">
+                <input
+                  type="file"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  onChange={handleFileSelect}
+                  multiple
+                />
+                <div className="flex flex-col items-center">
+                  <Upload className="h-10 w-10 text-muted-foreground mb-2" />
+                  <h3 className="font-medium mb-1">انقر أو اسحب لإضافة ملفات</h3>
+                  <p className="text-sm text-muted-foreground">
+                    يمكنك إضافة مستندات PDF، صور، أو ملفات مكتبية أخرى
+                  </p>
+                </div>
+              </div>
+              
+              {selectedFiles.length > 0 && (
+                <div className="border rounded-md overflow-hidden">
+                  <div className="bg-muted p-2 font-medium text-sm">
+                    المرفقات ({selectedFiles.length})
+                  </div>
+                  <ul className="divide-y">
+                    {selectedFiles.map((file, index) => (
+                      <li key={index} className="p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <FileUp className="h-5 w-5 text-primary" />
+                          <div>
+                            <p className="font-medium">{file.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {file.type} • {file.size < 1024 * 1024
+                                ? `${(file.size / 1024).toFixed(1)} KB`
+                                : `${(file.size / (1024 * 1024)).toFixed(1)} MB`}
+                            </p>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleRemoveFile(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {selectedFiles.length === 0 && (
+                <div className="text-center p-4 text-muted-foreground">
+                  لم تقم بإضافة أي مرفقات بعد
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+        
+        <DialogFooter className="flex justify-between gap-2">
+          <Button variant="outline" onClick={onClose}>إلغاء</Button>
+          
+          <Button 
+            onClick={handleSubmit}
+            disabled={adding}
+            className="gap-1"
+          >
+            <PlusCircle className="h-4 w-4" />
+            {adding ? 'جاري الحفظ...' : 'حفظ المعاملة'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
