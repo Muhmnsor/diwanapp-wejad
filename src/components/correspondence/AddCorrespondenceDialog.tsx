@@ -61,17 +61,78 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  
+  // الحصول على البيانات من النموذج
+  const formData = new FormData(e.currentTarget);
+  
+  try {
+    // إنشاء كائن المعاملة
+    const correspondenceData = {
+      subject: formData.get('subject') as string,
+      date: formData.get('date') as string,
+      sender: type === 'incoming' 
+        ? formData.get('sender') as string 
+        : formData.get('sender_select') as string,
+      recipient: type === 'incoming' 
+        ? formData.get('recipient_select') as string 
+        : formData.get('recipient') as string,
+      status: formData.get('status') as string,
+      content: formData.get('content') as string,
+      type: type,
+      notes: type !== 'incoming' ? formData.get('notes') as string : undefined
+    };
     
-    // Form validation and submission will be implemented
+    // إضافة المعاملة إلى قاعدة البيانات
+    const { data: newCorrespondence, error } = await supabase
+      .from('correspondence')
+      .insert([correspondenceData])
+      .select()
+      .single();
+      
+    if (error) throw error;
+    
+    // إضافة المرفقات إذا وجدت
+    if (files.length > 0) {
+      for (const file of files) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${newCorrespondence.id}_${Date.now()}.${fileExt}`;
+        const filePath = `correspondence/${fileName}`;
+        
+        // رفع الملف
+        const { error: uploadError } = await supabase.storage
+          .from('attachments')
+          .upload(filePath, file);
+          
+        if (uploadError) throw uploadError;
+        
+        // إضافة بيانات المرفق
+        await supabase.from('correspondence_attachments').insert([{
+          correspondence_id: newCorrespondence.id,
+          file_name: file.name,
+          file_path: filePath,
+          file_size: file.size,
+        }]);
+      }
+    }
+    
     toast({
       title: "تمت إضافة المعاملة بنجاح",
-      description: "سيتم توجيهك إلى صفحة المعاملات.",
+      description: "تمت إضافة المعاملة وجميع المرفقات بنجاح.",
     });
     
     onClose();
-  };
+  } catch (error) {
+    console.error('Error adding correspondence:', error);
+    toast({
+      variant: "destructive",
+      title: "حدث خطأ",
+      description: "لم نتمكن من إضافة المعاملة. الرجاء المحاولة مرة أخرى.",
+    });
+  }
+};
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
