@@ -1,5 +1,5 @@
-
-import React, { useState } from 'react';
+// src/pages/IncomingOutgoingMail.tsx
+import React, { useState, useEffect } from 'react';
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useToast } from "@/components/ui/use-toast";
@@ -11,8 +11,6 @@ import {
   Search,
   BarChart4,
   Plus,
-  Download,
-  Eye,
   Filter
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,47 +21,25 @@ import { CorrespondenceViewDialog } from "@/components/correspondence/Correspond
 import { AddCorrespondenceDialog } from "@/components/correspondence/AddCorrespondenceDialog";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-interface Mail {
-  id: string;
-  number: string;
-  subject: string;
-  sender: string;
-  recipient: string;
-  date: string;
-  status: string;
-  type: string;
-  hasAttachments: boolean;
-}
+import { useCorrespondence, Correspondence } from "@/hooks/useCorrespondence";
 
 const IncomingOutgoingMail = () => {
   const [activeTab, setActiveTab] = useState<string>("incoming");
-  const [selectedMail, setSelectedMail] = useState<Mail | null>(null);
+  const [selectedMail, setSelectedMail] = useState<Correspondence | null>(null);
   const [isMailViewOpen, setIsMailViewOpen] = useState(false);
   const [isAddMailOpen, setIsAddMailOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("all");
   const { toast } = useToast();
-
-  // Dummy data for demonstration
-  const incomingMail: Mail[] = [
-    { id: "1", number: "وارد/2025/001", subject: "طلب تعاون مع جهة خارجية", sender: "وزارة الثقافة", recipient: "مدير العام", date: "2025-04-01", status: "قيد المعالجة", type: "incoming", hasAttachments: true },
-    { id: "2", number: "وارد/2025/002", subject: "دعوة لحضور ورشة عمل", sender: "مؤسسة التدريب", recipient: "مدير الموارد البشرية", date: "2025-04-03", status: "مكتمل", type: "incoming", hasAttachments: false },
-    { id: "3", number: "وارد/2025/003", subject: "طلب معلومات عن المشاريع", sender: "وزارة التخطيط", recipient: "مدير المشاريع", date: "2025-04-05", status: "معلق", type: "incoming", hasAttachments: true },
-  ];
   
-  const outgoingMail: Mail[] = [
-    { id: "4", number: "صادر/2025/001", subject: "رد على طلب التعاون", sender: "المدير العام", recipient: "وزارة الثقافة", date: "2025-04-02", status: "مرسل", type: "outgoing", hasAttachments: true },
-    { id: "5", number: "صادر/2025/002", subject: "تأكيد حضور الورشة", sender: "مدير الموارد البشرية", recipient: "مؤسسة التدريب", date: "2025-04-04", status: "قيد الإعداد", type: "outgoing", hasAttachments: false },
-  ];
+  // استخدام Hook لجلب البيانات
+  const { correspondence, attachments, loading, error, hasAttachments } = useCorrespondence(
+    activeTab === "search" ? "all" : activeTab,
+    { searchQuery, status: statusFilter, dateFilter }
+  );
 
-  const letters: Mail[] = [
-    { id: "6", number: "خطاب/2025/001", subject: "خطاب تعريف بالمنظمة", sender: "المدير العام", recipient: "الجهات المعنية", date: "2025-04-01", status: "معتمد", type: "letter", hasAttachments: true },
-    { id: "7", number: "خطاب/2025/002", subject: "خطاب توصية", sender: "مدير الموارد البشرية", recipient: "الجهات المعنية", date: "2025-04-05", status: "مسودة", type: "letter", hasAttachments: false },
-  ];
-  
-  const handleViewMail = (mail: Mail) => {
+  const handleViewMail = (mail: Correspondence) => {
     setSelectedMail(mail);
     setIsMailViewOpen(true);
   };
@@ -72,50 +48,55 @@ const IncomingOutgoingMail = () => {
     setIsAddMailOpen(true);
   };
   
-  const handleDownload = (mail: Mail) => {
+  const handleDownload = (mail: Correspondence) => {
     toast({
       title: "جاري التنزيل",
       description: `يتم الآن تنزيل المعاملة رقم ${mail.number}`,
     });
   };
   
-  const getFilteredMails = () => {
-    let mails: Mail[] = [];
-    
-    if (activeTab === "incoming") {
-      mails = incomingMail;
-    } else if (activeTab === "outgoing") {
-      mails = outgoingMail;
-    } else if (activeTab === "letters") {
-      mails = letters;
-    }
-    
-    // Filter by search query
-    if (searchQuery) {
-      mails = mails.filter(mail => 
-        mail.subject.includes(searchQuery) || 
-        mail.sender.includes(searchQuery) ||
-        mail.recipient.includes(searchQuery) ||
-        mail.number.includes(searchQuery)
-      );
-    }
-    
-    // Filter by status
-    if (statusFilter !== "all") {
-      mails = mails.filter(mail => mail.status === statusFilter);
-    }
-    
-    // Filter by date (simplified - would need proper date filtering in production)
-    if (dateFilter === "today") {
-      mails = mails.filter(mail => mail.date === "2025-04-08");
-    } else if (dateFilter === "week") {
-      mails = mails.filter(mail => ["2025-04-01", "2025-04-02", "2025-04-03", "2025-04-04", "2025-04-05", "2025-04-06", "2025-04-07", "2025-04-08"].includes(mail.date));
-    }
-    
-    return mails;
+  // دالة لحساب عدد المعاملات حسب النوع
+  const countByType = (type: string) => {
+    return correspondence.filter(item => item.type === type).length;
   };
   
-  const filteredMails = getFilteredMails();
+  // تحديث طريقة عرض المعاملات في كل تبويب
+  const getTabContent = (tabType: string, label: string) => (
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-center">
+          <CardTitle>{label}</CardTitle>
+          <Badge>{countByType(tabType)} معاملة</Badge>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">جاري تحميل البيانات...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-8 text-red-500">
+            <p>حدث خطأ: {error}</p>
+          </div>
+        ) : correspondence.length > 0 ? (
+          <CorrespondenceTable 
+            mails={correspondence.map(item => ({
+              ...item,
+              hasAttachments: hasAttachments(item.id)
+            }))}
+            onView={handleViewMail}
+            onDownload={handleDownload}
+          />
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">
+              لا توجد معاملات تطابق معايير البحث
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
   
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
@@ -146,7 +127,7 @@ const IncomingOutgoingMail = () => {
               <Send className="h-4 w-4" />
               <span>الصادر</span>
             </TabsTrigger>
-            <TabsTrigger value="letters" className="flex gap-2 items-center">
+            <TabsTrigger value="letter" className="flex gap-2 items-center">
               <FileText className="h-4 w-4" />
               <span>الخطابات</span>
             </TabsTrigger>
@@ -209,81 +190,15 @@ const IncomingOutgoingMail = () => {
           </div>
           
           <TabsContent value="incoming" className="space-y-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-center">
-                  <CardTitle>المعاملات الواردة</CardTitle>
-                  <Badge>{incomingMail.length} معاملة</Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {filteredMails.length > 0 ? (
-                  <CorrespondenceTable 
-                    mails={filteredMails}
-                    onView={handleViewMail}
-                    onDownload={handleDownload}
-                  />
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground">
-                      لا توجد معاملات تطابق معايير البحث
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {getTabContent("incoming", "المعاملات الواردة")}
           </TabsContent>
           
           <TabsContent value="outgoing" className="space-y-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-center">
-                  <CardTitle>المعاملات الصادرة</CardTitle>
-                  <Badge>{outgoingMail.length} معاملة</Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {filteredMails.length > 0 ? (
-                  <CorrespondenceTable 
-                    mails={filteredMails}
-                    onView={handleViewMail}
-                    onDownload={handleDownload}
-                  />
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground">
-                      لا توجد معاملات تطابق معايير البحث
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {getTabContent("outgoing", "المعاملات الصادرة")}
           </TabsContent>
           
-          <TabsContent value="letters" className="space-y-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-center">
-                  <CardTitle>الخطابات</CardTitle>
-                  <Badge>{letters.length} خطاب</Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {filteredMails.length > 0 ? (
-                  <CorrespondenceTable 
-                    mails={filteredMails}
-                    onView={handleViewMail}
-                    onDownload={handleDownload}
-                  />
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground">
-                      لا توجد خطابات تطابق معايير البحث
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          <TabsContent value="letter" className="space-y-4">
+            {getTabContent("letter", "الخطابات")}
           </TabsContent>
           
           <TabsContent value="search" className="space-y-4">
@@ -328,6 +243,28 @@ const IncomingOutgoingMail = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* عرض نتائج البحث */}
+            {!loading && correspondence.length > 0 && (
+              <Card className="mt-4">
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-center">
+                    <CardTitle>نتائج البحث</CardTitle>
+                    <Badge>{correspondence.length} معاملة</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <CorrespondenceTable 
+                    mails={correspondence.map(item => ({
+                      ...item,
+                      hasAttachments: hasAttachments(item.id)
+                    }))}
+                    onView={handleViewMail}
+                    onDownload={handleDownload}
+                  />
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
           
           <TabsContent value="reports" className="space-y-4">
