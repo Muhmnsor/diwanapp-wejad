@@ -183,10 +183,10 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 </div>
                 
 <div>
-  <Label htmlFor="recipient">موجهة إلى</Label>
-  <Select name="recipient">
-    <SelectTrigger id="recipient">
-      <SelectValue placeholder="اختر المستلم" />
+  <Label htmlFor="sender">الجهة المرسلة</Label>
+  <Select name="sender_select">
+    <SelectTrigger id="sender">
+      <SelectValue placeholder="اختر المرسل" />
     </SelectTrigger>
     <SelectContent>
       <SelectItem value="general_manager">المدير العام</SelectItem>
@@ -196,6 +196,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     </SelectContent>
   </Select>
 </div>
+
 
               </>
             ) : (
