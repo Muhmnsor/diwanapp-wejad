@@ -47,7 +47,8 @@ const IncomingOutgoingMail = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("all");
   const { toast } = useToast();
-  const { loading, incomingMail, outgoingMail, letters, hasAttachments, downloadAttachment } = useCorrespondence();
+  const { loading, incomingMail, outgoingMail, letters, hasAttachments, downloadAttachment, getAttachments } = useCorrespondence();
+
   
   const handleViewMail = (mail: Mail) => {
     setSelectedMail(mail);
@@ -65,6 +66,12 @@ const handleDownload = (mail: Mail) => {
     getAttachments(mail.id).then(attachments => {
       if (attachments && attachments.length > 0) {
         downloadAttachment(attachments[0].file_path, attachments[0].file_name);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "لا توجد مرفقات",
+          description: "لم يتم العثور على مرفقات لهذه المعاملة"
+        });
       }
     });
   } else {
@@ -77,47 +84,50 @@ const handleDownload = (mail: Mail) => {
   }
 };
 
-    if (activeTab === "incoming") {
-      mails = incomingMail || [];
-    } else if (activeTab === "outgoing") {
-      mails = outgoingMail || [];
-    } else if (activeTab === "letters") {
-      mails = letters || [];
-    }
-    
-    // Filter by search query
-    if (searchQuery) {
-      mails = mails.filter(mail => 
-        mail.subject?.includes(searchQuery) || 
-        mail.sender?.includes(searchQuery) ||
-        mail.recipient?.includes(searchQuery) ||
-        mail.number?.includes(searchQuery)
-      );
-    }
-    
-    // Filter by status
-    if (statusFilter !== "all") {
-      mails = mails.filter(mail => mail.status === statusFilter);
-    }
-    
-    // Filter by date (simplified - would need proper date filtering in production)
-    if (dateFilter === "today") {
-      mails = mails.filter(mail => mail.date === "2025-04-08");
-    } else if (dateFilter === "week") {
-      mails = mails.filter(mail => [
-        "2025-04-01", "2025-04-02", "2025-04-03", "2025-04-04",
-        "2025-04-05", "2025-04-06", "2025-04-07", "2025-04-08"
-      ].includes(mail.date));
-    }
-    
-    // Convert to Mail type with hasAttachments property
-    return mails.map(mail => ({
-      ...mail,
-      hasAttachments: hasAttachments(mail.id)
-    }));
-  };
+
+   const getFilteredMails = () => {
+  let mails: Correspondence[] = [];
   
-  const filteredMails = getFilteredMails();
+  if (activeTab === "incoming") {
+    mails = incomingMail || [];
+  } else if (activeTab === "outgoing") {
+    mails = outgoingMail || [];
+  } else if (activeTab === "letters") {
+    mails = letters || [];
+  }
+  
+  // Filter by search query
+  if (searchQuery) {
+    mails = mails.filter(mail => 
+      mail.subject?.includes(searchQuery) || 
+      mail.sender?.includes(searchQuery) ||
+      mail.recipient?.includes(searchQuery) ||
+      mail.number?.includes(searchQuery)
+    );
+  }
+  
+  // Filter by status
+  if (statusFilter !== "all") {
+    mails = mails.filter(mail => mail.status === statusFilter);
+  }
+  
+  // Filter by date
+  if (dateFilter === "today") {
+    mails = mails.filter(mail => mail.date === "2025-04-08");
+  } else if (dateFilter === "week") {
+    mails = mails.filter(mail => [
+      "2025-04-01", "2025-04-02", "2025-04-03", "2025-04-04",
+      "2025-04-05", "2025-04-06", "2025-04-07", "2025-04-08"
+    ].includes(mail.date));
+  }
+  
+  // Convert to Mail type with hasAttachments property
+  return mails.map(mail => ({
+    ...mail,
+    hasAttachments: hasAttachments(mail.id)
+  }));
+};
+
   
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
