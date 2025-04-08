@@ -22,6 +22,9 @@ import { CorrespondenceTable } from "@/components/correspondence/CorrespondenceT
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCorrespondence, Correspondence } from "@/hooks/useCorrespondence";
+import { CorrespondenceViewDialog } from "@/components/correspondence/CorrespondenceViewDialog";
+import { AddCorrespondenceDialog } from "@/components/correspondence/AddCorrespondenceDialog";
+
 
 interface Mail {
   id: string;
@@ -55,15 +58,25 @@ const IncomingOutgoingMail = () => {
     setIsAddMailOpen(true);
   };
   
-  const handleDownload = (mail: Mail) => {
-    // Get the main file for download
-    const mainFilePath = `/documents/${mail.type}/${mail.number.replace(/\//g, '_')}.pdf`;
-    downloadAttachment(mainFilePath, `${mail.number}.pdf`);
-  };
-  
-  const getFilteredMails = (): Mail[] => {
-    let mails: Correspondence[] = [];
-    
+const handleDownload = (mail: Mail) => {
+  // استخدام وظيفة التنزيل المناسبة
+  if (mail.hasAttachments) {
+    // الحصول على المرفقات وتنزيل الأول منها
+    getAttachments(mail.id).then(attachments => {
+      if (attachments && attachments.length > 0) {
+        downloadAttachment(attachments[0].file_path, attachments[0].file_name);
+      }
+    });
+  } else {
+    // عرض رسالة عدم وجود مرفقات
+    toast({
+      variant: "destructive",
+      title: "لا توجد مرفقات",
+      description: "هذه المعاملة لا تحتوي على مرفقات للتنزيل"
+    });
+  }
+};
+
     if (activeTab === "incoming") {
       mails = incomingMail || [];
     } else if (activeTab === "outgoing") {
@@ -379,8 +392,18 @@ const IncomingOutgoingMail = () => {
         </Tabs>
       </div>
       
-      {/* Placeholder for dialogs that will be implemented */}
-      {/* Dialog components will be created in separate files */}
+     <CorrespondenceViewDialog 
+  isOpen={isMailViewOpen}
+  onClose={() => setIsMailViewOpen(false)}
+  mail={selectedMail}
+/>
+
+<AddCorrespondenceDialog 
+  isOpen={isAddMailOpen}
+  onClose={() => setIsAddMailOpen(false)}
+  type={activeTab === "incoming" ? "incoming" : activeTab === "outgoing" ? "outgoing" : "letter"}
+/>
+
       
       <Footer />
     </div>
