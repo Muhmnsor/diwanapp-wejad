@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Download, Paperclip, Printer, Share } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AttachmentsList } from "@/components/requests/detail/AttachmentsList";
+import { useCorrespondence, Attachment, History } from "@/hooks/useCorrespondence";
 
 interface Mail {
   id: string;
@@ -31,34 +32,40 @@ interface CorrespondenceViewDialogProps {
   mail: Mail | null;
 }
 
+// سطر 30-36: إضافة useState و useEffect للحصول على المرفقات وسجل المعاملة
 export const CorrespondenceViewDialog: React.FC<CorrespondenceViewDialogProps> = ({ 
   isOpen, 
   onClose,
   mail 
 }) => {
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [history, setHistory] = useState<History[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { getAttachments, getHistory, downloadAttachment } = useCorrespondence();
+  
+  useEffect(() => {
+    if (mail && isOpen) {
+      setLoading(true);
+      
+      // جلب المرفقات
+      const fetchAttachments = async () => {
+        const attachmentsData = await getAttachments(mail.id);
+        setAttachments(attachmentsData);
+      };
+      
+      // جلب سجل المعاملة
+      const fetchHistory = async () => {
+        const historyData = await getHistory(mail.id);
+        setHistory(historyData);
+      };
+      
+      Promise.all([fetchAttachments(), fetchHistory()])
+        .finally(() => setLoading(false));
+    }
+  }, [mail, isOpen, getAttachments, getHistory]);
+  
   if (!mail) return null;
   
-  // Demo attachment data
-  const attachments = mail.hasAttachments ? [
-    {
-      id: "att1",
-      filename: "خطاب_الوارد_2023.pdf",
-      content_type: "application/pdf",
-      file_size: 1024 * 1024 * 2.5, // 2.5MB
-      created_at: new Date().toISOString(),
-      uploaded_by: "مدير النظام",
-      url: "#"
-    },
-    {
-      id: "att2",
-      filename: "مرفقات_إضافية.docx",
-      content_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      file_size: 1024 * 512, // 512KB
-      created_at: new Date().toISOString(),
-      uploaded_by: "مدير النظام",
-      url: "#"
-    }
-  ] : [];
 
   // Function to get badge variant based on status
   const getStatusBadge = (status: string) => {
@@ -146,37 +153,38 @@ export const CorrespondenceViewDialog: React.FC<CorrespondenceViewDialogProps> =
             {mail.hasAttachments && (
               <TabsContent value="attachments" className="p-4 border rounded-md">
                 <h3 className="font-semibold text-lg mb-4">مرفقات المعاملة</h3>
+                {loading ? (
+                   <div className="text-center py-4">جاري تحميل المرفقات...</div>
+                ) : attachments.length > 0 ? (
                 <AttachmentsList attachments={attachments} />
+                ) : (
+                  <div className="text-center py-4">لا توجد مرفقات</div>
+                )}
               </TabsContent>
             )}
             
             <TabsContent value="history" className="p-4 border rounded-md">
               <h3 className="font-semibold text-lg mb-4">سجل المعاملة</h3>
+              {loading ? (
+                    <div className="text-center py-4">جاري تحميل السجل...</div>
+               ) : history.length > 0 ? (
               <div className="space-y-3">
-                <div className="relative flex gap-4 pb-5 border-r-2 border-gray-200 pr-4">
-                  <div className="absolute right-0 transform -translate-x-1/2 -translate-y-1/2 bg-white border-2 border-primary rounded-full w-3 h-3"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">تم إنشاء المعاملة</p>
-                    <p className="text-xs text-muted-foreground">2025-04-01 08:30 - بواسطة: موظف الاستقبال</p>
-                  </div>
-                </div>
-                
-                <div className="relative flex gap-4 pb-5 border-r-2 border-gray-200 pr-4">
-                  <div className="absolute right-0 transform -translate-x-1/2 -translate-y-1/2 bg-white border-2 border-primary rounded-full w-3 h-3"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">تم توجيه المعاملة إلى المدير العام</p>
-                    <p className="text-xs text-muted-foreground">2025-04-01 09:15 - بواسطة: مدير الإدارة</p>
-                  </div>
-                </div>
-                
-                <div className="relative flex gap-4 border-r-2 border-gray-200 pr-4">
-                  <div className="absolute right-0 transform -translate-x-1/2 -translate-y-1/2 bg-white border-2 border-primary rounded-full w-3 h-3"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">تم تحويل الحالة إلى قيد المعالجة</p>
-                    <p className="text-xs text-muted-foreground">2025-04-03 11:45 - بواسطة: المدير العام</p>
-                  </div>
-                </div>
+                {history.map((item) => (
+                   <div key={item.id} className="relative flex gap-4 pb-5 border-r-2 border-gray-200 pr-4">
+                       <div className="absolute right-0 transform -translate-x-1/2 -translate-y-1/2 bg-white border-2 border-primary rounded-full w-3 h-3"></div>
+                       <div className="flex-1">
+                          <p className="text-sm font-medium">{item.action_details}</p>
+                          <p className="text-xs text-muted-foreground">
+                             {new Date(item.action_date).toLocaleString('ar-SA')} 
+                             {item.action_by && ` - بواسطة: ${item.action_by}`}
+                           </p>
+                        </div>
+                   </div>
+                ))}
               </div>
+            ) : (
+               <div className="text-center py-4">لا يوجد سجل للمعاملة</div>
+            )}
             </TabsContent>
           </Tabs>
         </div>
@@ -195,9 +203,20 @@ export const CorrespondenceViewDialog: React.FC<CorrespondenceViewDialogProps> =
             <Button variant="outline" size="sm">
               <Download className="h-4 w-4 ml-1" />
               تنزيل
-            </Button>
-            <Button variant="outline" size="sm">
-              <Share className="h-4 w-4 ml-1" />
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                if (attachments.length > 0) {
+                   const mainDocument = attachments.find(att => att.is_main_document) || attachments[0];
+                   downloadAttachment(mainDocument.file_path, mainDocument.file_name);
+                  }
+                }}
+                disabled={loading || attachments.length === 0}
+               >
+                <Download className="h-4 w-4 ml-1" />
+                تنزيل
+              </Button>
               مشاركة
             </Button>
           </div>
