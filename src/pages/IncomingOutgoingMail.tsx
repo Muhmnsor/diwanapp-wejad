@@ -28,7 +28,8 @@ import { AddCorrespondenceDialog } from "@/components/correspondence/AddCorrespo
 import { DistributeCorrespondenceDialog } from "@/components/correspondence/DistributeCorrespondenceDialog";
 import { AdvancedSearchDialog, SearchCriteria } from "@/components/correspondence/AdvancedSearchDialog";
 import { Label } from "@/components/ui/label";
-
+// أضف هذا الاستيراد مع باقي الاستيرادات
+import { NotificationsPanel } from "@/components/correspondence/NotificationsPanel";
 
 interface Mail {
   id: string;
@@ -245,7 +246,16 @@ const IncomingOutgoingMail = () => {
 
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
-      <AdminHeader />
+      {/* أضف مكون NotificationsPanel في الجزء العلوي من الصفحة، مثلاً في عنصر الـ header */}
+      <AdminHeader>
+        <div className="container mx-auto p-6 flex justify-between items-center">
+          <h1 className="text-xl font-bold">نظام الصادر والوارد</h1>
+          <div className="flex items-center gap-2">
+            <NotificationsPanel />
+            {/* يمكنك إضافة أزرار أخرى هنا إذا كانت موجودة في AdminHeader */}
+          </div>
+        </div>
+      </AdminHeader>
 
       <div className="container mx-auto p-6 flex-grow">
         <div className="flex justify-between items-center mb-6">
