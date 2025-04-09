@@ -126,15 +126,14 @@ export const TagsManager: React.FC<TagsManagerProps> = ({
             type="button"
             variant="outline"
             size="sm"
-            className="flex items-center gap-1 h-8"
+            className="h-7 px-2 text-xs"
             onClick={() => setShowAddTag(true)}
           >
-            <Plus className="h-3 w-3" />
-            <span>إضافة وسم</span>
+            <Plus className="h-3 w-3 mr-1" />
+            إضافة وسم
           </Button>
         )}
       </div>
     </div>
   );
 };
-
