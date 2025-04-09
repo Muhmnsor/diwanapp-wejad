@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { PlusCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { RichTextEditor } from "./RichTextEditor";
 
 interface AddCorrespondenceDialogProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
 }) => {
   const [files, setFiles] = useState<File[]>([]);
   const { toast } = useToast();
+  const [content, setContent] = useState<string>("");
 
   const getDialogTitle = () => {
     switch (type) {
@@ -63,28 +65,27 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     // Get form data
     const formData = new FormData(e.currentTarget);
     const subject = formData.get('subject') as string;
     const date = formData.get('date') as string;
-    const sender = type === 'incoming' 
-      ? formData.get('sender') as string 
+    const sender = type === 'incoming'
+      ? formData.get('sender') as string
       : formData.get('sender_select') as string;
-    const recipient = type === 'incoming' 
-      ? formData.get('recipient_select') as string 
+    const recipient = type === 'incoming'
+      ? formData.get('recipient_select') as string
       : formData.get('recipient') as string;
     const status = formData.get('status') as string;
-    const content = formData.get('content') as string;
     const notes = formData.get('notes') as string;
     const priority = formData.get('priority') as string;
     const is_confidential = formData.has('is_confidential');
     const related_correspondence_id = formData.get('related_correspondence_id') as string;
-    
+
     try {
       // Create correspondence number (simple example - would be more sophisticated in production)
       const number = `${type.substring(0, 3)}-${Date.now().toString().substring(6)}`;
-      
+
       // Insert into database
       const { data: correspondence, error: corrError } = await supabase
         .from('correspondence')
@@ -107,22 +108,22 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
         ])
         .select()
         .single();
-      
+
       if (corrError) throw corrError;
-      
+
       // Upload attachments if any
       if (files.length > 0) {
         for (const file of files) {
           const fileExt = file.name.split('.').pop();
           const fileName = `${correspondence.id}_${Math.random().toString(36).substring(2)}.${fileExt}`;
           const filePath = `correspondence/${fileName}`;
-          
+
           const { error: uploadError } = await supabase.storage
             .from('attachments')
             .upload(filePath, file);
-          
+
           if (uploadError) throw uploadError;
-          
+
           // Link attachment to correspondence
           await supabase
             .from('correspondence_attachments')
@@ -137,12 +138,12 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
             ]);
         }
       }
-      
+
       toast({
         title: "تمت إضافة المعاملة بنجاح",
         description: `تم إضافة المعاملة برقم ${number}`,
       });
-      
+
       // Clear the form
       setFiles([]);
       onClose();
@@ -165,20 +166,20 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
             أدخل بيانات المعاملة بالتفصيل، وأرفق الملفات المطلوبة.
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="subject">موضوع المعاملة</Label>
               <Input id="subject" name="subject" placeholder="أدخل موضوع المعاملة" required />
             </div>
-            
+
             <div>
               <Label htmlFor="date">تاريخ المعاملة</Label>
               <Input id="date" name="date" type="date" required />
             </div>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             {type === 'incoming' ? (
               <>
@@ -186,7 +187,7 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
                   <Label htmlFor="sender">الجهة المرسلة</Label>
                   <Input id="sender" name="sender" placeholder="الجهة المرسلة" required />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="recipient_select">الجهة المستلمة</Label>
                   <Select name="recipient_select">
@@ -218,7 +219,7 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="recipient">الجهة المستلمة</Label>
                   <Input id="recipient" name="recipient" placeholder="الجهة المستلمة" required />
@@ -226,7 +227,7 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
               </>
             )}
           </div>
-          
+
           <div>
             <Label htmlFor="status">حالة المعاملة</Label>
             <Select name="status">
@@ -256,12 +257,17 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
               </SelectContent>
             </Select>
           </div>
-          
+
           <div>
             <Label htmlFor="content">محتوى المعاملة</Label>
-            <Textarea id="content" name="content" placeholder="أدخل محتوى المعاملة" rows={5} required />
+            <RichTextEditor
+              value={content}
+              onChange={setContent}
+              placeholder="أدخل محتوى المعاملة"
+              minHeight="150px"
+            />
           </div>
-          
+
           <div>
             <Label>المرفقات</Label>
             <div className="mt-2 p-4 border border-dashed rounded-md">
@@ -269,18 +275,18 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
                 {files.map((file, index) => (
                   <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md">
                     <div className="text-sm font-medium">{file.name} ({(file.size / 1024).toFixed(2)} KB)</div>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => removeFile(index)} 
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFile(index)}
                       className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                     >
                       إزالة
                     </Button>
                   </div>
                 ))}
-                
+
                 <div className="flex items-center justify-center p-4">
                   <label htmlFor="file-upload" className="cursor-pointer flex items-center text-primary">
                     <PlusCircle className="h-4 w-4 mr-2" />
@@ -291,14 +297,14 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
               </div>
             </div>
           </div>
-          
+
           {type !== 'incoming' && (
             <div>
               <Label htmlFor="notes">ملاحظات إضافية</Label>
               <Textarea id="notes" name="notes" placeholder="أية ملاحظات إضافية" />
             </div>
           )}
-          
+
           {/* إضافة حقول متقدمة */}
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -316,11 +322,11 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
             </div>
             <div>
               <Label htmlFor="is_confidential" className="flex items-center space-x-2 space-x-reverse">
-                <input 
-                  type="checkbox" 
-                  id="is_confidential" 
-                  name="is_confidential" 
-                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" 
+                <input
+                  type="checkbox"
+                  id="is_confidential"
+                  name="is_confidential"
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                 />
                 <span>معاملة سرية</span>
               </Label>
@@ -362,7 +368,7 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
               </button>
             </div>
           </div>
-          
+
           <DialogFooter className="mt-6 gap-2 sm:justify-start">
             <Button type="submit">إضافة المعاملة</Button>
             <Button type="button" variant="outline" onClick={onClose}>إلغاء</Button>
