@@ -251,6 +251,42 @@ export const useCorrespondence = () => {
     }
   };
 
+  const respondToDistribution = async (
+    distributionId: string,
+    responseText: string,
+    userId?: string
+  ) => {
+    try {
+      const { data, error } = await supabase
+        .from('correspondence_distribution')
+        .update({
+          response_text: responseText,
+          response_date: new Date().toISOString(),
+          status: 'مكتمل'
+        })
+        .eq('id', distributionId)
+        .select('correspondence_id')
+        .single();
+        
+      if (error) throw error;
+      
+      // Add to history
+      if (data.correspondence_id) {
+        await addToHistory(
+          data.correspondence_id,
+          'الرد على المعاملة',
+          userId,
+          `تم الرد على المعاملة الموزعة`
+        );
+      }
+      
+      return { success: true, data };
+    } catch (err) {
+      console.error("Error responding to distribution:", err);
+      return { success: false, error: err };
+    }
+  };
+
   const addToHistory = async (
     correspondenceId: string,
     actionType: string,
@@ -295,6 +331,7 @@ export const useCorrespondence = () => {
     getHistory,
     downloadAttachment,
     distributeCorrespondence,
+    respondToDistribution,
     addToHistory
   };
 };
