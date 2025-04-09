@@ -1,4 +1,3 @@
-
 // src/components/accounting/charts/MonthlyComparisonChart.tsx
 import React from "react";
 import {
@@ -78,7 +77,7 @@ export const MonthlyComparisonChart: React.FC = () => {
           >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="month" angle={-45} textAnchor="end" height={50} />
-            <YAxis tickFormatter={(value) => formatCurrency(value)} />
+            <YAxis tickFormatter={(value) => formatCurrency(value, 0)} />
             <Tooltip 
               formatter={(value) => formatCurrency(Number(value))}
               labelFormatter={(label) => `الشهر: ${label}`}
@@ -94,3 +93,4 @@ export const MonthlyComparisonChart: React.FC = () => {
     </Card>
   );
 };
+
