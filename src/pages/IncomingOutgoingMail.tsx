@@ -23,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCorrespondence, Correspondence } from "@/hooks/useCorrespondence";
 import { CorrespondenceViewDialog } from "@/components/correspondence/CorrespondenceViewDialog";
 import { AddCorrespondenceDialog } from "@/components/correspondence/AddCorrespondenceDialog";
+import { DistributeCorrespondenceDialog } from "@/components/correspondence/DistributeCorrespondenceDialog";
 
 
 interface Mail {
@@ -42,6 +43,7 @@ const IncomingOutgoingMail = () => {
   const [selectedMail, setSelectedMail] = useState<Mail | null>(null);
   const [isMailViewOpen, setIsMailViewOpen] = useState(false);
   const [isAddMailOpen, setIsAddMailOpen] = useState(false);
+  const [isDistributeDialogOpen, setIsDistributeDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("all");
@@ -80,6 +82,11 @@ const IncomingOutgoingMail = () => {
         description: "هذه المعاملة لا تحتوي على مرفقات للتنزيل"
       });
     }
+  };
+
+  const handleDistribute = (mail: Mail) => {
+    setSelectedMail(mail);
+    setIsDistributeDialogOpen(true);
   };
 
 // في الأسطر 67-87، تعديل وظيفة getFilteredMails لإصلاح فلترة البيانات:
@@ -255,6 +262,7 @@ const getFilteredMails = () => {
                     mails={filteredMails}
                     onView={handleViewMail}
                     onDownload={handleDownload}
+                    onDistribute={handleDistribute}
                   />
                 ) : (
                   <div className="text-center py-8">
@@ -286,6 +294,7 @@ const getFilteredMails = () => {
                     mails={filteredMails}
                     onView={handleViewMail}
                     onDownload={handleDownload}
+                    onDistribute={handleDistribute}
                   />
                 ) : (
                   <div className="text-center py-8">
@@ -317,6 +326,7 @@ const getFilteredMails = () => {
                     mails={filteredMails}
                     onView={handleViewMail}
                     onDownload={handleDownload}
+                    onDistribute={handleDistribute}
                   />
                 ) : (
                   <div className="text-center py-8">
@@ -429,6 +439,15 @@ const getFilteredMails = () => {
         onClose={() => setIsAddMailOpen(false)}
         type={activeTab === "incoming" ? "incoming" : activeTab === "outgoing" ? "outgoing" : "letter"}
       />
+      
+      {/* نافذة حوار توزيع المعاملة */}
+      {selectedMail && isDistributeDialogOpen && (
+        <DistributeCorrespondenceDialog
+          isOpen={isDistributeDialogOpen}
+          onClose={() => setIsDistributeDialogOpen(false)}
+          correspondenceId={selectedMail.id}
+        />
+      )}
       
       <Footer />
     </div>
