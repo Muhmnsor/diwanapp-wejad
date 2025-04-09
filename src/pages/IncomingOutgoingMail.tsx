@@ -24,6 +24,7 @@ import { useCorrespondence, Correspondence } from "@/hooks/useCorrespondence";
 import { CorrespondenceViewDialog } from "@/components/correspondence/CorrespondenceViewDialog";
 import { AddCorrespondenceDialog } from "@/components/correspondence/AddCorrespondenceDialog";
 import { DistributeCorrespondenceDialog } from "@/components/correspondence/DistributeCorrespondenceDialog";
+import { AdvancedSearchDialog, SearchCriteria } from "@/components/correspondence/AdvancedSearchDialog";
 
 
 interface Mail {
@@ -47,6 +48,8 @@ const IncomingOutgoingMail = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("all");
+  const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
+  const [advancedSearchCriteria, setAdvancedSearchCriteria] = useState<SearchCriteria>({});
   const { toast } = useToast();
   const { loading, incomingMail, outgoingMail, letters, hasAttachments, downloadAttachment, getAttachments } = useCorrespondence();
 
@@ -89,65 +92,147 @@ const IncomingOutgoingMail = () => {
     setIsDistributeDialogOpen(true);
   };
 
-// في الأسطر 67-87، تعديل وظيفة getFilteredMails لإصلاح فلترة البيانات:
-const getFilteredMails = () => {
-  let mails: Correspondence[] = [];
-  
-  if (activeTab === "incoming") {
-    mails = incomingMail || [];
-  } else if (activeTab === "outgoing") {
-    mails = outgoingMail || [];
-  } else if (activeTab === "letters") {
-    mails = letters || [];
-  }
-  
-  // Filter by search query
-  if (searchQuery) {
-    mails = mails.filter(mail => 
-      mail.subject?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      mail.sender?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      mail.recipient?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      mail.number?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }
-  
-  // Filter by status
-  if (statusFilter !== "all") {
-    mails = mails.filter(mail => mail.status === statusFilter);
-  }
-  
-  // Filter by date
-  if (dateFilter === "today") {
-    const today = new Date().toISOString().split('T')[0];
-    mails = mails.filter(mail => mail.date === today);
-  } else if (dateFilter === "week") {
-    const today = new Date();
-    const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - today.getDay());
-    const weekStartStr = weekStart.toISOString().split('T')[0];
+  const handleAdvancedSearch = (criteria: SearchCriteria) => {
+    setAdvancedSearchCriteria(criteria);
+    // تعيين علامة التبويب على البحث
+    setActiveTab('search');
     
-    mails = mails.filter(mail => {
-      const mailDate = new Date(mail.date);
-      return mailDate >= weekStart && mailDate <= today;
+    // يمكن إضافة رسالة لإظهار معايير البحث المستخدمة
+    toast({
+      title: "تم تطبيق البحث المتقدم",
+      description: "تم تطبيق معايير البحث المحددة"
     });
-  } else if (dateFilter === "month") {
-    const today = new Date();
-    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-    const monthStartStr = monthStart.toISOString().split('T')[0];
-    
-    mails = mails.filter(mail => {
-      const mailDate = new Date(mail.date);
-      return mailDate >= monthStart && mailDate <= today;
-    });
-  }
-  
-  // Convert to Mail type with hasAttachments property
-  return mails.map(mail => ({
-    ...mail,
-    hasAttachments: hasAttachments(mail.id)
-  }));
-};
+  };
 
+  const getFilteredMails = () => {
+    let mails: Correspondence[] = [];
+    
+    if (activeTab === "incoming") {
+      mails = incomingMail || [];
+    } else if (activeTab === "outgoing") {
+      mails = outgoingMail || [];
+    } else if (activeTab === "letters") {
+      mails = letters || [];
+    }
+    
+    // البحث العادي
+    if (searchQuery) {
+      mails = mails.filter(mail => 
+        mail.subject?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        mail.sender?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        mail.recipient?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        mail.number?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    // تطبيق معايير البحث المتقدم
+    if (advancedSearchCriteria) {
+      // البحث بالرقم
+      if (advancedSearchCriteria.number) {
+        mails = mails.filter(mail => 
+          mail.number?.toLowerCase().includes(advancedSearchCriteria.number!.toLowerCase())
+        );
+      }
+      
+      // البحث بالموضوع
+      if (advancedSearchCriteria.subject) {
+        mails = mails.filter(mail => 
+          mail.subject?.toLowerCase().includes(advancedSearchCriteria.subject!.toLowerCase())
+        );
+      }
+      
+      // البحث بالمرسل
+      if (advancedSearchCriteria.sender) {
+        mails = mails.filter(mail => 
+          mail.sender?.toLowerCase().includes(advancedSearchCriteria.sender!.toLowerCase())
+        );
+      }
+      
+      // البحث بالمستلم
+      if (advancedSearchCriteria.recipient) {
+        mails = mails.filter(mail => 
+          mail.recipient?.toLowerCase().includes(advancedSearchCriteria.recipient!.toLowerCase())
+        );
+      }
+      
+      // البحث بالتاريخ (من)
+      if (advancedSearchCriteria.fromDate) {
+        const fromDate = new Date(advancedSearchCriteria.fromDate);
+        mails = mails.filter(mail => {
+          const mailDate = new Date(mail.date);
+          return mailDate >= fromDate;
+        });
+      }
+      
+      // البحث بالتاريخ (إلى)
+      if (advancedSearchCriteria.toDate) {
+        const toDate = new Date(advancedSearchCriteria.toDate);
+        mails = mails.filter(mail => {
+          const mailDate = new Date(mail.date);
+          return mailDate <= toDate;
+        });
+      }
+      
+      // البحث بالنوع
+      if (advancedSearchCriteria.type) {
+        mails = mails.filter(mail => mail.type === advancedSearchCriteria.type);
+      }
+      
+      // البحث بالحالة
+      if (advancedSearchCriteria.status) {
+        mails = mails.filter(mail => mail.status === advancedSearchCriteria.status);
+      }
+      
+      // البحث بالأولوية
+      if (advancedSearchCriteria.priority) {
+        mails = mails.filter(mail => mail.priority === advancedSearchCriteria.priority);
+      }
+      
+      // البحث بالسرية
+      if (advancedSearchCriteria.is_confidential !== undefined) {
+        mails = mails.filter(mail => mail.is_confidential === advancedSearchCriteria.is_confidential);
+      }
+      
+      // البحث بالمرفقات
+      if (advancedSearchCriteria.hasAttachments) {
+        mails = mails.filter(mail => hasAttachments(mail.id));
+      }
+    }
+    
+    // البحث حسب الحالة
+    if (statusFilter !== "all") {
+      mails = mails.filter(mail => mail.status === statusFilter);
+    }
+    
+    // البحث حسب التاريخ
+    if (dateFilter === "today") {
+      const today = new Date().toISOString().split('T')[0];
+      mails = mails.filter(mail => mail.date === today);
+    } else if (dateFilter === "week") {
+      const today = new Date();
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - today.getDay());
+      
+      mails = mails.filter(mail => {
+        const mailDate = new Date(mail.date);
+        return mailDate >= weekStart && mailDate <= today;
+      });
+    } else if (dateFilter === "month") {
+      const today = new Date();
+      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      
+      mails = mails.filter(mail => {
+        const mailDate = new Date(mail.date);
+        return mailDate >= monthStart && mailDate <= today;
+      });
+    }
+    
+    // تحويل إلى نوع Mail مع خاصية hasAttachments
+    return mails.map(mail => ({
+      ...mail,
+      hasAttachments: hasAttachments(mail.id)
+    }));
+  };
 
   // استدعاء الدالة مرة واحدة لتخزين القيمة
   const filteredMails = getFilteredMails();
@@ -236,9 +321,9 @@ const getFilteredMails = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <Button variant="outline">
+              <Button variant="outline" onClick={() => setIsAdvancedSearchOpen(true)}>
                 <Filter className="h-4 w-4 ml-1" />
-                <span>فلترة متقدمة</span>
+                <span>بحث متقدم</span>
               </Button>
             </div>
           </div>
@@ -438,6 +523,12 @@ const getFilteredMails = () => {
         isOpen={isAddMailOpen}
         onClose={() => setIsAddMailOpen(false)}
         type={activeTab === "incoming" ? "incoming" : activeTab === "outgoing" ? "outgoing" : "letter"}
+      />
+      
+      <AdvancedSearchDialog
+        isOpen={isAdvancedSearchOpen}
+        onClose={() => setIsAdvancedSearchOpen(false)}
+        onSearch={handleAdvancedSearch}
       />
       
       {/* نافذة حوار توزيع المعاملة */}
