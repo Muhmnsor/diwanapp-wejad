@@ -8,7 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Eye, Download, Paperclip, Share } from "lucide-react";
+import { Eye, Download, Paperclip, Share, Clock, CheckCircle, AlertCircle, Send, Edit, CheckSquare, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface Mail {
@@ -88,8 +88,15 @@ export const CorrespondenceTable: React.FC<CorrespondenceTableProps> = ({
               <TableCell>{mail.recipient}</TableCell>
               <TableCell>{mail.date}</TableCell>
               <TableCell>
-                <Badge className={`${getStatusBadge(mail.status)} border font-medium`}>
-                  {mail.status}
+                <Badge className={`${getStatusBadge(mail.status)} border font-medium flex items-center gap-1`}>
+                  {mail.status === 'قيد المعالجة' && <Clock className="h-3 w-3" />}
+                  {mail.status === 'مكتمل' && <CheckCircle className="h-3 w-3" />}
+                  {mail.status === 'معلق' && <AlertCircle className="h-3 w-3" />}
+                  {mail.status === 'مرسل' && <Send className="h-3 w-3" />}
+                  {mail.status === 'قيد الإعداد' && <Edit className="h-3 w-3" />}
+                  {mail.status === 'معتمد' && <CheckSquare className="h-3 w-3" />}
+                  {mail.status === 'مسودة' && <FileText className="h-3 w-3" />}
+                  <span>{mail.status}</span>
                 </Badge>
               </TableCell>
               <TableCell>
