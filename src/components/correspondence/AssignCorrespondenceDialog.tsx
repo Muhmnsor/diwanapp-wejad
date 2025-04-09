@@ -9,17 +9,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, UserCheck } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { UserCog, CalendarIcon, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useCorrespondence } from "@/hooks/useCorrespondence";
-import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
+import { ar } from "date-fns/locale";
+
+interface User {
+  id: string;
+  display_name: string;
+  email?: string;
+}
 
 interface AssignCorrespondenceDialogProps {
   isOpen: boolean;
@@ -28,70 +32,72 @@ interface AssignCorrespondenceDialogProps {
   correspondenceNumber: string;
 }
 
-interface User {
-  id: string;
-  display_name: string;
-  email: string;
-}
-
 export const AssignCorrespondenceDialog: React.FC<AssignCorrespondenceDialogProps> = ({
   isOpen,
   onClose,
   correspondenceId,
   correspondenceNumber,
 }) => {
+  const [assigneeId, setAssigneeId] = useState<string>("");
+  const [instructions, setInstructions] = useState<string>("");
+  const [deadline, setDeadline] = useState<Date | undefined>(undefined);
+  const [deadlineOpen, setDeadlineOpen] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
-  const [userId, setUserId] = useState<string>("");
-  const [notes, setNotes] = useState<string>("");
+  const [fetchingUsers, setFetchingUsers] = useState(false);
+  
   const { toast } = useToast();
-  const { assignCorrespondence } = useCorrespondence();
+  const { assignCorrespondence, fetchUsers } = useCorrespondence();
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        // الحصول على قائمة المستخدمين
-        const { data, error } = await supabase
-          .from('auth_users_view')
-          .select('id, email, raw_user_meta_data');
-          
-        if (error) throw error;
-        
-        const formattedUsers = data?.map(user => ({
-          id: user.id,
-          display_name: user.raw_user_meta_data?.name || user.email,
-          email: user.email
-        })) || [];
-        
-        setUsers(formattedUsers);
-      } catch (err) {
-        console.error("Error fetching users:", err);
+    if (isOpen) {
+      loadUsers();
+    }
+  }, [isOpen]);
+
+  const loadUsers = async () => {
+    setFetchingUsers(true);
+    try {
+      const result = await fetchUsers();
+      if (result.success) {
+        setUsers(result.users);
+      } else {
         toast({
           variant: "destructive",
-          title: "خطأ في تحميل البيانات",
-          description: "تعذر تحميل قائمة المستخدمين"
+          title: "خطأ في تحميل المستخدمين",
+          description: "تعذر تحميل قائمة المستخدمين، يرجى المحاولة مرة أخرى"
         });
       }
-    };
-    
-    if (isOpen) {
-      fetchUsers();
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    } finally {
+      setFetchingUsers(false);
     }
-  }, [isOpen, toast]);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    if (!assigneeId) {
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: "يرجى اختيار الشخص المسؤول"
+      });
+      return;
+    }
+    
     setLoading(true);
     
     try {
-      if (!userId) {
-        throw new Error("يجب اختيار مستخدم للتعيين");
-      }
-      
-      const result = await assignCorrespondence(correspondenceId, userId, notes);
+      const result = await assignCorrespondence(correspondenceId, {
+        assigneeId,
+        instructions,
+        deadline: deadline ? format(deadline, 'yyyy-MM-dd') : undefined
+      });
       
       if (!result.success) {
-        throw new Error("فشل في تعيين المعاملة");
+        throw new Error(result.error || "فشل في تعيين المعاملة");
       }
       
       toast({
@@ -112,12 +118,24 @@ export const AssignCorrespondenceDialog: React.FC<AssignCorrespondenceDialogProp
     }
   };
 
+  const resetForm = () => {
+    setAssigneeId("");
+    setInstructions("");
+    setDeadline(undefined);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog 
+      open={isOpen} 
+      onOpenChange={(open) => {
+        if (!open) resetForm();
+        onClose();
+      }}
+    >
       <DialogContent className="max-w-md" dir="rtl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <UserCheck className="h-5 w-5" />
+            <UserCog className="h-5 w-5" />
             تعيين المعاملة
           </DialogTitle>
         </DialogHeader>
@@ -133,46 +151,92 @@ export const AssignCorrespondenceDialog: React.FC<AssignCorrespondenceDialogProp
           </div>
           
           <div>
-            <Label htmlFor="user_id">تعيين إلى</Label>
-            <Select 
-              value={userId} 
-              onValueChange={setUserId}
+            <Label htmlFor="assignee" className="required">تعيين إلى</Label>
+            <Select
+              value={assigneeId}
+              onValueChange={setAssigneeId}
               required
             >
-              <SelectTrigger id="user_id">
-                <SelectValue placeholder="اختر مستخدم" />
+              <SelectTrigger id="assignee" className="w-full">
+                <SelectValue placeholder="اختر الشخص المسؤول" />
               </SelectTrigger>
               <SelectContent>
-                {users.map(user => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.display_name}
-                  </SelectItem>
-                ))}
+                {fetchingUsers ? (
+                  <div className="flex items-center justify-center p-2">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    جاري التحميل...
+                  </div>
+                ) : users.length === 0 ? (
+                  <div className="p-2 text-center text-muted-foreground">
+                    لا يوجد مستخدمين
+                  </div>
+                ) : (
+                  users.map((user) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.display_name} {user.email ? `(${user.email})` : ''}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
           
           <div>
-            <Label htmlFor="notes">ملاحظات التعيين</Label>
+            <Label htmlFor="instructions">تعليمات</Label>
             <Textarea 
-              id="notes" 
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              placeholder="أدخل أي ملاحظات خاصة بالتعيين"
+              id="instructions" 
+              value={instructions}
+              onChange={e => setInstructions(e.target.value)}
+              placeholder="أدخل تعليمات للشخص المسؤول"
               rows={3}
             />
           </div>
           
-          <div className="p-3 bg-blue-50 rounded border border-blue-100 text-sm text-blue-800">
-            <div className="flex gap-1 items-center">
-              <Calendar className="h-4 w-4 text-blue-500" />
-              <p>سيتم تسجيل تاريخ التعيين تلقائيًا</p>
-            </div>
+          <div>
+            <Label htmlFor="deadline">الموعد النهائي</Label>
+            <Popover open={deadlineOpen} onOpenChange={setDeadlineOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  id="deadline"
+                  className="w-full justify-start text-right"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {deadline ? (
+                    format(deadline, 'PPP', { locale: ar })
+                  ) : (
+                    <span>اختر تاريخ...</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={deadline}
+                  onSelect={(date) => {
+                    setDeadline(date);
+                    setDeadlineOpen(false);
+                  }}
+                  initialFocus
+                  locale={ar}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           
           <DialogFooter className="mt-6 gap-2 sm:justify-start">
-            <Button type="submit" disabled={loading}>
-              {loading ? 'جاري التعيين...' : 'تعيين المعاملة'}
+            <Button 
+              type="submit" 
+              disabled={loading || !assigneeId}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  جاري التعيين...
+                </>
+              ) : (
+                'تعيين المعاملة'
+              )}
             </Button>
             <Button type="button" variant="outline" onClick={onClose}>
               إلغاء
@@ -183,4 +247,3 @@ export const AssignCorrespondenceDialog: React.FC<AssignCorrespondenceDialogProp
     </Dialog>
   );
 };
-
