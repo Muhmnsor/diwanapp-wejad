@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
@@ -13,7 +12,14 @@ interface Correspondence {
   status: string;
   type: string;
   content?: string;
+  priority?: string;
+  is_confidential?: boolean;
+  tags?: string[];
+  assigned_to?: string;
+  related_correspondence_id?: string;
   creation_date?: string;
+  created_by?: string;
+  notes?: string;
 }
 
 interface CorrespondenceAttachment {
@@ -73,7 +79,14 @@ export const useCorrespondence = () => {
           status: item.status,
           type: item.type,
           content: item.content,
-          creation_date: item.creation_date
+          creation_date: item.creation_date,
+          priority: item.priority,
+          is_confidential: item.is_confidential,
+          tags: item.tags,
+          assigned_to: item.assigned_to,
+          related_correspondence_id: item.related_correspondence_id,
+          created_by: item.created_by,
+          notes: item.notes
         })) || [];
         
         setCorrespondence(formattedData);
@@ -197,6 +210,78 @@ export const useCorrespondence = () => {
     }
   };
 
+  const distributeCorrespondence = async (
+    correspondenceId: string,
+    distributionData: {
+      distributed_to: string;
+      distributed_by: string;
+      distributed_to_department?: string;
+      instructions?: string;
+      response_deadline?: string;
+    }
+  ) => {
+    try {
+      const { data, error } = await supabase
+        .from('correspondence_distribution')
+        .insert([
+          {
+            correspondence_id: correspondenceId,
+            distributed_to: distributionData.distributed_to,
+            distributed_by: distributionData.distributed_by,
+            distributed_to_department: distributionData.distributed_to_department,
+            instructions: distributionData.instructions,
+            response_deadline: distributionData.response_deadline,
+            distribution_date: new Date().toISOString(),
+            status: 'pending',
+            is_read: false
+          }
+        ])
+        .select();
+        
+      if (error) throw error;
+      
+      // Add to history
+      await addToHistory(correspondenceId, 'توزيع المعاملة', distributionData.distributed_by, 
+        `تم توزيع المعاملة إلى ${distributionData.distributed_to_department || 'جهة معينة'}`);
+      
+      return { success: true, data };
+    } catch (err) {
+      console.error("Error distributing correspondence:", err);
+      return { success: false, error: err };
+    }
+  };
+
+  const addToHistory = async (
+    correspondenceId: string,
+    actionType: string,
+    actionBy?: string,
+    details?: string,
+    previousStatus?: string,
+    newStatus?: string
+  ) => {
+    try {
+      const { data, error } = await supabase
+        .from('correspondence_history')
+        .insert([
+          {
+            correspondence_id: correspondenceId,
+            action_type: actionType,
+            action_by: actionBy,
+            action_details: details,
+            action_date: new Date().toISOString(),
+            previous_status: previousStatus,
+            new_status: newStatus
+          }
+        ]);
+        
+      if (error) throw error;
+      return true;
+    } catch (err) {
+      console.error("Error adding to history:", err);
+      return false;
+    }
+  };
+
   return {
     correspondence,
     incomingMail,
@@ -208,7 +293,9 @@ export const useCorrespondence = () => {
     hasAttachments,
     getAttachments,
     getHistory,
-    downloadAttachment
+    downloadAttachment,
+    distributeCorrespondence,
+    addToHistory
   };
 };
 
