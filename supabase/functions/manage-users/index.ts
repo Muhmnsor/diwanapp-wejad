@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
 const corsHeaders = {
@@ -48,68 +49,6 @@ Deno.serve(async (req) => {
 
     const { operation, userId, newPassword, roleId } = requestData
     console.log('Managing user:', { operation, userId })
-
-    // إضافة عملية إنشاء مستخدم جديد
-    if (operation === 'create_user') {
-      const { email, password, displayName, roleId } = requestData;
-      
-      if (!email || !password || !roleId) {
-        throw new Error('Email, password, and roleId are required for user creation');
-      }
-      
-      console.log('Creating new user:', { email, displayName, roleId });
-      
-      // 1. إنشاء المستخدم باستخدام API المشرف
-      const { data: userData, error: userError } = await supabaseClient.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true, // تأكيد البريد الإلكتروني تلقائيًا
-        user_metadata: { display_name: displayName || '' }
-      });
-      
-      if (userError) {
-        console.error('Error creating user:', userError);
-        throw userError;
-      }
-      
-      const userId = userData.user.id;
-      console.log('User created successfully with ID:', userId);
-      
-      // 2. تحديث ملف المستخدم إذا تم توفير اسم العرض
-      if (displayName) {
-        const { error: profileError } = await supabaseClient
-          .from('profiles')
-          .update({ display_name: displayName })
-          .eq('id', userId);
-          
-        if (profileError) {
-          console.warn('Error updating profile display name:', profileError);
-          // نستمر بالعملية حتى مع وجود خطأ في تحديث الاسم
-        }
-      }
-      
-      // 3. تعيين الدور للمستخدم
-      const { data: roleData, error: roleError } = await supabaseClient.rpc('assign_user_role', {
-        p_user_id: userId,
-        p_role_id: roleId
-      });
-      
-      if (roleError) {
-        console.error('Error assigning role:', roleError);
-        // نحتاج لحذف المستخدم إذا فشل تعيين الدور
-        await supabaseClient.auth.admin.deleteUser(userId);
-        throw new Error(`User created but role assignment failed: ${roleError.message}`);
-      }
-      
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          userId: userId,
-          message: 'User created successfully with assigned role'
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
 
     if (operation === 'get_users') {
       const { data: { users }, error: usersError } = await supabaseClient.auth.admin.listUsers()
