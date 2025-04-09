@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Table,
@@ -9,7 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Eye, Download, Paperclip } from "lucide-react";
+import { Eye, Download, Paperclip, Share } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface Mail {
@@ -28,12 +27,14 @@ interface CorrespondenceTableProps {
   mails: Mail[];
   onView: (mail: Mail) => void;
   onDownload: (mail: Mail) => void;
+  onDistribute?: (mail: Mail) => void;
 }
 
 export const CorrespondenceTable: React.FC<CorrespondenceTableProps> = ({ 
   mails, 
   onView,
-  onDownload
+  onDownload,
+  onDistribute
 }) => {
   // Function to get badge variant based on status
   const getStatusBadge = (status: string) => {
@@ -98,16 +99,29 @@ export const CorrespondenceTable: React.FC<CorrespondenceTableProps> = ({
                     size="sm"
                     onClick={() => onView(mail)}
                     className="text-primary hover:text-primary hover:bg-primary/10"
+                    title="عرض التفاصيل"
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
+                  {mail.hasAttachments && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onDownload(mail)}
+                      className="text-primary hover:text-primary hover:bg-primary/10"
+                      title="تنزيل المرفقات"
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => onDownload(mail)}
-                    className="text-primary hover:text-primary hover:bg-primary/10"
+                    className="text-blue-600 hover:text-blue-600 hover:bg-blue-100"
+                    title="توزيع المعاملة"
+                    onClick={() => onDistribute && onDistribute(mail)}
                   >
-                    <Download className="h-4 w-4" />
+                    <Share className="h-4 w-4" />
                   </Button>
                 </div>
               </TableCell>
