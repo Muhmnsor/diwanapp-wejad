@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import React, { useState } from "react";
 import {
@@ -65,7 +64,6 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    // Get form data
     const formData = new FormData(e.currentTarget);
     const subject = formData.get('subject') as string;
     const date = formData.get('date') as string;
@@ -78,12 +76,11 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
     const status = formData.get('status') as string;
     const content = formData.get('content') as string;
     const notes = formData.get('notes') as string;
-    
+    const priority = formData.get('priority') as string;
+
     try {
-      // Create correspondence number (simple example - would be more sophisticated in production)
       const number = `${type.substring(0, 3)}-${Date.now().toString().substring(6)}`;
       
-      // Insert into database
       const { data: correspondence, error: corrError } = await supabase
         .from('correspondence')
         .insert([
@@ -96,6 +93,7 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
             status,
             content,
             notes,
+            priority,
             type,
             creation_date: new Date().toISOString()
           }
@@ -105,7 +103,6 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
       
       if (corrError) throw corrError;
       
-      // Upload attachments if any
       if (files.length > 0) {
         for (const file of files) {
           const fileExt = file.name.split('.').pop();
@@ -118,7 +115,6 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
           
           if (uploadError) throw uploadError;
           
-          // Link attachment to correspondence
           await supabase
             .from('correspondence_attachments')
             .insert([
@@ -138,7 +134,6 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
         description: `تم إضافة المعاملة برقم ${number}`,
       });
       
-      // Clear the form
       setFiles([]);
       onClose();
     } catch (error) {
@@ -167,7 +162,6 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
               <Label htmlFor="subject">موضوع المعاملة</Label>
               <Input id="subject" name="subject" placeholder="أدخل موضوع المعاملة" required />
             </div>
-            
             <div>
               <Label htmlFor="date">تاريخ المعاملة</Label>
               <Input id="date" name="date" type="date" required />
@@ -181,7 +175,6 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
                   <Label htmlFor="sender">الجهة المرسلة</Label>
                   <Input id="sender" name="sender" placeholder="الجهة المرسلة" required />
                 </div>
-                
                 <div>
                   <Label htmlFor="recipient_select">الجهة المستلمة</Label>
                   <Select name="recipient_select">
@@ -213,7 +206,6 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
                     </SelectContent>
                   </Select>
                 </div>
-                
                 <div>
                   <Label htmlFor="recipient">الجهة المستلمة</Label>
                   <Input id="recipient" name="recipient" placeholder="الجهة المستلمة" required />
@@ -251,12 +243,12 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
               </SelectContent>
             </Select>
           </div>
-          
+
           <div>
             <Label htmlFor="content">محتوى المعاملة</Label>
             <Textarea id="content" name="content" placeholder="أدخل محتوى المعاملة" rows={5} required />
           </div>
-          
+
           <div>
             <Label>المرفقات</Label>
             <div className="mt-2 p-4 border border-dashed rounded-md">
@@ -286,14 +278,31 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
               </div>
             </div>
           </div>
-          
+
           {type !== 'incoming' && (
             <div>
               <Label htmlFor="notes">ملاحظات إضافية</Label>
               <Textarea id="notes" name="notes" placeholder="أية ملاحظات إضافية" />
             </div>
           )}
-          
+
+          {/* إضافة حقول متقدمة */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="priority">الأولوية</Label>
+              <Select name="priority">
+                <SelectTrigger id="priority">
+                  <SelectValue placeholder="اختر الأولوية" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high">عاجل</SelectItem>
+                  <SelectItem value="medium">متوسط</SelectItem>
+                  <SelectItem value="low">عادي</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <DialogFooter className="mt-6 gap-2 sm:justify-start">
             <Button type="submit">إضافة المعاملة</Button>
             <Button type="button" variant="outline" onClick={onClose}>إلغاء</Button>
