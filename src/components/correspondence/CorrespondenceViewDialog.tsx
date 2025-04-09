@@ -23,7 +23,9 @@ import {
   FileText,
   History as HistoryIcon,
   Share,
-  Archive
+  Archive,
+  UserCheck,
+  CheckCircle
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -33,6 +35,8 @@ import { DistributeCorrespondenceDialog } from "./DistributeCorrespondenceDialog
 import { CorrespondenceResponseDialog } from "./CorrespondenceResponseDialog";
 import { ArchiveCorrespondenceDialog } from "./ArchiveCorrespondenceDialog";
 import { TagsManager } from "./TagsManager";
+import { AssignCorrespondenceDialog } from "./AssignCorrespondenceDialog";
+import { CompleteAssignmentDialog } from "./CompleteAssignmentDialog";
 
 interface Mail {
   id: string;
@@ -101,6 +105,8 @@ export const CorrespondenceViewDialog: React.FC<CorrespondenceViewDialogProps> =
   const [isResponseDialogOpen, setIsResponseDialogOpen] = useState(false);
   const [selectedDistribution, setSelectedDistribution] = useState<string | null>(null);
   const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -237,6 +243,8 @@ export const CorrespondenceViewDialog: React.FC<CorrespondenceViewDialogProps> =
       setDistributions([]);
       setRelatedMail(null);
       setActiveTab("details");
+      setAssignedToUser(null);
+      setCreatedByUser(null);
     }
   }, [isOpen, mail, getAttachments, getHistory]);
 
@@ -655,21 +663,41 @@ export const CorrespondenceViewDialog: React.FC<CorrespondenceViewDialogProps> =
         </Tabs>
 
         {/* إضافة زر لتوزيع المعاملة */}
-        <div className="mt-4 flex justify-between">
-          <Button
-            variant="outline"
-            className="flex items-center gap-2 bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100 hover:text-amber-800"
-            onClick={() => setIsArchiveDialogOpen(true)}
-          >
-            <Archive className="h-4 w-4" />
-            <span>أرشفة المعاملة</span>
-          </Button>
+        <div className="mt-4 flex flex-wrap gap-2 justify-between">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              className="flex items-center gap-2 bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100 hover:text-amber-800"
+              onClick={() => setIsArchiveDialogOpen(true)}
+            >
+              <Archive className="h-4 w-4" />
+              <span>أرشفة المعاملة</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="flex items-center gap-2 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:text-blue-800"
+              onClick={() => setIsAssignDialogOpen(true)}
+            >
+              <UserCheck className="h-4 w-4" />
+              <span>تعيين المعاملة</span>
+            </Button>
+
+            {assignedToUser && mail.status !== 'مكتمل' && (
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 bg-green-50 border-green-200 text-green-700 hover:bg-green-100 hover:text-green-800"
+                onClick={() => setIsCompleteDialogOpen(true)}
+              >
+                <CheckCircle className="h-4 w-4" />
+                <span>إكمال المعاملة</span>
+              </Button>
+            )}
+          </div>
           <Button
             variant="outline"
             className="flex items-center gap-2"
-            onClick={() => {
-              setIsDistributeDialogOpen(true);
-            }}
+            onClick={() => setIsDistributeDialogOpen(true)}
           >
             <Share className="h-4 w-4" />
             <span>توزيع المعاملة</span>
@@ -706,6 +734,24 @@ export const CorrespondenceViewDialog: React.FC<CorrespondenceViewDialogProps> =
         <ArchiveCorrespondenceDialog
           isOpen={isArchiveDialogOpen}
           onClose={() => setIsArchiveDialogOpen(false)}
+          correspondenceId={mail.id}
+          correspondenceNumber={mail.number}
+        />
+      )}
+      {/* نافذة حوار تعيين المعاملة */}
+      {mail && isAssignDialogOpen && (
+        <AssignCorrespondenceDialog
+          isOpen={isAssignDialogOpen}
+          onClose={() => setIsAssignDialogOpen(false)}
+          correspondenceId={mail.id}
+          correspondenceNumber={mail.number}
+        />
+      )}
+      {/* نافذة حوار إكمال المعاملة */}
+      {mail && isCompleteDialogOpen && (
+        <CompleteAssignmentDialog
+          isOpen={isCompleteDialogOpen}
+          onClose={() => setIsCompleteDialogOpen(false)}
           correspondenceId={mail.id}
           correspondenceNumber={mail.number}
         />
