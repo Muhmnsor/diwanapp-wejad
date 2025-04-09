@@ -119,6 +119,75 @@ Deno.serve(async (req) => {
       )
     }
 
+    if (operation === 'create_user' && requestData.username && requestData.password && requestData.roleId) {
+      console.log('Creating new user with username:', requestData.username);
+      
+      try {
+        // 1. إنشاء المستخدم في نظام المصادقة
+        const { data: authData, error: authError } = await supabaseClient.auth.admin.createUser({
+          email: requestData.username,
+          password: requestData.password,
+          email_confirm: true,
+          user_metadata: {
+            display_name: requestData.displayName || null
+          }
+        });
+        
+        if (authError) {
+          console.error("خطأ في إنشاء المستخدم:", authError);
+          throw authError;
+        }
+        
+        console.log("تم إنشاء المستخدم بنجاح:", authData.user.id);
+        const userId = authData.user.id;
+        
+        // 2. تحديث الاسم الشخصي إذا تم إدخاله
+        if (requestData.displayName) {
+          console.log("تحديث الاسم الشخصي...");
+          const { error: displayNameError } = await supabaseClient
+            .from('profiles')
+            .update({ display_name: requestData.displayName })
+            .eq('id', userId);
+            
+          if (displayNameError) {
+            console.error("خطأ في تحديث الاسم الشخصي:", displayNameError);
+            console.warn("تم تجاوز خطأ تحديث الاسم الشخصي واستكمال العملية");
+          } else {
+            console.log("تم تحديث الاسم الشخصي بنجاح");
+          }
+        }
+        
+        // 3. تعيين دور للمستخدم
+        console.log("تعيين دور للمستخدم...");
+        const { error: roleError } = await supabaseClient.rpc('assign_user_role', {
+          p_user_id: userId,
+          p_role_id: requestData.roleId,
+        });
+        
+        if (roleError) {
+          console.error("خطأ في تعيين الدور:", roleError);
+          throw roleError;
+        }
+        
+        // 4. تسجيل نشاط إنشاء المستخدم
+        await supabaseClient.rpc('log_user_activity', {
+          user_id: userId,
+          activity_type: 'user_created',
+          details: `تم إنشاء المستخدم (البريد: ${requestData.username}, الدور: ${requestData.roleId}, الاسم الشخصي: ${requestData.displayName || 'غير محدد'})`
+        });
+        
+        return new Response(
+          JSON.stringify({ success: true, userId: userId }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (error) {
+        console.error("خطأ في إنشاء المستخدم:", error);
+        throw error;
+      }
+    }
+
+    
+
     throw new Error('Invalid operation')
 
   } catch (error) {
