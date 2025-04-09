@@ -923,6 +923,28 @@ export const useCorrespondence = () => {
     }
   };
 
+  // فحص الإشعارات غير المقروءة
+  const checkUnreadNotifications = async () => {
+    try {
+      const { data: user } = await supabase.auth.getUser();
+
+      if (!user?.user?.id) return { count: 0 };
+
+      const { data, error, count } = await supabase
+        .from('in_app_notifications')
+        .select('id', { count: 'exact' })
+        .eq('user_id', user.user.id)
+        .eq('read', false);
+
+      if (error) throw error;
+
+      return { count: count || 0 };
+    } catch (error) {
+      console.error("Error checking unread notifications:", error);
+      return { count: 0 };
+    }
+  };
+
   return {
     correspondence,
     incomingMail,
@@ -952,7 +974,8 @@ export const useCorrespondence = () => {
     completeAssignment: completeAssignmentNew,
     assignCorrespondence: assignCorrespondenceNew,
     fetchUsers,
-    respondToDistribution: respondToDistributionNew
+    respondToDistribution: respondToDistributionNew,
+    checkUnreadNotifications,
   };
 };
 
