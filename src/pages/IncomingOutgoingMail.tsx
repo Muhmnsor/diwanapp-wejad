@@ -82,48 +82,65 @@ const IncomingOutgoingMail = () => {
     }
   };
 
-  const getFilteredMails = () => {
-    let mails: Correspondence[] = [];
+// في الأسطر 67-87، تعديل وظيفة getFilteredMails لإصلاح فلترة البيانات:
+const getFilteredMails = () => {
+  let mails: Correspondence[] = [];
+  
+  if (activeTab === "incoming") {
+    mails = incomingMail || [];
+  } else if (activeTab === "outgoing") {
+    mails = outgoingMail || [];
+  } else if (activeTab === "letters") {
+    mails = letters || [];
+  }
+  
+  // Filter by search query
+  if (searchQuery) {
+    mails = mails.filter(mail => 
+      mail.subject?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      mail.sender?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      mail.recipient?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      mail.number?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }
+  
+  // Filter by status
+  if (statusFilter !== "all") {
+    mails = mails.filter(mail => mail.status === statusFilter);
+  }
+  
+  // Filter by date
+  if (dateFilter === "today") {
+    const today = new Date().toISOString().split('T')[0];
+    mails = mails.filter(mail => mail.date === today);
+  } else if (dateFilter === "week") {
+    const today = new Date();
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - today.getDay());
+    const weekStartStr = weekStart.toISOString().split('T')[0];
     
-    if (activeTab === "incoming") {
-      mails = incomingMail || [];
-    } else if (activeTab === "outgoing") {
-      mails = outgoingMail || [];
-    } else if (activeTab === "letters") {
-      mails = letters || [];
-    }
+    mails = mails.filter(mail => {
+      const mailDate = new Date(mail.date);
+      return mailDate >= weekStart && mailDate <= today;
+    });
+  } else if (dateFilter === "month") {
+    const today = new Date();
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const monthStartStr = monthStart.toISOString().split('T')[0];
     
-    // Filter by search query
-    if (searchQuery) {
-      mails = mails.filter(mail => 
-        mail.subject?.includes(searchQuery) || 
-        mail.sender?.includes(searchQuery) ||
-        mail.recipient?.includes(searchQuery) ||
-        mail.number?.includes(searchQuery)
-      );
-    }
-    
-    // Filter by status
-    if (statusFilter !== "all") {
-      mails = mails.filter(mail => mail.status === statusFilter);
-    }
-    
-    // Filter by date
-    if (dateFilter === "today") {
-      mails = mails.filter(mail => mail.date === "2025-04-08");
-    } else if (dateFilter === "week") {
-      mails = mails.filter(mail => [
-        "2025-04-01", "2025-04-02", "2025-04-03", "2025-04-04",
-        "2025-04-05", "2025-04-06", "2025-04-07", "2025-04-08"
-      ].includes(mail.date));
-    }
-    
-    // Convert to Mail type with hasAttachments property
-    return mails.map(mail => ({
-      ...mail,
-      hasAttachments: hasAttachments(mail.id)
-    }));
-  };
+    mails = mails.filter(mail => {
+      const mailDate = new Date(mail.date);
+      return mailDate >= monthStart && mailDate <= today;
+    });
+  }
+  
+  // Convert to Mail type with hasAttachments property
+  return mails.map(mail => ({
+    ...mail,
+    hasAttachments: hasAttachments(mail.id)
+  }));
+};
+
 
   // استدعاء الدالة مرة واحدة لتخزين القيمة
   const filteredMails = getFilteredMails();
