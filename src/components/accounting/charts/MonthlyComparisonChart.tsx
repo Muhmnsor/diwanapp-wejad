@@ -78,7 +78,7 @@ export const MonthlyComparisonChart: React.FC = () => {
           >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="month" angle={-45} textAnchor="end" height={50} />
-            <YAxis tickFormatter={(value) => formatCurrency(value, 0)} />
+            <YAxis tickFormatter={(value) => formatCurrency(value)} />
             <Tooltip 
               formatter={(value) => formatCurrency(Number(value))}
               labelFormatter={(label) => `الشهر: ${label}`}
