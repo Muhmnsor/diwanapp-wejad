@@ -10,10 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { FileUploader } from "@/components/ui/file-uploader";
-import { Send, PaperclipIcon, Loader2 } from "lucide-react";
+import { Send, PaperclipIcon, Loader2, CalendarIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useCorrespondence } from "@/hooks/useCorrespondence";
 import { RichTextEditor } from "./RichTextEditor";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { ar } from "date-fns/locale";
 
 interface ResponseDialogProps {
   isOpen: boolean;
@@ -33,13 +36,15 @@ export const CorrespondenceResponseDialog: React.FC<ResponseDialogProps> = ({
   const [responseText, setResponseText] = useState<string>("");
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
-  
+  const [deadlineDate, setDeadlineDate] = useState<Date | null>(null);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+
   const { toast } = useToast();
   const { respondToDistribution } = useCorrespondence();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     if (!responseText.trim()) {
       toast({
         variant: "destructive",
@@ -48,25 +53,26 @@ export const CorrespondenceResponseDialog: React.FC<ResponseDialogProps> = ({
       });
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       const result = await respondToDistribution(distributionId, {
         responseText,
         files,
-        correspondenceId
+        correspondenceId,
+        deadlineDate: deadlineDate?.toISOString()
       });
-      
+
       if (!result.success) {
         throw new Error(result.error || "فشل في إرسال الرد");
       }
-      
+
       toast({
         title: "تم إرسال الرد بنجاح",
         description: `تم إرسال الرد على المعاملة رقم ${correspondenceNumber} بنجاح`
       });
-      
+
       onClose();
     } catch (error) {
       console.error("Error sending response:", error);
@@ -97,7 +103,7 @@ export const CorrespondenceResponseDialog: React.FC<ResponseDialogProps> = ({
             الرد على المعاملة {correspondenceNumber}
           </DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
           <div className="flex-grow overflow-auto">
             <div className="mb-4">
@@ -109,10 +115,10 @@ export const CorrespondenceResponseDialog: React.FC<ResponseDialogProps> = ({
                 className="min-h-[250px]"
               />
             </div>
-            
+
             <div className="mb-4">
               <Label>المرفقات</Label>
-              <FileUploader 
+              <FileUploader
                 onFilesSelected={handleFileUpload}
                 maxFiles={5}
                 maxSizeMB={10}
@@ -124,7 +130,7 @@ export const CorrespondenceResponseDialog: React.FC<ResponseDialogProps> = ({
                   "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 ]}
               />
-              
+
               {files.length > 0 && (
                 <div className="mt-2 space-y-2">
                   {files.map((file, index) => (
@@ -147,10 +153,39 @@ export const CorrespondenceResponseDialog: React.FC<ResponseDialogProps> = ({
               )}
             </div>
           </div>
-          
+
+          <div className="space-y-2 mb-4">
+            <Label htmlFor="deadline-date">الموعد النهائي (اختياري)</Label>
+            <div className="relative">
+              <Button
+                variant="outline"
+                className={`w-full justify-start text-right ${!deadlineDate ? "text-muted-foreground" : ""}`}
+                onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+                type="button"
+              >
+                <CalendarIcon className="ml-2 h-4 w-4" />
+                {deadlineDate ? format(deadlineDate, 'PPP', { locale: ar }) : "حدد موعد نهائي..."}
+              </Button>
+              {isCalendarOpen && (
+                <div className="absolute z-10 mt-1 bg-background rounded-md border shadow-md">
+                  <Calendar
+                    mode="single"
+                    selected={deadlineDate}
+                    onSelect={(date) => {
+                      setDeadlineDate(date);
+                      setIsCalendarOpen(false);
+                    }}
+                    locale={ar}
+                    disabled={(date) => date < new Date()}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
           <DialogFooter className="mt-6 gap-2 sm:justify-end">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={loading || !responseText.trim()}
               className="bg-green-600 hover:bg-green-700"
             >
