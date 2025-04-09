@@ -335,7 +335,7 @@ export const AddCorrespondenceDialog: React.FC<AddCorrespondenceDialogProps> = (
                 <SelectValue placeholder="اختر معاملة للربط" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">لا يوجد</SelectItem>
+                <SelectItem value="none">لا يوجد</SelectItem>
                 {/* هنا يمكن إضافة loop لعرض المعاملات السابقة */}
               </SelectContent>
             </Select>
