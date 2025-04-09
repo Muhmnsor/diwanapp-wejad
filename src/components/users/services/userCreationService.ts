@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -16,65 +15,38 @@ export const createUser = async (userData: UserCreationData): Promise<string | n
   console.log("الدور المحدد:", userData.roleId);
   
   try {
-    // 1. إنشاء المستخدم في نظام المصادقة
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: userData.username,
-      password: userData.password,
-      options: {
-        emailRedirectTo: window.location.origin,
-        data: {
-          display_name: userData.displayName || null
-        }
+    // استخدام Edge Function لإنشاء المستخدم وتعيين الدور بشكل آمن
+    const { data, error } = await supabase.functions.invoke('manage-users', {
+      body: {
+        operation: 'create_user',
+        email: userData.username,
+        password: userData.password,
+        displayName: userData.displayName,
+        roleId: userData.roleId
       }
     });
     
-    if (authError) {
-      console.error("خطأ في إنشاء المستخدم:", authError);
-      throw authError;
+    if (error) {
+      console.error("خطأ في استدعاء Edge Function:", error);
+      throw new Error(error.message);
     }
     
-    console.log("تم إنشاء المستخدم بنجاح:", authData.user.id);
-    const userId = authData.user.id;
-    
-    // 2. تحديث الاسم الشخصي إذا تم إدخاله
-    if (userData.displayName) {
-      console.log("تحديث الاسم الشخصي...");
-      const { error: displayNameError } = await supabase
-        .from('profiles')
-        .update({ display_name: userData.displayName })
-        .eq('id', userId);
-        
-      if (displayNameError) {
-        console.error("خطأ في تحديث الاسم الشخصي:", displayNameError);
-        console.warn("تم تجاوز خطأ تحديث الاسم الشخصي واستكمال العملية");
-      } else {
-        console.log("تم تحديث الاسم الشخصي بنجاح");
-      }
+    if (!data.success) {
+      console.error("فشل في إنشاء المستخدم:", data.error || "سبب غير معروف");
+      throw new Error(data.error || "فشل في إنشاء المستخدم لسبب غير معروف");
     }
     
-    // 3. تعيين دور للمستخدم
-    console.log("تعيين دور للمستخدم...");
-    const { error: roleError } = await supabase.rpc('assign_user_role', {
-      p_user_id: userId,
-      p_role_id: userData.roleId,
-    });
+    console.log("تم إنشاء المستخدم بنجاح:", data.userId);
     
-    if (roleError) {
-      console.error("خطأ في تعيين الدور:", roleError);
-      throw roleError;
-    }
-    
-    console.log("تم تعيين الدور بنجاح");
-    
-    // 4. تسجيل نشاط إنشاء المستخدم
+    // تسجيل نشاط إنشاء المستخدم
     await supabase.rpc('log_user_activity', {
-      user_id: userId,
+      user_id: data.userId,
       activity_type: 'user_created',
       details: `تم إنشاء المستخدم (البريد: ${userData.username}, الدور: ${userData.roleId}, الاسم الشخصي: ${userData.displayName || 'غير محدد'})`
     });
     
     console.log("=== تمت عملية إنشاء المستخدم بنجاح ===");
-    return userId;
+    return data.userId;
   } catch (error) {
     console.error("خطأ عام في إنشاء المستخدم:", error);
     throw error;
