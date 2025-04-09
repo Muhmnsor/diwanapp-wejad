@@ -29,6 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { DistributeCorrespondenceDialog } from "./DistributeCorrespondenceDialog";
+import { CorrespondenceResponseDialog } from "./CorrespondenceResponseDialog";
 
 interface Mail {
   id: string;
@@ -94,6 +95,8 @@ export const CorrespondenceViewDialog: React.FC<CorrespondenceViewDialogProps> =
   const [distributedToUsers, setDistributedToUsers] = useState<{[key: string]: UserInfo | null}>({});
   const [distributedByUsers, setDistributedByUsers] = useState<{[key: string]: UserInfo | null}>({});
   const [isDistributeDialogOpen, setIsDistributeDialogOpen] = useState(false);
+  const [isResponseDialogOpen, setIsResponseDialogOpen] = useState(false);
+  const [selectedDistribution, setSelectedDistribution] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -532,6 +535,21 @@ export const CorrespondenceViewDialog: React.FC<CorrespondenceViewDialogProps> =
                           حالة القراءة: {dist.is_read ? `تمت القراءة (${formatDateTime(dist.read_at)})` : 'لم تتم القراءة بعد'}
                         </p>
                       </div>
+                      
+                      {dist.status !== 'مكتمل' && (
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="mt-2"
+                          onClick={() => {
+                            setSelectedDistribution(dist.id);
+                            setIsResponseDialogOpen(true);
+                          }}
+                        >
+                          <MessageCircle className="h-4 w-4 ml-1" />
+                          الرد على المعاملة
+                        </Button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -657,6 +675,16 @@ export const CorrespondenceViewDialog: React.FC<CorrespondenceViewDialogProps> =
         <DistributeCorrespondenceDialog
           isOpen={isDistributeDialogOpen}
           onClose={() => setIsDistributeDialogOpen(false)}
+          correspondenceId={mail.id}
+        />
+      )}
+      
+      {/* نافذة حوار الرد على المعاملة */}
+      {mail && selectedDistribution && isResponseDialogOpen && (
+        <CorrespondenceResponseDialog
+          isOpen={isResponseDialogOpen}
+          onClose={() => setIsResponseDialogOpen(false)}
+          distributionId={selectedDistribution}
           correspondenceId={mail.id}
         />
       )}
