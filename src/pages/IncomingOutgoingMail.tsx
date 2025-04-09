@@ -411,6 +411,154 @@ const IncomingOutgoingMail = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="incoming" className="space-y-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-center">
+                  <CardTitle>المعاملات الواردة</CardTitle>
+                  <div className="flex gap-2">
+                    <div className="flex items-center space-x-2 space-x-reverse bg-muted/40 rounded-md px-3 py-1">
+                      <Search className="h-4 w-4 text-muted-foreground" />
+                      <Input
+                        className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 h-8 px-0"
+                        placeholder="بحث..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="h-9 w-[130px]">
+                        <SelectValue placeholder="الحالة" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">جميع الحالات</SelectItem>
+                        <SelectItem value="قيد المعالجة">قيد المعالجة</SelectItem>
+                        <SelectItem value="مكتمل">مكتمل</SelectItem>
+                        <SelectItem value="معلق">معلق</SelectItem>
+                        <SelectItem value="مرسل">مرسل</SelectItem>
+                        <SelectItem value="قيد الإعداد">قيد الإعداد</SelectItem>
+                        <SelectItem value="معتمد">معتمد</SelectItem>
+                        <SelectItem value="مسودة">مسودة</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={dateFilter} onValueChange={setDateFilter}>
+                      <SelectTrigger className="h-9 w-[130px]">
+                        <SelectValue placeholder="التاريخ" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">جميع التواريخ</SelectItem>
+                        <SelectItem value="today">اليوم</SelectItem>
+                        <SelectItem value="week">هذا الأسبوع</SelectItem>
+                        <SelectItem value="month">هذا الشهر</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" size="sm" onClick={() => setIsAdvancedSearchOpen(true)}>
+                      <Filter className="h-4 w-4 ml-1" />
+                      بحث متقدم
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="text-center py-8">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <p className="mt-2 text-muted-foreground">جاري تحميل المعاملات الواردة...</p>
+                  </div>
+                ) : filteredMails.length > 0 ? (
+                  <CorrespondenceTable
+                    mails={filteredMails}
+                    onView={handleViewMail}
+                    onDownload={handleDownload}
+                    onDistribute={handleDistribute}
+                  />
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">
+                      {searchQuery || statusFilter !== "all" || dateFilter !== "all"
+                        ? "لا توجد معاملات تطابق معايير البحث"
+                        : "لا توجد معاملات واردة"}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="outgoing" className="space-y-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-center">
+                  <CardTitle>المعاملات الصادرة</CardTitle>
+                  <div className="flex gap-2">
+                    <div className="flex items-center space-x-2 space-x-reverse bg-muted/40 rounded-md px-3 py-1">
+                      <Search className="h-4 w-4 text-muted-foreground" />
+                      <Input
+                        className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 h-8 px-0"
+                        placeholder="بحث..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="h-9 w-[130px]">
+                        <SelectValue placeholder="الحالة" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">جميع الحالات</SelectItem>
+                        <SelectItem value="قيد المعالجة">قيد المعالجة</SelectItem>
+                        <SelectItem value="مكتمل">مكتمل</SelectItem>
+                        <SelectItem value="معلق">معلق</SelectItem>
+                        <SelectItem value="مرسل">مرسل</SelectItem>
+                        <SelectItem value="قيد الإعداد">قيد الإعداد</SelectItem>
+                        <SelectItem value="معتمد">معتمد</SelectItem>
+                        <SelectItem value="مسودة">مسودة</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={dateFilter} onValueChange={setDateFilter}>
+                      <SelectTrigger className="h-9 w-[130px]">
+                        <SelectValue placeholder="التاريخ" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">جميع التواريخ</SelectItem>
+                        <SelectItem value="today">اليوم</SelectItem>
+                        <SelectItem value="week">هذا الأسبوع</SelectItem>
+                        <SelectItem value="month">هذا الشهر</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" size="sm" onClick={() => setIsAdvancedSearchOpen(true)}>
+                      <Filter className="h-4 w-4 ml-1" />
+                      بحث متقدم
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="text-center py-8">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <p className="mt-2 text-muted-foreground">جاري تحميل المعاملات الصادرة...</p>
+                  </div>
+                ) : filteredMails.length > 0 ? (
+                  <CorrespondenceTable
+                    mails={filteredMails}
+                    onView={handleViewMail}
+                    onDownload={handleDownload}
+                    onDistribute={handleDistribute}
+                  />
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">
+                      {searchQuery || statusFilter !== "all" || dateFilter !== "all"
+                        ? "لا توجد معاملات تطابق معايير البحث"
+                        : "لا توجد معاملات صادرة"}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="distributed" className="space-y-4">
             <Card>
               <CardHeader className="pb-2">
