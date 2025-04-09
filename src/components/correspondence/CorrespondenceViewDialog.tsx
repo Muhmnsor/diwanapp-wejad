@@ -21,12 +21,14 @@ import {
   MessageCircle, 
   Link2, 
   FileText, 
-  History as HistoryIcon 
+  History as HistoryIcon,
+  Share 
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
+import { DistributeCorrespondenceDialog } from "./DistributeCorrespondenceDialog";
 
 interface Mail {
   id: string;
@@ -91,6 +93,7 @@ export const CorrespondenceViewDialog: React.FC<CorrespondenceViewDialogProps> =
   const [createdByUser, setCreatedByUser] = useState<UserInfo | null>(null);
   const [distributedToUsers, setDistributedToUsers] = useState<{[key: string]: UserInfo | null}>({});
   const [distributedByUsers, setDistributedByUsers] = useState<{[key: string]: UserInfo | null}>({});
+  const [isDistributeDialogOpen, setIsDistributeDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -628,12 +631,35 @@ export const CorrespondenceViewDialog: React.FC<CorrespondenceViewDialogProps> =
           </TabsContent>
         </Tabs>
 
+        {/* إضافة زر لتوزيع المعاملة */}
+        <div className="mt-4 flex justify-end">
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2"
+            onClick={() => {
+              setIsDistributeDialogOpen(true);
+            }}
+          >
+            <Share className="h-4 w-4" />
+            <span>توزيع المعاملة</span>
+          </Button>
+        </div>
+
         <DialogFooter className="mt-6">
           <Button variant="outline" onClick={onClose}>
             إغلاق
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* إضافة نافذة حوار توزيع المعاملة */}
+      {mail && isDistributeDialogOpen && (
+        <DistributeCorrespondenceDialog
+          isOpen={isDistributeDialogOpen}
+          onClose={() => setIsDistributeDialogOpen(false)}
+          correspondenceId={mail.id}
+        />
+      )}
     </Dialog>
   );
 };
