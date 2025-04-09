@@ -1,3 +1,4 @@
+
 // src/components/accounting/charts/MonthlyComparisonChart.tsx
 import React from "react";
 import {
@@ -93,4 +94,3 @@ export const MonthlyComparisonChart: React.FC = () => {
     </Card>
   );
 };
-
