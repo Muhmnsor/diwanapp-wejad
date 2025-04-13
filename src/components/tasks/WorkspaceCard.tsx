@@ -1,3 +1,4 @@
+// src/components/tasks/WorkspaceCard.tsx
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
@@ -8,13 +9,18 @@ import {
   UserPlus,
   AlertTriangle,
   ClipboardList,
-  PauseCircle
+  PauseCircle,
+  Lock
 } from "lucide-react";
 import { Workspace } from "@/types/workspace";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { WorkspaceMembersDialog } from "./WorkspaceMembersDialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuthStore } from "@/store/authStore";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 
 interface WorkspaceCardProps {
   workspace: Workspace;
@@ -22,7 +28,9 @@ interface WorkspaceCardProps {
 
 export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false);
+  const [isCheckingMembership, setIsCheckingMembership] = useState(true);
   const [projectCounts, setProjectCounts] = useState({
     completed: 0,
     pending: 0,
@@ -31,9 +39,80 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
     total: 0
   });
   const [membersCount, setMembersCount] = useState(workspace.members_count || 0);
+  const [isUserMember, setIsUserMember] = useState(false);
 
-  // Fetch project counts
+  const { user } = useAuthStore();
+
+  // Check user membership or admin status
   useEffect(() => {
+    const checkMembership = async () => {
+      // Skip membership check if user is admin
+      if (user?.isAdmin) {
+        setIsUserMember(true);
+        return;
+      }
+
+      try {
+        const { data: membership, error } = await supabase
+          .from('workspace_members')
+          .select('*')
+          .eq('workspace_id', workspace.id)
+          .eq('user_id', user?.id)
+          .single();
+
+        if (error) {
+          console.error('Error checking membership:', error);
+          setIsUserMember(false);
+          return;
+        }
+
+        setIsUserMember(!!membership);
+      } catch (error) {
+        console.error('Failed to check membership:', error);
+        setIsUserMember(false);
+      }
+    };
+
+    checkMembership();
+  }, [workspace.id, user]);
+
+  // Check if current user is a member
+  useEffect(() => {
+    const checkMembership = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setIsUserMember(false);
+          setIsCheckingMembership(false);
+          return;
+        }
+
+        const { data: memberData, error } = await supabase
+          .from('workspace_members')
+          .select('*')
+          .eq('workspace_id', workspace.id)
+          .eq('user_id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error checking workspace membership:', error);
+          setIsUserMember(false);
+        } else {
+          setIsUserMember(!!memberData);
+        }
+      } catch (error) {
+        console.error('Failed to check membership:', error);
+        setIsUserMember(false);
+      } finally {
+        setIsCheckingMembership(false);
+      }
+    };
+
+    checkMembership();
+  }, [workspace.id]);
+
+   // Fetch project counts
+   useEffect(() => {
     const fetchProjectCounts = async () => {
       try {
         // Fetch all projects for this workspace
@@ -106,12 +185,22 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
     fetchMembersCount();
   }, [workspace.id, isMembersDialogOpen]); // Re-fetch when dialog closes
 
+  
+
   const handleClick = () => {
+    if ( !(user?.isAdmin || isUserMember)) {
+      toast({
+        title: "غير مصرح",
+        description: "عذراً، يجب أن تكون عضواً في مساحة العمل للوصول إليها",
+        variant: "destructive",
+      });
+      return;
+    }
     navigate(`/tasks/workspace/${workspace.id}`);
   };
 
   const handleManageMembers = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent navigation to the details page
+    e.stopPropagation();
     setIsMembersDialogOpen(true);
   };
 
@@ -119,12 +208,30 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
     setIsMembersDialogOpen(open);
   };
 
+  if (isCheckingMembership) {
+    return <div>Loading...</div>; // Or your loading component
+  }
+
   return (
     <>
+
+<TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
       <Card 
-        className="hover:shadow-md transition-shadow cursor-pointer"
+        className={`relative hover:shadow-md transition-shadow ${
+          isUserMember ? 'cursor-pointer' : 'cursor-not-allowed opacity-75' 
+        }`}
         onClick={handleClick}
       >
+        {!(user?.isAdmin || isUserMember) && (
+          <div className="absolute inset-0 bg-gray-100/50 flex items-center justify-center z-10">
+            <div className="bg-white p-3 rounded-full shadow-lg">
+              <Lock className="h-6 w-6 text-gray-500" />
+            </div>
+          </div>
+        )}
+        
         <CardContent className="p-6">
           <div className="mb-3">
             <h3 className="font-bold text-lg">{workspace.name}</h3>
@@ -172,6 +279,16 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
           </Button>
         </CardFooter>
       </Card>
+      </TooltipTrigger>
+        
+        {/* Show tooltip if user can't access */}
+        {!(user?.isAdmin || isUserMember) && (
+          <TooltipContent>
+            <p>يجب أن تكون عضوًا في المساحة للوصول</p>
+          </TooltipContent>
+        )}
+      </Tooltip>
+    </TooltipProvider>
 
       <WorkspaceMembersDialog 
         open={isMembersDialogOpen}
