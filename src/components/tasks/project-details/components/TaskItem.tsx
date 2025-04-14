@@ -69,7 +69,8 @@ export const TaskItem = ({
     projectId: task.project_id,
     workspaceId: task.workspace_id,
     createdBy: task.created_by,
-    isGeneral: task.is_general
+    isGeneral: task.is_general,
+    projectManager: task.project_manager // إضافة projectManager
   });
   
   const { dependencies, dependentTasks, checkDependenciesCompleted } = useTaskDependencies(task.id);
