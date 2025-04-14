@@ -1,4 +1,3 @@
-
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useParams } from "react-router-dom";
@@ -10,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { CreateTaskProjectDialog } from "@/components/tasks/projects/CreateTaskProjectDialog";
+import { useAuthStore } from "@/store/authStore"; // تم إضافة الاستيراد هنا
 
 const WorkspaceTaskProjects = () => {
   const { workspaceId } = useParams<{ workspaceId: string }>();
@@ -17,6 +17,9 @@ const WorkspaceTaskProjects = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+  
+  const [isWorkspaceAdmin, setIsWorkspaceAdmin] = useState<boolean>(false); // تم إضافة حالة جديدة للتحقق من دور المستخدم
+  const { user } = useAuthStore(); // تم إضافة استيراد حالة المستخدم
   
   useEffect(() => {
     const fetchWorkspaceName = async () => {
@@ -68,7 +71,26 @@ const WorkspaceTaskProjects = () => {
     
     fetchWorkspaceName();
   }, [workspaceId]);
-  
+
+  useEffect(() => {
+    const checkUserRole = async () => {
+      if (!workspaceId || !user?.id) return;
+      
+      const { data: memberData, error: memberError } = await supabase
+        .from('workspace_members')
+        .select('role')
+        .eq('workspace_id', workspaceId)
+        .eq('user_id', user.id)
+        .single();
+        
+      if (!memberError && memberData) {
+        setIsWorkspaceAdmin(memberData.role === 'admin');
+      }
+    };
+
+    checkUserRole();
+  }, [workspaceId, user?.id]); // تأكد من استدعاء checkUserRole عند تغير workspaceId أو user.id
+
   const handleCreateProject = () => {
     setIsDialogOpen(true);
   };
@@ -87,10 +109,12 @@ const WorkspaceTaskProjects = () => {
                   {workspaceName ? `مشاريع ${workspaceName}` : 'مشاريع مساحة العمل'}
                 </h1>
               )}
-              <Button onClick={handleCreateProject} className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                إنشاء مشروع جديد
-              </Button>
+              {isWorkspaceAdmin && (
+                <Button onClick={handleCreateProject} className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  إنشاء مشروع جديد
+                </Button>
+              )}
             </div>
             {workspaceId && !error && <TaskProjectsList workspaceId={workspaceId} />}
             {error && (
