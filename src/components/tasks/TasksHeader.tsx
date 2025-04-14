@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Calendar, Repeat } from "lucide-react";
+import { Plus, Search, Calendar, Repeat, Layout, BarChart2, ListTodo, GitBranch } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { CreateWorkspaceDialog } from "./CreateWorkspaceDialog";
@@ -59,9 +59,8 @@ export const TasksHeader = () => {
 
           if (error) throw error;
 
-          // تحويل البيانات إلى تنسيق ProjectMember
           const formattedMembers: ProjectMember[] = profiles.map(profile => ({
-            id: profile.id, // Make sure this is included for the ProjectMember type
+            id: profile.id,
             user_id: profile.id,
             user_display_name: profile.display_name,
             user_email: profile.email,
@@ -86,14 +85,41 @@ export const TasksHeader = () => {
   };
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4 mb-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="flex flex-col gap-4 mb-6">
+      <div className="flex justify-between items-center">
         <h1 className="text-xl sm:text-2xl font-bold">نظام إدارة المهام</h1>
-        {/* تعديل أزرار كل تبويب */}
+        
+        {/* أيقونات التنقل */}
+        <div className="flex items-center gap-6 overflow-x-auto pb-2">
+          <a href="#overview" className={`flex flex-col items-center gap-1 ${activeTab === 'overview' ? 'text-primary' : 'text-gray-500'}`}>
+            <ListTodo size={20} />
+            <span className="text-xs">نظرة عامة</span>
+          </a>
+          <a href="#workspaces" className={`flex flex-col items-center gap-1 ${activeTab === 'workspaces' ? 'text-primary' : 'text-gray-500'}`}>
+            <Layout size={20} />
+            <span className="text-xs">مساحات العمل</span>
+          </a>
+          <a href="#yearly-plan" className={`flex flex-col items-center gap-1 ${activeTab === 'yearly-plan' ? 'text-primary' : 'text-gray-500'}`}>
+            <Calendar size={20} />
+            <span className="text-xs">الخطة السنوية</span>
+          </a>
+          <a href="#reports" className={`flex flex-col items-center gap-1 ${activeTab === 'reports' ? 'text-primary' : 'text-gray-500'}`}>
+            <BarChart2 size={20} />
+            <span className="text-xs">التقارير</span>
+          </a>
+          <a href="#recurring" className={`flex flex-col items-center gap-1 ${activeTab === 'recurring' ? 'text-primary' : 'text-gray-500'}`}>
+            <GitBranch size={20} />
+            <span className="text-xs">المهام المتكررة</span>
+          </a>
+        </div>
+      </div>
+
+      {/* أزرار الإجراءات */}
+      <div className="flex justify-between items-center gap-4">
         {activeTab === 'workspaces' && (
           <Button
             onClick={() => setIsCreateDialogOpen(true)}
-            className="w-full sm:w-auto flex items-center gap-2 justify-center"
+            className="flex items-center gap-2"
           >
             <Plus className="h-4 w-4" />
             <span className="sm:inline">إنشاء مساحة عمل</span>
@@ -102,32 +128,29 @@ export const TasksHeader = () => {
         {activeTab === 'recurring' && (
           <Button
             onClick={() => setIsRecurringDialogOpen(true)}
-            className="w-full sm:w-auto flex items-center gap-2 justify-center"
+            className="flex items-center gap-2"
           >
             <Repeat className="h-4 w-4" />
             <span className="sm:inline">إضافة مهمة متكررة</span>
           </Button>
         )}
-      </div>
 
-      {(activeTab === 'workspaces' || activeTab === 'recurring') && (
-        <div className="relative w-full">
-          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-          <Input
-            placeholder={activeTab === 'recurring'
-              ? "بحث في المهام المتكررة..."
-              : "بحث..."}
-            className="pr-10 w-full"
-          />
-        </div>
-      )}
+        {(activeTab === 'workspaces' || activeTab === 'recurring') && (
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <Input
+              placeholder={activeTab === 'recurring' ? "بحث في المهام المتكررة..." : "بحث..."}
+              className="pr-10 w-full"
+            />
+          </div>
+        )}
+      </div>
 
       <CreateWorkspaceDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
       />
 
-      {/* Pass project members to RecurringTaskDialog */}
       <RecurringTaskDialog
         open={isRecurringDialogOpen}
         onOpenChange={setIsRecurringDialogOpen}
