@@ -12,7 +12,7 @@ export const Logo = () => {
       <img 
         src="/lovable-uploads/6e693a05-5355-4718-95b9-23327287d678.png" 
         alt="ديوان" 
-        className="h-16 sm:h-20 md:h-24 lg:h-28 object-contain cursor-pointer w-auto max-w-[200px] sm:max-w-[250px] md:max-w-[300px]"
+        className="h-24 sm:h-28 md:h-32 lg:h-36 object-contain cursor-pointer w-auto max-w-[250px] sm:max-w-[300px] md:max-w-[350px]"
         onClick={() => navigate("/")}
       />
     </div>
