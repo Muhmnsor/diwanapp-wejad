@@ -2,6 +2,8 @@ import { MessageCircle, Upload, Paperclip, Check, Clock, XCircle, FileDown, Penc
 import { Button } from "@/components/ui/button";
 import { useTaskButtonStates } from "../../hooks/useTaskButtonStates";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store/authStore"; // استيراد استخدام الحالة للمستخدم
+import { usePermissionCheck } from "@/hooks/usePermissionCheck"; // استيراد دالة التحقق من الصلاحيات
 
 interface TaskActionButtonsProps {
   currentStatus: string;
@@ -16,6 +18,8 @@ interface TaskActionButtonsProps {
   taskId: string;
   isGeneral?: boolean;
   requiresDeliverable?: boolean;
+  createdBy?: string; // إضافة الحقول الجديدة
+  projectManager?: string;
 }
 
 export const TaskActionButtons = ({
@@ -31,6 +35,8 @@ export const TaskActionButtons = ({
   taskId,
   isGeneral,
   requiresDeliverable,
+  createdBy,
+  projectManager,
 }: TaskActionButtonsProps) => {
   const { 
     hasNewDiscussion, 
@@ -39,11 +45,18 @@ export const TaskActionButtons = ({
     resetDiscussionFlag 
   } = useTaskButtonStates(taskId);
 
+  const { user } = useAuthStore(); // الحصول على بيانات المستخدم الحالي
+  const { canEdit } = usePermissionCheck({
+    createdBy,
+    projectManager,
+    isGeneral,
+  }); // التحقق من الصلاحيات بناءً على المستخدم
+
   console.log("Task button states for task", taskId, {
     hasNewDiscussion,
     hasDeliverables,
     hasTemplates,
-    requiresDeliverable
+    requiresDeliverable,
   });
 
   const handleDiscussionClick = () => {
@@ -128,8 +141,8 @@ export const TaskActionButtons = ({
       </div>
       
       <div className="flex flex-wrap gap-1 sm:gap-2">
-        {/* Edit button for general tasks */}
-        {isGeneral && onEdit && (
+        {/* Edit button based on permission */}
+        {canEdit && onEdit && (
           <Button 
             variant="outline" 
             size="sm" 
