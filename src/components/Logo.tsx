@@ -4,12 +4,17 @@ interface LogoProps {
   className?: string;
 }
 
-export const Logo = ({ className }: LogoProps) => {
+export const Logo = () => {
+  const navigate = useNavigate();
+
   return (
-    <img 
-      src="/lovable-uploads/8f06dc5f-92e3-4f27-8dbb-9769d6e9d178.png" 
-      alt="Logo" 
-      className={cn("w-16 h-16 logo object-contain mb-4", className)}
-    />
+    <div className="flex justify-center items-center w-full" dir="rtl">
+      <img 
+        src="/lovable-uploads/6e693a05-5355-4718-95b9-23327287d678.png" 
+        alt="ديوان" 
+        className="h-8 sm:h-10 md:h-12 lg:h-16 object-contain cursor-pointer w-auto max-w-[100px] sm:max-w-[150px] md:max-w-[200px]"
+        onClick={() => navigate("/")}
+      />
+    </div>
   );
 };
