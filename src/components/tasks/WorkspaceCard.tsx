@@ -40,6 +40,7 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
   });
   const [membersCount, setMembersCount] = useState(workspace.members_count || 0);
   const [isUserMember, setIsUserMember] = useState(false);
+  const [isWorkspaceAdmin, setIsWorkspaceAdmin] = useState(false); // إضافة حالة جديدة للتحقق من دور المستخدم
 
   const { user } = useAuthStore();
 
@@ -111,8 +112,8 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
     checkMembership();
   }, [workspace.id]);
 
-   // Fetch project counts
-   useEffect(() => {
+  // Fetch project counts
+  useEffect(() => {
     const fetchProjectCounts = async () => {
       try {
         // Fetch all projects for this workspace
@@ -185,7 +186,25 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
     fetchMembersCount();
   }, [workspace.id, isMembersDialogOpen]); // Re-fetch when dialog closes
 
-  
+  // Check user role in workspace
+  useEffect(() => {
+    const checkUserRole = async () => {
+      if (!user?.id) return;
+      
+      const { data, error } = await supabase
+        .from('workspace_members')
+        .select('role')
+        .eq('workspace_id', workspace.id)
+        .eq('user_id', user.id)
+        .single();
+        
+      if (!error && data) {
+        setIsWorkspaceAdmin(data.role === 'admin');
+      }
+    };
+    
+    checkUserRole();
+  }, [workspace.id, user?.id]);
 
   const handleClick = () => {
     if ( !(user?.isAdmin || isUserMember)) {
@@ -215,80 +234,82 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
   return (
     <>
 
-<TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-      <Card 
-        className={`relative hover:shadow-md transition-shadow ${
-          isUserMember ? 'cursor-pointer' : 'cursor-not-allowed opacity-75' 
-        }`}
-        onClick={handleClick}
-      >
-        {!(user?.isAdmin || isUserMember) && (
-          <div className="absolute inset-0 bg-gray-100/50 flex items-center justify-center z-10">
-            <div className="bg-white p-3 rounded-full shadow-lg">
-              <Lock className="h-6 w-6 text-gray-500" />
-            </div>
-          </div>
-        )}
-        
-        <CardContent className="p-6">
-          <div className="mb-3">
-            <h3 className="font-bold text-lg">{workspace.name}</h3>
-          </div>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Card 
+              className={`relative hover:shadow-md transition-shadow ${
+                isUserMember ? 'cursor-pointer' : 'cursor-not-allowed opacity-75' 
+              }`}
+              onClick={handleClick}
+            >
+              {!(user?.isAdmin || isUserMember) && (
+                <div className="absolute inset-0 bg-gray-100/50 flex items-center justify-center z-10">
+                  <div className="bg-white p-3 rounded-full shadow-lg">
+                    <Lock className="h-6 w-6 text-gray-500" />
+                  </div>
+                </div>
+              )}
+              
+              <CardContent className="p-6">
+                <div className="mb-3">
+                  <h3 className="font-bold text-lg">{workspace.name}</h3>
+                </div>
+                
+                <p className="text-gray-500 mb-4 text-sm line-clamp-2">
+                  {workspace.description || 'لا يوجد وصف'}
+                </p>
+                
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center text-sm">
+                    <div className="flex items-center gap-1">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      <span>{projectCounts.completed} مكتملة</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4 text-blue-500" />
+                      <span>{projectCounts.pending} جارية</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <PauseCircle className="h-4 w-4 text-orange-500" />
+                      <span>{projectCounts.stopped} متوقفة</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <AlertTriangle className="h-4 w-4 text-amber-500" />
+                      <span>{projectCounts.stalled} متعثرة</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+              
+              <CardFooter className="px-6 py-4 border-t flex justify-between">
+                <div className="flex items-center gap-1 text-sm text-gray-500">
+                  <Users className="h-4 w-4" />
+                  <span>{membersCount} عضو</span>
+                </div>
+                {(user?.isAdmin || isWorkspaceAdmin) && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="gap-1"
+                    onClick={handleManageMembers}
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    <span className="hidden sm:inline">إدارة الأعضاء</span>
+                  </Button>
+                )}
+              </CardFooter>
+            </Card>
+          </TooltipTrigger>
           
-          <p className="text-gray-500 mb-4 text-sm line-clamp-2">
-            {workspace.description || 'لا يوجد وصف'}
-          </p>
-          
-          <div className="space-y-4">
-            <div className="flex justify-between items-center text-sm">
-              <div className="flex items-center gap-1">
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                <span>{projectCounts.completed} مكتملة</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4 text-blue-500" />
-                <span>{projectCounts.pending} جارية</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <PauseCircle className="h-4 w-4 text-orange-500" />
-                <span>{projectCounts.stopped} متوقفة</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <AlertTriangle className="h-4 w-4 text-amber-500" />
-                <span>{projectCounts.stalled} متعثرة</span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-        
-        <CardFooter className="px-6 py-4 border-t flex justify-between">
-          <div className="flex items-center gap-1 text-sm text-gray-500">
-            <Users className="h-4 w-4" />
-            <span>{membersCount} عضو</span>
-          </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="gap-1"
-            onClick={handleManageMembers}
-          >
-            <UserPlus className="h-4 w-4" />
-            <span className="hidden sm:inline">إدارة الأعضاء</span>
-          </Button>
-        </CardFooter>
-      </Card>
-      </TooltipTrigger>
-        
-        {/* Show tooltip if user can't access */}
-        {!(user?.isAdmin || isUserMember) && (
-          <TooltipContent>
-            <p>يجب أن تكون عضوًا في المساحة للوصول</p>
-          </TooltipContent>
-        )}
-      </Tooltip>
-    </TooltipProvider>
+          {/* Show tooltip if user can't access */}
+          {!(user?.isAdmin || isUserMember) && (
+            <TooltipContent>
+              <p>يجب أن تكون عضوًا في المساحة للوصول</p>
+            </TooltipContent>
+          )}
+        </Tooltip>
+      </TooltipProvider>
 
       <WorkspaceMembersDialog 
         open={isMembersDialogOpen}
