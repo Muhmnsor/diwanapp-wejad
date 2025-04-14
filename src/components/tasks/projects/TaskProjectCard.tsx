@@ -59,6 +59,7 @@ export const TaskProjectCard = ({ project, onProjectUpdated }: TaskProjectCardPr
         onEdit={handleEditClick}
         onDelete={handleDeleteClick}
         onCopy={handleCopyClick}
+        workspaceId={project.workspace_id}
       />
       
       <CardContent className="p-6">
