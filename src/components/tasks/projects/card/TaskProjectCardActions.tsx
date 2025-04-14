@@ -1,14 +1,26 @@
-
 import { Button } from "@/components/ui/button";
 import { Copy, Edit, Trash2 } from "lucide-react";
+import { useWorkspacePermissions } from "@/hooks/tasks/useWorkspacePermissions";
 
 interface TaskProjectCardActionsProps {
   onEdit: (e: React.MouseEvent) => void;
   onDelete: (e: React.MouseEvent) => void;
   onCopy?: (e: React.MouseEvent) => void;
+  workspaceId: string;
 }
 
-export const TaskProjectCardActions = ({ onEdit, onDelete, onCopy }: TaskProjectCardActionsProps) => {
+export const TaskProjectCardActions = ({ 
+  onEdit, 
+  onDelete, 
+  onCopy, 
+  workspaceId 
+}: TaskProjectCardActionsProps) => {
+  const { canManageProjects } = useWorkspacePermissions(workspaceId);
+
+  if (!canManageProjects) {
+    return null;
+  }
+
   return (
     <div className="absolute top-2 left-2 flex gap-1 z-10 project-actions opacity-0 group-hover:opacity-100 transition-opacity">
       {onCopy && (
