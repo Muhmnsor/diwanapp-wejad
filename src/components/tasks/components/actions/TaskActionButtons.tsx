@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { useTaskButtonStates } from "../../hooks/useTaskButtonStates";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/authStore"; // استيراد استخدام الحالة للمستخدم
-import { usePermissionCheck } from "@/hooks/usePermissionCheck"; // استيراد دالة التحقق من الصلاحيات
+import { usePermissionCheck } from "@/components/tasks/project-details/hooks/usePermissionCheck";
+
 
 interface TaskActionButtonsProps {
   currentStatus: string;
