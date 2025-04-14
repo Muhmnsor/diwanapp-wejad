@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/refactored-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +8,7 @@ interface UsePermissionCheckProps {
   workspaceId?: string | null;
   createdBy?: string | null;
   isGeneral?: boolean;
+  projectManager?: string | null;
 }
 
 export const usePermissionCheck = ({ 
@@ -16,7 +16,8 @@ export const usePermissionCheck = ({
   projectId, 
   workspaceId, 
   createdBy,
-  isGeneral 
+  isGeneral,
+  projectManager
 }: UsePermissionCheckProps) => {
   const { user } = useAuthStore();
   const [canEdit, setCanEdit] = useState<boolean>(false);
@@ -143,7 +144,15 @@ export const usePermissionCheck = ({
     };
     
     checkPermission();
-  }, [user, assignedTo, projectId, workspaceId, createdBy, isGeneral]);
+  }, [user, assignedTo, projectId, workspaceId, createdBy, isGeneral, projectManager]);
   
-  return { canEdit };
+  // تحقق من صلاحيات المستخدم بناءً على الدور المحدد
+  const userHasPermission = user && (
+    user.role === 'admin' ||
+    user.role === 'مدير ادارة' ||
+    user.role === 'developer' ||
+    user.id === projectManager
+  );
+  
+  return { canEdit: canEdit || userHasPermission };
 };
