@@ -14,10 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const TopHeader = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const {
-    isAuthenticated,
-    user
-  } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const [activeTab, setActiveTab] = useState("overview");
   const [displayName, setDisplayName] = useState<string | null>(null);
 
@@ -100,36 +97,36 @@ export const TopHeader = () => {
             </div>}
 
           {isTasksPage && <div className="w-full bg-white border-t py-3">
-              <div className="flex justify-center">
-                <div className="flex gap-6 items-center">
+              <div className="flex justify-center overflow-x-auto">
+                <div className="flex gap-6 items-center min-w-max">
                   <Link to="/tasks#overview" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "overview" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`} onClick={() => handleTabChange("overview")}>
                     <LayoutDashboard className="h-4 w-4" />
-                    <span>لوحة المعلومات</span>
+                    <span className="hidden md:inline">لوحة المعلومات</span>
                   </Link>
                   
                   <Link to="/tasks#workspaces" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "workspaces" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`} onClick={() => handleTabChange("workspaces")}>
                     <FolderKanban className="h-4 w-4" />
-                    <span>مساحات العمل</span>
+                    <span className="hidden md:inline">مساحات العمل</span>
                   </Link>
 
                   <Link to="/general-tasks" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${location.pathname === "/general-tasks" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}>
                     <ClipboardList className="h-4 w-4" />
-                    <span>المهام العامة</span>
+                    <span className="hidden md:inline">المهام العامة</span>
                   </Link>
 
                   <Link to="/tasks#yearly-plan" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "yearly-plan" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`} onClick={() => handleTabChange("yearly-plan")}>
                     <Calendar className="h-4 w-4" />
-                    <span>الخطة السنوية</span>
+                    <span className="hidden md:inline">الخطة السنوية</span>
                   </Link>
                   
                   <Link to="/tasks#recurring" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "recurring" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`} onClick={() => handleTabChange("recurring")}>
                     <Repeat className="h-4 w-4" />
-                    <span>المهام المتكررة</span>
+                    <span className="hidden md:inline">المهام المتكررة</span>
                   </Link>
                   
                   <Link to="/tasks#reports" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "reports" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`} onClick={() => handleTabChange("reports")}>
                     <FileText className="h-4 w-4" />
-                    <span>التقارير</span>
+                    <span className="hidden md:inline">التقارير</span>
                   </Link>
                 </div>
               </div>
