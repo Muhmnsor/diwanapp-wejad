@@ -90,7 +90,7 @@ export const TasksHeader = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-xl sm:text-2xl font-bold">نظام إدارة المهام</h1>
         {/* تعديل أزرار كل تبويب */}
-        {activeTab === 'workspaces' && (
+        {activeTab === 'workspaces' && (user?.role === 'admin' || user?.role === 'مدير ادارة' || user?.role === 'developer') && (
           <Button
             onClick={() => setIsCreateDialogOpen(true)}
             className="w-full sm:w-auto flex items-center gap-2 justify-center"
