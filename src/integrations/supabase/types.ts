@@ -973,12 +973,18 @@ export type Database = {
       }
       correspondence: {
         Row: {
+          archive_date: string | null
+          archive_notes: string | null
+          archive_number: string | null
+          archived_at: string | null
           assigned_to: string | null
           content: string | null
           created_by: string | null
           creation_date: string | null
           date: string
+          deadline_date: string | null
           id: string
+          include_attachments_in_archive: boolean | null
           is_confidential: boolean | null
           number: string
           priority: string | null
@@ -992,12 +998,18 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          archive_date?: string | null
+          archive_notes?: string | null
+          archive_number?: string | null
+          archived_at?: string | null
           assigned_to?: string | null
           content?: string | null
           created_by?: string | null
           creation_date?: string | null
           date: string
+          deadline_date?: string | null
           id?: string
+          include_attachments_in_archive?: boolean | null
           is_confidential?: boolean | null
           number: string
           priority?: string | null
@@ -1011,12 +1023,18 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          archive_date?: string | null
+          archive_notes?: string | null
+          archive_number?: string | null
+          archived_at?: string | null
           assigned_to?: string | null
           content?: string | null
           created_by?: string | null
           creation_date?: string | null
           date?: string
+          deadline_date?: string | null
           id?: string
+          include_attachments_in_archive?: boolean | null
           is_confidential?: boolean | null
           number?: string
           priority?: string | null
@@ -3256,10 +3274,12 @@ export type Database = {
       }
       in_app_notifications: {
         Row: {
+          additional_data: string | null
           created_at: string
           id: string
           message: string
           notification_type: string
+          priority: string | null
           read: boolean
           related_entity_id: string | null
           related_entity_type: string | null
@@ -3267,10 +3287,12 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          additional_data?: string | null
           created_at?: string
           id?: string
           message: string
           notification_type: string
+          priority?: string | null
           read?: boolean
           related_entity_id?: string | null
           related_entity_type?: string | null
@@ -3278,10 +3300,12 @@ export type Database = {
           user_id: string
         }
         Update: {
+          additional_data?: string | null
           created_at?: string
           id?: string
           message?: string
           notification_type?: string
+          priority?: string | null
           read?: boolean
           related_entity_id?: string | null
           related_entity_type?: string | null
@@ -6170,6 +6194,38 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      saved_searches: {
+        Row: {
+          created_at: string
+          criteria: Json
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          criteria: Json
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          criteria?: Json
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_searches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "auth_users_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sequential_ids: {
         Row: {
