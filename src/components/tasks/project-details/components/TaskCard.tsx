@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,24 +11,28 @@ interface TaskCardProps {
   onStatusChange: (taskId: string, newStatus: string) => Promise<void>;
   onDelete: (taskId: string) => Promise<void>;
   onEdit: (task: Task) => void;
+  createdBy?: string;
+  projectManager?: string;
 }
 
-export const TaskCard = ({ 
-  task, 
+export const TaskCard = ({
+  task,
   onStatusChange,
   onDelete,
-  onEdit 
+  onEdit,
+  createdBy,
+  projectManager
 }: TaskCardProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   const handleStatusChange = (newStatus: string) => {
     onStatusChange(task.id, newStatus);
   };
-  
+
   const handleEdit = () => {
     onEdit(task);
   };
-  
+
   const handleDelete = async () => {
     if (isDeleting) {
       try {
@@ -42,7 +45,7 @@ export const TaskCard = ({
       setIsDeleting(true);
     }
   };
-  
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
@@ -57,7 +60,7 @@ export const TaskCard = ({
         return 'bg-gray-100 text-gray-600 border-gray-300';
     }
   };
-  
+
   const getStatusText = (status: string) => {
     switch (status) {
       case 'pending':
@@ -72,7 +75,7 @@ export const TaskCard = ({
         return status;
     }
   };
-  
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
@@ -85,7 +88,7 @@ export const TaskCard = ({
         return 'bg-gray-100 text-gray-600 border-gray-300';
     }
   };
-  
+
   const getPriorityText = (priority: string) => {
     switch (priority) {
       case 'high':
@@ -98,7 +101,16 @@ export const TaskCard = ({
         return priority;
     }
   };
-  
+
+  // Assuming useAuthStore and user type are defined elsewhere
+  // For the purpose of this example, we'll mock it
+  const useAuthStore = () => ({ user: { isAdmin: false, id: 'someUserId' } });
+  const { user } = useAuthStore();
+  const canEdit =
+    user?.isAdmin ||
+    user?.id === createdBy ||
+    user?.id === projectManager;
+
   return (
     <Card className="hover:shadow-md transition-shadow duration-200">
       <CardContent className="p-4">
@@ -110,11 +122,11 @@ export const TaskCard = ({
                 <Badge className={`${getStatusColor(task.status)}`}>
                   {getStatusText(task.status)}
                 </Badge>
-                
+
                 <Badge className={`${getPriorityColor(task.priority)}`}>
                   {getPriorityText(task.priority)}
                 </Badge>
-                
+
                 {task.category && (
                   <Badge variant="outline">
                     {task.category}
@@ -122,33 +134,35 @@ export const TaskCard = ({
                 )}
               </div>
             </div>
-            
-            <div className="flex gap-1">
-              <Button size="sm" variant="ghost" onClick={handleEdit}>
-                <Edit className="h-4 w-4" />
-              </Button>
-              <Button 
-                size="sm" 
-                variant="ghost" 
-                className={isDeleting ? "text-red-600" : ""}
-                onClick={handleDelete}
-              >
-                {isDeleting ? (
-                  <>
-                    <Trash className="h-4 w-4 text-red-600" />
-                    <span className="sr-only">تأكيد الحذف</span>
-                  </>
-                ) : (
-                  <Trash className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
+
+            {canEdit && (
+              <div className="flex gap-1">
+                <Button size="sm" variant="ghost" onClick={handleEdit}>
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className={isDeleting ? "text-red-600" : ""}
+                  onClick={handleDelete}
+                >
+                  {isDeleting ? (
+                    <>
+                      <Trash className="h-4 w-4 text-red-600" />
+                      <span className="sr-only">تأكيد الحذف</span>
+                    </>
+                  ) : (
+                    <Trash className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
-          
+
           {task.description && (
             <p className="text-gray-600 text-sm">{task.description}</p>
           )}
-          
+
           <div className="flex flex-wrap gap-3 text-sm text-gray-500">
             {task.due_date && (
               <div className="flex items-center">
@@ -156,7 +170,7 @@ export const TaskCard = ({
                 <span>تاريخ الإستحقاق: {formatDate(task.due_date)}</span>
               </div>
             )}
-            
+
             {task.assigned_to && task.assigned_user_name && (
               <div className="flex items-center">
                 <User className="h-4 w-4 mr-1" />
@@ -164,13 +178,13 @@ export const TaskCard = ({
               </div>
             )}
           </div>
-          
+
           {task.status !== 'completed' && (
             <div className="flex flex-wrap gap-2 pt-2">
               {task.status === 'pending' && (
-                <Button 
-                  size="sm" 
-                  variant="outline" 
+                <Button
+                  size="sm"
+                  variant="outline"
                   className="text-blue-600"
                   onClick={() => handleStatusChange('in_progress')}
                 >
@@ -178,10 +192,10 @@ export const TaskCard = ({
                   بدء العمل
                 </Button>
               )}
-              
-              <Button 
-                size="sm" 
-                variant="outline" 
+
+              <Button
+                size="sm"
+                variant="outline"
                 className="text-green-600"
                 onClick={() => handleStatusChange('completed')}
               >
