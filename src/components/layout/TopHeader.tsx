@@ -114,20 +114,24 @@ export const TopHeader = () => {
                     <span className="hidden md:inline">المهام العامة</span>
                   </Link>
 
-                  <Link to="/tasks#yearly-plan" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "yearly-plan" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`} onClick={() => handleTabChange("yearly-plan")}>
-                    <Calendar className="h-4 w-4" />
-                    <span className="hidden md:inline">الخطة السنوية</span>
-                  </Link>
-                  
-                  <Link to="/tasks#recurring" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "recurring" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`} onClick={() => handleTabChange("recurring")}>
-                    <Repeat className="h-4 w-4" />
-                    <span className="hidden md:inline">المهام المتكررة</span>
-                  </Link>
-                  
-                  <Link to="/tasks#reports" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "reports" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`} onClick={() => handleTabChange("reports")}>
-                    <FileText className="h-4 w-4" />
-                    <span className="hidden md:inline">التقارير</span>
-                  </Link>
+                  {(user?.isAdmin || user?.role === 'developer' || user?.role === 'admin') && (
+                    <>
+                      <Link to="/tasks#yearly-plan" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "yearly-plan" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`} onClick={() => handleTabChange("yearly-plan")}>
+                        <Calendar className="h-4 w-4" />
+                        <span className="hidden md:inline">الخطة السنوية</span>
+                      </Link>
+                      
+                      <Link to="/tasks#recurring" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "recurring" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`} onClick={() => handleTabChange("recurring")}>
+                        <Repeat className="h-4 w-4" />
+                        <span className="hidden md:inline">المهام المتكررة</span>
+                      </Link>
+                      
+                      <Link to="/tasks#reports" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "reports" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`} onClick={() => handleTabChange("reports")}>
+                        <FileText className="h-4 w-4" />
+                        <span className="hidden md:inline">التقارير</span>
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
             </div>}
