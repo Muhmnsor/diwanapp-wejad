@@ -100,16 +100,7 @@ return (
         {/* Left Section: Actions and Search */}
         <div className="flex flex-col sm:flex-row items-center gap-4 order-1 sm:order-2">
           <div className="flex flex-wrap gap-3">
-            {activeTab === 'workspaces' &&
-              (user?.role === 'admin' || user?.role === 'مدير ادارة' || user?.role === 'developer') && (
-                <Button
-                  onClick={() => setIsCreateDialogOpen(true)}
-                  className="bg-primary hover:bg-primary/90 flex items-center gap-2 justify-center w-full sm:w-auto"
-                >
-                  <Plus className="h-4 w-4 ml-2" />
-                  <span className="sm:inline">إنشاء مساحة عمل</span>
-                </Button>
-            )}
+
 
             {activeTab === 'recurring' && (
               <Button
@@ -132,6 +123,17 @@ return (
               />
             </div>
           )}
+
+                      {activeTab === 'workspaces' &&
+              (user?.role === 'admin' || user?.role === 'مدير ادارة' || user?.role === 'developer') && (
+                <Button
+                  onClick={() => setIsCreateDialogOpen(true)}
+                  className="bg-primary hover:bg-primary/90 flex items-center gap-2 justify-center w-full sm:w-auto"
+                >
+                  <Plus className="h-4 w-4 ml-2" />
+                  <span className="sm:inline">إنشاء مساحة عمل</span>
+                </Button>
+            )}
         </div>
       </div>
     </div>
