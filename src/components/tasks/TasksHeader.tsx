@@ -94,8 +94,6 @@ export const TasksHeader = () => {
 
           {/* Left Section: Title and Actions */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <h1 className="text-2xl font-bold text-gray-900">نظام إدارة المهام</h1>
-
             <div className="flex flex-wrap gap-3">
               {activeTab === 'workspaces' &&
                 (user?.role === 'admin' || user?.role === 'مدير ادارة' || user?.role === 'developer') && (
@@ -119,6 +117,7 @@ export const TasksHeader = () => {
                 </Button>
               )}
             </div>
+            <h1 className="text-2xl font-bold text-gray-900">نظام إدارة المهام</h1>
           </div>
 
           {/* Right Section: Search */}
