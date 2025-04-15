@@ -72,6 +72,15 @@ export const TaskItem = ({
     isGeneral: task.is_general,
     projectManager: task.project_manager // إضافة projectManager
   });
+
+    const { canDelete } = usePermissionCheck({
+    assignedTo: task.assigned_to,
+    projectId: task.project_id,
+    workspaceId: task.workspace_id,
+    createdBy: task.created_by,
+    isGeneral: task.is_general,
+    projectManager: task.project_manager
+  });
   
   const { dependencies, dependentTasks, checkDependenciesCompleted } = useTaskDependencies(task.id);
   
@@ -362,7 +371,7 @@ export const TaskItem = ({
               </Button>
             )}
             
-            {onDelete && canEdit && (
+           {canDelete && (
               <Button 
                 variant="ghost" 
                 size="sm" 
