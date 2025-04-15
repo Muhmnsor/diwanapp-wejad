@@ -55,12 +55,13 @@ export const TaskProjectCard = ({ project, onProjectUpdated }: TaskProjectCardPr
       className={`hover:shadow-md transition-shadow cursor-pointer relative group ${isDraft ? 'bg-gray-50/50 border-gray-300' : ''}`}
       onClick={handleClick}
     >
-      <TaskProjectCardActions
-        onEdit={handleEditClick}
-        onDelete={handleDeleteClick}
-        onCopy={handleCopyClick}
-        workspaceId={project.workspace_id}
-      />
+<TaskProjectCardActions
+  onEdit={handleEditClick}
+  onDelete={handleDeleteClick}
+  onCopy={handleCopyClick}
+  workspaceId={project.workspace_id}
+  projectId={project.id}
+/>
       
       <CardContent className="p-6">
         <div className="mb-3 flex justify-between items-start">
