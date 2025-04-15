@@ -18,7 +18,7 @@ export const useWorkspacePermissions = (workspaceId: string, projectId: string) 
         .eq('user_id', user.id)
         .single();
 
-      // Check if user is project manager  
+      // Check if user is project manager
       const { data: project } = await supabase
         .from('project_tasks')
         .select('project_manager')
