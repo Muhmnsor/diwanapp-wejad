@@ -1,7 +1,5 @@
-// src/components/TasksHeader.tsx
-
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Repeat } from "lucide-react";
+import { Plus, Search, Calendar, Repeat } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { CreateWorkspaceDialog } from "./CreateWorkspaceDialog";
@@ -19,6 +17,7 @@ export const TasksHeader = () => {
   const [projectMembers, setProjectMembers] = useState<ProjectMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Detect the active tab from URL hash
   useEffect(() => {
     const updateFromHash = () => {
       const hash = window.location.hash.replace('#', '');
@@ -35,13 +34,19 @@ export const TasksHeader = () => {
       }
     };
 
+    // Update initially
     updateFromHash();
+
+    // Add event listener for hash changes
     window.addEventListener('hashchange', updateFromHash);
+
+    // Cleanup
     return () => {
       window.removeEventListener('hashchange', updateFromHash);
     };
   }, []);
 
+  // جلب الأعضاء الذين يمكن إسناد المهام لهم
   useEffect(() => {
     const fetchAvailableUsers = async () => {
       if (activeTab === 'recurring' && isRecurringDialogOpen) {
@@ -54,8 +59,9 @@ export const TasksHeader = () => {
 
           if (error) throw error;
 
+          // تحويل البيانات إلى تنسيق ProjectMember
           const formattedMembers: ProjectMember[] = profiles.map(profile => ({
-            id: profile.id,
+            id: profile.id, // Make sure this is included for the ProjectMember type
             user_id: profile.id,
             user_display_name: profile.display_name,
             user_email: profile.email,
@@ -75,52 +81,66 @@ export const TasksHeader = () => {
     fetchAvailableUsers();
   }, [activeTab, isRecurringDialogOpen, user?.id]);
 
+  const handleRecurringDialogClosed = () => {
+    setIsRecurringDialogOpen(false);
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <h1 className="text-2xl font-bold text-gray-900">نظام إدارة المهام</h1>
+    <div className="flex flex-col sm:flex-row gap-4 mb-6">
+      {/* Header Container */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6">
 
-          <div className="flex flex-wrap gap-3">
-            {activeTab === 'workspaces' && 
-              (user?.role === 'admin' || user?.role === 'مدير ادارة' || user?.role === 'developer') && (
-              <Button 
-                onClick={() => setIsCreateDialogOpen(true)}
-                className="bg-primary hover:bg-primary/90"
-              >
-                <Plus className="h-4 w-4 ml-2" />
-                <span>إنشاء مساحة عمل</span>
-              </Button>
-            )}
+          {/* Left Section: Title and Actions */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <h1 className="text-2xl font-bold text-gray-900">نظام إدارة المهام</h1>
 
-            {activeTab === 'recurring' && (
-              <Button 
-                onClick={() => setIsRecurringDialogOpen(true)}
-                variant="secondary"
-              >
-                <Repeat className="h-4 w-4 ml-2" />
-                <span>إضافة مهمة متكررة</span>
-              </Button>
-            )}
+            <div className="flex flex-wrap gap-3">
+              {activeTab === 'workspaces' &&
+                (user?.role === 'admin' || user?.role === 'مدير ادارة' || user?.role === 'developer') && (
+                  <Button
+                    onClick={() => setIsCreateDialogOpen(true)}
+                    className="bg-primary hover:bg-primary/90 flex items-center gap-2 justify-center w-full sm:w-auto"
+                  >
+                    <Plus className="h-4 w-4 ml-2" />
+                    <span className="sm:inline">إنشاء مساحة عمل</span>
+                  </Button>
+                )}
+
+              {activeTab === 'recurring' && (
+                <Button
+                  onClick={() => setIsRecurringDialogOpen(true)}
+                  variant="secondary"
+                  className="flex items-center gap-2 justify-center w-full sm:w-auto"
+                >
+                  <Repeat className="h-4 w-4 ml-2" />
+                  <span className="sm:inline">إضافة مهمة متكررة</span>
+                </Button>
+              )}
+            </div>
           </div>
+
+          {/* Right Section: Search */}
+          {(activeTab === 'workspaces' || activeTab === 'recurring') && (
+            <div className="relative w-full lg:max-w-[320px]">
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <Input
+                placeholder={activeTab === 'recurring' ? "بحث في المهام المتكررة..." : "بحث..."}
+                className="pr-10 w-full bg-gray-50 border-gray-200 focus:border-primary/50 focus:ring-primary/50"
+              />
+            </div>
+          )}
         </div>
-
-        {(activeTab === 'workspaces' || activeTab === 'recurring') && (
-          <div className="relative w-full lg:max-w-[320px]">
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <Input
-              placeholder={activeTab === 'recurring' ? "بحث في المهام المتكررة..." : "بحث..."}
-              className="pr-10 w-full bg-gray-50 border-gray-200 focus:border-primary/50 focus:ring-primary/50"
-            />
-          </div>
-        )}
       </div>
 
+      {/* Dialogs */}
       <CreateWorkspaceDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
       />
 
+      {/* Pass project members to RecurringTaskDialog */}
       <RecurringTaskDialog
         open={isRecurringDialogOpen}
         onOpenChange={setIsRecurringDialogOpen}
