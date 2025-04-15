@@ -7,10 +7,11 @@ export const formatDateArabic = (dateString: string): string => {
   
   try {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-SA', {
+    return date.toLocaleDateString('en', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
+       calendar: 'gregory'
     });
   } catch (error) {
     console.error('Error formatting date:', error);
@@ -26,10 +27,11 @@ export const formatDate = (dateString: string): string => {
   
   try {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-SA', {
+    return date.toLocaleDateString('ar', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
+       calendar: 'gregory'
     });
   } catch (error) {
     console.error('Error formatting date:', error);
