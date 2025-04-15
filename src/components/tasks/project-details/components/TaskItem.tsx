@@ -65,7 +65,7 @@ export const TaskItem = ({
   const { user } = useAuthStore();
   
   const { canEdit } = usePermissionCheck({
-    assignedTo: task.assigned_to,
+    assignedTo: null,
     projectId: task.project_id,
     workspaceId: task.workspace_id,
     createdBy: task.created_by,
