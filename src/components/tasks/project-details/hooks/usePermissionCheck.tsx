@@ -155,5 +155,5 @@ export const usePermissionCheck = ({
     user.id === projectManager
   );
   
-  return { canEdit: canEdit || userHasPermission, canDelete  };
+  return { canEdit: canEdit || userHasPermission, canDelete };
 };
