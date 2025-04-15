@@ -239,7 +239,7 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
           <TooltipTrigger asChild>
             <Card 
             className={`relative hover:shadow-md transition-shadow ${
-              isUserMember || user?.isAdmin0 ? 'cursor-pointer' : 'cursor-not-allowed opacity-75'
+              isUserMember || user?.isAdmin ? 'cursor-pointer' : 'cursor-not-allowed opacity-75'
             }`}
               onClick={handleClick}
             >
