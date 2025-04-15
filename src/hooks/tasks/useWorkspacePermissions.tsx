@@ -1,39 +1,47 @@
-import { useAuthStore } from "@/store/authStore";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuthStore } from '@/store/refactored-auth';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
-export const useWorkspacePermissions = (workspaceId: string) => {
+export const useWorkspacePermissions = (workspaceId: string, projectId: string) => {
   const { user } = useAuthStore();
 
   const { data: permissions } = useQuery({
-    queryKey: ['workspace-permissions', workspaceId, user?.id],
+    queryKey: ['workspace-permissions', workspaceId, projectId],
     queryFn: async () => {
-      if (!user?.id) return { isManager: false, isAdmin: false };
+      if (!user?.id) return null;
 
       // Check if user is workspace manager
-      const { data: member } = await supabase
+      const { data: workspaceMember } = await supabase
         .from('workspace_members')
         .select('role')
         .eq('workspace_id', workspaceId)
         .eq('user_id', user.id)
         .single();
 
-      // Check if user is system admin
-      const { data: roles } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id);
+      // Check if user is project manager
+      const { data: project } = await supabase
+        .from('project_tasks')
+        .select('project_manager')
+        .eq('id', projectId)
+        .single();
 
-      const isAdmin = roles?.some(r => r.role === 'admin') || false;
-      const isManager = member?.role === 'manager' || false;
-
-      return { isManager, isAdmin };
+      return {
+        isSystemAdmin: user.isAdmin,
+        isWorkspaceManager: workspaceMember?.role === 'manager',
+        isProjectManager: project?.project_manager === user.id
+      };
     },
-    enabled: !!user?.id && !!workspaceId
+    enabled: !!user?.id && !!workspaceId && !!projectId
   });
 
-  const canManageProjects = permissions?.isManager || permissions?.isAdmin || false;
+  const canManageProject = !!permissions && (
+    permissions.isSystemAdmin ||
+    permissions.isWorkspaceManager ||
+    permissions.isProjectManager
+  );
 
-  return { canManageProjects };
+  return {
+    canManageProject,
+    ...permissions
+  };
 };
-
