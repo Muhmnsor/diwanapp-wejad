@@ -243,7 +243,7 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
               }`}
               onClick={handleClick}
             >
-              {!(user?.isAdmin || isUserMember) && (
+              {!isUserMember && (
                 <div className="absolute inset-0 bg-gray-100/50 flex items-center justify-center z-10">
                   <div className="bg-white p-3 rounded-full shadow-lg">
                     <Lock className="h-6 w-6 text-gray-500" />
