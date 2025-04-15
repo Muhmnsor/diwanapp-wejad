@@ -85,44 +85,46 @@ export const TasksHeader = () => {
     setIsRecurringDialogOpen(false);
   };
 
-  return (
-    <div className="flex flex-col sm:flex-row gap-4 mb-6">
-      {/* Header Container */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6">
+return (
+  <div className="flex flex-col sm:flex-row gap-4 mb-6">
+    {/* Header Container */}
+    <div className="bg-white rounded-lg shadow-sm p-6 w-full">
+      {/* Main Content with Flex */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
+        
+        {/* Right Section: Title */}
+        <h1 className="text-2xl font-bold text-gray-900 order-2 sm:order-1">
+          نظام إدارة المهام
+        </h1>
 
-          {/* Left Section: Title and Actions */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="flex flex-wrap gap-3">
-              {activeTab === 'workspaces' &&
-                (user?.role === 'admin' || user?.role === 'مدير ادارة' || user?.role === 'developer') && (
-                  <Button
-                    onClick={() => setIsCreateDialogOpen(true)}
-                    className="bg-primary hover:bg-primary/90 flex items-center gap-2 justify-center w-full sm:w-auto"
-                  >
-                    <Plus className="h-4 w-4 ml-2" />
-                    <span className="sm:inline">إنشاء مساحة عمل</span>
-                  </Button>
-                )}
-
-              {activeTab === 'recurring' && (
+        {/* Left Section: Actions and Search */}
+        <div className="flex flex-col sm:flex-row items-center gap-4 order-1 sm:order-2">
+          <div className="flex flex-wrap gap-3">
+            {activeTab === 'workspaces' &&
+              (user?.role === 'admin' || user?.role === 'مدير ادارة' || user?.role === 'developer') && (
                 <Button
-                  onClick={() => setIsRecurringDialogOpen(true)}
-                  variant="secondary"
-                  className="flex items-center gap-2 justify-center w-full sm:w-auto"
+                  onClick={() => setIsCreateDialogOpen(true)}
+                  className="bg-primary hover:bg-primary/90 flex items-center gap-2 justify-center w-full sm:w-auto"
                 >
-                  <Repeat className="h-4 w-4 ml-2" />
-                  <span className="sm:inline">إضافة مهمة متكررة</span>
+                  <Plus className="h-4 w-4 ml-2" />
+                  <span className="sm:inline">إنشاء مساحة عمل</span>
                 </Button>
-              )}
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900">نظام إدارة المهام</h1>
-          </div>
+            )}
 
-          {/* Right Section: Search */}
+            {activeTab === 'recurring' && (
+              <Button
+                onClick={() => setIsRecurringDialogOpen(true)}
+                variant="secondary"
+                className="flex items-center gap-2 justify-center w-full sm:w-auto"
+              >
+                <Repeat className="h-4 w-4 ml-2" />
+                <span className="sm:inline">إضافة مهمة متكررة</span>
+              </Button>
+            )}
+          </div>
+          
           {(activeTab === 'workspaces' || activeTab === 'recurring') && (
-            <div className="relative w-full lg:max-w-[320px]">
+            <div className="relative w-full sm:w-[320px]">
               <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
               <Input
                 placeholder={activeTab === 'recurring' ? "بحث في المهام المتكررة..." : "بحث..."}
@@ -132,22 +134,21 @@ export const TasksHeader = () => {
           )}
         </div>
       </div>
-
-      {/* Dialogs */}
-      <CreateWorkspaceDialog
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-      />
-
-      {/* Pass project members to RecurringTaskDialog */}
-      <RecurringTaskDialog
-        open={isRecurringDialogOpen}
-        onOpenChange={setIsRecurringDialogOpen}
-        projectMembers={projectMembers}
-        onRecurringTaskAdded={() => {
-          // Refresh recurring tasks list if needed
-        }}
-      />
     </div>
-  );
+
+    {/* Dialogs */}
+    <CreateWorkspaceDialog
+      open={isCreateDialogOpen}
+      onOpenChange={setIsCreateDialogOpen}
+    />
+    <RecurringTaskDialog
+      open={isRecurringDialogOpen}
+      onOpenChange={setIsRecurringDialogOpen}
+      projectMembers={projectMembers}
+      onRecurringTaskAdded={() => {
+        // Refresh recurring tasks list if needed
+      }}
+    />
+  </div>
+);
 };
