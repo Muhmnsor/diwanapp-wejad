@@ -1,6 +1,6 @@
 // src/components/tasks/projects/card/TaskProjectCardActions.tsx
 
-import { useWorkspacePermissions } from '@/hooks/useWorkspacePermissions';
+import { useWorkspacePermissions } from '@/hooks/tasks/useWorkspacePermissions';
 import { Button } from "@/components/ui/button";
 import { Copy, Edit, Trash2 } from "lucide-react";
 import React from 'react';
