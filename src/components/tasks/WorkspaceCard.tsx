@@ -238,9 +238,9 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
         <Tooltip>
           <TooltipTrigger asChild>
             <Card 
-              className={`relative hover:shadow-md transition-shadow ${
-                !(user?.isAdmin || isUserMember) ? 'cursor-pointer' : 'cursor-not-allowed opacity-75' 
-              }`}
+            className={`relative hover:shadow-md transition-shadow ${
+              isUserMember || user?.isAdmin0 ? 'cursor-pointer' : 'cursor-not-allowed opacity-75'
+            }`}
               onClick={handleClick}
             >
         {!(user?.isAdmin || isUserMember) && (
