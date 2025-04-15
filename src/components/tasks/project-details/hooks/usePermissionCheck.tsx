@@ -21,6 +21,7 @@ export const usePermissionCheck = ({
 }: UsePermissionCheckProps) => {
   const { user } = useAuthStore();
   const [canEdit, setCanEdit] = useState<boolean>(false);
+  const { canDelete } = useWorkspacePermissions(workspaceId || '', projectId || '');
   
   useEffect(() => {
     const checkPermission = async () => {
@@ -154,5 +155,5 @@ export const usePermissionCheck = ({
     user.id === projectManager
   );
   
-  return { canEdit: canEdit || userHasPermission };
+  return { canEdit: canEdit || userHasPermission, canDelete  };
 };
