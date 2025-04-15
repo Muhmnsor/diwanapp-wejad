@@ -7,7 +7,7 @@ export const formatDateArabic = (dateString: string): string => {
   
   try {
     const date = new Date(dateString);
-    return date.toLocaleDateString('ar-SA', {
+    return date.toLocaleDateString('en-SA', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -26,7 +26,7 @@ export const formatDate = (dateString: string): string => {
   
   try {
     const date = new Date(dateString);
-    return date.toLocaleDateString('ar-SA', {
+    return date.toLocaleDateString('en-SA', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
