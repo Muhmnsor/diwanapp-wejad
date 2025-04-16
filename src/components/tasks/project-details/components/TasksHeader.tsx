@@ -21,6 +21,13 @@ export const TasksHeader = ({ onAddTask, isGeneral, hideAddButton, hideTitle, pr
 
   useEffect(() => {
     const checkPermissions = async () => {
+      // إذا كانت المهمة عامة، اسمح لجميع المستخدمين بالإضافة
+      if (isGeneral) {
+        setCanAddTask(true);
+        return;
+      }
+
+      // تحقق من الصلاحيات للمشاريع
       if (!projectId || !user) return;
 
       const { data: projectData } = await supabase
@@ -38,7 +45,7 @@ export const TasksHeader = ({ onAddTask, isGeneral, hideAddButton, hideTitle, pr
     };
 
     checkPermissions();
-  }, [projectId, user]);
+  }, [projectId, user, isGeneral]);  // إضافة isGeneral للتبعيات
 
   // تعديل عرض الزر
   return (
