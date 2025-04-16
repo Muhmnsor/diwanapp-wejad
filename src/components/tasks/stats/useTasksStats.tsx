@@ -77,13 +77,14 @@ export const useTasksStats = () => {
       }).length;
       
       // Count tasks as delayed only if they're not completed and past due date
-      const delayedTasks = allAssignedTasks.filter(task => {
-        if (task.status === 'completed') return false;
-        if (!task.due_date) return false;
-        
-        const dueDate = new Date(task.due_date);
-        return dueDate < now;
-      }).length;
+const delayedTasks = allAssignedTasks.filter(task => {
+  // Only consider tasks that are in progress or pending
+  if (!['in_progress', 'pending'].includes(task.status)) return false;
+  if (!task.due_date) return false;
+  
+  const dueDate = new Date(task.due_date);
+  return dueDate < now;
+}).length;
       
       // Count tasks as upcoming only if they're not completed and due within the next week
       const upcomingDeadlines = allAssignedTasks.filter(task => {
