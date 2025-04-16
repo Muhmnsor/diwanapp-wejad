@@ -33,13 +33,13 @@ serve(async (req) => {
     const formattedDate = yesterday.toISOString().split('T')[0];
 
     // Call the function to mark absent employees
-    const { data, error } = await supabaseClient.rpc(
-      'mark_absent_employees',
-      {
-        p_date: formattedDate,
-        schedule_start_time: '08:00:00'
-      }
-    )
+const { data, error } = await supabaseClient.rpc(
+  'mark_absent_employees',
+  {
+    p_date: formattedDate,
+    p_default_schedule_id: null  // سيتم استخدام الجدول الخاص بكل موظف
+  }
+)
 
     if (error) throw error
 
