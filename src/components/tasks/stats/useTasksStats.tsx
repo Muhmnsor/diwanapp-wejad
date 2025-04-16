@@ -101,7 +101,7 @@ export const useTasksStats = () => {
         pendingTasks, 
         upcomingDeadlines,
         delayedTasks,
-        sumOfCategories: completedTasks + pendingTasks + delayedTasks + upcomingDeadlines
+        sumOfCategories: completedTasks + pendingTasks + upcomingDeadlines
       });
       
       // Log individual tasks to help identify issues
