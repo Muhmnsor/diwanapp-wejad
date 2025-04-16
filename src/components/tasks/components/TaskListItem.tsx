@@ -11,6 +11,8 @@ import { FileUploadDialog } from "./dialogs/FileUploadDialog";
 import { TaskTemplatesDialog } from "./dialogs/TaskTemplatesDialog";
 import { EditTaskDialog } from "../project-details/EditTaskDialog";
 import { TaskDependenciesDialog } from "../project-details/components/dependencies/TaskDependenciesDialog";
+import { useAuthStore } from "@/store/authStore";
+
 
 interface TaskListItemProps {
   task: Task;
