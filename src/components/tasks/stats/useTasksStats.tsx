@@ -27,11 +27,6 @@ export const useTasksStats = () => {
         };
       }
       
-      // Fetch tasks from portfolio_tasks table
-      const { data: userPortfolioTasks, error: portfolioError } = await supabase
-        .from('portfolio_tasks')
-        .select('status, due_date')
-        .eq('assigned_to', user.id);
       
       if (portfolioError) {
         console.error("Error fetching portfolio tasks stats:", portfolioError);
@@ -62,13 +57,11 @@ export const useTasksStats = () => {
       
       // Combine all tasks arrays
       const allAssignedTasks = [
-        ...(userPortfolioTasks || []), 
         ...(userTasks || []),
         ...(userSubtasks || [])
       ];
       
       console.log(`Found ${allAssignedTasks.length} tasks assigned to user ID: ${user.id}`);
-      console.log(`- Portfolio tasks: ${userPortfolioTasks?.length || 0}`);
       console.log(`- Regular tasks: ${userTasks?.length || 0}`);
       console.log(`- Subtasks: ${userSubtasks?.length || 0}`);
       
