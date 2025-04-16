@@ -106,7 +106,7 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task, onStatusChange 
         
         <div className="mt-auto">
 <TaskCommentForm
-  taskId={taskId}
+  taskId={task.id}
   task={task}
   onCommentAdded={handleCommentAdded}
   onTaskStatusChanged={handleStatusChange}
