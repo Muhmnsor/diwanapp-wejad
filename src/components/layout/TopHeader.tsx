@@ -10,24 +10,19 @@ import { Calendar, FolderKanban, LayoutDashboard, FileText, User, ClipboardList,
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-
 export const TopHeader = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { isAuthenticated, user } = useAuthStore();
+  const {
+    isAuthenticated,
+    user
+  } = useAuthStore();
   const [activeTab, setActiveTab] = useState("overview");
   const [displayName, setDisplayName] = useState<string | null>(null);
-
-  const isEventsPage = location.pathname === '/' || 
-                      location.pathname === '/dashboard' || 
-                      location.pathname.includes('/events') || 
-                      location.pathname.includes('/create-project') || 
-                      location.pathname.includes('/projects');
-
+  const isEventsPage = location.pathname === '/' || location.pathname === '/dashboard' || location.pathname.includes('/events') || location.pathname.includes('/create-project') || location.pathname.includes('/projects');
   const isEventOrProjectDetails = location.pathname.includes('/events/') || location.pathname.includes('/projects/');
   const isTasksPage = location.pathname.includes('/tasks') || location.pathname.includes('/portfolios') || location.pathname.includes('/portfolio-workspaces') || location.pathname.includes('/general-tasks');
   const isRequestsPage = location.pathname.includes('/requests');
-
   useEffect(() => {
     const fetchUserDisplayName = async () => {
       if (isAuthenticated && user) {
@@ -46,7 +41,6 @@ export const TopHeader = () => {
     };
     fetchUserDisplayName();
   }, [isAuthenticated, user]);
-
   useEffect(() => {
     if (isTasksPage) {
       const hash = window.location.hash.replace('#', '');
@@ -70,12 +64,10 @@ export const TopHeader = () => {
       }
     }
   }, [location.pathname, location.hash, isTasksPage, isRequestsPage, searchParams]);
-
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     window.location.hash = value;
   };
-
   return <div className="w-full bg-white border-b">
       <div className="w-full px-2 sm:container sm:mx-auto sm:px-4">
         <div className="flex flex-col" dir="rtl">
@@ -98,7 +90,7 @@ export const TopHeader = () => {
 
           {isTasksPage && <div className="w-full bg-white border-t py-3">
               <div className="flex justify-center overflow-x-auto">
-                <div className="flex gap-6 items-center min-w-max">
+                <div className="flex gap-1 items-center min-w-max">
                   <Link to="/tasks#overview" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "overview" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`} onClick={() => handleTabChange("overview")}>
                     <LayoutDashboard className="h-4 w-4" />
                     <span className="hidden md:inline">لوحة المعلومات</span>
@@ -114,8 +106,7 @@ export const TopHeader = () => {
                     <span className="hidden md:inline">المهام العامة</span>
                   </Link>
 
-                  {(user?.isAdmin || user?.role === 'developer' || user?.role === 'admin') && (
-                    <>
+                  {(user?.isAdmin || user?.role === 'developer' || user?.role === 'admin') && <>
                       <Link to="/tasks#yearly-plan" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "yearly-plan" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`} onClick={() => handleTabChange("yearly-plan")}>
                         <Calendar className="h-4 w-4" />
                         <span className="hidden md:inline">الخطة السنوية</span>
@@ -130,8 +121,7 @@ export const TopHeader = () => {
                         <FileText className="h-4 w-4" />
                         <span className="hidden md:inline">التقارير</span>
                       </Link>
-                    </>
-                  )}
+                    </>}
                 </div>
               </div>
             </div>}
@@ -149,8 +139,7 @@ export const TopHeader = () => {
                     <span>الطلبات الصادرة</span>
                   </Link>
 
-                  {(user?.isAdmin || user?.role === 'developer' || user?.role === 'admin') && (
-                    <>
+                  {(user?.isAdmin || user?.role === 'developer' || user?.role === 'admin') && <>
                       <Link to="/requests?tab=approvals" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "approvals" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}>
                         <ClipboardList className="h-4 w-4" />
                         <span>الاعتمادات</span>
@@ -160,8 +149,7 @@ export const TopHeader = () => {
                         <BarChart4 className="h-4 w-4" />
                         <span>لوحة الإدارة</span>
                       </Link>
-                    </>
-                  )}
+                    </>}
 
                   <Link to="/requests?tab=forms" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "forms" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}>
                     <FolderKanban className="h-4 w-4" />
