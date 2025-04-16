@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/refactored-auth";
 import { supabase } from "@/integrations/supabase/client";
-import {useWorkspacePermissions} from "@/hooks/tasks/useWorkspacePermissions";
+
 interface UsePermissionCheckProps {
   assignedTo?: string | null;
   projectId?: string | null;
@@ -21,7 +21,6 @@ export const usePermissionCheck = ({
 }: UsePermissionCheckProps) => {
   const { user } = useAuthStore();
   const [canEdit, setCanEdit] = useState<boolean>(false);
-  const { canDelete } = useWorkspacePermissions(workspaceId || '', projectId || '');
   
   useEffect(() => {
     const checkPermission = async () => {
@@ -155,5 +154,5 @@ export const usePermissionCheck = ({
     user.id === projectManager
   );
   
-  return { canEdit: canEdit || userHasPermission, canDelete  };
+  return { canEdit: canEdit || userHasPermission };
 };

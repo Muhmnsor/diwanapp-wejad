@@ -28,17 +28,20 @@ export const useWorkspacePermissions = (workspaceId: string, projectId: string) 
       return {
         isSystemAdmin: user.isAdmin,
         isWorkspaceManager: workspaceMember?.role === 'manager',
-        isProjectManager: project?.project_manager === user.id,
-        canDelete: user.isAdmin || 
-                  workspaceMember?.role === 'manager' || 
-                  project?.project_manager === user.id
+        isProjectManager: project?.project_manager === user.id
       };
     },
     enabled: !!user?.id && !!workspaceId && !!projectId
   });
 
+  const canManageProject = !!permissions && (
+    permissions.isSystemAdmin ||
+    permissions.isWorkspaceManager ||
+    permissions.isProjectManager
+  );
+
   return {
-    ...permissions,
-    canDelete: permissions?.canDelete || false
+    canManageProject,
+    ...permissions
   };
 };

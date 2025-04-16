@@ -73,7 +73,6 @@ export const TaskItem = ({
     projectManager: task.project_manager // إضافة projectManager
   });
   
-  
   const { dependencies, dependentTasks, checkDependenciesCompleted } = useTaskDependencies(task.id);
   
   const hasDependencies = dependencies.length > 0;
