@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+// Remove the .limit(100) and update the query
 export function useAttendanceRecords() {
   return useQuery({
     queryKey: ['attendance-records'],
@@ -13,11 +14,14 @@ export function useAttendanceRecords() {
           employees:employee_id (
             full_name,
             position,
-            department
+            department,
+            schedule_id
+          ),
+          schedules:employees(
+            schedule:schedule_id(*)
           )
         `)
-        .order('attendance_date', { ascending: false })
-        .limit(100);
+        .order('attendance_date', { ascending: false });
         
       if (error) throw error;
       return data || [];
