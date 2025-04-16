@@ -37,9 +37,9 @@ const { data, error } = await supabaseClient.rpc(
   'mark_absent_employees',
   {
     p_date: formattedDate,
-    p_default_schedule_id: null  // سيتم استخدام الجدول الخاص بكل موظف
+    p_default_schedule_id: null  // Will use employee-specific schedules
   }
-)
+);
 
     if (error) throw error
 
