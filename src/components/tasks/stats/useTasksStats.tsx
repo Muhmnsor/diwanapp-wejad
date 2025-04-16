@@ -27,11 +27,7 @@ export const useTasksStats = () => {
         };
       }
       
-      
-      if (portfolioError) {
-        console.error("Error fetching portfolio tasks stats:", portfolioError);
-        throw portfolioError;
-      }
+    
       
       // Fetch tasks from the regular tasks table
       const { data: userTasks, error: tasksError } = await supabase
