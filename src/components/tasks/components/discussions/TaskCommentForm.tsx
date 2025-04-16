@@ -100,9 +100,10 @@ export const TaskCommentForm = ({
       }
       
       // إذا كانت هذه هي أول مرة يتم فيها التعليق على المهمة وكانت المهمة في حالة "pending"، قم بتغيير حالتها إلى "in_progress"
-      if (task && task.status === "pending" && onTaskStatusChanged) {
-        await onTaskStatusChanged(actualTaskId, "in_progress");
-      }
+        if (task && task.status === "completed" && onTaskStatusChanged) {
+          await onTaskStatusChanged(actualTaskId, "pending");
+          toast.info("تم إعادة فتح المهمة بسبب إضافة تعليق جديد");
+        }
       
       toast.success("تمت إضافة التعليق بنجاح");
       setContent("");
