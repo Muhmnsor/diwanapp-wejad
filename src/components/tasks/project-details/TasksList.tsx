@@ -80,7 +80,11 @@ export const TasksList = ({
       
       <Card className="border shadow-sm">
         <CardHeader className="pb-0">
-          <TasksHeader onAddTask={() => setIsAddDialogOpen(true)} isGeneral={isGeneralBoolean} />
+          <TasksHeader 
+  onAddTask={() => setIsAddDialogOpen(true)} 
+  isGeneral={isGeneralBoolean}
+  projectId={projectId || ''} 
+/>
         </CardHeader>
         
         <CardContent className="pt-4">
