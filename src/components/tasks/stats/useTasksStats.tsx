@@ -66,7 +66,7 @@ export const useTasksStats = () => {
       oneWeekFromNow.setDate(now.getDate() + 7);
       
       // Calculate stats - each task goes into exactly one category for counting purposes
-      const totalTasks = allAssignedTasks.length;
+ 
       const completedTasks = allAssignedTasks.filter(task => task.status === 'completed').length;
       
       // Only count tasks with explicit pending status as pending
@@ -93,6 +93,8 @@ export const useTasksStats = () => {
         const dueDate = new Date(task.due_date);
         return dueDate > now && dueDate <= oneWeekFromNow;
       }).length;
+
+      const totalTasks = completedTasks + pendingTasks;
       
       // Log detailed stats to help with debugging
       console.log('Calculated user tasks stats:', { 
