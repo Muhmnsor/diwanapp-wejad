@@ -8,6 +8,7 @@ import { PaperclipIcon, SendHorizonal, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Task } from "../../types/task";
 import { TaskComment } from "../../types/taskComment";
+import { useAuthStore } from "@/store/authStore";
 
 interface TaskCommentFormProps {
   taskId?: string;
@@ -30,6 +31,7 @@ export const TaskCommentForm = ({
   const [attachment, setAttachment] = useState<File | null>(null);
   const [attachmentName, setAttachmentName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuthStore();
   
   // Get the taskId either from direct prop or from task object
   const actualTaskId = task?.id || taskId;
@@ -88,7 +90,7 @@ export const TaskCommentForm = ({
           attachment_name: attachmentFileName,
           attachment_type: attachmentType,
           task_table: taskTable,
-          created_by: user.user?.id
+          created_by: user?.id
         })
         .select()
         .single();
