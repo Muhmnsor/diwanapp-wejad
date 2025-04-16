@@ -87,7 +87,8 @@ export const TaskCommentForm = ({
           attachment_url: attachmentUrl,
           attachment_name: attachmentFileName,
           attachment_type: attachmentType,
-          task_table: taskTable
+          task_table: taskTable,
+          created_by: user.user?.id
         })
         .select()
         .single();
