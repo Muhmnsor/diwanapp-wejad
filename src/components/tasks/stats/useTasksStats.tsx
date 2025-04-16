@@ -42,7 +42,7 @@ export const useTasksStats = () => {
       
       // Fetch subtasks assigned to the user
       const { data: userSubtasks, error: subtasksError } = await supabase
-        .from('subtasks')
+        .from('task_subtasks')
         .select('status, due_date')
         .eq('assigned_to', user.id);
       
