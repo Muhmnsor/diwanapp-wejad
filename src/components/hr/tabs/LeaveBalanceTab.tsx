@@ -61,7 +61,7 @@ export function LeaveBalanceTab() {
               <div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm text-muted-foreground">المتبقي:</span>
+                  <span className="text-sm text-muted-foreground">المتبقي:</span>  
                 </div>
                 <div className="text-lg font-bold">{entitlement.remaining_days} يوم</div>
               </div>

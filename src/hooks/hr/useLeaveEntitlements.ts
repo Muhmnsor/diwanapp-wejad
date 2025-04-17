@@ -13,7 +13,6 @@ export interface LeaveEntitlement {
   remaining_days: number;
   leave_type?: {
     name: string;
-    code: string;
   };
 }
 
@@ -46,7 +45,7 @@ export function useLeaveEntitlements() {
         .from("hr_leave_entitlements")
         .select(`
           *,
-          leave_type:leave_type_id(name, code)
+          leave_type:leave_type_id(name)
         `)
         .eq("employee_id", employeeData.id)
         .eq("year", currentYear);
