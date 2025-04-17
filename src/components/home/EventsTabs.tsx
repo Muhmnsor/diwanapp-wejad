@@ -37,7 +37,7 @@ export const EventsTabs = ({
   };
   return <div dir="rtl" className="container mx-auto mt-12 my-[10px] px-0">
       <div className="relative">
-        <div className="flex justify-center mb-12">
+        <div className="flex justify-center mb-12 my-[21px]">
           <div className="inline-flex p-1 bg-muted rounded-lg">
             <Button variant="ghost" onClick={() => setActiveTab("upcoming")} className={`
                 relative px-6 py-2 rounded-md transition-all
