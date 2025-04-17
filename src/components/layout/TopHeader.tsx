@@ -71,7 +71,7 @@ export const TopHeader = () => {
   return <div className="w-full bg-white border-b">
       <div className="w-full px-2 sm:container sm:mx-auto sm:px-4">
         <div className="flex flex-col" dir="rtl">
-          <div className="flex flex-col xs:flex-row md:flex-row md:justify-between md:items-center py-2 md:py-4 gap-2 xs:gap-4">
+          <div className="flex flex-col xs:flex-row md:flex-row md:justify-between md:items-center md:py-4 gap-2 xs:gap-4 px-[14px] py-[2px]">
             <Logo />
             <div className="flex items-center justify-center gap-2 mt-1 xs:mt-0 md:mt-0 flex-wrap xs:flex-nowrap">
               {isAuthenticated && user && <div className="flex items-center gap-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md shadow-sm ms-2 py-2 px-3">
