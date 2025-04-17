@@ -7718,8 +7718,10 @@ export type Database = {
         Returns: boolean
       }
       check_attendance_status: {
-        Args: { check_in_time: string; schedule_start_time: string }
-        Returns: Record<string, unknown>
+        Args:
+          | { check_in_time: string; schedule_start_time: string }
+          | { p_employee_id: string; p_date: string }
+        Returns: Json
       }
       check_if_request_accessible: {
         Args: { request_id: string }

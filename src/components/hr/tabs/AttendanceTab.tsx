@@ -5,7 +5,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Calendar } from "lucide-react";
 import { AddAttendanceDialog } from "../dialogs/AddAttendanceDialog";
 import { AttendanceTable } from "../tables/AttendanceTable";
-import { SelfAttendanceTab } from "./SelfAttendanceTab";
+import { LeaveBalanceTab } from "./LeaveBalanceTab";
 import { LeavesManagement } from "../leaves/LeavesManagement";
 
 export function AttendanceTab() {
@@ -21,7 +21,7 @@ export function AttendanceTab() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full grid grid-cols-3">
           <TabsTrigger value="attendance">سجلات الحضور</TabsTrigger>
-          <TabsTrigger value="self-attendance">التسجيل الذاتي</TabsTrigger>
+          <TabsTrigger value="leave-balance">رصيد الإجازات</TabsTrigger>
           <TabsTrigger value="leaves">طلبات الإجازات</TabsTrigger>
         </TabsList>
         
@@ -36,8 +36,8 @@ export function AttendanceTab() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="self-attendance" className="mt-4">
-          <SelfAttendanceTab />
+        <TabsContent value="leave-balance" className="mt-4">
+          <LeaveBalanceTab />
         </TabsContent>
         
         <TabsContent value="leaves" className="mt-4">
