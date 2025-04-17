@@ -6,6 +6,7 @@ import { Calendar, BadgeCheck, Clock } from "lucide-react";
 
 export function LeaveBalanceTab() {
   const [employeeId, setEmployeeId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { getCurrentUserEmployee } = useUserEmployeeLink();
   
   useEffect(() => {
@@ -13,6 +14,10 @@ export function LeaveBalanceTab() {
       const result = await getCurrentUserEmployee();
       if (result.success && result.isLinked && result.employee) {
         setEmployeeId(result.employee.id);
+      } else if (!result.isLinked) {
+        setError("هذا المستخدم غير مرتبط بموظف");
+      } else if (result.error) {
+        setError("حدث خطأ في جلب بيانات الموظف");
       }
     };
     
@@ -21,6 +26,10 @@ export function LeaveBalanceTab() {
 
   const { data: leaveEntitlements, isLoading } = useLeaveEntitlements(employeeId);
 
+  if (error) {
+    return <div className="p-8 text-center text-red-500">{error}</div>;
+  }
+
   if (isLoading) {
     return <div className="p-8 text-center">جاري تحميل رصيد الإجازات...</div>;
   }
@@ -28,7 +37,7 @@ export function LeaveBalanceTab() {
   if (!leaveEntitlements?.length) {
     return (
       <div className="p-8 text-center text-muted-foreground">
-        لم يتم العثور على رصيد إجازات
+        لم يتم العثور على رصيد إجازات لهذه السنة
       </div>
     );
   }
