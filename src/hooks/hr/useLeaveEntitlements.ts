@@ -7,7 +7,7 @@ export interface LeaveEntitlement {
   employee_id: string;
   leave_type_id: string;
   year: number;
-  entitled_days: number;
+  total_days: number;
   used_days: number;
   remaining_days: number;
   leave_type?: {
