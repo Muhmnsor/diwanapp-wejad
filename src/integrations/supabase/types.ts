@@ -2190,7 +2190,9 @@ export type Database = {
         Row: {
           attendance_date: string
           check_in: string | null
+          check_in_schedule: string | null
           check_out: string | null
+          check_out_schedule: string | null
           created_at: string | null
           created_by: string | null
           early_departure_minutes: number | null
@@ -2205,7 +2207,9 @@ export type Database = {
         Insert: {
           attendance_date: string
           check_in?: string | null
+          check_in_schedule?: string | null
           check_out?: string | null
+          check_out_schedule?: string | null
           created_at?: string | null
           created_by?: string | null
           early_departure_minutes?: number | null
@@ -2220,7 +2224,9 @@ export type Database = {
         Update: {
           attendance_date?: string
           check_in?: string | null
+          check_in_schedule?: string | null
           check_out?: string | null
+          check_out_schedule?: string | null
           created_at?: string | null
           created_by?: string | null
           early_departure_minutes?: number | null
@@ -7711,6 +7717,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      check_attendance_status: {
+        Args: { check_in_time: string; schedule_start_time: string }
+        Returns: Record<string, unknown>
+      }
       check_if_request_accessible: {
         Args: { request_id: string }
         Returns: boolean
@@ -8004,7 +8014,7 @@ export type Database = {
         Returns: boolean
       }
       is_request_approver: {
-        Args: { step_id: string; user_id: string } | { step_id: string }
+        Args: { step_id: string } | { step_id: string; user_id: string }
         Returns: boolean
       }
       is_request_creator: {
@@ -8054,7 +8064,7 @@ export type Database = {
         Returns: string
       }
       mark_absent_employees: {
-        Args: { p_date?: string }
+        Args: { p_date?: string; p_default_schedule_id?: string }
         Returns: Json
       }
       record_employee_attendance: {

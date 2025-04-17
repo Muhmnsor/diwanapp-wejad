@@ -2,7 +2,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-// Remove the .limit(100) and update the query
 export function useAttendanceRecords() {
   return useQuery({
     queryKey: ['attendance-records'],
