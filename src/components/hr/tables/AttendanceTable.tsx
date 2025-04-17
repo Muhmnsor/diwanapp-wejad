@@ -50,26 +50,28 @@ export function AttendanceTable() {
     );
   }
 
-const getStatusBadge = (status: string, leftEarly: boolean, isTardy: boolean) => {
-  // إذا كان المستخدم غادر مبكرًا، نعرض شارة خاصة بذلك بغض النظر عن الحالة الأساسية
-  if (leftEarly) {
-    return <Badge variant="warning">مغادرة مبكرة</Badge>;
-  }
+  // Filter out entries with undefined employees to avoid "غير محدد" in the table
+  const validRecords = data.filter(record => record.employees && record.employees.full_name);
 
-  const statusMap: Record<string, { label: string; variant: "default" | "destructive" | "outline" | "secondary" | "warning" }> = {
-    present: { label: "حاضر", variant: "default" },
-    absent: { label: "غائب", variant: "destructive" },
-    late: { label: "متأخر", variant: "secondary" },
-    leave: { label: "إجازة", variant: "outline" }
+  const getStatusBadge = (status: string, leftEarly: boolean, isTardy: boolean) => {
+    if (leftEarly) {
+      return <Badge variant="warning">مغادرة مبكرة</Badge>;
+    }
+
+    const statusMap: Record<string, { label: string; variant: "default" | "destructive" | "outline" | "secondary" | "warning" }> = {
+      present: { label: "حاضر", variant: "default" },
+      absent: { label: "غائب", variant: "destructive" },
+      late: { label: "متأخر", variant: "secondary" },
+      leave: { label: "إجازة", variant: "outline" }
+    };
+
+    const { label, variant } = statusMap[status] || { label: status, variant: "default" };
+    return <Badge variant={variant}>{label}</Badge>;
   };
 
-  const { label, variant } = statusMap[status] || { label: status, variant: "default" };
-  return <Badge variant={variant}>{label}</Badge>;
-};
-
   // Prepare data for export
-  const exportData = data.map(record => ({
-    الموظف: record.employees?.full_name || 'غير محدد',
+  const exportData = validRecords.map(record => ({
+    الموظف: record.employees?.full_name || '',
     التاريخ: formatDateWithDay(record.attendance_date),
     وقت_الحضور: formatTime(record.check_in),
     وقت_الانصراف: formatTime(record.check_out),
@@ -82,6 +84,8 @@ const getStatusBadge = (status: string, leftEarly: boolean, isTardy: boolean) =>
 
   const canManageAttendance = permissions?.canManageAttendance || permissions?.isAdmin;
 
+  console.log('Valid attendance records:', validRecords.length);
+  
   return (
     <div>
       <div className="flex justify-end mb-4 gap-2">
@@ -102,33 +106,33 @@ const getStatusBadge = (status: string, leftEarly: boolean, isTardy: boolean) =>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((record) => (
-<TableRow key={record.id}>
-  <TableCell className="font-medium">
-    {record.employees?.full_name || 'غير محدد'}
-  </TableCell>
-  <TableCell>
-    {formatDateWithDay(record.attendance_date)}
-  </TableCell>
-  <TableCell>{formatTime(record.check_in)}</TableCell>
-  <TableCell>{formatTime(record.check_out)}</TableCell>
-  <TableCell>
-    {getStatusBadge(record.status, record.left_early, record.is_tardy)}
-    {record.is_tardy && record.tardiness_minutes > 0 && (
-      <div className="text-xs text-muted-foreground mt-1">
-        تأخر {record.tardiness_minutes} دقيقة
-      </div>
-    )}
-    {record.left_early && record.early_departure_minutes > 0 && (
-      <div className="text-xs text-muted-foreground mt-1">
-        غادر قبل الموعد بـ {record.early_departure_minutes} دقيقة
-      </div>
-    )}
-  </TableCell>
-  <TableCell className="max-w-[200px] truncate">
-    {record.notes || '-'}
-  </TableCell>
-</TableRow>
+            {validRecords.map((record) => (
+              <TableRow key={record.id}>
+                <TableCell className="font-medium">
+                  {record.employees?.full_name || ''}
+                </TableCell>
+                <TableCell>
+                  {formatDateWithDay(record.attendance_date)}
+                </TableCell>
+                <TableCell>{formatTime(record.check_in)}</TableCell>
+                <TableCell>{formatTime(record.check_out)}</TableCell>
+                <TableCell>
+                  {getStatusBadge(record.status, record.left_early, record.is_tardy)}
+                  {record.is_tardy && record.tardiness_minutes > 0 && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      تأخر {record.tardiness_minutes} دقيقة
+                    </div>
+                  )}
+                  {record.left_early && record.early_departure_minutes > 0 && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      غادر قبل الموعد بـ {record.early_departure_minutes} دقيقة
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell className="max-w-[200px] truncate">
+                  {record.notes || '-'}
+                </TableCell>
+              </TableRow>
             ))}
           </TableBody>
         </Table>

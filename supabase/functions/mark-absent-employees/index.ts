@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -5,29 +6,39 @@ const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 
 export const markAbsentEmployees = async () => {
-  // **تحسين:** تم إزالة هذا الاستعلام لأنه لا يستخدم في الكود الحالي
-  // const { data: workSchedules } = await supabase
-  //   .from('hr_work_schedules')
-  //   .select('*');
-
+  console.log('Starting automatic absence marking process');
+  
   const today = new Date();
   const dayOfWeek = today.getDay(); // 0: الأحد, 1: الاثنين, ..., 6: السبت
+  const dateString = today.toISOString().split('T')[0];
+  
+  console.log(`Processing for date: ${dateString}, day of week: ${dayOfWeek}`);
 
   // Get all active employees with their schedules
-  const { data: employees } = await supabase
+  const { data: employees, error: employeesError } = await supabase
     .from('employees')
     .select(`
       id,
+      full_name,
       schedule_id,
       default_schedule_id
     `)
     .eq('status', 'active');
 
+  if (employeesError) {
+    console.error('Error fetching employees:', employeesError);
+    throw employeesError;
+  }
+
+  console.log(`Found ${employees?.length || 0} active employees`);
+
   for (const employee of employees || []) {
+    console.log(`Processing employee: ${employee.full_name} (ID: ${employee.id})`);
+    
     const scheduleId = employee.schedule_id || employee.default_schedule_id;
 
     if (!scheduleId) {
-      console.warn(`لا يوجد جدول عمل محدد للموظف برقم التعريف: ${employee.id}`);
+      console.warn(`No schedule defined for employee: ${employee.full_name} (ID: ${employee.id})`);
       continue;
     }
 
@@ -40,12 +51,12 @@ export const markAbsentEmployees = async () => {
       .single();
 
     if (workDayError) {
-      console.error(`خطأ في استعلام أيام العمل للموظف ${employee.id} وجدول العمل ${scheduleId}:`, workDayError);
+      console.error(`Error querying work days for employee ${employee.full_name} (ID: ${employee.id}) with schedule ${scheduleId}:`, workDayError);
       continue;
     }
 
     if (!workDay?.is_working_day) {
-      // اليوم ليس يوم عمل لهذا الموظف، لذا ننتقل إلى الموظف التالي
+      console.log(`Today is not a working day for employee ${employee.full_name} (ID: ${employee.id})`);
       continue;
     }
 
@@ -54,31 +65,54 @@ export const markAbsentEmployees = async () => {
       .from('hr_attendance')
       .select('*')
       .eq('employee_id', employee.id)
-      .eq('attendance_date', today.toISOString().split('T')[0])
-      .single();
+      .eq('attendance_date', dateString);
 
     if (attendanceError) {
-      console.error(`خطأ في استعلام الحضور للموظف ${employee.id} بتاريخ ${today.toISOString().split('T')[0]}:`, attendanceError);
+      console.error(`Error querying attendance for employee ${employee.full_name} (ID: ${employee.id}) on date ${dateString}:`, attendanceError);
       continue;
     }
 
     // If no attendance record exists, mark as absent
-    if (!attendance) {
+    if (!attendance || attendance.length === 0) {
+      console.log(`No attendance record found for ${employee.full_name} (ID: ${employee.id}), marking as absent`);
+      
       const { error: insertError } = await supabase
         .from('hr_attendance')
         .insert({
           employee_id: employee.id,
-          attendance_date: today.toISOString().split('T')[0],
+          attendance_date: dateString,
           status: 'absent',
           notes: 'تم تسجيل الغياب تلقائياً',
-          created_by: null, // **ملاحظة:** قد تحتاج إلى تحديد المستخدم الذي قام بهذا الإجراء إذا كان ذلك مهمًا
+          created_by: null,
         });
 
       if (insertError) {
-        console.error(`خطأ في تسجيل الغياب للموظف ${employee.id}:`, insertError);
+        console.error(`Error marking absence for employee ${employee.full_name} (ID: ${employee.id}):`, insertError);
       } else {
-        console.log(`تم تسجيل غياب الموظف ${employee.id} تلقائيًا.`);
+        console.log(`Successfully marked employee ${employee.full_name} (ID: ${employee.id}) as absent`);
       }
+    } else {
+      console.log(`Attendance record already exists for ${employee.full_name} (ID: ${employee.id}) on ${dateString}`);
     }
   }
+  
+  console.log('Automatic absence marking process completed');
 };
+
+// Handler for when the function is invoked directly via HTTP request
+Deno.serve(async (req) => {
+  try {
+    console.log('Mark absent employees function invoked');
+    await markAbsentEmployees();
+    return new Response(
+      JSON.stringify({ success: true, message: 'Absent employees marked successfully' }),
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    console.error('Error in mark-absent-employees function:', error);
+    return new Response(
+      JSON.stringify({ success: false, error: error.message }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+});
