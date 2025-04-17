@@ -1,5 +1,7 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthStore } from "@/store/refactored-auth";
 
 export interface LeaveEntitlement {
   id: string;
@@ -15,21 +17,38 @@ export interface LeaveEntitlement {
   };
 }
 
-export function useLeaveEntitlements(employeeId?: string) {
+export function useLeaveEntitlements() {
+  const { user } = useAuthStore();
   const currentYear = new Date().getFullYear();
   
   return useQuery({
-    queryKey: ["leave-entitlements", employeeId, currentYear],
+    queryKey: ["leave-entitlements", user?.id, currentYear],
     queryFn: async () => {
-      if (!employeeId) return [];
+      if (!user?.id) return [];
       
+      const { data: employeeData, error: employeeError } = await supabase
+        .from("employees")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (employeeError) {
+        console.error("Error fetching employee:", employeeError);
+        throw employeeError;
+      }
+
+      if (!employeeData) {
+        console.log("No employee found for user");
+        return [];
+      }
+
       const { data, error } = await supabase
         .from("hr_leave_entitlements")
         .select(`
           *,
           leave_type:leave_type_id(name, code)
         `)
-        .eq("employee_id", employeeId)
+        .eq("employee_id", employeeData.id)
         .eq("year", currentYear);
 
       if (error) {
@@ -39,6 +58,6 @@ export function useLeaveEntitlements(employeeId?: string) {
 
       return data as LeaveEntitlement[];
     },
-    enabled: !!employeeId,
+    enabled: !!user?.id,
   });
 }

@@ -1,33 +1,21 @@
-import React, { useState, useEffect } from "react";
+
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLeaveEntitlements } from "@/hooks/hr/useLeaveEntitlements";
-import { useUserEmployeeLink } from "@/components/hr/useUserEmployeeLink";
 import { Calendar, BadgeCheck, Clock } from "lucide-react";
+import { useAuthStore } from "@/store/refactored-auth";
 
 export function LeaveBalanceTab() {
-  const [employeeId, setEmployeeId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const { getCurrentUserEmployee } = useUserEmployeeLink();
-  
-  useEffect(() => {
-    const fetchEmployeeId = async () => {
-      const result = await getCurrentUserEmployee();
-      if (result.success && result.isLinked && result.employee) {
-        setEmployeeId(result.employee.id);
-      } else if (!result.isLinked) {
-        setError("هذا المستخدم غير مرتبط بموظف");
-      } else if (result.error) {
-        setError("حدث خطأ في جلب بيانات الموظف");
-      }
-    };
-    
-    fetchEmployeeId();
-  }, []);
+  const { user } = useAuthStore();
+  const { data: leaveEntitlements, isLoading, error } = useLeaveEntitlements();
 
-  const { data: leaveEntitlements, isLoading } = useLeaveEntitlements(employeeId);
+  if (!user) {
+    return <div className="p-8 text-center text-red-500">يجب تسجيل الدخول لعرض رصيد الإجازات</div>;
+  }
 
   if (error) {
-    return <div className="p-8 text-center text-red-500">{error}</div>;
+    console.error("Leave entitlements error:", error);
+    return <div className="p-8 text-center text-red-500">حدث خطأ في جلب بيانات الإجازات</div>;
   }
 
   if (isLoading) {
