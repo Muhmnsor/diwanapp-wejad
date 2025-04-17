@@ -1,12 +1,24 @@
-
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLeaveEntitlements } from "@/hooks/hr/useLeaveEntitlements";
 import { useUserEmployeeLink } from "@/components/hr/useUserEmployeeLink";
 import { Calendar, BadgeCheck, Clock } from "lucide-react";
 
 export function LeaveBalanceTab() {
-  const { employeeId } = useUserEmployeeLink();
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
+  const { getCurrentUserEmployee } = useUserEmployeeLink();
+  
+  useEffect(() => {
+    const fetchEmployeeId = async () => {
+      const result = await getCurrentUserEmployee();
+      if (result.success && result.isLinked && result.employee) {
+        setEmployeeId(result.employee.id);
+      }
+    };
+    
+    fetchEmployeeId();
+  }, []);
+
   const { data: leaveEntitlements, isLoading } = useLeaveEntitlements(employeeId);
 
   if (isLoading) {
