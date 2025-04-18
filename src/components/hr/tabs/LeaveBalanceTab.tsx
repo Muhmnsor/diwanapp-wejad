@@ -11,12 +11,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
+import { useAuthStore } from "@/store/refactored-auth";
 
 export function LeaveBalanceTab() {
   const { data: leaveEntitlements, isLoading, error } = useLeaveEntitlements();
   const { data: permissions } = useHRPermissions();
+  const { user } = useAuthStore();
 
-  if (!permissions?.canManageLeaves) {
+  // First check if user is admin - they should always have access
+  const isAdmin = user?.isAdmin;
+
+  // Only block access if user is not admin AND doesn't have canManageLeaves permission
+  if (!isAdmin && !permissions?.canManageLeaves) {
     return (
       <div className="p-8 text-center text-red-500">
         عذراً، لا تملك صلاحية الوصول لهذه الصفحة
