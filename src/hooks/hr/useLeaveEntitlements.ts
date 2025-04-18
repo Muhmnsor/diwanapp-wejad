@@ -8,15 +8,14 @@ import { useHRPermissions } from "./useHRPermissions";
 export function useLeaveEntitlements() {
   const { user } = useAuthStore();
   const { data: permissions } = useHRPermissions();
-  const currentYear = new Date().getFullYear();
   
   return useQuery({
-    queryKey: ["leave-entitlements", user?.id, currentYear, permissions?.canManageLeaves],
+    queryKey: ["leave-entitlements", user?.id, permissions?.canManageLeaves, user?.isAdmin],
     queryFn: async () => {
       if (!user?.id) return [];
       
-      // If user has HR permissions, fetch all employees' entitlements
-      if (permissions?.canManageLeaves) {
+      // If user is admin or has HR permissions, fetch all employees' entitlements
+      if (user.isAdmin || permissions?.canManageLeaves) {
         const { data, error } = await supabase
           .from("hr_leave_entitlements")
           .select(`
@@ -26,8 +25,7 @@ export function useLeaveEntitlements() {
               id,
               full_name
             )
-          `)
-          .eq("year", currentYear);
+          `);
 
         if (error) {
           console.error("Error fetching leave entitlements:", error);
@@ -60,8 +58,7 @@ export function useLeaveEntitlements() {
           *,
           leave_type:leave_type_id(name)
         `)
-        .eq("employee_id", employeeData.id)
-        .eq("year", currentYear);
+        .eq("employee_id", employeeData.id);
 
       if (error) {
         console.error("Error fetching leave entitlements:", error);

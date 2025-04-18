@@ -46,27 +46,30 @@ export function LeaveBalanceTab() {
     );
   }
 
-  // Group entitlements by employee
+  // Group entitlements by employee and year
   const employeeBalances = leaveEntitlements?.reduce((acc, entitlement) => {
     const employeeId = entitlement.employee_id;
-    if (!acc[employeeId]) {
-      acc[employeeId] = {
+    const year = entitlement.year;
+    const key = `${employeeId}-${year}`;
+    
+    if (!acc[key]) {
+      acc[key] = {
         employee_name: (entitlement as any).employee?.full_name || "غير معروف",
         employee_id: employeeId,
+        year: year,
         annual_balance: 0,
         emergency_balance: 0
       };
     }
 
-    // Update balances based on leave type
     if (entitlement.leave_type?.name === "سنوية") {
-      acc[employeeId].annual_balance = entitlement.remaining_days;
+      acc[key].annual_balance = entitlement.remaining_days;
     } else if (entitlement.leave_type?.name === "اضطرارية") {
-      acc[employeeId].emergency_balance = entitlement.remaining_days;
+      acc[key].emergency_balance = entitlement.remaining_days;
     }
 
     return acc;
-  }, {} as Record<string, { employee_name: string; employee_id: string; annual_balance: number; emergency_balance: number; }>);
+  }, {} as Record<string, { employee_name: string; employee_id: string; year: number; annual_balance: number; emergency_balance: number; }>);
 
   return (
     <div className="space-y-4 p-4">
@@ -76,15 +79,19 @@ export function LeaveBalanceTab() {
           <TableHeader>
             <TableRow>
               <TableHead>اسم الموظف</TableHead>
+              <TableHead>السنة</TableHead>
               <TableHead>رصيد الإجازة السنوية</TableHead>
               <TableHead>رصيد الإجازة الاضطرارية</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {Object.values(employeeBalances || {}).map((balance) => (
-              <TableRow key={balance.employee_id}>
+              <TableRow key={`${balance.employee_id}-${balance.year}`}>
                 <TableCell className="font-medium">
                   {balance.employee_name}
+                </TableCell>
+                <TableCell>
+                  {balance.year}
                 </TableCell>
                 <TableCell>
                   {balance.annual_balance} يوم
