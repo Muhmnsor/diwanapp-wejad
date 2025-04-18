@@ -1,74 +1,96 @@
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLeaveEntitlements } from "@/hooks/hr/useLeaveEntitlements";
-import { Calendar, BadgeCheck, Clock } from "lucide-react";
-import { useAuthStore } from "@/store/refactored-auth";
+import { useHRPermissions } from "@/hooks/hr/useHRPermissions";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Loader2 } from "lucide-react";
 
 export function LeaveBalanceTab() {
-  const { user } = useAuthStore();
   const { data: leaveEntitlements, isLoading, error } = useLeaveEntitlements();
+  const { data: permissions } = useHRPermissions();
 
-  if (!user) {
-    return <div className="p-8 text-center text-red-500">يجب تسجيل الدخول لعرض رصيد الإجازات</div>;
-  }
-
-  if (error) {
-    console.error("Leave entitlements error:", error);
-    return <div className="p-8 text-center text-red-500">حدث خطأ في جلب بيانات الإجازات</div>;
-  }
-
-  if (isLoading) {
-    return <div className="p-8 text-center">جاري تحميل رصيد الإجازات...</div>;
-  }
-
-  if (!leaveEntitlements?.length) {
+  if (!permissions?.canManageLeaves) {
     return (
-      <div className="p-8 text-center text-muted-foreground">
-        لم يتم العثور على رصيد إجازات لهذه السنة
+      <div className="p-8 text-center text-red-500">
+        عذراً، لا تملك صلاحية الوصول لهذه الصفحة
       </div>
     );
   }
 
+  if (error) {
+    return (
+      <div className="p-8 text-center text-red-500">
+        حدث خطأ في جلب بيانات الإجازات
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Group entitlements by employee
+  const employeeBalances = leaveEntitlements?.reduce((acc, entitlement) => {
+    const employeeId = entitlement.employee_id;
+    if (!acc[employeeId]) {
+      acc[employeeId] = {
+        employee_name: (entitlement as any).employee?.full_name || "غير معروف",
+        employee_id: employeeId,
+        annual_balance: 0,
+        emergency_balance: 0
+      };
+    }
+
+    // Update balances based on leave type
+    if (entitlement.leave_type?.name === "سنوية") {
+      acc[employeeId].annual_balance = entitlement.remaining_days;
+    } else if (entitlement.leave_type?.name === "اضطرارية") {
+      acc[employeeId].emergency_balance = entitlement.remaining_days;
+    }
+
+    return acc;
+  }, {} as Record<string, { employee_name: string; employee_id: string; annual_balance: number; emergency_balance: number; }>);
+
   return (
-    <div className="grid gap-4 md:grid-cols-3">
-      {leaveEntitlements.map((entitlement) => (
-        <Card key={entitlement.id}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {entitlement.leave_type?.name}
-            </CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div>
-                <div className="flex items-center gap-2">
-                  <BadgeCheck className="h-4 w-4 text-green-500" />
-                  <span className="text-sm text-muted-foreground">الرصيد الكلي:</span>
-                </div>
-                <div className="text-lg font-bold">{entitlement.total_days} يوم</div>
-              </div>
-
-              <div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-yellow-500" />
-                  <span className="text-sm text-muted-foreground">المستخدم:</span>
-                </div>
-                <div className="text-lg font-bold">{entitlement.used_days} يوم</div>
-              </div>
-
-              <div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm text-muted-foreground">المتبقي:</span>  
-                </div>
-                <div className="text-lg font-bold">{entitlement.remaining_days} يوم</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+    <div className="space-y-4 p-4">
+      <h2 className="text-2xl font-bold mb-6">أرصدة إجازات الموظفين</h2>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>اسم الموظف</TableHead>
+              <TableHead>رصيد الإجازة السنوية</TableHead>
+              <TableHead>رصيد الإجازة الاضطرارية</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Object.values(employeeBalances || {}).map((balance) => (
+              <TableRow key={balance.employee_id}>
+                <TableCell className="font-medium">
+                  {balance.employee_name}
+                </TableCell>
+                <TableCell>
+                  {balance.annual_balance} يوم
+                </TableCell>
+                <TableCell>
+                  {balance.emergency_balance} يوم
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }
