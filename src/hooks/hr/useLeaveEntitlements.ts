@@ -56,7 +56,7 @@ export function useLeaveEntitlements() {
         .from("hr_leave_entitlements")
         .select(`
           *,
-          leave_type:leave_type_id(name)
+          leave_type:leave_type_id(id, name)
         `)
         .eq("employee_id", employeeData.id);
 
