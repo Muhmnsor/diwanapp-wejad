@@ -15,6 +15,7 @@ export interface LeaveEntitlement {
   used_days: number;
   remaining_days: number;
   leave_type?: {
+    id: string;
     name: string;
   };
 }
