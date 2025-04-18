@@ -48,8 +48,7 @@ export function AddLeaveDialog() {
       const formattedData = {
         ...data,
         start_date: data.start_date.toISOString().split('T')[0],
-        end_date: data.end_date.toISOString().split('T')[0],
-        leave_type_id: leaveTypes.find(t => t.code === data.leave_type)?.id
+        end_date: data.end_date.toISOString().split('T')[0]
       };
 
       const { error } = await supabase

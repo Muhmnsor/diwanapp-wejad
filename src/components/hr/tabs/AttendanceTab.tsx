@@ -7,7 +7,6 @@ import { AddAttendanceDialog } from "../dialogs/AddAttendanceDialog";
 import { AttendanceTable } from "../tables/AttendanceTable";
 import { LeaveBalanceTab } from "./LeaveBalanceTab";
 import { LeavesManagement } from "../leaves/LeavesManagement";
-import { LeaveSystemTester } from "../leaves/LeaveSystemTester";
 
 export function AttendanceTab() {
   const [activeTab, setActiveTab] = useState("attendance");
@@ -20,11 +19,10 @@ export function AttendanceTab() {
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full grid grid-cols-4">
+        <TabsList className="w-full grid grid-cols-3">
           <TabsTrigger value="attendance">سجلات الحضور</TabsTrigger>
           <TabsTrigger value="leave-balance">رصيد الإجازات</TabsTrigger>
           <TabsTrigger value="leaves">طلبات الإجازات</TabsTrigger>
-          <TabsTrigger value="test">اختبار النظام</TabsTrigger>
         </TabsList>
         
         <TabsContent value="attendance" className="mt-4">
@@ -44,10 +42,6 @@ export function AttendanceTab() {
         
         <TabsContent value="leaves" className="mt-4">
           <LeavesManagement />
-        </TabsContent>
-
-        <TabsContent value="test" className="mt-4">
-          <LeaveSystemTester />
         </TabsContent>
       </Tabs>
     </div>

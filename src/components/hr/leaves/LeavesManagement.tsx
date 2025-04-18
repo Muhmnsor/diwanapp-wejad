@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { AddLeaveRequestDialog } from "./AddLeaveRequestDialog";
 import { LeavesTable } from "../tables/LeavesTable";
-import { toast } from "@/components/ui/use-toast";
 
 export function LeavesManagement() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -24,30 +23,7 @@ export function LeavesManagement() {
           <CardTitle>طلبات الإجازات</CardTitle>
         </CardHeader>
         <CardContent>
-           <LeavesTable 
-             onApproveSuccess={() => {
-               toast({
-                 title: "تمت الموافقة على الإجازة",
-                 description: "تم تحديث رصيد الإجازات بنجاح",
-                 variant: "default",
-               });
-             }}
-             onApproveError={(error) => {
-               console.error("Error approving leave:", error);
-               toast({
-                 title: "حدث خطأ",
-                 description: "لم نتمكن من تحديث حالة الاجازة",
-                 variant: "destructive",
-               });
-             }}
-             onRejectSuccess={() => {
-               toast({
-                 title: "تم رفض الإجازة",
-                 description: "تم تحديث حالة الإجازة بنجاح",
-                 variant: "default",
-               });
-             }}
-           />
+           <LeavesTable />
         </CardContent>
       </Card>
 

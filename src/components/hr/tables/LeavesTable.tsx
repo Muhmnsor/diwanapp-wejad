@@ -86,13 +86,9 @@ const getLeaveTypeName = (typeId: string) => {
     setUpdating(id);
     try {
       const { error } = await supabase
-  .from("hr_leave_requests")
-  .update({
-    status,
-    approved_at: status === "approved" ? new Date().toISOString() : null,
-    approved_by: status === "approved" ? user.id : null
-  })
-  .eq("id", id);
+        .from("hr_leave_requests")
+        .update({ status })
+        .eq("id", id);
 
       if (error) throw error;
 

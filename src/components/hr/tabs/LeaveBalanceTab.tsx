@@ -62,10 +62,9 @@ export function LeaveBalanceTab() {
       };
     }
 
-    // Now checking for both name and id to ensure proper mapping
-    if (entitlement.leave_type?.name === "سنوية" || entitlement.leave_type?.id === "annual") {
+    if (entitlement.leave_type?.name === "سنوية") {
       acc[key].annual_balance = entitlement.remaining_days;
-    } else if (entitlement.leave_type?.name === "اضطرارية" || entitlement.leave_type?.id === "emergency") {
+    } else if (entitlement.leave_type?.name === "اضطرارية") {
       acc[key].emergency_balance = entitlement.remaining_days;
     }
 
