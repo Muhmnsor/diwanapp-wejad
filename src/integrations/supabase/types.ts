@@ -2548,6 +2548,36 @@ export type Database = {
           },
         ]
       }
+      hr_leave_balance_logs: {
+        Row: {
+          action_type: string
+          details: Json | null
+          employee_id: string
+          id: string
+          leave_type: string
+          logged_at: string | null
+          year: number
+        }
+        Insert: {
+          action_type: string
+          details?: Json | null
+          employee_id: string
+          id?: string
+          leave_type: string
+          logged_at?: string | null
+          year: number
+        }
+        Update: {
+          action_type?: string
+          details?: Json | null
+          employee_id?: string
+          id?: string
+          leave_type?: string
+          logged_at?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
       hr_leave_entitlements: {
         Row: {
           created_at: string | null
