@@ -2548,6 +2548,36 @@ export type Database = {
           },
         ]
       }
+      hr_leave_balance_logs: {
+        Row: {
+          action_type: string
+          details: Json | null
+          employee_id: string
+          id: string
+          leave_type: string
+          logged_at: string | null
+          year: number
+        }
+        Insert: {
+          action_type: string
+          details?: Json | null
+          employee_id: string
+          id?: string
+          leave_type: string
+          logged_at?: string | null
+          year: number
+        }
+        Update: {
+          action_type?: string
+          details?: Json | null
+          employee_id?: string
+          id?: string
+          leave_type?: string
+          logged_at?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
       hr_leave_entitlements: {
         Row: {
           created_at: string | null
@@ -2666,6 +2696,8 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_paid: boolean | null
+          is_partial: boolean | null
+          is_repeatable: boolean | null
           max_days_per_year: number | null
           name: string
           requires_approval: boolean | null
@@ -2680,6 +2712,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_paid?: boolean | null
+          is_partial?: boolean | null
+          is_repeatable?: boolean | null
           max_days_per_year?: number | null
           name: string
           requires_approval?: boolean | null
@@ -2694,6 +2728,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_paid?: boolean | null
+          is_partial?: boolean | null
+          is_repeatable?: boolean | null
           max_days_per_year?: number | null
           name?: string
           requires_approval?: boolean | null
@@ -7709,6 +7745,10 @@ export type Database = {
         }
         Returns: Json
       }
+      calculate_leave_days: {
+        Args: { start_date: string; end_date: string }
+        Returns: number
+      }
       can_delete_request: {
         Args: { p_request_id: string }
         Returns: boolean
@@ -8030,6 +8070,12 @@ export type Database = {
       is_step_approver: {
         Args: { step_id: string }
         Returns: boolean
+      }
+      log_leave_balance_update: {
+        Args:
+          | { p_employee_id: string; p_leave_type: string; p_year: number }
+          | { p_employee_id: string; p_leave_type_id: string; p_year: number }
+        Returns: Json
       }
       log_request_approval_action: {
         Args: {
