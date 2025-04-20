@@ -29,6 +29,7 @@ export interface Task {
   project_name?: string | null;
   workspace_id?: string | null;
   workspace_name?: string | null;
+  project_manager?: string | null;
   // Subtask properties
   is_subtask?: boolean;
   parent_task_id?: string | null;
@@ -42,5 +43,6 @@ export interface Task {
   dependency_type?: DependencyType;
   // Required deliverables flag
   requires_deliverable?: boolean;
+  // Order position for drag and drop functionality
   order_position?: number;
 }

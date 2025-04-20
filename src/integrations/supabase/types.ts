@@ -6891,6 +6891,7 @@ export type Database = {
           id: string
           is_general: boolean | null
           meeting_id: string | null
+          order_position: number | null
           priority: string | null
           project_id: string | null
           requires_deliverable: boolean | null
@@ -6912,6 +6913,7 @@ export type Database = {
           id?: string
           is_general?: boolean | null
           meeting_id?: string | null
+          order_position?: number | null
           priority?: string | null
           project_id?: string | null
           requires_deliverable?: boolean | null
@@ -6933,6 +6935,7 @@ export type Database = {
           id?: string
           is_general?: boolean | null
           meeting_id?: string | null
+          order_position?: number | null
           priority?: string | null
           project_id?: string | null
           requires_deliverable?: boolean | null
@@ -8157,6 +8160,10 @@ export type Database = {
       update_request_after_rejection: {
         Args: { p_request_id: string; p_step_id: string }
         Returns: Json
+      }
+      update_task_order: {
+        Args: { task_id: string; new_position: number }
+        Returns: undefined
       }
       update_workspace_members_count: {
         Args: { workspace_id: string }
