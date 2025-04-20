@@ -42,4 +42,5 @@ export interface Task {
   dependency_type?: DependencyType;
   // Required deliverables flag
   requires_deliverable?: boolean;
+  order_position?: number;
 }
