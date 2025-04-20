@@ -1,7 +1,7 @@
+import React, { useState, useEffect } from "react";
 import { Calendar, Users, Check, Clock, ChevronDown, ChevronUp, MessageCircle, Download, Trash2, Edit } from "lucide-react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/authStore";
@@ -9,14 +9,11 @@ import { SubtasksList } from "./subtasks/SubtasksList";
 import { checkPendingSubtasks } from "../services/subtasksService";
 import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
 import { TaskDependenciesDialog } from "./dependencies/TaskDependenciesDialog";
-import { useTaskDependencies } from "../hooks/useTaskDependencies";
 import { usePermissionCheck } from "../hooks/usePermissionCheck";
-import { useTaskButtonStates } from "../../hooks/useTaskButtonStates";
 import { DependencyIcon } from "../../components/dependencies/DependencyIcon";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Task } from "../types/task";
 
 export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, onStatusChange, projectId, onEdit, onDelete }) => {
   const [isUpdating, setIsUpdating] = useState(false);
@@ -216,7 +213,7 @@ export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, o
               e.stopPropagation();
               setShowSubtasks(!showSubtasks);
             }}
-            title={showSubtasks ? "إخفاء المهام الفرعية" : "عرض المهام الفرعية"}
+            title={showSubtasks ? "إخفاء المهام الفرعية" : "عرض المهام الفرعي��"}
           >
             {showSubtasks ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           </Button>

@@ -1,24 +1,10 @@
-
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody
-} from "@/components/ui/table";
-
-import { Task } from "../types/task";
+import React, { useState, useEffect } from "react";
+import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
 import { TaskItem } from "./TaskItem";
-
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy
-} from "@dnd-kit/sortable";
-
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useState, useEffect } from "react";
 
 interface TasksStageGroupProps {
   stage: { id: string; name: string };
@@ -45,10 +31,8 @@ export const TasksStageGroup = ({
   onEdit,
   onDelete
 }: TasksStageGroupProps) => {
-  // إضافة حالة محلية لتتبع المهام للتحديثات المتفائلة
   const [localTasks, setTasks] = useState<Task[]>(tasks);
 
-  // تحديث المهام المحلية عندما تتغير المهام في الخواص
   useEffect(() => {
     setTasks(tasks);
   }, [tasks]);
@@ -67,7 +51,6 @@ export const TasksStageGroup = ({
     const activeIndex = filteredTasks.findIndex(task => task.id === active.id);
     const overIndex = filteredTasks.findIndex(task => task.id === over.id);
     
-    // حساب الموقع الجديد
     const newPosition = overIndex;
     
     try {
@@ -82,7 +65,6 @@ export const TasksStageGroup = ({
         return;
       }
 
-      // تحديث متفائل للواجهة
       const newTasks = [...localTasks];
       const [movedTask] = newTasks.splice(activeIndex, 1);
       newTasks.splice(overIndex, 0, movedTask);
@@ -114,7 +96,7 @@ export const TasksStageGroup = ({
                 <TableHead>الأولوية</TableHead>
                 <TableHead>المكلف</TableHead>
                 <TableHead>تاريخ الاستحقاق</TableHead>
-                <TableHead>الإجراءات</TableHead>
+                <TableHead>ال��جراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
