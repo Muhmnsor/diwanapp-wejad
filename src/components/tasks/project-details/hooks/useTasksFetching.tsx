@@ -45,7 +45,7 @@ export const useTasksFetching = (
         query = query.eq('is_general', true);
       }
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data, error } = await query.order('created_at', { ascending: true });
 
       if (error) {
         console.error("Error fetching tasks:", error);
