@@ -15,7 +15,7 @@ import { useTaskDependencies } from "../hooks/useTaskDependencies";
 import { usePermissionCheck } from "../hooks/usePermissionCheck";
 import { useTaskButtonStates } from "../../hooks/useTaskButtonStates";
 import { DependencyIcon } from "../../components/dependencies/DependencyIcon";
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -25,6 +25,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
 
 interface TaskItemProps {
   task: Task;
@@ -45,10 +48,10 @@ interface TaskAttachment {
   created_by: string;
 }
 
-export const TaskItem = ({ 
-  task, 
-  getStatusBadge, 
-  getPriorityBadge, 
+export const TaskItem = ({
+  task,
+  getStatusBadge,
+  getPriorityBadge,
   formatDate,
   onStatusChange,
   projectId,
@@ -63,28 +66,41 @@ export const TaskItem = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { user } = useAuthStore();
-  
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   const { canEdit } = usePermissionCheck({
-    assignedTo: null,
+    assignedTo: null, // This component checks general edit permissions based on task properties
     projectId: task.project_id,
     workspaceId: task.workspace_id,
     createdBy: task.created_by,
     isGeneral: task.is_general,
     projectManager: task.project_manager // إضافة projectManager
   });
-  
+
   const { dependencies, dependentTasks, checkDependenciesCompleted } = useTaskDependencies(task.id);
-  
   const hasDependencies = dependencies.length > 0;
   const hasDependents = dependentTasks.length > 0;
   const hasPendingDependencies = hasDependencies && dependencies.some(d => d.status !== 'completed');
-  
-  const dependencyIconColor = hasDependencies && dependencies.some(d => d.status !== 'completed') 
-    ? 'text-amber-500' 
-    : hasDependencies || hasDependents 
-      ? 'text-blue-500' 
+
+  const dependencyIconColor = hasDependencies && dependencies.some(d => d.status !== 'completed')
+    ? 'text-amber-500'
+    : hasDependencies || hasDependents
+      ? 'text-blue-500'
       : 'text-gray-500';
-  
+
+
   const { hasNewDiscussion, hasDeliverables, hasTemplates, resetDiscussionFlag } = useTaskButtonStates(task.id);
 
   useEffect(() => {
@@ -110,14 +126,14 @@ export const TaskItem = ({
         .eq("created_by", task.assigned_to)
         .order('created_at', { ascending: false })
         .limit(1);
-      
-      if ((portfolioAttachments && portfolioAttachments.length > 0) || 
-          (taskAttachments && taskAttachments.length > 0)) {
-        
-        const attachment = portfolioAttachments?.length > 0 
-          ? portfolioAttachments[0] 
+
+      if ((portfolioAttachments && portfolioAttachments.length > 0) ||
+        (taskAttachments && taskAttachments.length > 0)) {
+
+        const attachment = portfolioAttachments?.length > 0
+          ? portfolioAttachments[0]
           : taskAttachments![0];
-          
+
         setAssigneeAttachment(attachment as TaskAttachment);
       }
     } catch (error) {
@@ -142,7 +158,7 @@ export const TaskItem = ({
       }
       return;
     }
-    
+
     setIsDeleting(true);
     try {
       onDelete(task.id);
@@ -160,24 +176,24 @@ export const TaskItem = ({
       toast.error("ليس لديك صلاحية لتغيير حالة هذه المهمة");
       return;
     }
-    
+
     setIsUpdating(true);
     try {
       if (newStatus === 'completed') {
         const { hasPendingSubtasks, error } = await checkPendingSubtasks(task.id);
-        
+
         if (error) {
           toast.error(error);
           setIsUpdating(false);
           return;
         }
-        
+
         if (hasPendingSubtasks) {
           toast.error("لا يمكن إكمال المهمة حتى يتم إكمال جميع المهام الفرعية");
           setIsUpdating(false);
           return;
         }
-        
+
         if (task.requires_deliverable && !hasDeliverables) {
           toast.error("لا يمكن إكمال المهمة. المستلمات إلزامية لهذه المهمة", {
             description: "يرجى رفع مستلم واحد على الأقل قبل إكمال المهمة",
@@ -186,7 +202,7 @@ export const TaskItem = ({
           setIsUpdating(false);
           return;
         }
-        
+
         const dependencyCheck = await checkDependenciesCompleted(task.id);
         if (!dependencyCheck.isValid) {
           toast.error(dependencyCheck.message);
@@ -200,7 +216,7 @@ export const TaskItem = ({
           return;
         }
       }
-      
+
       await onStatusChange(task.id, newStatus);
     } catch (error) {
       console.error("Error updating task status:", error);
@@ -214,11 +230,11 @@ export const TaskItem = ({
     if (!canEdit) {
       return null;
     }
-    
+
     return task.status !== 'completed' ? (
-      <Button 
-        variant="outline" 
-        size="sm" 
+      <Button
+        variant="outline"
+        size="sm"
         className="h-7 w-7 p-0 ml-1"
         onClick={() => handleStatusUpdate('completed')}
         disabled={isUpdating}
@@ -227,9 +243,9 @@ export const TaskItem = ({
         <Check className="h-3.5 w-3.5 text-green-500" />
       </Button>
     ) : (
-      <Button 
-        variant="outline" 
-        size="sm" 
+      <Button
+        variant="outline"
+        size="sm"
         className="h-7 w-7 p-0 ml-1"
         onClick={() => handleStatusUpdate('in_progress')}
         disabled={isUpdating}
@@ -247,44 +263,47 @@ export const TaskItem = ({
 
   return (
     <>
-      <TableRow key={task.id} className="cursor-pointer hover:bg-gray-50">
-        <TableCell className="font-medium">
-          <div className="flex items-center">
-            <span className="mr-1">{task.title}</span>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="p-0 h-7 w-7 ml-2"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowSubtasks(!showSubtasks);
-              }}
-              title={showSubtasks ? "إخفاء المهام الفرعية" : "عرض المهام الفرعية"}
-            >
-              {showSubtasks ? 
-                <ChevronUp className="h-4 w-4 text-gray-500" /> : 
-                <ChevronDown className="h-4 w-4 text-gray-500" />
-              }
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`p-0 h-7 w-7 ${(hasDependencies || hasDependents) ? 'bg-gray-50 hover:bg-gray-100' : ''}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowDependencies(true);
-              }}
-              title="إدارة اعتماديات المهمة"
-            >
-              <DependencyIcon 
-                hasDependencies={hasDependencies} 
-                hasPendingDependencies={hasPendingDependencies}
-                hasDependents={hasDependents}
-                size={16}
-              />
-            </Button>
-          </div>
+      <TableRow
+        ref={setNodeRef}
+        style={style}
+        {...attributes}
+        {...listeners}
+      >
+        <TableCell className="font-medium flex items-center">
+          {task.title}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="p-0 h-7 w-7 ml-2"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowSubtasks(!showSubtasks);
+            }}
+            title={showSubtasks ? "إخفاء المهام الفرعية" : "عرض المهام الفرعية"}
+          >
+            {showSubtasks ?
+              <ChevronUp className="h-3.5 w-3.5" /> :
+              <ChevronDown className="h-3.5 w-3.5" />
+            }
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`p-0 h-7 w-7 ${(hasDependencies || hasDependents) ? 'bg-gray-50 hover:bg-gray-100' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowDependencies(true);
+            }}
+            title="إدارة اعتماديات المهمة"
+          >
+            <DependencyIcon
+              hasDependencies={hasDependencies}
+              hasPendingDependencies={hasPendingDependencies}
+              hasDependents={hasDependents}
+              size={16}
+            />
+          </Button>
         </TableCell>
         <TableCell>
           <div className="flex items-center gap-2">
@@ -311,12 +330,12 @@ export const TaskItem = ({
         </TableCell>
         <TableCell>
           <div className="flex items-center gap-1">
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               className={`p-0 h-7 w-7 ${
-                hasNewDiscussion 
-                  ? "text-orange-500 hover:text-orange-600 hover:bg-orange-50" 
+                hasNewDiscussion
+                  ? "text-orange-500 hover:text-orange-600 hover:bg-orange-50"
                   : "text-muted-foreground hover:text-foreground"
               }`}
               onClick={(e) => {
@@ -327,11 +346,11 @@ export const TaskItem = ({
             >
               <MessageCircle className="h-4 w-4" />
             </Button>
-            
+
             {assigneeAttachment && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className={`p-0 h-7 w-7 ${
                   hasDeliverables
                     ? "text-blue-500 hover:text-blue-600 hover:bg-blue-50"
@@ -346,11 +365,11 @@ export const TaskItem = ({
                 <Download className="h-4 w-4" />
               </Button>
             )}
-            
+
             {onEdit && canEdit && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="p-0 h-7 w-7"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -361,11 +380,11 @@ export const TaskItem = ({
                 <Edit className="h-4 w-4 text-amber-500 hover:text-amber-700" />
               </Button>
             )}
-            
+
             {onDelete && canEdit && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="p-0 h-7 w-7"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -379,13 +398,13 @@ export const TaskItem = ({
           </div>
         </TableCell>
       </TableRow>
-      
+
       {showSubtasks && (
         <TableRow>
           <TableCell colSpan={6} className="bg-gray-50 p-0">
             <div className="p-3">
-              <SubtasksList 
-                taskId={task.id} 
+              <SubtasksList
+                taskId={task.id}
                 projectId={projectId}
               />
             </div>
@@ -393,20 +412,20 @@ export const TaskItem = ({
         </TableRow>
       )}
 
-      <TaskDiscussionDialog 
-        open={showDiscussion} 
+      <TaskDiscussionDialog
+        open={showDiscussion}
         onOpenChange={setShowDiscussion}
         task={task}
         onStatusChange={onStatusChange}
       />
-      
+
       <TaskDependenciesDialog
         open={showDependencies}
         onOpenChange={setShowDependencies}
         task={task}
         projectId={projectId}
       />
-      
+
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -418,7 +437,7 @@ export const TaskItem = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>إلغاء</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
               className="bg-red-500 hover:bg-red-600"
