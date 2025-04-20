@@ -17,6 +17,7 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useState, useEffect } from "react";
 
 interface TasksStageGroupProps {
   stage: { id: string; name: string };
@@ -43,7 +44,15 @@ export const TasksStageGroup = ({
   onEdit,
   onDelete
 }: TasksStageGroupProps) => {
-  const filteredTasks = tasks.filter(
+  // إضافة حالة محلية لتتبع المهام للتحديثات المتفائلة
+  const [localTasks, setTasks] = useState<Task[]>(tasks);
+
+  // تحديث المهام المحلية عندما تتغير المهام في الخواص
+  useEffect(() => {
+    setTasks(tasks);
+  }, [tasks]);
+
+  const filteredTasks = localTasks.filter(
     (task) => activeTab === "all" || task.status === activeTab
   );
 
@@ -51,15 +60,37 @@ export const TasksStageGroup = ({
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
+    
     if (!over || active.id === over.id) return;
+    
+    const activeIndex = filteredTasks.findIndex(task => task.id === active.id);
+    const overIndex = filteredTasks.findIndex(task => task.id === over.id);
+    
+    // حساب الموقع الجديد
+    const newPosition = overIndex;
+    
+    try {
+      const { error } = await supabase.rpc("update_task_order", {
+        task_id: active.id,
+        new_position: newPosition
+      });
 
-    const { error } = await supabase.rpc("update_task_order", {
-      task_id: active.id,
-      new_position: over.data.current?.sortable?.index
-    });
+      if (error) {
+        toast.error("حدث خطأ أثناء تحديث الترتيب");
+        console.error("Error updating task order:", error);
+        return;
+      }
 
-    if (error) {
+      // تحديث متفائل للواجهة
+      const newTasks = [...localTasks];
+      const [movedTask] = newTasks.splice(activeIndex, 1);
+      newTasks.splice(overIndex, 0, movedTask);
+      setTasks(newTasks);
+      
+      toast.success("تم تحديث ترتيب المهام بنجاح");
+    } catch (error) {
       toast.error("حدث خطأ أثناء تحديث الترتيب");
+      console.error("Error in handleDragEnd:", error);
     }
   };
 
