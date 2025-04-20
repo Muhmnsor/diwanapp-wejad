@@ -1,7 +1,5 @@
-import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, MessageCircle, Download, Trash2, Edit, Link2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Calendar, Users, Check, Clock, ChevronDown, ChevronUp, MessageCircle, Download, Trash2, Edit } from "lucide-react";
 import { TableRow, TableCell } from "@/components/ui/table";
-import { Task } from "../types/task";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,93 +13,38 @@ import { useTaskDependencies } from "../hooks/useTaskDependencies";
 import { usePermissionCheck } from "../hooks/usePermissionCheck";
 import { useTaskButtonStates } from "../../hooks/useTaskButtonStates";
 import { DependencyIcon } from "../../components/dependencies/DependencyIcon";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Task } from "../types/task";
 
-
-interface TaskItemProps {
-  task: Task;
-  getStatusBadge: (status: string) => JSX.Element;
-  getPriorityBadge: (priority: string | null) => JSX.Element | null;
-  formatDate: (date: string | null) => string;
-  onStatusChange: (taskId: string, newStatus: string) => void;
-  projectId: string;
-  onEdit?: (task: Task) => void;
-  onDelete?: (taskId: string) => void;
-}
-
-interface TaskAttachment {
-  id: string;
-  file_name: string;
-  file_url: string;
-  created_at: string;
-  created_by: string;
-}
-
-export const TaskItem = ({
-  task,
-  getStatusBadge,
-  getPriorityBadge,
-  formatDate,
-  onStatusChange,
-  projectId,
-  onEdit,
-  onDelete
-}: TaskItemProps) => {
+export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, onStatusChange, projectId, onEdit, onDelete }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [showSubtasks, setShowSubtasks] = useState(false);
   const [showDiscussion, setShowDiscussion] = useState(false);
   const [showDependencies, setShowDependencies] = useState(false);
-  const [assigneeAttachment, setAssigneeAttachment] = useState<TaskAttachment | null>(null);
+  const [assigneeAttachment, setAssigneeAttachment] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { user } = useAuthStore();
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id: task.id });
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: task.id
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition
   };
 
   const { canEdit } = usePermissionCheck({
-    assignedTo: null, // This component checks general edit permissions based on task properties
+    assignedTo: null,
     projectId: task.project_id,
     workspaceId: task.workspace_id,
     createdBy: task.created_by,
     isGeneral: task.is_general,
-    projectManager: task.project_manager // إضافة projectManager
+    projectManager: task.project_manager
   });
-
-  const { dependencies, dependentTasks, checkDependenciesCompleted } = useTaskDependencies(task.id);
-  const hasDependencies = dependencies.length > 0;
-  const hasDependents = dependentTasks.length > 0;
-  const hasPendingDependencies = hasDependencies && dependencies.some(d => d.status !== 'completed');
-
-  const dependencyIconColor = hasDependencies && dependencies.some(d => d.status !== 'completed')
-    ? 'text-amber-500'
-    : hasDependencies || hasDependents
-      ? 'text-blue-500'
-      : 'text-gray-500';
-
-
-  const { hasNewDiscussion, hasDeliverables, hasTemplates, resetDiscussionFlag } = useTaskButtonStates(task.id);
 
   useEffect(() => {
     if (task.assigned_to) {
@@ -128,20 +71,16 @@ export const TaskItem = ({
         .limit(1);
 
       if ((portfolioAttachments && portfolioAttachments.length > 0) ||
-        (taskAttachments && taskAttachments.length > 0)) {
-
-        const attachment = portfolioAttachments?.length > 0
-          ? portfolioAttachments[0]
-          : taskAttachments![0];
-
-        setAssigneeAttachment(attachment as TaskAttachment);
+          (taskAttachments && taskAttachments.length > 0)) {
+        const attachment = portfolioAttachments?.length > 0 ? portfolioAttachments[0] : taskAttachments[0];
+        setAssigneeAttachment(attachment);
       }
     } catch (error) {
       console.error("Error fetching assignee attachment:", error);
     }
   };
 
-  const handleDownload = (fileUrl: string, fileName: string) => {
+  const handleDownload = (fileUrl, fileName) => {
     const link = document.createElement('a');
     link.href = fileUrl;
     link.target = '_blank';
@@ -171,7 +110,7 @@ export const TaskItem = ({
     }
   };
 
-  const handleStatusUpdate = async (newStatus: string) => {
+  const handleStatusUpdate = async (newStatus) => {
     if (!canEdit) {
       toast.error("ليس لديك صلاحية لتغيير حالة هذه المهمة");
       return;
@@ -197,7 +136,7 @@ export const TaskItem = ({
         if (task.requires_deliverable && !hasDeliverables) {
           toast.error("لا يمكن إكمال المهمة. المستلمات إلزامية لهذه المهمة", {
             description: "يرجى رفع مستلم واحد على الأقل قبل إكمال المهمة",
-            duration: 5000,
+            duration: 5000
           });
           setIsUpdating(false);
           return;
@@ -207,9 +146,7 @@ export const TaskItem = ({
         if (!dependencyCheck.isValid) {
           toast.error(dependencyCheck.message);
           if (dependencyCheck.pendingDependencies.length > 0) {
-            const pendingTasks = dependencyCheck.pendingDependencies
-              .map(task => task.title)
-              .join(", ");
+            const pendingTasks = dependencyCheck.pendingDependencies.map((task) => task.title).join(", ");
             toast.error(`المهام المعلقة: ${pendingTasks}`);
           }
           setIsUpdating(false);
@@ -281,16 +218,12 @@ export const TaskItem = ({
             }}
             title={showSubtasks ? "إخفاء المهام الفرعية" : "عرض المهام الفرعية"}
           >
-            {showSubtasks ?
-              <ChevronUp className="h-3.5 w-3.5" /> :
-              <ChevronDown className="h-3.5 w-3.5" />
-            }
+            {showSubtasks ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           </Button>
-
           <Button
             variant="ghost"
             size="sm"
-            className={`p-0 h-7 w-7 ${(hasDependencies || hasDependents) ? 'bg-gray-50 hover:bg-gray-100' : ''}`}
+            className={`p-0 h-7 w-7 ${hasDependencies || hasDependents ? 'bg-gray-50 hover:bg-gray-100' : ''}`}
             onClick={(e) => {
               e.stopPropagation();
               setShowDependencies(true);
@@ -346,7 +279,6 @@ export const TaskItem = ({
             >
               <MessageCircle className="h-4 w-4" />
             </Button>
-
             {assigneeAttachment && (
               <Button
                 variant="ghost"
@@ -365,7 +297,6 @@ export const TaskItem = ({
                 <Download className="h-4 w-4" />
               </Button>
             )}
-
             {onEdit && canEdit && (
               <Button
                 variant="ghost"
@@ -380,7 +311,6 @@ export const TaskItem = ({
                 <Edit className="h-4 w-4 text-amber-500 hover:text-amber-700" />
               </Button>
             )}
-
             {onDelete && canEdit && (
               <Button
                 variant="ghost"
@@ -398,34 +328,27 @@ export const TaskItem = ({
           </div>
         </TableCell>
       </TableRow>
-
       {showSubtasks && (
         <TableRow>
           <TableCell colSpan={6} className="bg-gray-50 p-0">
             <div className="p-3">
-              <SubtasksList
-                taskId={task.id}
-                projectId={projectId}
-              />
+              <SubtasksList taskId={task.id} projectId={projectId} />
             </div>
           </TableCell>
         </TableRow>
       )}
-
       <TaskDiscussionDialog
         open={showDiscussion}
         onOpenChange={setShowDiscussion}
         task={task}
         onStatusChange={onStatusChange}
       />
-
       <TaskDependenciesDialog
         open={showDependencies}
         onOpenChange={setShowDependencies}
         task={task}
         projectId={projectId}
       />
-
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
