@@ -14,6 +14,8 @@ import { DependencyIcon } from "../../components/dependencies/DependencyIcon";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useTaskDependencyManager } from "../../../components/tasks/components/dependencies/TaskDependencyManager";
+
 
 export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, onStatusChange, projectId, onEdit, onDelete }) => {
   const [isUpdating, setIsUpdating] = useState(false);
@@ -194,6 +196,11 @@ export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, o
     resetDiscussionFlag();
     setShowDiscussion(true);
   };
+  const {
+  hasDependencies,
+  hasDependents,
+  hasPendingDependencies
+} = useTaskDependencyManager({ taskId: task.id });
 
   return (
     <>
