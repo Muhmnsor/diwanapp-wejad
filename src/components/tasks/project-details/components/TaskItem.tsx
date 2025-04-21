@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Calendar, Users, Check, Clock, ChevronDown, ChevronUp, MessageCircle, Download, Trash2, Edit } from "lucide-react";
 import { TableRow, TableCell } from "@/components/ui/table";
@@ -14,8 +15,7 @@ import { DependencyIcon } from "../../components/dependencies/DependencyIcon";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useTaskDependencyManager } from "../../../components/tasks/components/dependencies/TaskDependencyManager";
-
+import { useTaskDependencyManager } from "../../components/dependencies/TaskDependencyManager";
 
 export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, onStatusChange, projectId, onEdit, onDelete }) => {
   const [isUpdating, setIsUpdating] = useState(false);
@@ -25,17 +25,19 @@ export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, o
   const [assigneeAttachment, setAssigneeAttachment] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [hasNewDiscussion, setHasNewDiscussion] = useState(false);
+  const [hasDeliverables, setHasDeliverables] = useState(false);
+  
   const { user } = useAuthStore();
-
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: task.id
   });
-
+  
   const style = {
     transform: CSS.Transform.toString(transform),
     transition
   };
-
+  
   const { canEdit } = usePermissionCheck({
     assignedTo: null,
     projectId: task.project_id,
@@ -49,7 +51,10 @@ export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, o
     if (task.assigned_to) {
       fetchAssigneeAttachment();
     }
-  }, [task.id, task.assigned_to]);
+    
+    // Set hasDeliverables based on assigneeAttachment
+    setHasDeliverables(!!assigneeAttachment);
+  }, [task.id, task.assigned_to, assigneeAttachment]);
 
   const fetchAssigneeAttachment = async () => {
     try {
@@ -69,10 +74,12 @@ export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, o
         .order('created_at', { ascending: false })
         .limit(1);
 
-      if ((portfolioAttachments && portfolioAttachments.length > 0) ||
-          (taskAttachments && taskAttachments.length > 0)) {
+      if ((portfolioAttachments && portfolioAttachments.length > 0) || (taskAttachments && taskAttachments.length > 0)) {
         const attachment = portfolioAttachments?.length > 0 ? portfolioAttachments[0] : taskAttachments[0];
         setAssigneeAttachment(attachment);
+        setHasDeliverables(true);
+      } else {
+        setHasDeliverables(false);
       }
     } catch (error) {
       console.error("Error fetching assignee attachment:", error);
@@ -108,6 +115,10 @@ export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, o
       setIsDeleting(false);
     }
   };
+  
+  const resetDiscussionFlag = () => {
+    setHasNewDiscussion(false);
+  };
 
   const handleStatusUpdate = async (newStatus) => {
     if (!canEdit) {
@@ -119,7 +130,7 @@ export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, o
     try {
       if (newStatus === 'completed') {
         const { hasPendingSubtasks, error } = await checkPendingSubtasks(task.id);
-
+        
         if (error) {
           toast.error(error);
           setIsUpdating(false);
@@ -141,11 +152,13 @@ export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, o
           return;
         }
 
+        const { checkDependenciesCompleted } = useTaskDependencyManager({ taskId: task.id });
         const dependencyCheck = await checkDependenciesCompleted(task.id);
+        
         if (!dependencyCheck.isValid) {
           toast.error(dependencyCheck.message);
           if (dependencyCheck.pendingDependencies.length > 0) {
-            const pendingTasks = dependencyCheck.pendingDependencies.map((task) => task.title).join(", ");
+            const pendingTasks = dependencyCheck.pendingDependencies.map(task => task.title).join(", ");
             toast.error(`المهام المعلقة: ${pendingTasks}`);
           }
           setIsUpdating(false);
@@ -196,11 +209,10 @@ export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, o
     resetDiscussionFlag();
     setShowDiscussion(true);
   };
-  const {
-  hasDependencies,
-  hasDependents,
-  hasPendingDependencies
-} = useTaskDependencyManager({ taskId: task.id });
+
+  const { hasDependencies, hasDependents, hasPendingDependencies } = useTaskDependencyManager({
+    taskId: task.id
+  });
 
   return (
     <>
@@ -220,7 +232,7 @@ export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, o
               e.stopPropagation();
               setShowSubtasks(!showSubtasks);
             }}
-            title={showSubtasks ? "إخفاء المهام الفرعية" : "عرض المهام الفرعي��"}
+            title={showSubtasks ? "إخفاء المهام الفرعية" : "عرض المهام الفرعية"}
           >
             {showSubtasks ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           </Button>
@@ -270,11 +282,7 @@ export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, o
             <Button
               variant="ghost"
               size="sm"
-              className={`p-0 h-7 w-7 ${
-                hasNewDiscussion
-                  ? "text-orange-500 hover:text-orange-600 hover:bg-orange-50"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              className={`p-0 h-7 w-7 ${hasNewDiscussion ? "text-orange-500 hover:text-orange-600 hover:bg-orange-50" : "text-muted-foreground hover:text-foreground"}`}
               onClick={(e) => {
                 e.stopPropagation();
                 handleShowDiscussion();
@@ -283,15 +291,12 @@ export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, o
             >
               <MessageCircle className="h-4 w-4" />
             </Button>
+
             {assigneeAttachment && (
               <Button
                 variant="ghost"
                 size="sm"
-                className={`p-0 h-7 w-7 ${
-                  hasDeliverables
-                    ? "text-blue-500 hover:text-blue-600 hover:bg-blue-50"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                className={`p-0 h-7 w-7 ${hasDeliverables ? "text-blue-500 hover:text-blue-600 hover:bg-blue-50" : "text-muted-foreground hover:text-foreground"}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDownload(assigneeAttachment.file_url, assigneeAttachment.file_name);
@@ -301,6 +306,7 @@ export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, o
                 <Download className="h-4 w-4" />
               </Button>
             )}
+
             {onEdit && canEdit && (
               <Button
                 variant="ghost"
@@ -315,6 +321,7 @@ export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, o
                 <Edit className="h-4 w-4 text-amber-500 hover:text-amber-700" />
               </Button>
             )}
+
             {onDelete && canEdit && (
               <Button
                 variant="ghost"
@@ -332,6 +339,7 @@ export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, o
           </div>
         </TableCell>
       </TableRow>
+
       {showSubtasks && (
         <TableRow>
           <TableCell colSpan={6} className="bg-gray-50 p-0">
@@ -341,18 +349,21 @@ export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, o
           </TableCell>
         </TableRow>
       )}
+
       <TaskDiscussionDialog
         open={showDiscussion}
         onOpenChange={setShowDiscussion}
         task={task}
         onStatusChange={onStatusChange}
       />
+
       <TaskDependenciesDialog
         open={showDependencies}
         onOpenChange={setShowDependencies}
         task={task}
         projectId={projectId}
       />
+
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

@@ -1,12 +1,12 @@
+
 import React, { useState, useEffect } from "react";
 import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
 import { TaskItem } from "./TaskItem";
-import { DndContext, DragEndEvent } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Task } from "../types/task";
-
 
 interface TasksStageGroupProps {
   stage: { id: string; name: string };
@@ -34,6 +34,15 @@ export const TasksStageGroup = ({
   onDelete
 }: TasksStageGroupProps) => {
   const [localTasks, setTasks] = useState<Task[]>(tasks);
+
+  // Configure sensors for better drag detection
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5, // Require moving 5px before activating drag
+      },
+    })
+  );
 
   useEffect(() => {
     setTasks(tasks);
@@ -85,7 +94,7 @@ export const TasksStageGroup = ({
         <h3 className="font-medium">{stage.name}</h3>
       </div>
 
-      <DndContext onDragEnd={handleDragEnd}>
+      <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
         <SortableContext
           items={filteredTasks.map((task) => task.id)}
           strategy={verticalListSortingStrategy}
@@ -98,7 +107,7 @@ export const TasksStageGroup = ({
                 <TableHead>الأولوية</TableHead>
                 <TableHead>المكلف</TableHead>
                 <TableHead>تاريخ الاستحقاق</TableHead>
-                <TableHead>ال��جراءات</TableHead>
+                <TableHead>الإجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
