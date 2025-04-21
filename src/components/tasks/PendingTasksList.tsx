@@ -1,4 +1,4 @@
-import { useAssignedTasks } from "./hooks/useAssignedTasks";
+import { useAssignedTasks } from "../hooks/useAssignedTasks";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   CheckCircle2,
