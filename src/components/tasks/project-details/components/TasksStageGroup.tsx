@@ -5,6 +5,8 @@ import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Task } from "../types/task";
+
 
 interface TasksStageGroupProps {
   stage: { id: string; name: string };
