@@ -215,7 +215,7 @@ export const TaskItem = ({
         // يتم استدعاء الدالة من الهوك الجديد لإدارة تحديث الحالة
         // الهوك هو المسؤول عن تعيين حالة isUpdating، التفاعل مع الواجهة الخلفية، وتحديث حالات tasks و tasksByStage
         try {
-             await manageTaskStatus(task, newStatus); // نمرر كائن المهمة بالكامل إذا كان الهوك يحتاجه
+             await manageTaskStatus(task.id, newStatus); // نمرر كائن المهمة بالكامل إذا كان الهوك يحتاجه
              // لا حاجة لتعيين setIsUpdating(false) هنا، الهوك هو من يديرها
         } catch (error) {
             // من المفترض أن يتعامل الهوك مع أخطائه وتوستاته داخلياً، ولكن هذه كآلية احتياطية
