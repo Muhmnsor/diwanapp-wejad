@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from "react";
 import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
 import { TaskItem } from "./TaskItem";
-import { DndContext, DragEndEvent, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+// استيراد KeyboardSensor و sortableKeyboardCoordinates
+import { DndContext, DragEndEvent, useSensor, useSensors, PointerSensor, KeyboardSensor } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Task } from "../types/task";
@@ -35,36 +35,46 @@ export const TasksStageGroup = ({
 }: TasksStageGroupProps) => {
   const [localTasks, setTasks] = useState<Task[]>(tasks);
 
-  // Configure sensors for better drag detection
+  // أضفنا دعم لوحة المفاتيح هنا مع الحفاظ على إعدادات مؤشر الماوس
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5, // Require moving 5px before activating drag
+        distance: 5, // تتطلب تحريك 5 بكسل قبل تفعيل السحب بالمؤشر
       },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
   useEffect(() => {
+    // عند تغيير قائمة المهام الواردة (مثلاً عند التحديث من الخارج)، نحدث الحالة المحلية
     setTasks(tasks);
   }, [tasks]);
 
+  // تصفية المهام بناءً على التبويب النشط
   const filteredTasks = localTasks.filter(
     (task) => activeTab === "all" || task.status === activeTab
   );
 
+  // لا نعرض المجموعة إذا لم تكن هناك مهام مفلترة
   if (filteredTasks.length === 0) return null;
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
+    // إذا لم يتم إسقاط العنصر فوق عنصر آخر، أو إذا كان العنصر فوق نفسه، لا تفعل شيئًا
     if (!over || active.id === over.id) return;
     
+    // العثور على مؤشر العنصر النشط والعنصر الذي تم الإسقاط فوقه في القائمة المفلترة
     const activeIndex = filteredTasks.findIndex(task => task.id === active.id);
     const overIndex = filteredTasks.findIndex(task => task.id === over.id);
     
+    // حساب الموضع الجديد بناءً على مؤشر العنصر الذي تم الإسقاط فوقه في القائمة المفلترة
     const newPosition = overIndex;
     
     try {
+      // استدعاء وظيفة Supabase لتحديث ترتيب المهمة في قاعدة البيانات
       const { error } = await supabase.rpc("update_task_order", {
         task_id: active.id,
         new_position: newPosition
@@ -76,9 +86,10 @@ export const TasksStageGroup = ({
         return;
       }
 
+      // تحديث الحالة المحلية لتعكس الترتيب الجديد للمهام
       const newTasks = [...localTasks];
-      const [movedTask] = newTasks.splice(activeIndex, 1);
-      newTasks.splice(overIndex, 0, movedTask);
+      const [movedTask] = newTasks.splice(activeIndex, 1); // إزالة المهمة من موضعها القديم
+      newTasks.splice(overIndex, 0, movedTask); // إدخال المهمة في موضعها الجديد
       setTasks(newTasks);
       
       toast.success("تم تحديث ترتيب المهام بنجاح");
@@ -94,10 +105,11 @@ export const TasksStageGroup = ({
         <h3 className="font-medium">{stage.name}</h3>
       </div>
 
+      {/* DndContext الصحيح الذي يحيط بالعناصر القابلة للسحب والإفلات */}
       <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
         <SortableContext
-          items={filteredTasks.map((task) => task.id)}
-          strategy={verticalListSortingStrategy}
+          items={filteredTasks.map((task) => task.id)} // تحديد العناصر التي يمكن فرزها باستخدام معرفاتها
+          strategy={verticalListSortingStrategy} // استخدام استراتيجية الفرز العمودي
         >
           <Table>
             <TableHeader>
@@ -111,6 +123,7 @@ export const TasksStageGroup = ({
               </TableRow>
             </TableHeader>
             <TableBody>
+              {/* عرض المهام المفلترة والقابلة للفرز */}
               {filteredTasks.map((task) => (
                 <TaskItem
                   key={task.id}
