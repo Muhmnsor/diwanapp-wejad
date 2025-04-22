@@ -1,4 +1,17 @@
-import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, MessageCircle, Download, Trash2, Edit, Link2, GripVertical } from "lucide-react";
+// استيراد الأيقونات والمكتبات الضرورية
+import {
+  Calendar,
+  Users,
+  Check,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  MessageCircle,
+  Download,
+  Trash2,
+  Edit,
+  GripVertical,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Task } from "../types/task";
@@ -9,27 +22,26 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/store/authStore";
 import { SubtasksList } from "./subtasks/SubtasksList";
 import { checkPendingSubtasks } from "../services/subtasksService";
-// لا نستورد مكونات الحوار هنا، سيتم التعامل معها في المكون الأب
-// import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
-// import { TaskDependenciesDialog } from "./dependencies/TaskDependenciesDialog";
+import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
+import { TaskDependenciesDialog } from "./dependencies/TaskDependenciesDialog";
 import { useTaskDependencies } from "../hooks/useTaskDependencies";
 import { usePermissionCheck } from "../hooks/usePermissionCheck";
 import { useTaskButtonStates } from "../../hooks/useTaskButtonStates";
 import { DependencyIcon } from "../../components/dependencies/DependencyIcon";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-// لا نستورد مكونات الحوار هنا
-// import {
-//   AlertDialog,
-//   AlertDialogAction,
-//   AlertDialogCancel,
-//   AlertDialogContent,
-//   AlertDialogDescription,
-//   AlertDialogFooter,
-//   AlertDialogHeader,
-//   AlertDialogTitle,
-// } from "@/components/ui/alert-dialog";
 
+// تعريف واجهة الخصائص
 interface TaskItemProps {
   task: Task;
   getStatusBadge: (status: string) => JSX.Element;
@@ -38,12 +50,8 @@ interface TaskItemProps {
   onStatusChange: (taskId: string, newStatus: string) => void;
   projectId: string;
   onEdit?: (task: Task) => void;
-  onDelete?: (taskId: string) => void; // هذا قد يبقى للدلالة على القدرة على الحذف، لكن التأكيد سيتم عبر onConfirmDelete
+  onDelete?: (taskId: string) => void;
   isDraggable?: boolean;
-  // دوال رد النداء التي سيستمع إليها المكون الأب لفتح الحوارات
-  onShowDiscussion: (task: Task) => void;
-  onShowDependencies: (task: Task) => void;
-  onConfirmDelete: (taskId: string) => void; // استدعاء هذا سيفتح حوار التأكيد في الأب
 }
 
 interface TaskAttachment {
@@ -62,39 +70,17 @@ export const TaskItem = ({
   onStatusChange,
   projectId,
   onEdit,
-  onDelete, // يمكن الاحتفاظ بها في حالة الحاجة لمنطق حذف مباشر بدون تأكيد في مكان آخر
+  onDelete,
   isDraggable = false,
-  onShowDiscussion,
-  onShowDependencies,
-  onConfirmDelete,
 }: TaskItemProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [showSubtasks, setShowSubtasks] = useState(false);
-  // لا نحتاج حالات محلية للحوارات بعد نقلها للأب
-  // const [showDiscussion, setShowDiscussion] = useState(false);
-  // const [showDependencies, setShowDependencies] = useState(false);
-  // const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [showDiscussion, setShowDiscussion] = useState(false);
+  const [showDependencies, setShowDependencies] = useState(false);
   const [assigneeAttachment, setAssigneeAttachment] = useState<TaskAttachment | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false); // يمكن الاحتفاظ بها لحالة زر الحذف
-
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id: task.id,
-    disabled: !isDraggable,
-  });
-
-  // تطبيق التحويل والانتقال من dnd-kit
-  const dndStyle = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { user } = useAuthStore();
 
   const { canEdit } = usePermissionCheck({
     assignedTo: null,
@@ -102,14 +88,14 @@ export const TaskItem = ({
     workspaceId: task.workspace_id,
     createdBy: task.created_by,
     isGeneral: task.is_general,
-    projectManager: task.project_manager
+    projectManager: task.project_manager,
   });
 
   const { dependencies, dependentTasks, checkDependenciesCompleted } = useTaskDependencies(task.id);
 
   const hasDependencies = dependencies.length > 0;
   const hasDependents = dependentTasks.length > 0;
-  const hasPendingDependencies = hasDependencies && dependencies.some(d => d.status !== 'completed');
+  const hasPendingDependencies = hasDependencies && dependencies.some((d) => d.status !== "completed");
 
   const { hasNewDiscussion, hasDeliverables, hasTemplates, resetDiscussionFlag } = useTaskButtonStates(task.id);
 
@@ -121,30 +107,24 @@ export const TaskItem = ({
 
   const fetchAssigneeAttachment = async () => {
     try {
-      // ... (نفس كود جلب المرفقات)
-      const { data: portfolioAttachments, error: portfolioError } = await supabase
+      const { data: portfolioAttachments } = await supabase
         .from("portfolio_task_attachments")
         .select("*")
         .eq("task_id", task.id)
         .eq("created_by", task.assigned_to)
-        .order('created_at', { ascending: false })
+        .order("created_at", { ascending: false })
         .limit(1);
 
-      const { data: taskAttachments, error: taskError } = await supabase
+      const { data: taskAttachments } = await supabase
         .from("task_attachments")
         .select("*")
         .eq("task_id", task.id)
         .eq("created_by", task.assigned_to)
-        .order('created_at', { ascending: false })
+        .order("created_at", { ascending: false })
         .limit(1);
 
-      if ((portfolioAttachments && portfolioAttachments.length > 0) ||
-        (taskAttachments && taskAttachments.length > 0)) {
-
-        const attachment = portfolioAttachments?.length > 0
-          ? portfolioAttachments[0]
-          : taskAttachments![0];
-
+      if ((portfolioAttachments && portfolioAttachments.length > 0) || (taskAttachments && taskAttachments.length > 0)) {
+        const attachment = portfolioAttachments?.length > 0 ? portfolioAttachments[0] : taskAttachments![0];
         setAssigneeAttachment(attachment as TaskAttachment);
       }
     } catch (error) {
@@ -153,29 +133,38 @@ export const TaskItem = ({
   };
 
   const handleDownload = (fileUrl: string, fileName: string) => {
-    // ... (نفس كود التنزيل)
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = fileUrl;
-    link.target = '_blank';
+    link.target = "_blank";
     link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  const handleDeleteClick = (e: React.MouseEvent) => {
-     e.stopPropagation();
-     if (!canEdit) {
+  const handleDelete = async () => {
+    if (!onDelete || !canEdit) {
+      if (!canEdit) {
         toast.error("ليس لديك صلاحية لحذف هذه المهمة");
-        return;
-     }
-     // استدعاء دالة رد النداء في الأب لفتح حوار التأكيد
-     onConfirmDelete(task.id);
+      }
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      onDelete(task.id);
+      setDeleteDialogOpen(false
+::contentReference[oaicite:9]{index=9}
+       );
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      toast.error("حدث خطأ أثناء حذف المهمة");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
-
   const handleStatusUpdate = async (newStatus: string) => {
-    // ... (نفس كود تحديث الحالة بما في ذلك التحقق من المهام الفرعية والاعتماديات والمستلمات)
     if (!canEdit) {
       toast.error("ليس لديك صلاحية لتغيير حالة هذه المهمة");
       return;
@@ -183,9 +172,8 @@ export const TaskItem = ({
 
     setIsUpdating(true);
     try {
-      if (newStatus === 'completed') {
+      if (newStatus === "completed") {
         const { hasPendingSubtasks, error } = await checkPendingSubtasks(task.id);
-
         if (error) {
           toast.error(error);
           setIsUpdating(false);
@@ -211,9 +199,7 @@ export const TaskItem = ({
         if (!dependencyCheck.isValid) {
           toast.error(dependencyCheck.message);
           if (dependencyCheck.pendingDependencies.length > 0) {
-            const pendingTasks = dependencyCheck.pendingDependencies
-              .map(task => task.title)
-              .join(", ");
+            const pendingTasks = dependencyCheck.pendingDependencies.map((t) => t.title).join(", ");
             toast.error(`المهام المعلقة: ${pendingTasks}`);
           }
           setIsUpdating(false);
@@ -221,7 +207,6 @@ export const TaskItem = ({
         }
       }
 
-      // استدعاء دالة رد النداء لتغيير الحالة في الأب
       await onStatusChange(task.id, newStatus);
     } catch (error) {
       console.error("Error updating task status:", error);
@@ -231,361 +216,166 @@ export const TaskItem = ({
     }
   };
 
-   const renderStatusChangeButton = () => {
-     if (!canEdit) {
-       return null;
-     }
-
-     return task.status !== 'completed' ? (
-       <Button
-         variant="outline"
-         size="sm"
-         className="h-7 w-7 p-0 ml-1"
-         onClick={(e) => { e.stopPropagation(); handleStatusUpdate('completed'); }}
-         disabled={isUpdating}
-         title="إكمال المهمة"
-       >
-         <Check className="h-4 w-4" />
-       </Button>
-     ) : (
-       <Button
-         variant="outline"
-         size="sm"
-         className="h-7 w-7 p-0 ml-1"
-         onClick={(e) => { e.stopPropagation(); handleStatusUpdate('in_progress'); }}
-         disabled={isUpdating}
-         title="إعادة فتح المهمة"
-       >
-         <AlertCircle className="h-4 w-4" />
-       </Button>
-     );
-   };
-
-
-  const handleDiscussionClick = (e: React.MouseEvent) => {
-     e.stopPropagation();
-     resetDiscussionFlag(); // يمكن الاحتفاظ بها هنا لتحديث حالة الزر محليًا
-     // استدعاء دالة رد النداء في الأب لفتح حوار النقاش
-     onShowDiscussion(task);
+  const renderStatusChangeButton = () => {
+    if (!canEdit) return null;
+    return task.status !== "completed" ? (
+      <Button variant="outline" size="sm" className="h-7 w-7 p-0 ml-1" onClick={() => handleStatusUpdate("completed")} disabled={isUpdating} title="إكمال المهمة">
+        <Check className="h-3.5 w-3.5 text-green-500" />
+      </Button>
+    ) : (
+      <Button variant="outline" size="sm" className="h-7 w-7 p-0 ml-1" onClick={() => handleStatusUpdate("in_progress")} disabled={isUpdating} title="إعادة فتح المهمة">
+        <Clock className="h-3.5 w-3.5 text-amber-500" />
+      </Button>
+    );
   };
 
-  const handleDependenciesClick = (e: React.MouseEvent) => {
-     e.stopPropagation();
-     // استدعاء دالة رد النداء في الأب لفتح حوار الاعتماديات
-     onShowDependencies(task);
+  const handleShowDiscussion = () => {
+    resetDiscussionFlag();
+    setShowDiscussion(true);
   };
 
-  const handleEditClick = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      if (onEdit && canEdit) {
-          onEdit(task);
-      } else if (!canEdit) {
-           toast.error("ليس لديك صلاحية لتعديل هذه المهمة");
-      }
-  }
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: task.id,
+    disabled: !isDraggable,
+  });
 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
-  // منطق العرض الشرطي بناءً على isDraggable
+  const TaskTitleSection = () => (
+    <div className="flex items-center">
+      {isDraggable && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="p-0 h-7 w-7 cursor-grab active:cursor-grabbing"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4 text-gray-400" />
+        </Button>
+      )}
+      <span className="mr-1">{task.title}</span>
+      <Button variant="ghost" size="sm" className="p-0 h-7 w-7 ml-2" onClick={(e) => { e.stopPropagation(); setShowSubtasks(!showSubtasks); }} title={showSubtasks ? "إخفاء المهام الفرعية" : "عرض المهام الفرعية"}>
+        {showSubtasks ? <ChevronUp className="h-4 w-4 text-gray-500" /> : <ChevronDown className="h-4 w-4 text-gray-500" />}
+      </Button>
+      <Button variant="ghost" size="sm" className={`p-0 h-7 w-7 ${(hasDependencies || hasDependents) ? 'bg-gray-50 hover:bg-gray-100' : ''}`} onClick={(e) => { e.stopPropagation(); setShowDependencies(true); }} title="إدارة اعتماديات المهمة">
+        <DependencyIcon hasDependencies={hasDependencies} hasPendingDependencies={hasPendingDependencies} hasDependents={hasDependents} size={16} />
+      </Button>
+    </div>
+  );
+
   if (isDraggable) {
     return (
-      // عرض المهمة كعنصر قابل للسحب (عادة ما يكون div)
-      <>
-        <div
-          ref={setNodeRef}
-          style={dndStyle}
-          className={`p-4 bg-white rounded-md shadow-sm border ${isDragging ? 'ring-2 ring-primary' : ''} flex items-center justify-between gap-4`} // استخدام flexbox للعرض الأفقي
-        >
-          {/* مقبض السحب */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="p-0 h-7 w-7 cursor-grab active:cursor-grabbing flex-shrink-0"
-            {...attributes}
-            {...listeners}
-            title="اسحب لتغيير الترتيب"
-          >
-            <GripVertical className="h-4 w-4" />
-          </Button>
-
-          {/* المحتوى الرئيسي للمهمة (العنوان، الأزرار الداخلية) */}
-          <div className="flex-grow flex items-center gap-4"> {/* دمج العناصر الأساسية */}
-             <div className="font-medium flex items-center gap-2">
-               {task.title}
-               {/* زر المهام الفرعية */}
-               <Button
-                 variant="ghost"
-                 size="sm"
-                 className="p-0 h-7 w-7"
-                 onClick={(e) => {
-                   e.stopPropagation();
-                   setShowSubtasks(!showSubtasks);
-                 }}
-                 title={showSubtasks ? "إخفاء المهام الفرعية" : "عرض المهام الفرعية"}
-               >
-                 {showSubtasks ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-               </Button>
-               {/* زر الاعتماديات */}
-               <Button
-                 variant="ghost"
-                 size="sm"
-                 className={`p-0 h-7 w-7 ${(hasDependencies || hasDependents) ? 'bg-gray-50 hover:bg-gray-100' : ''}`}
-                 onClick={handleDependenciesClick} // استخدام معالج جديد يستدعي callback الأب
-                 title="إدارة اعتماديات المهمة"
-               >
-                 <DependencyIcon
-                   hasDependencies={hasDependencies}
-                   hasPendingDependencies={hasPendingDependencies}
-                   hasDependents={hasDependents}
-                   size={16}
-                 />
-               </Button>
-             </div>
-
-             {/* الشارات والتاريخ والمكلف */}
-             <div className="flex items-center gap-2 flex-shrink-0">
-                 {getStatusBadge(task.status)}
-                 {renderStatusChangeButton()} {/* زر تغيير الحالة */}
-                 {getPriorityBadge(task.priority)}
-                  <div className="flex items-center gap-1 text-sm">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    {task.assigned_user_name ? task.assigned_user_name : 'غير محدد'}
-                  </div>
-                  <div className="flex items-center gap-1 text-sm">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    {formatDate(task.due_date)}
-                  </div>
-             </div>
-          </div>
-
-
-          {/* أزرار الإجراءات (في نهاية السطر) */}
-          <div className="flex items-center gap-1 flex-shrink-0">
-            {/* زر المناقشة */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`p-0 h-7 w-7 ${
-                hasNewDiscussion
-                  ? "text-orange-500 hover:text-orange-600 hover:bg-orange-50"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={handleDiscussionClick} // استخدام معالج جديد يستدعي callback الأب
-              title="مناقشة المهمة"
-            >
-              <MessageCircle className="h-4 w-4" />
-            </Button>
-
-            {/* زر تنزيل المرفق */}
-            {assigneeAttachment && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`p-0 h-7 w-7 ${
-                  hasDeliverables
-                    ? "text-blue-500 hover:text-blue-600 hover:bg-blue-50"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                onClick={(e) => { e.stopPropagation(); handleDownload(assigneeAttachment.file_url, assigneeAttachment.file_name); }}
-                title="تنزيل مرفق المكلف"
-              >
-                <Download className="h-4 w-4" />
-              </Button>
-            )}
-
-            {/* زر التعديل */}
-            {onEdit && canEdit && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="p-0 h-7 w-7"
-                onClick={handleEditClick} // استخدام معالج جديد
-                title="تعديل المهمة"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-            )}
-
-            {/* زر الحذف */}
-            {onDelete && canEdit && ( // نتحقق من onDelete و canEdit قبل عرض الزر
-              <Button
-                variant="ghost"
-                size="sm"
-                className="p-0 h-7 w-7 text-red-500 hover:text-red-600"
-                onClick={handleDeleteClick} // استخدام معالج جديد يستدعي callback الأب
-                title="حذف المهمة"
-                disabled={isDeleting} // يمكن تعطيله إذا كان الأب يمرر حالة الحذف
-              >
-                 {/* يمكن عرض أيقونة تحميل هنا إذا كان isDeleting true */}
-                 {isDeleting ? <span className="animate-spin">...</span> : <Trash2 className="h-4 w-4" />}
-              </Button>
-            )}
+      <div ref={setNodeRef} style={style} className={`p-4 bg-white ${isDragging ? 'ring-2 ring-primary' : ''}`}>
+        <div className="flex justify-between items-center">
+          <TaskTitleSection />
+          <div className="flex items-center gap-2">
+            {getStatusBadge(task.status)}
+            {renderStatusChangeButton()}
+            {getPriorityBadge(task.priority)}
+            <div className="flex items-center">
+              <Calendar className="h-3.5 w-3.5 ml-1.5 text-gray-500" />
+              {formatDate(task.due_date)}
+            </div>
           </div>
         </div>
-
-        {/* عرض المهام الفرعية أسفل العنصر الرئيسي إذا كانت مفتوحة */}
-        {showSubtasks && (
-           <div className="ml-8 mt-2 border-l pl-4"> {/* تباعد وتنسيق للتمييز */}
-             <SubtasksList
-               taskId={task.id}
-               projectId={projectId}
-             />
-           </div>
-        )}
-        {/* ملاحظة: الحوارات لا تعرض هنا */}
-      </>
+      </div>
     );
   }
 
-  // عرض المهمة كصف في الجدول (الحالة الافتراضية)
   return (
     <>
-      <TableRow ref={setNodeRef} style={dndStyle} className={`${isDragging ? 'opacity-50' : ''}`}> {/* تطبيق dndStyle على الصف */}
-        {/* مقبض السحب لا يظهر في عرض الجدول عادة، ما لم يكن الجدول نفسه هو منطقة السحب */}
-        {/* <TableCell className="w-8">
-             {isDraggable && ( // يمكن إظهاره هنا إذا كان الصف هو العنصر القابل للسحب داخل جدول
-              <Button variant="ghost" size="sm" className="p-0 h-7 w-7 cursor-grab active:cursor-grabbing" {...attributes} {...listeners}>
-                 <GripVertical className="h-4 w-4" />
-              </Button>
-             )}
-        </TableCell> */}
+      <TableRow key={task.id} className="cursor-pointer hover:bg-gray-50">
         <TableCell className="font-medium">
+          <TaskTitleSection />
+        </TableCell>
+        <TableCell>
           <div className="flex items-center gap-2">
-            {task.title}
-            {/* زر المهام الفرعية */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="p-0 h-7 w-7 ml-2"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowSubtasks(!showSubtasks);
-              }}
-              title={showSubtasks ? "إخفاء المهام الفرعية" : "عرض المهام الفرعية"}
-            >
-              {showSubtasks ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            </Button>
-            {/* زر الاعتماديات */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`p-0 h-7 w-7 ${(hasDependencies || hasDependents) ? 'bg-gray-50 hover:bg-gray-100' : ''}`}
-              onClick={handleDependenciesClick} // استخدام معالج جديد يستدعي callback الأب
-              title="إدارة اعتماديات المهمة"
-            >
-              <DependencyIcon
-                hasDependencies={hasDependencies}
-                hasPendingDependencies={hasPendingDependencies}
-                hasDependents={hasDependents}
-                size={16}
-              />
-            </Button>
-          </div>
-        </TableCell>
-        <TableCell>
-          <div className="flex items-center">
             {getStatusBadge(task.status)}
-            {renderStatusChangeButton()} {/* زر تغيير الحالة */}
+            {renderStatusChangeButton()}
           </div>
         </TableCell>
-        <TableCell>
-          {getPriorityBadge(task.priority)}
-        </TableCell>
+        <TableCell>{getPriorityBadge(task.priority)}</TableCell>
         <TableCell>
           {task.assigned_user_name ? (
-            <div className="flex items-center gap-1">
-              <Users className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center">
+              <Users className="h-3.5 w-3.5 ml-1.5 text-gray-500" />
               {task.assigned_user_name}
             </div>
           ) : (
-            "غير محدد"
+            <span className="text-gray-400">غير محدد</span>
           )}
         </TableCell>
         <TableCell>
-          <div className="flex items-center gap-1">
-            <Clock className="h-4 w-4 text-muted-foreground" />
+          <div className="flex items-center">
+            <Calendar className="h-3.5 w-3.5 ml-1.5 text-gray-500" />
             {formatDate(task.due_date)}
           </div>
         </TableCell>
-        <TableCell className="text-right">
-          <div className="flex items-center justify-end gap-1">
-             {/* زر المناقشة */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`p-0 h-7 w-7 ${
-                hasNewDiscussion
-                  ? "text-orange-500 hover:text-orange-600 hover:bg-orange-50"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={handleDiscussionClick} // استخدام معالج جديد يستدعي callback الأب
-              title="مناقشة المهمة"
-            >
+        <TableCell>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" className={`p-0 h-7 w-7 ${hasNewDiscussion ? "text-orange-500 hover:text-orange-600 hover:bg-orange-50" : "text-muted-foreground hover:text-foreground"}`} onClick={(e) => { e.stopPropagation(); handleShowDiscussion(); }} title="مناقشة المهمة">
               <MessageCircle className="h-4 w-4" />
             </Button>
-
-            {/* زر تنزيل المرفق */}
             {assigneeAttachment && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`p-0 h-7 w-7 ${
-                  hasDeliverables
-                    ? "text-blue-500 hover:text-blue-600 hover:bg-blue-50"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                onClick={(e) => { e.stopPropagation(); handleDownload(assigneeAttachment.file_url, assigneeAttachment.file_name); }}
-                title="تنزيل مرفق المكلف"
-              >
+              <Button variant="ghost" size="sm" className={`p-0 h-7 w-7 ${hasDeliverables ? "text-blue-500 hover:text-blue-600 hover:bg-blue-50" : "text-muted-foreground hover:text-foreground"}`} onClick={(e) => { e.stopPropagation(); handleDownload(assigneeAttachment.file_url, assigneeAttachment.file_name); }} title="تنزيل مرفق المكلف">
                 <Download className="h-4 w-4" />
               </Button>
             )}
-
-            {/* زر التعديل */}
             {onEdit && canEdit && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="p-0 h-7 w-7"
-                 onClick={handleEditClick} // استخدام معالج جديد
-                title="تعديل المهمة"
-              >
-                <Edit className="h-4 w-4" />
+              <Button variant="ghost" size="sm" className="p-0 h-7 w-7" onClick={(e) => { e.stopPropagation(); onEdit(task); }} title="تعديل المهمة">
+                <Edit className="h-4 w-4 text-amber-500 hover:text-amber-700" />
               </Button>
             )}
-
-            {/* زر الحذف */}
-            {onDelete && canEdit && ( // نتحقق من onDelete و canEdit قبل عرض الزر
-              <Button
-                variant="ghost"
-                size="sm"
-                className="p-0 h-7 w-7 text-red-500 hover:text-red-600"
-                onClick={handleDeleteClick} // استخدام معالج جديد يستدعي callback الأب
-                title="حذف المهمة"
-                 disabled={isDeleting} // يمكن تعطيله إذا كان الأب يمرر حالة الحذف
-              >
-                 {/* يمكن عرض أيقونة تحميل هنا إذا كان isDeleting true */}
-                 {isDeleting ? <span className="animate-spin">...</span> : <Trash2 className="h-4 w-4" />}
+            {onDelete && canEdit && (
+              <Button variant="ghost" size="sm" className="p-0 h-7 w-7" onClick={(e) => { e.stopPropagation(); setDeleteDialogOpen(true); }} title="حذف المهمة">
+                <Trash2 className="h-4 w-4 text-red-500 hover:text-red-700" />
               </Button>
             )}
           </div>
         </TableCell>
       </TableRow>
 
-      {/* عرض المهام الفرعية في صف منفصل أسفل الصف الرئيسي إذا كانت مفتوحة (في وضع الجدول) */}
       {showSubtasks && (
         <TableRow>
-          <TableCell colSpan={6} className="py-0"> {/* تغطية جميع الأعمدة */}
-            <div className="ml-6 border-l pl-4"> {/* تباعد وتنسيق للتمييز */}
-              <SubtasksList
-                taskId={task.id}
-                projectId={projectId}
-              />
+          <TableCell colSpan={6} className="bg-gray-50 p-0">
+            <div className="p-3">
+              <SubtasksList taskId={task.id} projectId={projectId} />
             </div>
           </TableCell>
         </TableRow>
       )}
 
-      {/* ملاحظة: الحوارات لا تعرض هنا */}
+      <TaskDiscussionDialog open={showDiscussion} onOpenChange={setShowDiscussion} task={task} onStatusChange={onStatusChange} />
+      <TaskDependenciesDialog open={showDependencies} onOpenChange={setShowDependencies} task={task} projectId={projectId} />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>هل أنت متأكد من حذف هذه المهمة؟</AlertDialogTitle>
+            <AlertDialogDescription>
+              سيتم حذف المهمة وجميع المهام الفرعية والمرفقات المرتبطة بها بشكل نهائي. لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-red-500 hover:bg-red-600">
+              {isDeleting ? "جاري الحذف..." : "تأكيد الحذف"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
