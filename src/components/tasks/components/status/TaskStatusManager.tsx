@@ -72,18 +72,8 @@ export const useTaskStatusManager = ({
           }, status);
         }
       } else {
-        // Update regular task status
-        const { error } = await supabase
-          .from('tasks')
-          .update({ status })
-          .eq('id', taskId);
-          
-        if (error) throw error;
-        
         onStatusChange(taskId, status);
-        toast.success('تم تحديث حالة المهمة');
         
-        // Send notification to task assignee about status update
         if (assignedTo && assignedTo !== user?.id) {
           const userData = await supabase.auth.getUser(user?.id || '');
           const userName = userData.data?.user?.email || 'مستخدم';
