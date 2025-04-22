@@ -40,13 +40,15 @@ export const TaskTableRow = ({ task }: TaskTableRowProps) => {
       <td className="px-4 py-3">
         <TaskPriorityBadge priority={task.priority || 'medium'} />
       </td>
+      <td className="px-4 py-3">
+        {task.assigned_user_name || 'غير محدد'}
+      </td>
       <td className="px-4 py-3 text-sm">{formattedDueDate}</td>
-      <td className="px-4 py-3 text-sm">{formattedCreatedAt}</td>
       <td className="px-4 py-3">
         <Button variant="ghost" size="icon" className="h-8 w-8">
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </td>
     </tr>
-  );
+);
 };
