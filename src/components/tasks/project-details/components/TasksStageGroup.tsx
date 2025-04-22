@@ -32,6 +32,8 @@ interface TasksStageGroupProps {
   projectId: string;
   onEdit?: (task: Task) => void;
   onDelete?: (taskId: string) => void;
+  tasksByStage: Record<string, Task[]>;
+  setTasksByStage: React.Dispatch<React.SetStateAction<Record<string, Task[]>>>;
 }
 
 // إنشاء مكون TaskItem قابل للفرز
@@ -51,7 +53,12 @@ const SortableTaskItem = ({ task, ...props }: TaskItemProps & { id: string }) =>
 
   return (
     <TableRow ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <TaskItem task={task} {...props} />
+      <TaskItem
+  task={task}
+  tasks={localTasks}
+  setTasks={setTasks}
+  tasksByStage={tasksByStage}
+  setTasksByStage={setTasksByStage} />
     </TableRow>
   );
 };
