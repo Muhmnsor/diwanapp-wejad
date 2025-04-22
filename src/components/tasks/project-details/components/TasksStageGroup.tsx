@@ -162,47 +162,47 @@ export const TasksStageGroup = ({
   };
 
   return (
-  <div className="border rounded-md overflow-hidden">
-    <div className="bg-gray-50 p-3 border-b">
-      <h3 className="font-medium">{stage.name}</h3>
-    </div>
+    <div className="border rounded-md overflow-hidden">
+      <div className="bg-gray-50 p-3 border-b">
+        <h3 className="font-medium">{stage.name}</h3>
+      </div>
 
-    {/* DndContext الصحيح الذي يحيط بالعناصر القابلة للسحب والإفلات */}
-    <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
-      <SortableContext
-        items={filteredTasks.map((task) => task.id)} // تحديد العناصر التي يمكن فرزها باستخدام معرفاتها
-        strategy={verticalListSortingStrategy} // استخدام استراتيجية الفرز العمودي
-      >
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[40%]">المهمة</TableHead>
-              <TableHead className="w-[15%]">الحالة</TableHead>
-              <TableHead className="w-[10%]">الأولوية</TableHead>
-              <TableHead className="w-[15%]">المكلف</TableHead>
-              <TableHead className="w-[12%]">تاريخ الاستحقاق</TableHead>
-              <TableHead className="w-[8%]">الإجراءات</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredTasks.map((task) => (
-              <SortableTaskItem
-                key={task.id}
-                id={task.id}
-                task={task}
-                getStatusBadge={getStatusBadge}
-                getPriorityBadge={getPriorityBadge}
-                formatDate={formatDate}
-                onStatusChange={onStatusChange}
-                projectId={projectId}
-                onEdit={onEdit}
-                onDelete={onDelete}
-              />
-            ))}
-          </TableBody>
-        </Table>
-      </SortableContext>
-    </DndContext>
-  </div>
-);
+      {/* DndContext الصحيح الذي يحيط بالعناصر القابلة للسحب والإفلات */}
+      <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
+        <SortableContext
+          items={filteredTasks.map((task) => task.id)} // تحديد العناصر التي يمكن فرزها باستخدام معرفاتها
+          strategy={verticalListSortingStrategy} // استخدام استراتيجية الفرز العمودي
+        >
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>المهمة</TableHead>
+                <TableHead>الحالة</TableHead>
+                <TableHead>الأولوية</TableHead>
+                <TableHead>المكلف</TableHead>
+                <TableHead>تاريخ الاستحقاق</TableHead>
+                <TableHead>الإجراءات</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredTasks.map((task) => (
+                <SortableTaskItem
+                  key={task.id}
+                  id={task.id}
+                  task={task}
+                  getStatusBadge={getStatusBadge}
+                  getPriorityBadge={getPriorityBadge}
+                  formatDate={formatDate}
+                  onStatusChange={onStatusChange}
+                  projectId={projectId}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                />
+              ))}
+            </TableBody>
+          </Table>
+        </SortableContext>
+      </DndContext>
+    </div>
+  );
 };
