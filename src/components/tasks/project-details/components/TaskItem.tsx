@@ -156,8 +156,8 @@ export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, o
           return;
         }
 
-        const { hasDependencies, hasDependents, hasPendingDependencies, checkDependenciesCompleted } = useTaskDependencyManager({ taskId: task.id });
-       const dependencyCheck = await checkDependenciesCompleted(); 
+        const { checkDependenciesCompleted } = useTaskDependencyManager({ taskId: task.id });
+        const dependencyCheck = await checkDependenciesCompleted(task.id);
         
         if (!dependencyCheck.isValid) {
           toast.error(dependencyCheck.message);
@@ -220,6 +220,12 @@ export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, o
 
   return (
     <>
+      <TableRow
+        ref={setNodeRef}
+        style={style}
+        {...attributes}
+        {...listeners}
+      >
         <TableCell className="font-medium flex items-center">
           {task.title}
           <Button
@@ -336,16 +342,16 @@ export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, o
             )}
           </div>
         </TableCell>
-
+      </TableRow>
 
       {showSubtasks && (
-
+        <TableRow>
           <TableCell colSpan={6} className="bg-gray-50 p-0">
             <div className="p-3">
               <SubtasksList taskId={task.id} projectId={projectId} />
             </div>
           </TableCell>
-
+        </TableRow>
       )}
 
       <TaskDiscussionDialog
