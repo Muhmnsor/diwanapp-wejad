@@ -43,7 +43,10 @@ export const TasksStageGroup = ({
       },
     })
   );
-
+<DndContext 
+  sensors={sensors}
+  onDragEnd={handleDragEnd}
+>
   useEffect(() => {
     setTasks(tasks);
   }, [tasks]);
