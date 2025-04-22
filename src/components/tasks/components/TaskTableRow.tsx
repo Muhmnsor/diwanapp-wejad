@@ -6,6 +6,7 @@ import { TaskStatusBadge } from './status/TaskStatusBadge';
 import { TaskPriorityBadge } from './priority/TaskPriorityBadge';
 import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { TableCell } from '@/components/ui/table';
 
 interface TaskTableRowProps {
   task: Task;
@@ -29,24 +30,24 @@ export const TaskTableRow = ({ task }: TaskTableRowProps) => {
     : 'غير معروف';
   
   return (
-    <tr>
-      <td className="px-4 py-3">
+    <>
+      <TableCell className="w-[30%]">
         <div className="font-medium">{task.title}</div>
         <div className="text-xs text-muted-foreground mt-1">{task.project_name || 'مشروع غير محدد'}</div>
-      </td>
-      <td className="px-4 py-3">
+      </TableCell>
+      <TableCell className="w-[12%]">
         <TaskStatusBadge status={task.status || 'pending'} />
-      </td>
-      <td className="px-4 py-3">
+      </TableCell>
+      <TableCell className="w-[12%]">
         <TaskPriorityBadge priority={task.priority || 'medium'} />
-      </td>
-      <td className="px-4 py-3 text-sm">{formattedDueDate}</td>
-      <td className="px-4 py-3 text-sm">{formattedCreatedAt}</td>
-      <td className="px-4 py-3">
+      </TableCell>
+      <TableCell className="w-[15%] text-sm">{formattedDueDate}</TableCell>
+      <TableCell className="w-[15%] text-sm">{formattedCreatedAt}</TableCell>
+      <TableCell className="w-[10%]">
         <Button variant="ghost" size="icon" className="h-8 w-8">
           <MoreHorizontal className="h-4 w-4" />
         </Button>
-      </td>
-    </tr>
+      </TableCell>
+    </>
   );
 };
