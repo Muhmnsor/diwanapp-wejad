@@ -76,8 +76,8 @@ export const TasksStageGroup = ({
     try {
       // استدعاء وظيفة Supabase لتحديث ترتيب المهمة في قاعدة البيانات
       const { error } = await supabase.rpc("update_task_order", {
-        task_id_param: active.id,
-        new_position_param: newPosition
+        task_id: active.id,
+        new_position: newPosition
       });
 
       if (error) {
