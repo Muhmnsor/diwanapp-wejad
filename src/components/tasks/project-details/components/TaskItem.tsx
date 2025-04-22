@@ -1,4 +1,3 @@
-```javascript
 import React, { useState, useEffect } from "react";
 import { Calendar, Users, Check, Clock, ChevronDown, ChevronUp, MessageCircle, Download, Trash2, Edit } from "lucide-react";
 import { TableRow, TableCell } from "@/components/ui/table";
@@ -443,4 +442,3 @@ export const TaskItem = ({
         </>
     );
 };
-```
