@@ -1,12 +1,25 @@
 import React, { useState, useEffect } from "react";
 import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
 import { TaskItem } from "./TaskItem";
-// استيراد KeyboardSensor و sortableKeyboardCoordinates
-import { DndContext, DragEndEvent, useSensor, useSensors, PointerSensor, KeyboardSensor } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import {
+  DndContext,
+  DragEndEvent,
+  useSensor,
+  useSensors,
+  PointerSensor,
+  KeyboardSensor,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Task } from "../types/task";
+import { useToast as useAppToast } from "@/hooks/use-toast"; // تجنب تعارض الأسماء
 
 interface TasksStageGroupProps {
   stage: { id: string; name: string };
@@ -21,6 +34,32 @@ interface TasksStageGroupProps {
   onDelete?: (taskId: string) => void;
 }
 
+// إنشاء مكون TaskItem قابل للفرز
+const SortableTaskItem = ({ task, ...props }: TaskItemProps & { id: string }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <TableRow ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <TaskItem task={task} {...props} />
+    </TableRow>
+  );
+};
+
+interface TaskItemProps extends Omit<TasksStageGroupProps, 'tasks' | 'stage' | 'activeTab'> {
+  task: Task;
+}
+
 export const TasksStageGroup = ({
   stage,
   tasks,
@@ -31,9 +70,10 @@ export const TasksStageGroup = ({
   onStatusChange,
   projectId,
   onEdit,
-  onDelete
+  onDelete,
 }: TasksStageGroupProps) => {
   const [localTasks, setTasks] = useState<Task[]>(tasks);
+  const { toast: appToast } = useAppToast(); // استخدام اسم مختلف لتجنب التعارض
 
   // أضفنا دعم لوحة المفاتيح هنا مع الحفاظ على إعدادات مؤشر الماوس
   const sensors = useSensors(
@@ -62,40 +102,62 @@ export const TasksStageGroup = ({
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    
+
     // إذا لم يتم إسقاط العنصر فوق عنصر آخر، أو إذا كان العنصر فوق نفسه، لا تفعل شيئًا
-    if (!over || active.id === over.id) return;
-    
+    if (!over || active?.id === over?.id) return;
+
+    const oldIndex = localTasks.findIndex(task => task.id === active.id);
+    const newIndex = localTasks.findIndex(task => task.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) {
+      return; // أحد العناصر غير موجود في القائمة المحلية
+    }
+
+    // إنشاء نسخة من المهام المحلية وتحديث ترتيبها
+    const newTasks = [...localTasks];
+    const [movedTask] = newTasks.splice(oldIndex, 1);
+    newTasks.splice(newIndex, 0, movedTask);
+    setTasks(newTasks);
+
     // العثور على مؤشر العنصر النشط والعنصر الذي تم الإسقاط فوقه في القائمة المفلترة
-    const activeIndex = filteredTasks.findIndex(task => task.id === active.id);
-    const overIndex = filteredTasks.findIndex(task => task.id === over.id);
-    
+    const activeFilteredIndex = filteredTasks.findIndex(task => task.id === active.id);
+    const overFilteredIndex = filteredTasks.findIndex(task => task.id === over.id);
+
     // حساب الموضع الجديد بناءً على مؤشر العنصر الذي تم الإسقاط فوقه في القائمة المفلترة
-    const newPosition = overIndex;
-    
+    const newPosition = overFilteredIndex;
+
     try {
       // استدعاء وظيفة Supabase لتحديث ترتيب المهمة في قاعدة البيانات
       const { error } = await supabase.rpc("update_task_order", {
-        task_id: active.id,
-        new_position: newPosition
+        task_id_param: active.id,
+        new_position_param: newPosition
       });
 
       if (error) {
-        toast.error("حدث خطأ أثناء تحديث الترتيب");
+        appToast({
+          title: "خطأ في تحديث الترتيب",
+          description: "حدث خطأ أثناء حفظ ترتيب المهام",
+          variant: "destructive",
+        });
         console.error("Error updating task order:", error);
+        // استعادة الترتيب السابق في حالة الفشل
+        setTasks(tasks);
         return;
       }
 
-      // تحديث الحالة المحلية لتعكس الترتيب الجديد للمهام
-      const newTasks = [...localTasks];
-      const [movedTask] = newTasks.splice(activeIndex, 1); // إزالة المهمة من موضعها القديم
-      newTasks.splice(overIndex, 0, movedTask); // إدخال المهمة في موضعها الجديد
-      setTasks(newTasks);
-      
-      toast.success("تم تحديث ترتيب المهام بنجاح");
+      appToast({
+        title: "تم تحديث الترتيب",
+        description: "تم تحديث ترتيب المهام بنجاح",
+      });
     } catch (error) {
-      toast.error("حدث خطأ أثناء تحديث الترتيب");
+      appToast({
+        title: "خطأ غير متوقع",
+        description: "حدث خطأ غير متوقع أثناء تحديث ترتيب المهام",
+        variant: "destructive",
+      });
       console.error("Error in handleDragEnd:", error);
+      // استعادة الترتيب السابق في حالة الفشل
+      setTasks(tasks);
     }
   };
 
@@ -123,10 +185,10 @@ export const TasksStageGroup = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {/* عرض المهام المفلترة والقابلة للفرز */}
               {filteredTasks.map((task) => (
-                <TaskItem
+                <SortableTaskItem
                   key={task.id}
+                  id={task.id}
                   task={task}
                   getStatusBadge={getStatusBadge}
                   getPriorityBadge={getPriorityBadge}
