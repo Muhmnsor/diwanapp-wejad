@@ -1,28 +1,31 @@
-import React, { useState, useEffect } from "react";
-import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
-import { TaskItem } from "./TaskItem";
-import {
-  DndContext,
-  DragEndEvent,
+
+import { useState } from "react";
+import { 
+  DndContext, 
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
   useSensor,
   useSensors,
-  PointerSensor,
-  KeyboardSensor,
-} from "@dnd-kit/core";
+  DragEndEvent
+} from '@dnd-kit/core';
 import {
+  arrayMove,
   SortableContext,
-  verticalListSortingStrategy,
   sortableKeyboardCoordinates,
-  useSortable,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { Task } from "../types/task";
+import { SortableTaskItem } from "./SortableTaskItem";
+import { TaskItem } from "./TaskItem";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Task } from "../types/task";
-import { useToast as useAppToast } from "@/hooks/use-toast"; // تجنب تعارض الأسماء
 
 interface TasksStageGroupProps {
-  stage: { id: string; name: string };
+  stage: {
+    id: string;
+    name: string;
+  };
   tasks: Task[];
   activeTab: string;
   getStatusBadge: (status: string) => JSX.Element;
@@ -30,34 +33,10 @@ interface TasksStageGroupProps {
   formatDate: (date: string | null) => string;
   onStatusChange: (taskId: string, newStatus: string) => void;
   projectId: string;
+  tasksByStage: Record<string, Task[]>;
+  setTasksByStage: React.Dispatch<React.SetStateAction<Record<string, Task[]>>>;
   onEdit?: (task: Task) => void;
   onDelete?: (taskId: string) => void;
-}
-
-// إنشاء مكون TaskItem قابل للفرز
-const SortableTaskItem = ({ task, ...props }: TaskItemProps & { id: string }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id: task.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  return (
-    <TableRow ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <TaskItem task={task} {...props} />
-    </TableRow>
-  );
-};
-
-interface TaskItemProps extends Omit<TasksStageGroupProps, 'tasks' | 'stage' | 'activeTab'> {
-  task: Task;
 }
 
 export const TasksStageGroup = ({
@@ -69,140 +48,106 @@ export const TasksStageGroup = ({
   formatDate,
   onStatusChange,
   projectId,
+  tasksByStage,
+  setTasksByStage,
   onEdit,
-  onDelete,
+  onDelete
 }: TasksStageGroupProps) => {
-  const [localTasks, setTasks] = useState<Task[]>(tasks);
-  const { toast: appToast } = useAppToast(); // استخدام اسم مختلف لتجنب التعارض
+  const [isDragging, setIsDragging] = useState(false);
 
-  // أضفنا دعم لوحة المفاتيح هنا مع الحفاظ على إعدادات مؤشر الماوس
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5, // تتطلب تحريك 5 بكسل قبل تفعيل السحب بالمؤشر
-      },
-    }),
+    useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
-  useEffect(() => {
-    // عند تغيير قائمة المهام الواردة (مثلاً عند التحديث من الخارج)، نحدث الحالة المحلية
-    setTasks(tasks);
-  }, [tasks]);
-
-  // تصفية المهام بناءً على التبويب النشط
-  const filteredTasks = localTasks.filter(
-    (task) => activeTab === "all" || task.status === activeTab
-  );
-
-  // لا نعرض المجموعة إذا لم تكن هناك مهام مفلترة
-  if (filteredTasks.length === 0) return null;
-
+  const stageTasks = tasksByStage[stage.id] || [];
+  
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-
-    // إذا لم يتم إسقاط العنصر فوق عنصر آخر، أو إذا كان العنصر فوق نفسه، لا تفعل شيئًا
-    if (!over || active?.id === over?.id) return;
-
-    const oldIndex = localTasks.findIndex(task => task.id === active.id);
-    const newIndex = localTasks.findIndex(task => task.id === over.id);
-
-    if (oldIndex === -1 || newIndex === -1) {
-      return; // أحد العناصر غير موجود في القائمة المحلية
+    
+    if (!over || active.id === over.id) {
+      setIsDragging(false);
+      return;
     }
-
-    // إنشاء نسخة من المهام المحلية وتحديث ترتيبها
-    const newTasks = [...localTasks];
-    const [movedTask] = newTasks.splice(oldIndex, 1);
-    newTasks.splice(newIndex, 0, movedTask);
-    setTasks(newTasks);
-
-    // العثور على مؤشر العنصر النشط والعنصر الذي تم الإسقاط فوقه في القائمة المفلترة
-    const activeFilteredIndex = filteredTasks.findIndex(task => task.id === active.id);
-    const overFilteredIndex = filteredTasks.findIndex(task => task.id === over.id);
-
-    // حساب الموضع الجديد بناءً على مؤشر العنصر الذي تم الإسقاط فوقه في القائمة المفلترة
-    const newPosition = overFilteredIndex;
-
+    
+    // Find the indices of the dragged and target items
+    const oldIndex = stageTasks.findIndex(task => task.id === active.id);
+    const newIndex = stageTasks.findIndex(task => task.id === over.id);
+    
+    if (oldIndex === -1 || newIndex === -1) return;
+    
     try {
-      // استدعاء وظيفة Supabase لتحديث ترتيب المهمة في قاعدة البيانات
-      const { error } = await supabase.rpc("update_task_order", {
-        task_id_param: active.id,
-        new_position_param: newPosition
+      // Update local state first for immediate UI response
+      const updatedTasks = arrayMove(stageTasks, oldIndex, newIndex);
+      
+      // Update the tasksByStage state with the new order
+      setTasksByStage(prevTasksByStage => ({
+        ...prevTasksByStage,
+        [stage.id]: updatedTasks
+      }));
+      
+      // Update the database with the new order
+      const updatePromises = updatedTasks.map((task, index) => {
+        return supabase
+          .from('tasks')
+          .update({ order_position: index })
+          .eq('id', task.id);
       });
-
-      if (error) {
-        appToast({
-          title: "خطأ في تحديث الترتيب",
-          description: "حدث خطأ أثناء حفظ ترتيب المهام",
-          variant: "destructive",
-        });
-        console.error("Error updating task order:", error);
-        // استعادة الترتيب السابق في حالة الفشل
-        setTasks(tasks);
-        return;
-      }
-
-      appToast({
-        title: "تم تحديث الترتيب",
-        description: "تم تحديث ترتيب المهام بنجاح",
-      });
+      
+      await Promise.all(updatePromises);
+      
     } catch (error) {
-      appToast({
-        title: "خطأ غير متوقع",
-        description: "حدث خطأ غير متوقع أثناء تحديث ترتيب المهام",
-        variant: "destructive",
-      });
-      console.error("Error in handleDragEnd:", error);
-      // استعادة الترتيب السابق في حالة الفشل
-      setTasks(tasks);
+      console.error("Error updating task positions:", error);
+      toast.error("حدث خطأ أثناء تحديث ترتيب المهام");
+    } finally {
+      setIsDragging(false);
     }
   };
 
-  return (
-    <div className="border rounded-md overflow-hidden">
-      <div className="bg-gray-50 p-3 border-b">
-        <h3 className="font-medium">{stage.name}</h3>
+  if (stageTasks.length === 0) {
+    return (
+      <div className="mb-6">
+        <div className="text-lg font-semibold mb-2">{stage.name}</div>
+        <div className="p-4 border rounded-md bg-gray-50 text-center text-gray-500">
+          لا توجد مهام في هذه المرحلة
+        </div>
       </div>
+    );
+  }
 
-      {/* DndContext الصحيح الذي يحيط بالعناصر القابلة للسحب والإفلات */}
-      <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
-        <SortableContext
-          items={filteredTasks.map((task) => task.id)} // تحديد العناصر التي يمكن فرزها باستخدام معرفاتها
-          strategy={verticalListSortingStrategy} // استخدام استراتيجية الفرز العمودي
+  return (
+    <div className="mb-6">
+      <div className="text-lg font-semibold mb-2">{stage.name}</div>
+      
+      <DndContext 
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+        onDragStart={() => setIsDragging(true)}
+      >
+        <SortableContext 
+          items={stageTasks.map(task => task.id)}
+          strategy={verticalListSortingStrategy}
         >
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>المهمة</TableHead>
-                <TableHead>الحالة</TableHead>
-                <TableHead>الأولوية</TableHead>
-                <TableHead>المكلف</TableHead>
-                <TableHead>تاريخ الاستحقاق</TableHead>
-                <TableHead>الإجراءات</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTasks.map((task) => (
-                <SortableTaskItem
-                  key={task.id}
-                  id={task.id}
-                  task={task}
-                  getStatusBadge={getStatusBadge}
-                  getPriorityBadge={getPriorityBadge}
-                  formatDate={formatDate}
-                  onStatusChange={onStatusChange}
-                  projectId={projectId}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                  tasksByStage={tasksByStage}   
-                  setTasksByStage={setTasksByStage}
-                />
-              ))}
-            </TableBody>
-          </Table>
+          <div className="space-y-3">
+            {stageTasks.map(task => (
+              <SortableTaskItem 
+                key={task.id} 
+                id={task.id}
+                task={task}
+                getStatusBadge={getStatusBadge}
+                getPriorityBadge={getPriorityBadge}
+                formatDate={formatDate}
+                onStatusChange={onStatusChange}
+                projectId={projectId}
+                isDragging={isDragging}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            ))}
+          </div>
         </SortableContext>
       </DndContext>
     </div>

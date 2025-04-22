@@ -15,6 +15,7 @@ interface TasksContentProps {
     name: string;
   }[];
   tasksByStage: Record<string, Task[]>;
+  setTasksByStage: React.Dispatch<React.SetStateAction<Record<string, Task[]>>>;
   getStatusBadge: (status: string) => JSX.Element;
   getPriorityBadge: (priority: string | null) => JSX.Element | null;
   formatDate: (date: string | null) => string;
@@ -31,6 +32,7 @@ export const TasksContent = ({
   filteredTasks,
   projectStages,
   tasksByStage,
+  setTasksByStage,
   getStatusBadge,
   getPriorityBadge,
   formatDate,
@@ -64,13 +66,15 @@ export const TasksContent = ({
           <TasksStageGroup 
             key={stage.id} 
             stage={stage} 
-            tasks={tasksByStage[stage.id] || []} 
+            tasks={filteredTasks} 
             activeTab={activeTab} 
             getStatusBadge={getStatusBadge} 
             getPriorityBadge={getPriorityBadge} 
             formatDate={formatDate} 
             onStatusChange={onStatusChange} 
             projectId={projectId || ''} 
+            tasksByStage={tasksByStage}
+            setTasksByStage={setTasksByStage}
             onEdit={onEditTask} 
             onDelete={onDeleteTask} 
           />

@@ -36,6 +36,7 @@ export const TasksList = ({
     projectStages,
     handleStagesChange,
     tasksByStage,
+    setTasksByStage,
     handleStatusChange,
     fetchTasks,
     isGeneral,
@@ -81,10 +82,10 @@ export const TasksList = ({
       <Card className="border shadow-sm">
         <CardHeader className="pb-0">
           <TasksHeader 
-  onAddTask={() => setIsAddDialogOpen(true)} 
-  isGeneral={isGeneralBoolean}
-  projectId={projectId || ''} 
-/>
+            onAddTask={() => setIsAddDialogOpen(true)} 
+            isGeneral={isGeneralBoolean}
+            projectId={projectId || ''} 
+          />
         </CardHeader>
         
         <CardContent className="pt-4">
@@ -99,6 +100,7 @@ export const TasksList = ({
             filteredTasks={filteredTasks}
             projectStages={projectStages}
             tasksByStage={tasksByStage}
+            setTasksByStage={setTasksByStage}
             getStatusBadge={getStatusBadge}
             getPriorityBadge={getPriorityBadge}
             formatDate={formatDate}
