@@ -4,17 +4,18 @@ import { TaskHeader } from './components/TaskHeader';
 import { TaskDescription } from './components/TaskDescription';
 import { TaskMetadata } from './components/TaskMetadata';
 
-// إضافة الخصائص في interface TaskCardProps
 interface TaskCardProps {
-  task: Task;
-  onStatusChange: (taskId: string, newStatus: string) => void;
-  onEdit?: (task: Task) => void;
-  onDelete?: (taskId: string) => void;
-  getStatusBadge: (status: string) => JSX.Element;
-  getPriorityBadge: (priority: string | null) => JSX.Element | null;
-  formatDate: (date: string | null) => string;
+  task: {
+    id: string;
+    title: string;
+    description: string | null;
+    due_date: string | null;
+    assigned_to: string | null;
+    status: string;
+    priority: string;
+    updated_at: string;
+  };
 }
-
 
 export const TaskCard = ({ task }: TaskCardProps) => {
   console.log('📋 Rendering task card with data:', task);
