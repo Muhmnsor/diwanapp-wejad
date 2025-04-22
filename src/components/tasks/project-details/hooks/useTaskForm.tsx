@@ -1,8 +1,15 @@
-
-import { useState, useEffect } from "react";
+// src/hooks/tasks/useTaskForm.tsx
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { uploadAttachment, saveTaskTemplate, saveAttachmentReference } from "../../services/uploadService";
+
+import {
+  uploadAttachment,
+  saveTaskTemplate,
+  saveAttachmentReference, // keep if you still need it somewhere else
+} from "../../services/uploadService";
+
+import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
 
 export interface UseTaskFormProps {
   projectId?: string;
@@ -30,10 +37,13 @@ export const useTaskForm = ({
   onTaskUpdated,
   initialValues,
   taskId,
-  meetingId
+  meetingId,
 }: UseTaskFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // ⬇️  Import the notification‑sending hook
+  const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
 
   const handleSubmit = async (formData: {
     title: string;
@@ -50,79 +60,93 @@ export const useTaskForm = ({
     setError(null);
 
     try {
-      const user = await supabase.auth.getUser();
-      const userId = user.data.user?.id;
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const userId = user?.id;
 
       const taskData = {
         title: formData.title,
         description: formData.description || "",
-        due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
+        due_date: formData.dueDate
+          ? new Date(formData.dueDate).toISOString()
+          : null,
         priority: formData.priority,
         assigned_to: formData.assignedTo,
         project_id: isGeneral ? null : projectId,
         stage_id: isGeneral ? null : formData.stageId,
-        is_general: isGeneral && !meetingId, // It's a general task if isGeneral is true and meetingId is not provided
+        is_general: isGeneral && !meetingId,
         category: isGeneral || meetingId ? formData.category : null,
-        workspace_id: null, // Will be set based on project or general workspace
+        workspace_id: null,
         created_by: userId,
         requires_deliverable: formData.requiresDeliverable || false,
-        meeting_id: meetingId || null, // Add the meeting_id field
-        task_type: meetingId ? 'meeting_task' : null // Identify tasks created from meetings
+        meeting_id: meetingId || null,
+        task_type: meetingId ? "meeting_task" : null,
       };
 
-      console.log("Task data to insert:", taskData);
-
       let result;
-      
+
       if (taskId) {
-        // Update existing task
+        /* ---------- Update existing task ---------- */
         const { data, error } = await supabase
           .from("tasks")
           .update(taskData)
           .eq("id", taskId)
           .select()
           .single();
-        
+
         if (error) throw error;
         result = data;
-        
+
         toast.success("تم تحديث المهمة بنجاح");
-        
-        if (onTaskUpdated) onTaskUpdated();
+        onTaskUpdated?.();
       } else {
-        // Create new task
+        /* ---------- Create new task ---------- */
         const { data, error } = await supabase
           .from("tasks")
           .insert(taskData)
           .select()
           .single();
-        
+
         if (error) throw error;
         result = data;
-        
-        toast.success("تمت إضافة المهمة بنجاح");
-        
-        // Upload templates if provided
-        if (formData.templates && formData.templates.length > 0 && result) {
+
+        /* 🔔 Send assignment notification */
+        try {
+          await sendTaskAssignmentNotification({
+            taskId: result.id,
+            taskTitle: formData.title,
+            assignedUserId: formData.assignedTo ?? "",
+            projectId: taskData.project_id ?? undefined,
+            projectTitle: isGeneral ? null : undefined, // null for general tasks
+            assignedByUserId: userId ?? undefined,
+          });
+        } catch (notificationError) {
+          // Don’t block task creation if notification fails
+          console.error(
+            "Failed to send assignment notification:",
+            notificationError
+          );
+        }
+
+        /* ---------- Upload any template attachments ---------- */
+        if (
+          formData.templates &&
+          formData.templates.length > 0 &&
+          result?.id
+        ) {
           for (const file of formData.templates) {
             const { url, error } = await uploadAttachment(file, "template");
-            
             if (error || !url) {
               console.error("Error uploading template:", error);
               continue;
             }
-            
-            // Save template reference
-            await saveTaskTemplate(
-              result.id,
-              url,
-              file.name,
-              file.type
-            );
+            await saveTaskTemplate(result.id, url, file.name, file.type);
           }
         }
-        
-        if (onTaskAdded) onTaskAdded();
+
+        toast.success("تمت إضافة المهمة بنجاح");
+        onTaskAdded?.();
       }
     } catch (err: any) {
       console.error("Error submitting task:", err);
@@ -136,6 +160,6 @@ export const useTaskForm = ({
   return {
     isSubmitting,
     error,
-    handleSubmit
+    handleSubmit,
   };
 };
