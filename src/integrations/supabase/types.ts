@@ -8162,7 +8162,7 @@ export type Database = {
         Returns: Json
       }
       update_task_order: {
-        Args: { task_id: string; new_position: number }
+        Args: { task_id_param: string; new_position_param: number }
         Returns: undefined
       }
       update_workspace_members_count: {
