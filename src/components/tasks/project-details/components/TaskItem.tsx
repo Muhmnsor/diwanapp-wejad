@@ -16,6 +16,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useTaskDependencyManager } from "../../components/dependencies/TaskDependencyManager";
+import { useTaskDependencies } from "../hooks/useTaskDependencies";
+
 
 export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, onStatusChange, projectId, onEdit, onDelete }) => {
   const [isUpdating, setIsUpdating] = useState(false);
@@ -28,7 +30,9 @@ export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, o
   const [hasNewDiscussion, setHasNewDiscussion] = useState(false);
   const [hasDeliverables, setHasDeliverables] = useState(false);
   
+  
   const { user } = useAuthStore();
+  const { checkDependenciesCompleted } = useTaskDependencies(task.id);
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: task.id
   });
