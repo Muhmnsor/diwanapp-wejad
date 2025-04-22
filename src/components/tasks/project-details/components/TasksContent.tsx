@@ -57,34 +57,27 @@ export const TasksContent = ({
   }
 
   // إذا كان التبويب النشط هو "الكل" وليست مهام عامة، فسنعرض المهام مقسمة حسب المراحل
- if (activeTab === "all" && projectStages.length > 0 && !isGeneral) {
-  return (
-    <div className="space-y-6" dir="rtl">
-      {projectStages.map(stage => (
-        <TasksStageGroup 
-          key={stage.id} 
-          stage={stage} 
-          tasks={tasksByStage[stage.id] || []} 
-          activeTab={activeTab} 
-          getStatusBadge={getStatusBadge} 
-          getPriorityBadge={getPriorityBadge} 
-          formatDate={formatDate} 
-          onStatusChange={onStatusChange} 
-          projectId={projectId || ''} 
-          onEdit={onEditTask} 
-          onDelete={onDeleteTask}
-          onReorder={async (tasks) => {
-            const updatedTasks = tasks.map((task, index) => ({
-              ...task,
-              order_position: index + 1
-            }));
-            await reorderTasks(updatedTasks);
-          }}
-        />
-      ))}
-    </div>
-  );
-}
+  if (activeTab === "all" && projectStages.length > 0 && !isGeneral) {
+    return (
+      <div className="space-y-6" dir="rtl">
+        {projectStages.map(stage => (
+          <TasksStageGroup 
+            key={stage.id} 
+            stage={stage} 
+            tasks={tasksByStage[stage.id] || []} 
+            activeTab={activeTab} 
+            getStatusBadge={getStatusBadge} 
+            getPriorityBadge={getPriorityBadge} 
+            formatDate={formatDate} 
+            onStatusChange={onStatusChange} 
+            projectId={projectId || ''} 
+            onEdit={onEditTask} 
+            onDelete={onDeleteTask} 
+          />
+        ))}
+      </div>
+    );
+  }
 
   // عرض المهام كقائمة بدون تقسيم للتبويبات الأخرى أو المهام العامة
   return (
