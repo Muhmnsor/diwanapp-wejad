@@ -1,24 +1,6 @@
-/**
- * TaskItem.tsx
- * مكوّن صفّ مهمة مع كل وظائفه (تحديث الحالة، المناقشة، الاعتماديات، الحذف …)
- * ✔︎ يعالج خطأ استدعاء الـ Hook داخل event handler
- * ✔︎ يستخدم useTaskDependencyManager مرة واحدة في المستوى الأعلى
- * ✔︎ يعيد فتح المهمة إلى "pending" (عدّلها إذا كانت لديك قيمة مختلفة)
- */
 
 import React, { useState, useEffect } from "react";
-import {
-  Calendar,
-  Users,
-  Check,
-  Clock,
-  ChevronDown,
-  ChevronUp,
-  MessageCircle,
-  Download,
-  Trash2,
-  Edit,
-} from "lucide-react";
+import { Calendar, Users, Check, Clock, ChevronDown, ChevronUp, MessageCircle, Download, Trash2, Edit } from "lucide-react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,202 +12,164 @@ import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
 import { TaskDependenciesDialog } from "./dependencies/TaskDependenciesDialog";
 import { usePermissionCheck } from "../hooks/usePermissionCheck";
 import { DependencyIcon } from "../../components/dependencies/DependencyIcon";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useTaskDependencyManager } from "../../components/dependencies/TaskDependencyManager";
+import { useTaskDependencies } from "../hooks/useTaskDependencies";
 
-interface TaskItemProps {
-  task: any; // ✴︎ استبدل بـ Type دقيقة إن توفرت
-  getStatusBadge: (status: string) => JSX.Element;
-  getPriorityBadge: (priority: string | null) => JSX.Element | null;
-  formatDate: (date: string | null) => string;
-  onStatusChange: (taskId: string, status: string) => Promise<void>;
-  projectId: string;
-  onEdit?: (task: any) => void;
-  onDelete?: (taskId: string) => void;
-}
 
-export const TaskItem = ({
-  task,
-  getStatusBadge,
-  getPriorityBadge,
-  formatDate,
-  onStatusChange,
-  projectId,
-  onEdit,
-  onDelete,
-}: TaskItemProps) => {
-  /* ------------------------------------------------------------------ */
-  /* »» الحالة الداخلية                                                  */
-  /* ------------------------------------------------------------------ */
+export const TaskItem = ({ task, getStatusBadge, getPriorityBadge, formatDate, onStatusChange, projectId, onEdit, onDelete }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [showSubtasks, setShowSubtasks] = useState(false);
   const [showDiscussion, setShowDiscussion] = useState(false);
   const [showDependencies, setShowDependencies] = useState(false);
-  const [assigneeAttachment, setAssigneeAttachment] = useState<any>(null);
+  const [assigneeAttachment, setAssigneeAttachment] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [hasNewDiscussion, setHasNewDiscussion] = useState(false);
   const [hasDeliverables, setHasDeliverables] = useState(false);
-
-  /* ------------------------------------------------------------------ */
-  /* »» البيانات المشتركة                                                 */
-  /* ------------------------------------------------------------------ */
+  
+  
   const { user } = useAuthStore();
-
-  /** صلاحيات التعديل / الحذف */
+  const { checkDependenciesCompleted } = useTaskDependencies(task.id);
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: task.id
+  });
+  
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition
+  };
+  
   const { canEdit } = usePermissionCheck({
     assignedTo: null,
     projectId: task.project_id,
     workspaceId: task.workspace_id,
     createdBy: task.created_by,
     isGeneral: task.is_general,
-    projectManager: task.project_manager,
+    projectManager: task.project_manager
   });
 
-  /** إدارة الاعتماديات – استدعاء واحد فقط في أعلى المكوّن */
-  const {
-    hasDependencies,
-    hasDependents,
-    hasPendingDependencies,
-    checkDependenciesCompleted,
-  } = useTaskDependencyManager({ taskId: task.id });
-
-  /* ------------------------------------------------------------------ */
-  /* »» سحب‑وإفلات                                                       */
-  /* ------------------------------------------------------------------ */
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: task.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  /* ------------------------------------------------------------------ */
-  /* »» جلب مرفق المكلَّف                                               */
-  /* ------------------------------------------------------------------ */
   useEffect(() => {
-    if (task.assigned_to) fetchAssigneeAttachment();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [task.id, task.assigned_to]);
+    if (task.assigned_to) {
+      fetchAssigneeAttachment();
+    }
+    
+    // Set hasDeliverables based on assigneeAttachment
+    setHasDeliverables(!!assigneeAttachment);
+  }, [task.id, task.assigned_to, assigneeAttachment]);
 
   const fetchAssigneeAttachment = async () => {
     try {
-      const { data: portfolioAttachments } = await supabase
+      const { data: portfolioAttachments, error: portfolioError } = await supabase
         .from("portfolio_task_attachments")
         .select("*")
         .eq("task_id", task.id)
         .eq("created_by", task.assigned_to)
-        .order("created_at", { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(1);
 
-      const { data: taskAttachments } = await supabase
+      const { data: taskAttachments, error: taskError } = await supabase
         .from("task_attachments")
         .select("*")
         .eq("task_id", task.id)
         .eq("created_by", task.assigned_to)
-        .order("created_at", { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(1);
 
-      const attachment =
-        portfolioAttachments?.[0] ?? taskAttachments?.[0] ?? null;
-
-      setAssigneeAttachment(attachment);
-      setHasDeliverables(!!attachment);
+      if ((portfolioAttachments && portfolioAttachments.length > 0) || (taskAttachments && taskAttachments.length > 0)) {
+        const attachment = portfolioAttachments?.length > 0 ? portfolioAttachments[0] : taskAttachments[0];
+        setAssigneeAttachment(attachment);
+        setHasDeliverables(true);
+      } else {
+        setHasDeliverables(false);
+      }
     } catch (error) {
       console.error("Error fetching assignee attachment:", error);
     }
   };
 
-  const handleDownload = (fileUrl: string, fileName: string) => {
-    const link = document.createElement("a");
+  const handleDownload = (fileUrl, fileName) => {
+    const link = document.createElement('a');
     link.href = fileUrl;
-    link.target = "_blank";
+    link.target = '_blank';
     link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  /* ------------------------------------------------------------------ */
-  /* »» حذف المهمة                                                       */
-  /* ------------------------------------------------------------------ */
   const handleDelete = async () => {
     if (!onDelete || !canEdit) {
-      if (!canEdit) toast.error("ليس لديك صلاحية لحذف هذه المهمة");
+      if (!canEdit) {
+        toast.error("ليس لديك صلاحية لحذف هذه المهمة");
+      }
       return;
     }
 
+    setIsDeleting(true);
     try {
-      setIsDeleting(true);
-      await onDelete(task.id);
+      onDelete(task.id);
       setDeleteDialogOpen(false);
-    } catch {
+    } catch (error) {
+      console.error("Error deleting task:", error);
       toast.error("حدث خطأ أثناء حذف المهمة");
     } finally {
       setIsDeleting(false);
     }
   };
+  
+  const resetDiscussionFlag = () => {
+    setHasNewDiscussion(false);
+  };
 
-  /* ------------------------------------------------------------------ */
-  /* »» تحديث حالة المهمة                                                */
-  /* ------------------------------------------------------------------ */
-  const handleStatusUpdate = async (newStatus: string) => {
+  const handleStatusUpdate = async (newStatus) => {
     if (!canEdit) {
       toast.error("ليس لديك صلاحية لتغيير حالة هذه المهمة");
       return;
     }
 
     setIsUpdating(true);
-
     try {
-      /* شروط عند الإكمال فقط */
-      if (newStatus === "completed") {
-        /* تحقق من المهام الفرعية */
-        const { hasPendingSubtasks, error } = await checkPendingSubtasks(
-          task.id
-        );
-        if (error) throw new Error(error);
+      if (newStatus === 'completed') {
+        const { hasPendingSubtasks, error } = await checkPendingSubtasks(task.id);
+        
+        if (error) {
+          toast.error(error);
+          setIsUpdating(false);
+          return;
+        }
+
         if (hasPendingSubtasks) {
           toast.error("لا يمكن إكمال المهمة حتى يتم إكمال جميع المهام الفرعية");
+          setIsUpdating(false);
           return;
         }
 
-        /* تحقق من المستلَمات */
         if (task.requires_deliverable && !hasDeliverables) {
-          toast.error("المستلمات إلزامية لهذه المهمة", {
-            description: "يرجى رفع مستلم واحد على الأقل قبل الإكمال",
-            duration: 5000,
+          toast.error("لا يمكن إكمال المهمة. المستلمات إلزامية لهذه المهمة", {
+            description: "يرجى رفع مستلم واحد على الأقل قبل إكمال المهمة",
+            duration: 5000
           });
+          setIsUpdating(false);
           return;
         }
 
-        /* تحقق من الاعتماديات */
-        const dependencyCheck = await checkDependenciesCompleted();
+        const { checkDependenciesCompleted } = useTaskDependencyManager({ taskId: task.id });
+        const dependencyCheck = await checkDependenciesCompleted(task.id);
+        
         if (!dependencyCheck.isValid) {
           toast.error(dependencyCheck.message);
-          if (dependencyCheck.pendingDependencies.length) {
-            const pending = dependencyCheck.pendingDependencies
-              .map((t: any) => t.title)
-              .join(", ");
-            toast.error(`المهام المعلقة: ${pending}`);
+          if (dependencyCheck.pendingDependencies.length > 0) {
+            const pendingTasks = dependencyCheck.pendingDependencies.map(task => task.title).join(", ");
+            toast.error(`المهام المعلقة: ${pendingTasks}`);
           }
+          setIsUpdating(false);
           return;
         }
       }
 
-      /* استدعاء الدالة المرسلة من الأب */
       await onStatusChange(task.id, newStatus);
     } catch (error) {
       console.error("Error updating task status:", error);
@@ -235,18 +179,17 @@ export const TaskItem = ({
     }
   };
 
-  /* ------------------------------------------------------------------ */
-  /* »» أزرار الحالة                                                     */
-  /* ------------------------------------------------------------------ */
   const renderStatusChangeButton = () => {
-    if (!canEdit) return null;
+    if (!canEdit) {
+      return null;
+    }
 
-    return task.status !== "completed" ? (
+    return task.status !== 'completed' ? (
       <Button
         variant="outline"
         size="sm"
         className="h-7 w-7 p-0 ml-1"
-        onClick={() => handleStatusUpdate("completed")}
+        onClick={() => handleStatusUpdate('completed')}
         disabled={isUpdating}
         title="إكمال المهمة"
       >
@@ -257,7 +200,7 @@ export const TaskItem = ({
         variant="outline"
         size="sm"
         className="h-7 w-7 p-0 ml-1"
-        onClick={() => handleStatusUpdate("pending")} // ← غيّر القيمة إن كانت مختلفة لديك
+        onClick={() => handleStatusUpdate('in_progress')}
         disabled={isUpdating}
         title="إعادة فتح المهمة"
       >
@@ -266,42 +209,41 @@ export const TaskItem = ({
     );
   };
 
-  /* ------------------------------------------------------------------ */
-  /* »» واجهة المكوّن                                                    */
-  /* ------------------------------------------------------------------ */
+  const handleShowDiscussion = () => {
+    resetDiscussionFlag();
+    setShowDiscussion(true);
+  };
+
+  const { hasDependencies, hasDependents, hasPendingDependencies } = useTaskDependencyManager({
+    taskId: task.id
+  });
+
   return (
     <>
-      {/* الصفّ الرئيسي */}
-      <TableRow ref={setNodeRef} style={style} {...attributes} {...listeners}>
-        {/* العنوان + أزرار إظهار التفاصيل */}
+      <TableRow
+        ref={setNodeRef}
+        style={style}
+        {...attributes}
+        {...listeners}
+      >
         <TableCell className="font-medium flex items-center">
           {task.title}
-
-          {/* زر عرض/إخفاء المهام الفرعية */}
           <Button
             variant="ghost"
             size="sm"
             className="p-0 h-7 w-7 ml-2"
             onClick={(e) => {
               e.stopPropagation();
-              setShowSubtasks((p) => !p);
+              setShowSubtasks(!showSubtasks);
             }}
             title={showSubtasks ? "إخفاء المهام الفرعية" : "عرض المهام الفرعية"}
           >
-            {showSubtasks ? (
-              <ChevronUp className="h-3.5 w-3.5" />
-            ) : (
-              <ChevronDown className="h-3.5 w-3.5" />
-            )}
+            {showSubtasks ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           </Button>
-
-          {/* زر الاعتماديات */}
           <Button
             variant="ghost"
             size="sm"
-            className={`p-0 h-7 w-7 ${
-              hasDependencies || hasDependents ? "bg-gray-50 hover:bg-gray-100" : ""
-            }`}
+            className={`p-0 h-7 w-7 ${hasDependencies || hasDependents ? 'bg-gray-50 hover:bg-gray-100' : ''}`}
             onClick={(e) => {
               e.stopPropagation();
               setShowDependencies(true);
@@ -316,19 +258,13 @@ export const TaskItem = ({
             />
           </Button>
         </TableCell>
-
-        {/* الحالة */}
         <TableCell>
           <div className="flex items-center gap-2">
             {getStatusBadge(task.status)}
             {renderStatusChangeButton()}
           </div>
         </TableCell>
-
-        {/* الأولوية */}
         <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-
-        {/* المكلَّف */}
         <TableCell>
           {task.assigned_user_name ? (
             <div className="flex items-center">
@@ -339,53 +275,35 @@ export const TaskItem = ({
             <span className="text-gray-400">غير محدد</span>
           )}
         </TableCell>
-
-        {/* تاريخ الاستحقاق */}
         <TableCell>
           <div className="flex items-center">
             <Calendar className="h-3.5 w-3.5 ml-1.5 text-gray-500" />
             {formatDate(task.due_date)}
           </div>
         </TableCell>
-
-        {/* أزرار جانبية (مناقشة ‑ مرفق المكلَّف ‑ تعديل ‑ حذف) */}
         <TableCell>
           <div className="flex items-center gap-1">
-            {/* مناقشة */}
             <Button
               variant="ghost"
               size="sm"
-              className={`p-0 h-7 w-7 ${
-                hasNewDiscussion
-                  ? "text-orange-500 hover:text-orange-600 hover:bg-orange-50"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              className={`p-0 h-7 w-7 ${hasNewDiscussion ? "text-orange-500 hover:text-orange-600 hover:bg-orange-50" : "text-muted-foreground hover:text-foreground"}`}
               onClick={(e) => {
                 e.stopPropagation();
-                setHasNewDiscussion(false);
-                setShowDiscussion(true);
+                handleShowDiscussion();
               }}
               title="مناقشة المهمة"
             >
               <MessageCircle className="h-4 w-4" />
             </Button>
 
-            {/* تنزيل مرفق المكلف */}
             {assigneeAttachment && (
               <Button
                 variant="ghost"
                 size="sm"
-                className={`p-0 h-7 w-7 ${
-                  hasDeliverables
-                    ? "text-blue-500 hover:text-blue-600 hover:bg-blue-50"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                className={`p-0 h-7 w-7 ${hasDeliverables ? "text-blue-500 hover:text-blue-600 hover:bg-blue-50" : "text-muted-foreground hover:text-foreground"}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleDownload(
-                    assigneeAttachment.file_url,
-                    assigneeAttachment.file_name
-                  );
+                  handleDownload(assigneeAttachment.file_url, assigneeAttachment.file_name);
                 }}
                 title="تنزيل مرفق المكلف"
               >
@@ -393,7 +311,6 @@ export const TaskItem = ({
               </Button>
             )}
 
-            {/* تعديل */}
             {onEdit && canEdit && (
               <Button
                 variant="ghost"
@@ -409,7 +326,6 @@ export const TaskItem = ({
               </Button>
             )}
 
-            {/* حذف */}
             {onDelete && canEdit && (
               <Button
                 variant="ghost"
@@ -428,7 +344,6 @@ export const TaskItem = ({
         </TableCell>
       </TableRow>
 
-      {/* صفّ المهام الفرعية */}
       {showSubtasks && (
         <TableRow>
           <TableCell colSpan={6} className="bg-gray-50 p-0">
@@ -439,7 +354,6 @@ export const TaskItem = ({
         </TableRow>
       )}
 
-      {/* حوار المناقشة */}
       <TaskDiscussionDialog
         open={showDiscussion}
         onOpenChange={setShowDiscussion}
@@ -447,7 +361,6 @@ export const TaskItem = ({
         onStatusChange={onStatusChange}
       />
 
-      {/* حوار الاعتماديات */}
       <TaskDependenciesDialog
         open={showDependencies}
         onOpenChange={setShowDependencies}
@@ -455,14 +368,13 @@ export const TaskItem = ({
         projectId={projectId}
       />
 
-      {/* تأكيد الحذف */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>هل أنت متأكد من حذف هذه المهمة؟</AlertDialogTitle>
             <AlertDialogDescription>
-              سيتم حذف المهمة وجميع المهام الفرعية والمرفقات المرتبطة بها بشكل
-              نهائي. لا يمكن التراجع عن هذا الإجراء.
+              سيتم حذف المهمة وجميع المهام الفرعية والمرفقات المرتبطة بها بشكل نهائي.
+              لا يمكن التراجع عن هذا الإجراء.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
