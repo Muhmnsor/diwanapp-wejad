@@ -1,5 +1,11 @@
-import { useTaskStatusManagement } from "@/components/tasks/project-details/hooks/useTaskStatusManagement";
+
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useTaskNotifications } from "@/hooks/useTaskNotifications";
+import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
 import { useAuthStore } from "@/store/authStore";
+import { handleTaskCompletion } from "../actions/handleTaskCompletion";
 
 interface TaskStatusManagerProps {
   taskId: string;
@@ -10,29 +16,95 @@ interface TaskStatusManagerProps {
   projectId?: string | null;
   projectTitle?: string | null;
   taskTitle: string;
-  tasks: Task[];
-  setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
-  tasksByStage: Record<string, Task[]>;
-  setTasksByStage: React.Dispatch<React.SetStateAction<Record<string, Task[]>>>;
+  onStatusChange: (taskId: string, status: string) => void;
 }
 
 export const useTaskStatusManager = ({
   taskId,
+  isSubtask,
   currentStatus,
+  dueDate,
+  assignedTo,
   projectId,
-  tasks,
-  setTasks,
-  tasksByStage,
-  setTasksByStage,
-  ...props
+  projectTitle,
+  taskTitle,
+  onStatusChange
 }: TaskStatusManagerProps) => {
-  const { handleStatusChange, isUpdating } = useTaskStatusManagement(
-    projectId,
-    tasks,
-    setTasks,
-    tasksByStage, 
-    setTasksByStage
-  );
+  const [isUpdating, setIsUpdating] = useState(false);
+  const { sendTaskStatusUpdateNotification } = useTaskNotifications();
+  const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
+  const { user } = useAuthStore();
+
+  const handleStatusChange = async (status: string) => {
+    setIsUpdating(true);
+    try {
+      if (status === 'completed' && currentStatus !== 'completed' && user?.id) {
+        const taskTable = isSubtask ? 'subtasks' : 'tasks';
+        await handleTaskCompletion({
+          taskId,
+          taskTable,
+          userId: user.id,
+          dueDate
+        });
+      }
+      
+      if (isSubtask) {
+        const { error } = await supabase
+          .from('subtasks')
+          .update({ status })
+          .eq('id', taskId);
+          
+        if (error) throw error;
+        
+        onStatusChange(taskId, status);
+        toast.success('تم تحديث حالة المهمة الفرعية');
+        
+        if (assignedTo && assignedTo !== user?.id) {
+          const userData = await supabase.auth.getUser(user?.id || '');
+          const userName = userData.data?.user?.email || 'مستخدم';
+          
+          await sendTaskStatusUpdateNotification({
+            taskId,
+            taskTitle,
+            assignedUserId: assignedTo,
+            updatedByUserId: user?.id,
+            updatedByUserName: userName
+          }, status);
+        }
+} else {
+      // Add database update for regular tasks
+      const { error } = await supabase
+        .from('tasks')
+        .update({ status })
+        .eq('id', taskId);
+        
+      if (error) throw error;
+      
+      onStatusChange(taskId, status);
+      toast.success('تم تحديث حالة المهمة');
+      
+      if (assignedTo && assignedTo !== user?.id) {
+        const userData = await supabase.auth.getUser(user?.id || '');
+        const userName = userData.data?.user?.email || 'مستخدم';
+        
+        await sendTaskStatusUpdateNotification({
+          taskId,
+          taskTitle,
+          projectId: projectId || undefined,
+          projectTitle: projectTitle || undefined,
+          assignedUserId: assignedTo,
+          updatedByUserId: user?.id,
+          updatedByUserName: userName
+        }, status);
+      }
+    }
+  } catch (error) {
+    console.error("Error updating task status:", error);
+    toast.error('حدث خطأ أثناء تحديث حالة المهمة');
+  } finally {
+    setIsUpdating(false);
+  }
+};
 
   return {
     isUpdating,
