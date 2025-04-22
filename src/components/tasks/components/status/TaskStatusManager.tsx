@@ -71,40 +71,31 @@ export const useTaskStatusManager = ({
             updatedByUserName: userName
           }, status);
         }
-} else {
-      // Add database update for regular tasks
-      const { error } = await supabase
-        .from('tasks')
-        .update({ status })
-        .eq('id', taskId);
+      } else {
+        onStatusChange(taskId, status);
         
-      if (error) throw error;
-      
-      onStatusChange(taskId, status);
-      toast.success('تم تحديث حالة المهمة');
-      
-      if (assignedTo && assignedTo !== user?.id) {
-        const userData = await supabase.auth.getUser(user?.id || '');
-        const userName = userData.data?.user?.email || 'مستخدم';
-        
-        await sendTaskStatusUpdateNotification({
-          taskId,
-          taskTitle,
-          projectId: projectId || undefined,
-          projectTitle: projectTitle || undefined,
-          assignedUserId: assignedTo,
-          updatedByUserId: user?.id,
-          updatedByUserName: userName
-        }, status);
+        if (assignedTo && assignedTo !== user?.id) {
+          const userData = await supabase.auth.getUser(user?.id || '');
+          const userName = userData.data?.user?.email || 'مستخدم';
+          
+          await sendTaskStatusUpdateNotification({
+            taskId,
+            taskTitle,
+            projectId: projectId || undefined,
+            projectTitle: projectTitle || undefined,
+            assignedUserId: assignedTo,
+            updatedByUserId: user?.id,
+            updatedByUserName: userName
+          }, status);
+        }
       }
+    } catch (error) {
+      console.error("Error updating task status:", error);
+      toast.error('حدث خطأ أثناء تحديث حالة المهمة');
+    } finally {
+      setIsUpdating(false);
     }
-  } catch (error) {
-    console.error("Error updating task status:", error);
-    toast.error('حدث خطأ أثناء تحديث حالة المهمة');
-  } finally {
-    setIsUpdating(false);
-  }
-};
+  };
 
   return {
     isUpdating,
