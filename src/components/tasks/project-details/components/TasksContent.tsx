@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Task } from "../types/task";
 import { TasksStageGroup } from "./TasksStageGroup";
@@ -6,13 +7,16 @@ import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components
 import { TaskItem } from "./TaskItem";
 import { useTaskReorder } from "../hooks/useTaskReorder";
 import { toast } from "sonner";
+import { DragDebugPanel } from "./debug/DragDebugPanel";
 import {
   DndContext,
   closestCenter,
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent
+  DragEndEvent,
+  DragStartEvent,
+  DragOverEvent,
 } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 
@@ -49,9 +53,21 @@ export const TasksContent = ({
   projectId,
   isGeneral = false,
   onEditTask,
-  onDeleteTask
+  onDeleteTask,
+  refetchTasks
 }: TasksContentProps) => {
   const { reorderTasks, isReordering } = useTaskReorder(projectId || '');
+  
+  const [debugInfo, setDebugInfo] = useState({
+    activeTaskId: null,
+    overTaskId: null,
+    isDragging: false,
+    currentStageId: null,
+    targetStageId: null,
+    reorderStatus: 'idle',
+    lastError: null
+  });
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -60,30 +76,75 @@ export const TasksContent = ({
     })
   );
 
-// Update the handleDragEnd function
-const handleDragEnd = async (event: DragEndEvent) => {
-  const { active, over } = event;
-  
-  if (!over || active.id === over.id) return;
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    setDebugInfo(prev => ({
+      ...prev,
+      activeTaskId: active.id as string,
+      isDragging: true,
+      currentStageId: active.data?.current?.stage_id || null,
+      reorderStatus: 'idle',
+      lastError: null
+    }));
+  };
 
-  try {
-    const success = await reorderTasks({
-      tasks: filteredTasks,
-      activeId: active.id.toString(),
-      overId: over.id.toString()
-    });
+  const handleDragOver = (event: DragOverEvent) => {
+    const { over } = event;
+    setDebugInfo(prev => ({
+      ...prev,
+      overTaskId: over?.id as string || null,
+      targetStageId: over?.data?.current?.stage_id || null
+    }));
+  };
 
-    if (success) {
-      toast.success("تم إعادة ترتيب المهام بنجاح");
-      await refetchTasks(); // Add this line to refresh the tasks
-    } else {
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) {
+      setDebugInfo(prev => ({
+        ...prev,
+        isDragging: false,
+        reorderStatus: 'idle'
+      }));
+      return;
+    }
+
+    try {
+      setDebugInfo(prev => ({
+        ...prev,
+        reorderStatus: 'loading'
+      }));
+
+      const result = await reorderTasks({
+        tasks: filteredTasks,
+        activeId: active.id.toString(),
+        overId: over.id.toString()
+      });
+
+      setDebugInfo(prev => ({
+        ...prev,
+        isDragging: false,
+        reorderStatus: result.success ? 'success' : 'error',
+        lastError: result.success ? null : 'Reorder operation failed'
+      }));
+
+      if (result.success) {
+        toast.success("تم إعادة ترتيب المهام بنجاح");
+        await refetchTasks();
+      } else {
+        toast.error("حدث خطأ أثناء إعادة ترتيب المهام");
+      }
+    } catch (error) {
+      console.error('خطأ في handleDragEnd:', error);
+      setDebugInfo(prev => ({
+        ...prev,
+        isDragging: false,
+        reorderStatus: 'error',
+        lastError: error.message
+      }));
       toast.error("حدث خطأ أثناء إعادة ترتيب المهام");
     }
-  } catch (error) {
-    console.error('خطأ في handleDragEnd:', error);
-    toast.error("حدث خطأ أثناء إعادة ترتيب المهام");
-  }
-};
+  };
 
   if (isLoading) {
     return (
@@ -105,8 +166,12 @@ const handleDragEnd = async (event: DragEndEvent) => {
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
+      <DragDebugPanel debugInfo={debugInfo} />
+
       {activeTab === "all" && projectStages.length > 0 && !isGeneral ? (
         <div className="space-y-6" dir="rtl">
           {projectStages.map(stage => (
