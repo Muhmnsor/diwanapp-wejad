@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "../types/task";
-import { toast } from 'sonner';
 
 interface ReorderParams {
   tasks: Task[];
@@ -11,54 +10,48 @@ interface ReorderParams {
 
 export const useTaskReorder = (projectId: string) => {
   const [isReordering, setIsReordering] = useState(false);
-  const [optimisticTasks, setOptimisticTasks] = useState<Task[]>([]);
 
   const reorderTasks = async ({ tasks, activeId, overId }: ReorderParams) => {
-    if (!projectId) return { success: false, tasks: tasks };
     setIsReordering(true);
     
     try {
-      // Find old and new positions
+      // 1. إيجاد المواقع القديمة والجديدة
       const oldIndex = tasks.findIndex(t => t.id === activeId);
       const newIndex = tasks.findIndex(t => t.id === overId);
       
       if (oldIndex === -1 || newIndex === -1) {
-        throw new Error("Task not found");
+        throw new Error("لم يتم العثور على المهمة");
       }
 
-      // Create optimistic update
-      const updatedTasks = [...tasks];
-      const [movedTask] = updatedTasks.splice(oldIndex, 1);
-      updatedTasks.splice(newIndex, 0, movedTask);
+      // 2. إعادة ترتيب المصفوفة محليًا
+      const reorderedTasks = [...tasks];
+      const [movedTask] = reorderedTasks.splice(oldIndex, 1);
+      reorderedTasks.splice(newIndex, 0, movedTask);
 
-      // Apply optimistic update
-      setOptimisticTasks(updatedTasks);
-
-      // Prepare database updates
-      const updates = updatedTasks.map((task, index) => ({
+      // 3. إنشاء مصفوفة من التحديثات مع الترتيب الجديد
+      const updates = reorderedTasks.map((task, index) => ({
         id: task.id,
-        order_position: index + 1,
-        project_id: projectId,
-        updated_at: new Date().toISOString()
+        order_position: index + 1
       }));
 
-      // Update database
+      // 4. تحديث قاعدة البيانات
       const { error } = await supabase
         .from('tasks')
-        .upsert(updates);
+        .upsert(
+          updates.map(u => ({
+            id: u.id,
+            order_position: u.order_position,
+            project_id: projectId, // Add this line
+            updated_at: new Date().toISOString()
+          }))
+        );
 
-      if (error) {
-        // Rollback optimistic update on error
-        setOptimisticTasks(tasks);
-        throw error;
-      }
+      if (error) throw error;
 
-      return { success: true, tasks: updatedTasks };
-
+      return true;
     } catch (error) {
-      console.error('Reorder error:', error);
-      toast.error("Failed to reorder tasks");
-      return { success: false, tasks: tasks };
+      console.error('خطأ في إعادة الترتيب:', error);
+      return false;
     } finally {
       setIsReordering(false);
     }
@@ -66,7 +59,6 @@ export const useTaskReorder = (projectId: string) => {
 
   return {
     reorderTasks,
-    isReordering,
-    optimisticTasks
+    isReordering
   };
 };
