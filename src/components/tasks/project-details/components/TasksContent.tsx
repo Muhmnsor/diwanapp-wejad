@@ -49,9 +49,16 @@ export const TasksContent = ({
   projectId,
   isGeneral = false,
   onEditTask,
-  onDeleteTask
+  onDeleteTask,
+  refetchTasks
 }: TasksContentProps) => {
-  const { reorderTasks, isReordering } = useTaskReorder(projectId || '');
+  const { reorderTasks, updateTasksOrder, isReordering } = useTaskReorder(projectId || '');
+  const [localTasks, setLocalTasks] = useState(filteredTasks);
+  
+  useEffect(() => {
+    setLocalTasks(filteredTasks);
+  }, [filteredTasks]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -60,30 +67,38 @@ export const TasksContent = ({
     })
   );
 
-// Update the handleDragEnd function
-const handleDragEnd = async (event: DragEndEvent) => {
-  const { active, over } = event;
-  
-  if (!over || active.id === over.id) return;
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) return;
 
-  try {
-    const success = await reorderTasks({
-      tasks: filteredTasks,
+    // Perform frontend reordering first
+    const reorderedTasks = reorderTasks({
+      tasks: localTasks,
       activeId: active.id.toString(),
       overId: over.id.toString()
     });
 
+    if (!reorderedTasks) {
+      toast.error("حدث خطأ في إعادة الترتيب");
+      return;
+    }
+
+    // Update local state immediately
+    setLocalTasks(reorderedTasks);
+
+    // Then update backend
+    const success = await updateTasksOrder(reorderedTasks);
+    
     if (success) {
       toast.success("تم إعادة ترتيب المهام بنجاح");
       await refetchTasks(); // Add this line to refresh the tasks
     } else {
-      toast.error("حدث خطأ أثناء إعادة ترتيب المهام");
+      toast.error("حدث خطأ أثناء حفظ الترتيب الجديد");
+      // Revert to original order if backend update fails
+      setLocalTasks(filteredTasks);
     }
-  } catch (error) {
-    console.error('خطأ في handleDragEnd:', error);
-    toast.error("حدث خطأ أثناء إعادة ترتيب المهام");
-  }
-};
+  };
 
   if (isLoading) {
     return (
@@ -141,10 +156,10 @@ const handleDragEnd = async (event: DragEndEvent) => {
               </TableHeader>
               <TableBody>
                 <SortableContext
-                  items={filteredTasks.map(task => task.id)}
+                  items={localTasks.map(task => task.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  {filteredTasks.map(task => (
+                  {localTasks.map(task => (
                     <TaskItem
                       key={task.id}
                       task={task}

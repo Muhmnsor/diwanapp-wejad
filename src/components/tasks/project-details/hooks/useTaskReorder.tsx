@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "../types/task";
@@ -11,54 +12,50 @@ interface ReorderParams {
 export const useTaskReorder = (projectId: string) => {
   const [isReordering, setIsReordering] = useState(false);
 
-  const reorderTasks = async ({ tasks, activeId, overId }: ReorderParams) => {
-    setIsReordering(true);
-    
+  const updateTasksOrder = async (reorderedTasks: Task[]) => {
     try {
-      // 1. إيجاد المواقع القديمة والجديدة
-      const oldIndex = tasks.findIndex(t => t.id === activeId);
-      const newIndex = tasks.findIndex(t => t.id === overId);
-      
-      if (oldIndex === -1 || newIndex === -1) {
-        throw new Error("لم يتم العثور على المهمة");
-      }
-
-      // 2. إعادة ترتيب المصفوفة محليًا
-      const reorderedTasks = [...tasks];
-      const [movedTask] = reorderedTasks.splice(oldIndex, 1);
-      reorderedTasks.splice(newIndex, 0, movedTask);
-
-      // 3. إنشاء مصفوفة من التحديثات مع الترتيب الجديد
+      // Backend update with new order
       const updates = reorderedTasks.map((task, index) => ({
         id: task.id,
-        order_position: index + 1
+        order_position: index + 1,
+        project_id: projectId,
+        updated_at: new Date().toISOString()
       }));
 
-      // 4. تحديث قاعدة البيانات
       const { error } = await supabase
         .from('tasks')
-        .upsert(
-          updates.map(u => ({
-            id: u.id,
-            order_position: u.order_position,
-            project_id: projectId, // Add this line
-            updated_at: new Date().toISOString()
-          }))
-        );
+        .upsert(updates);
 
       if (error) throw error;
 
       return true;
     } catch (error) {
-      console.error('خطأ في إعادة الترتيب:', error);
+      console.error('خطأ في تحديث الترتيب:', error);
       return false;
     } finally {
       setIsReordering(false);
     }
   };
 
+  const reorderTasks = ({ tasks, activeId, overId }: ReorderParams) => {
+    // Frontend reordering
+    const oldIndex = tasks.findIndex(t => t.id === activeId);
+    const newIndex = tasks.findIndex(t => t.id === overId);
+    
+    if (oldIndex === -1 || newIndex === -1) {
+      return null;
+    }
+
+    const reorderedTasks = [...tasks];
+    const [movedTask] = reorderedTasks.splice(oldIndex, 1);
+    reorderedTasks.splice(newIndex, 0, movedTask);
+
+    return reorderedTasks;
+  };
+
   return {
     reorderTasks,
+    updateTasksOrder,
     isReordering
   };
 };
