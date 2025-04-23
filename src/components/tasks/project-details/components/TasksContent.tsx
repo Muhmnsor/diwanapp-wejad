@@ -1,36 +1,39 @@
-
-import React from 'react';
-import { Task } from '../types/task';
-import { TasksStageGroup } from './TasksStageGroup';
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  DndContext, 
+import { Task } from "../types/task";
+import { TasksStageGroup } from "./TasksStageGroup";
+import { TaskCard } from "./TaskCard";
+import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
+import { TaskItem } from "./TaskItem";
+import { useTaskReorder } from "../hooks/useTaskReorder";
+import { toast } from "sonner";
+import {
+  DndContext,
   closestCenter,
-  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
-  DragStartEvent,
-  DragOverEvent
-} from '@dnd-kit/core';
-import { useTaskReorder } from '../hooks/useTaskReorder';
+  DragEndEvent
+} from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 
 interface TasksContentProps {
   isLoading: boolean;
   activeTab: string;
   filteredTasks: Task[];
-  projectStages: { id: string; name: string }[];
+  projectStages: {
+    id: string;
+    name: string;
+  }[];
   tasksByStage: Record<string, Task[]>;
   getStatusBadge: (status: string) => JSX.Element;
   getPriorityBadge: (priority: string | null) => JSX.Element | null;
   formatDate: (date: string | null) => string;
   onStatusChange: (taskId: string, newStatus: string) => void;
-  projectId?: string;
+  projectId?: string | undefined;
   isGeneral?: boolean;
   onEditTask?: (task: Task) => void;
   onDeleteTask?: (taskId: string) => void;
-  onDragDebugUpdate?: (debugData: any) => void;
+  refetchTasks: () => Promise<void>;
 }
 
 export const TasksContent = ({
@@ -43,201 +46,124 @@ export const TasksContent = ({
   getPriorityBadge,
   formatDate,
   onStatusChange,
-  projectId = '',
+  projectId,
   isGeneral = false,
   onEditTask,
-  onDeleteTask,
-  onDragDebugUpdate
+  onDeleteTask
 }: TasksContentProps) => {
-  const { reorderTasks, isReordering, optimisticTasks } = useTaskReorder(projectId);
-  
+  const { reorderTasks, isReordering } = useTaskReorder(projectId || '');
   const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor)
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
   );
 
-  const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event;
-    console.log("Drag started with task:", active.id);
-    
-    // Find the task's current stage
-    let currentStageId = null;
-    for (const [stageId, stageTasks] of Object.entries(tasksByStage)) {
-      if (stageTasks.some(task => task.id === active.id)) {
-        currentStageId = stageId;
-        break;
-      }
-    }
-    
-    // Update debug info
-    if (onDragDebugUpdate) {
-      onDragDebugUpdate({
-        activeTaskId: active.id,
-        isDragging: true,
-        currentStageId,
-        reorderStatus: 'idle',
-        lastError: null
-      });
-    }
-  };
-
-  const handleDragOver = (event: DragOverEvent) => {
-    // Update debug info with over task info
-    if (onDragDebugUpdate && event.over) {
-      onDragDebugUpdate({
-        overTaskId: event.over.id,
-        targetStageId: event.over.data?.current?.stageId
-      });
-    }
-  };
-
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (over && active.id !== over.id) {
-      console.log("Drag ended with:", { activeId: active.id, overId: over.id });
-      
-      // Find tasks
-      let tasksToReorder = [] as Task[];
-      let stageId = '';
-      
-      // Get the correct array of tasks to reorder
-      for (const [currentStageId, stageTasks] of Object.entries(tasksByStage)) {
-        if (stageTasks.some(task => task.id === active.id)) {
-          tasksToReorder = stageTasks;
-          stageId = currentStageId;
-          break;
-        }
-      }
-      
-      if (tasksToReorder.length > 0) {
-        try {
-          // Update debug info to show reordering in progress
-          if (onDragDebugUpdate) {
-            onDragDebugUpdate({
-              reorderStatus: 'loading',
-            });
-          }
-          
-          // Call the reorder function
-          const result = await reorderTasks({
-            tasks: tasksToReorder,
-            activeId: active.id as string,
-            overId: over.id as string,
-          });
-          
-          // Update debug info based on result
-          if (onDragDebugUpdate) {
-            onDragDebugUpdate({
-              reorderStatus: result.success ? 'success' : 'error',
-              lastError: result.success ? null : 'Failed to reorder tasks',
-              isDragging: false,
-              activeTaskId: null,
-              overTaskId: null
-            });
-          }
-        } catch (error) {
-          console.error('Error in drag end handler:', error);
-          
-          // Update debug info with error
-          if (onDragDebugUpdate) {
-            onDragDebugUpdate({
-              reorderStatus: 'error',
-              lastError: error.message || 'Unknown error occurred',
-              isDragging: false,
-              activeTaskId: null,
-              overTaskId: null
-            });
-          }
-        }
-      } else {
-        console.warn('Could not find tasks to reorder');
-        if (onDragDebugUpdate) {
-          onDragDebugUpdate({
-            reorderStatus: 'error',
-            lastError: 'Could not find tasks to reorder',
-            isDragging: false,
-            activeTaskId: null,
-            overTaskId: null
-          });
-        }
-      }
-    } else {
-      // Reset debug info if no valid drop
-      if (onDragDebugUpdate) {
-        onDragDebugUpdate({
-          isDragging: false,
-          activeTaskId: null,
-          overTaskId: null,
-          reorderStatus: 'idle'
-        });
-      }
-    }
-  };
+// Update the handleDragEnd function
+const handleDragEnd = async (event: DragEndEvent) => {
+  const { active, over } = event;
   
+  if (!over || active.id === over.id) return;
+
+  try {
+    const success = await reorderTasks({
+      tasks: filteredTasks,
+      activeId: active.id.toString(),
+      overId: over.id.toString()
+    });
+
+    if (success) {
+      toast.success("تم إعادة ترتيب المهام بنجاح");
+      await refetchTasks(); // Add this line to refresh the tasks
+    } else {
+      toast.error("حدث خطأ أثناء إعادة ترتيب المهام");
+    }
+  } catch (error) {
+    console.error('خطأ في handleDragEnd:', error);
+    toast.error("حدث خطأ أثناء إعادة ترتيب المهام");
+  }
+};
+
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-48" />
-        <Skeleton className="h-48" />
+      <div className="space-y-3" dir="rtl">
+        {[...Array(3)].map((_, index) => <Skeleton key={index} className="h-24 w-full" />)}
       </div>
     );
   }
 
-  if (!projectStages || projectStages.length === 0) {
-    // Handle general tasks (not grouped by stage)
+  if (filteredTasks.length === 0) {
     return (
-      <div className="space-y-6">
-        <TasksStageGroup
-          stage={{ id: "default", name: "المهام" }}
-          tasks={filteredTasks}
-          activeTab={activeTab}
-          getStatusBadge={getStatusBadge}
-          getPriorityBadge={getPriorityBadge}
-          formatDate={formatDate}
-          onStatusChange={onStatusChange}
-          projectId={projectId}
-          onEdit={onEditTask}
-          onDelete={onDeleteTask}
-        />
+      <div className="text-center py-8 bg-gray-50 rounded-md border" dir="rtl">
+        <p className="text-gray-500">لا توجد مهام {activeTab !== "all" && "بهذه الحالة"}</p>
       </div>
     );
   }
 
-  // Tasks grouped by stages
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="space-y-6">
-        {projectStages.map((stage) => {
-          const stageTasks = tasksByStage[stage.id] || [];
-          // Apply optimistic updates if available
-          const tasksToShow = optimisticTasks.length > 0 && stageTasks.some(task => 
-            optimisticTasks.some(ot => ot.id === task.id)
-          ) ? optimisticTasks.filter(task => task.stage_id === stage.id) : stageTasks;
-          
-          return (
+      {activeTab === "all" && projectStages.length > 0 && !isGeneral ? (
+        <div className="space-y-6" dir="rtl">
+          {projectStages.map(stage => (
             <TasksStageGroup
               key={stage.id}
               stage={stage}
-              tasks={tasksToShow}
+              tasks={tasksByStage[stage.id] || []}
               activeTab={activeTab}
               getStatusBadge={getStatusBadge}
               getPriorityBadge={getPriorityBadge}
               formatDate={formatDate}
               onStatusChange={onStatusChange}
-              projectId={projectId}
+              projectId={projectId || ''}
               onEdit={onEditTask}
               onDelete={onDeleteTask}
             />
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-6" dir="rtl">
+          <div className="bg-white rounded-md shadow-sm overflow-hidden border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>المهمة</TableHead>
+                  <TableHead>الحالة</TableHead>
+                  <TableHead>الأولوية</TableHead>
+                  <TableHead>المكلف</TableHead>
+                  <TableHead>تاريخ الاستحقاق</TableHead>
+                  <TableHead>الإجراءات</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <SortableContext
+                  items={filteredTasks.map(task => task.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {filteredTasks.map(task => (
+                    <TaskItem
+                      key={task.id}
+                      task={task}
+                      isDraggable={activeTab === "all" && !isGeneral}
+                      getStatusBadge={getStatusBadge}
+                      getPriorityBadge={getPriorityBadge}
+                      formatDate={formatDate}
+                      onStatusChange={onStatusChange}
+                      projectId={projectId || ''}
+                      onEdit={onEditTask}
+                      onDelete={onDeleteTask}
+                    />
+                  ))}
+                </SortableContext>
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      )}
     </DndContext>
   );
 };

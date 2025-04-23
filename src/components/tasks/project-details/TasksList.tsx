@@ -1,5 +1,4 @@
 
-import React, { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ProjectStages } from "./ProjectStages";
 import { AddTaskDialog } from "./AddTaskDialog";
@@ -10,9 +9,8 @@ import { getStatusBadge, getPriorityBadge, formatDate } from "./utils/taskFormat
 import { useTasksList } from "./hooks/useTasksList";
 import { Task } from "./types/task";
 import { useProjectMembers } from "./hooks/useProjectMembers";
-// Removed the duplicate useState import
+import { useState } from "react";
 import { EditTaskDialog } from "./EditTaskDialog";
-import { DragDebugPanel } from "./components/debug/DragDebugPanel";
 
 interface TasksListProps {
   projectId?: string | undefined;
@@ -46,17 +44,6 @@ export const TasksList = ({
 
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  
-  // Debug state for drag operations
-  const [debugInfo, setDebugInfo] = useState({
-    activeTaskId: null,
-    overTaskId: null,
-    isDragging: false,
-    currentStageId: null,
-    targetStageId: null,
-    reorderStatus: 'idle',
-    lastError: null
-  });
 
   // Fetch project members
   const { projectMembers } = useProjectMembers(projectId);
@@ -82,14 +69,6 @@ export const TasksList = ({
     }
   };
 
-  // Debug handler for updating drag state
-  const handleDragDebugUpdate = (debugData) => {
-    setDebugInfo(prevState => ({
-      ...prevState,
-      ...debugData
-    }));
-  };
-
   return (
     <>
       {!isGeneralBoolean && !isWorkspace && !meetingId && (
@@ -102,10 +81,10 @@ export const TasksList = ({
       <Card className="border shadow-sm">
         <CardHeader className="pb-0">
           <TasksHeader 
-            onAddTask={() => setIsAddDialogOpen(true)} 
-            isGeneral={isGeneralBoolean}
-            projectId={projectId || ''} 
-          />
+  onAddTask={() => setIsAddDialogOpen(true)} 
+  isGeneral={isGeneralBoolean}
+  projectId={projectId || ''} 
+/>
         </CardHeader>
         
         <CardContent className="pt-4">
@@ -128,7 +107,6 @@ export const TasksList = ({
             isGeneral={isGeneralBoolean}
             onEditTask={handleEditTask}
             onDeleteTask={handleDeleteTask}
-            onDragDebugUpdate={handleDragDebugUpdate}
           />
         </CardContent>
       </Card>
@@ -157,9 +135,6 @@ export const TasksList = ({
           meetingId={meetingId}
         />
       )}
-      
-      {/* Debug Panel */}
-      <DragDebugPanel debugInfo={debugInfo} />
     </>
   );
 };
