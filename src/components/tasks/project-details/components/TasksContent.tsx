@@ -5,6 +5,7 @@ import { TaskCard } from "./TaskCard";
 import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
 import { TaskItem } from "./TaskItem";
 import { useTaskReorder } from "../hooks/useTaskReorder";
+import { toast } from "sonner";
 import {
   DndContext,
   closestCenter,
@@ -60,20 +61,26 @@ export const TasksContent = ({
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
+    
+    if (!over || active.id === over.id) return;
 
-    if (!over) return;
+    try {
+      const success = await reorderTasks({
+        tasks: filteredTasks,
+        activeId: active.id.toString(),
+        overId: over.id.toString()
+      });
 
-    const success = await reorderTasks({
-      tasks: filteredTasks,
-      activeId: active.id.toString(),
-      overId: over.id.toString()
-    });
-
-    if (success) {
-      toast.success("تم إعادة ترتيب المهام بنجاح");
+      if (success) {
+        toast.success("تم إعادة ترتيب المهام بنجاح");
+      } else {
+        toast.error("حدث خطأ أثناء إعادة ترتيب المهام");
+      }
+    } catch (error) {
+      console.error('Error in handleDragEnd:', error);
+      toast.error("حدث خطأ أثناء إعادة ترتيب المهام");
     }
-};
-
+  };
 
   if (isLoading) {
     return (
