@@ -39,22 +39,28 @@ export const TasksStageGroup = ({
 
   if (filteredTasks.length === 0) return null;
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const reorderedTasks = [...filteredTasks];
-      const oldIndex = reorderedTasks.findIndex(t => t.id === active.id);
-      const newIndex = reorderedTasks.findIndex(t => t.id === over.id);
+const handleDragEnd = (event: DragEndEvent) => {
+  const { active, over } = event;
+  if (over && active.id !== over.id) {
+    const oldIndex = filteredTasks.findIndex(t => t.id === active.id);
+    const newIndex = filteredTasks.findIndex(t => t.id === over.id);
 
-      if (oldIndex === -1 || newIndex === -1) return;
+    if (oldIndex === -1 || newIndex === -1) return;
 
-      const [movedTask] = reorderedTasks.splice(oldIndex, 1);
-      reorderedTasks.splice(newIndex, 0, movedTask);
+    const updatedTasks = [...filteredTasks];
+    const [movedTask] = updatedTasks.splice(oldIndex, 1);
+    updatedTasks.splice(newIndex, 0, movedTask);
 
-      updateTaskOrder(reorderedTasks);
-      toast.success("تم إعادة ترتيب المهام بنجاح"); // ✅ الرسالة
-    }
-  };
+    // إضافة order_position لكل مهمة
+    const tasksWithOrder = updatedTasks.map((task, index) => ({
+      ...task,
+      order_position: index + 1
+    }));
+
+    updateTaskOrder(tasksWithOrder);
+  }
+};
+
 
   return (
     <div className="border rounded-md overflow-hidden">
