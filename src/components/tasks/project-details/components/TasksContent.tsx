@@ -40,8 +40,7 @@ export const TasksContent = ({
   onEditTask,
   onDeleteTask
 }: TasksContentProps) => {
-  // ✅ تم نقل الهوك إلى الأعلى باستخدام id فارغ مبدئيًا
-  const { reorderTasks } = useTaskReorder("");
+
 
   if (isLoading) {
     return (
@@ -64,10 +63,8 @@ export const TasksContent = ({
       <div className="space-y-6" dir="rtl">
         {projectStages.map(stage => {
           // ✅ تعريف دالة reorderTasks حسب كل مرحلة داخل الماب
-          const updateTaskOrder = async (reorderedTasks: Task[]) => {
-            await useTaskReorder(stage.id).reorderTasks(reorderedTasks);
-          };
-
+          const { reorderTasks } = useTaskReorder(stage.id);
+        
           return (
             <TasksStageGroup
               key={stage.id}
