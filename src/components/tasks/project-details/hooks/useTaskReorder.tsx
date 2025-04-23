@@ -14,6 +14,7 @@ export const useTaskReorder = (stageId: string) => {
       const updates = tasks.map((task, index) => ({
         id: task.id,
         order_position: index + 1
+        stage_id: task.stage_id
       }));
 
     const { error } = await supabase
