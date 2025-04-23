@@ -270,25 +270,24 @@ const style = {
 
   return (
     <>
-      <TableRow
+<TableRow
   ref={setNodeRef}
   style={style}
-  className={`cursor-pointer hover:bg-gray-50 ${isDragging ? 'bg-gray-100' : ''}`}
+  className={`group ${isDragging ? 'opacity-50' : ''}`}
 >
-
-       <TableCell className="font-medium">
-  <div className="flex items-center">
-    {isDraggable && (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="p-0 h-7 w-7 cursor-grab active:cursor-grabbing mr-2"
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical className="h-4 w-4 text-gray-400" />
-      </Button>
-    )}
+  <TableCell className="font-medium">
+    <div className="flex items-center">
+      {isDraggable && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="p-0 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing mr-2"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4 text-gray-400" />
+        </Button>
+      )}
     <span className="mr-1">{task.title}</span>
 
     <Button 

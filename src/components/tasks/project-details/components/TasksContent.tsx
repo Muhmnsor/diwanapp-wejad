@@ -55,8 +55,9 @@ export const TasksContent = ({
   refetchTasks
 }: TasksContentProps) => {
   const { reorderTasks, updateTasksOrder, isReordering } = useTaskReorder(projectId || '');
-  const [localTasks, setLocalTasks] = useState(filteredTasks);
+  const [localTasks, setLocalTasks] = useState<Task[]>([]);
   
+  // Keep local state in sync with props
   useEffect(() => {
     setLocalTasks(filteredTasks);
   }, [filteredTasks]);
@@ -74,7 +75,7 @@ export const TasksContent = ({
     
     if (!over || active.id === over.id) return;
 
-    // Perform frontend reordering first
+    // First, update frontend state immediately
     const reorderedTasks = reorderTasks({
       tasks: localTasks,
       activeId: active.id.toString(),
@@ -86,19 +87,32 @@ export const TasksContent = ({
       return;
     }
 
-    // Update local state immediately
+    // Update local state immediately for smooth UX
     setLocalTasks(reorderedTasks);
 
-    // Then update backend
-    const success = await updateTasksOrder(reorderedTasks);
+    // Prepare backend updates
+    const updates = await updateTasksOrder(reorderedTasks);
     
-    if (success) {
+    if (!updates) {
+      toast.error("حدث خطأ في تحضير الترتيب");
+      setLocalTasks(filteredTasks); // Revert on error
+      return;
+    }
+
+    // Now update backend
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .upsert(updates);
+
+      if (error) throw error;
+      
       toast.success("تم إعادة ترتيب المهام بنجاح");
-      await refetchTasks(); // Add this line to refresh the tasks
-    } else {
+      await refetchTasks();
+    } catch (error) {
+      console.error('Error updating task order:', error);
       toast.error("حدث خطأ أثناء حفظ الترتيب الجديد");
-      // Revert to original order if backend update fails
-      setLocalTasks(filteredTasks);
+      setLocalTasks(filteredTasks); // Revert on error
     }
   };
 

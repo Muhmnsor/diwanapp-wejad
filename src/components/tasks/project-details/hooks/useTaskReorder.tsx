@@ -1,20 +1,36 @@
-
 import { useState } from 'react';
-import { supabase } from "@/integrations/supabase/client";
 import { Task } from "../types/task";
 
 interface ReorderParams {
   tasks: Task[];
-  activeId: string; 
+  activeId: string;
   overId: string;
 }
 
 export const useTaskReorder = (projectId: string) => {
   const [isReordering, setIsReordering] = useState(false);
 
+  const reorderTasks = ({ tasks, activeId, overId }: ReorderParams) => {
+    const oldIndex = tasks.findIndex(t => t.id === activeId);
+    const newIndex = tasks.findIndex(t => t.id === overId);
+    
+    if (oldIndex === -1 || newIndex === -1) return null;
+
+    const reorderedTasks = [...tasks];
+    const [movedTask] = reorderedTasks.splice(oldIndex, 1);
+    reorderedTasks.splice(newIndex, 0, movedTask);
+
+    // Update order_position for all tasks
+    return reorderedTasks.map((task, index) => ({
+      ...task,
+      order_position: index + 1
+    }));
+  };
+
   const updateTasksOrder = async (reorderedTasks: Task[]) => {
     try {
-      // Backend update with new order
+      setIsReordering(true);
+      // Here just prepare the updates for backend
       const updates = reorderedTasks.map((task, index) => ({
         id: task.id,
         order_position: index + 1,
@@ -22,35 +38,14 @@ export const useTaskReorder = (projectId: string) => {
         updated_at: new Date().toISOString()
       }));
 
-      const { error } = await supabase
-        .from('tasks')
-        .upsert(updates);
-
-      if (error) throw error;
-
-      return true;
+      // Return the updates to be handled by parent
+      return updates;
     } catch (error) {
-      console.error('خطأ في تحديث الترتيب:', error);
-      return false;
+      console.error('Error preparing task order:', error);
+      return null;
     } finally {
       setIsReordering(false);
     }
-  };
-
-  const reorderTasks = ({ tasks, activeId, overId }: ReorderParams) => {
-    // Frontend reordering
-    const oldIndex = tasks.findIndex(t => t.id === activeId);
-    const newIndex = tasks.findIndex(t => t.id === overId);
-    
-    if (oldIndex === -1 || newIndex === -1) {
-      return null;
-    }
-
-    const reorderedTasks = [...tasks];
-    const [movedTask] = reorderedTasks.splice(oldIndex, 1);
-    reorderedTasks.splice(newIndex, 0, movedTask);
-
-    return reorderedTasks;
   };
 
   return {
