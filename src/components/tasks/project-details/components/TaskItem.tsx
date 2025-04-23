@@ -1,33 +1,21 @@
-import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, MessageCircle, Download, Trash2, Edit, Link2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { TableRow, TableCell } from "@/components/ui/table";
+
+import { useEffect, useState } from "react";
 import { Task } from "../types/task";
+import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useAuthStore } from "@/store/authStore";
-import { SubtasksList } from "./subtasks/SubtasksList";
-import { checkPendingSubtasks } from "../services/subtasksService";
-import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
-import { TaskDependenciesDialog } from "./dependencies/TaskDependenciesDialog";
-import { useTaskDependencies } from "../hooks/useTaskDependencies";
-import { usePermissionCheck } from "../hooks/usePermissionCheck";
-import { useTaskButtonStates } from "../../hooks/useTaskButtonStates";
-import { DependencyIcon } from "../../components/dependencies/DependencyIcon";
+import { Edit, Trash } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical } from "lucide-react";
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { TaskStatusDropdown } from "./dropdowns/TaskStatusDropdown";
 
 interface TaskItemProps {
   task: Task;
@@ -36,434 +24,129 @@ interface TaskItemProps {
   formatDate: (date: string | null) => string;
   onStatusChange: (taskId: string, newStatus: string) => void;
   projectId: string;
+  isDraggable: boolean;
   onEdit?: (task: Task) => void;
   onDelete?: (taskId: string) => void;
-  isDraggable?: boolean; // ✅ تمت الإضافة
+  stageId?: string; // New prop to track which stage this task belongs to
 }
 
-interface TaskAttachment {
-  id: string;
-  file_name: string;
-  file_url: string;
-  created_at: string;
-  created_by: string;
-}
-
-export const TaskItem = ({ 
-  task, 
-  getStatusBadge, 
-  getPriorityBadge, 
+export const TaskItem = ({
+  task,
+  getStatusBadge,
+  getPriorityBadge,
   formatDate,
   onStatusChange,
   projectId,
+  isDraggable = true,
   onEdit,
   onDelete,
-  isDraggable = false
-  
+  stageId
 }: TaskItemProps) => {
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [showSubtasks, setShowSubtasks] = useState(false);
-  const [showDiscussion, setShowDiscussion] = useState(false);
-  const [showDependencies, setShowDependencies] = useState(false);
-  const [assigneeAttachment, setAssigneeAttachment] = useState<TaskAttachment | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const { user } = useAuthStore();
   
-  const { canEdit } = usePermissionCheck({
-    assignedTo: null,
-    projectId: task.project_id,
-    workspaceId: task.workspace_id,
-    createdBy: task.created_by,
-    isGeneral: task.is_general,
-    projectManager: task.project_manager // إضافة projectManager
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: task.id,
+    disabled: !isDraggable,
+    data: {
+      ...task,
+      stageId // Pass the stageId with the drag data
+    }
   });
   
-  const { dependencies, dependentTasks, checkDependenciesCompleted } = useTaskDependencies(task.id);
-  
-  const hasDependencies = dependencies.length > 0;
-  const hasDependents = dependentTasks.length > 0;
-  const hasPendingDependencies = hasDependencies && dependencies.some(d => d.status !== 'completed');
-  
-  const dependencyIconColor = hasDependencies && dependencies.some(d => d.status !== 'completed') 
-    ? 'text-amber-500' 
-    : hasDependencies || hasDependents 
-      ? 'text-blue-500' 
-      : 'text-gray-500';
-  
-  const { hasNewDiscussion, hasDeliverables, hasTemplates, resetDiscussionFlag } = useTaskButtonStates(task.id);
-
-  const {
-  attributes,
-  listeners,
-  setNodeRef,
-  transform,
-  transition,
-  isDragging
-} = useSortable({
-  id: task.id
-});
-
-const style = {
-  transform: CSS.Transform.toString(transform),
-  transition,
-  opacity: isDragging ? 0.5 : 1
-};
-
-  useEffect(() => {
-    if (task.assigned_to) {
-      fetchAssigneeAttachment();
-    }
-  }, [task.id, task.assigned_to]);
-
-  const fetchAssigneeAttachment = async () => {
-    try {
-      const { data: portfolioAttachments, error: portfolioError } = await supabase
-        .from("portfolio_task_attachments")
-        .select("*")
-        .eq("task_id", task.id)
-        .eq("created_by", task.assigned_to)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      const { data: taskAttachments, error: taskError } = await supabase
-        .from("task_attachments")
-        .select("*")
-        .eq("task_id", task.id)
-        .eq("created_by", task.assigned_to)
-        .order('created_at', { ascending: false })
-        .limit(1);
-      
-      if ((portfolioAttachments && portfolioAttachments.length > 0) || 
-          (taskAttachments && taskAttachments.length > 0)) {
-        
-        const attachment = portfolioAttachments?.length > 0 
-          ? portfolioAttachments[0] 
-          : taskAttachments![0];
-          
-        setAssigneeAttachment(attachment as TaskAttachment);
-      }
-    } catch (error) {
-      console.error("Error fetching assignee attachment:", error);
-    }
-  };
-
-  const handleDownload = (fileUrl: string, fileName: string) => {
-    const link = document.createElement('a');
-    link.href = fileUrl;
-    link.target = '_blank';
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : 1,
   };
 
   const handleDelete = async () => {
-    if (!onDelete || !canEdit) {
-      if (!canEdit) {
-        toast.error("ليس لديك صلاحية لحذف هذه المهمة");
+    if (onDelete) {
+      setIsDeleting(true);
+      try {
+        await onDelete(task.id);
+      } finally {
+        setIsDeleting(false);
+        setShowDeleteDialog(false);
       }
-      return;
     }
-    
-    setIsDeleting(true);
-    try {
-      onDelete(task.id);
-      setDeleteDialogOpen(false);
-    } catch (error) {
-      console.error("Error deleting task:", error);
-      toast.error("حدث خطأ أثناء حذف المهمة");
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const handleStatusUpdate = async (newStatus: string) => {
-    if (!canEdit) {
-      toast.error("ليس لديك صلاحية لتغيير حالة هذه المهمة");
-      return;
-    }
-    
-    setIsUpdating(true);
-    try {
-      if (newStatus === 'completed') {
-        const { hasPendingSubtasks, error } = await checkPendingSubtasks(task.id);
-        
-        if (error) {
-          toast.error(error);
-          setIsUpdating(false);
-          return;
-        }
-        
-        if (hasPendingSubtasks) {
-          toast.error("لا يمكن إكمال المهمة حتى يتم إكمال جميع المهام الفرعية");
-          setIsUpdating(false);
-          return;
-        }
-        
-        if (task.requires_deliverable && !hasDeliverables) {
-          toast.error("لا يمكن إكمال المهمة. المستلمات إلزامية لهذه المهمة", {
-            description: "يرجى رفع مستلم واحد على الأقل قبل إكمال المهمة",
-            duration: 5000,
-          });
-          setIsUpdating(false);
-          return;
-        }
-        
-        const dependencyCheck = await checkDependenciesCompleted(task.id);
-        if (!dependencyCheck.isValid) {
-          toast.error(dependencyCheck.message);
-          if (dependencyCheck.pendingDependencies.length > 0) {
-            const pendingTasks = dependencyCheck.pendingDependencies
-              .map(task => task.title)
-              .join(", ");
-            toast.error(`المهام المعلقة: ${pendingTasks}`);
-          }
-          setIsUpdating(false);
-          return;
-        }
-      }
-      
-      await onStatusChange(task.id, newStatus);
-    } catch (error) {
-      console.error("Error updating task status:", error);
-      toast.error("حدث خطأ أثناء تحديث حالة المهمة");
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  const renderStatusChangeButton = () => {
-    if (!canEdit) {
-      return null;
-    }
-    
-    return task.status !== 'completed' ? (
-      <Button 
-        variant="outline" 
-        size="sm" 
-        className="h-7 w-7 p-0 ml-1"
-        onClick={() => handleStatusUpdate('completed')}
-        disabled={isUpdating}
-        title="إكمال المهمة"
-      >
-        <Check className="h-3.5 w-3.5 text-green-500" />
-      </Button>
-    ) : (
-      <Button 
-        variant="outline" 
-        size="sm" 
-        className="h-7 w-7 p-0 ml-1"
-        onClick={() => handleStatusUpdate('in_progress')}
-        disabled={isUpdating}
-        title="إعادة فتح المهمة"
-      >
-        <Clock className="h-3.5 w-3.5 text-amber-500" />
-      </Button>
-    );
-  };
-
-  const handleShowDiscussion = () => {
-    resetDiscussionFlag();
-    setShowDiscussion(true);
   };
 
   return (
     <>
-<TableRow
-  ref={setNodeRef}
-  style={style}
-  className={`group ${isDragging ? 'opacity-50' : ''}`}
->
-  <TableCell className="font-medium">
-    <div className="flex items-center">
-      {isDraggable && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="p-0 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing mr-2"
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical className="h-4 w-4 text-gray-400" />
-        </Button>
-      )}
-    <span className="mr-1">{task.title}</span>
-
-    <Button 
-      variant="ghost" 
-      size="sm" 
-      className="p-0 h-7 w-7 ml-2"
-      onClick={(e) => {
-        e.stopPropagation();
-        setShowSubtasks(!showSubtasks);
-      }}
-      title={showSubtasks ? "إخفاء المهام الفرعية" : "عرض المهام الفرعية"}
-    >
-      {showSubtasks ? 
-        <ChevronUp className="h-4 w-4 text-gray-500" /> : 
-        <ChevronDown className="h-4 w-4 text-gray-500" />
-      }
-    </Button>
-
-    <Button
-      variant="ghost"
-      size="sm"
-      className={`p-0 h-7 w-7 ${(hasDependencies || hasDependents) ? 'bg-gray-50 hover:bg-gray-100' : ''}`}
-      onClick={(e) => {
-        e.stopPropagation();
-        setShowDependencies(true);
-      }}
-      title="إدارة اعتماديات المهمة"
-    >
-      <DependencyIcon 
-        hasDependencies={hasDependencies} 
-        hasPendingDependencies={hasPendingDependencies}
-        hasDependents={hasDependents}
-        size={16}
-      />
-    </Button>
-  </div>
-</TableCell>
-
-        <TableCell>
+      <TableRow 
+        ref={setNodeRef} 
+        style={style}
+        {...attributes} 
+        className={`relative ${isDragging ? 'bg-muted' : ''} ${task.stage_id ? '' : 'border-l-4 border-primary-500'}`}
+      >
+        <TableCell className="cursor-grab" {...listeners}>
           <div className="flex items-center gap-2">
-            {getStatusBadge(task.status)}
-            {renderStatusChangeButton()}
+            <div className={`w-1 h-5 rounded-full ${task.priority === 'high' ? 'bg-red-500' : task.priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'}`} />
+            <span>{task.title}</span>
           </div>
         </TableCell>
-        <TableCell>{getPriorityBadge(task.priority)}</TableCell>
+        
         <TableCell>
-          {task.assigned_user_name ? (
-            <div className="flex items-center">
-              <Users className="h-3.5 w-3.5 ml-1.5 text-gray-500" />
-              {task.assigned_user_name}
-            </div>
-          ) : (
-            <span className="text-gray-400">غير محدد</span>
-          )}
+          <TaskStatusDropdown 
+            currentStatus={task.status} 
+            onStatusChange={(newStatus) => onStatusChange(task.id, newStatus)} 
+          />
         </TableCell>
+        
         <TableCell>
-          <div className="flex items-center">
-            <Calendar className="h-3.5 w-3.5 ml-1.5 text-gray-500" />
-            {formatDate(task.due_date)}
-          </div>
+          {getPriorityBadge(task.priority)}
         </TableCell>
+        
         <TableCell>
-          <div className="flex items-center gap-1">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className={`p-0 h-7 w-7 ${
-                hasNewDiscussion 
-                  ? "text-orange-500 hover:text-orange-600 hover:bg-orange-50" 
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleShowDiscussion();
-              }}
-              title="مناقشة المهمة"
-            >
-              <MessageCircle className="h-4 w-4" />
-            </Button>
-            
-            {assigneeAttachment && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className={`p-0 h-7 w-7 ${
-                  hasDeliverables
-                    ? "text-blue-500 hover:text-blue-600 hover:bg-blue-50"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDownload(assigneeAttachment.file_url, assigneeAttachment.file_name);
-                }}
-                title="تنزيل مرفق المكلف"
-              >
-                <Download className="h-4 w-4" />
+          {task.assigned_user_name || (task.assigned_to ? <Skeleton className="h-4 w-20" /> : 'غير محدد')}
+        </TableCell>
+        
+        <TableCell>
+          {formatDate(task.due_date)}
+        </TableCell>
+        
+        <TableCell>
+          <div className="flex space-x-2 justify-end">
+            {onEdit && (
+              <Button variant="ghost" size="sm" onClick={() => onEdit(task)}>
+                <Edit className="h-4 w-4" />
               </Button>
             )}
             
-            {onEdit && canEdit && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="p-0 h-7 w-7"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit(task);
-                }}
-                title="تعديل المهمة"
-              >
-                <Edit className="h-4 w-4 text-amber-500 hover:text-amber-700" />
-              </Button>
-            )}
-            
-            {onDelete && canEdit && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="p-0 h-7 w-7"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDeleteDialogOpen(true);
-                }}
-                title="حذف المهمة"
-              >
-                <Trash2 className="h-4 w-4 text-red-500 hover:text-red-700" />
+            {onDelete && (
+              <Button variant="ghost" size="sm" onClick={() => setShowDeleteDialog(true)}>
+                <Trash className="h-4 w-4" />
               </Button>
             )}
           </div>
         </TableCell>
       </TableRow>
       
-      {showSubtasks && (
-        <TableRow>
-          <TableCell colSpan={6} className="bg-gray-50 p-0">
-            <div className="p-3">
-              <SubtasksList 
-                taskId={task.id} 
-                projectId={projectId}
-              />
-            </div>
-          </TableCell>
-        </TableRow>
-      )}
-
-      <TaskDiscussionDialog 
-        open={showDiscussion} 
-        onOpenChange={setShowDiscussion}
-        task={task}
-        onStatusChange={onStatusChange}
-      />
-      
-      <TaskDependenciesDialog
-        open={showDependencies}
-        onOpenChange={setShowDependencies}
-        task={task}
-        projectId={projectId}
-      />
-      
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>هل أنت متأكد من حذف هذه المهمة؟</AlertDialogTitle>
+            <AlertDialogTitle>هل أنت متأكد؟</AlertDialogTitle>
             <AlertDialogDescription>
-              سيتم حذف المهمة وجميع المهام الفرعية والمرفقات المرتبطة بها بشكل نهائي.
-              لا يمكن التراجع عن هذا الإجراء.
+              سيتم حذف هذه المهمة نهائياً.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>إلغاء</AlertDialogCancel>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={handleDelete}
-              disabled={isDeleting}
+              onClick={handleDelete} 
+              disabled={isDeleting} 
               className="bg-red-500 hover:bg-red-600"
             >
-              {isDeleting ? "جاري الحذف..." : "تأكيد الحذف"}
+              {isDeleting ? 'جاري الحذف...' : 'حذف'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

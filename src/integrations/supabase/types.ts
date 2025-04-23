@@ -6898,7 +6898,7 @@ export type Database = {
           stage_id: string | null
           status: string | null
           task_type: string | null
-          title: string
+          title: string | null
           updated_at: string | null
           workspace_id: string | null
         }
@@ -6920,7 +6920,7 @@ export type Database = {
           stage_id?: string | null
           status?: string | null
           task_type?: string | null
-          title: string
+          title?: string | null
           updated_at?: string | null
           workspace_id?: string | null
         }
@@ -6942,7 +6942,7 @@ export type Database = {
           stage_id?: string | null
           status?: string | null
           task_type?: string | null
-          title?: string
+          title?: string | null
           updated_at?: string | null
           workspace_id?: string | null
         }

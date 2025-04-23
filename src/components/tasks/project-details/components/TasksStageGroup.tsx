@@ -35,7 +35,16 @@ export const TasksStageGroup = ({
     activeTab === "all" || task.status === activeTab
   );
 
-  if (filteredTasks.length === 0) return null;
+  const sortedTasks = [...filteredTasks].sort((a, b) => {
+    if (a.order_position && b.order_position) {
+      return a.order_position - b.order_position;
+    }
+    if (a.order_position) return -1;
+    if (b.order_position) return 1;
+    return 0;
+  });
+
+  if (sortedTasks.length === 0) return null;
 
   return (
     <div className="border rounded-md overflow-hidden">
@@ -55,10 +64,10 @@ export const TasksStageGroup = ({
         </TableHeader>
         <TableBody>
           <SortableContext 
-            items={filteredTasks.map(task => task.id)}
+            items={sortedTasks.map(task => task.id)}
             strategy={verticalListSortingStrategy}
           >
-            {filteredTasks.map(task => (
+            {sortedTasks.map(task => (
               <TaskItem
                 key={task.id}
                 task={task}
@@ -70,6 +79,7 @@ export const TasksStageGroup = ({
                 projectId={projectId}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                stageId={stage.id}
               />
             ))}
           </SortableContext>

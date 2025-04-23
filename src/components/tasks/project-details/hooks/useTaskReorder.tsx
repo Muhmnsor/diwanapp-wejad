@@ -7,6 +7,7 @@ interface ReorderParams {
   tasks: Task[];
   activeId: string;
   overId: string;
+  stageId?: string;
 }
 
 const emitDebugEvent = (debugInfo: {
@@ -15,6 +16,7 @@ const emitDebugEvent = (debugInfo: {
   targetPosition: number | null;
   status: string;
   error: string | null;
+  stageId?: string | null;
 }) => {
   console.log("Emitting debug event:", debugInfo);
   const event = new CustomEvent('dragDebugUpdate', { detail: debugInfo });
@@ -24,7 +26,7 @@ const emitDebugEvent = (debugInfo: {
 export const useTaskReorder = (projectId: string) => {
   const [isReordering, setIsReordering] = useState(false);
 
-  const reorderTasks = ({ tasks, activeId, overId }: ReorderParams) => {
+  const reorderTasks = ({ tasks, activeId, overId, stageId }: ReorderParams) => {
     const oldIndex = tasks.findIndex(t => t.id === activeId);
     const newIndex = tasks.findIndex(t => t.id === overId);
     
@@ -37,13 +39,14 @@ export const useTaskReorder = (projectId: string) => {
         sourcePosition: oldIndex === -1 ? null : oldIndex + 1,
         targetPosition: newIndex === -1 ? null : newIndex + 1,
         status: 'error',
-        error: 'Invalid source or target position'
+        error: 'Invalid source or target position',
+        stageId
       });
       return null;
     }
 
     // Log reordering attempt
-    console.log(`Reordering task from position ${oldIndex + 1} to ${newIndex + 1}`);
+    console.log(`Reordering task from position ${oldIndex + 1} to ${newIndex + 1} in stage: ${stageId || 'unknown'}`);
     console.log("Task being moved:", draggedTask);
 
     const reorderedTasks = [...tasks];
@@ -56,17 +59,19 @@ export const useTaskReorder = (projectId: string) => {
       sourcePosition: oldIndex + 1,
       targetPosition: newIndex + 1,
       status: 'reordering',
-      error: null
+      error: null,
+      stageId
     });
 
-    // Update order_position for all tasks
+    // Update order_position for all tasks within this stage
+    // We only reorder tasks within the same stage and preserve the order in other stages
     return reorderedTasks.map((task, index) => ({
       ...task,
       order_position: index + 1
     }));
   };
 
-  const updateTasksOrder = async (reorderedTasks: Task[]) => {
+  const updateTasksOrder = async (reorderedTasks: Task[], stageId?: string) => {
     try {
       setIsReordering(true);
       
@@ -76,21 +81,23 @@ export const useTaskReorder = (projectId: string) => {
         sourcePosition: null,
         targetPosition: null,
         status: 'updating',
-        error: null
+        error: null,
+        stageId
       });
 
       if (!reorderedTasks || reorderedTasks.length === 0) {
         throw new Error('No tasks to update');
       }
 
-      console.log("Preparing updates for", reorderedTasks.length, "tasks");
+      console.log("Preparing updates for", reorderedTasks.length, "tasks in stage:", stageId || 'unknown');
       
       // Prepare updates for backend
-      const updates = reorderedTasks.map((task, index) => ({
+      const updates = reorderedTasks.map((task) => ({
         id: task.id,
-        order_position: index + 1,
-        project_id: projectId,
-        updated_at: new Date().toISOString()
+        order_position: task.order_position,
+        updated_at: new Date().toISOString(),
+        ...(task.project_id ? { project_id: task.project_id } : {}), // Only include project_id if it exists
+        ...(stageId ? { stage_id: stageId } : {}) // Only include stage_id if it's provided
       }));
 
       // Execute the actual update against Supabase
@@ -105,7 +112,8 @@ export const useTaskReorder = (projectId: string) => {
           sourcePosition: null,
           targetPosition: null,
           status: 'error',
-          error: error.message
+          error: error.message,
+          stageId
         });
         return null;
       }
@@ -116,7 +124,8 @@ export const useTaskReorder = (projectId: string) => {
         sourcePosition: null,
         targetPosition: null,
         status: 'success',
-        error: null
+        error: null,
+        stageId
       });
 
       return updates;
@@ -129,7 +138,8 @@ export const useTaskReorder = (projectId: string) => {
         sourcePosition: null,
         targetPosition: null,
         status: 'error',
-        error: errorMessage
+        error: errorMessage,
+        stageId
       });
       
       return null;

@@ -1,41 +1,28 @@
-import { useState, useEffect } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+
+import { useEffect, useState } from "react";
 import { Task } from "../types/task";
+import { TasksTable } from "./TasksTable";
 import { TasksStageGroup } from "./TasksStageGroup";
-import { TaskCard } from "./TaskCard";
-import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
-import { TaskItem } from "./TaskItem";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { DndContext, DragEndEvent, DragStartEvent, closestCenter } from "@dnd-kit/core";
+import { SortableContext, arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useTaskReorder } from "../hooks/useTaskReorder";
-import { toast } from "sonner";
-import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent
-} from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { DragDebugOverlay } from './debug/DragDebugOverlay';
+import { DragDebugOverlay } from "./debug/DragDebugOverlay";
 
 interface TasksContentProps {
   isLoading: boolean;
   activeTab: string;
   filteredTasks: Task[];
-  projectStages: {
-    id: string;
-    name: string;
-  }[];
+  projectStages: { id: string; name: string }[];
   tasksByStage: Record<string, Task[]>;
   getStatusBadge: (status: string) => JSX.Element;
   getPriorityBadge: (priority: string | null) => JSX.Element | null;
   formatDate: (date: string | null) => string;
   onStatusChange: (taskId: string, newStatus: string) => void;
-  projectId?: string | undefined;
+  projectId?: string;
   isGeneral?: boolean;
   onEditTask?: (task: Task) => void;
   onDeleteTask?: (taskId: string) => void;
-  refetchTasks: () => Promise<void>;
 }
 
 export const TasksContent = ({
@@ -48,95 +35,118 @@ export const TasksContent = ({
   getPriorityBadge,
   formatDate,
   onStatusChange,
-  projectId,
+  projectId = "",
   isGeneral = false,
   onEditTask,
-  onDeleteTask,
-  refetchTasks
+  onDeleteTask
 }: TasksContentProps) => {
-  const { reorderTasks, updateTasksOrder, isReordering } = useTaskReorder(projectId || '');
-  const [localTasks, setLocalTasks] = useState<Task[]>([]);
+  const { reorderTasks, updateTasksOrder } = useTaskReorder(projectId);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [activeStage, setActiveStage] = useState<string | null>(null);
   
+  // Sort tasks by order_position first, fallback to created_at
   useEffect(() => {
-    setLocalTasks(filteredTasks);
+    const sortedTasks = [...filteredTasks].sort((a, b) => {
+      // First by order_position if both have it
+      if (a.order_position && b.order_position) {
+        return a.order_position - b.order_position;
+      }
+      // If only one has order_position, that one comes first
+      if (a.order_position) return -1;
+      if (b.order_position) return 1;
+      
+      // Fallback: sort by created_at (newest first)
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+      return dateB - dateA;
+    });
+    
+    setTasks(sortedTasks);
   }, [filteredTasks]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    })
-  );
+  // Handle drag start to track which stage we're dragging from
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const activeData = active.data.current as any;
+    if (activeData && activeData.stageId) {
+      setActiveStage(activeData.stageId);
+    } else {
+      setActiveStage(null);
+    }
+  };
 
+  // Handle drag end for reordering
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
-    if (!over || active.id === over.id) return;
-
-    const reorderedTasks = reorderTasks({
-      tasks: localTasks,
-      activeId: active.id.toString(),
-      overId: over.id.toString()
-    });
-
-    if (!reorderedTasks) {
-      toast.error("حدث خطأ في إعادة الترتيب");
-      return;
-    }
-
-    setLocalTasks(reorderedTasks);
-
-    const updates = await updateTasksOrder(reorderedTasks);
+    if (!over) return;
     
-    if (!updates) {
-      toast.error("حدث خطأ في تحضير الترتيب");
-      setLocalTasks(filteredTasks);
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .upsert(updates);
-
-      if (error) throw error;
+    if (active.id !== over.id) {
+      const activeId = String(active.id);
+      const overId = String(over.id);
       
-      toast.success("تم إعادة ترتيب المهام بنجاح");
-      await refetchTasks();
-    } catch (error) {
-      console.error('Error updating task order:', error);
-      toast.error("حدث خطأ أثناء حفظ الترتيب الجديد");
-      setLocalTasks(filteredTasks);
+      // Get the stage ID from the drag data
+      const stageId = (active.data.current as any)?.stageId;
+      
+      // If within a stage, reorder tasks within that stage
+      if (stageId) {
+        const stageTasks = tasksByStage[stageId] || [];
+        const reordered = reorderTasks({
+          tasks: stageTasks,
+          activeId,
+          overId,
+          stageId
+        });
+        
+        if (reordered) {
+          // Update tasks within the stage
+          await updateTasksOrder(reordered, stageId);
+        }
+      } else {
+        // For tasks without stages (general tasks)
+        const reordered = reorderTasks({
+          tasks,
+          activeId,
+          overId
+        });
+        
+        if (reordered) {
+          await updateTasksOrder(reordered);
+        }
+      }
     }
   };
 
   if (isLoading) {
     return (
-      <div className="space-y-3" dir="rtl">
-        {[...Array(3)].map((_, index) => <Skeleton key={index} className="h-24 w-full" />)}
+      <div className="text-center py-8">
+        <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
+        <p className="mt-2 text-gray-500">جاري تحميل المهام...</p>
       </div>
     );
   }
 
-  if (filteredTasks.length === 0) {
+  if (tasks.length === 0) {
     return (
-      <div className="text-center py-8 bg-gray-50 rounded-md border" dir="rtl">
-        <p className="text-gray-500">لا توجد مهام {activeTab !== "all" && "بهذه الحالة"}</p>
+      <div className="text-center py-8">
+        <p className="text-gray-500">لا توجد مهام حالياً</p>
       </div>
     );
   }
+
+  // Determine the rendering mode - show stages or not
+  const hasStages = projectStages.length > 0 && !isGeneral;
 
   return (
-    <div className="space-y-6">
+    <>
       <DndContext
-        sensors={sensors}
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
+        onDragStart={handleDragStart}
       >
-        {activeTab === "all" && projectStages.length > 0 && !isGeneral ? (
-          <div className="space-y-6" dir="rtl">
-            {projectStages.map(stage => (
+        {hasStages ? (
+          <div className="space-y-6">
+            {projectStages.map((stage) => (
               <TasksStageGroup
                 key={stage.id}
                 stage={stage}
@@ -146,53 +156,44 @@ export const TasksContent = ({
                 getPriorityBadge={getPriorityBadge}
                 formatDate={formatDate}
                 onStatusChange={onStatusChange}
-                projectId={projectId || ''}
+                projectId={projectId}
                 onEdit={onEditTask}
                 onDelete={onDeleteTask}
               />
             ))}
+            {/* Tasks without a stage */}
+            {tasks.filter((task) => !task.stage_id).length > 0 && (
+              <div className="border rounded-md overflow-hidden mt-4">
+                <div className="bg-gray-50 p-3 border-b">
+                  <h3 className="font-medium">مهام بدون مرحلة</h3>
+                </div>
+                <TasksTable
+                  tasks={tasks.filter((task) => !task.stage_id)}
+                  getStatusBadge={getStatusBadge}
+                  getPriorityBadge={getPriorityBadge}
+                  formatDate={formatDate}
+                  onStatusChange={onStatusChange}
+                  projectId={projectId}
+                  onEdit={onEditTask}
+                  onDelete={onDeleteTask}
+                />
+              </div>
+            )}
           </div>
         ) : (
-          <div className="space-y-6" dir="rtl">
-            <div className="bg-white rounded-md shadow-sm overflow-hidden border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>المهمة</TableHead>
-                    <TableHead>الحالة</TableHead>
-                    <TableHead>الأولوية</TableHead>
-                    <TableHead>المكلف</TableHead>
-                    <TableHead>تاريخ الاستحقاق</TableHead>
-                    <TableHead>الإجراءات</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <SortableContext
-                    items={localTasks.map(task => task.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    {localTasks.map(task => (
-                      <TaskItem
-                        key={task.id}
-                        task={task}
-                        isDraggable={activeTab === "all" && !isGeneral}
-                        getStatusBadge={getStatusBadge}
-                        getPriorityBadge={getPriorityBadge}
-                        formatDate={formatDate}
-                        onStatusChange={onStatusChange}
-                        projectId={projectId || ''}
-                        onEdit={onEditTask}
-                        onDelete={onDeleteTask}
-                      />
-                    ))}
-                  </SortableContext>
-                </TableBody>
-              </Table>
-            </div>
-          </div>
+          <TasksTable
+            tasks={tasks}
+            getStatusBadge={getStatusBadge}
+            getPriorityBadge={getPriorityBadge}
+            formatDate={formatDate}
+            onStatusChange={onStatusChange}
+            projectId={projectId}
+            onEdit={onEditTask}
+            onDelete={onDeleteTask}
+          />
         )}
       </DndContext>
       <DragDebugOverlay />
-    </div>
+    </>
   );
 };

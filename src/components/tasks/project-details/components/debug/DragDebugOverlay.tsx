@@ -9,6 +9,7 @@ interface DragDebugInfo {
   targetPosition: number | null;
   status: string;
   error: string | null;
+  stageId?: string | null;
 }
 
 export const DragDebugOverlay = () => {
@@ -17,7 +18,8 @@ export const DragDebugOverlay = () => {
     sourcePosition: null,
     targetPosition: null,
     status: 'idle',
-    error: null
+    error: null,
+    stageId: null
   });
 
   // Listen to custom debug events
@@ -53,12 +55,22 @@ export const DragDebugOverlay = () => {
       <div className="space-y-2 text-foreground">
         <p className={`font-medium ${getStatusColor()}`}>Status: {debugInfo.status}</p>
         
+        {debugInfo.stageId && (
+          <div className="bg-muted/50 p-2 rounded">
+            <p className="text-xs text-muted-foreground">Stage ID:</p>
+            <p className="font-medium text-xs text-primary/80">{debugInfo.stageId}</p>
+          </div>
+        )}
+        
         {debugInfo.draggedTask && (
           <div className="border-l-2 border-primary pl-2 my-2">
             <p className="font-semibold">Dragged Task:</p>
             <p>Title: <span className="font-medium">{debugInfo.draggedTask.title}</span></p>
             <p>ID: <span className="text-xs text-muted-foreground">{debugInfo.draggedTask.id}</span></p>
             <p>Current Position: <span className="font-medium">{debugInfo.draggedTask.order_position}</span></p>
+            {debugInfo.draggedTask.stage_id && (
+              <p>Stage ID: <span className="text-xs text-primary/80">{debugInfo.draggedTask.stage_id}</span></p>
+            )}
           </div>
         )}
         
