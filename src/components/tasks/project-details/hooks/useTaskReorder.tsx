@@ -13,10 +13,15 @@ interface ReorderParams {
 export const useTaskReorder = (projectId: string) => {
   const [isReordering, setIsReordering] = useState(false);
   const [optimisticTasks, setOptimisticTasks] = useState<Task[]>([]);
+  const [lastError, setLastError] = useState<string | null>(null);
+  const [reorderStatus, setReorderStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
   const reorderTasks = async ({ tasks, activeId, overId }: ReorderParams) => {
-    if (!projectId) return { success: false, tasks: tasks };
+    if (!projectId) return { success: false, tasks: tasks, error: "No project ID provided" };
+    
     setIsReordering(true);
+    setReorderStatus('loading');
+    setLastError(null);
     
     try {
       console.log('Reordering tasks:', { activeId, overId });
@@ -26,8 +31,11 @@ export const useTaskReorder = (projectId: string) => {
       const newIndex = tasks.findIndex(t => t.id === overId);
       
       if (oldIndex === -1 || newIndex === -1) {
+        const error = `Task not found: ${oldIndex === -1 ? activeId : overId}`;
         console.error('Task not found:', { oldIndex, newIndex });
-        throw new Error("Task not found");
+        setLastError(error);
+        setReorderStatus('error');
+        throw new Error(error);
       }
 
       console.log('Task positions:', { oldIndex, newIndex });
@@ -49,7 +57,8 @@ export const useTaskReorder = (projectId: string) => {
         order_position: index + 1,
         project_id: projectId,
         stage_id: task.stage_id,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        title: task.title // Ensure title is included as it's required
       }));
 
       console.log('Preparing database updates:', updates);
@@ -63,27 +72,41 @@ export const useTaskReorder = (projectId: string) => {
         });
 
       if (error) {
-        console.error('Database update error:', error);
+        console.error('خطأ في إعادة الترتيب:', error);
         // Rollback optimistic update on error
-        setOptimisticTasks(tasks);
+        setOptimisticTasks([]);
+        setLastError(JSON.stringify(error));
+        setReorderStatus('error');
+        // Show error toast
+        toast.error("فشل في إعادة ترتيب المهام");
         throw error;
       }
 
       console.log('Database update successful');
+      setReorderStatus('success');
       return { success: true, tasks: updatedTasks };
 
     } catch (error) {
       console.error('Reorder error:', error);
-      toast.error("Failed to reorder tasks");
-      return { success: false, tasks: tasks };
+      setReorderStatus('error');
+      setLastError(error.message || JSON.stringify(error));
+      toast.error("فشل في إعادة ترتيب المهام");
+      return { success: false, tasks: tasks, error };
     } finally {
       setIsReordering(false);
+      // Clear optimistic updates after a delay to show the success/failure state
+      setTimeout(() => {
+        setOptimisticTasks([]);
+        setReorderStatus('idle');
+      }, 2000);
     }
   };
 
   return {
     reorderTasks,
     isReordering,
-    optimisticTasks
+    optimisticTasks,
+    lastError,
+    reorderStatus
   };
 };
