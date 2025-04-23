@@ -45,10 +45,9 @@ export const useTasksFetching = (
         query = query.eq('is_general', true);
       }
 
-      // Important: Order primarily by order_position, then by stage_id (if available)
       const { data, error } = await query
-  .order('stage_id', { ascending: true, nullsLast: true })
-  .order('order_position', { ascending: true, nullsLast: true });
+  .order('order_position', { ascending: true, nullsLast: true })
+  .order('created_at', { ascending: false });
 
       if (error) {
         console.error("Error fetching tasks:", error);
@@ -98,21 +97,6 @@ export const useTasksFetching = (
             groupedTasks[task.stage_id].push(task);
           }
         });
-        
-        // Sort tasks within each stage by order_position
-        Object.keys(groupedTasks).forEach(stageId => {
-          groupedTasks[stageId].sort((a, b) => {
-            if (a.order_position && b.order_position) {
-              return a.order_position - b.order_position;
-            }
-            if (a.order_position) return -1;
-            if (b.order_position) return 1;
-            
-            // Fallback to created_at
-            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-          });
-        });
-        
         setTasksByStage(groupedTasks);
       }
 
