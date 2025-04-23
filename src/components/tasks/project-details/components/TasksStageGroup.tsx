@@ -1,10 +1,11 @@
+
 import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
 import { Task } from "../types/task";
 import { TaskItem } from "./TaskItem";
 import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useState } from "react";
-import { toast } from "sonner"; // لإظهار رسالة النجاح
+import { toast } from "sonner";
 
 interface TasksStageGroupProps {
   stage: { id: string; name: string };
@@ -17,7 +18,7 @@ interface TasksStageGroupProps {
   projectId: string;
   onEdit?: (task: Task) => void;
   onDelete?: (taskId: string) => void;
-  updateTaskOrder: (reorderedTasks: Task[]) => void; // ✅ تم التحديث هنا
+  updateTaskOrder: (reorderedTasks: Task[]) => Promise<boolean>;
 }
 
 export const TasksStageGroup = ({
@@ -39,28 +40,29 @@ export const TasksStageGroup = ({
 
   if (filteredTasks.length === 0) return null;
 
-const handleDragEnd = (event: DragEndEvent) => {
-  const { active, over } = event;
-  if (over && active.id !== over.id) {
-    const oldIndex = tasks.findIndex(t => t.id === active.id); 
-    const newIndex = tasks.findIndex(t => t.id === over.id); 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = tasks.findIndex(t => t.id === active.id); 
+      const newIndex = tasks.findIndex(t => t.id === over.id); 
 
-    if (oldIndex === -1 || newIndex === -1) return;
+      if (oldIndex === -1 || newIndex === -1) return;
 
-    const updatedTasks = [...tasks];
-    const [movedTask] = updatedTasks.splice(oldIndex, 1);
-    updatedTasks.splice(newIndex, 0, movedTask);
+      const updatedTasks = [...tasks];
+      const [movedTask] = updatedTasks.splice(oldIndex, 1);
+      updatedTasks.splice(newIndex, 0, movedTask);
 
-    // إضافة order_position لكل مهمة
-const tasksWithOrder = updatedTasks.map((task, index) => ({
-  ...task,
-  order_position: index + 1,
-  stage_id: stage.id
-}));
-    updateTaskOrder(tasksWithOrder);
-  }
-};
-
+      // Add order_position and stage_id to each task
+      const tasksWithOrder = updatedTasks.map((task, index) => ({
+        ...task,
+        order_position: index + 1,
+        stage_id: stage.id
+      }));
+      
+      // Use the updateTaskOrder function passed from the parent component
+      updateTaskOrder(tasksWithOrder);
+    }
+  };
 
   return (
     <div className="border rounded-md overflow-hidden">

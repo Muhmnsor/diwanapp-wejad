@@ -13,17 +13,14 @@ export const useTaskReorder = (stageId: string) => {
     try {
       // Update order_position for each task
       const updates = tasks.map((task, index) => ({
-  id: task.id,
-  order_position: index + 1,
-  stage_id: stageId // استخدام stageId المستلم كـ prop
-}));
+        id: task.id,
+        order_position: index + 1,
+        stage_id: stageId // Use the stageId parameter passed to the hook
+      }));
 
-
-    const { error } = await supabase
-  .from('tasks')
-  .upsert(
-    updates  // استخدام المصفوفة updates التي تم إنشاؤها فوق
-  );
+      const { error } = await supabase
+        .from('tasks')
+        .upsert(updates);
 
       if (error) throw error;
       toast.success("تم إعادة ترتيب المهام بنجاح");

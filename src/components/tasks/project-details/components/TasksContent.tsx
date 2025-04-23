@@ -1,3 +1,4 @@
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { Task } from "../types/task";
 import { TasksStageGroup } from "./TasksStageGroup";
@@ -41,7 +42,6 @@ export const TasksContent = ({
   onDeleteTask
 }: TasksContentProps) => {
 
-
   if (isLoading) {
     return (
       <div className="space-y-3" dir="rtl">
@@ -62,9 +62,10 @@ export const TasksContent = ({
     return (
       <div className="space-y-6" dir="rtl">
         {projectStages.map(stage => {
-          // ✅ تعريف دالة reorderTasks حسب كل مرحلة داخل الماب
+          // Define the reorderTasks function using the hook
           const { reorderTasks } = useTaskReorder(stage.id);
-        
+          
+          // Pass it to the TasksStageGroup component
           return (
             <TasksStageGroup
               key={stage.id}
@@ -78,7 +79,7 @@ export const TasksContent = ({
               projectId={projectId || ''}
               onEdit={onEditTask}
               onDelete={onDeleteTask}
-              updateTaskOrder={updateTaskOrder}
+              updateTaskOrder={reorderTasks}
             />
           );
         })}
