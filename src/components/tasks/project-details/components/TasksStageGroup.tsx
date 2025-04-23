@@ -52,11 +52,11 @@ const handleDragEnd = (event: DragEndEvent) => {
     updatedTasks.splice(newIndex, 0, movedTask);
 
     // إضافة order_position لكل مهمة
-    const tasksWithOrder = updatedTasks.map((task, index) => ({
-      ...task,
-      order_position: index + 1
-    }));
-
+const tasksWithOrder = updatedTasks.map((task, index) => ({
+  ...task,
+  order_position: index + 1,
+  stage_id: stage.id
+}));
     updateTaskOrder(tasksWithOrder);
   }
 };
@@ -68,7 +68,7 @@ const handleDragEnd = (event: DragEndEvent) => {
         <h3 className="font-medium">{stage.name}</h3>
       </div>
       <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
-        <SortableContext items={filteredTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+        <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
           <Table>
             <TableHeader>
               <TableRow>
