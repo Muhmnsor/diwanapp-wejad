@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "../types/task";
@@ -9,21 +8,18 @@ export const useTaskReorder = (stageId: string) => {
 
   const reorderTasks = async (tasks: Task[]) => {
     setIsReordering(true);
-    if (!tasks.length) return false;
     try {
       // Update order_position for each task
       const updates = tasks.map((task, index) => ({
         id: task.id,
-        order_position: index + 1,
-        stage_id: stageId // Use the stageId parameter passed to the hook
+        order_position: index + 1
       }));
 
       const { error } = await supabase
         .from('tasks')
-        .upsert(updates);
+        .upsert(updates, { onConflict: 'id' });
 
       if (error) throw error;
-      toast.success("تم إعادة ترتيب المهام بنجاح");
       
       return true;
     } catch (error) {
@@ -40,3 +36,4 @@ export const useTaskReorder = (stageId: string) => {
     reorderTasks
   };
 };
+

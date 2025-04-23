@@ -15,8 +15,6 @@ import { useTaskDependencies } from "../hooks/useTaskDependencies";
 import { usePermissionCheck } from "../hooks/usePermissionCheck";
 import { useTaskButtonStates } from "../../hooks/useTaskButtonStates";
 import { DependencyIcon } from "../../components/dependencies/DependencyIcon";
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -57,22 +55,6 @@ export const TaskItem = ({
   onEdit,
   onDelete
 }: TaskItemProps) => {
-
-const {
-  attributes,
-  listeners,
-  setNodeRef,
-  transform,
-  transition,
-  isDragging
-} = useSortable({ id: task.id });
-
-const style = {
-  transform: CSS.Transform.toString(transform),
-  transition,
-  opacity: isDragging ? 0.5 : 1
-};
-
   const [isUpdating, setIsUpdating] = useState(false);
   const [showSubtasks, setShowSubtasks] = useState(false);
   const [showDiscussion, setShowDiscussion] = useState(false);
@@ -238,10 +220,7 @@ const style = {
         variant="outline" 
         size="sm" 
         className="h-7 w-7 p-0 ml-1"
-        onClick={(e) => {
-  e.stopPropagation();
-  handleStatusUpdate('completed');
-}}
+        onClick={() => handleStatusUpdate('completed')}
         disabled={isUpdating}
         title="إكمال المهمة"
       >
@@ -252,10 +231,7 @@ const style = {
         variant="outline" 
         size="sm" 
         className="h-7 w-7 p-0 ml-1"
-onClick={(e) => {
-  e.stopPropagation();
-  handleStatusUpdate('in_progress');
-}}
+        onClick={() => handleStatusUpdate('in_progress')}
         disabled={isUpdating}
         title="إعادة فتح المهمة"
       >
@@ -271,14 +247,8 @@ onClick={(e) => {
 
   return (
     <>
-<TableRow 
-  ref={setNodeRef}
-  style={style}
-  {...attributes}
-  className={`hover:bg-gray-50 ${isDragging ? 'bg-gray-100' : ''}`}
->
-  <TableCell className="font-medium cursor-move" {...listeners}>
-
+      <TableRow key={task.id} className="cursor-pointer hover:bg-gray-50">
+        <TableCell className="font-medium">
           <div className="flex items-center">
             <span className="mr-1">{task.title}</span>
             <Button 
