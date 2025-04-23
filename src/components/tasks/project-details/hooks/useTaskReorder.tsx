@@ -41,6 +41,7 @@ export const useTaskReorder = (projectId: string) => {
           updates.map(u => ({
             id: u.id,
             order_position: u.order_position,
+            project_id: projectId, // Add this line
             updated_at: new Date().toISOString()
           }))
         );

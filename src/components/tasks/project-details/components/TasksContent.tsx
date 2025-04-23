@@ -33,6 +33,7 @@ interface TasksContentProps {
   isGeneral?: boolean;
   onEditTask?: (task: Task) => void;
   onDeleteTask?: (taskId: string) => void;
+  refetchTasks: () => Promise<void>;
 }
 
 export const TasksContent = ({
@@ -59,7 +60,7 @@ export const TasksContent = ({
     })
   );
 
-  // تحديث handleDragEnd داخل المكون
+// Update the handleDragEnd function
 const handleDragEnd = async (event: DragEndEvent) => {
   const { active, over } = event;
   
@@ -74,8 +75,7 @@ const handleDragEnd = async (event: DragEndEvent) => {
 
     if (success) {
       toast.success("تم إعادة ترتيب المهام بنجاح");
-      // إذا كان لديك دالة لتحديث قائمة المهام، قم باستدعائها هنا
-      // مثال: await refetchTasks();
+      await refetchTasks(); // Add this line to refresh the tasks
     } else {
       toast.error("حدث خطأ أثناء إعادة ترتيب المهام");
     }
