@@ -92,13 +92,15 @@ export const useTaskReorder = (projectId: string) => {
       console.log("Preparing updates for", reorderedTasks.length, "tasks in stage:", stageId || 'unknown');
       
       // Prepare updates for backend
-      const updates = reorderedTasks.map((task) => ({
-        id: task.id,
-        order_position: task.order_position,
-        updated_at: new Date().toISOString(),
-        ...(task.project_id ? { project_id: task.project_id } : {}), // Only include project_id if it exists
-        ...(stageId ? { stage_id: stageId } : {}) // Only include stage_id if it's provided
-      }));
+      const updates = reorderedTasks.map((task, index) => ({
+  id: task.id,
+  order_position: stageId ? 
+    (parseInt(stageId, 16) * 100000 + ((index + 1) * 100)) :
+    ((index + 1) * 10000),
+  updated_at: new Date().toISOString(),
+  ...(stageId ? { stage_id: stageId } : {})
+}));
+
 
       // Execute the actual update against Supabase
       const { data, error } = await supabase
