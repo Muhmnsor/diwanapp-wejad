@@ -47,8 +47,8 @@ export const useTasksFetching = (
 
       // Important: Order primarily by order_position, then by stage_id (if available)
       const { data, error } = await query
-        .order('order_position', { ascending: true, nullsLast: true })
-        .order('created_at', { ascending: false });
+  .order('stage_id', { ascending: true, nullsLast: true })
+  .order('order_position', { ascending: true, nullsLast: true });
 
       if (error) {
         console.error("Error fetching tasks:", error);
