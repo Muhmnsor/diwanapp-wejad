@@ -36,15 +36,14 @@ export const useTaskReorder = (projectId: string) => {
 
       // 4. تحديث قاعدة البيانات
       const { error } = await supabase
-  .from('tasks')
-  .upsert(
-    updates.map(u => ({
-      id: u.id,
-      project_id: projectId, // إضافة project_id
-      order_position: u.order_position,
-      updated_at: new Date().toISOString()
-    }))
-  );
+        .from('tasks')
+        .upsert(
+          updates.map(u => ({
+            id: u.id,
+            order_position: u.order_position,
+            updated_at: new Date().toISOString()
+          }))
+        );
 
       if (error) throw error;
 
