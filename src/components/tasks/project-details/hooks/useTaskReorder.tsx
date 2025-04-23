@@ -17,24 +17,11 @@ export const useTaskReorder = (stageId: string) => {
   const reorderTasks = async ({ tasks, activeId, overId }: ReorderParams) => {
     setIsReordering(true);
     try {
-      const oldIndex = tasks.findIndex(t => t.id === activeId);
-      const newIndex = tasks.findIndex(t => t.id === overId);
-
-      if (oldIndex === -1 || newIndex === -1) {
-        throw new Error("تعذر العثور على المهام المحددة لإعادة الترتيب");
-      }
-
-      // إعادة ترتيب المهام محليًا
-      const updatedTasks = [...tasks];
-      const [movedTask] = updatedTasks.splice(oldIndex, 1);
-      updatedTasks.splice(newIndex, 0, movedTask);
-
-      // إعداد البيانات للتحديث في Supabase
-      const updates = updatedTasks.map((task, index) => ({
-        id: task.id,
-        order_position: index,
-        stage_id: stageId
-      }));
+      // تعديل طريقة حساب الترتيب الجديد
+      const updates = [{
+        id: activeId,
+        order_position: tasks.findIndex(t => t.id === overId)
+      }];
 
       const { error } = await supabase
         .from('tasks')
@@ -49,7 +36,8 @@ export const useTaskReorder = (stageId: string) => {
     } finally {
       setIsReordering(false);
     }
-  };
+};
+
 
   return {
     isReordering,
