@@ -59,27 +59,31 @@ export const TasksContent = ({
     })
   );
 
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (!over || active.id === over.id) return;
+  // تحديث handleDragEnd داخل المكون
+const handleDragEnd = async (event: DragEndEvent) => {
+  const { active, over } = event;
+  
+  if (!over || active.id === over.id) return;
 
-    try {
-      const success = await reorderTasks({
-        tasks: filteredTasks,
-        activeId: active.id.toString(),
-        overId: over.id.toString()
-      });
+  try {
+    const success = await reorderTasks({
+      tasks: filteredTasks,
+      activeId: active.id.toString(),
+      overId: over.id.toString()
+    });
 
-      if (!success) {
-        toast.error("حدث خطأ أثناء إعادة ترتيب المهام");
-      }
-    } catch (error) {
-      console.error('Error in handleDragEnd:', error);
+    if (success) {
+      toast.success("تم إعادة ترتيب المهام بنجاح");
+      // إذا كان لديك دالة لتحديث قائمة المهام، قم باستدعائها هنا
+      // مثال: await refetchTasks();
+    } else {
       toast.error("حدث خطأ أثناء إعادة ترتيب المهام");
     }
+  } catch (error) {
+    console.error('خطأ في handleDragEnd:', error);
+    toast.error("حدث خطأ أثناء إعادة ترتيب المهام");
+  }
 };
-
 
   if (isLoading) {
     return (
