@@ -1,10 +1,10 @@
-
 import { Skeleton } from "@/components/ui/skeleton";
 import { Task } from "../types/task";
 import { TasksStageGroup } from "./TasksStageGroup";
 import { TaskCard } from "./TaskCard";
 import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
 import { TaskItem } from "./TaskItem";
+import { useTaskReorder } from "../hooks/useTaskReorder"; // ✅ الاستيراد الجديد
 
 interface TasksContentProps {
   isLoading: boolean;
@@ -40,6 +40,7 @@ export const TasksContent = ({
   onEditTask,
   onDeleteTask
 }: TasksContentProps) => {
+
   if (isLoading) {
     return (
       <div className="space-y-3" dir="rtl">
@@ -47,7 +48,7 @@ export const TasksContent = ({
       </div>
     );
   }
-  
+
   if (filteredTasks.length === 0) {
     return (
       <div className="text-center py-8 bg-gray-50 rounded-md border" dir="rtl">
@@ -60,21 +61,35 @@ export const TasksContent = ({
   if (activeTab === "all" && projectStages.length > 0 && !isGeneral) {
     return (
       <div className="space-y-6" dir="rtl">
-        {projectStages.map(stage => (
-          <TasksStageGroup 
-            key={stage.id} 
-            stage={stage} 
-            tasks={tasksByStage[stage.id] || []} 
-            activeTab={activeTab} 
-            getStatusBadge={getStatusBadge} 
-            getPriorityBadge={getPriorityBadge} 
-            formatDate={formatDate} 
-            onStatusChange={onStatusChange} 
-            projectId={projectId || ''} 
-            onEdit={onEditTask} 
-            onDelete={onDeleteTask} 
-          />
-        ))}
+        {projectStages.map(stage => {
+          const { reorderTasks } = useTaskReorder(stage.id); // ✅ استخدام hook حسب المرحلة
+
+          const updateTaskOrder = async (taskId: string, newPosition: number) => {
+            const stageTasksCopy = [...(tasksByStage[stage.id] || [])];
+            const updatedTasks = stageTasksCopy.map((task, index) => ({
+              ...task,
+              order_position: index + 1
+            }));
+            await reorderTasks(updatedTasks);
+          };
+
+          return (
+            <TasksStageGroup
+              key={stage.id}
+              stage={stage}
+              tasks={tasksByStage[stage.id] || []}
+              activeTab={activeTab}
+              getStatusBadge={getStatusBadge}
+              getPriorityBadge={getPriorityBadge}
+              formatDate={formatDate}
+              onStatusChange={onStatusChange}
+              projectId={projectId || ''}
+              onEdit={onEditTask}
+              onDelete={onDeleteTask}
+              updateTaskOrder={updateTaskOrder} // ✅ التمرير للدالة
+            />
+          );
+        })}
       </div>
     );
   }
@@ -97,16 +112,16 @@ export const TasksContent = ({
             </TableHeader>
             <TableBody>
               {filteredTasks.map(task => (
-                <TaskItem 
-                  key={task.id} 
-                  task={task} 
-                  getStatusBadge={getStatusBadge} 
-                  getPriorityBadge={getPriorityBadge} 
-                  formatDate={formatDate} 
-                  onStatusChange={onStatusChange} 
-                  projectId={projectId || ''} 
-                  onEdit={onEditTask} 
-                  onDelete={onDeleteTask} 
+                <TaskItem
+                  key={task.id}
+                  task={task}
+                  getStatusBadge={getStatusBadge}
+                  getPriorityBadge={getPriorityBadge}
+                  formatDate={formatDate}
+                  onStatusChange={onStatusChange}
+                  projectId={projectId || ''}
+                  onEdit={onEditTask}
+                  onDelete={onDeleteTask}
                 />
               ))}
             </TableBody>
