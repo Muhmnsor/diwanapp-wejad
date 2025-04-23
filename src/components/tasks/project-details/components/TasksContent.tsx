@@ -1,11 +1,13 @@
 
 import { useEffect, useState } from "react";
+import { Task } from "../types/task";
 import { TasksTable } from "./TasksTable";
 import { TasksStageGroup } from "./TasksStageGroup";
-import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
-import { arrayMove } from "@dnd-kit/sortable";
-import { Task } from "../types/task";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { DndContext, DragEndEvent, DragStartEvent, closestCenter } from "@dnd-kit/core";
+import { SortableContext, arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useTaskReorder } from "../hooks/useTaskReorder";
+import { DragDebugOverlay } from "./debug/DragDebugOverlay";
 
 interface TasksContentProps {
   isLoading: boolean;
@@ -38,125 +40,160 @@ export const TasksContent = ({
   onEditTask,
   onDeleteTask
 }: TasksContentProps) => {
-  const [localTasks, setLocalTasks] = useState<Task[]>(filteredTasks);
-  const [localTasksByStage, setLocalTasksByStage] = useState(tasksByStage);
-
+  const { reorderTasks, updateTasksOrder } = useTaskReorder(projectId);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [activeStage, setActiveStage] = useState<string | null>(null);
+  
+  // Sort tasks by order_position first, fallback to created_at
   useEffect(() => {
-    setLocalTasks(filteredTasks);
-    setLocalTasksByStage(tasksByStage);
-  }, [filteredTasks, tasksByStage]);
+    const sortedTasks = [...filteredTasks].sort((a, b) => {
+      // First by order_position if both have it
+      if (a.order_position && b.order_position) {
+        return a.order_position - b.order_position;
+      }
+      // If only one has order_position, that one comes first
+      if (a.order_position) return -1;
+      if (b.order_position) return 1;
+      
+      // Fallback: sort by created_at (newest first)
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+      return dateB - dateA;
+    });
+    
+    setTasks(sortedTasks);
+  }, [filteredTasks]);
+
+  // Handle drag start to track which stage we're dragging from
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const activeData = active.data.current as any;
+    if (activeData && activeData.stageId) {
+      setActiveStage(activeData.stageId);
+    } else {
+      setActiveStage(null);
+    }
+  };
+
+  // Handle drag end for reordering
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over) return;
+    
+    if (active.id !== over.id) {
+      const activeId = String(active.id);
+      const overId = String(over.id);
+      
+      // Get the stage ID from the drag data
+      const stageId = (active.data.current as any)?.stageId;
+      
+      // If within a stage, reorder tasks within that stage
+      if (stageId) {
+        const stageTasks = tasksByStage[stageId] || [];
+        const reordered = reorderTasks({
+          tasks: stageTasks,
+          activeId,
+          overId,
+          stageId
+        });
+        
+        if (reordered) {
+          // Update tasks within the stage
+          await updateTasksOrder(reordered, stageId);
+        }
+      } else {
+        // For tasks without stages (general tasks)
+        const reordered = reorderTasks({
+          tasks,
+          activeId,
+          overId
+        });
+        
+        if (reordered) {
+          await updateTasksOrder(reordered);
+        }
+      }
+    }
+  };
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
+      <div className="text-center py-8">
+        <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
+        <p className="mt-2 text-gray-500">جاري تحميل المهام...</p>
       </div>
     );
   }
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (!over || active.id === over.id) {
-      return;
-    }
+  if (tasks.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500">لا توجد مهام حالياً</p>
+      </div>
+    );
+  }
 
-    // Get the dragged task and its data
-    const draggedItemId = active.id as string;
-    const draggedTask = filteredTasks.find(task => task.id === draggedItemId);
-    
-    if (!draggedTask) return;
-
-    if (isGeneral || !projectStages || projectStages.length === 0) {
-      setLocalTasks(tasks => {
-        const oldIndex = tasks.findIndex(t => t.id === active.id);
-        const newIndex = tasks.findIndex(t => t.id === over.id);
-        return arrayMove(tasks, oldIndex, newIndex);
-      });
-    } else {
-      // Handle stage-based drag and drop
-      setLocalTasksByStage(prev => {
-        const newTasksByStage = { ...prev };
-        
-        // Find which stage lists are affected
-        let sourceStageId = "";
-        let targetStageId = "";
-        
-        for (const [stageId, tasks] of Object.entries(prev)) {
-          if (tasks.some(t => t.id === active.id)) {
-            sourceStageId = stageId;
-          }
-          if (tasks.some(t => t.id === over.id)) {
-            targetStageId = stageId;
-          }
-        }
-        
-        if (!sourceStageId || !targetStageId) return prev;
-        
-        // Remove from source
-        const sourceTasks = [...(prev[sourceStageId] || [])];
-        const targetTasks = [...(prev[targetStageId] || [])];
-        
-        const oldIndex = sourceTasks.findIndex(t => t.id === active.id);
-        const newIndex = targetTasks.findIndex(t => t.id === over.id);
-        
-        // If same stage, just reorder
-        if (sourceStageId === targetStageId) {
-          newTasksByStage[sourceStageId] = arrayMove(sourceTasks, oldIndex, newIndex);
-        } else {
-          // Move between stages
-          const [movedTask] = sourceTasks.splice(oldIndex, 1);
-          if (movedTask) {
-            movedTask.stage_id = targetStageId;
-            targetTasks.splice(newIndex, 0, movedTask);
-            newTasksByStage[sourceStageId] = sourceTasks;
-            newTasksByStage[targetStageId] = targetTasks;
-          }
-        }
-        
-        return newTasksByStage;
-      });
-    }
-  };
+  // Determine the rendering mode - show stages or not
+  const hasStages = projectStages.length > 0 && !isGeneral;
 
   return (
-    <DndContext
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
-      {isGeneral || !projectStages || projectStages.length === 0 ? (
-        <TasksTable
-          tasks={localTasks}
-          activeTab={activeTab}
-          getStatusBadge={getStatusBadge}
-          getPriorityBadge={getPriorityBadge}
-          formatDate={formatDate}
-          onStatusChange={onStatusChange}
-          projectId={projectId}
-          onEdit={onEditTask}
-          onDelete={onDeleteTask}
-        />
-      ) : (
-        <div className="space-y-6">
-          {projectStages.map(stage => (
-            <TasksStageGroup
-              key={stage.id}
-              stage={stage}
-              tasks={localTasksByStage[stage.id] || []}
-              activeTab={activeTab}
-              getStatusBadge={getStatusBadge}
-              getPriorityBadge={getPriorityBadge}
-              formatDate={formatDate}
-              onStatusChange={onStatusChange}
-              projectId={projectId}
-              onEdit={onEditTask}
-              onDelete={onDeleteTask}
-            />
-          ))}
-        </div>
-      )}
-    </DndContext>
+    <>
+      <DndContext
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+        onDragStart={handleDragStart}
+      >
+        {hasStages ? (
+          <div className="space-y-6">
+            {projectStages.map((stage) => (
+              <TasksStageGroup
+                key={stage.id}
+                stage={stage}
+                tasks={tasksByStage[stage.id] || []}
+                activeTab={activeTab}
+                getStatusBadge={getStatusBadge}
+                getPriorityBadge={getPriorityBadge}
+                formatDate={formatDate}
+                onStatusChange={onStatusChange}
+                projectId={projectId}
+                onEdit={onEditTask}
+                onDelete={onDeleteTask}
+              />
+            ))}
+            {/* Tasks without a stage */}
+            {tasks.filter((task) => !task.stage_id).length > 0 && (
+              <div className="border rounded-md overflow-hidden mt-4">
+                <div className="bg-gray-50 p-3 border-b">
+                  <h3 className="font-medium">مهام بدون مرحلة</h3>
+                </div>
+                <TasksTable
+                  tasks={tasks.filter((task) => !task.stage_id)}
+                  getStatusBadge={getStatusBadge}
+                  getPriorityBadge={getPriorityBadge}
+                  formatDate={formatDate}
+                  onStatusChange={onStatusChange}
+                  projectId={projectId}
+                  onEdit={onEditTask}
+                  onDelete={onDeleteTask}
+                />
+              </div>
+            )}
+          </div>
+        ) : (
+          <TasksTable
+            tasks={tasks}
+            getStatusBadge={getStatusBadge}
+            getPriorityBadge={getPriorityBadge}
+            formatDate={formatDate}
+            onStatusChange={onStatusChange}
+            projectId={projectId}
+            onEdit={onEditTask}
+            onDelete={onDeleteTask}
+          />
+        )}
+      </DndContext>
+      <DragDebugOverlay />
+    </>
   );
 };

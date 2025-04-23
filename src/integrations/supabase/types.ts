@@ -8165,10 +8165,6 @@ export type Database = {
         Args: { task_id_param: string; new_position_param: number }
         Returns: undefined
       }
-      update_tasks_stage_order: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       update_workspace_members_count: {
         Args: { workspace_id: string }
         Returns: undefined
