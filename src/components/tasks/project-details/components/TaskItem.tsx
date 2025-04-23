@@ -57,7 +57,7 @@ export const TaskItem = ({
   onStatusChange,
   projectId,
   onEdit,
-  onDelete
+  onDelete,
   isDraggable = false
   
 }: TaskItemProps) => {
