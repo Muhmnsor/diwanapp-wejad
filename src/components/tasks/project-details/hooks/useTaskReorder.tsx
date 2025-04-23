@@ -13,10 +13,11 @@ export const useTaskReorder = (stageId: string) => {
     try {
       // Update order_position for each task
       const updates = tasks.map((task, index) => ({
-        id: task.id,
-        order_position: index + 1,
-        stage_id: task.stage_id
-      }));
+  id: task.id,
+  order_position: index + 1,
+  stage_id: stageId // استخدام stageId المستلم كـ prop
+}));
+
 
     const { error } = await supabase
   .from('tasks')
