@@ -85,34 +85,30 @@ const handleDragEnd = async (event: DragEndEvent) => {
     return;
   }
 
-  // 1. تحديث قاعدة البيانات أولاً
-  const updates = await updateTasksOrder(reorderedTasks);
-    
-  if (!updates) {
-    toast.error("حدث خطأ في تحضير الترتيب");
-    return;
-  }
-
   try {
-    const { error } = await supabase
-      .from('tasks')
-      .upsert(updates);
+    // 1. تحديث قاعدة البيانات أولاً
+    const updates = await updateTasksOrder(reorderedTasks);
+    
+    if (!updates) {
+      toast.error("حدث خطأ في تحديث الترتيب");
+      return;
+    }
 
-    if (error) throw error;
-      
     // 2. تحديث الحالة المحلية فقط بعد نجاح تحديث قاعدة البيانات
     setLocalTasks(reorderedTasks);
-    toast.success("تم إعادة ترتيب المهام بنجاح");
     
-    // 3. إضافة تأخير صغير قبل إعادة جلب البيانات
+    // 3. إضافة تأخير قبل إعادة جلب البيانات
     setTimeout(() => {
       refetchTasks();
     }, 500);
+
+    toast.success("تم إعادة ترتيب المهام بنجاح");
   } catch (error) {
     console.error('Error updating task order:', error);
     toast.error("حدث خطأ أثناء حفظ الترتيب الجديد");
   }
 };
+
 
 
   if (isLoading) {
