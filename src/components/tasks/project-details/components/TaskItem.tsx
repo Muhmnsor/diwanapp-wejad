@@ -59,6 +59,7 @@ export const TaskItem = ({
   onEdit,
   onDelete
   isDraggable = false
+  
 }: TaskItemProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [showSubtasks, setShowSubtasks] = useState(false);
