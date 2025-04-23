@@ -15,6 +15,8 @@ import { useTaskDependencies } from "../hooks/useTaskDependencies";
 import { usePermissionCheck } from "../hooks/usePermissionCheck";
 import { useTaskButtonStates } from "../../hooks/useTaskButtonStates";
 import { DependencyIcon } from "../../components/dependencies/DependencyIcon";
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -55,6 +57,22 @@ export const TaskItem = ({
   onEdit,
   onDelete
 }: TaskItemProps) => {
+
+const {
+  attributes,
+  listeners,
+  setNodeRef,
+  transform,
+  transition,
+  isDragging
+} = useSortable({ id: task.id });
+
+const style = {
+  transform: CSS.Transform.toString(transform),
+  transition,
+  opacity: isDragging ? 0.5 : 1
+};
+
   const [isUpdating, setIsUpdating] = useState(false);
   const [showSubtasks, setShowSubtasks] = useState(false);
   const [showDiscussion, setShowDiscussion] = useState(false);
@@ -247,7 +265,13 @@ export const TaskItem = ({
 
   return (
     <>
-      <TableRow key={task.id} className="cursor-pointer hover:bg-gray-50">
+      <TableRow 
+  ref={setNodeRef}
+  style={style}
+  {...attributes}
+  {...listeners}
+  className={`cursor-move hover:bg-gray-50 ${isDragging ? 'bg-gray-100' : ''}`}
+>
         <TableCell className="font-medium">
           <div className="flex items-center">
             <span className="mr-1">{task.title}</span>
