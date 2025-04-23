@@ -69,47 +69,51 @@ export const TasksContent = ({
     })
   );
 
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
+const handleDragEnd = async (event: DragEndEvent) => {
+  const { active, over } = event;
     
-    if (!over || active.id === over.id) return;
+  if (!over || active.id === over.id) return;
 
-    const reorderedTasks = reorderTasks({
-      tasks: localTasks,
-      activeId: active.id.toString(),
-      overId: over.id.toString()
-    });
+  const reorderedTasks = reorderTasks({
+    tasks: localTasks,
+    activeId: active.id.toString(),
+    overId: over.id.toString()
+  });
 
-    if (!reorderedTasks) {
-      toast.error("حدث خطأ في إعادة الترتيب");
-      return;
-    }
+  if (!reorderedTasks) {
+    toast.error("حدث خطأ في إعادة الترتيب");
+    return;
+  }
 
-    setLocalTasks(reorderedTasks);
-
-    const updates = await updateTasksOrder(reorderedTasks);
+  // 1. تحديث قاعدة البيانات أولاً
+  const updates = await updateTasksOrder(reorderedTasks);
     
-    if (!updates) {
-      toast.error("حدث خطأ في تحضير الترتيب");
-      setLocalTasks(filteredTasks);
-      return;
-    }
+  if (!updates) {
+    toast.error("حدث خطأ في تحضير الترتيب");
+    return;
+  }
 
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .upsert(updates);
+  try {
+    const { error } = await supabase
+      .from('tasks')
+      .upsert(updates);
 
-      if (error) throw error;
+    if (error) throw error;
       
-      toast.success("تم إعادة ترتيب المهام بنجاح");
-      await refetchTasks();
-    } catch (error) {
-      console.error('Error updating task order:', error);
-      toast.error("حدث خطأ أثناء حفظ الترتيب الجديد");
-      setLocalTasks(filteredTasks);
-    }
-  };
+    // 2. تحديث الحالة المحلية فقط بعد نجاح تحديث قاعدة البيانات
+    setLocalTasks(reorderedTasks);
+    toast.success("تم إعادة ترتيب المهام بنجاح");
+    
+    // 3. إضافة تأخير صغير قبل إعادة جلب البيانات
+    setTimeout(() => {
+      refetchTasks();
+    }, 500);
+  } catch (error) {
+    console.error('Error updating task order:', error);
+    toast.error("حدث خطأ أثناء حفظ الترتيب الجديد");
+  }
+};
+
 
   if (isLoading) {
     return (
