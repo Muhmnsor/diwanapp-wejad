@@ -65,8 +65,8 @@ export const TasksContent = ({
 
     const reorderResult = await reorderTasks({
       tasks: filteredTasks,
-      activeId: active.id,
-      overId: over.id
+      activeId: active.id.toString(), // تأكد من تحويل الـ ID إلى string
+      overId: over.id.toString()
     });
   };
 
