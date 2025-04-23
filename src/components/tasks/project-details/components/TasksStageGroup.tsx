@@ -70,7 +70,7 @@ const handleDragEnd = (event: DragEndEvent) => {
         <h3 className="font-medium">{stage.name}</h3>
       </div>
       <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
-        <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+        <SortableContext items={filteredTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
           <Table>
             <TableHeader>
               <TableRow>
