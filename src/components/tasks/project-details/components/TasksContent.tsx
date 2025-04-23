@@ -63,12 +63,17 @@ export const TasksContent = ({
 
     if (!over) return;
 
-    const reorderResult = await reorderTasks({
+    const success = await reorderTasks({
       tasks: filteredTasks,
-      activeId: active.id.toString(), // تأكد من تحويل الـ ID إلى string
+      activeId: active.id.toString(),
       overId: over.id.toString()
     });
-  };
+
+    if (success) {
+      toast.success("تم إعادة ترتيب المهام بنجاح");
+    }
+};
+
 
   if (isLoading) {
     return (
