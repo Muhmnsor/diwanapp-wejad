@@ -148,7 +148,7 @@ const handleDragEnd = async (event: DragEndEvent) => {
                     <TaskItem
                       key={task.id}
                       task={task}
-                      isDraggable={true}
+                      isDraggable={activeTab === "all" && !isGeneral}
                       getStatusBadge={getStatusBadge}
                       getPriorityBadge={getPriorityBadge}
                       formatDate={formatDate}
