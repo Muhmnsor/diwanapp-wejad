@@ -40,29 +40,29 @@ export const TasksStageGroup = ({
 
   if (filteredTasks.length === 0) return null;
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const oldIndex = tasks.findIndex(t => t.id === active.id); 
-      const newIndex = tasks.findIndex(t => t.id === over.id); 
+// تعديل handleDragEnd
+const handleDragEnd = (event: DragEndEvent) => {
+  const { active, over } = event;
+  if (over && active.id !== over.id) {
+    const oldIndex = filteredTasks.findIndex(t => t.id === active.id);
+    const newIndex = filteredTasks.findIndex(t => t.id === over.id);
 
-      if (oldIndex === -1 || newIndex === -1) return;
+    if (oldIndex === -1 || newIndex === -1) return;
 
-      const updatedTasks = [...tasks];
-      const [movedTask] = updatedTasks.splice(oldIndex, 1);
-      updatedTasks.splice(newIndex, 0, movedTask);
+    const updatedTasks = [...filteredTasks];
+    const [movedTask] = updatedTasks.splice(oldIndex, 1);
+    updatedTasks.splice(newIndex, 0, movedTask);
 
-      // Add order_position and stage_id to each task
-      const tasksWithOrder = updatedTasks.map((task, index) => ({
-        ...task,
-        order_position: index + 1,
-        stage_id: stage.id
-      }));
-      
-      // Use the updateTaskOrder function passed from the parent component
-      updateTaskOrder(tasksWithOrder);
-    }
-  };
+    const tasksWithOrder = updatedTasks.map((task, index) => ({
+      ...task,
+      order_position: index + 1,
+      stage_id: stage.id
+    }));
+    
+    updateTaskOrder(tasksWithOrder);
+  }
+};
+
 
   return (
     <div className="border rounded-md overflow-hidden">
