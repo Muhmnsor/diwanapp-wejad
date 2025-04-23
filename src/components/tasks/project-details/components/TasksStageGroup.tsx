@@ -4,6 +4,7 @@ import { TaskItem } from "./TaskItem";
 import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useState } from "react";
+import { toast } from "sonner"; // لإظهار رسالة النجاح
 
 interface TasksStageGroupProps {
   stage: { id: string; name: string };
@@ -16,7 +17,7 @@ interface TasksStageGroupProps {
   projectId: string;
   onEdit?: (task: Task) => void;
   onDelete?: (taskId: string) => void;
-  updateTaskOrder: (taskId: string, newPosition: number) => void; // ✅ تم الإضافة هنا
+  updateTaskOrder: (reorderedTasks: Task[]) => void; // ✅ تم التحديث هنا
 }
 
 export const TasksStageGroup = ({
@@ -30,7 +31,7 @@ export const TasksStageGroup = ({
   projectId,
   onEdit,
   onDelete,
-  updateTaskOrder, // ✅ تم التأكيد هنا
+  updateTaskOrder,
 }: TasksStageGroupProps) => {
   const filteredTasks = tasks.filter(task =>
     activeTab === "all" || task.status === activeTab
@@ -41,13 +42,17 @@ export const TasksStageGroup = ({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      const activeTaskId = active.id.toString();
-      const overTaskId = over.id.toString();
-      const activeIndex = filteredTasks.findIndex(t => t.id === activeTaskId);
-      const overIndex = filteredTasks.findIndex(t => t.id === overTaskId);
+      const reorderedTasks = [...filteredTasks];
+      const oldIndex = reorderedTasks.findIndex(t => t.id === active.id);
+      const newIndex = reorderedTasks.findIndex(t => t.id === over.id);
 
-      const newPosition = overIndex;
-      updateTaskOrder(activeTaskId, newPosition); // ✅ تم التعديل هنا
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      const [movedTask] = reorderedTasks.splice(oldIndex, 1);
+      reorderedTasks.splice(newIndex, 0, movedTask);
+
+      updateTaskOrder(reorderedTasks);
+      toast.success("تم إعادة ترتيب المهام بنجاح"); // ✅ الرسالة
     }
   };
 
