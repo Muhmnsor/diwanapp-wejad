@@ -38,7 +38,7 @@ interface TaskItemProps {
   projectId: string;
   onEdit?: (task: Task) => void;
   onDelete?: (taskId: string) => void;
-  isDraggable?: boolean; // ✅ تمت الإضافة
+  isDraggable?: boolean = false
 }
 
 interface TaskAttachment {
