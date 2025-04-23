@@ -38,7 +38,7 @@ interface TaskItemProps {
   projectId: string;
   onEdit?: (task: Task) => void;
   onDelete?: (taskId: string) => void;
-  isDraggable?: boolean; // ✅ تمت الإضافة
+  isDraggable?: boolean = false
 }
 
 interface TaskAttachment {
@@ -186,23 +186,18 @@ const style = {
     
     setIsUpdating(true);
     try {
-      // إذا كانت الحالة "قيد التنفيذ"، نقوم بالتحديث مباشرة
-      if (newStatus === 'in_progress') {
-        await onStatusChange(task.id, newStatus);
-        return;
-      }
-
-      // التحقق من الشروط فقط عند الإكمال
       if (newStatus === 'completed') {
         const { hasPendingSubtasks, error } = await checkPendingSubtasks(task.id);
         
         if (error) {
           toast.error(error);
+          setIsUpdating(false);
           return;
         }
         
         if (hasPendingSubtasks) {
           toast.error("لا يمكن إكمال المهمة حتى يتم إكمال جميع المهام الفرعية");
+          setIsUpdating(false);
           return;
         }
         
@@ -211,6 +206,7 @@ const style = {
             description: "يرجى رفع مستلم واحد على الأقل قبل إكمال المهمة",
             duration: 5000,
           });
+          setIsUpdating(false);
           return;
         }
         
@@ -223,6 +219,7 @@ const style = {
               .join(", ");
             toast.error(`المهام المعلقة: ${pendingTasks}`);
           }
+          setIsUpdating(false);
           return;
         }
       }
@@ -235,7 +232,6 @@ const style = {
       setIsUpdating(false);
     }
   };
-
 
   const renderStatusChangeButton = () => {
     if (!canEdit) {
