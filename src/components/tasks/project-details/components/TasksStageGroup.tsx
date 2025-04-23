@@ -47,7 +47,7 @@ const handleDragEnd = (event: DragEndEvent) => {
 
     if (oldIndex === -1 || newIndex === -1) return;
 
-    const updatedTasks = [...filteredTasks];
+    const updatedTasks = [...tasks];
     const [movedTask] = updatedTasks.splice(oldIndex, 1);
     updatedTasks.splice(newIndex, 0, movedTask);
 
