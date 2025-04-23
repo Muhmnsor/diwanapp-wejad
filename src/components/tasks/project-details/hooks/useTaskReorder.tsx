@@ -21,6 +21,7 @@ export const useTaskReorder = (stageId: string) => {
         .upsert(updates, { onConflict: 'id' });
 
       if (error) throw error;
+      toast.success("تم إعادة ترتيب المهام بنجاح");
       
       return true;
     } catch (error) {
