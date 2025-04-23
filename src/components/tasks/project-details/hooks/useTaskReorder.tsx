@@ -18,7 +18,8 @@ export const useTaskReorder = (stageId: string) => {
 
       const { error } = await supabase
         .from('tasks')
-        .upsert(updates, { onConflict: 'id' });
+        .update({ order_position: index + 1 })  
+        .eq('id', task.id);
 
       if (error) throw error;
       toast.success("تم إعادة ترتيب المهام بنجاح");
