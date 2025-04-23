@@ -64,14 +64,11 @@ export const TasksContent = ({
         {projectStages.map(stage => {
           const { reorderTasks } = useTaskReorder(stage.id); // ✅ استخدام hook حسب المرحلة
 
-          const updateTaskOrder = async (taskId: string, newPosition: number) => {
-            const stageTasksCopy = [...(tasksByStage[stage.id] || [])];
-            const updatedTasks = stageTasksCopy.map((task, index) => ({
-              ...task,
-              order_position: index + 1
-            }));
-            await reorderTasks(updatedTasks);
-          };
+// تعديل تعريف updateTaskOrder
+const updateTaskOrder = async (reorderedTasks: Task[]) => {
+  await reorderTasks(reorderedTasks);
+};
+
 
           return (
             <TasksStageGroup
