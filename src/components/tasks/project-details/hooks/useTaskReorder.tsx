@@ -32,7 +32,7 @@ export const useTaskReorder = (stageId: string) => {
       // إعداد البيانات للتحديث في Supabase
       const updates = updatedTasks.map((task, index) => ({
         id: task.id,
-        order_position: index + 1,
+        order_position: index,
         stage_id: stageId
       }));
 
