@@ -1,7 +1,10 @@
-
 import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
 import { Task } from "../types/task";
 import { TaskItem } from "./TaskItem";
+import {
+  SortableContext,
+  verticalListSortingStrategy
+} from "@dnd-kit/sortable";
 
 interface TasksStageGroupProps {
   stage: { id: string; name: string };
@@ -31,9 +34,9 @@ export const TasksStageGroup = ({
   const filteredTasks = tasks.filter(task => 
     activeTab === "all" || task.status === activeTab
   );
-  
+
   if (filteredTasks.length === 0) return null;
-  
+
   return (
     <div className="border rounded-md overflow-hidden">
       <div className="bg-gray-50 p-3 border-b">
@@ -51,19 +54,25 @@ export const TasksStageGroup = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredTasks.map(task => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              getStatusBadge={getStatusBadge}
-              getPriorityBadge={getPriorityBadge}
-              formatDate={formatDate}
-              onStatusChange={onStatusChange}
-              projectId={projectId}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-          ))}
+          <SortableContext 
+            items={filteredTasks.map(task => task.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            {filteredTasks.map(task => (
+              <TaskItem
+                key={task.id}
+                task={task}
+                isDraggable={true}
+                getStatusBadge={getStatusBadge}
+                getPriorityBadge={getPriorityBadge}
+                formatDate={formatDate}
+                onStatusChange={onStatusChange}
+                projectId={projectId}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            ))}
+          </SortableContext>
         </TableBody>
       </Table>
     </div>
