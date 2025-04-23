@@ -4,7 +4,7 @@ import { TasksStageGroup } from "./TasksStageGroup";
 import { TaskCard } from "./TaskCard";
 import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
 import { TaskItem } from "./TaskItem";
-import { useTaskReorder } from "../hooks/useTaskReorder"; // ✅ الاستيراد الجديد
+import { useTaskReorder } from "../hooks/useTaskReorder";
 
 interface TasksContentProps {
   isLoading: boolean;
@@ -40,6 +40,8 @@ export const TasksContent = ({
   onEditTask,
   onDeleteTask
 }: TasksContentProps) => {
+  // ✅ تم نقل الهوك إلى الأعلى باستخدام id فارغ مبدئيًا
+  const { reorderTasks } = useTaskReorder("");
 
   if (isLoading) {
     return (
@@ -57,18 +59,14 @@ export const TasksContent = ({
     );
   }
 
-  // إذا كان التبويب النشط هو "الكل" وليست مهام عامة، فسنعرض المهام مقسمة حسب المراحل
   if (activeTab === "all" && projectStages.length > 0 && !isGeneral) {
     return (
       <div className="space-y-6" dir="rtl">
         {projectStages.map(stage => {
-          const { reorderTasks } = useTaskReorder(stage.id); // ✅ استخدام hook حسب المرحلة
-
-// تعديل تعريف updateTaskOrder
-const updateTaskOrder = async (reorderedTasks: Task[]) => {
-  await reorderTasks(reorderedTasks);
-};
-
+          // ✅ تعريف دالة reorderTasks حسب كل مرحلة داخل الماب
+          const updateTaskOrder = async (reorderedTasks: Task[]) => {
+            await useTaskReorder(stage.id).reorderTasks(reorderedTasks);
+          };
 
           return (
             <TasksStageGroup
@@ -83,7 +81,7 @@ const updateTaskOrder = async (reorderedTasks: Task[]) => {
               projectId={projectId || ''}
               onEdit={onEditTask}
               onDelete={onDeleteTask}
-              updateTaskOrder={updateTaskOrder} // ✅ التمرير للدالة
+              updateTaskOrder={updateTaskOrder}
             />
           );
         })}
@@ -91,7 +89,6 @@ const updateTaskOrder = async (reorderedTasks: Task[]) => {
     );
   }
 
-  // عرض المهام كقائمة بدون تقسيم للتبويبات الأخرى أو المهام العامة
   return (
     <div className="space-y-6" dir="rtl">
       <div className="bg-white rounded-md shadow-sm overflow-hidden border">
