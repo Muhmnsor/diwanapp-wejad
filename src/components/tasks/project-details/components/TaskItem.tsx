@@ -15,6 +15,9 @@ import { useTaskDependencies } from "../hooks/useTaskDependencies";
 import { usePermissionCheck } from "../hooks/usePermissionCheck";
 import { useTaskButtonStates } from "../../hooks/useTaskButtonStates";
 import { DependencyIcon } from "../../components/dependencies/DependencyIcon";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { GripVertical } from "lucide-react";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +38,7 @@ interface TaskItemProps {
   projectId: string;
   onEdit?: (task: Task) => void;
   onDelete?: (taskId: string) => void;
+  isDraggable?: boolean; // ✅ تمت الإضافة
 }
 
 interface TaskAttachment {
@@ -86,6 +90,23 @@ export const TaskItem = ({
       : 'text-gray-500';
   
   const { hasNewDiscussion, hasDeliverables, hasTemplates, resetDiscussionFlag } = useTaskButtonStates(task.id);
+
+  const {
+  attributes,
+  listeners,
+  setNodeRef,
+  transform,
+  transition,
+  isDragging
+} = useSortable({
+  id: task.id
+});
+
+const style = {
+  transform: CSS.Transform.toString(transform),
+  transition,
+  opacity: isDragging ? 0.5 : 1
+};
 
   useEffect(() => {
     if (task.assigned_to) {
@@ -247,45 +268,63 @@ export const TaskItem = ({
 
   return (
     <>
-      <TableRow key={task.id} className="cursor-pointer hover:bg-gray-50">
-        <TableCell className="font-medium">
-          <div className="flex items-center">
-            <span className="mr-1">{task.title}</span>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="p-0 h-7 w-7 ml-2"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowSubtasks(!showSubtasks);
-              }}
-              title={showSubtasks ? "إخفاء المهام الفرعية" : "عرض المهام الفرعية"}
-            >
-              {showSubtasks ? 
-                <ChevronUp className="h-4 w-4 text-gray-500" /> : 
-                <ChevronDown className="h-4 w-4 text-gray-500" />
-              }
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`p-0 h-7 w-7 ${(hasDependencies || hasDependents) ? 'bg-gray-50 hover:bg-gray-100' : ''}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowDependencies(true);
-              }}
-              title="إدارة اعتماديات المهمة"
-            >
-              <DependencyIcon 
-                hasDependencies={hasDependencies} 
-                hasPendingDependencies={hasPendingDependencies}
-                hasDependents={hasDependents}
-                size={16}
-              />
-            </Button>
-          </div>
-        </TableCell>
+      <TableRow
+  ref={setNodeRef}
+  style={style}
+  className={`cursor-pointer hover:bg-gray-50 ${isDragging ? 'bg-gray-100' : ''}`}
+>
+
+       <TableCell className="font-medium">
+  <div className="flex items-center">
+    {isDraggable && (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="p-0 h-7 w-7 cursor-grab active:cursor-grabbing mr-2"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4 text-gray-400" />
+      </Button>
+    )}
+    <span className="mr-1">{task.title}</span>
+
+    <Button 
+      variant="ghost" 
+      size="sm" 
+      className="p-0 h-7 w-7 ml-2"
+      onClick={(e) => {
+        e.stopPropagation();
+        setShowSubtasks(!showSubtasks);
+      }}
+      title={showSubtasks ? "إخفاء المهام الفرعية" : "عرض المهام الفرعية"}
+    >
+      {showSubtasks ? 
+        <ChevronUp className="h-4 w-4 text-gray-500" /> : 
+        <ChevronDown className="h-4 w-4 text-gray-500" />
+      }
+    </Button>
+
+    <Button
+      variant="ghost"
+      size="sm"
+      className={`p-0 h-7 w-7 ${(hasDependencies || hasDependents) ? 'bg-gray-50 hover:bg-gray-100' : ''}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        setShowDependencies(true);
+      }}
+      title="إدارة اعتماديات المهمة"
+    >
+      <DependencyIcon 
+        hasDependencies={hasDependencies} 
+        hasPendingDependencies={hasPendingDependencies}
+        hasDependents={hasDependents}
+        size={16}
+      />
+    </Button>
+  </div>
+</TableCell>
+
         <TableCell>
           <div className="flex items-center gap-2">
             {getStatusBadge(task.status)}
