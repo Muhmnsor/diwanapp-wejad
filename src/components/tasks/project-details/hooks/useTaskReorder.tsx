@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "../types/task";
@@ -13,7 +14,7 @@ export const useTaskReorder = (stageId: string) => {
       // Update order_position for each task
       const updates = tasks.map((task, index) => ({
         id: task.id,
-        order_position: index + 1
+        order_position: index + 1,
         stage_id: task.stage_id
       }));
 
@@ -41,4 +42,3 @@ export const useTaskReorder = (stageId: string) => {
     reorderTasks
   };
 };
-
