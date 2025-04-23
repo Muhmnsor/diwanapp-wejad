@@ -17,7 +17,6 @@ interface TasksStageGroupProps {
   projectId: string;
   onEdit?: (task: Task) => void;
   onDelete?: (taskId: string) => void;
-  isDraggable: boolean;
 }
 
 export const TasksStageGroup = ({
@@ -30,10 +29,9 @@ export const TasksStageGroup = ({
   onStatusChange,
   projectId,
   onEdit,
-  onDelete,
-  isDraggable
+  onDelete
 }: TasksStageGroupProps) => {
-  const filteredTasks = tasks.filter(task =>
+  const filteredTasks = tasks.filter(task => 
     activeTab === "all" || task.status === activeTab
   );
 
@@ -56,7 +54,7 @@ export const TasksStageGroup = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          <SortableContext
+          <SortableContext 
             items={filteredTasks.map(task => task.id)}
             strategy={verticalListSortingStrategy}
           >
@@ -64,7 +62,7 @@ export const TasksStageGroup = ({
               <TaskItem
                 key={task.id}
                 task={task}
-                isDraggable={isDraggable}
+                isDraggable={true}
                 getStatusBadge={getStatusBadge}
                 getPriorityBadge={getPriorityBadge}
                 formatDate={formatDate}
