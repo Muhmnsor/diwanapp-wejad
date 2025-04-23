@@ -4,6 +4,8 @@ import { TasksStageGroup } from "./TasksStageGroup";
 import { TaskCard } from "./TaskCard";
 import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
 import { TaskItem } from "./TaskItem";
+import { useTaskReorder } from "../hooks/useTaskReorder";
+import { toast } from "sonner";
 import {
   DndContext,
   closestCenter,
@@ -12,6 +14,7 @@ import {
   useSensors,
   DragEndEvent
 } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 
 interface TasksContentProps {
   isLoading: boolean;
@@ -47,6 +50,7 @@ export const TasksContent = ({
   onEditTask,
   onDeleteTask
 }: TasksContentProps) => {
+  const { reorderTasks, isReordering } = useTaskReorder(projectId || '');
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -55,10 +59,31 @@ export const TasksContent = ({
     })
   );
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    // 👉 هنا تضع منطق إعادة الترتيب باستخدام event.active.id و event.over?.id
-    console.log("Drag ended:", event);
-  };
+  // تحديث handleDragEnd داخل المكون
+const handleDragEnd = async (event: DragEndEvent) => {
+  const { active, over } = event;
+  
+  if (!over || active.id === over.id) return;
+
+  try {
+    const success = await reorderTasks({
+      tasks: filteredTasks,
+      activeId: active.id.toString(),
+      overId: over.id.toString()
+    });
+
+    if (success) {
+      toast.success("تم إعادة ترتيب المهام بنجاح");
+      // إذا كان لديك دالة لتحديث قائمة المهام، قم باستدعائها هنا
+      // مثال: await refetchTasks();
+    } else {
+      toast.error("حدث خطأ أثناء إعادة ترتيب المهام");
+    }
+  } catch (error) {
+    console.error('خطأ في handleDragEnd:', error);
+    toast.error("حدث خطأ أثناء إعادة ترتيب المهام");
+  }
+};
 
   if (isLoading) {
     return (
@@ -85,54 +110,57 @@ export const TasksContent = ({
       {activeTab === "all" && projectStages.length > 0 && !isGeneral ? (
         <div className="space-y-6" dir="rtl">
           {projectStages.map(stage => (
-            <TasksStageGroup 
-              key={stage.id} 
-              stage={stage} 
-              tasks={tasksByStage[stage.id] || []} 
-              activeTab={activeTab} 
-              getStatusBadge={getStatusBadge} 
-              getPriorityBadge={getPriorityBadge} 
-              formatDate={formatDate} 
-              onStatusChange={onStatusChange} 
-              projectId={projectId || ''} 
-              onEdit={onEditTask} 
-              onDelete={onDeleteTask} 
+            <TasksStageGroup
+              key={stage.id}
+              stage={stage}
+              tasks={tasksByStage[stage.id] || []}
+              activeTab={activeTab}
+              getStatusBadge={getStatusBadge}
+              getPriorityBadge={getPriorityBadge}
+              formatDate={formatDate}
+              onStatusChange={onStatusChange}
+              projectId={projectId || ''}
+              onEdit={onEditTask}
+              onDelete={onDeleteTask}
             />
           ))}
         </div>
       ) : (
         <div className="space-y-6" dir="rtl">
           <div className="bg-white rounded-md shadow-sm overflow-hidden border">
-            <div className="border rounded-md overflow-hidden">
-              <Table dir="rtl">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>المهمة</TableHead>
-                    <TableHead>الحالة</TableHead>
-                    <TableHead>الأولوية</TableHead>
-                    <TableHead>المكلف</TableHead>
-                    <TableHead>تاريخ الاستحقاق</TableHead>
-                    <TableHead>الإجراءات</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>المهمة</TableHead>
+                  <TableHead>الحالة</TableHead>
+                  <TableHead>الأولوية</TableHead>
+                  <TableHead>المكلف</TableHead>
+                  <TableHead>تاريخ الاستحقاق</TableHead>
+                  <TableHead>الإجراءات</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <SortableContext
+                  items={filteredTasks.map(task => task.id)}
+                  strategy={verticalListSortingStrategy}
+                >
                   {filteredTasks.map(task => (
-                    <TaskItem 
-                      key={task.id} 
-                      task={task} 
-                      isDraggable={true}
-                      getStatusBadge={getStatusBadge} 
-                      getPriorityBadge={getPriorityBadge} 
-                      formatDate={formatDate} 
-                      onStatusChange={onStatusChange} 
-                      projectId={projectId || ''} 
-                      onEdit={onEditTask} 
-                      onDelete={onDeleteTask} 
+                    <TaskItem
+                      key={task.id}
+                      task={task}
+                      isDraggable={activeTab === "all" && !isGeneral}
+                      getStatusBadge={getStatusBadge}
+                      getPriorityBadge={getPriorityBadge}
+                      formatDate={formatDate}
+                      onStatusChange={onStatusChange}
+                      projectId={projectId || ''}
+                      onEdit={onEditTask}
+                      onDelete={onDeleteTask}
                     />
                   ))}
-                </TableBody>
-              </Table>
-            </div>
+                </SortableContext>
+              </TableBody>
+            </Table>
           </div>
         </div>
       )}
