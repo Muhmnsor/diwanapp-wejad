@@ -16,7 +16,7 @@ interface TasksStageGroupProps {
   projectId: string;
   onEdit?: (task: Task) => void;
   onDelete?: (taskId: string) => void;
-  updateTaskOrder: (taskId: string, newPosition: number) => void;
+  updateTaskOrder: (taskId: string, newPosition: number) => void; // ✅ تم الإضافة هنا
 }
 
 export const TasksStageGroup = ({
@@ -30,7 +30,7 @@ export const TasksStageGroup = ({
   projectId,
   onEdit,
   onDelete,
-  updateTaskOrder,
+  updateTaskOrder, // ✅ تم التأكيد هنا
 }: TasksStageGroupProps) => {
   const filteredTasks = tasks.filter(task =>
     activeTab === "all" || task.status === activeTab
@@ -47,7 +47,7 @@ export const TasksStageGroup = ({
       const overIndex = filteredTasks.findIndex(t => t.id === overTaskId);
 
       const newPosition = overIndex;
-      updateTaskOrder(activeTaskId, newPosition);
+      updateTaskOrder(activeTaskId, newPosition); // ✅ تم التعديل هنا
     }
   };
 
