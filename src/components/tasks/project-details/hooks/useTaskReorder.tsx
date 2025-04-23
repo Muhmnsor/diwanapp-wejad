@@ -8,6 +8,7 @@ export const useTaskReorder = (stageId: string) => {
 
   const reorderTasks = async (tasks: Task[]) => {
     setIsReordering(true);
+    if (!tasks.length) return false;
     try {
       // Update order_position for each task
       const updates = tasks.map((task, index) => ({
