@@ -16,10 +16,11 @@ export const useTaskReorder = (stageId: string) => {
         order_position: index + 1
       }));
 
-      const { error } = await supabase
-        .from('tasks')
-        .update({ order_position: index + 1 })  
-        .eq('id', task.id);
+    const { error } = await supabase
+  .from('tasks')
+  .upsert(
+    updates  // استخدام المصفوفة updates التي تم إنشاؤها فوق
+  );
 
       if (error) throw error;
       toast.success("تم إعادة ترتيب المهام بنجاح");
