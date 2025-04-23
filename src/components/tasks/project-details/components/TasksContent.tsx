@@ -13,6 +13,7 @@ import {
   useSensors,
   DragEndEvent
 } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 
 interface TasksContentProps {
   isLoading: boolean;
@@ -48,6 +49,7 @@ export const TasksContent = ({
   onEditTask,
   onDeleteTask
 }: TasksContentProps) => {
+  const { reorderTasks, isReordering } = useTaskReorder(projectId || '');
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -58,25 +60,14 @@ export const TasksContent = ({
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    
+
     if (!over) return;
 
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ order_position: over.data?.current?.sortable?.index })
-        .eq('id', active.id);
-
-      if (error) {
-        toast.error('فشل في إعادة ترتيب المهام');
-        return;
-      }
-
-      toast.success('تم إعادة ترتيب المهام بنجاح');
-    } catch (error) {
-      console.error('Error reordering tasks:', error);
-      toast.error('حدث خطأ أثناء إعادة ترتيب المهام');
-    }
+    const reorderResult = await reorderTasks({
+      tasks: filteredTasks,
+      activeId: active.id,
+      overId: over.id
+    });
   };
 
   if (isLoading) {
@@ -104,18 +95,18 @@ export const TasksContent = ({
       {activeTab === "all" && projectStages.length > 0 && !isGeneral ? (
         <div className="space-y-6" dir="rtl">
           {projectStages.map(stage => (
-            <TasksStageGroup 
-              key={stage.id} 
-              stage={stage} 
-              tasks={tasksByStage[stage.id] || []} 
-              activeTab={activeTab} 
-              getStatusBadge={getStatusBadge} 
-              getPriorityBadge={getPriorityBadge} 
-              formatDate={formatDate} 
-              onStatusChange={onStatusChange} 
-              projectId={projectId || ''} 
-              onEdit={onEditTask} 
-              onDelete={onDeleteTask} 
+            <TasksStageGroup
+              key={stage.id}
+              stage={stage}
+              tasks={tasksByStage[stage.id] || []}
+              activeTab={activeTab}
+              getStatusBadge={getStatusBadge}
+              getPriorityBadge={getPriorityBadge}
+              formatDate={formatDate}
+              onStatusChange={onStatusChange}
+              projectId={projectId || ''}
+              onEdit={onEditTask}
+              onDelete={onDeleteTask}
             />
           ))}
         </div>
@@ -134,7 +125,7 @@ export const TasksContent = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <SortableContext 
+                <SortableContext
                   items={filteredTasks.map(task => task.id)}
                   strategy={verticalListSortingStrategy}
                 >
