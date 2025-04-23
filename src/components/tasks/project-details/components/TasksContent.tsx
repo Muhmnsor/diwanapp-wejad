@@ -4,6 +4,7 @@ import { TasksStageGroup } from "./TasksStageGroup";
 import { TaskCard } from "./TaskCard";
 import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
 import { TaskItem } from "./TaskItem";
+import { useTaskReorder } from "../hooks/useTaskReorder";
 import {
   DndContext,
   closestCenter,
@@ -55,9 +56,27 @@ export const TasksContent = ({
     })
   );
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    // 👉 هنا تضع منطق إعادة الترتيب باستخدام event.active.id و event.over?.id
-    console.log("Drag ended:", event);
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over) return;
+
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ order_position: over.data?.current?.sortable?.index })
+        .eq('id', active.id);
+
+      if (error) {
+        toast.error('فشل في إعادة ترتيب المهام');
+        return;
+      }
+
+      toast.success('تم إعادة ترتيب المهام بنجاح');
+    } catch (error) {
+      console.error('Error reordering tasks:', error);
+      toast.error('حدث خطأ أثناء إعادة ترتيب المهام');
+    }
   };
 
   if (isLoading) {
@@ -103,36 +122,39 @@ export const TasksContent = ({
       ) : (
         <div className="space-y-6" dir="rtl">
           <div className="bg-white rounded-md shadow-sm overflow-hidden border">
-            <div className="border rounded-md overflow-hidden">
-              <Table dir="rtl">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>المهمة</TableHead>
-                    <TableHead>الحالة</TableHead>
-                    <TableHead>الأولوية</TableHead>
-                    <TableHead>المكلف</TableHead>
-                    <TableHead>تاريخ الاستحقاق</TableHead>
-                    <TableHead>الإجراءات</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>المهمة</TableHead>
+                  <TableHead>الحالة</TableHead>
+                  <TableHead>الأولوية</TableHead>
+                  <TableHead>المكلف</TableHead>
+                  <TableHead>تاريخ الاستحقاق</TableHead>
+                  <TableHead>الإجراءات</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <SortableContext 
+                  items={filteredTasks.map(task => task.id)}
+                  strategy={verticalListSortingStrategy}
+                >
                   {filteredTasks.map(task => (
-                    <TaskItem 
-                      key={task.id} 
-                      task={task} 
+                    <TaskItem
+                      key={task.id}
+                      task={task}
                       isDraggable={true}
-                      getStatusBadge={getStatusBadge} 
-                      getPriorityBadge={getPriorityBadge} 
-                      formatDate={formatDate} 
-                      onStatusChange={onStatusChange} 
-                      projectId={projectId || ''} 
-                      onEdit={onEditTask} 
-                      onDelete={onDeleteTask} 
+                      getStatusBadge={getStatusBadge}
+                      getPriorityBadge={getPriorityBadge}
+                      formatDate={formatDate}
+                      onStatusChange={onStatusChange}
+                      projectId={projectId || ''}
+                      onEdit={onEditTask}
+                      onDelete={onDeleteTask}
                     />
                   ))}
-                </TableBody>
-              </Table>
-            </div>
+                </SortableContext>
+              </TableBody>
+            </Table>
           </div>
         </div>
       )}
