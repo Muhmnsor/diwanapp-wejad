@@ -42,8 +42,8 @@ export const TasksStageGroup = ({
 const handleDragEnd = (event: DragEndEvent) => {
   const { active, over } = event;
   if (over && active.id !== over.id) {
-    const oldIndex = filteredTasks.findIndex(t => t.id === active.id);
-    const newIndex = filteredTasks.findIndex(t => t.id === over.id);
+    const oldIndex = tasks.findIndex(t => t.id === active.id); 
+    const newIndex = tasks.findIndex(t => t.id === over.id); 
 
     if (oldIndex === -1 || newIndex === -1) return;
 
