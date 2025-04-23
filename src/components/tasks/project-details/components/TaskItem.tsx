@@ -265,14 +265,14 @@ const style = {
 
   return (
     <>
-      <TableRow 
+<TableRow 
   ref={setNodeRef}
   style={style}
   {...attributes}
-  {...listeners}
-  className={`cursor-move hover:bg-gray-50 ${isDragging ? 'bg-gray-100' : ''}`}
+  className={`hover:bg-gray-50 ${isDragging ? 'bg-gray-100' : ''}`}
 >
-        <TableCell className="font-medium">
+  <TableCell className="font-medium cursor-move" {...listeners}>
+
           <div className="flex items-center">
             <span className="mr-1">{task.title}</span>
             <Button 
