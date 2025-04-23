@@ -10,7 +10,7 @@ import { getStatusBadge, getPriorityBadge, formatDate } from "./utils/taskFormat
 import { useTasksList } from "./hooks/useTasksList";
 import { Task } from "./types/task";
 import { useProjectMembers } from "./hooks/useProjectMembers";
-import { useState } from "react";
+// Removed the duplicate useState import
 import { EditTaskDialog } from "./EditTaskDialog";
 import { DragDebugPanel } from "./components/debug/DragDebugPanel";
 
