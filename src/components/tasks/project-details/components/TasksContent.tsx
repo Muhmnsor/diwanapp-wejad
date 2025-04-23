@@ -71,16 +71,15 @@ export const TasksContent = ({
         overId: over.id.toString()
       });
 
-      if (success) {
-        toast.success("تم إعادة ترتيب المهام بنجاح");
-      } else {
+      if (!success) {
         toast.error("حدث خطأ أثناء إعادة ترتيب المهام");
       }
     } catch (error) {
       console.error('Error in handleDragEnd:', error);
       toast.error("حدث خطأ أثناء إعادة ترتيب المهام");
     }
-  };
+};
+
 
   if (isLoading) {
     return (
