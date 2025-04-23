@@ -11,18 +11,28 @@ export const useTaskReorder = (stageId: string) => {
     setIsReordering(true);
     if (!tasks.length) return false;
     try {
+      console.log("Reordering tasks for stage:", stageId);
+      console.log("Tasks to reorder:", tasks);
+      
       // Update order_position for each task
       const updates = tasks.map((task, index) => ({
         id: task.id,
         order_position: index + 1,
-        stage_id: stageId // Use the stageId parameter passed to the hook
+        stage_id: stageId
       }));
 
-      const { error } = await supabase
+      console.log("Updates to be sent to database:", updates);
+
+      const { error, data } = await supabase
         .from('tasks')
         .upsert(updates);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error in upsert operation:", error);
+        throw error;
+      }
+      
+      console.log("Reordering successful, response:", data);
       toast.success("تم إعادة ترتيب المهام بنجاح");
       
       return true;

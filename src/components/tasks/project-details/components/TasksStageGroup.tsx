@@ -34,20 +34,33 @@ export const TasksStageGroup = ({
   onDelete,
   updateTaskOrder,
 }: TasksStageGroupProps) => {
+  const [isReordering, setIsReordering] = useState(false);
   const filteredTasks = tasks.filter(task =>
     activeTab === "all" || task.status === activeTab
   );
 
   if (filteredTasks.length === 0) return null;
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    if (over && active.id !== over.id) {
+    
+    if (!over || active.id === over.id) return;
+    
+    setIsReordering(true);
+    try {
+      console.log("Drag ended:", { active, over });
+      
       const oldIndex = tasks.findIndex(t => t.id === active.id); 
       const newIndex = tasks.findIndex(t => t.id === over.id); 
 
-      if (oldIndex === -1 || newIndex === -1) return;
+      if (oldIndex === -1 || newIndex === -1) {
+        console.log("Could not find task indices", { oldIndex, newIndex });
+        return;
+      }
 
+      console.log("Moving task from position", oldIndex, "to", newIndex);
+
+      // Create a new array with the updated order
       const updatedTasks = [...tasks];
       const [movedTask] = updatedTasks.splice(oldIndex, 1);
       updatedTasks.splice(newIndex, 0, movedTask);
@@ -59,8 +72,18 @@ export const TasksStageGroup = ({
         stage_id: stage.id
       }));
       
-      // Use the updateTaskOrder function passed from the parent component
-      updateTaskOrder(tasksWithOrder);
+      console.log("Calling updateTaskOrder with:", tasksWithOrder);
+      
+      // Update the database with the new order
+      const success = await updateTaskOrder(tasksWithOrder);
+      if (!success) {
+        toast.error("فشل إعادة ترتيب المهام");
+      }
+    } catch (error) {
+      console.error("Error during drag reordering:", error);
+      toast.error("حدث خطأ أثناء إعادة الترتيب");
+    } finally {
+      setIsReordering(false);
     }
   };
 

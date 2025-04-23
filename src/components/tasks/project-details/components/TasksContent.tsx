@@ -6,6 +6,7 @@ import { TaskCard } from "./TaskCard";
 import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
 import { TaskItem } from "./TaskItem";
 import { useTaskReorder } from "../hooks/useTaskReorder";
+import { useEffect, useRef } from "react";
 
 interface TasksContentProps {
   isLoading: boolean;
@@ -62,10 +63,9 @@ export const TasksContent = ({
     return (
       <div className="space-y-6" dir="rtl">
         {projectStages.map(stage => {
-          // Define the reorderTasks function using the hook
-          const { reorderTasks } = useTaskReorder(stage.id);
+          // Create a custom reorderTasks function for each stage
+          const stageHook = useTaskReorder(stage.id);
           
-          // Pass it to the TasksStageGroup component
           return (
             <TasksStageGroup
               key={stage.id}
@@ -79,7 +79,7 @@ export const TasksContent = ({
               projectId={projectId || ''}
               onEdit={onEditTask}
               onDelete={onDeleteTask}
-              updateTaskOrder={reorderTasks}
+              updateTaskOrder={stageHook.reorderTasks}
             />
           );
         })}
