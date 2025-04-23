@@ -238,7 +238,10 @@ const style = {
         variant="outline" 
         size="sm" 
         className="h-7 w-7 p-0 ml-1"
-        onClick={() => handleStatusUpdate('completed')}
+        onClick={(e) => {
+  e.stopPropagation();
+  handleStatusUpdate('completed');
+}}
         disabled={isUpdating}
         title="إكمال المهمة"
       >
@@ -249,7 +252,10 @@ const style = {
         variant="outline" 
         size="sm" 
         className="h-7 w-7 p-0 ml-1"
-        onClick={() => handleStatusUpdate('in_progress')}
+onClick={(e) => {
+  e.stopPropagation();
+  handleStatusUpdate('in_progress');
+}}
         disabled={isUpdating}
         title="إعادة فتح المهمة"
       >
