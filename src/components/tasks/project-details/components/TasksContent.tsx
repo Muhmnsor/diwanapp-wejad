@@ -62,7 +62,7 @@ export const TasksContent = ({
   // تحديث handleDragEnd داخل المكون
 const handleDragEnd = async (event: DragEndEvent) => {
   const { active, over } = event;
-  
+
   if (!over || active.id === over.id) return;
 
   try {
@@ -101,69 +101,89 @@ const handleDragEnd = async (event: DragEndEvent) => {
     );
   }
 
-  return (
+  // تعديل الشرط في بداية الـ render
+  const shouldEnableDragAndDrop = !isGeneral && activeTab === "all" && projectStages.length > 0;
+
+  // تغليف المحتوى بـ DndContext فقط إذا كان السحب والإسقاط مفعل
+  return shouldEnableDragAndDrop ? (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      {activeTab === "all" && projectStages.length > 0 && !isGeneral ? (
-        <div className="space-y-6" dir="rtl">
-          {projectStages.map(stage => (
-            <TasksStageGroup
-              key={stage.id}
-              stage={stage}
-              tasks={tasksByStage[stage.id] || []}
-              activeTab={activeTab}
-              getStatusBadge={getStatusBadge}
-              getPriorityBadge={getPriorityBadge}
-              formatDate={formatDate}
-              onStatusChange={onStatusChange}
-              projectId={projectId || ''}
-              onEdit={onEditTask}
-              onDelete={onDeleteTask}
-            />
-          ))}
-        </div>
+      <div className="space-y-6" dir="rtl">
+        {projectStages.map(stage => (
+          <TasksStageGroup
+            key={stage.id}
+            stage={stage}
+            tasks={tasksByStage[stage.id] || []}
+            activeTab={activeTab}
+            getStatusBadge={getStatusBadge}
+            getPriorityBadge={getPriorityBadge}
+            formatDate={formatDate}
+            onStatusChange={onStatusChange}
+            projectId={projectId}
+            onEdit={onEditTask}
+            onDelete={onDeleteTask}
+            isDraggable={true}
+          />
+        ))}
+      </div>
+    </DndContext>
+  ) : (
+    // محتوى عادي بدون سحب وإسقاط
+    <div className="space-y-6" dir="rtl">
+      {activeTab === "all" && projectStages.length > 0 ? (
+        // عرض المهام حسب المراحل
+        projectStages.map(stage => (
+          <TasksStageGroup
+            key={stage.id}
+            stage={stage}
+            tasks={tasksByStage[stage.id] || []}
+            activeTab={activeTab}
+            getStatusBadge={getStatusBadge}
+            getPriorityBadge={getPriorityBadge}
+            formatDate={formatDate}
+            onStatusChange={onStatusChange}
+            projectId={projectId}
+            onEdit={onEditTask}
+            onDelete={onDeleteTask}
+            isDraggable={false}
+          />
+        ))
       ) : (
-        <div className="space-y-6" dir="rtl">
-          <div className="bg-white rounded-md shadow-sm overflow-hidden border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>المهمة</TableHead>
-                  <TableHead>الحالة</TableHead>
-                  <TableHead>الأولوية</TableHead>
-                  <TableHead>المكلف</TableHead>
-                  <TableHead>تاريخ الاستحقاق</TableHead>
-                  <TableHead>الإجراءات</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <SortableContext
-                  items={filteredTasks.map(task => task.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  {filteredTasks.map(task => (
-                    <TaskItem
-                      key={task.id}
-                      task={task}
-                      isDraggable={true}
-                      getStatusBadge={getStatusBadge}
-                      getPriorityBadge={getPriorityBadge}
-                      formatDate={formatDate}
-                      onStatusChange={onStatusChange}
-                      projectId={projectId || ''}
-                      onEdit={onEditTask}
-                      onDelete={onDeleteTask}
-                    />
-                  ))}
-                </SortableContext>
-              </TableBody>
-            </Table>
-          </div>
+        // عرض جدول المهام
+        <div className="bg-white rounded-md shadow-sm overflow-hidden border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>المهمة</TableHead>
+                <TableHead>الحالة</TableHead>
+                <TableHead>الأولوية</TableHead>
+                <TableHead>المكلف</TableHead>
+                <TableHead>تاريخ الاستحقاق</TableHead>
+                <TableHead>الإجراءات</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredTasks.map(task => (
+                <TaskItem
+                  key={task.id}
+                  task={task}
+                  isDraggable={false}
+                  getStatusBadge={getStatusBadge}
+                  getPriorityBadge={getPriorityBadge}
+                  formatDate={formatDate}
+                  onStatusChange={onStatusChange}
+                  projectId={projectId}
+                  onEdit={onEditTask}
+                  onDelete={onDeleteTask}
+                />
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
-    </DndContext>
+    </div>
   );
 };
