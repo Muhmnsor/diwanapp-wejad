@@ -76,7 +76,7 @@ export const useTaskReorder = (projectId: string) => {
     // تحديث order_position لجميع المهام
     return reorderedTasks.map((task, index) => ({
       ...task,
-      order_position: index + 1
+      order_position: (index + 1) * 1000
     }));
   };
 
@@ -102,7 +102,7 @@ export const useTaskReorder = (projectId: string) => {
       // إعداد التحديثات للخلفية
       const updates = reorderedTasks.map((task, index) => ({
         id: task.id,
-        order_position: index + 1,
+        order_position: (index + 1) * 1000,
         project_id: projectId,
         stage_id: task.stage_id, // إضافة stage_id للتحديث
         updated_at: new Date().toISOString()
