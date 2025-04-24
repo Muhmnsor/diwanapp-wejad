@@ -1,3 +1,4 @@
+// src/components/tasks/project-details/hooks/useTaskReorder.tsx
 
 import { useState } from 'react';
 import { Task } from "../types/task";
@@ -7,6 +8,8 @@ interface ReorderParams {
   tasks: Task[];
   activeId: string;
   overId: string;
+  activeStageId?: string;  // إضافة معرف المرحلة النشطة
+  overStageId?: string;    // إضافة معرف المرحلة المستهدفة
 }
 
 const emitDebugEvent = (debugInfo: {
@@ -24,13 +27,15 @@ const emitDebugEvent = (debugInfo: {
 export const useTaskReorder = (projectId: string) => {
   const [isReordering, setIsReordering] = useState(false);
 
-  const reorderTasks = ({ tasks, activeId, overId }: ReorderParams) => {
+  const reorderTasks = ({ tasks, activeId, overId, activeStageId, overStageId }: ReorderParams) => {
+    // التحقق من وجود إعادة ترتيب بين المراحل
+    const crossStage = activeStageId && overStageId && activeStageId !== overStageId;
+
     const oldIndex = tasks.findIndex(t => t.id === activeId);
     const newIndex = tasks.findIndex(t => t.id === overId);
-    
-    // Emit debug event for drag start
+
     const draggedTask = tasks.find(t => t.id === activeId) || null;
-    
+
     if (oldIndex === -1 || newIndex === -1) {
       emitDebugEvent({
         draggedTask,
@@ -44,13 +49,22 @@ export const useTaskReorder = (projectId: string) => {
 
     // Log reordering attempt
     console.log(`Reordering task from position ${oldIndex + 1} to ${newIndex + 1}`);
+    if (crossStage) {
+      console.log(`Moving across stages: ${activeStageId} -> ${overStageId}`);
+    }
     console.log("Task being moved:", draggedTask);
 
     const reorderedTasks = [...tasks];
     const [movedTask] = reorderedTasks.splice(oldIndex, 1);
+
+    // إذا كان هناك تحريك بين المراحل، نقوم بتحديث المرحلة للمهمة المتحركة
+    if (crossStage) {
+      movedTask.stage_id = overStageId;
+    }
+
     reorderedTasks.splice(newIndex, 0, movedTask);
 
-    // Update debug info during reordering
+    // تحديث معلومات التصحيح أثناء إعادة الترتيب
     emitDebugEvent({
       draggedTask: movedTask,
       sourcePosition: oldIndex + 1,
@@ -59,7 +73,7 @@ export const useTaskReorder = (projectId: string) => {
       error: null
     });
 
-    // Update order_position for all tasks
+    // تحديث order_position لجميع المهام
     return reorderedTasks.map((task, index) => ({
       ...task,
       order_position: index + 1
@@ -69,8 +83,8 @@ export const useTaskReorder = (projectId: string) => {
   const updateTasksOrder = async (reorderedTasks: Task[]) => {
     try {
       setIsReordering(true);
-      
-      // Start update process
+
+      // بدء عملية التحديث
       emitDebugEvent({
         draggedTask: null,
         sourcePosition: null,
@@ -84,20 +98,21 @@ export const useTaskReorder = (projectId: string) => {
       }
 
       console.log("Preparing updates for", reorderedTasks.length, "tasks");
-      
-      // Prepare updates for backend
+
+      // إعداد التحديثات للخلفية
       const updates = reorderedTasks.map((task, index) => ({
         id: task.id,
         order_position: index + 1,
         project_id: projectId,
+        stage_id: task.stage_id, // إضافة stage_id للتحديث
         updated_at: new Date().toISOString()
       }));
 
-      // Execute the actual update against Supabase
+      // تنفيذ التحديث الفعلي ضد Supabase
       const { data, error } = await supabase
         .from('tasks')
         .upsert(updates, { onConflict: 'id' });
-      
+
       if (error) {
         console.error("Error updating task order:", error);
         emitDebugEvent({
@@ -109,7 +124,7 @@ export const useTaskReorder = (projectId: string) => {
         });
         return null;
       }
-      
+
       console.log("Task order updated successfully:", data);
       emitDebugEvent({
         draggedTask: null,
@@ -123,7 +138,7 @@ export const useTaskReorder = (projectId: string) => {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       console.error('Error updating task order:', errorMessage);
-      
+
       emitDebugEvent({
         draggedTask: null,
         sourcePosition: null,
@@ -131,7 +146,7 @@ export const useTaskReorder = (projectId: string) => {
         status: 'error',
         error: errorMessage
       });
-      
+
       return null;
     } finally {
       setIsReordering(false);
