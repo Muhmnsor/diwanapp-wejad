@@ -83,21 +83,21 @@ export const TasksContent = ({
 
 const handleDragEnd = async (event: DragEndEvent) => {
   const { active, over } = event;
-    
+
   if (!over || active.id === over.id) return;
 
   // نحتاج إلى معرفة المرحلة التي تنتمي إليها المهمة المسحوبة والمرحلة المستهدفة
   // هنا سنفترض أننا نستطيع الحصول عليها من البيانات المخزنة في active و over
   // قد تحتاج لتعديل هذا المنطق حسب كيفية تخزين البيانات في مشروعك
-  
+
   const activeTask = localTasks.find(t => t.id === active.id.toString());
   const overTask = localTasks.find(t => t.id === over.id.toString());
-  
+
   if (!activeTask || !overTask) return;
-  
+
   const activeStageId = activeTask.stage_id;
   const overStageId = overTask.stage_id;
-  
+
   const reorderedTasks = reorderTasks({
     tasks: localTasks,
     activeId: active.id.toString(),
@@ -114,7 +114,7 @@ const handleDragEnd = async (event: DragEndEvent) => {
   try {
     // 1. تحديث قاعدة البيانات أولاً
     const updates = await updateTasksOrder(reorderedTasks);
-    
+
     if (!updates) {
       toast.error("حدث خطأ في تحديث الترتيب");
       return;
@@ -122,7 +122,7 @@ const handleDragEnd = async (event: DragEndEvent) => {
 
     // 2. تحديث الحالة المحلية فقط بعد نجاح تحديث قاعدة البيانات
     setLocalTasks(reorderedTasks);
-    
+
     // 3. إعادة تنظيم المهام حسب المراحل
     const updatedTasksByStage = {} as Record<string, Task[]>;
     projectStages.forEach(stage => {
@@ -131,7 +131,7 @@ const handleDragEnd = async (event: DragEndEvent) => {
         .sort((a, b) => (a.order_position || 0) - (b.order_position || 0));
     });
     setLocalTasksByStage(updatedTasksByStage);
-    
+
     // 4. إضافة تأخير قبل إعادة جلب البيانات
     setTimeout(() => {
       refetchTasks();
@@ -169,43 +169,65 @@ const handleDragEnd = async (event: DragEndEvent) => {
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
       >
-        {activeTab === "all" && projectStages.length > 0 && !isGeneral ? (
-          <div className="space-y-6" dir="rtl">
-            {projectStages.map(stage => (
-              <TasksStageGroup
-                key={stage.id}
-                stage={stage}
-                tasks={localTasksByStage[stage.id] || []}
-                activeTab={activeTab}
-                getStatusBadge={getStatusBadge}
-                getPriorityBadge={getPriorityBadge}
-                formatDate={formatDate}
-                onStatusChange={onStatusChange}
-                projectId={projectId || ''}
-                onEdit={onEditTask}
-                onDelete={onDeleteTask}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-6" dir="rtl">
-            <div className="bg-white rounded-md shadow-sm overflow-hidden border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>المهمة</TableHead>
-                    <TableHead>الحالة</TableHead>
-                    <TableHead>الأولوية</TableHead>
-                    <TableHead>المكلف</TableHead>
-                    <TableHead>تاريخ الاستحقاق</TableHead>
-                    <TableHead>الإجراءات</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <SortableContext
-                    items={localTasks.map(task => task.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
+        {/* استخدام SortableContext واحد لجميع المهام بدلاً من SortableContext لكل مرحلة */}
+        <SortableContext
+          items={localTasks.map(task => task.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {activeTab === "all" && projectStages.length > 0 && !isGeneral ? (
+            <div className="space-y-6" dir="rtl">
+              {projectStages.map(stage => (
+                <div key={stage.id} className="border rounded-md overflow-hidden">
+                  <div className="bg-gray-50 p-3 border-b">
+                    <h3 className="font-medium">{stage.name}</h3>
+                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>المهمة</TableHead>
+                        <TableHead>الحالة</TableHead>
+                        <TableHead>الأولوية</TableHead>
+                        <TableHead>المكلف</TableHead>
+                        <TableHead>تاريخ الاستحقاق</TableHead>
+                        <TableHead>الإجراءات</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {/* استخدام localTasks المرشحة حسب stage_id بدلاً من tasksByStage */}
+                      {localTasks.filter(task => task.stage_id === stage.id).map(task => (
+                        <TaskItem
+                          key={task.id}
+                          task={task}
+                          isDraggable={true}
+                          getStatusBadge={getStatusBadge}
+                          getPriorityBadge={getPriorityBadge}
+                          formatDate={formatDate}
+                          onStatusChange={onStatusChange}
+                          projectId={projectId || ''}
+                          onEdit={onEditTask}
+                          onDelete={onDeleteTask}
+                        />
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-6" dir="rtl">
+              <div className="bg-white rounded-md shadow-sm overflow-hidden border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>المهمة</TableHead>
+                      <TableHead>الحالة</TableHead>
+                      <TableHead>الأولوية</TableHead>
+                      <TableHead>المكلف</TableHead>
+                      <TableHead>تاريخ الاستحقاق</TableHead>
+                      <TableHead>الإجراءات</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {localTasks.map(task => (
                       <TaskItem
                         key={task.id}
@@ -220,12 +242,12 @@ const handleDragEnd = async (event: DragEndEvent) => {
                         onDelete={onDeleteTask}
                       />
                     ))}
-                  </SortableContext>
-                </TableBody>
-              </Table>
+                  </TableBody>
+                </Table>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </SortableContext>
       </DndContext>
       <DragDebugOverlay />
     </div>
