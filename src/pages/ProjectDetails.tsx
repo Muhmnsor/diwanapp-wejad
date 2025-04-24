@@ -67,33 +67,61 @@ const ProjectDetails = () => {
     if (!confirmed) return;
 
     try {
-      // First, delete related project_events
-      const { error: eventsError } = await supabase
-        .from("project_events")
+      // 1. حذف سجلات الحضور
+      const { error: attendanceError } = await supabase
+        .from("activity_attendance")
         .delete()
-        .eq("project_id", id);
+        .in('activity_id', 
+          supabase
+            .from('project_activities')
+            .select('id')
+            .eq('project_id', id)
+        );
 
-      if (eventsError) {
-        console.error("Error deleting project events:", eventsError);
-        throw eventsError;
-      }
+      if (attendanceError) throw attendanceError;
 
-      // Then, delete related registrations
+      // 2. حذف التقييمات
+      const { error: feedbackError } = await supabase
+        .from("activity_feedback")
+        .delete()
+        .in('activity_id',
+          supabase
+            .from('project_activities')
+            .select('id')
+            .eq('project_id', id)
+        );
+
+      if (feedbackError) throw feedbackError;
+
+      // 3. حذف الأنشطة
+      const { error: activitiesError } = await supabase
+        .from("project_activities")
+        .delete()
+        .eq('project_id', id);
+
+      if (activitiesError) throw activitiesError;
+
+      // 4. حذف التسجيلات
       const { error: registrationsError } = await supabase
         .from("registrations")
         .delete()
-        .eq("project_id", id);
+        .eq('project_id', id);
 
-      if (registrationsError) {
-        console.error("Error deleting project registrations:", registrationsError);
-        throw registrationsError;
-      }
+      if (registrationsError) throw registrationsError;
 
-      // Finally, delete the project
+      // 5. حذف الشهادات
+      const { error: certificatesError } = await supabase
+        .from("certificates")
+        .delete()
+        .eq('project_id', id);
+
+      if (certificatesError) throw certificatesError;
+
+      // 6. حذف المشروع نفسه
       const { error: projectError } = await supabase
         .from("projects")
         .delete()
-        .eq("id", id);
+        .eq('id', id);
 
       if (projectError) throw projectError;
 
