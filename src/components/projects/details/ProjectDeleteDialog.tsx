@@ -1,5 +1,4 @@
 // src/components/projects/details/ProjectDeleteDialog.tsx
-
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
@@ -12,20 +11,22 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { deleteProject } from "./handlers/deleteProject"
+import { deleteProject } from "../deletion/deleteProject"
 
 interface ProjectDeleteDialogProps {
   isOpen: boolean
-  onClose: () => void
+  onOpenChange: (open: boolean) => void
   projectId: string
-  projectName: string
+  title: string
+  onConfirm: () => Promise<void>
 }
 
 export const ProjectDeleteDialog = ({
   isOpen,
-  onClose,
+  onOpenChange,
   projectId,
-  projectName,
+  title,
+  onConfirm,
 }: ProjectDeleteDialogProps) => {
   const navigate = useNavigate()
   const [isDeleting, setIsDeleting] = useState(false)
@@ -33,25 +34,23 @@ export const ProjectDeleteDialog = ({
   const handleDelete = async () => {
     setIsDeleting(true)
     try {
-      await deleteProject(projectId)
-      toast.success("تم حذف المشروع بنجاح")
-      navigate("/")
+      await onConfirm()
     } catch (error) {
       console.error("Error deleting project:", error)
       toast.error("حدث خطأ أثناء حذف المشروع")
     } finally {
       setIsDeleting(false)
-      onClose()
+      onOpenChange(false)
     }
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>حذف المشروع</DialogTitle>
           <DialogDescription>
-            هل أنت متأكد من حذف مشروع "{projectName}"؟
+            هل أنت متأكد من حذف مشروع "{title}"؟
             <br />
             هذا الإجراء لا يمكن التراجع عنه وسيتم حذف جميع البيانات المرتبطة به.
           </DialogDescription>
@@ -59,7 +58,7 @@ export const ProjectDeleteDialog = ({
         <DialogFooter>
           <Button
             variant="outline"
-            onClick={onClose}
+            onClick={() => onOpenChange(false)}
             disabled={isDeleting}
           >
             إلغاء
@@ -76,4 +75,3 @@ export const ProjectDeleteDialog = ({
     </Dialog>
   )
 }
-
