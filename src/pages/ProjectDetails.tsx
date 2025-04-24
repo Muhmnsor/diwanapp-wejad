@@ -120,6 +120,13 @@ const handleConfirmDelete = async () => {
           id={id}
         />
       </main>
+<ProjectDeleteDialog
+  projectId={id}
+  isOpen={showDeleteDialog}
+  onOpenChange={setShowDeleteDialog}
+  onConfirm={handleConfirmDelete}
+  title={project.title}
+/>
       <Footer />
     </div>
   );
