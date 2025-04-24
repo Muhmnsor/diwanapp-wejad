@@ -60,48 +60,50 @@ const ProjectDetails = () => {
     navigate(`/projects/${id}/edit`);
   };
 
-  const handleDelete = async () => {
+const handleDelete = async () => {
     if (!id) return;
     
     const confirmed = window.confirm("هل أنت متأكد من حذف هذا المشروع؟ لا يمكن التراجع عن هذا الإجراء.");
     if (!confirmed) return;
 
     try {
-      // 1. حذف سجلات الحضور
-      const { error: attendanceError } = await supabase
-        .from("activity_attendance")
-        .delete()
-        .in('activity_id', 
-          supabase
-            .from('project_activities')
-            .select('id')
-            .eq('project_id', id)
-        );
-
-      if (attendanceError) throw attendanceError;
-
-      // 2. حذف التقييمات
-      const { error: feedbackError } = await supabase
-        .from("activity_feedback")
-        .delete()
-        .in('activity_id',
-          supabase
-            .from('project_activities')
-            .select('id')
-            .eq('project_id', id)
-        );
-
-      if (feedbackError) throw feedbackError;
-
-      // 3. حذف الأنشطة
-      const { error: activitiesError } = await supabase
-        .from("project_activities")
-        .delete()
+      // 1. جلب معرفات الأنشطة أولاً
+      const { data: activities, error: activitiesError } = await supabase
+        .from('project_activities')
+        .select('id')
         .eq('project_id', id);
 
       if (activitiesError) throw activitiesError;
+      
+      if (activities && activities.length > 0) {
+        const activityIds = activities.map(activity => activity.id);
 
-      // 4. حذف التسجيلات
+        // 2. حذف سجلات الحضور
+        const { error: attendanceError } = await supabase
+          .from("activity_attendance")
+          .delete()
+          .in('activity_id', activityIds);
+
+        if (attendanceError) throw attendanceError;
+
+        // 3. حذف التقييمات
+        const { error: feedbackError } = await supabase
+          .from("activity_feedback")
+          .delete()
+          .in('activity_id', activityIds);
+
+        if (feedbackError) throw feedbackError;
+
+        // 4. حذف الأنشطة نفسها
+        const { error: deleteActivitiesError } = await supabase
+          .from("project_activities")
+          .delete()
+          .eq('project_id', id);
+
+        if (deleteActivitiesError) throw deleteActivitiesError;
+      }
+
+      // 5. حذف التسجيلات
       const { error: registrationsError } = await supabase
         .from("registrations")
         .delete()
@@ -109,7 +111,7 @@ const ProjectDetails = () => {
 
       if (registrationsError) throw registrationsError;
 
-      // 5. حذف الشهادات
+      // 6. حذف الشهادات
       const { error: certificatesError } = await supabase
         .from("certificates")
         .delete()
@@ -117,7 +119,7 @@ const ProjectDetails = () => {
 
       if (certificatesError) throw certificatesError;
 
-      // 6. حذف المشروع نفسه
+      // 7. حذف المشروع نفسه
       const { error: projectError } = await supabase
         .from("projects")
         .delete()
@@ -127,11 +129,13 @@ const ProjectDetails = () => {
 
       toast.success("تم حذف المشروع بنجاح");
       navigate("/");
+      
     } catch (error) {
       console.error("Error deleting project:", error);
       toast.error("حدث خطأ أثناء حذف المشروع");
     }
   };
+
 
   if (loading) {
     return (
