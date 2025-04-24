@@ -1,3 +1,5 @@
+// src/components/tasks/project-details/components/TasksContent.tsx
+
 import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Task } from "../types/task";
@@ -56,10 +58,20 @@ export const TasksContent = ({
 }: TasksContentProps) => {
   const { reorderTasks, updateTasksOrder, isReordering } = useTaskReorder(projectId || '');
   const [localTasks, setLocalTasks] = useState<Task[]>([]);
-  
+  // إضافة متغير لتتبع المهام مرتبة حسب المراحل
+  const [localTasksByStage, setLocalTasksByStage] = useState<Record<string, Task[]>>({});
+
+  // تحديث useEffect لتهيئة المهام المحلية
   useEffect(() => {
     setLocalTasks(filteredTasks);
-  }, [filteredTasks]);
+
+    // تحديث المهام حسب المراحل
+    const tasksByStageMap = {} as Record<string, Task[]>;
+    projectStages.forEach(stage => {
+      tasksByStageMap[stage.id] = tasksByStage[stage.id] || [];
+    });
+    setLocalTasksByStage(tasksByStageMap);
+  }, [filteredTasks, projectStages, tasksByStage]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -74,10 +86,24 @@ const handleDragEnd = async (event: DragEndEvent) => {
     
   if (!over || active.id === over.id) return;
 
+  // نحتاج إلى معرفة المرحلة التي تنتمي إليها المهمة المسحوبة والمرحلة المستهدفة
+  // هنا سنفترض أننا نستطيع الحصول عليها من البيانات المخزنة في active و over
+  // قد تحتاج لتعديل هذا المنطق حسب كيفية تخزين البيانات في مشروعك
+  
+  const activeTask = localTasks.find(t => t.id === active.id.toString());
+  const overTask = localTasks.find(t => t.id === over.id.toString());
+  
+  if (!activeTask || !overTask) return;
+  
+  const activeStageId = activeTask.stage_id;
+  const overStageId = overTask.stage_id;
+  
   const reorderedTasks = reorderTasks({
     tasks: localTasks,
     activeId: active.id.toString(),
-    overId: over.id.toString()
+    overId: over.id.toString(),
+    activeStageId,
+    overStageId
   });
 
   if (!reorderedTasks) {
@@ -97,7 +123,16 @@ const handleDragEnd = async (event: DragEndEvent) => {
     // 2. تحديث الحالة المحلية فقط بعد نجاح تحديث قاعدة البيانات
     setLocalTasks(reorderedTasks);
     
-    // 3. إضافة تأخير قبل إعادة جلب البيانات
+    // 3. إعادة تنظيم المهام حسب المراحل
+    const updatedTasksByStage = {} as Record<string, Task[]>;
+    projectStages.forEach(stage => {
+      updatedTasksByStage[stage.id] = reorderedTasks
+        .filter(task => task.stage_id === stage.id)
+        .sort((a, b) => (a.order_position || 0) - (b.order_position || 0));
+    });
+    setLocalTasksByStage(updatedTasksByStage);
+    
+    // 4. إضافة تأخير قبل إعادة جلب البيانات
     setTimeout(() => {
       refetchTasks();
     }, 500);
@@ -140,7 +175,7 @@ const handleDragEnd = async (event: DragEndEvent) => {
               <TasksStageGroup
                 key={stage.id}
                 stage={stage}
-                tasks={tasksByStage[stage.id] || []}
+                tasks={localTasksByStage[stage.id] || []}
                 activeTab={activeTab}
                 getStatusBadge={getStatusBadge}
                 getPriorityBadge={getPriorityBadge}
