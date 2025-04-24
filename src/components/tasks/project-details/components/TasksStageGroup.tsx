@@ -1,10 +1,8 @@
 import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
 import { Task } from "../types/task";
 import { TaskItem } from "./TaskItem";
-import {
-  SortableContext,
-  verticalListSortingStrategy
-} from "@dnd-kit/sortable";
+// تم إزالة استيراد SortableContext و verticalListSortingStrategy بناءً على الطلب
+
 
 interface TasksStageGroupProps {
   stage: { id: string; name: string };
@@ -19,6 +17,9 @@ interface TasksStageGroupProps {
   onDelete?: (taskId: string) => void;
 }
 
+// src/components/tasks/project-details/components/TasksStageGroup.tsx
+
+// تم إزالة SortableContext من هنا والاعتماد على المكون الأب
 export const TasksStageGroup = ({
   stage,
   tasks,
@@ -31,7 +32,7 @@ export const TasksStageGroup = ({
   onEdit,
   onDelete
 }: TasksStageGroupProps) => {
-  const filteredTasks = tasks.filter(task => 
+  const filteredTasks = tasks.filter(task =>
     activeTab === "all" || task.status === activeTab
   );
 
@@ -54,25 +55,21 @@ export const TasksStageGroup = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          <SortableContext 
-            items={filteredTasks.map(task => task.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            {filteredTasks.map(task => (
-              <TaskItem
-                key={task.id}
-                task={task}
-                isDraggable={true}
-                getStatusBadge={getStatusBadge}
-                getPriorityBadge={getPriorityBadge}
-                formatDate={formatDate}
-                onStatusChange={onStatusChange}
-                projectId={projectId}
-                onEdit={onEdit}
-                onDelete={onDelete}
-              />
-            ))}
-          </SortableContext>
+          {/* تم إزالة SortableContext من هنا */}
+          {filteredTasks.map(task => (
+            <TaskItem
+              key={task.id}
+              task={task}
+              isDraggable={true} // احتفظنا بها، ولكن قد يتم التحكم بها من الأب الآن
+              getStatusBadge={getStatusBadge}
+              getPriorityBadge={getPriorityBadge}
+              formatDate={formatDate}
+              onStatusChange={onStatusChange}
+              projectId={projectId}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
+          ))}
         </TableBody>
       </Table>
     </div>
