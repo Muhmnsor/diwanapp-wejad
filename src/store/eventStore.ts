@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { BeneficiaryType, EventPathType, EventCategoryType } from '@/types/event';
 
@@ -42,6 +43,29 @@ export interface Event {
     national_id: boolean;
     gender: boolean;
     work_status: boolean;
+  };
+  // إضافة حقول مخصصة للنموذج
+  customForm?: {
+    id: string;
+    title: string;
+    description?: string;
+    fields: Array<{
+      id: string;
+      type: string;
+      label: string;
+      required?: boolean;
+      placeholder?: string;
+      description?: string;
+      options?: Array<{
+        label: string;
+        value: string;
+      }>;
+      config?: {
+        alertType?: string;
+        maxFileSize?: number;
+        allowedFileTypes?: string[];
+      };
+    }>;
   };
 }
 

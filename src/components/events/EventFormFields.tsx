@@ -1,3 +1,5 @@
+
+// تحديث ملف EventFormFields.tsx ليضم حقولًا مخصصة
 import { Event } from "@/store/eventStore";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { BasicEventFields } from "./form/fields/BasicEventFields";
@@ -7,6 +9,7 @@ import { RegistrationFields } from "./form/fields/RegistrationFields";
 import { EventPathFields } from "./form/fields/EventPathFields";
 import { EventPriceAndSeatsFields } from "./form/fields/EventPriceAndSeatsFields";
 import { EventRegistrationDatesFields } from "./form/fields/EventRegistrationDatesFields";
+import { CustomFormFields } from "./form/fields/CustomFormFields";
 import { Card } from "@/components/ui/card";
 
 interface EventFormFieldsProps {
@@ -69,6 +72,14 @@ export const EventFormFields = ({ formData, setFormData, onImageChange }: EventF
         <div className="space-y-4">
           <CertificateFields formData={formData} setFormData={setFormData} />
           <RegistrationFields formData={formData} setFormData={setFormData} />
+        </div>
+      </Card>
+      
+      {/* Custom Form Fields */}
+      <Card className="p-6">
+        <h2 className="text-lg font-semibold mb-4">حقول إضافية مخصصة</h2>
+        <div className="space-y-4">
+          <CustomFormFields formData={formData} setFormData={setFormData} />
         </div>
       </Card>
     </div>

@@ -5283,6 +5283,7 @@ export type Database = {
           is_visible: boolean | null
           max_attendees: number
           price: number | null
+          project_number: number | null
           project_type: string
           registration_end_date: string | null
           registration_start_date: string | null
@@ -5306,6 +5307,7 @@ export type Database = {
           is_visible?: boolean | null
           max_attendees?: number
           price?: number | null
+          project_number?: number | null
           project_type?: string
           registration_end_date?: string | null
           registration_start_date?: string | null
@@ -5329,6 +5331,7 @@ export type Database = {
           is_visible?: boolean | null
           max_attendees?: number
           price?: number | null
+          project_number?: number | null
           project_type?: string
           registration_end_date?: string | null
           registration_start_date?: string | null
@@ -7813,7 +7816,7 @@ export type Database = {
       }
       delete_project: {
         Args: { p_project_id: string; p_user_id: string }
-        Returns: boolean
+        Returns: Json
       }
       delete_request: {
         Args: { p_request_id: string }
@@ -7853,6 +7856,10 @@ export type Database = {
       }
       generate_next_registration_number: {
         Args: { event_id: string } | { p_type: string; p_id: string }
+        Returns: string
+      }
+      generate_project_registration_number: {
+        Args: { project_id: string }
         Returns: string
       }
       generate_recurring_tasks: {
@@ -8079,6 +8086,15 @@ export type Database = {
           | { p_employee_id: string; p_leave_type: string; p_year: number }
           | { p_employee_id: string; p_leave_type_id: string; p_year: number }
         Returns: Json
+      }
+      log_project_deletion: {
+        Args: {
+          project_id: string
+          user_id: string
+          status: string
+          details?: string
+        }
+        Returns: string
       }
       log_request_approval_action: {
         Args: {

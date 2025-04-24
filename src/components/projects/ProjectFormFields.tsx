@@ -1,3 +1,5 @@
+
+// تحديث ملف ProjectFormFields.tsx
 import { Project } from "@/types/project";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,6 +7,7 @@ import { ProjectBasicFields } from "./form/fields/ProjectBasicFields";
 import { ProjectDatesFields } from "./form/fields/ProjectDatesFields";
 import { ProjectTypeFields } from "./form/fields/ProjectTypeFields";
 import { ProjectRegistrationFieldsConfig } from "./form/fields/ProjectRegistrationFieldsConfig";
+import { ProjectFormBuilder } from "./ProjectFormBuilder";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 
@@ -91,6 +94,13 @@ export const ProjectFormFields = ({ formData, setFormData, onImageChange }: Proj
     updateRegistrationFields();
   }, [formData.registration_fields]);
 
+  const handleSaveCustomForm = (customForm: any) => {
+    setFormData({
+      ...formData,
+      customForm
+    });
+  };
+
   return (
     <div className="space-y-6 text-right" dir="rtl">
       <Card className="p-4">
@@ -116,6 +126,14 @@ export const ProjectFormFields = ({ formData, setFormData, onImageChange }: Proj
         formData={formData}
         setFormData={setFormData}
       />
+      
+      <Card className="p-4">
+        <h2 className="text-lg font-semibold mb-4">حقول مخصصة إضافية</h2>
+        <ProjectFormBuilder 
+          initialForm={formData.customForm} 
+          onSaveForm={handleSaveCustomForm}
+        />
+      </Card>
     </div>
   );
 };
