@@ -1,3 +1,4 @@
+// src/components/projects/details/deletion/deleteProject.ts
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -73,4 +74,3 @@ export const deleteProject = async (projectId: string) => {
     throw error;
   }
 };
-
