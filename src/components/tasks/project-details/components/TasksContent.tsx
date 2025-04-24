@@ -194,7 +194,11 @@ const handleDragEnd = async (event: DragEndEvent) => {
                     </TableHeader>
                     <TableBody>
                       {/* استخدام localTasks المرشحة حسب stage_id بدلاً من tasksByStage */}
-                      {localTasks.filter(task => task.stage_id === stage.id).map(task => (
+                      {localTasks
+  .filter(task => task.stage_id === stage.id)
+  .sort((a, b) => (a.order_position || 0) - (b.order_position || 0))
+  .map(task => (
+
                         <TaskItem
                           key={task.id}
                           task={task}
