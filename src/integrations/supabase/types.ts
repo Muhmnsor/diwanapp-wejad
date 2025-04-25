@@ -1240,6 +1240,114 @@ export type Database = {
           },
         ]
       }
+      custom_form_fields: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          event_id: string | null
+          field_description: string | null
+          field_title: string
+          field_type: string
+          id: string
+          max_selections: number | null
+          options: Json | null
+          order_position: number | null
+          project_id: string | null
+          required: boolean | null
+          validation_rules: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          event_id?: string | null
+          field_description?: string | null
+          field_title: string
+          field_type: string
+          id?: string
+          max_selections?: number | null
+          options?: Json | null
+          order_position?: number | null
+          project_id?: string | null
+          required?: boolean | null
+          validation_rules?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          event_id?: string | null
+          field_description?: string | null
+          field_title?: string
+          field_type?: string
+          id?: string
+          max_selections?: number | null
+          options?: Json | null
+          order_position?: number | null
+          project_id?: string | null
+          required?: boolean | null
+          validation_rules?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_form_fields_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "auth_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custom_form_fields_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custom_form_fields_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_forms: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          project_id: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          project_id?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          project_id?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_forms_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       department_projects: {
         Row: {
           asana_gid: string | null
@@ -1803,12 +1911,14 @@ export type Database = {
           created_at: string
           education_level: boolean | null
           email: boolean | null
+          enable_steps: boolean | null
           english_name: boolean | null
           event_id: string | null
           gender: boolean | null
           id: string
           national_id: boolean | null
           phone: boolean | null
+          steps_config: Json | null
           work_status: boolean | null
         }
         Insert: {
@@ -1817,12 +1927,14 @@ export type Database = {
           created_at?: string
           education_level?: boolean | null
           email?: boolean | null
+          enable_steps?: boolean | null
           english_name?: boolean | null
           event_id?: string | null
           gender?: boolean | null
           id?: string
           national_id?: boolean | null
           phone?: boolean | null
+          steps_config?: Json | null
           work_status?: boolean | null
         }
         Update: {
@@ -1831,12 +1943,14 @@ export type Database = {
           created_at?: string
           education_level?: boolean | null
           email?: boolean | null
+          enable_steps?: boolean | null
           english_name?: boolean | null
           event_id?: string | null
           gender?: boolean | null
           id?: string
           national_id?: boolean | null
           phone?: boolean | null
+          steps_config?: Json | null
           work_status?: boolean | null
         }
         Relationships: [
@@ -1981,6 +2095,7 @@ export type Database = {
           end_date: string | null
           event_category: string
           event_hours: number | null
+          event_number: number | null
           event_path: string
           event_type: string
           id: string
@@ -2008,6 +2123,7 @@ export type Database = {
           end_date?: string | null
           event_category?: string
           event_hours?: number | null
+          event_number?: number | null
           event_path?: string
           event_type: string
           id?: string
@@ -2035,6 +2151,7 @@ export type Database = {
           end_date?: string | null
           event_category?: string
           event_hours?: number | null
+          event_number?: number | null
           event_path?: string
           event_type?: string
           id?: string
@@ -2096,6 +2213,41 @@ export type Database = {
             columns: ["budget_item_id"]
             isOneToOne: false
             referencedRelation: "budget_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      field_options: {
+        Row: {
+          created_at: string | null
+          field_id: string | null
+          id: string
+          label: string
+          order_position: number | null
+          value: string
+        }
+        Insert: {
+          created_at?: string | null
+          field_id?: string | null
+          id?: string
+          label: string
+          order_position?: number | null
+          value: string
+        }
+        Update: {
+          created_at?: string | null
+          field_id?: string | null
+          id?: string
+          label?: string
+          order_position?: number | null
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "field_options_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "form_fields"
             referencedColumns: ["id"]
           },
         ]
@@ -2182,6 +2334,95 @@ export type Database = {
             columns: ["budget_item_id"]
             isOneToOne: false
             referencedRelation: "budget_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_fields: {
+        Row: {
+          config: Json | null
+          created_at: string | null
+          description: string | null
+          form_id: string | null
+          id: string
+          label: string
+          order_position: number | null
+          placeholder: string | null
+          required: boolean | null
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string | null
+          description?: string | null
+          form_id?: string | null
+          id?: string
+          label: string
+          order_position?: number | null
+          placeholder?: string | null
+          required?: boolean | null
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string | null
+          description?: string | null
+          form_id?: string | null
+          id?: string
+          label?: string
+          order_position?: number | null
+          placeholder?: string | null
+          required?: boolean | null
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_fields_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "custom_forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_submissions: {
+        Row: {
+          answers: Json
+          form_id: string | null
+          id: string
+          registration_id: string | null
+          submitted_at: string | null
+        }
+        Insert: {
+          answers?: Json
+          form_id?: string | null
+          id?: string
+          registration_id?: string | null
+          submitted_at?: string | null
+        }
+        Update: {
+          answers?: Json
+          form_id?: string | null
+          id?: string
+          registration_id?: string | null
+          submitted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_submissions_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "custom_forms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_submissions_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "registrations"
             referencedColumns: ["id"]
           },
         ]
@@ -5088,12 +5329,14 @@ export type Database = {
           created_at: string
           education_level: boolean | null
           email: boolean | null
+          enable_steps: boolean | null
           english_name: boolean | null
           gender: boolean | null
           id: string
           national_id: boolean | null
           phone: boolean | null
           project_id: string | null
+          steps_config: Json | null
           work_status: boolean | null
         }
         Insert: {
@@ -5102,12 +5345,14 @@ export type Database = {
           created_at?: string
           education_level?: boolean | null
           email?: boolean | null
+          enable_steps?: boolean | null
           english_name?: boolean | null
           gender?: boolean | null
           id?: string
           national_id?: boolean | null
           phone?: boolean | null
           project_id?: string | null
+          steps_config?: Json | null
           work_status?: boolean | null
         }
         Update: {
@@ -5116,12 +5361,14 @@ export type Database = {
           created_at?: string
           education_level?: boolean | null
           email?: boolean | null
+          enable_steps?: boolean | null
           english_name?: boolean | null
           gender?: boolean | null
           id?: string
           national_id?: boolean | null
           phone?: boolean | null
           project_id?: string | null
+          steps_config?: Json | null
           work_status?: boolean | null
         }
         Relationships: [
@@ -5439,12 +5686,15 @@ export type Database = {
           arabic_name: string
           birth_date: string | null
           created_at: string
+          custom_fields_data: Json | null
           education_level: string | null
           email: string
           english_name: string | null
           event_id: string | null
+          form_step: number | null
           gender: string | null
           id: string
+          is_draft: boolean | null
           name: string | null
           national_id: string | null
           phone: string
@@ -5458,12 +5708,15 @@ export type Database = {
           arabic_name: string
           birth_date?: string | null
           created_at?: string
+          custom_fields_data?: Json | null
           education_level?: string | null
           email: string
           english_name?: string | null
           event_id?: string | null
+          form_step?: number | null
           gender?: string | null
           id?: string
+          is_draft?: boolean | null
           name?: string | null
           national_id?: string | null
           phone: string
@@ -5477,12 +5730,15 @@ export type Database = {
           arabic_name?: string
           birth_date?: string | null
           created_at?: string
+          custom_fields_data?: Json | null
           education_level?: string | null
           email?: string
           english_name?: string | null
           event_id?: string | null
+          form_step?: number | null
           gender?: string | null
           id?: string
+          is_draft?: boolean | null
           name?: string | null
           national_id?: string | null
           phone?: string
@@ -6271,27 +6527,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      sequential_ids: {
-        Row: {
-          created_at: string
-          id: string
-          sequential_number: number
-          type: string
-        }
-        Insert: {
-          created_at?: string
-          id: string
-          sequential_number: number
-          type: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          sequential_number?: number
-          type?: string
-        }
-        Relationships: []
       }
       subscription_attachments: {
         Row: {
