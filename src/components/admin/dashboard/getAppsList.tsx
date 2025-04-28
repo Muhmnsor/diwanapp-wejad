@@ -214,7 +214,7 @@ export const ROLE_MAPPING = {
   'developer': 'developer',
   'meeting_organizer': 'meeting_organizer',
   'meeting_participant': 'meeting_participant',
-  'subscription_manager': 'subscription_manager'
+  'subscription_manager': 'subscription_manager',
   'strategy_manager': 'strategy_manager'
   
 };
