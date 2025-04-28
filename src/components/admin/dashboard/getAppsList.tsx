@@ -14,7 +14,8 @@ import {
   Calculator,
   CalendarClock,
   Mail,
-  Bookmark
+  Bookmark,
+  BarChart4
 } from "lucide-react";
 import { AppItem } from "./DashboardApps";
 import { NotificationCounts } from "@/hooks/dashboard/useNotificationCounts";
@@ -171,6 +172,7 @@ export const ROLE_MAPPING = {
   'منظم الاجتماعات': 'meeting_organizer',
   'مشارك في الاجتماعات': 'meeting_participant',
   'مدير الاشتراكات': 'subscription_manager',
+  'مدير الخطة الاستراتيجية': 'strategy_manager',
   
   // English to English (for direct matching)
   'admin': 'admin',
@@ -213,6 +215,8 @@ export const ROLE_MAPPING = {
   'meeting_organizer': 'meeting_organizer',
   'meeting_participant': 'meeting_participant',
   'subscription_manager': 'subscription_manager'
+  'strategy_manager': 'strategy_manager'
+  
 };
 
 // Define the list of all available applications
@@ -334,6 +338,13 @@ const ALL_APPS: AppItem[] = [
     icon: Bookmark,
     path: "/admin/subscriptions",
     description: "إدارة الاشتراكات والعضويات",
+    notifications: 0
+  }
+    {
+    title: "الخطة الاستراتيجية",
+    icon: BarChart4,
+    path: "/admin/strategy",
+    description: "إدارة الخطة الاستراتيجية وبطاقات الأداء المتوازن",
     notifications: 0
   }
 ];
@@ -517,6 +528,7 @@ const getAppKeyFromPath = (path: string): string | null => {
   if (path === '/admin/internal-mail') return 'internal_mail';
   if (path === '/admin/subscriptions') return 'subscriptions';
   if (path === '/admin/correspondence') return 'correspondence';
+  if (path === '/admin/strategy') return 'strategy';
   return null;
 };
 
@@ -536,6 +548,7 @@ const getNotificationCount = (path: string, counts: NotificationCounts): number 
   if (path === '/ideas') return counts.ideas || 0;
   if (path === '/finance') return counts.finance || 0;
   if (path === '/admin/correspondence') return counts.correspondence || 0;
+  if (path === '/admin/strategy') return counts.strategy || 0;
   
   return 0;
 };
